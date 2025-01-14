@@ -1,0 +1,517 @@
+{
+    "schema": "olm.package",
+    "name": "ocs-operator",
+    "defaultChannel": "stable-4.17",
+    "icon": {
+        "base64data": "PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-4.17",
+    "package": "ocs-operator",
+    "entries": [
+        {
+            "name": "ocs-operator.v4.17.0-rhodf",
+            "skipRange": ">=4.2.0 <4.17.0-rhodf"
+        },
+        {
+            "name": "ocs-operator.v4.17.1-rhodf",
+            "replaces": "ocs-operator.v4.17.0-rhodf",
+            "skipRange": ">=4.2.0 <4.17.1-rhodf"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "ocs-operator.v4.17.0-rhodf",
+    "package": "ocs-operator",
+    "image": "registry.redhat.io/odf4/ocs-operator-bundle@sha256:60f6533b7262bbfad59c5e14dff71878d3ea501c3b46194155ce53bc43a119e4",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "OCSInitialization",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageCluster",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageClusterPeer",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageConsumer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageProfile",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageRequest",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "ocs-operator",
+                "version": "4.17.0-rhodf"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "\n[\n    {\n        \"apiVersion\": \"ocs.openshift.io/v1\",\n        \"kind\": \"StorageCluster\",\n        \"metadata\": {\n            \"name\": \"example-storagecluster\",\n            \"namespace\": \"openshift-storage\"\n        },\n        \"spec\": {\n            \"manageNodes\": false,\n            \"monPVCTemplate\": {\n                \"spec\": {\n                    \"accessModes\": [\n                        \"ReadWriteOnce\"\n                    ],\n                    \"resources\": {\n                        \"requests\": {\n                            \"storage\": \"10Gi\"\n                        }\n                    },\n                    \"storageClassName\": \"gp2-csi\"\n                }\n            },\n            \"storageDeviceSets\": [\n                {\n                    \"count\": 3,\n                    \"dataPVCTemplate\": {\n                        \"spec\": {\n                            \"accessModes\": [\n                                \"ReadWriteOnce\"\n                            ],\n                            \"resources\": {\n                                \"requests\": {\n                                    \"storage\": \"1Ti\"\n                                }\n                            },\n                            \"storageClassName\": \"gp2-csi\",\n                            \"volumeMode\": \"Block\"\n                        }\n                    },\n                    \"name\": \"example-deviceset\",\n                    \"placement\": {},\n                    \"portable\": true,\n                    \"resources\": {}\n                }\n            ]\n        }\n    }\n]",
+                    "capabilities": "Deep Insights",
+                    "categories": "Storage",
+                    "containerImage": "registry.redhat.io/odf4/ocs-rhel9-operator@sha256:ee0f7bff993f4b3c9fee9172661bf08aa52be268cace1f2418596611cce085d3",
+                    "description": "Red Hat OpenShift Container Storage provides hyperconverged storage for applications within an OpenShift cluster.",
+                    "external.features.ocs.openshift.io/supported-platforms": "[\"BareMetal\", \"None\", \"VSphere\", \"OpenStack\", \"oVirt\"]",
+                    "external.features.ocs.openshift.io/validation": "{\"secrets\":[\"rook-ceph-operator-creds\", \"rook-csi-rbd-node\", \"rook-csi-rbd-provisioner\"], \"configMaps\": [\"rook-ceph-mon-endpoints\", \"rook-ceph-mon\"], \"storageClasses\": [\"ceph-rbd\"], \"cephClusters\": [\"monitoring-endpoint\"]}",
+                    "features.ocs.openshift.io/disabled": "[\"ss-list\", \"install-wizard\", \"block-pool\", \"mcg-resource\", \"odf-dashboard\", \"common\", \"storage-provider\", \"storage-provisioner\", \"dashboard-resources\", \"csv-actions\", \"inventory-item\", \"alert-actions\"]",
+                    "features.ocs.openshift.io/enabled": "[\"kms\", \"arbiter\", \"flexible-scaling\", \"multus\", \"pool-management\", \"namespace-store\", \"mcg-standalone\", \"taint-nodes\", \"vault-sa-kms\", \"hpcs-kms\"]",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "true",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=4.2.0 <4.17.0-rhodf",
+                    "operatorframework.io/initialization-resource": "\n    {\n        \"apiVersion\": \"ocs.openshift.io/v1\",\n        \"kind\": \"StorageCluster\",\n        \"metadata\": {\n            \"name\": \"example-storagecluster\",\n            \"namespace\": \"openshift-storage\"\n        },\n        \"spec\": {\n            \"manageNodes\": false,\n            \"monPVCTemplate\": {\n                \"spec\": {\n                    \"accessModes\": [\n                        \"ReadWriteOnce\"\n                    ],\n                    \"resources\": {\n                        \"requests\": {\n                            \"storage\": \"10Gi\"\n                        }\n                    },\n                    \"storageClassName\": \"gp2-csi\"\n                }\n            },\n            \"storageDeviceSets\": [\n                {\n                    \"count\": 3,\n                    \"dataPVCTemplate\": {\n                        \"spec\": {\n                            \"accessModes\": [\n                                \"ReadWriteOnce\"\n                            ],\n                            \"resources\": {\n                                \"requests\": {\n                                    \"storage\": \"1Ti\"\n                                }\n                            },\n                            \"storageClassName\": \"gp2-csi\",\n                            \"volumeMode\": \"Block\"\n                        }\n                    },\n                    \"name\": \"example-deviceset\",\n                    \"placement\": {},\n                    \"portable\": true,\n                    \"resources\": {}\n                }\n            ]\n        }\n    }\n\t",
+                    "operatorframework.io/suggested-namespace": "openshift-storage",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.openshift.io/must-gather-image": "registry.redhat.io/odf4/odf-must-gather-rhel9@sha256:2d3fc39bc479fc5d0886f894b266ac0ed90464b17d9c85bd69f24f70b10e7e98",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\",\"OpenShift Data Foundation Essentials\",\"OpenShift Data Foundation Advanced\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.25.4",
+                    "operators.operatorframework.io/internal-objects": "[\"ocsinitializations.ocs.openshift.io\",\"storageclusterpeers.ocs.openshift.io\",\"storageconsumers.ocs.openshift.io\",\"storageprofiles.ocs.openshift.io\",\"storagerequests.ocs.openshift.io\"]",
+                    "operators.operatorframework.io/operator-type": "non-standalone",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/red-hat-storage/ocs-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "ocsinitializations.ocs.openshift.io",
+                            "version": "v1",
+                            "kind": "OCSInitialization",
+                            "displayName": "OCS Initialization",
+                            "description": "OCSInitialization represents the initial data to be created when the operator is installed."
+                        },
+                        {
+                            "name": "storageclusterpeers.ocs.openshift.io",
+                            "version": "v1",
+                            "kind": "StorageClusterPeer",
+                            "displayName": "Storage Cluster Peer",
+                            "description": "StorageClusterPeer is the Schema for the storageclusterpeers API"
+                        },
+                        {
+                            "name": "storageclusters.ocs.openshift.io",
+                            "version": "v1",
+                            "kind": "StorageCluster",
+                            "displayName": "Storage Cluster",
+                            "description": "StorageCluster represents a cluster including Ceph Cluster, NooBaa and all the storage and compute resources required.",
+                            "resources": [
+                                {
+                                    "name": "cephclusters.ceph.rook.io",
+                                    "kind": "CephCluster",
+                                    "version": "v1"
+                                },
+                                {
+                                    "name": "noobaas.noobaa.io",
+                                    "kind": "NooBaa",
+                                    "version": "v1alpha1"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "storageconsumers.ocs.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "StorageConsumer",
+                            "displayName": "Storage Consumer",
+                            "description": "StorageConsumer is the Schema for the storageconsumers API"
+                        },
+                        {
+                            "name": "storageprofiles.ocs.openshift.io",
+                            "version": "v1",
+                            "kind": "StorageProfile",
+                            "displayName": "Storage Profile",
+                            "description": "StorageProfile is the Schema for the storageprofiles API"
+                        },
+                        {
+                            "name": "storagerequests.ocs.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "StorageRequest",
+                            "displayName": "Storage Request",
+                            "description": "StorageRequest is the Schema for the StorageRequests API"
+                        }
+                    ]
+                },
+                "description": "**Red Hat OpenShift Container Storage** deploys three operators.\n\n### OpenShift Container Storage operator\n\nThe OpenShift Container Storage operator is the primary operator for OpenShift Container Storage. It serves to facilitate the other operators in OpenShift Container Storage by performing administrative tasks outside their scope as well as watching and configuring their CustomResources.\n\n### Rook\n\n[Rook][1] deploys and manages Ceph on OpenShift, which provides block and file storage.\n\n# Core Capabilities\n\n* **Self-managing service:** No matter which supported storage technologies you choose, OpenShift Container Storage ensures that resources can be deployed and managed automatically.\n\n* **Hyper-scale or hyper-converged:** With OpenShift Container Storage you can either build dedicated storage clusters or hyper-converged clusters where your apps run alongside storage.\n\n* **File, Block, and Object provided by OpenShift Container Storage:** OpenShift Container Storage integrates Ceph with multiple storage presentations including object storage (compatible with S3), block storage, and POSIX-compliant shared file system.\n\n* **Your data, protected:** OpenShift Container Storage efficiently distributes and replicates your data across your cluster to minimize the risk of data loss. With snapshots, cloning, and versioning, no more losing sleep over your data.\n\n* **Elastic storage in your datacenter:** Scale is now possible in your datacenter. Get started with a few terabytes, and easily scale up.\n\n* **Simplified data management:** Easily create hybrid and multi-cloud data storage for your workloads, using a single namespace.\n\n[1]: https://rook.io\n",
+                "displayName": "OpenShift Container Storage",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "storage",
+                    "rook",
+                    "ceph",
+                    "block storage",
+                    "shared filesystem",
+                    "object storage"
+                ],
+                "labels": {
+                    "full_version": "4.17.0-126",
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Source Code",
+                        "url": "https://github.com/red-hat-storage/ocs-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Red Hat Support",
+                        "email": "ocs-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "noobaa-core",
+            "image": "registry.redhat.io/odf4/mcg-core-rhel9@sha256:49a182ac75acc345de55f75dbb40fb0a64f636e19cafc2e3dff908bb15c294ba"
+        },
+        {
+            "name": "ocs-metrics-exporter",
+            "image": "registry.redhat.io/odf4/ocs-metrics-exporter-rhel9@sha256:a594c54b0a291d2938c4ccc34b10d9310020d4250ddad3e9743f69ff7adf62ac"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/odf4/ocs-operator-bundle@sha256:60f6533b7262bbfad59c5e14dff71878d3ea501c3b46194155ce53bc43a119e4"
+        },
+        {
+            "name": "ocs-operator",
+            "image": "registry.redhat.io/odf4/ocs-rhel9-operator@sha256:ee0f7bff993f4b3c9fee9172661bf08aa52be268cace1f2418596611cce085d3"
+        },
+        {
+            "name": "ocs-must-gather",
+            "image": "registry.redhat.io/odf4/odf-must-gather-rhel9@sha256:2d3fc39bc479fc5d0886f894b266ac0ed90464b17d9c85bd69f24f70b10e7e98"
+        },
+        {
+            "name": "rook-container",
+            "image": "registry.redhat.io/odf4/rook-ceph-rhel9-operator@sha256:1c77aa11c3b304baedc94e4eb721181376421ed5e0187659929163d5f2bcacb4"
+        },
+        {
+            "name": "ux-backend-oauth-image",
+            "image": "registry.redhat.io/openshift4/ose-oauth-proxy-rhel9@sha256:04a258aa0b217b2177d60fe8e84777f1d6bca9dcac7a69d30984ea2248638cd9"
+        },
+        {
+            "name": "ceph-container",
+            "image": "registry.redhat.io/rhceph/rhceph-7-rhel9@sha256:75bd8969ab3f86f2203a1ceb187876f44e54c9ee3b917518c4d696cf6cd88ce3"
+        },
+        {
+            "name": "noobaa-db",
+            "image": "registry.redhat.io/rhel9/postgresql-15@sha256:92808c81661c3289ff027a06f6acd40b3937c43c3ba8e69b6d808b48e2e083ba"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "ocs-operator.v4.17.1-rhodf",
+    "package": "ocs-operator",
+    "image": "registry.redhat.io/odf4/ocs-operator-bundle@sha256:e00dd0625fd985e093554675e84295599ae225e8125e6288cc88753112013b0f",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "OCSInitialization",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageCluster",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageClusterPeer",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageConsumer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageProfile",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "ocs.openshift.io",
+                "kind": "StorageRequest",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "ocs-operator",
+                "version": "4.17.1-rhodf"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "\n[\n    {\n        \"apiVersion\": \"ocs.openshift.io/v1\",\n        \"kind\": \"StorageCluster\",\n        \"metadata\": {\n            \"name\": \"example-storagecluster\",\n            \"namespace\": \"openshift-storage\"\n        },\n        \"spec\": {\n            \"manageNodes\": false,\n            \"monPVCTemplate\": {\n                \"spec\": {\n                    \"accessModes\": [\n                        \"ReadWriteOnce\"\n                    ],\n                    \"resources\": {\n                        \"requests\": {\n                            \"storage\": \"10Gi\"\n                        }\n                    },\n                    \"storageClassName\": \"gp2-csi\"\n                }\n            },\n            \"storageDeviceSets\": [\n                {\n                    \"count\": 3,\n                    \"dataPVCTemplate\": {\n                        \"spec\": {\n                            \"accessModes\": [\n                                \"ReadWriteOnce\"\n                            ],\n                            \"resources\": {\n                                \"requests\": {\n                                    \"storage\": \"1Ti\"\n                                }\n                            },\n                            \"storageClassName\": \"gp2-csi\",\n                            \"volumeMode\": \"Block\"\n                        }\n                    },\n                    \"name\": \"example-deviceset\",\n                    \"placement\": {},\n                    \"portable\": true,\n                    \"resources\": {}\n                }\n            ]\n        }\n    }\n]",
+                    "capabilities": "Deep Insights",
+                    "categories": "Storage",
+                    "containerImage": "registry.redhat.io/odf4/ocs-rhel9-operator@sha256:8b7db654c3d97279a7e2393e2bfcf801020ae7c96b9b8303e66cba6279c69987",
+                    "description": "Red Hat OpenShift Container Storage provides hyperconverged storage for applications within an OpenShift cluster.",
+                    "external.features.ocs.openshift.io/supported-platforms": "[\"BareMetal\", \"None\", \"VSphere\", \"OpenStack\", \"oVirt\"]",
+                    "external.features.ocs.openshift.io/validation": "{\"secrets\":[\"rook-ceph-operator-creds\", \"rook-csi-rbd-node\", \"rook-csi-rbd-provisioner\"], \"configMaps\": [\"rook-ceph-mon-endpoints\", \"rook-ceph-mon\"], \"storageClasses\": [\"ceph-rbd\"], \"cephClusters\": [\"monitoring-endpoint\"]}",
+                    "features.ocs.openshift.io/disabled": "[\"ss-list\", \"install-wizard\", \"block-pool\", \"mcg-resource\", \"odf-dashboard\", \"common\", \"storage-provider\", \"storage-provisioner\", \"dashboard-resources\", \"csv-actions\", \"inventory-item\", \"alert-actions\"]",
+                    "features.ocs.openshift.io/enabled": "[\"kms\", \"arbiter\", \"flexible-scaling\", \"multus\", \"pool-management\", \"namespace-store\", \"mcg-standalone\", \"taint-nodes\", \"vault-sa-kms\", \"hpcs-kms\"]",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "true",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=4.2.0 <4.17.1-rhodf",
+                    "operatorframework.io/initialization-resource": "\n    {\n        \"apiVersion\": \"ocs.openshift.io/v1\",\n        \"kind\": \"StorageCluster\",\n        \"metadata\": {\n            \"name\": \"example-storagecluster\",\n            \"namespace\": \"openshift-storage\"\n        },\n        \"spec\": {\n            \"manageNodes\": false,\n            \"monPVCTemplate\": {\n                \"spec\": {\n                    \"accessModes\": [\n                        \"ReadWriteOnce\"\n                    ],\n                    \"resources\": {\n                        \"requests\": {\n                            \"storage\": \"10Gi\"\n                        }\n                    },\n                    \"storageClassName\": \"gp2-csi\"\n                }\n            },\n            \"storageDeviceSets\": [\n                {\n                    \"count\": 3,\n                    \"dataPVCTemplate\": {\n                        \"spec\": {\n                            \"accessModes\": [\n                                \"ReadWriteOnce\"\n                            ],\n                            \"resources\": {\n                                \"requests\": {\n                                    \"storage\": \"1Ti\"\n                                }\n                            },\n                            \"storageClassName\": \"gp2-csi\",\n                            \"volumeMode\": \"Block\"\n                        }\n                    },\n                    \"name\": \"example-deviceset\",\n                    \"placement\": {},\n                    \"portable\": true,\n                    \"resources\": {}\n                }\n            ]\n        }\n    }\n\t",
+                    "operatorframework.io/suggested-namespace": "openshift-storage",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.openshift.io/must-gather-image": "registry.redhat.io/odf4/odf-must-gather-rhel9@sha256:e7bfe39fafe605354d01f9fc9bc08d35567cf2b9fb6d88bed0b9c2790e08245e",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\",\"OpenShift Data Foundation Essentials\",\"OpenShift Data Foundation Advanced\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.25.4",
+                    "operators.operatorframework.io/internal-objects": "[\"ocsinitializations.ocs.openshift.io\",\"storageclusterpeers.ocs.openshift.io\",\"storageconsumers.ocs.openshift.io\",\"storageprofiles.ocs.openshift.io\",\"storagerequests.ocs.openshift.io\"]",
+                    "operators.operatorframework.io/operator-type": "non-standalone",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/red-hat-storage/ocs-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "ocsinitializations.ocs.openshift.io",
+                            "version": "v1",
+                            "kind": "OCSInitialization",
+                            "displayName": "OCS Initialization",
+                            "description": "OCSInitialization represents the initial data to be created when the operator is installed."
+                        },
+                        {
+                            "name": "storageclusterpeers.ocs.openshift.io",
+                            "version": "v1",
+                            "kind": "StorageClusterPeer",
+                            "displayName": "Storage Cluster Peer",
+                            "description": "StorageClusterPeer is the Schema for the storageclusterpeers API"
+                        },
+                        {
+                            "name": "storageclusters.ocs.openshift.io",
+                            "version": "v1",
+                            "kind": "StorageCluster",
+                            "displayName": "Storage Cluster",
+                            "description": "StorageCluster represents a cluster including Ceph Cluster, NooBaa and all the storage and compute resources required.",
+                            "resources": [
+                                {
+                                    "name": "cephclusters.ceph.rook.io",
+                                    "kind": "CephCluster",
+                                    "version": "v1"
+                                },
+                                {
+                                    "name": "noobaas.noobaa.io",
+                                    "kind": "NooBaa",
+                                    "version": "v1alpha1"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "storageconsumers.ocs.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "StorageConsumer",
+                            "displayName": "Storage Consumer",
+                            "description": "StorageConsumer is the Schema for the storageconsumers API"
+                        },
+                        {
+                            "name": "storageprofiles.ocs.openshift.io",
+                            "version": "v1",
+                            "kind": "StorageProfile",
+                            "displayName": "Storage Profile",
+                            "description": "StorageProfile is the Schema for the storageprofiles API"
+                        },
+                        {
+                            "name": "storagerequests.ocs.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "StorageRequest",
+                            "displayName": "Storage Request",
+                            "description": "StorageRequest is the Schema for the StorageRequests API"
+                        }
+                    ]
+                },
+                "description": "**Red Hat OpenShift Container Storage** deploys three operators.\n\n### OpenShift Container Storage operator\n\nThe OpenShift Container Storage operator is the primary operator for OpenShift Container Storage. It serves to facilitate the other operators in OpenShift Container Storage by performing administrative tasks outside their scope as well as watching and configuring their CustomResources.\n\n### Rook\n\n[Rook][1] deploys and manages Ceph on OpenShift, which provides block and file storage.\n\n# Core Capabilities\n\n* **Self-managing service:** No matter which supported storage technologies you choose, OpenShift Container Storage ensures that resources can be deployed and managed automatically.\n\n* **Hyper-scale or hyper-converged:** With OpenShift Container Storage you can either build dedicated storage clusters or hyper-converged clusters where your apps run alongside storage.\n\n* **File, Block, and Object provided by OpenShift Container Storage:** OpenShift Container Storage integrates Ceph with multiple storage presentations including object storage (compatible with S3), block storage, and POSIX-compliant shared file system.\n\n* **Your data, protected:** OpenShift Container Storage efficiently distributes and replicates your data across your cluster to minimize the risk of data loss. With snapshots, cloning, and versioning, no more losing sleep over your data.\n\n* **Elastic storage in your datacenter:** Scale is now possible in your datacenter. Get started with a few terabytes, and easily scale up.\n\n* **Simplified data management:** Easily create hybrid and multi-cloud data storage for your workloads, using a single namespace.\n\n[1]: https://rook.io\n",
+                "displayName": "OpenShift Container Storage",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "storage",
+                    "rook",
+                    "ceph",
+                    "block storage",
+                    "shared filesystem",
+                    "object storage"
+                ],
+                "labels": {
+                    "full_version": "4.17.1-4",
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Source Code",
+                        "url": "https://github.com/red-hat-storage/ocs-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Red Hat Support",
+                        "email": "ocs-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "noobaa-core",
+            "image": "registry.redhat.io/odf4/mcg-core-rhel9@sha256:a92163ffa40a5395dfe71e26f6444af76654913bedad76c184e050d3a3f24808"
+        },
+        {
+            "name": "ocs-metrics-exporter",
+            "image": "registry.redhat.io/odf4/ocs-metrics-exporter-rhel9@sha256:1d5699772e636eb59d5682d102e06877c287287a79d1513c8cc8136c2acb733f"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/odf4/ocs-operator-bundle@sha256:e00dd0625fd985e093554675e84295599ae225e8125e6288cc88753112013b0f"
+        },
+        {
+            "name": "ocs-operator",
+            "image": "registry.redhat.io/odf4/ocs-rhel9-operator@sha256:8b7db654c3d97279a7e2393e2bfcf801020ae7c96b9b8303e66cba6279c69987"
+        },
+        {
+            "name": "ocs-must-gather",
+            "image": "registry.redhat.io/odf4/odf-must-gather-rhel9@sha256:e7bfe39fafe605354d01f9fc9bc08d35567cf2b9fb6d88bed0b9c2790e08245e"
+        },
+        {
+            "name": "rook-container",
+            "image": "registry.redhat.io/odf4/rook-ceph-rhel9-operator@sha256:5ff9c7d8ecd0f869ce80f0eb5f5ac76334b99b4d204688a57260195965c0a1cc"
+        },
+        {
+            "name": "ux-backend-oauth-image",
+            "image": "registry.redhat.io/openshift4/ose-oauth-proxy-rhel9@sha256:a2f559dcef0e0b2a3343ba974458f1a5b879d7514da25f473eb34d5a9708ba0e"
+        },
+        {
+            "name": "ceph-container",
+            "image": "registry.redhat.io/rhceph/rhceph-7-rhel9@sha256:64bbe343ae9a03f29e1e24f7e41865c97d9955533f68bbac83c3aa596bad9d57"
+        },
+        {
+            "name": "noobaa-db",
+            "image": "registry.redhat.io/rhel9/postgresql-15@sha256:f3215f5e79e8bea5f8aa50066b6b14ac312d3540647a6d47183a919a4a3ed74e"
+        }
+    ]
+}

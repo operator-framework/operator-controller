@@ -1,0 +1,650 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-emrcontainers-controller
+schema: olm.package
+---
+entries:
+- name: ack-emrcontainers-controller.v0.0.10
+  replaces: ack-emrcontainers-controller.v0.0.9
+- name: ack-emrcontainers-controller.v0.0.3
+- name: ack-emrcontainers-controller.v0.0.4
+  replaces: ack-emrcontainers-controller.v0.0.3
+- name: ack-emrcontainers-controller.v0.0.5
+  replaces: ack-emrcontainers-controller.v0.0.4
+- name: ack-emrcontainers-controller.v0.0.6
+  replaces: ack-emrcontainers-controller.v0.0.5
+- name: ack-emrcontainers-controller.v0.0.7
+  replaces: ack-emrcontainers-controller.v0.0.6
+- name: ack-emrcontainers-controller.v0.0.8
+  replaces: ack-emrcontainers-controller.v0.0.7
+- name: ack-emrcontainers-controller.v0.0.9
+  replaces: ack-emrcontainers-controller.v0.0.8
+- name: ack-emrcontainers-controller.v0.1.0
+  replaces: ack-emrcontainers-controller.v0.0.10
+- name: ack-emrcontainers-controller.v0.1.1
+  replaces: ack-emrcontainers-controller.v0.1.0
+- name: ack-emrcontainers-controller.v0.1.2
+  replaces: ack-emrcontainers-controller.v0.1.1
+- name: ack-emrcontainers-controller.v1.0.0
+  replaces: ack-emrcontainers-controller.v0.1.2
+- name: ack-emrcontainers-controller.v1.0.1
+  replaces: ack-emrcontainers-controller.v1.0.0
+- name: ack-emrcontainers-controller.v1.0.11
+  replaces: ack-emrcontainers-controller.v1.0.9
+- name: ack-emrcontainers-controller.v1.0.12
+  replaces: ack-emrcontainers-controller.v1.0.11
+- name: ack-emrcontainers-controller.v1.0.13
+  replaces: ack-emrcontainers-controller.v1.0.12
+- name: ack-emrcontainers-controller.v1.0.2
+  replaces: ack-emrcontainers-controller.v1.0.1
+- name: ack-emrcontainers-controller.v1.0.3
+  replaces: ack-emrcontainers-controller.v1.0.2
+- name: ack-emrcontainers-controller.v1.0.4
+  replaces: ack-emrcontainers-controller.v1.0.3
+- name: ack-emrcontainers-controller.v1.0.8
+  replaces: ack-emrcontainers-controller.v1.0.4
+- name: ack-emrcontainers-controller.v1.0.9
+  replaces: ack-emrcontainers-controller.v1.0.8
+name: alpha
+package: ack-emrcontainers-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:d51221ca68de32da20410ee2a2db701f5ccc5a3d664cd25ed2608c0a0ffa540d
+name: ack-emrcontainers-controller.v0.0.10
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:d51221ca68de32da20410ee2a2db701f5ccc5a3d664cd25ed2608c0a0ffa540d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:6b4835e244f065ea6ed9e894cea20ddcd8724066913c6cdae6ea93e5b14ee3d2
+name: ack-emrcontainers-controller.v0.0.3
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:6b4835e244f065ea6ed9e894cea20ddcd8724066913c6cdae6ea93e5b14ee3d2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:125798c5787ca724b6ecd8dfa6c908e936647284289d3730b9a39e7a0e7b42a0
+name: ack-emrcontainers-controller.v0.0.4
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:125798c5787ca724b6ecd8dfa6c908e936647284289d3730b9a39e7a0e7b42a0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:f5265520eae7d83bd4f8851c40d4436b2712a561712570a6e751339518c894db
+name: ack-emrcontainers-controller.v0.0.5
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:f5265520eae7d83bd4f8851c40d4436b2712a561712570a6e751339518c894db
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:8d58ecc73af9e61b257a7d6762cd30bb7fd8a6ba7a3c69cdd6bfd294ab1025c5
+name: ack-emrcontainers-controller.v0.0.6
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:8d58ecc73af9e61b257a7d6762cd30bb7fd8a6ba7a3c69cdd6bfd294ab1025c5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:a6db49c75631836ccb485414eb960d305890cfaeaa261c4b3c6c4db0bfc51783
+name: ack-emrcontainers-controller.v0.0.7
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:a6db49c75631836ccb485414eb960d305890cfaeaa261c4b3c6c4db0bfc51783
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:b86fae5ee94538d2bfa21e74f05c47da9bdcd31c8de5c8811144cb8c5e9e423c
+name: ack-emrcontainers-controller.v0.0.8
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:b86fae5ee94538d2bfa21e74f05c47da9bdcd31c8de5c8811144cb8c5e9e423c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:daf12eca7003594b5eba6505576f156e879d998b2861e53b7c83528bcd4829d0
+name: ack-emrcontainers-controller.v0.0.9
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:daf12eca7003594b5eba6505576f156e879d998b2861e53b7c83528bcd4829d0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:37bc7a4ccbe1b5bd172d16f333cb615e0aba7c90e62cb34ad7cb71b8a9dbb6ac
+name: ack-emrcontainers-controller.v0.1.0
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:37bc7a4ccbe1b5bd172d16f333cb615e0aba7c90e62cb34ad7cb71b8a9dbb6ac
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:cabf8cf85b6cf492de954e0c31b4226a59e20783a287b8353bfce648520c423b
+name: ack-emrcontainers-controller.v0.1.1
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:cabf8cf85b6cf492de954e0c31b4226a59e20783a287b8353bfce648520c423b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:4bb652bc0470b3dd08cd29f168e543cb2a112ae64b17be70c389884c4c2c2390
+name: ack-emrcontainers-controller.v0.1.2
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:4bb652bc0470b3dd08cd29f168e543cb2a112ae64b17be70c389884c4c2c2390
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:c8d645f035e6381e8c9170a599fe75dd374246bcd100bd9edbb9e5110cccdce8
+name: ack-emrcontainers-controller.v1.0.0
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:c8d645f035e6381e8c9170a599fe75dd374246bcd100bd9edbb9e5110cccdce8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:f2754c8aa40e0584b1f1e739936b6deafcdd4842f0b10fcdb131a80e97361d62
+name: ack-emrcontainers-controller.v1.0.1
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:v1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:f2754c8aa40e0584b1f1e739936b6deafcdd4842f0b10fcdb131a80e97361d62
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:cb8b08caa2664eb6b3f0dd7f550bf3f0bd52f3ff9778816e28ec3e6e9463c9cd
+name: ack-emrcontainers-controller.v1.0.11
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:cb8b08caa2664eb6b3f0dd7f550bf3f0bd52f3ff9778816e28ec3e6e9463c9cd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:0583ab86130d2cbd105969bb8e527cbd422f3ed8a338ce563be7aa6bf5090565
+name: ack-emrcontainers-controller.v1.0.12
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:0583ab86130d2cbd105969bb8e527cbd422f3ed8a338ce563be7aa6bf5090565
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:69dc316128ebfb42efa98d3be51365fc59b678e60a5ad139e2d4853732d52c5d
+name: ack-emrcontainers-controller.v1.0.13
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.13
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "emrcontainers.services.k8s.aws/v1alpha1",
+            "kind": "VirtualCluster",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.13
+      createdAt: "2024-09-10T01:41:26Z"
+      description: AWS EMR on EKS controller is a service controller for managing
+        EMR on EKS resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: JobRun represents the state of an AWS emrcontainers JobRun resource.
+        displayName: JobRun
+        kind: JobRun
+        name: jobruns.emrcontainers.services.k8s.aws
+        version: v1alpha1
+      - description: VirtualCluster represents the state of an AWS emrcontainers VirtualCluster
+          resource.
+        displayName: VirtualCluster
+        kind: VirtualCluster
+        name: virtualclusters.emrcontainers.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon EMR on EKS resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon EMR on EKS**
+
+      Amazon EMR on EKS provides a deployment option for Amazon EMR that allows you to run open-source big data frameworks on Amazon Elastic Kubernetes Service (Amazon EKS). With this deployment option, you can focus on running analytics workloads while Amazon EMR on EKS builds, configures, and manages containers for open-source applications.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon EMR on EKS
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - emrcontainers
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon EMR on EKS Developer Resources
+      url: https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: emr on eks maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:69dc316128ebfb42efa98d3be51365fc59b678e60a5ad139e2d4853732d52c5d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:fc8bef4aeb63ca143861a2566061b0fb029944a658e5934d34eacb9989b42d8b
+name: ack-emrcontainers-controller.v1.0.2
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:fc8bef4aeb63ca143861a2566061b0fb029944a658e5934d34eacb9989b42d8b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:399035a61e56084535da794159310e7ad68065111318f784a0426965184a990a
+name: ack-emrcontainers-controller.v1.0.3
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:399035a61e56084535da794159310e7ad68065111318f784a0426965184a990a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:d15d4ed2ff4979b6019d4818da8d3ae43a3746f411fff0f62e242611aded144d
+name: ack-emrcontainers-controller.v1.0.4
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:d15d4ed2ff4979b6019d4818da8d3ae43a3746f411fff0f62e242611aded144d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:db84c5cab1bf15695680fe635898f1bccc1e4477313c260b19833bf49975f4e1
+name: ack-emrcontainers-controller.v1.0.8
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:db84c5cab1bf15695680fe635898f1bccc1e4477313c260b19833bf49975f4e1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:832ea50e2bcd5b6c0fef69c667b37b4f22da272d686d2c9cdc6e23592d8998ff
+name: ack-emrcontainers-controller.v1.0.9
+package: ack-emrcontainers-controller
+properties:
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: JobRun
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: emrcontainers.services.k8s.aws
+    kind: VirtualCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-emrcontainers-controller
+    version: 1.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/emrcontainers-controller:1.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-emrcontainers-controller@sha256:832ea50e2bcd5b6c0fef69c667b37b4f22da272d686d2c9cdc6e23592d8998ff
+  name: ""
+schema: olm.bundle

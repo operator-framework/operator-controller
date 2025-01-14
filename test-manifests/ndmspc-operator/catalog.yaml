@@ -1,0 +1,554 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MzEuNjUgNjg4LjIzIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2U5ZTllOTt9LmNscy0yLC5jbHMtNCwuY2xzLTZ7ZmlsbDpub25lO3N0cm9rZS1saW5lam9pbjpyb3VuZDt9LmNscy0yLC5jbHMtNntzdHJva2U6Izg4OWJiMzt9LmNscy0ye3N0cm9rZS13aWR0aDo2cHg7b3BhY2l0eTowLjI1O30uY2xzLTN7b3BhY2l0eTowLjU5O30uY2xzLTR7c3Ryb2tlOiM5OGE3YmM7c3Ryb2tlLXdpZHRoOjRweDt9LmNscy01e2ZpbGw6Izg4OWJiMzt9LmNscy02e3N0cm9rZS13aWR0aDo4cHg7fTwvc3R5bGU+PC9kZWZzPjxnIGlkPSJMYXllcl82IiBkYXRhLW5hbWU9IkxheWVyIDYiPjxnIGlkPSJrb2NrYS0yIiBkYXRhLW5hbWU9ImtvY2thIj48cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iMzE3LjU0IDIyNy45NCA1MTQuMjkgMTE0LjE2IDMxNy41NCAwIDEyMC45NCAxMTMuOTcgMzE3LjU0IDIyNy45NCIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSIzLjQ4IDU0Mi43MiAyMDAuNCA2NTYuMjEgMjAwLjg4IDQyOC43NSAzLjg4IDMxNS40NyAzLjQ4IDU0Mi43MiIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSI2MzEuNjUgNTQzLjMyIDQzNC43NCA2NTYuODIgNDM0LjI1IDQyOS4zNSA2MzEuMjUgMzE2LjA3IDYzMS42NSA1NDMuMzIiLz48cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iMTQ4LjA3IDEzNC4zMiAzNi4yOSAxOTguNzMgMTY3LjE5IDI3NC44MSAyNTUuMTkgMjI0LjY4IDI1NS4xOSAxOTYuNDIgMTQ4LjA3IDEzNC4zMiIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSIzNC4xOSAyMDIuMTkgMTY1LjE3IDI3OC4yOCAxNjUuMjQgMzgwLjIzIDE0NS4wMiAzOTIuMDIgMzQuMTkgMzI4LjI2IDM0LjE5IDIwMi4xOSIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSIyNTcuMTkgMjI4LjMzIDE2OS4yMSAyNzguMjkgMTY5LjI4IDM3OS45NCAyNTcuMTkgMzI4Ljk1IDI1Ny4xOSAyMjguMzMiLz48cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iNDg2Ljg1IDEzNC42NCA1OTguMDggMTk4Ljc0IDQ2Ny4xOCAyNzQuODIgMzc5LjE5IDIyNC42OCAzNzkuMTkgMTk2LjkxIDQ4Ni44NSAxMzQuNjQiLz48cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iNjAwLjE5IDIwMi4xOSA0NjkuMiAyNzguMjkgNDY5LjEzIDM4MC4yNCA0OTAuMiAzOTIuNTEgNjAwLjE5IDMyOS4xMyA2MDAuMTkgMjAyLjE5Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjM3Ny4xOSAyMjguMTcgNDY1LjE2IDI3OC4zIDQ2NS4xNCAzODAgMzc3LjE5IDMyOC45NiAzNzcuMTkgMjI4LjE3Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjIwNS4xNyA2MjQuMDkgMzE2LjE5IDY4OC4yMyAzMTUuNzMgNTM3LjE5IDIyNy42NSA0ODYuMzkgMjA1LjExIDQ5OS4xNyAyMDUuMTcgNjI0LjA5Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjMyMC4yMiA2ODguNDMgMzE5Ljg3IDUzNy4wOCA0MDcuMjcgNDg1Ljk5IDQzMC4yNiA0OTkuMjYgNDMwLjI2IDYyNC43NyAzMjAuMjIgNjg4LjQzIi8+PHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjIyOS44MSA0ODIuODMgMzE3Ljc2IDUzMy42MyA0MDUuMDYgNDgyLjU1IDMxNy45NyA0MzIuMjIgMjI5LjgxIDQ4Mi44MyIvPjwvZz48ZyBpZD0icGF2dWNpbmEiPjxwb2x5bGluZSBjbGFzcz0iY2xzLTIiIHBvaW50cz0iNDI2LjQyIDQyNC44NCAzMTYuMiAzNjEuOTUgMjEwLjQ5IDQyNC40NiIvPjxsaW5lIGNsYXNzPSJjbHMtMiIgeDE9IjMxNS42NSIgeTE9IjM2MS45NSIgeDI9IjMxNS42NSIgeTI9IjIzNi43NyIvPjxnIGNsYXNzPSJjbHMtMyI+PHBvbHlsaW5lIGNsYXNzPSJjbHMtNCIgcG9pbnRzPSIzODEuMjcgMzk5LjQ1IDMxNi4wNCAzNjIuMjMgMjUzLjQ4IDM5OS4yMyIvPjxsaW5lIGNsYXNzPSJjbHMtNCIgeDE9IjMxNS43MSIgeTE9IjM2Mi4yMyIgeDI9IjMxNS43MSIgeTI9IjI4OC4xNSIvPjwvZz48cG9seWdvbiBjbGFzcz0iY2xzLTUiIHBvaW50cz0iMjUyLjQyIDM5Ny40OSAyNTQuMTUgNDAwLjQ5IDIxNS42NCA0MjQuNTMgMjEyLjkzIDQxOS44NCAyNTIuNDIgMzk3LjQ5Ii8+PHBvbHlnb24gY2xhc3M9ImNscy01IiBwb2ludHM9IjMxNy42NiAyODguMTUgMzE0LjIgMjg4LjE1IDMxMi42MyAyNDIuNzcgMzE4LjA1IDI0Mi43NyAzMTcuNjYgMjg4LjE1Ii8+PHBvbHlnb24gY2xhc3M9ImNscy01IiBwb2ludHM9IjM4My4yIDM5OC4yNSAzODEuNTIgNDAxLjI4IDQyMC40OSA0MjQuNTggNDIzLjExIDQxOS44NCAzODMuMiAzOTguMjUiLz48cG9seWdvbiBjbGFzcz0iY2xzLTQiIHBvaW50cz0iMzE2LjQ1IDI4OC4xNSAzODIuMDkgMzI2LjA5IDM4Mi4zNSAzOTkuNjkgMzE2LjcxIDQzNi4wMiAyNTMuMjQgMzk5LjQ2IDI1Mi45OCAzMjUuODYgMzE2LjQ1IDI4OC4xNSIvPjxwb2x5bGluZSBjbGFzcz0iY2xzLTYiIHBvaW50cz0iMjA5LjY0IDMwMS4zNiAzMTYuMDQgMzYyLjA5IDMxNi40OCA0ODYuMjQiLz48bGluZSBjbGFzcz0iY2xzLTYiIHgxPSIzMTUuNSIgeTE9IjM2Mi4wOSIgeDI9IjQyNS41NCIgeTI9IjMwMS43NCIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtNiIgcG9pbnRzPSIzMTUuNjMgMjM4LjQ0IDQyNS40IDMwMS44OSA0MjUuODQgNDI0Ljk3IDMxNi4wNyA0ODUuNzMgMjA5LjkzIDQyNC41OSAyMDkuNDkgMzAxLjUxIDMxNS42MyAyMzguNDQiLz48L2c+PC9nPjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ndmspc-operator
+schema: olm.package
+---
+entries:
+- name: ndmspc-operator.v0.10.0
+  replaces: ndmspc-operator.v0.9.0
+- name: ndmspc-operator.v0.10.1
+  replaces: ndmspc-operator.v0.10.0
+- name: ndmspc-operator.v0.10.2
+  replaces: ndmspc-operator.v0.10.1
+- name: ndmspc-operator.v0.11.0
+  replaces: ndmspc-operator.v0.10.2
+- name: ndmspc-operator.v0.11.1
+  replaces: ndmspc-operator.v0.11.0
+- name: ndmspc-operator.v0.11.2
+  replaces: ndmspc-operator.v0.11.1
+- name: ndmspc-operator.v0.11.3
+  replaces: ndmspc-operator.v0.11.2
+- name: ndmspc-operator.v0.11.4
+  replaces: ndmspc-operator.v0.11.3
+- name: ndmspc-operator.v0.11.5
+  replaces: ndmspc-operator.v0.11.4
+- name: ndmspc-operator.v0.11.6
+  replaces: ndmspc-operator.v0.11.5
+- name: ndmspc-operator.v0.20240412.0
+  replaces: ndmspc-operator.v0.11.6
+- name: ndmspc-operator.v0.5.0
+- name: ndmspc-operator.v0.6.0
+  replaces: ndmspc-operator.v0.5.0
+- name: ndmspc-operator.v0.7.0
+  replaces: ndmspc-operator.v0.6.0
+- name: ndmspc-operator.v0.7.3
+  replaces: ndmspc-operator.v0.7.0
+- name: ndmspc-operator.v0.7.4
+  replaces: ndmspc-operator.v0.7.3
+- name: ndmspc-operator.v0.8.0
+  replaces: ndmspc-operator.v0.7.4
+- name: ndmspc-operator.v0.9.0
+  replaces: ndmspc-operator.v0.8.0
+name: alpha
+package: ndmspc-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:210ecd38f47c9fe24c9ffc15f01627ec4d80fd6ad6d2e5ba15747ae31f6193b3
+name: ndmspc-operator.v0.10.0
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.10.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:210ecd38f47c9fe24c9ffc15f01627ec4d80fd6ad6d2e5ba15747ae31f6193b3
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.10.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:a514e8a37eb4e5746e957aa8d0ae0e029f4a1b45ec42c72fc4ebca2b902b08e6
+name: ndmspc-operator.v0.10.1
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.10.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:a514e8a37eb4e5746e957aa8d0ae0e029f4a1b45ec42c72fc4ebca2b902b08e6
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.10.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:fd480f78f6e6c3ba1344b69b90ba7111322a5d5cc8936b91f481c5e4a6c4f9a8
+name: ndmspc-operator.v0.10.2
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.10.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:fd480f78f6e6c3ba1344b69b90ba7111322a5d5cc8936b91f481c5e4a6c4f9a8
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.10.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:2fbe37316a7bb4bcdf34b07acb2cfeac82b740d1c6f08675d14761c8f3315676
+name: ndmspc-operator.v0.11.0
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.11.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:2fbe37316a7bb4bcdf34b07acb2cfeac82b740d1c6f08675d14761c8f3315676
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.11.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:6e774898b6ca5bfd385af230bd5b66bac36216782377dacccc838a547f59adaa
+name: ndmspc-operator.v0.11.1
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.11.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:6e774898b6ca5bfd385af230bd5b66bac36216782377dacccc838a547f59adaa
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.11.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:c868020dd7a9f4f24e4432651284ef28a453c958e0e54d6e66b5313a73628c5c
+name: ndmspc-operator.v0.11.2
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.11.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:c868020dd7a9f4f24e4432651284ef28a453c958e0e54d6e66b5313a73628c5c
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.11.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:9bf07612e34ec7d26ce8540f78d4e487597d1cdeece2f6ac288334e3a0391075
+name: ndmspc-operator.v0.11.3
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.11.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:9bf07612e34ec7d26ce8540f78d4e487597d1cdeece2f6ac288334e3a0391075
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.11.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:0fb299d44488533dbe64cf0de31760f2b4c3141c1f5f9441d55480543fba4063
+name: ndmspc-operator.v0.11.4
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.11.4
+- type: olm.package.required
+  value:
+    packageName: keycloak-operator
+    versionRange: '>24.0.0'
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:0fb299d44488533dbe64cf0de31760f2b4c3141c1f5f9441d55480543fba4063
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.11.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:b8fbd0a5541d3ab2b941e5ead67a731e96d47a0d1211f7cf347730701721d879
+name: ndmspc-operator.v0.11.5
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.11.5
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:b8fbd0a5541d3ab2b941e5ead67a731e96d47a0d1211f7cf347730701721d879
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.11.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:65b211a4f987e3aca243ecf049bc67a9df00994e590cd885cbd85eae254e040c
+name: ndmspc-operator.v0.11.6
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.11.6
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:65b211a4f987e3aca243ecf049bc67a9df00994e590cd885cbd85eae254e040c
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.11.6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:a8030d7318568a16d66eed43c9043afa7f82137f3cf421a9a0628f050f7c4a20
+name: ndmspc-operator.v0.20240412.0
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.20240412.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "apps.ndmspc.io/v1alpha1",
+            "kind": "NdmSpcConfig",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/created-by": "ndmspc-operator",
+                "app.kubernetes.io/instance": "ndmspcconfig-sample",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "ndmspcconfig",
+                "app.kubernetes.io/part-of": "ndmspc-operator"
+              },
+              "name": "ndmspc-sample"
+            },
+            "spec": {
+              "executor": {
+                "image": "registry.gitlab.com/ndmspc/api:v0.20240215.2",
+                "name": "api/v1"
+              },
+              "executors": 1,
+              "ingressclasstype": "nginx",
+              "ingressenabled": true,
+              "ingresshostdomain": "127.0.0.1.nip.io",
+              "ingressnostname": "ndmspc",
+              "ingressssltraefik": false,
+              "ndmvr": {
+                "image": "registry.gitlab.com/ndmspc/ndmvr/shared:v0.20230320.0",
+                "name": "ndmvr"
+              },
+              "salsa": {
+                "image": "registry.gitlab.com/ndmspc/user/ndmspc:v0.20240412.0"
+              },
+              "webapp": {
+                "image": "registry.gitlab.com/ndmspc/react-ndmspc:v0.20240412.0",
+                "name": ""
+              },
+              "webappcontainerport": 8080,
+              "webapps": 1,
+              "worker": {
+                "resources": {
+                  "limits": {
+                    "cpu": "200m",
+                    "memory": "2Gi"
+                  },
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "1Gi"
+                  }
+                }
+              },
+              "workers": 2,
+              "workerslots": 1,
+              "zmq2ws": {
+                "image": "registry.gitlab.com/ndmspc/zmq2ws:v1.20231012.0",
+                "name": "zmq2ws"
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Big Data
+      containerImage: registry.gitlab.com/ndmspc/ndmspc-operator:0.20240412.0
+      createdAt: "2024-04-12T11:29:21Z"
+      description: The NdmSpc operator automates the deployment and management of
+        Ndmspc suite on Kubernetes cluster.
+      operators.operatorframework.io/builder: operator-sdk-v1.34.1
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      repository: https://gitlab.com/ndmspc/ndmspc-operator
+      support: NDMSPC Team
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: NdmSpc configuration
+        displayName: NdmSpc Config
+        kind: NdmSpcConfig
+        name: ndmspcconfigs.apps.ndmspc.io
+        version: v1alpha1
+    description: "The NdmSpc operator automates the deployment and management of Ndmspc
+      suite on Kubernetes cluster. This operator allows user to deploy SALSA cluster
+      with ZMQ2WS and job executor service and specify custom webapp page.\n\n###
+      Capabilities\n\n- SALSA cluster\n- ZMQ2WS api service\n- Job executor service
+      \n- Custom WebApp page\n"
+    displayName: NdmSpc operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - ndmspc
+    links:
+    - name: Ndmspc Operator
+      url: https://ndmspc.gitlab.io/docs
+    maintainers:
+    - email: ndmspc@gmail.com
+      name: NdmSpc Support
+    maturity: alpha
+    provider:
+      name: NdmSpc project
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:a8030d7318568a16d66eed43c9043afa7f82137f3cf421a9a0628f050f7c4a20
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.20240412.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:81a85b9295fd71da2438663207bb4d4f3bb4a1bef74f9525765e24d86130f465
+name: ndmspc-operator.v0.5.0
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.5.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:81a85b9295fd71da2438663207bb4d4f3bb4a1bef74f9525765e24d86130f465
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.5.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:60f56de7504c545a084b5605841344efe2e3b671039ac13a1ba73a2b8c7813dc
+name: ndmspc-operator.v0.6.0
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.6.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:60f56de7504c545a084b5605841344efe2e3b671039ac13a1ba73a2b8c7813dc
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.6.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:c9c543eadb75ddfdc30623bb96abb7b89cfa1131e0fe4ec96e2cbd2a110e1800
+name: ndmspc-operator.v0.7.0
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.7.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:c9c543eadb75ddfdc30623bb96abb7b89cfa1131e0fe4ec96e2cbd2a110e1800
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.7.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:0fa0fd85b388815d20fecdccf75253c022e448532120285a706b787902efcd2d
+name: ndmspc-operator.v0.7.3
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.7.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:0fa0fd85b388815d20fecdccf75253c022e448532120285a706b787902efcd2d
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.7.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:d1545a4ab3f31ca32466f2566a1163308a27ac7c6faae4dbd0788f1aaeb06fc0
+name: ndmspc-operator.v0.7.4
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.7.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:d1545a4ab3f31ca32466f2566a1163308a27ac7c6faae4dbd0788f1aaeb06fc0
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.7.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:7eb7fca30700ea6e5ba350439ebc72b8f1ceb7e5d181c6269ddf5ceea3fcb01e
+name: ndmspc-operator.v0.8.0
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.8.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:7eb7fca30700ea6e5ba350439ebc72b8f1ceb7e5d181c6269ddf5ceea3fcb01e
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.8.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ndmspc-operator@sha256:77487c31a4731b1bc79a82bb0ec699b0fb085576b7562eee4b2c626edc58ddc1
+name: ndmspc-operator.v0.9.0
+package: ndmspc-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.ndmspc.io
+    kind: NdmSpcConfig
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ndmspc-operator
+    version: 0.9.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/ndmspc-operator@sha256:77487c31a4731b1bc79a82bb0ec699b0fb085576b7562eee4b2c626edc58ddc1
+  name: ""
+- image: registry.gitlab.com/ndmspc/ndmspc-operator:0.9.0
+  name: ""
+schema: olm.bundle

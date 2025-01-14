@@ -1,0 +1,334 @@
+---
+defaultChannel: alpha
+name: sonataflow-operator
+schema: olm.package
+---
+entries:
+- name: sonataflow-operator.v1.40.0
+- name: sonataflow-operator.v1.41.0
+  replaces: sonataflow-operator.v1.40.0
+- name: sonataflow-operator.v1.42.0
+  replaces: sonataflow-operator.v1.41.0
+- name: sonataflow-operator.v1.43.1
+  replaces: sonataflow-operator.v1.42.0
+- name: sonataflow-operator.v1.44.1
+  replaces: sonataflow-operator.v1.43.1
+name: alpha
+package: sonataflow-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/sonataflow-operator@sha256:08beb3e0da835b23bb53fa805dd2f56eed1dd1313bec91bba7e22af586f9e1aa
+name: sonataflow-operator.v1.40.0
+package: sonataflow-operator
+properties:
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlow
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowBuild
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowPlatform
+    version: v1alpha08
+- type: olm.package
+  value:
+    packageName: sonataflow-operator
+    version: 1.40.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/kiegroup/kogito-serverless-operator:1.40.0
+  name: ""
+- image: quay.io/operatorhubio/sonataflow-operator@sha256:08beb3e0da835b23bb53fa805dd2f56eed1dd1313bec91bba7e22af586f9e1aa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sonataflow-operator@sha256:6b23ccbfc42250778e368ab3a8ebcbe173a7c8872344bc0060b95e6bf5566853
+name: sonataflow-operator.v1.41.0
+package: sonataflow-operator
+properties:
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlow
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowBuild
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowPlatform
+    version: v1alpha08
+- type: olm.package
+  value:
+    packageName: sonataflow-operator
+    version: 1.41.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/kiegroup/kogito-serverless-operator:1.41
+  name: ""
+- image: quay.io/operatorhubio/sonataflow-operator@sha256:6b23ccbfc42250778e368ab3a8ebcbe173a7c8872344bc0060b95e6bf5566853
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sonataflow-operator@sha256:5efa574786aab187198794f5df63384e5b3e80a4943399f6026c6d7288dac630
+name: sonataflow-operator.v1.42.0
+package: sonataflow-operator
+properties:
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlow
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowBuild
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowPlatform
+    version: v1alpha08
+- type: olm.package
+  value:
+    packageName: sonataflow-operator
+    version: 1.42.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/kiegroup/kogito-serverless-operator:1.42
+  name: ""
+- image: quay.io/operatorhubio/sonataflow-operator@sha256:5efa574786aab187198794f5df63384e5b3e80a4943399f6026c6d7288dac630
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sonataflow-operator@sha256:8a190c5ce65b7c4b5bd7fd4963d57b6422ce9c96ba8c392c3f4a6cae5a294804
+name: sonataflow-operator.v1.43.1
+package: sonataflow-operator
+properties:
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlow
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowBuild
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowPlatform
+    version: v1alpha08
+- type: olm.package
+  value:
+    packageName: sonataflow-operator
+    version: 1.43.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/kiegroup/kogito-serverless-operator:1.43
+  name: ""
+- image: quay.io/operatorhubio/sonataflow-operator@sha256:8a190c5ce65b7c4b5bd7fd4963d57b6422ce9c96ba8c392c3f4a6cae5a294804
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sonataflow-operator@sha256:5521055d16207d00e6ec81309cf3e88413c64528a6af861749de1083ecb156e4
+name: sonataflow-operator.v1.44.1
+package: sonataflow-operator
+properties:
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlow
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowBuild
+    version: v1alpha08
+- type: olm.gvk
+  value:
+    group: sonataflow.org
+    kind: SonataFlowPlatform
+    version: v1alpha08
+- type: olm.package
+  value:
+    packageName: sonataflow-operator
+    version: 1.44.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "sonataflow.org/v1alpha08",
+            "kind": "SonataFlow",
+            "metadata": {
+              "annotations": {
+                "sonataflow.org/description": "Greeting example on k8s!",
+                "sonataflow.org/version": "0.0.1"
+              },
+              "name": "greeting"
+            },
+            "spec": {
+              "flow": {
+                "functions": [
+                  {
+                    "name": "greetFunction",
+                    "operation": "sysout",
+                    "type": "custom"
+                  }
+                ],
+                "start": "ChooseOnLanguage",
+                "states": [
+                  {
+                    "dataConditions": [
+                      {
+                        "condition": "${ .language == \"English\" }",
+                        "transition": "GreetInEnglish"
+                      },
+                      {
+                        "condition": "${ .language == \"Spanish\" }",
+                        "transition": "GreetInSpanish"
+                      }
+                    ],
+                    "defaultCondition": "GreetInEnglish",
+                    "name": "ChooseOnLanguage",
+                    "type": "switch"
+                  },
+                  {
+                    "data": {
+                      "greeting": "Hello from JSON Workflow, "
+                    },
+                    "name": "GreetInEnglish",
+                    "transition": "GreetPerson",
+                    "type": "inject"
+                  },
+                  {
+                    "data": {
+                      "greeting": "Saludos desde JSON Workflow, "
+                    },
+                    "name": "GreetInSpanish",
+                    "transition": "GreetPerson",
+                    "type": "inject"
+                  },
+                  {
+                    "actions": [
+                      {
+                        "functionRef": {
+                          "arguments": {
+                            "message": ".greeting+.name"
+                          },
+                          "refName": "greetFunction"
+                        },
+                        "name": "greetAction"
+                      }
+                    ],
+                    "end": true,
+                    "name": "GreetPerson",
+                    "type": "operation"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "apiVersion": "sonataflow.org/v1alpha08",
+            "kind": "SonataFlowPlatform",
+            "metadata": {
+              "name": "sonataflow-platform"
+            },
+            "spec": {
+              "build": {
+                "config": {
+                  "registry": {
+                    "address": "quay.io/kiegroup",
+                    "secret": "regcred"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Application Runtime
+      containerImage: quay.io/kiegroup/kogito-serverless-operator:1.44
+      description: SonataFlow Kubernetes Operator for deploying workflow applications
+        based on the CNCF Serverless Workflow specification
+      operators.operatorframework.io/builder: operator-sdk-v1.25.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/kiegroup/kogito-serverless-operator
+      support: Red Hat
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: SonataFlowBuild is an internal custom resource to control workflow
+          build instances in the target platform
+        displayName: Sonata Flow Build
+        kind: SonataFlowBuild
+        name: sonataflowbuilds.sonataflow.org
+        version: v1alpha08
+      - description: SonataFlowPlatform is the descriptor for the workflow platform
+          infrastructure.
+        displayName: Sonata Flow Platform
+        kind: SonataFlowPlatform
+        name: sonataflowplatforms.sonataflow.org
+        version: v1alpha08
+      - description: SonataFlow is the descriptor representation for a workflow application
+          based on the CNCF Serverless Workflow specification.
+        displayName: Sonata Flow
+        kind: SonataFlow
+        name: sonataflows.sonataflow.org
+        version: v1alpha08
+    description: |-
+      SonataFlow Kubernetes Operator for deploying workflow applications
+      based on the [CNCF Serverless Workflow specification](https://serverlessworkflow.io/):
+
+      * Deploy workflow applications using the [dev profile](https://sonataflow.org/serverlessworkflow/latest/cloud/operator/developing-workflows.html), suited for the your development cycle
+      * Build workflow applications based on the platform you're currently working on.
+    displayName: SonataFlow Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - sonataflow
+    - cncf
+    - serverless
+    - serverlessworkflow
+    links:
+    - name: Product Page
+      url: https://sonataflow.org/serverlessworkflow/latest/index.html
+    maintainers:
+    - email: bsig-cloud@redhat.com
+      name: Red Hat
+    maturity: alpha
+    minKubeVersion: 1.23.0
+    provider:
+      name: Red Hat
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/kiegroup/kogito-serverless-operator:1.44
+  name: ""
+- image: quay.io/operatorhubio/sonataflow-operator@sha256:5521055d16207d00e6ec81309cf3e88413c64528a6af861749de1083ecb156e4
+  name: ""
+schema: olm.bundle

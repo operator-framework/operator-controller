@@ -1,0 +1,778 @@
+{
+    "schema": "olm.package",
+    "name": "red-hat-hawtio-operator",
+    "defaultChannel": "stable-v1",
+    "icon": {
+        "base64data": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgd2lkdGg9IjM4MHB4IiBoZWlnaHQ9IjM4MHB4IiBzdHlsZT0ic2hhcGUtcmVuZGVyaW5nOmdlb21ldHJpY1ByZWNpc2lvbjsgdGV4dC1yZW5kZXJpbmc6Z2VvbWV0cmljUHJlY2lzaW9uOyBpbWFnZS1yZW5kZXJpbmc6b3B0aW1pemVRdWFsaXR5OyBmaWxsLXJ1bGU6ZXZlbm9kZDsgY2xpcC1ydWxlOmV2ZW5vZGQiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KPGc+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2UxZTFlMSIgZD0iTSA4NS41LDkuNSBDIDE1NC44MzQsOS4zMzMzNCAyMjQuMTY3LDkuNSAyOTMuNSwxMEMgMzMyLjIyMSwxNy4zODgzIDM1Ni44ODgsNDAuMDU0OSAzNjcuNSw3OEMgMzY4LjgwNSw4NS4wMDUxIDM2OS44MDUsOTIuMDA1MSAzNzAuNSw5OUMgMzY5LjE2NywxNTkuMzMzIDM2OS4xNjcsMjE5LjY2NyAzNzAuNSwyODBDIDM2OC41MywzMTcuNjA5IDM1MC44NjQsMzQ0Ljk0MiAzMTcuNSwzNjJDIDMwOS43OTcsMzY1LjM0NiAzMDEuNzk3LDM2Ny42NzkgMjkzLjUsMzY5QyAyMjQuMTY3LDM2OS42NjcgMTU0LjgzMywzNjkuNjY3IDg1LjUsMzY5QyA0My42NjY3LDM2MC41IDE4LjUsMzM1LjMzMyAxMCwyOTMuNUMgOS44MzE0MywyMjguNTk2IDkuMzMxNDMsMTYzLjc2MyA4LjUsOTlDIDEwLjc3MzEsNTkuMDkyOCAzMC4xMDY0LDMxLjA5MjggNjYuNSwxNUMgNzIuODM1MiwxMi43MTA2IDc5LjE2ODUsMTAuODc3MyA4NS41LDkuNSBaIi8+PC9nPgo8Zz48cGF0aCBzdHlsZT0ib3BhY2l0eToxIiBmaWxsPSIjZmVmZWZlIiBkPSJNIDg4LjUsMjIuNSBDIDE1NS44MzQsMjIuMzMzMyAyMjMuMTY3LDIyLjUgMjkwLjUsMjNDIDMyNy4wNDksMzAuMjE1NiAzNDguODgyLDUyLjA0OSAzNTYsODguNUMgMzU2LjY2NywxNTUuODMzIDM1Ni42NjcsMjIzLjE2NyAzNTYsMjkwLjVDIDM0OC44MzMsMzI3IDMyNywzNDguODMzIDI5MC41LDM1NkMgMjIzLjE2NywzNTYuNjY3IDE1NS44MzMsMzU2LjY2NyA4OC41LDM1NkMgNTIuMDQ5LDM0OC44ODIgMzAuMjE1NiwzMjcuMDQ5IDIzLDI5MC41QyAyMi4wMjMyLDIyMC44MDcgMjIuMzU2NiwxNTEuMTQgMjQsODEuNUMgMzMuNjUwMiw0OC42NzU3IDU1LjE1MDIsMjkuMDA5MSA4OC41LDIyLjUgWiIvPjwvZz4KPGc+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2VlMGYwNyIgZD0iTSAyNDUuNSwxMDMuNSBDIDI0NS41LDEwNy41IDI0NS41LDExMS41IDI0NS41LDExNS41QyAyNDQuNjYyLDExNS44NDIgMjQ0LjMyOCwxMTYuNTA4IDI0NC41LDExNy41QyAyMzguNDM3LDEzMi4yMDMgMjI3LjQzNywxMzguMDM2IDIxMS41LDEzNUMgMjA5LjU5MywxMzMuODc4IDIwNy41OTMsMTMzLjA0NSAyMDUuNSwxMzIuNUMgMjAyLjE2NywxMjkuODMzIDE5OS4xNjcsMTI2LjgzMyAxOTYuNSwxMjMuNUMgMTg5LjA4MywxMDUuNTE1IDE5NC4wODMsOTIuMzQ4MyAyMTEuNSw4NEMgMjI4LjQ3OSw4MC45ODE3IDIzOS44MTIsODcuNDgxNyAyNDUuNSwxMDMuNSBaIi8+PC9nPgo8Zz48cGF0aCBzdHlsZT0ib3BhY2l0eToxIiBmaWxsPSIjZmZmYmZiIiBkPSJNIDIxNC41LDk2LjUgQyAyMzAuNzI5LDk1Ljk0NTggMjM1Ljg5NiwxMDMuMjc5IDIzMCwxMTguNUMgMjIzLjg2OSwxMjMuMTk2IDIxNy4zNjksMTIzLjY5NiAyMTAuNSwxMjBDIDIwNS44MDQsMTEzLjg2OSAyMDUuMzA0LDEwNy4zNjkgMjA5LDEwMC41QyAyMTAuODEyLDk5LjAyMjkgMjEyLjY0NSw5Ny42ODk2IDIxNC41LDk2LjUgWiIvPjwvZz4KPGc+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iIzAzMDEwMCIgZD0iTSAyNDUuNSwxMDMuNSBDIDI1Ny44MzgsMTAzLjMzMyAyNzAuMTcxLDEwMy41IDI4Mi41LDEwNEMgMjg1LjU3LDEwNi41NjkgMjg2LjIzNywxMDkuNzM2IDI4NC41LDExMy41QyAyODMuNjQzLDExNC40MjUgMjgyLjY0MywxMTUuMDkyIDI4MS41LDExNS41QyAyNjkuNSwxMTUuNSAyNTcuNSwxMTUuNSAyNDUuNSwxMTUuNUMgMjQ1LjUsMTExLjUgMjQ1LjUsMTA3LjUgMjQ1LjUsMTAzLjUgWiIvPjwvZz4KPGc+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iI2MyYmRiYyIgZD0iTSAyNDUuNSwxMTUuNSBDIDI1Ny41LDExNS41IDI2OS41LDExNS41IDI4MS41LDExNS41QyAyNjkuMjY1LDExNi4xODUgMjU2LjkzMiwxMTYuODUyIDI0NC41LDExNy41QyAyNDQuMzI4LDExNi41MDggMjQ0LjY2MiwxMTUuODQyIDI0NS41LDExNS41IFoiLz48L2c+CjxnPjxwYXRoIHN0eWxlPSJvcGFjaXR5OjEiIGZpbGw9IiMwZjBlMGUiIGQ9Ik0gMTk2LjUsMTIzLjUgQyAxOTkuMTY3LDEyNi44MzMgMjAyLjE2NywxMjkuODMzIDIwNS41LDEzMi41QyAxOTEuNSwxNDcuMTY3IDE3Ny4xNjcsMTYxLjUgMTYyLjUsMTc1LjVDIDE1OS44MzMsMTcyLjE2NyAxNTYuODMzLDE2OS4xNjcgMTUzLjUsMTY2LjVDIDE2Ny41LDE1MS44MzMgMTgxLjgzMywxMzcuNSAxOTYuNSwxMjMuNSBaIi8+PC9nPgo8Zz48cGF0aCBzdHlsZT0ib3BhY2l0eToxIiBmaWxsPSIjZWUwZjA3IiBkPSJNIDE1My41LDE2Ni41IEMgMTU2LjgzMywxNjkuMTY3IDE1OS44MzMsMTcyLjE2NyAxNjIuNSwxNzUuNUMgMTY3LjA2NCwxODYuMjY0IDE2Ni4yMzEsMTk2LjU5OCAxNjAsMjA2LjVDIDE0OS43ODIsMjE2LjE3MyAxMzguMjgyLDIxOC4wMDYgMTI1LjUsMjEyQyAxMTkuNjQxLDIwNy43NTUgMTE1LjY0MSwyMDIuMjU1IDExMy41LDE5NS41QyAxMTMuNSwxOTEuNSAxMTMuNSwxODcuNSAxMTMuNSwxODMuNUMgMTIxLjEwMSwxNjQuNzA2IDEzNC40MzQsMTU5LjAzOSAxNTMuNSwxNjYuNSBaIi8+PC9nPgo8Zz48cGF0aCBzdHlsZT0ib3BhY2l0eToxIiBmaWxsPSIjZWUwZjA4IiBkPSJNIDI0NS41LDE4My41IEMgMjQ1LjUsMTg3LjUgMjQ1LjUsMTkxLjUgMjQ1LjUsMTk1LjVDIDI0NC42NjIsMTk1Ljg0MiAyNDQuMzI4LDE5Ni41MDggMjQ0LjUsMTk3LjVDIDIzOC40MzcsMjEyLjIwMyAyMjcuNDM3LDIxOC4wMzYgMjExLjUsMjE1QyAxOTYuODY0LDIwOC41NjQgMTkxLjAzLDE5Ny4zOTggMTk0LDE4MS41QyAyMDIuNDAxLDE2My44ODkgMjE1LjU2OCwxNTkuMDU1IDIzMy41LDE2N0MgMjM5LjMzMSwxNzEuMTU5IDI0My4zMzEsMTc2LjY1OSAyNDUuNSwxODMuNSBaIi8+PC9nPgo8Zz48cGF0aCBzdHlsZT0ib3BhY2l0eToxIiBmaWxsPSIjZmZmYmZiIiBkPSJNIDEzNC41LDE3Ni41IEMgMTUwLjcyOSwxNzUuOTQ2IDE1NS44OTYsMTgzLjI3OSAxNTAsMTk4LjVDIDE0My44NjksMjAzLjE5NiAxMzcuMzY5LDIwMy42OTYgMTMwLjUsMjAwQyAxMjUuODA0LDE5My44NjkgMTI1LjMwNCwxODcuMzY5IDEyOSwxODAuNUMgMTMwLjgxMiwxNzkuMDIzIDEzMi42NDUsMTc3LjY5IDEzNC41LDE3Ni41IFoiLz48L2c+CjxnPjxwYXRoIHN0eWxlPSJvcGFjaXR5OjEiIGZpbGw9IiNmZmZiZmIiIGQ9Ik0gMjE0LjUsMTc2LjUgQyAyMzAuNzI5LDE3NS45NDYgMjM1Ljg5NiwxODMuMjc5IDIzMCwxOTguNUMgMjIzLjg2OSwyMDMuMTk2IDIxNy4zNjksMjAzLjY5NiAyMTAuNSwyMDBDIDIwNS44MDQsMTkzLjg2OSAyMDUuMzA0LDE4Ny4zNjkgMjA5LDE4MC41QyAyMTAuODEyLDE3OS4wMjMgMjEyLjY0NSwxNzcuNjkgMjE0LjUsMTc2LjUgWiIvPjwvZz4KPGc+PHBhdGggc3R5bGU9Im9wYWNpdHk6MSIgZmlsbD0iIzA0MDEwMSIgZD0iTSAxMTMuNSwxODMuNSBDIDExMy41LDE4Ny41IDExMy41LDE5MS41IDExMy41LDE5NS41QyAxMDQuNDk0LDE5NS42NjYgOTUuNDkzOCwxOTUuNSA4Ni41LDE5NUMgODMuNDI5NywxOTIuNDMxIDgyLjc2MywxODkuMjY0IDg0LjUsMTg1LjVDIDg1LjAyNTMsMTg0LjgwOCA4NS42OTE5LDE4NC4zMDggODYuNSwxODRDIDk1LjQ5MzgsMTgzLjUgMTA0LjQ5NCwxODMuMzM0IDExMy41LDE4My41IFoiLz48L2c+CjxnPjxwYXRoIHN0eWxlPSJvcGFjaXR5OjEiIGZpbGw9IiMwMzAxMDAiIGQ9Ik0gMjQ1LjUsMTgzLjUgQyAyNTcuODM4LDE4My4zMzMgMjcwLjE3MSwxODMuNSAyODIuNSwxODRDIDI4NS41NywxODYuNTY5IDI4Ni4yMzcsMTg5LjczNiAyODQuNSwxOTMuNUMgMjgzLjY0MywxOTQuNDI1IDI4Mi42NDMsMTk1LjA5MiAyODEuNSwxOTUuNUMgMjY5LjUsMTk1LjUgMjU3LjUsMTk1LjUgMjQ1LjUsMTk1LjVDIDI0NS41LDE5MS41IDI0NS41LDE4Ny41IDI0NS41LDE4My41IFoiLz48L2c+CjxnPjxwYXRoIHN0eWxlPSJvcGFjaXR5OjEiIGZpbGw9IiNjMmJkYmMiIGQ9Ik0gMjQ1LjUsMTk1LjUgQyAyNTcuNSwxOTUuNSAyNjkuNSwxOTUuNSAyODEuNSwxOTUuNUMgMjY5LjI2NSwxOTYuMTg1IDI1Ni45MzIsMTk2Ljg1MiAyNDQuNSwxOTcuNUMgMjQ0LjMyOCwxOTYuNTA4IDI0NC42NjIsMTk1Ljg0MiAyNDUuNSwxOTUuNSBaIi8+PC9nPgo8Zz48cGF0aCBzdHlsZT0ib3BhY2l0eToxIiBmaWxsPSIjZWUwZjA4IiBkPSJNIDI0NS41LDI2My41IEMgMjQ1LjUsMjY3LjUgMjQ1LjUsMjcxLjUgMjQ1LjUsMjc1LjVDIDI0NC42NjIsMjc1Ljg0MiAyNDQuMzI4LDI3Ni41MDggMjQ0LjUsMjc3LjVDIDIzOC40MzcsMjkyLjIwMyAyMjcuNDM3LDI5OC4wMzYgMjExLjUsMjk1QyAxOTYuODY0LDI4OC41NjQgMTkxLjAzLDI3Ny4zOTggMTk0LDI2MS41QyAyMDIuNDAxLDI0My44ODkgMjE1LjU2OCwyMzkuMDU1IDIzMy41LDI0N0MgMjM5LjMzMSwyNTEuMTU5IDI0My4zMzEsMjU2LjY1OSAyNDUuNSwyNjMuNSBaIi8+PC9nPgo8Zz48cGF0aCBzdHlsZT0ib3BhY2l0eToxIiBmaWxsPSIjZmZmYmZiIiBkPSJNIDIxNC41LDI1Ni41IEMgMjMwLjcyOSwyNTUuOTQ2IDIzNS44OTYsMjYzLjI3OSAyMzAsMjc4LjVDIDIyMy44NjksMjgzLjE5NiAyMTcuMzY5LDI4My42OTYgMjEwLjUsMjgwQyAyMDUuODA0LDI3My44NjkgMjA1LjMwNCwyNjcuMzY5IDIwOSwyNjAuNUMgMjEwLjgxMiwyNTkuMDIzIDIxMi42NDUsMjU3LjY5IDIxNC41LDI1Ni41IFoiLz48L2c+CjxnPjxwYXRoIHN0eWxlPSJvcGFjaXR5OjEiIGZpbGw9IiMwMzAxMDAiIGQ9Ik0gMjQ1LjUsMjYzLjUgQyAyNTcuODM4LDI2My4zMzMgMjcwLjE3MSwyNjMuNSAyODIuNSwyNjRDIDI4NS41NywyNjYuNTY5IDI4Ni4yMzcsMjY5LjczNiAyODQuNSwyNzMuNUMgMjgzLjY0MywyNzQuNDI1IDI4Mi42NDMsMjc1LjA5MiAyODEuNSwyNzUuNUMgMjY5LjUsMjc1LjUgMjU3LjUsMjc1LjUgMjQ1LjUsMjc1LjVDIDI0NS41LDI3MS41IDI0NS41LDI2Ny41IDI0NS41LDI2My41IFoiLz48L2c+CjxnPjxwYXRoIHN0eWxlPSJvcGFjaXR5OjEiIGZpbGw9IiNjMmJkYmMiIGQ9Ik0gMjQ1LjUsMjc1LjUgQyAyNTcuNSwyNzUuNSAyNjkuNSwyNzUuNSAyODEuNSwyNzUuNUMgMjY5LjI2NSwyNzYuMTg1IDI1Ni45MzIsMjc2Ljg1MiAyNDQuNSwyNzcuNUMgMjQ0LjMyOCwyNzYuNTA4IDI0NC42NjIsMjc1Ljg0MiAyNDUuNSwyNzUuNSBaIi8+PC9nPgo8L3N2Zz4K",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "latest",
+    "package": "red-hat-hawtio-operator",
+    "entries": [
+        {
+            "name": "red-hat-hawtio-operator.v1.0.0"
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.1"
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.2",
+            "replaces": "red-hat-hawtio-operator.v1.0.0",
+            "skips": [
+                "red-hat-hawtio-operator.v1.0.1"
+            ]
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.3",
+            "replaces": "red-hat-hawtio-operator.v1.0.2",
+            "skips": [
+                "red-hat-hawtio-operator.v1.0.1"
+            ]
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.1.0",
+            "replaces": "red-hat-hawtio-operator.v1.0.3",
+            "skips": [
+                "red-hat-hawtio-operator.v1.0.1"
+            ]
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-v1",
+    "package": "red-hat-hawtio-operator",
+    "entries": [
+        {
+            "name": "red-hat-hawtio-operator.v1.0.0"
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.1"
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.2",
+            "replaces": "red-hat-hawtio-operator.v1.0.0",
+            "skips": [
+                "red-hat-hawtio-operator.v1.0.1"
+            ]
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.3",
+            "replaces": "red-hat-hawtio-operator.v1.0.2",
+            "skips": [
+                "red-hat-hawtio-operator.v1.0.1"
+            ]
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.1.0",
+            "replaces": "red-hat-hawtio-operator.v1.0.3",
+            "skips": [
+                "red-hat-hawtio-operator.v1.0.1"
+            ]
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-v1.0",
+    "package": "red-hat-hawtio-operator",
+    "entries": [
+        {
+            "name": "red-hat-hawtio-operator.v1.0.0"
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.1"
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.2",
+            "replaces": "red-hat-hawtio-operator.v1.0.0",
+            "skips": [
+                "red-hat-hawtio-operator.v1.0.1"
+            ]
+        },
+        {
+            "name": "red-hat-hawtio-operator.v1.0.3",
+            "replaces": "red-hat-hawtio-operator.v1.0.2",
+            "skips": [
+                "red-hat-hawtio-operator.v1.0.1"
+            ]
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "red-hat-hawtio-operator.v1.0.0",
+    "package": "red-hat-hawtio-operator",
+    "image": "registry.redhat.io/rhbac-4-tech-preview/hawtio-operator-bundle@sha256:54b9c5996aaf6fd6250292e398a431d868856c53032844ce6fe34e1b2b9707de",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "red-hat-hawtio-operator",
+                "version": "1.0.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  },\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\",\n      \"version\": 1.12\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/rhbac-4-tech-preview/hawtio-rhel8-operator@sha256:c8b61c93f209624e8ded2066144b48f0ca2687987f5df846e01e4419dca73882",
+                    "createdAt": "2024-01-30T12:18:50Z",
+                    "description": "HawtIO eases the discovery and management of Java applications deployed on OpenShift.",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Application Foundations\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.28.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "HawtIO eases the discovery and management of hawtio-enabled applications"
+                        },
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio"
+                        }
+                    ]
+                },
+                "description": "Red Hat build of HawtIO\n==============\n\nHawtIO eases the discovery and management of Java applications deployed on OpenShift.\n\nTo secure the communication between HawtIO and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `hawtio-online.hawtio.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/manual/agents.html#agents-jvm).\n",
+                "displayName": "HawtIO Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "links": [
+                    {
+                        "name": "HawtIO Web site",
+                        "url": "https://hawt.io"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "The HawtIO team",
+                        "email": "hawtio@googlegroups.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.11.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhbac-4-tech-preview/hawtio-operator-bundle@sha256:54b9c5996aaf6fd6250292e398a431d868856c53032844ce6fe34e1b2b9707de"
+        },
+        {
+            "name": "hawtio-rhel8-operator-c8b61c93f209624e8ded2066144b48f0ca2687987f5df846e01e4419dca73882-annotation",
+            "image": "registry.redhat.io/rhbac-4-tech-preview/hawtio-rhel8-operator@sha256:c8b61c93f209624e8ded2066144b48f0ca2687987f5df846e01e4419dca73882"
+        },
+        {
+            "name": "hawtio-operator",
+            "image": "registry.redhat.io/rhbac-4-tech-preview/hawtio-rhel8-operator@sha256:c8b61c93f209624e8ded2066144b48f0ca2687987f5df846e01e4419dca73882"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "red-hat-hawtio-operator.v1.0.1",
+    "package": "red-hat-hawtio-operator",
+    "image": "registry.redhat.io/rhbac-4/hawtio-operator-bundle@sha256:78e78f27337e4bbb8c5977f22646ff6c47a8d7b4e06292346a451e23990fd073",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "red-hat-hawtio-operator",
+                "version": "1.0.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  },\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\",\n      \"version\": 1.12\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:1624c6f34d6bdd1db6576b4e7807d32bbc504be8ac3b8a07d5b801d013c5f9b0",
+                    "createdAt": "2024-01-30T12:18:50Z",
+                    "description": "HawtIO eases the discovery and management of Java applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Application Foundations\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.28.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "HawtIO eases the discovery and management of hawtio-enabled applications"
+                        },
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio"
+                        }
+                    ]
+                },
+                "description": "Red Hat build of HawtIO\n==============\n\nHawtIO eases the discovery and management of Java applications deployed on OpenShift.\n\nTo secure the communication between HawtIO and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `hawtio-online.hawtio.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/manual/agents.html#agents-jvm).\n",
+                "displayName": "HawtIO Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "links": [
+                    {
+                        "name": "HawtIO Web site",
+                        "url": "https://hawt.io"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "The HawtIO team",
+                        "email": "hawtio@googlegroups.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.11.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhbac-4/hawtio-operator-bundle@sha256:78e78f27337e4bbb8c5977f22646ff6c47a8d7b4e06292346a451e23990fd073"
+        },
+        {
+            "name": "hawtio-rhel8-operator-1624c6f34d6bdd1db6576b4e7807d32bbc504be8ac3b8a07d5b801d013c5f9b0-annotation",
+            "image": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:1624c6f34d6bdd1db6576b4e7807d32bbc504be8ac3b8a07d5b801d013c5f9b0"
+        },
+        {
+            "name": "hawtio-operator",
+            "image": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:1624c6f34d6bdd1db6576b4e7807d32bbc504be8ac3b8a07d5b801d013c5f9b0"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "red-hat-hawtio-operator.v1.0.2",
+    "package": "red-hat-hawtio-operator",
+    "image": "registry.redhat.io/rhbac-4/hawtio-operator-bundle@sha256:203928d3e86779600983d47abfee4e0800c503f5a3b757ccab78d59fe6265ba6",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "red-hat-hawtio-operator",
+                "version": "1.0.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  },\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\",\n      \"version\": 1.12\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:b9e03dc5eea7f80001b59120cc3aab69eff22a8fe73df1046e230d77ed868b11",
+                    "createdAt": "2024-01-30T12:18:50Z",
+                    "description": "HawtIO eases the discovery and management of Java applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Application Foundations\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.28.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "HawtIO eases the discovery and management of hawtio-enabled applications"
+                        },
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio"
+                        }
+                    ]
+                },
+                "description": "Red Hat build of HawtIO\n==============\n\nHawtIO eases the discovery and management of Java applications deployed on OpenShift.\n\nTo secure the communication between HawtIO and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `hawtio-online.hawtio.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/manual/agents.html#agents-jvm).\n",
+                "displayName": "HawtIO Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "links": [
+                    {
+                        "name": "HawtIO Web site",
+                        "url": "https://hawt.io"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "The HawtIO team",
+                        "email": "hawtio@googlegroups.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.11.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhbac-4/hawtio-operator-bundle@sha256:203928d3e86779600983d47abfee4e0800c503f5a3b757ccab78d59fe6265ba6"
+        },
+        {
+            "name": "hawtio-rhel8-operator-b9e03dc5eea7f80001b59120cc3aab69eff22a8fe73df1046e230d77ed868b11-annotation",
+            "image": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:b9e03dc5eea7f80001b59120cc3aab69eff22a8fe73df1046e230d77ed868b11"
+        },
+        {
+            "name": "hawtio-operator",
+            "image": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:b9e03dc5eea7f80001b59120cc3aab69eff22a8fe73df1046e230d77ed868b11"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "red-hat-hawtio-operator.v1.0.3",
+    "package": "red-hat-hawtio-operator",
+    "image": "registry.redhat.io/rhbac-4/hawtio-operator-bundle@sha256:0ee0bd2449f183277af845e312257b4a1ced4de865831b15e1758a397d8d29eb",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "red-hat-hawtio-operator",
+                "version": "1.0.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  },\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\",\n      \"version\": 1.12\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:f04d81d24c757db7b678464382ad8c5182b1580e714123a9f4f5fc9fbd9b8c57",
+                    "createdAt": "2024-01-30T12:18:50Z",
+                    "description": "HawtIO eases the discovery and management of Java applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Application Foundations\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.28.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "HawtIO eases the discovery and management of hawtio-enabled applications"
+                        },
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio"
+                        }
+                    ]
+                },
+                "description": "Red Hat build of HawtIO\n==============\n\nHawtIO eases the discovery and management of Java applications deployed on OpenShift.\n\nTo secure the communication between HawtIO and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `hawtio-online.hawtio.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/manual/agents.html#agents-jvm).\n",
+                "displayName": "HawtIO Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported",
+                    "operatorframework.io/os.zos": "supported"
+                },
+                "links": [
+                    {
+                        "name": "HawtIO Web site",
+                        "url": "https://hawt.io"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "The HawtIO team",
+                        "email": "hawtio@googlegroups.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.11.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhbac-4/hawtio-operator-bundle@sha256:0ee0bd2449f183277af845e312257b4a1ced4de865831b15e1758a397d8d29eb"
+        },
+        {
+            "name": "hawtio-rhel8-operator-f04d81d24c757db7b678464382ad8c5182b1580e714123a9f4f5fc9fbd9b8c57-annotation",
+            "image": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:f04d81d24c757db7b678464382ad8c5182b1580e714123a9f4f5fc9fbd9b8c57"
+        },
+        {
+            "name": "hawtio-operator",
+            "image": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:f04d81d24c757db7b678464382ad8c5182b1580e714123a9f4f5fc9fbd9b8c57"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "red-hat-hawtio-operator.v1.1.0",
+    "package": "red-hat-hawtio-operator",
+    "image": "registry.redhat.io/rhbac-4/hawtio-operator-bundle@sha256:ee8096df23cbb63cdb0ddd7afb50e78d564b41f204e4e82a9f503d4633662742",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "red-hat-hawtio-operator",
+                "version": "1.1.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  },\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"hawtio-online\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"200Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\",\n      \"version\": 1.12\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:f963db812145c747a5724f67fae3b6e510aba0d3275f65606cd65a8efb3cb231",
+                    "createdAt": "2024-01-30T12:18:50Z",
+                    "description": "HawtIO eases the discovery and management of Java applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Application Foundations\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.28.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "HawtIO eases the discovery and management of hawtio-enabled applications"
+                        },
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio"
+                        }
+                    ]
+                },
+                "description": "Red Hat build of HawtIO\n==============\n\nHawtIO eases the discovery and management of Java applications deployed on OpenShift.\n\nTo secure the communication between HawtIO and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `hawtio-online.hawtio.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/manual/agents.html#agents-jvm).\n",
+                "displayName": "HawtIO Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported",
+                    "operatorframework.io/os.zos": "supported"
+                },
+                "links": [
+                    {
+                        "name": "HawtIO Web site",
+                        "url": "https://hawt.io"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "The HawtIO team",
+                        "email": "hawtio@googlegroups.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.11.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhbac-4/hawtio-operator-bundle@sha256:ee8096df23cbb63cdb0ddd7afb50e78d564b41f204e4e82a9f503d4633662742"
+        },
+        {
+            "name": "hawtio-rhel8-operator-f963db812145c747a5724f67fae3b6e510aba0d3275f65606cd65a8efb3cb231-annotation",
+            "image": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:f963db812145c747a5724f67fae3b6e510aba0d3275f65606cd65a8efb3cb231"
+        },
+        {
+            "name": "hawtio-operator",
+            "image": "registry.redhat.io/rhbac-4/hawtio-rhel8-operator@sha256:f963db812145c747a5724f67fae3b6e510aba0d3275f65606cd65a8efb3cb231"
+        }
+    ]
+}

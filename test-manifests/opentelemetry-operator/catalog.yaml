@@ -1,0 +1,2490 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHJvbGU9ImltZyIgdmlld0JveD0iLTEyLjcwIC0xMi43MCAxMDI0LjQwIDEwMjQuNDAiPjxzdHlsZT5zdmcge2VuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMTAwMCAxMDAwfTwvc3R5bGU+PHBhdGggZmlsbD0iI2Y1YTgwMCIgZD0iTTUyOC43IDU0NS45Yy00MiA0Mi00MiAxMTAuMSAwIDE1Mi4xczExMC4xIDQyIDE1Mi4xIDAgNDItMTEwLjEgMC0xNTIuMS0xMTAuMS00Mi0xNTIuMSAwem0xMTMuNyAxMTMuOGMtMjAuOCAyMC44LTU0LjUgMjAuOC03NS4zIDAtMjAuOC0yMC44LTIwLjgtNTQuNSAwLTc1LjMgMjAuOC0yMC44IDU0LjUtMjAuOCA3NS4zIDAgMjAuOCAyMC43IDIwLjggNTQuNSAwIDc1LjN6bTM2LjYtNjQzbC02NS45IDY1LjljLTEyLjkgMTIuOS0xMi45IDM0LjEgMCA0N2wyNTcuMyAyNTcuM2MxMi45IDEyLjkgMzQuMSAxMi45IDQ3IDBsNjUuOS02NS45YzEyLjktMTIuOSAxMi45LTM0LjEgMC00N0w3MjUuOSAxNi43Yy0xMi45LTEyLjktMzQtMTIuOS00Ni45IDB6TTIxNy4zIDg1OC44YzExLjctMTEuNyAxMS43LTMwLjggMC00Mi41bC0zMy41LTMzLjVjLTExLjctMTEuNy0zMC44LTExLjctNDIuNSAwTDcyLjEgODUybC0uMS4xLTE5LTE5Yy0xMC41LTEwLjUtMjcuNi0xMC41LTM4IDAtMTAuNSAxMC41LTEwLjUgMjcuNiAwIDM4bDExNCAxMTRjMTAuNSAxMC41IDI3LjYgMTAuNSAzOCAwczEwLjUtMjcuNiAwLTM4bC0xOS0xOSAuMS0uMSA2OS4yLTY5LjJ6Ii8+PHBhdGggZmlsbD0iIzQyNWNjNyIgZD0iTTU2NS45IDIwNS45TDQxOS41IDM1Mi4zYy0xMyAxMy0xMyAzNC40IDAgNDcuNGw5MC40IDkwLjRjNjMuOS00NiAxNTMuNS00MC4zIDIxMSAxNy4ybDczLjItNzMuMmMxMy0xMyAxMy0zNC40IDAtNDcuNEw2MTMuMyAyMDUuOWMtMTMtMTMuMS0zNC40LTEzLjEtNDcuNCAwem0tOTQgMzIyLjNsLTUzLjQtNTMuNGMtMTIuNS0xMi41LTMzLTEyLjUtNDUuNSAwTDE4NC43IDY2My4yYy0xMi41IDEyLjUtMTIuNSAzMyAwIDQ1LjVsMTA2LjcgMTA2LjdjMTIuNSAxMi41IDMzIDEyLjUgNDUuNSAwTDQ1OCA2OTQuMWMtMjUuNi01Mi45LTIxLTExNi44IDEzLjktMTY1Ljl6Ii8+PC9zdmc+
+  mediatype: image/svg+xml
+name: opentelemetry-operator
+schema: olm.package
+---
+entries:
+- name: opentelemetry-operator.v0.100.0
+  replaces: opentelemetry-operator.v0.99.0
+- name: opentelemetry-operator.v0.100.1
+  replaces: opentelemetry-operator.v0.100.0
+- name: opentelemetry-operator.v0.101.0
+  replaces: opentelemetry-operator.v0.100.1
+- name: opentelemetry-operator.v0.102.0
+  replaces: opentelemetry-operator.v0.101.0
+- name: opentelemetry-operator.v0.103.0
+  replaces: opentelemetry-operator.v0.102.0
+- name: opentelemetry-operator.v0.104.0
+  replaces: opentelemetry-operator.v0.103.0
+- name: opentelemetry-operator.v0.105.0
+  replaces: opentelemetry-operator.v0.104.0
+- name: opentelemetry-operator.v0.106.0
+  replaces: opentelemetry-operator.v0.105.0
+- name: opentelemetry-operator.v0.107.0
+  replaces: opentelemetry-operator.v0.106.0
+- name: opentelemetry-operator.v0.108.0
+  replaces: opentelemetry-operator.v0.107.0
+- name: opentelemetry-operator.v0.109.0
+  replaces: opentelemetry-operator.v0.108.0
+- name: opentelemetry-operator.v0.16.0
+- name: opentelemetry-operator.v0.17.1
+  replaces: opentelemetry-operator.v0.16.0
+- name: opentelemetry-operator.v0.21.0
+  replaces: opentelemetry-operator.v0.17.1
+- name: opentelemetry-operator.v0.27.0
+  replaces: opentelemetry-operator.v0.21.0
+- name: opentelemetry-operator.v0.33.0
+  replaces: opentelemetry-operator.v0.27.0
+- name: opentelemetry-operator.v0.36.0
+  replaces: opentelemetry-operator.v0.33.0
+- name: opentelemetry-operator.v0.37.1
+  replaces: opentelemetry-operator.v0.36.0
+- name: opentelemetry-operator.v0.38.0
+  replaces: opentelemetry-operator.v0.37.1
+- name: opentelemetry-operator.v0.39.0
+  replaces: opentelemetry-operator.v0.38.0
+- name: opentelemetry-operator.v0.40.0
+  replaces: opentelemetry-operator.v0.39.0
+- name: opentelemetry-operator.v0.41.0
+  replaces: opentelemetry-operator.v0.40.0
+- name: opentelemetry-operator.v0.42.0
+  replaces: opentelemetry-operator.v0.41.0
+- name: opentelemetry-operator.v0.43.0
+  replaces: opentelemetry-operator.v0.42.0
+- name: opentelemetry-operator.v0.44.0
+  replaces: opentelemetry-operator.v0.43.0
+- name: opentelemetry-operator.v0.45.0
+  replaces: opentelemetry-operator.v0.44.0
+- name: opentelemetry-operator.v0.47.0
+  replaces: opentelemetry-operator.v0.45.0
+- name: opentelemetry-operator.v0.48.0
+  replaces: opentelemetry-operator.v0.47.0
+- name: opentelemetry-operator.v0.49.0
+  replaces: opentelemetry-operator.v0.48.0
+- name: opentelemetry-operator.v0.51.0
+  replaces: opentelemetry-operator.v0.49.0
+- name: opentelemetry-operator.v0.52.0
+  replaces: opentelemetry-operator.v0.51.0
+- name: opentelemetry-operator.v0.54.0
+  replaces: opentelemetry-operator.v0.52.0
+- name: opentelemetry-operator.v0.55.0
+  replaces: opentelemetry-operator.v0.54.0
+- name: opentelemetry-operator.v0.56.0
+  replaces: opentelemetry-operator.v0.55.0
+- name: opentelemetry-operator.v0.58.0
+  replaces: opentelemetry-operator.v0.56.0
+- name: opentelemetry-operator.v0.59.0
+  replaces: opentelemetry-operator.v0.58.0
+- name: opentelemetry-operator.v0.61.0
+  replaces: opentelemetry-operator.v0.59.0
+- name: opentelemetry-operator.v0.62.1
+  replaces: opentelemetry-operator.v0.61.0
+- name: opentelemetry-operator.v0.66.0
+  replaces: opentelemetry-operator.v0.62.1
+- name: opentelemetry-operator.v0.67.0
+  replaces: opentelemetry-operator.v0.66.0
+- name: opentelemetry-operator.v0.68.0
+  replaces: opentelemetry-operator.v0.67.0
+- name: opentelemetry-operator.v0.70.0
+  replaces: opentelemetry-operator.v0.68.0
+- name: opentelemetry-operator.v0.71.0
+  replaces: opentelemetry-operator.v0.70.0
+- name: opentelemetry-operator.v0.72.0
+  replaces: opentelemetry-operator.v0.71.0
+- name: opentelemetry-operator.v0.73.0
+  replaces: opentelemetry-operator.v0.72.0
+- name: opentelemetry-operator.v0.74.0
+  replaces: opentelemetry-operator.v0.73.0
+- name: opentelemetry-operator.v0.75.0
+  replaces: opentelemetry-operator.v0.74.0
+- name: opentelemetry-operator.v0.76.1
+  replaces: opentelemetry-operator.v0.75.0
+- name: opentelemetry-operator.v0.77.0
+  replaces: opentelemetry-operator.v0.76.1
+- name: opentelemetry-operator.v0.78.0
+  replaces: opentelemetry-operator.v0.77.0
+- name: opentelemetry-operator.v0.79.0
+  replaces: opentelemetry-operator.v0.78.0
+- name: opentelemetry-operator.v0.80.0
+  replaces: opentelemetry-operator.v0.79.0
+- name: opentelemetry-operator.v0.81.0
+  replaces: opentelemetry-operator.v0.80.0
+- name: opentelemetry-operator.v0.82.0
+  replaces: opentelemetry-operator.v0.81.0
+- name: opentelemetry-operator.v0.84.0
+  replaces: opentelemetry-operator.v0.82.0
+- name: opentelemetry-operator.v0.85.0
+  replaces: opentelemetry-operator.v0.84.0
+- name: opentelemetry-operator.v0.86.0
+  replaces: opentelemetry-operator.v0.85.0
+- name: opentelemetry-operator.v0.87.0
+  replaces: opentelemetry-operator.v0.86.0
+- name: opentelemetry-operator.v0.89.0
+  replaces: opentelemetry-operator.v0.87.0
+- name: opentelemetry-operator.v0.90.0
+  replaces: opentelemetry-operator.v0.89.0
+- name: opentelemetry-operator.v0.91.0
+  replaces: opentelemetry-operator.v0.90.0
+- name: opentelemetry-operator.v0.92.0
+  replaces: opentelemetry-operator.v0.91.0
+- name: opentelemetry-operator.v0.92.1
+  replaces: opentelemetry-operator.v0.92.0
+- name: opentelemetry-operator.v0.93.0
+  replaces: opentelemetry-operator.v0.92.1
+- name: opentelemetry-operator.v0.94.0
+  replaces: opentelemetry-operator.v0.93.0
+- name: opentelemetry-operator.v0.95.0
+  replaces: opentelemetry-operator.v0.94.0
+- name: opentelemetry-operator.v0.96.0
+  replaces: opentelemetry-operator.v0.95.0
+- name: opentelemetry-operator.v0.97.0
+  replaces: opentelemetry-operator.v0.96.0
+- name: opentelemetry-operator.v0.97.1
+  replaces: opentelemetry-operator.v0.97.0
+- name: opentelemetry-operator.v0.98.0
+  replaces: opentelemetry-operator.v0.97.1
+- name: opentelemetry-operator.v0.99.0
+  replaces: opentelemetry-operator.v0.98.0
+name: alpha
+package: opentelemetry-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:1c411f2a5138d1ff7974703ded51c8cdbcaf99c5b5f49242b5621672c6045421
+name: opentelemetry-operator.v0.100.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.100.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.100.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:1c411f2a5138d1ff7974703ded51c8cdbcaf99c5b5f49242b5621672c6045421
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:903251a70cfc69c90bd60dba7a300faecb06abe8f870aad6f2ab662ca8cc386f
+name: opentelemetry-operator.v0.100.1
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.100.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.100.1
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:903251a70cfc69c90bd60dba7a300faecb06abe8f870aad6f2ab662ca8cc386f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:b27aec23e6d04883077eb16685184e2dc9d6be215239ba7d7943fc52842d8591
+name: opentelemetry-operator.v0.101.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.101.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.101.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:b27aec23e6d04883077eb16685184e2dc9d6be215239ba7d7943fc52842d8591
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:cf2c3a632e1fb447fb3e091216b1ce0731691bc0dcf4e9443d3c76a55032a121
+name: opentelemetry-operator.v0.102.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.102.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.102.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:cf2c3a632e1fb447fb3e091216b1ce0731691bc0dcf4e9443d3c76a55032a121
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:931c0c8e76ff78170dcfc4aada83c31c284475cd81d9124681c88e780e59b0e0
+name: opentelemetry-operator.v0.103.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.103.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.103.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:931c0c8e76ff78170dcfc4aada83c31c284475cd81d9124681c88e780e59b0e0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:24c17c45fa6d98099c33a131c07e6a1f242343c9b904c4dd6a4c9fc58c1ab1a8
+name: opentelemetry-operator.v0.104.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.104.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.104.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:24c17c45fa6d98099c33a131c07e6a1f242343c9b904c4dd6a4c9fc58c1ab1a8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:cb4f1a3aa01b9eda3dbbc1fd0276984dc2e044218241529ae19f72be88b77c87
+name: opentelemetry-operator.v0.105.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.105.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.105.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:cb4f1a3aa01b9eda3dbbc1fd0276984dc2e044218241529ae19f72be88b77c87
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:10e08f27e7b7f23d95f84bc5de9cf1fb445eff30a036d3adfc23403d3dc99e23
+name: opentelemetry-operator.v0.106.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.106.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.106.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:10e08f27e7b7f23d95f84bc5de9cf1fb445eff30a036d3adfc23403d3dc99e23
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:b6f2a8e3d41774db28723db72e49e1acdeec82e9d63c2220b4d3c772b6be928d
+name: opentelemetry-operator.v0.107.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.107.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.107.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:b6f2a8e3d41774db28723db72e49e1acdeec82e9d63c2220b4d3c772b6be928d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:499641773ce064eb020aa5379ad3535c930c155f0235f0e26f346a2002a6d626
+name: opentelemetry-operator.v0.108.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.108.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.108.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:499641773ce064eb020aa5379ad3535c930c155f0235f0e26f346a2002a6d626
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:65d83a51c0e62569dc6d13ddf2c3695a056f90eb6bf2c010c2fa95ccc0916ecd
+name: opentelemetry-operator.v0.109.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.109.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "opentelemetry.io/v1alpha1",
+            "kind": "Instrumentation",
+            "metadata": {
+              "name": "instrumentation"
+            },
+            "spec": {
+              "exporter": {
+                "endpoint": "http://otel-collector-headless:4317"
+              }
+            }
+          },
+          {
+            "apiVersion": "opentelemetry.io/v1alpha1",
+            "kind": "OpAMPBridge",
+            "metadata": {
+              "name": "opampbridge-sample"
+            },
+            "spec": {
+              "capabilities": {
+                "AcceptsOpAMPConnectionSettings": true,
+                "AcceptsOtherConnectionSettings": true,
+                "AcceptsRemoteConfig": true,
+                "AcceptsRestartCommand": true,
+                "ReportsEffectiveConfig": true,
+                "ReportsHealth": true,
+                "ReportsOwnLogs": true,
+                "ReportsOwnMetrics": true,
+                "ReportsOwnTraces": true,
+                "ReportsRemoteConfig": true,
+                "ReportsStatus": true
+              },
+              "componentsAllowed": {
+                "exporters": [
+                  "debug"
+                ],
+                "processors": [
+                  "memory_limiter"
+                ],
+                "receivers": [
+                  "otlp"
+                ]
+              },
+              "endpoint": "ws://opamp-server:4320/v1/opamp"
+            }
+          },
+          {
+            "apiVersion": "opentelemetry.io/v1alpha1",
+            "kind": "OpenTelemetryCollector",
+            "metadata": {
+              "name": "otel"
+            },
+            "spec": {
+              "config": "receivers:\n  otlp:\n    protocols: \n      grpc: {}\n      http: {}\n\nexporters:\n  debug: {}\n\nservice:\n  pipelines:\n    traces:\n      receivers: [otlp]\n      exporters: [debug]\n"
+            }
+          },
+          {
+            "apiVersion": "opentelemetry.io/v1beta1",
+            "kind": "OpenTelemetryCollector",
+            "metadata": {
+              "name": "otel"
+            },
+            "spec": {
+              "config": {
+                "exporters": {
+                  "debug": {}
+                },
+                "receivers": {
+                  "otlp": {
+                    "protocols": {
+                      "grpc": {},
+                      "http": {}
+                    }
+                  }
+                },
+                "service": {
+                  "pipelines": {
+                    "traces": {
+                      "exporters": [
+                        "debug"
+                      ],
+                      "receivers": [
+                        "otlp"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      capabilities: Deep Insights
+      categories: Logging & Tracing,Monitoring
+      certified: "false"
+      containerImage: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
+      createdAt: "2024-09-19T17:15:52Z"
+      description: Provides the OpenTelemetry components, including the Collector
+      operators.operatorframework.io/builder: operator-sdk-v1.29.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: github.com/open-telemetry/opentelemetry-operator
+      support: OpenTelemetry Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Instrumentation is the spec for OpenTelemetry instrumentation.
+        displayName: OpenTelemetry Instrumentation
+        kind: Instrumentation
+        name: instrumentations.opentelemetry.io
+        resources:
+        - kind: Pod
+          name: ""
+          version: v1
+        version: v1alpha1
+      - description: OpAMPBridge is the Schema for the opampbridges API.
+        displayName: OpAMP Bridge
+        kind: OpAMPBridge
+        name: opampbridges.opentelemetry.io
+        resources:
+        - kind: ConfigMaps
+          name: ""
+          version: v1
+        - kind: Deployment
+          name: ""
+          version: apps/v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        version: v1alpha1
+      - description: OpenTelemetryCollector is the Schema for the opentelemetrycollectors
+          API.
+        displayName: OpenTelemetry Collector
+        kind: OpenTelemetryCollector
+        name: opentelemetrycollectors.opentelemetry.io
+        resources:
+        - kind: ConfigMaps
+          name: ""
+          version: v1
+        - kind: DaemonSets
+          name: ""
+          version: apps/v1
+        - kind: Deployment
+          name: ""
+          version: apps/v1
+        - kind: Ingress
+          name: ""
+          version: networking/v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: StatefulSets
+          name: ""
+          version: apps/v1
+        specDescriptors:
+        - description: ObservabilitySpec defines how telemetry data gets handled.
+          displayName: Observability
+          path: observability
+        - description: Metrics defines the metrics configuration for operands.
+          displayName: Metrics Config
+          path: observability.metrics
+        - description: EnableMetrics specifies if ServiceMonitor or PodMonitor(for
+            sidecar mode) should be created for the service managed by the OpenTelemetry
+            Operator. The operator.observability.prometheus feature gate must be enabled
+            to use this feature.
+          displayName: Create ServiceMonitors for OpenTelemetry Collector
+          path: observability.metrics.enableMetrics
+        - description: ObservabilitySpec defines how telemetry data gets handled.
+          displayName: Observability
+          path: targetAllocator.observability
+        - description: Metrics defines the metrics configuration for operands.
+          displayName: Metrics Config
+          path: targetAllocator.observability.metrics
+        - description: EnableMetrics specifies if ServiceMonitor or PodMonitor(for
+            sidecar mode) should be created for the service managed by the OpenTelemetry
+            Operator. The operator.observability.prometheus feature gate must be enabled
+            to use this feature.
+          displayName: Create ServiceMonitors for OpenTelemetry Collector
+          path: targetAllocator.observability.metrics.enableMetrics
+        version: v1alpha1
+      - description: OpenTelemetryCollector is the Schema for the opentelemetrycollectors
+          API.
+        displayName: OpenTelemetry Collector
+        kind: OpenTelemetryCollector
+        name: opentelemetrycollectors.opentelemetry.io
+        resources:
+        - kind: ConfigMaps
+          name: ""
+          version: v1
+        - kind: DaemonSets
+          name: ""
+          version: apps/v1
+        - kind: Deployment
+          name: ""
+          version: apps/v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: StatefulSets
+          name: ""
+          version: apps/v1
+        specDescriptors:
+        - description: ObservabilitySpec defines how telemetry data gets handled.
+          displayName: Observability
+          path: observability
+        - description: Metrics defines the metrics configuration for operands.
+          displayName: Metrics Config
+          path: observability.metrics
+        - description: EnableMetrics specifies if ServiceMonitor or PodMonitor(for
+            sidecar mode) should be created for the service managed by the OpenTelemetry
+            Operator. The operator.observability.prometheus feature gate must be enabled
+            to use this feature.
+          displayName: Create ServiceMonitors for OpenTelemetry Collector
+          path: observability.metrics.enableMetrics
+        - description: ObservabilitySpec defines how telemetry data gets handled.
+          displayName: Observability
+          path: targetAllocator.observability
+        - description: Metrics defines the metrics configuration for operands.
+          displayName: Metrics Config
+          path: targetAllocator.observability.metrics
+        - description: EnableMetrics specifies if ServiceMonitor or PodMonitor(for
+            sidecar mode) should be created for the service managed by the OpenTelemetry
+            Operator. The operator.observability.prometheus feature gate must be enabled
+            to use this feature.
+          displayName: Create ServiceMonitors for OpenTelemetry Collector
+          path: targetAllocator.observability.metrics.enableMetrics
+        version: v1beta1
+    description: |-
+      OpenTelemetry is a collection of tools, APIs, and SDKs. You use it to instrument, generate, collect, and export telemetry data (metrics, logs, and traces) for analysis in order to understand your software's performance and behavior.
+
+      ### Operator features
+
+      * **Sidecar injection** - annotate your pods and let the operator inject a sidecar.
+      * **Managed upgrades** - updating the operator will automatically update your OpenTelemetry collectors.
+      * **Deployment modes** - your collector can be deployed as sidecar, daemon set, or regular deployment.
+      * **Service port management** - the operator detects which ports need to be exposed based on the provided configuration.
+    displayName: Community OpenTelemetry Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - opentelemetry
+    - tracing
+    - logging
+    - metrics
+    - monitoring
+    - troubleshooting
+    links:
+    - name: OpenTelemetry Operator
+      url: https://github.com/open-telemetry/opentelemetry-operator
+    maintainers:
+    - email: jpkroehling@redhat.com
+      name: Juraci Paixão Kröhling
+    maturity: alpha
+    minKubeVersion: 1.23.0
+    provider:
+      name: OpenTelemetry Community
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.109.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:65d83a51c0e62569dc6d13ddf2c3695a056f90eb6bf2c010c2fa95ccc0916ecd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:668e10dd12f1c0dbe7fb13417a9b63980f54de7e2e86c784ed2b104651b9c512
+name: opentelemetry-operator.v0.16.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.16.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/opentelemetry/opentelemetry-operator:0.16.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:668e10dd12f1c0dbe7fb13417a9b63980f54de7e2e86c784ed2b104651b9c512
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:644fa83831f21703e8265f856210407fb6b0a2ffa532d6d2b10e726fa7868143
+name: opentelemetry-operator.v0.17.1
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.17.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/opentelemetry/opentelemetry-operator:0.17.1
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:644fa83831f21703e8265f856210407fb6b0a2ffa532d6d2b10e726fa7868143
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:149fdf56ada3eb0bcaf31c66addcedbc5f0386066a4d670a827a3629d5ff7614
+name: opentelemetry-operator.v0.21.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.21.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/opentelemetry/opentelemetry-operator:0.21.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:149fdf56ada3eb0bcaf31c66addcedbc5f0386066a4d670a827a3629d5ff7614
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:18b2fb67cae0c02c0bbdce68736dd40a1812cec95d9375e89710b11cf888eeb0
+name: opentelemetry-operator.v0.27.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.27.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/opentelemetry/opentelemetry-operator:v0.27.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:18b2fb67cae0c02c0bbdce68736dd40a1812cec95d9375e89710b11cf888eeb0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:9d28202c960d2df4faeff0259b3ee092c9384392f91d7bfef48d9a72de7c25f4
+name: opentelemetry-operator.v0.33.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.33.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/opentelemetry/opentelemetry-operator:v0.33.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:9d28202c960d2df4faeff0259b3ee092c9384392f91d7bfef48d9a72de7c25f4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:abc9ce5ef164d4f2166e146598eb170b4ae3bd40f0fb479c6020bc3c741da280
+name: opentelemetry-operator.v0.36.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.36.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/opentelemetry/opentelemetry-operator:v0.36.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:abc9ce5ef164d4f2166e146598eb170b4ae3bd40f0fb479c6020bc3c741da280
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:23f96ff60ced0bfc822b74dfff4e979aec5da0ad8dff7d6adf6ec89fe8fe8a51
+name: opentelemetry-operator.v0.37.1
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.37.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/opentelemetry/opentelemetry-operator:v0.37.1
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:23f96ff60ced0bfc822b74dfff4e979aec5da0ad8dff7d6adf6ec89fe8fe8a51
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:9d3cf774d69fd487868ce0e62d07a229c4189e66918c7b3c5d6490b9e561cf7a
+name: opentelemetry-operator.v0.38.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.38.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/opentelemetry/opentelemetry-operator:v0.38.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:9d3cf774d69fd487868ce0e62d07a229c4189e66918c7b3c5d6490b9e561cf7a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:99ce4062221cdfbce613223a0c53c932faa21ab395e2506430d12991b75026a7
+name: opentelemetry-operator.v0.39.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.39.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:v0.39.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:99ce4062221cdfbce613223a0c53c932faa21ab395e2506430d12991b75026a7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:da47156ffb9b2b4a6d1fc3e602456215a07ff149e9354ac3eb40c05e15f6b78e
+name: opentelemetry-operator.v0.40.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.40.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:v0.40.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:da47156ffb9b2b4a6d1fc3e602456215a07ff149e9354ac3eb40c05e15f6b78e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:8a5e88ccd1dacbbdfbfb50d0c0b7a250aba7d53225800feb2274b44f0d2c3eae
+name: opentelemetry-operator.v0.41.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.41.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:v0.41.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:8a5e88ccd1dacbbdfbfb50d0c0b7a250aba7d53225800feb2274b44f0d2c3eae
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:60291f6ae7de04f9772436ad4db59885d06a7112501be390c5c172a47c8935f9
+name: opentelemetry-operator.v0.42.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.42.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:v0.42.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:60291f6ae7de04f9772436ad4db59885d06a7112501be390c5c172a47c8935f9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:3e936bcfafd63efbda20fe2605087da0e17a44f6977974dad57585847af6400e
+name: opentelemetry-operator.v0.43.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.43.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:v0.43.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:3e936bcfafd63efbda20fe2605087da0e17a44f6977974dad57585847af6400e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:01e8a8f82f05b4d5fd4ab278ab08cd93237467d03453eac24f0171a5ce76ec05
+name: opentelemetry-operator.v0.44.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.44.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:v0.44.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:01e8a8f82f05b4d5fd4ab278ab08cd93237467d03453eac24f0171a5ce76ec05
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:01f00c21793f79fcd7b86408585855aa69e8ae0dc47678475519eafa57a7a452
+name: opentelemetry-operator.v0.45.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.45.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:v0.45.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:01f00c21793f79fcd7b86408585855aa69e8ae0dc47678475519eafa57a7a452
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:873b8d6e3898862ab2ba4bcdfae1410fbeacac735d971ce1544305417cb95d0f
+name: opentelemetry-operator.v0.47.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.47.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.47.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:873b8d6e3898862ab2ba4bcdfae1410fbeacac735d971ce1544305417cb95d0f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:633d903c774666afa038c88e829732cf4be6b1a5120ff6a5cf225b5ee2c5a5c0
+name: opentelemetry-operator.v0.48.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.48.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.48.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:633d903c774666afa038c88e829732cf4be6b1a5120ff6a5cf225b5ee2c5a5c0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:d29dc48a99a3114d5a41c3285411a1c60c8eeef1091c4d326dd57f92273bfd45
+name: opentelemetry-operator.v0.49.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.49.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.49.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:d29dc48a99a3114d5a41c3285411a1c60c8eeef1091c4d326dd57f92273bfd45
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:f89c538bc019462a2e48282f6f6479bc16ac5a9ff16fb3f7d80950d8795484da
+name: opentelemetry-operator.v0.51.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.51.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.51.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:f89c538bc019462a2e48282f6f6479bc16ac5a9ff16fb3f7d80950d8795484da
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:7c17ac7b32e076d2d2a75c99c08a2f63f391bc46e5634fc8ebc9ebdae79e9683
+name: opentelemetry-operator.v0.52.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.52.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.52.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:7c17ac7b32e076d2d2a75c99c08a2f63f391bc46e5634fc8ebc9ebdae79e9683
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:b1b98bb8461e29c553590d51c5ef0b8ebe65690c6374bb011565d0568e3d8732
+name: opentelemetry-operator.v0.54.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.54.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.54.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:b1b98bb8461e29c553590d51c5ef0b8ebe65690c6374bb011565d0568e3d8732
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:022e38a37c187c2c1db35e0a2c4e46e17f6c4701968424bc0742b97abb703338
+name: opentelemetry-operator.v0.55.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.55.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.55.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:022e38a37c187c2c1db35e0a2c4e46e17f6c4701968424bc0742b97abb703338
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:5627c14c516c848e2eba2fde49d377209f64e82819e70b95f124f1486e9f4dbc
+name: opentelemetry-operator.v0.56.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.56.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.56.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:5627c14c516c848e2eba2fde49d377209f64e82819e70b95f124f1486e9f4dbc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:9f7959819e849b4ced7b3bc31e5121c129e401c06b04f67a6c1f9239c8c51c1a
+name: opentelemetry-operator.v0.58.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.58.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.58.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:9f7959819e849b4ced7b3bc31e5121c129e401c06b04f67a6c1f9239c8c51c1a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:0bf895e377d9f3c3746910f02be3f6c3a2b03cedaf2e5d970e829e81b2f205b7
+name: opentelemetry-operator.v0.59.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.59.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.59.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:0bf895e377d9f3c3746910f02be3f6c3a2b03cedaf2e5d970e829e81b2f205b7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:e056a8de18cd50af0c3bf7a4844c3027c5fbcd5e3162519b340ff7bbba9c0fc0
+name: opentelemetry-operator.v0.61.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.61.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.61.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:e056a8de18cd50af0c3bf7a4844c3027c5fbcd5e3162519b340ff7bbba9c0fc0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:e640dcc0778fc218bb76873174a1b94ae41f1d3abb91c71647e9bb459edb2c69
+name: opentelemetry-operator.v0.62.1
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.62.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.62.1
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:e640dcc0778fc218bb76873174a1b94ae41f1d3abb91c71647e9bb459edb2c69
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:ea7564744dd65a929765f03aaf3b51d7c47210ded0e397b05225bd26a2ada1cd
+name: opentelemetry-operator.v0.66.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.66.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.66.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:ea7564744dd65a929765f03aaf3b51d7c47210ded0e397b05225bd26a2ada1cd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:ff6597b8ddc97fbf8d682b905ad6cf53949534ec2da5ffdeeee65d0a6ba6b92c
+name: opentelemetry-operator.v0.67.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.67.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.67.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:ff6597b8ddc97fbf8d682b905ad6cf53949534ec2da5ffdeeee65d0a6ba6b92c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:e7e38c349ef3f192093f30926ab289e6b72c3d8d8d9d4e27e4a0627ba53844d7
+name: opentelemetry-operator.v0.68.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.68.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.68.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:e7e38c349ef3f192093f30926ab289e6b72c3d8d8d9d4e27e4a0627ba53844d7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:ac144678dedfcfc0017d9f2c101580b46b4594fc8d34068a1984547cd3c770e3
+name: opentelemetry-operator.v0.70.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.70.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.70.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:ac144678dedfcfc0017d9f2c101580b46b4594fc8d34068a1984547cd3c770e3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:492bdaa382ca11d40f9999895a4b7c92fc9745a50da0251c4e0963049bdc39a4
+name: opentelemetry-operator.v0.71.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.71.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.71.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:492bdaa382ca11d40f9999895a4b7c92fc9745a50da0251c4e0963049bdc39a4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:4ccfe04eae1225a7d8ba8a1417d0895a94422a9e73ddd821aedb0d527c68abbb
+name: opentelemetry-operator.v0.72.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.72.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.72.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:4ccfe04eae1225a7d8ba8a1417d0895a94422a9e73ddd821aedb0d527c68abbb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:31f9bc0390f0345713e9716e36c8cf590ece2b6cd1186eb760d46a54cc9ce0e9
+name: opentelemetry-operator.v0.73.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.73.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.73.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:31f9bc0390f0345713e9716e36c8cf590ece2b6cd1186eb760d46a54cc9ce0e9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:f28025a731a60afee1ec84969bf00cfc75aab28252f845545eae6ed30a51b02a
+name: opentelemetry-operator.v0.74.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.74.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.74.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:f28025a731a60afee1ec84969bf00cfc75aab28252f845545eae6ed30a51b02a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:ddcc357f3418a650729ad0a2f98807b2150f0a8fb8e8f532ed3eb9b79dc1b0f5
+name: opentelemetry-operator.v0.75.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.75.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.75.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:ddcc357f3418a650729ad0a2f98807b2150f0a8fb8e8f532ed3eb9b79dc1b0f5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:ccea8c2826a62e24973b340954adb8f803fefb79efe5ece45db764d095d9a904
+name: opentelemetry-operator.v0.76.1
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.76.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.76.1
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:ccea8c2826a62e24973b340954adb8f803fefb79efe5ece45db764d095d9a904
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:665e3fc7aa492d8d32f19507d6ea26be11583519a90df46a8540d0e943211ea4
+name: opentelemetry-operator.v0.77.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.77.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.77.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:665e3fc7aa492d8d32f19507d6ea26be11583519a90df46a8540d0e943211ea4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:ed63d2a20d64919a25344caacd40702c175e0d4077642be00441d8cf5866c30b
+name: opentelemetry-operator.v0.78.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.78.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.78.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:ed63d2a20d64919a25344caacd40702c175e0d4077642be00441d8cf5866c30b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:750522811d76cbbe6134bc64e69ca205da7f83569a8a958f9e3587efb98a6e1b
+name: opentelemetry-operator.v0.79.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.79.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.79.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:750522811d76cbbe6134bc64e69ca205da7f83569a8a958f9e3587efb98a6e1b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:e24a5c44a2a9cadd8346f521d0231b66a1659a3e61b1558dd46c6f5109d00b1c
+name: opentelemetry-operator.v0.80.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.80.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.80.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:e24a5c44a2a9cadd8346f521d0231b66a1659a3e61b1558dd46c6f5109d00b1c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:179a9a0b438c4dd0f9346adb73e9e6b33dbad8d6ced4b1ff30c10c0da38852a9
+name: opentelemetry-operator.v0.81.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.81.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.81.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:179a9a0b438c4dd0f9346adb73e9e6b33dbad8d6ced4b1ff30c10c0da38852a9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:318e774d6cfdc6ffe70ed4750e773a4452258cc07023295ab46773bcb3485b87
+name: opentelemetry-operator.v0.82.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.82.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.82.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:318e774d6cfdc6ffe70ed4750e773a4452258cc07023295ab46773bcb3485b87
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:97226fc0b33c28452effa6988443218ddcf8bc446c43b69a6dad51a4ee0ed57c
+name: opentelemetry-operator.v0.84.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.84.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.84.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:97226fc0b33c28452effa6988443218ddcf8bc446c43b69a6dad51a4ee0ed57c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:5927d920d9f63cc8e290d8e44a4516d880f671497fbcb4ea446dfd1f7e172986
+name: opentelemetry-operator.v0.85.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.85.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.85.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:5927d920d9f63cc8e290d8e44a4516d880f671497fbcb4ea446dfd1f7e172986
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:9b1430a091349d39f012a95940fa45388397d5feca1542691712fd44f5fc1379
+name: opentelemetry-operator.v0.86.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.86.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.86.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:9b1430a091349d39f012a95940fa45388397d5feca1542691712fd44f5fc1379
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:ab7824bb3d8997f1fcb26ebd9f89d0260708de1ae8203769804a136186d3c67b
+name: opentelemetry-operator.v0.87.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.87.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.87.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:ab7824bb3d8997f1fcb26ebd9f89d0260708de1ae8203769804a136186d3c67b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:c15ebbb48f5e5b17ecb82feb065350ddd30885de6085de06bc39116745589be7
+name: opentelemetry-operator.v0.89.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.89.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.89.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:c15ebbb48f5e5b17ecb82feb065350ddd30885de6085de06bc39116745589be7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:7b67c06aa6d4e81b04e7d534b8d181adaf9330a695ed22cdd6545379fbe1f796
+name: opentelemetry-operator.v0.90.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.90.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.90.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:7b67c06aa6d4e81b04e7d534b8d181adaf9330a695ed22cdd6545379fbe1f796
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:f9a14f6c4fc5f0b014942098b678b22e47fef5cfa18eb6e5e2a81fbef57c24d7
+name: opentelemetry-operator.v0.91.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.91.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.91.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:f9a14f6c4fc5f0b014942098b678b22e47fef5cfa18eb6e5e2a81fbef57c24d7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:18f9a27591a5f579009ea6c148edc48416693167ffe576be5fa142db073df10f
+name: opentelemetry-operator.v0.92.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.92.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.92.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:18f9a27591a5f579009ea6c148edc48416693167ffe576be5fa142db073df10f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:cf364837794999a8e1cf53a1cf0d24fef0cc9db95b3bb1cfd87d18a2e7de7c54
+name: opentelemetry-operator.v0.92.1
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.92.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.92.1
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:cf364837794999a8e1cf53a1cf0d24fef0cc9db95b3bb1cfd87d18a2e7de7c54
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:3a2f1c4bdd7ce6e35734dad09d8c2dbd3c66b1bbf5cd041d9d948147f6e5c69f
+name: opentelemetry-operator.v0.93.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.93.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.93.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:3a2f1c4bdd7ce6e35734dad09d8c2dbd3c66b1bbf5cd041d9d948147f6e5c69f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:f0a2f87422861eb253ddd039e6b86698b09761c5b7c2c65dad35eb1bcfea4e45
+name: opentelemetry-operator.v0.94.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.94.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.94.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:f0a2f87422861eb253ddd039e6b86698b09761c5b7c2c65dad35eb1bcfea4e45
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:137b81e5e6a3aa86ee61e42440c3f41dd1bb64cf868e3219444b1ee3f197b72c
+name: opentelemetry-operator.v0.95.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.95.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.95.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:137b81e5e6a3aa86ee61e42440c3f41dd1bb64cf868e3219444b1ee3f197b72c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:6a900fa8bb118447e6d78749d1fbeb78f1f1938528f6c913c6d8206c92cbef7f
+name: opentelemetry-operator.v0.96.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.96.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.96.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:6a900fa8bb118447e6d78749d1fbeb78f1f1938528f6c913c6d8206c92cbef7f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:b2c0ace62ed43c0c16998167d481f8f9a6de7335b32d2ce7f0eab5d11e095730
+name: opentelemetry-operator.v0.97.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.97.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.97.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:b2c0ace62ed43c0c16998167d481f8f9a6de7335b32d2ce7f0eab5d11e095730
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:1dee865d9f28e09c514fd777f34860300cd9e89068c71c3a82e65ac6c901e9cf
+name: opentelemetry-operator.v0.97.1
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.97.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.97.1
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:1dee865d9f28e09c514fd777f34860300cd9e89068c71c3a82e65ac6c901e9cf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:43c5e39aeb06b420c7cb5daf191769c9e9da0d0b07f8ed4644f816c670b71781
+name: opentelemetry-operator.v0.98.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.98.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.98.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:43c5e39aeb06b420c7cb5daf191769c9e9da0d0b07f8ed4644f816c670b71781
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/opentelemetry-operator@sha256:bb613e89510465f47f75497fd607b2c47523b4674cf1269f0d1211c88477d183
+name: opentelemetry-operator.v0.99.0
+package: opentelemetry-operator
+properties:
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: Instrumentation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpAMPBridge
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: opentelemetry-operator
+    version: 0.99.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.99.0
+  name: ""
+- image: quay.io/operatorhubio/opentelemetry-operator@sha256:bb613e89510465f47f75497fd607b2c47523b4674cf1269f0d1211c88477d183
+  name: ""
+schema: olm.bundle

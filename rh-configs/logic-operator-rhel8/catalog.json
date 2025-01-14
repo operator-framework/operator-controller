@@ -1,0 +1,870 @@
+{
+    "schema": "olm.package",
+    "name": "logic-operator-rhel8",
+    "defaultChannel": "alpha",
+    "icon": {
+        "base64data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzOCIgaGVpZ2h0PSIzOCIgdmlld0JveD0iMCAwIDM4IDM4Ij48ZGVmcz48c3R5bGU+LmF7ZmlsbDojZmZmO30uYntmaWxsOiNlMDA7fTwvc3R5bGU+PC9kZWZzPjxwYXRoIGNsYXNzPSJhIiBkPSJNMjgsMUgxMGE5LDksMCwwLDAtOSw5VjI4YTksOSwwLDAsMCw5LDlIMjhhOSw5LDAsMCwwLDktOVYxMGE5LDksMCwwLDAtOS05WiIvPjxwYXRoIGQ9Ik0yOCwyLjI1QTcuNzU4Nyw3Ljc1ODcsMCwwLDEsMzUuNzUsMTBWMjhBNy43NTg3LDcuNzU4NywwLDAsMSwyOCwzNS43NUgxMEE3Ljc1ODcsNy43NTg3LDAsMCwxLDIuMjUsMjhWMTBBNy43NTg3LDcuNzU4NywwLDAsMSwxMCwyLjI1SDI4TTI4LDFIMTBhOSw5LDAsMCwwLTksOVYyOGE5LDksMCwwLDAsOSw5SDI4YTksOSwwLDAsMCw5LTlWMTBhOSw5LDAsMCwwLTktOVoiLz48cGF0aCBjbGFzcz0iYiIgZD0iTTE0LDIzLjQ3NjZIMTBhLjYyNTMuNjI1MywwLDAsMS0uNjI1LS42MjV2LTRhLjYyNTIuNjI1MiwwLDAsMSwuNjI1LS42MjVoNGEuNjI1Mi42MjUyLDAsMCwxLC42MjUuNjI1djRBLjYyNTMuNjI1MywwLDAsMSwxNCwyMy40NzY2Wm0tMy4zNzUtMS4yNWgyLjc1di0yLjc1aC0yLjc1WiIvPjxwYXRoIGNsYXNzPSJiIiBkPSJNMjEsMjMuNDc2NkgxN2EuNjI1My42MjUzLDAsMCwxLS42MjUtLjYyNXYtNGEuNjI1Mi42MjUyLDAsMCwxLC42MjUtLjYyNWg0YS42MjUyLjYyNTIsMCwwLDEsLjYyNS42MjV2NEEuNjI1My42MjUzLDAsMCwxLDIxLDIzLjQ3NjZabS0zLjM3NS0xLjI1aDIuNzV2LTIuNzVoLTIuNzVaIi8+PHBhdGggY2xhc3M9ImIiIGQ9Ik0xNy41LDE2LjQ3NjZoLTRhLjYyNTMuNjI1MywwLDAsMS0uNjI1LS42MjV2LTRhLjYyNTIuNjI1MiwwLDAsMSwuNjI1LS42MjVoNGEuNjI1Mi42MjUyLDAsMCwxLC42MjUuNjI1djRBLjYyNTMuNjI1MywwLDAsMSwxNy41LDE2LjQ3NjZabS0zLjM3NS0xLjI1aDIuNzV2LTIuNzVoLTIuNzVaIi8+PHBhdGggY2xhc3M9ImIiIGQ9Ik0yNC41LDE2LjQ3NjZoLTRhLjYyNTMuNjI1MywwLDAsMS0uNjI1LS42MjV2LTRhLjYyNTIuNjI1MiwwLDAsMSwuNjI1LS42MjVoNGEuNjI1Mi42MjUyLDAsMCwxLC42MjUuNjI1djRBLjYyNTMuNjI1MywwLDAsMSwyNC41LDE2LjQ3NjZabS0zLjM3NS0xLjI1aDIuNzV2LTIuNzVoLTIuNzVaIi8+PHBhdGggY2xhc3M9ImIiIGQ9Ik0yOCwyMy40NzY2SDI0YS42MjUzLjYyNTMsMCwwLDEtLjYyNS0uNjI1di00YS42MjUyLjYyNTIsMCwwLDEsLjYyNS0uNjI1aDRhLjYyNTIuNjI1MiwwLDAsMSwuNjI1LjYyNXY0QS42MjUzLjYyNTMsMCwwLDEsMjgsMjMuNDc2NlptLTMuMzc1LTEuMjVoMi43NXYtMi43NWgtMi43NVoiLz48cGF0aCBkPSJNMjksMjYuNDc2Nkg5YS42MjUuNjI1LDAsMCwxLDAtMS4yNUgyOWEuNjI1LjYyNSwwLDAsMSwwLDEuMjVaIi8+PC9zdmc+",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "alpha",
+    "package": "logic-operator-rhel8",
+    "entries": [
+        {
+            "name": "logic-operator-rhel8.v1.33.0"
+        },
+        {
+            "name": "logic-operator-rhel8.v1.34.0",
+            "replaces": "logic-operator-rhel8.v1.33.0"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "logic-operator-rhel8.v1.33.0",
+    "package": "logic-operator-rhel8",
+    "image": "registry.redhat.io/openshift-serverless-1/logic-operator-bundle@sha256:f4495c801002a4501b6b472a2f709cf6f7e0955b74d407254f4aa00a5c26932c",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sonataflow.org",
+                "kind": "SonataFlow",
+                "version": "v1alpha08"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sonataflow.org",
+                "kind": "SonataFlowBuild",
+                "version": "v1alpha08"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sonataflow.org",
+                "kind": "SonataFlowClusterPlatform",
+                "version": "v1alpha08"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sonataflow.org",
+                "kind": "SonataFlowPlatform",
+                "version": "v1alpha08"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "logic-operator-rhel8",
+                "version": "1.33.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"sonataflow.org/v1alpha08\",\n    \"kind\": \"SonataFlow\",\n    \"metadata\": {\n      \"annotations\": {\n        \"sonataflow.org/description\": \"Greeting example on k8s!\",\n        \"sonataflow.org/version\": \"0.0.1\"\n      },\n      \"name\": \"greeting\"\n    },\n    \"spec\": {\n      \"flow\": {\n        \"functions\": [\n          {\n            \"name\": \"greetFunction\",\n            \"operation\": \"sysout\",\n            \"type\": \"custom\"\n          }\n        ],\n        \"start\": \"ChooseOnLanguage\",\n        \"states\": [\n          {\n            \"dataConditions\": [\n              {\n                \"condition\": \"${ .language == \\\"English\\\" }\",\n                \"transition\": \"GreetInEnglish\"\n              },\n              {\n                \"condition\": \"${ .language == \\\"Spanish\\\" }\",\n                \"transition\": \"GreetInSpanish\"\n              }\n            ],\n            \"defaultCondition\": \"GreetInEnglish\",\n            \"name\": \"ChooseOnLanguage\",\n            \"type\": \"switch\"\n          },\n          {\n            \"data\": {\n              \"greeting\": \"Hello from JSON Workflow, \"\n            },\n            \"name\": \"GreetInEnglish\",\n            \"transition\": \"GreetPerson\",\n            \"type\": \"inject\"\n          },\n          {\n            \"data\": {\n              \"greeting\": \"Saludos desde JSON Workflow, \"\n            },\n            \"name\": \"GreetInSpanish\",\n            \"transition\": \"GreetPerson\",\n            \"type\": \"inject\"\n          },\n          {\n            \"actions\": [\n              {\n                \"functionRef\": {\n                  \"arguments\": {\n                    \"message\": \".greeting+.name\"\n                  },\n                  \"refName\": \"greetFunction\"\n                },\n                \"name\": \"greetAction\"\n              }\n            ],\n            \"end\": true,\n            \"name\": \"GreetPerson\",\n            \"type\": \"operation\"\n          }\n        ]\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"sonataflow.org/v1alpha08\",\n    \"kind\": \"SonataFlowBuild\",\n    \"metadata\": {\n      \"name\": \"greeting\"\n    },\n    \"spec\": {\n      \"timeout\": \"360s\"\n    }\n  },\n  {\n    \"apiVersion\": \"sonataflow.org/v1alpha08\",\n    \"kind\": \"SonataFlowClusterPlatform\",\n    \"metadata\": {\n      \"name\": \"sonataflow-clusterplatform\"\n    },\n    \"spec\": {\n      \"platformRef\": {\n        \"name\": \"sonataflow-platform\",\n        \"namespace\": \"sonataflow-operator-system\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"sonataflow.org/v1alpha08\",\n    \"kind\": \"SonataFlowPlatform\",\n    \"metadata\": {\n      \"name\": \"sonataflow-platform\"\n    },\n    \"spec\": {\n      \"build\": {\n        \"config\": {\n          \"registry\": {\n            \"address\": \"quay.io/kiegroup\",\n            \"secret\": \"regcred\"\n          }\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "description": "OpenShift Serverless Logic Kubernetes Operator for deploying workflow applications based on the CNCF Serverless Workflow specification",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operatorframework.io/suggested-namespace": "openshift-serverless-logic",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.25.0",
+                    "operators.operatorframework.io/internal-objects": "[\"sonataflowbuilds.sonataflow.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/kiegroup/kogito-serverless-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "sonataflowbuilds.sonataflow.org",
+                            "version": "v1alpha08",
+                            "kind": "SonataFlowBuild",
+                            "displayName": "Sonata Flow Build",
+                            "description": "SonataFlowBuild is an internal custom resource to control workflow build instances in the target platform",
+                            "resources": [
+                                {
+                                    "name": "An Openshift Build Config",
+                                    "kind": "BuildConfig",
+                                    "version": "build.openshift.io/v1"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "buildPhase",
+                                    "displayName": "BuildPhase",
+                                    "description": "BuildPhase Current phase of the build"
+                                },
+                                {
+                                    "path": "error",
+                                    "displayName": "Error",
+                                    "description": "Error Last error found during build"
+                                },
+                                {
+                                    "path": "imageTag",
+                                    "displayName": "ImageTag",
+                                    "description": "ImageTag The final image tag produced by this build instance"
+                                },
+                                {
+                                    "path": "innerBuild",
+                                    "displayName": "InnerBuild",
+                                    "description": "InnerBuild is a reference to an internal build object, which can be anything known only to internal builders."
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "arguments",
+                                    "displayName": "Arguments",
+                                    "description": "Arguments lists the command line arguments to send to the internal builder command. Depending on the build method you might set this attribute instead of BuildArgs. For example: \".spec.arguments=verbose=3\". Please see the SonataFlow guides."
+                                },
+                                {
+                                    "path": "buildArgs",
+                                    "displayName": "BuildArgs",
+                                    "description": "Optional build arguments that can be set to the internal build (e.g. Docker ARG)"
+                                },
+                                {
+                                    "path": "envs",
+                                    "displayName": "Envs",
+                                    "description": "Optional environment variables to add to the internal build"
+                                },
+                                {
+                                    "path": "resources",
+                                    "displayName": "Resources",
+                                    "description": "Resources optional compute resource requirements for the builder"
+                                },
+                                {
+                                    "path": "timeout",
+                                    "displayName": "Timeout",
+                                    "description": "Timeout defines the Build maximum execution duration. The Build deadline is set to the Build start time plus the Timeout duration. If the Build deadline is exceeded, the Build context is canceled, and its phase set to BuildPhaseFailed."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "sonataflowclusterplatforms.sonataflow.org",
+                            "version": "v1alpha08",
+                            "kind": "SonataFlowClusterPlatform",
+                            "displayName": "Sonata Flow Cluster Platform",
+                            "description": "SonataFlowClusterPlatform is the Schema for the sonataflowclusterplatforms API",
+                            "resources": [
+                                {
+                                    "name": "A SonataFlowClusterPlatform",
+                                    "kind": "SonataFlowClusterPlatform",
+                                    "version": "sonataflow.org/v1alpha08"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "version",
+                                    "displayName": "version",
+                                    "description": "Version the operator version controlling this ClusterPlatform"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "capabilities",
+                                    "displayName": "Capabilities",
+                                    "description": "Capabilities defines which platform capabilities should be applied cluster-wide. If nil, defaults to `capabilities.workflows[\"services\"]`"
+                                },
+                                {
+                                    "path": "platformRef",
+                                    "displayName": "PlatformRef",
+                                    "description": "PlatformRef defines which existing SonataFlowPlatform's supporting services should be used cluster-wide."
+                                },
+                                {
+                                    "path": "platformRef.name",
+                                    "displayName": "Platform_Name",
+                                    "description": "Name of the SonataFlowPlatform"
+                                },
+                                {
+                                    "path": "platformRef.namespace",
+                                    "displayName": "Platform_NS",
+                                    "description": "Namespace of the SonataFlowPlatform"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "sonataflowplatforms.sonataflow.org",
+                            "version": "v1alpha08",
+                            "kind": "SonataFlowPlatform",
+                            "displayName": "Sonata Flow Platform",
+                            "description": "SonataFlowPlatform is the descriptor for the workflow platform infrastructure.",
+                            "resources": [
+                                {
+                                    "name": "The Namespace controlled by the platform",
+                                    "kind": "Namespace",
+                                    "version": "v1"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "cluster",
+                                    "displayName": "cluster",
+                                    "description": "Cluster what kind of cluster you're running (ie, plain Kubernetes or OpenShift)"
+                                },
+                                {
+                                    "path": "clusterPlatformRef",
+                                    "displayName": "clusterPlatformRef",
+                                    "description": "ClusterPlatformRef information related to the (optional) active SonataFlowClusterPlatform"
+                                },
+                                {
+                                    "path": "info",
+                                    "displayName": "info",
+                                    "description": "Info generic information related to the build"
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "version",
+                                    "description": "Version the operator version controlling this Platform"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "build",
+                                    "displayName": "Build",
+                                    "description": "Build Attributes for building workflows in the target platform"
+                                },
+                                {
+                                    "path": "build.template.arguments",
+                                    "displayName": "Arguments",
+                                    "description": "Arguments lists the command line arguments to send to the internal builder command. Depending on the build method you might set this attribute instead of BuildArgs. For example: \".spec.arguments=verbose=3\". Please see the SonataFlow guides."
+                                },
+                                {
+                                    "path": "build.template.buildArgs",
+                                    "displayName": "BuildArgs",
+                                    "description": "Optional build arguments that can be set to the internal build (e.g. Docker ARG)"
+                                },
+                                {
+                                    "path": "build.template.envs",
+                                    "displayName": "Envs",
+                                    "description": "Optional environment variables to add to the internal build"
+                                },
+                                {
+                                    "path": "build.template.resources",
+                                    "displayName": "Resources",
+                                    "description": "Resources optional compute resource requirements for the builder"
+                                },
+                                {
+                                    "path": "build.template.timeout",
+                                    "displayName": "Timeout",
+                                    "description": "Timeout defines the Build maximum execution duration. The Build deadline is set to the Build start time plus the Timeout duration. If the Build deadline is exceeded, the Build context is canceled, and its phase set to BuildPhaseFailed."
+                                },
+                                {
+                                    "path": "devMode",
+                                    "displayName": "DevMode",
+                                    "description": "DevMode Attributes for running workflows in devmode (immutable, no build required)"
+                                },
+                                {
+                                    "path": "services",
+                                    "displayName": "Services",
+                                    "description": "Services attributes for deploying supporting applications like Data Index & Job Service. Only workflows without the `sonataflow.org/profile: dev` annotation will be configured to use these service(s). Setting this will override the use of any cluster-scoped services that might be defined via `SonataFlowClusterPlatform`."
+                                },
+                                {
+                                    "path": "services.dataIndex.podTemplate",
+                                    "displayName": "podTemplate",
+                                    "description": "PodTemplate describes the deployment details of this platform service instance."
+                                },
+                                {
+                                    "path": "services.jobService.podTemplate",
+                                    "displayName": "podTemplate",
+                                    "description": "PodTemplate describes the deployment details of this platform service instance."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "sonataflows.sonataflow.org",
+                            "version": "v1alpha08",
+                            "kind": "SonataFlow",
+                            "displayName": "Sonata Flow",
+                            "description": "SonataFlow is the descriptor representation for a workflow application based on the CNCF Serverless Workflow specification.",
+                            "resources": [
+                                {
+                                    "name": "A Deployment for the Flow",
+                                    "kind": "Deployment",
+                                    "version": "apps/v1"
+                                },
+                                {
+                                    "name": "A Knative Serving Service for the Flow",
+                                    "kind": "Service",
+                                    "version": "serving.knative.dev/v1"
+                                },
+                                {
+                                    "name": "A Service for the Flow",
+                                    "kind": "Service",
+                                    "version": "v1"
+                                },
+                                {
+                                    "name": "A SonataFlowBuild",
+                                    "kind": "SonataFlowBuild",
+                                    "version": "sonataflow.org/v1alpha08"
+                                },
+                                {
+                                    "name": "An OpenShift Route for the Flow",
+                                    "kind": "Route",
+                                    "version": "route.openshift.io/v1"
+                                },
+                                {
+                                    "name": "The ConfigMaps with Flow definition and additional configuration files",
+                                    "kind": "ConfigMap",
+                                    "version": "v1"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "address",
+                                    "displayName": "address",
+                                    "description": "Address is used as a part of Addressable interface (status.address.url) for knative"
+                                },
+                                {
+                                    "path": "endpoint",
+                                    "displayName": "endpoint",
+                                    "description": "Endpoint is an externally accessible URL of the workflow"
+                                },
+                                {
+                                    "path": "lastTimeRecoverAttempt",
+                                    "displayName": "lastTimeRecoverAttempt"
+                                },
+                                {
+                                    "path": "recoverFailureAttempts",
+                                    "displayName": "recoverFailureAttempts",
+                                    "description": "keeps track of how many failure recovers a given workflow had so far"
+                                },
+                                {
+                                    "path": "services",
+                                    "displayName": "services",
+                                    "description": "Services displays which platform services are being used by this workflow"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "flow",
+                                    "displayName": "flow",
+                                    "description": "Flow the workflow definition."
+                                },
+                                {
+                                    "path": "podTemplate",
+                                    "displayName": "podTemplate",
+                                    "description": "PodTemplate describes the deployment details of this SonataFlow instance."
+                                },
+                                {
+                                    "path": "resources",
+                                    "displayName": "resources",
+                                    "description": "Resources workflow resources that are linked to this workflow definition. For example, a collection of OpenAPI specification files."
+                                },
+                                {
+                                    "path": "sink",
+                                    "displayName": "sink",
+                                    "description": "Sink describes the sinkBinding details of this SonataFlow instance."
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "OpenShift Serverless Logic Kubernetes Operator for deploying workflow applications\nbased on the [CNCF Serverless Workflow specification v0.8](https://serverlessworkflow.io/).",
+                "displayName": "OpenShift Serverless Logic Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "sonataflow",
+                    "cncf",
+                    "serverless",
+                    "serverlessworkflow",
+                    "workflows"
+                ],
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://docs.openshift.com/serverless/"
+                    },
+                    {
+                        "name": "Source Repository",
+                        "url": "https://github.com/kiegroup/kogito-serverless-operator/"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Red Hat",
+                        "email": "serverless-logic-team@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.23.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-serverless-1/logic-operator-bundle@sha256:f4495c801002a4501b6b472a2f709cf6f7e0955b74d407254f4aa00a5c26932c"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-serverless-1/logic-rhel8-operator@sha256:26b40ece2d755d64495aeeda49fd5c354c4f827e221c9875d282974ffd0299cb"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:4564ca3dc5bac80d6faddaf94c817fbbc270698a9399d8a21ee1005d85ceda56"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "logic-operator-rhel8.v1.34.0",
+    "package": "logic-operator-rhel8",
+    "image": "registry.redhat.io/openshift-serverless-1/logic-operator-bundle@sha256:50afc0aeea749c34be4b311121fb5f934f490c0eec18d1def751ffdf8124654c",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sonataflow.org",
+                "kind": "SonataFlow",
+                "version": "v1alpha08"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sonataflow.org",
+                "kind": "SonataFlowBuild",
+                "version": "v1alpha08"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sonataflow.org",
+                "kind": "SonataFlowClusterPlatform",
+                "version": "v1alpha08"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sonataflow.org",
+                "kind": "SonataFlowPlatform",
+                "version": "v1alpha08"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "logic-operator-rhel8",
+                "version": "1.34.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"sonataflow.org/v1alpha08\",\n    \"kind\": \"SonataFlow\",\n    \"metadata\": {\n      \"annotations\": {\n        \"sonataflow.org/description\": \"Greeting example on k8s!\",\n        \"sonataflow.org/version\": \"0.0.1\"\n      },\n      \"name\": \"greeting\"\n    },\n    \"spec\": {\n      \"flow\": {\n        \"functions\": [\n          {\n            \"name\": \"greetFunction\",\n            \"operation\": \"sysout\",\n            \"type\": \"custom\"\n          }\n        ],\n        \"start\": \"ChooseOnLanguage\",\n        \"states\": [\n          {\n            \"dataConditions\": [\n              {\n                \"condition\": \"${ .language == \\\"English\\\" }\",\n                \"transition\": \"GreetInEnglish\"\n              },\n              {\n                \"condition\": \"${ .language == \\\"Spanish\\\" }\",\n                \"transition\": \"GreetInSpanish\"\n              }\n            ],\n            \"defaultCondition\": \"GreetInEnglish\",\n            \"name\": \"ChooseOnLanguage\",\n            \"type\": \"switch\"\n          },\n          {\n            \"data\": {\n              \"greeting\": \"Hello from JSON Workflow, \"\n            },\n            \"name\": \"GreetInEnglish\",\n            \"transition\": \"GreetPerson\",\n            \"type\": \"inject\"\n          },\n          {\n            \"data\": {\n              \"greeting\": \"Saludos desde JSON Workflow, \"\n            },\n            \"name\": \"GreetInSpanish\",\n            \"transition\": \"GreetPerson\",\n            \"type\": \"inject\"\n          },\n          {\n            \"actions\": [\n              {\n                \"functionRef\": {\n                  \"arguments\": {\n                    \"message\": \".greeting+.name\"\n                  },\n                  \"refName\": \"greetFunction\"\n                },\n                \"name\": \"greetAction\"\n              }\n            ],\n            \"end\": true,\n            \"name\": \"GreetPerson\",\n            \"type\": \"operation\"\n          }\n        ]\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"sonataflow.org/v1alpha08\",\n    \"kind\": \"SonataFlowBuild\",\n    \"metadata\": {\n      \"name\": \"greeting\"\n    },\n    \"spec\": {\n      \"timeout\": \"360s\"\n    }\n  },\n  {\n    \"apiVersion\": \"sonataflow.org/v1alpha08\",\n    \"kind\": \"SonataFlowClusterPlatform\",\n    \"metadata\": {\n      \"name\": \"sonataflow-clusterplatform\"\n    },\n    \"spec\": {\n      \"platformRef\": {\n        \"name\": \"sonataflow-platform\",\n        \"namespace\": \"sonataflow-operator-system\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"sonataflow.org/v1alpha08\",\n    \"kind\": \"SonataFlowPlatform\",\n    \"metadata\": {\n      \"name\": \"sonataflow-platform\"\n    },\n    \"spec\": {\n      \"build\": {\n        \"config\": {\n          \"registry\": {\n            \"address\": \"quay.io/kiegroup\",\n            \"secret\": \"regcred\"\n          }\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "description": "OpenShift Serverless Logic Kubernetes Operator for deploying workflow applications based on the CNCF Serverless Workflow specification",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operatorframework.io/suggested-namespace": "openshift-serverless-logic",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.25.0",
+                    "operators.operatorframework.io/internal-objects": "[\"sonataflowbuilds.sonataflow.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/kiegroup/kogito-serverless-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "sonataflowbuilds.sonataflow.org",
+                            "version": "v1alpha08",
+                            "kind": "SonataFlowBuild",
+                            "displayName": "SonataFlowBuild",
+                            "description": "SonataFlowBuild is an internal custom resource to control workflow build instances in the target platform",
+                            "resources": [
+                                {
+                                    "name": "An Openshift Build Config",
+                                    "kind": "BuildConfig",
+                                    "version": "build.openshift.io/v1"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "buildPhase",
+                                    "displayName": "BuildPhase",
+                                    "description": "BuildPhase Current phase of the build"
+                                },
+                                {
+                                    "path": "error",
+                                    "displayName": "Error",
+                                    "description": "Error Last error found during build"
+                                },
+                                {
+                                    "path": "imageTag",
+                                    "displayName": "ImageTag",
+                                    "description": "ImageTag The final image tag produced by this build instance"
+                                },
+                                {
+                                    "path": "innerBuild",
+                                    "displayName": "InnerBuild",
+                                    "description": "InnerBuild is a reference to an internal build object, which can be anything known only to internal builders."
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "arguments",
+                                    "displayName": "Arguments",
+                                    "description": "Arguments lists the command line arguments to send to the internal builder command. Depending on the build method you might set this attribute instead of BuildArgs. For example: \".spec.arguments=verbose=3\". Please see the SonataFlow guides."
+                                },
+                                {
+                                    "path": "buildArgs",
+                                    "displayName": "BuildArgs",
+                                    "description": "Optional build arguments that can be set to the internal build (e.g. Docker ARG)"
+                                },
+                                {
+                                    "path": "envs",
+                                    "displayName": "Envs",
+                                    "description": "Optional environment variables to add to the internal build"
+                                },
+                                {
+                                    "path": "resources",
+                                    "displayName": "Resources",
+                                    "description": "Resources optional compute resource requirements for the builder"
+                                },
+                                {
+                                    "path": "timeout",
+                                    "displayName": "Timeout",
+                                    "description": "Timeout defines the Build maximum execution duration. The Build deadline is set to the Build start time plus the Timeout duration. If the Build deadline is exceeded, the Build context is canceled, and its phase set to BuildPhaseFailed."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "sonataflowclusterplatforms.sonataflow.org",
+                            "version": "v1alpha08",
+                            "kind": "SonataFlowClusterPlatform",
+                            "displayName": "SonataFlowClusterPlatform",
+                            "description": "SonataFlowClusterPlatform is the Schema for the sonataflowclusterplatforms API",
+                            "resources": [
+                                {
+                                    "name": "A SonataFlow Platform",
+                                    "kind": "SonataFlowPlatform",
+                                    "version": "sonataflow.org/v1alpha08"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "version",
+                                    "displayName": "version",
+                                    "description": "Version the operator version controlling this ClusterPlatform"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "capabilities",
+                                    "displayName": "Capabilities",
+                                    "description": "Capabilities defines which platform capabilities should be applied cluster-wide. If nil, defaults to `capabilities.workflows[\"services\"]`"
+                                },
+                                {
+                                    "path": "platformRef",
+                                    "displayName": "PlatformRef",
+                                    "description": "PlatformRef defines which existing SonataFlowPlatform's supporting services should be used cluster-wide."
+                                },
+                                {
+                                    "path": "platformRef.name",
+                                    "displayName": "Platform_Name",
+                                    "description": "Name of the SonataFlowPlatform"
+                                },
+                                {
+                                    "path": "platformRef.namespace",
+                                    "displayName": "Platform_NS",
+                                    "description": "Namespace of the SonataFlowPlatform"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "sonataflowplatforms.sonataflow.org",
+                            "version": "v1alpha08",
+                            "kind": "SonataFlowPlatform",
+                            "displayName": "SonataFlowPlatform",
+                            "description": "SonataFlowPlatform is the descriptor for the workflow platform infrastructure.",
+                            "resources": [
+                                {
+                                    "name": "The Namespace controlled by the platform",
+                                    "kind": "Namespace",
+                                    "version": "v1"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "cluster",
+                                    "displayName": "cluster",
+                                    "description": "Cluster what kind of cluster you're running (ie, plain Kubernetes or OpenShift)"
+                                },
+                                {
+                                    "path": "clusterPlatformRef",
+                                    "displayName": "clusterPlatformRef",
+                                    "description": "ClusterPlatformRef information related to the (optional) active SonataFlowClusterPlatform"
+                                },
+                                {
+                                    "path": "info",
+                                    "displayName": "info",
+                                    "description": "Info generic information related to the build"
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "version",
+                                    "description": "Version the operator version controlling this Platform"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "build",
+                                    "displayName": "Build",
+                                    "description": "Build Attributes for building workflows in the target platform"
+                                },
+                                {
+                                    "path": "build.template.arguments",
+                                    "displayName": "Arguments",
+                                    "description": "Arguments lists the command line arguments to send to the internal builder command. Depending on the build method you might set this attribute instead of BuildArgs. For example: \".spec.arguments=verbose=3\". Please see the SonataFlow guides."
+                                },
+                                {
+                                    "path": "build.template.buildArgs",
+                                    "displayName": "BuildArgs",
+                                    "description": "Optional build arguments that can be set to the internal build (e.g. Docker ARG)"
+                                },
+                                {
+                                    "path": "build.template.envs",
+                                    "displayName": "Envs",
+                                    "description": "Optional environment variables to add to the internal build"
+                                },
+                                {
+                                    "path": "build.template.resources",
+                                    "displayName": "Resources",
+                                    "description": "Resources optional compute resource requirements for the builder"
+                                },
+                                {
+                                    "path": "build.template.timeout",
+                                    "displayName": "Timeout",
+                                    "description": "Timeout defines the Build maximum execution duration. The Build deadline is set to the Build start time plus the Timeout duration. If the Build deadline is exceeded, the Build context is canceled, and its phase set to BuildPhaseFailed."
+                                },
+                                {
+                                    "path": "devMode",
+                                    "displayName": "DevMode",
+                                    "description": "DevMode Attributes for running workflows in devmode (immutable, no build required)"
+                                },
+                                {
+                                    "path": "services",
+                                    "displayName": "Services",
+                                    "description": "Services attributes for deploying supporting applications like Data Index & Job Service. Only workflows without the `sonataflow.org/profile: dev` annotation will be configured to use these service(s). Setting this will override the use of any cluster-scoped services that might be defined via `SonataFlowClusterPlatform`."
+                                },
+                                {
+                                    "path": "services.dataIndex.podTemplate",
+                                    "displayName": "podTemplate",
+                                    "description": "PodTemplate describes the deployment details of this platform service instance."
+                                },
+                                {
+                                    "path": "services.jobService.podTemplate",
+                                    "displayName": "podTemplate",
+                                    "description": "PodTemplate describes the deployment details of this platform service instance."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "sonataflows.sonataflow.org",
+                            "version": "v1alpha08",
+                            "kind": "SonataFlow",
+                            "displayName": "SonataFlow",
+                            "description": "SonataFlow is the descriptor representation for a workflow application based on the CNCF Serverless Workflow specification.",
+                            "resources": [
+                                {
+                                    "name": "A Deployment for the Flow",
+                                    "kind": "Deployment",
+                                    "version": "apps/v1"
+                                },
+                                {
+                                    "name": "A Knative Serving Service for the Flow",
+                                    "kind": "Service",
+                                    "version": "serving.knative.dev/v1"
+                                },
+                                {
+                                    "name": "A Service for the Flow",
+                                    "kind": "Service",
+                                    "version": "v1"
+                                },
+                                {
+                                    "name": "A SonataFlow Build",
+                                    "kind": "SonataFlowBuild",
+                                    "version": "sonataflow.org/v1alpha08"
+                                },
+                                {
+                                    "name": "An OpenShift Route for the Flow",
+                                    "kind": "Route",
+                                    "version": "route.openshift.io/v1"
+                                },
+                                {
+                                    "name": "The ConfigMaps with Flow definition and additional configuration files",
+                                    "kind": "ConfigMap",
+                                    "version": "v1"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "address",
+                                    "displayName": "address",
+                                    "description": "Address is used as a part of Addressable interface (status.address.url) for knative"
+                                },
+                                {
+                                    "path": "endpoint",
+                                    "displayName": "endpoint",
+                                    "description": "Endpoint is an externally accessible URL of the workflow"
+                                },
+                                {
+                                    "path": "lastTimeRecoverAttempt",
+                                    "displayName": "lastTimeRecoverAttempt"
+                                },
+                                {
+                                    "path": "platform",
+                                    "displayName": "platform",
+                                    "description": "Platform displays which platform is being used by this workflow"
+                                },
+                                {
+                                    "path": "recoverFailureAttempts",
+                                    "displayName": "recoverFailureAttempts",
+                                    "description": "keeps track of how many failure recovers a given workflow had so far"
+                                },
+                                {
+                                    "path": "services",
+                                    "displayName": "services",
+                                    "description": "Services displays which platform services are being used by this workflow"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "flow",
+                                    "displayName": "flow",
+                                    "description": "Flow the workflow definition."
+                                },
+                                {
+                                    "path": "podTemplate",
+                                    "displayName": "podTemplate",
+                                    "description": "PodTemplate describes the deployment details of this SonataFlow instance."
+                                },
+                                {
+                                    "path": "resources",
+                                    "displayName": "resources",
+                                    "description": "Resources workflow resources that are linked to this workflow definition. For example, a collection of OpenAPI specification files."
+                                },
+                                {
+                                    "path": "sink",
+                                    "displayName": "sink",
+                                    "description": "Sink describes the sinkBinding details of this SonataFlow instance."
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "OpenShift Serverless Logic Kubernetes Operator for deploying workflow applications\nbased on the [CNCF Serverless Workflow specification v0.8](https://serverlessworkflow.io/).",
+                "displayName": "OpenShift Serverless Logic Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "sonataflow",
+                    "cncf",
+                    "serverless",
+                    "serverlessworkflow",
+                    "workflows"
+                ],
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://docs.openshift.com/serverless/"
+                    },
+                    {
+                        "name": "Source Repository",
+                        "url": "https://github.com/kiegroup/kogito-serverless-operator/"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Red Hat",
+                        "email": "serverless-logic-team@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.23.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-serverless-1/logic-operator-bundle@sha256:50afc0aeea749c34be4b311121fb5f934f490c0eec18d1def751ffdf8124654c"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-serverless-1/logic-rhel8-operator@sha256:05f83eb018e18141fef961a6259fccd3ae0c25dad4c626e0ec09a20fadf78c3a"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:4564ca3dc5bac80d6faddaf94c817fbbc270698a9399d8a21ee1005d85ceda56"
+        }
+    ]
+}

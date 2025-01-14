@@ -1,0 +1,718 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: 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
+  mediatype: image/png
+name: tektoncd-operator
+schema: olm.package
+---
+entries:
+- name: tektoncd-operator.v0.15.2-1
+- name: tektoncd-operator.v0.23.0-2
+  replaces: tektoncd-operator.v0.15.2-1
+- name: tektoncd-operator.v0.24.1-1
+  replaces: tektoncd-operator.v0.23.0-2
+- name: tektoncd-operator.v0.49.0
+  replaces: tektoncd-operator.v0.24.1-1
+- name: tektoncd-operator.v0.60.0
+  replaces: tektoncd-operator.v0.49.0
+- name: tektoncd-operator.v0.61.0
+  replaces: tektoncd-operator.v0.60.0
+- name: tektoncd-operator.v0.68.1
+  replaces: tektoncd-operator.v0.61.0
+- name: tektoncd-operator.v0.69.1
+  replaces: tektoncd-operator.v0.68.1
+- name: tektoncd-operator.v0.70.0
+  replaces: tektoncd-operator.v0.69.1
+name: alpha
+package: tektoncd-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:db7ec55db11a7010b0655ebb479287954c5e719f6c12eacffcd65f78a2b66d5c
+name: tektoncd-operator.v0.15.2-1
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonAddon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.15.2-1
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/manager@sha256:38aa1931f8338154bc6461acb83079c0de1595b640afb658bb1753ce50246cf4
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:db7ec55db11a7010b0655ebb479287954c5e719f6c12eacffcd65f78a2b66d5c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:8cc597ae56664c10923c8c5ca247a85780ea642017d4bf648e5222240ff9505d
+name: tektoncd-operator.v0.23.0-2
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonTrigger
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.23.0-2
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:bc04c98f9a0aee94b5be740e2818a043383475347a576e766a984933d4e8999f
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:8cc597ae56664c10923c8c5ca247a85780ea642017d4bf648e5222240ff9505d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:db62abdd60c8526e4e74754bfe2e2721ec09281ef42d367d937fb216a3ab0348
+name: tektoncd-operator.v0.24.1-1
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonTrigger
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.24.1-1
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:7e55e79a3da2fe96a61af5731abab59eb8fb33c4024e9975a391797ed7ca05dc
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:db62abdd60c8526e4e74754bfe2e2721ec09281ef42d367d937fb216a3ab0348
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:0ece04bedf01d08b7286dad564abfbe90a790a04ef80f8cbe2b534d0c8c0cd62
+name: tektoncd-operator.v0.49.0
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonResult
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonTrigger
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.49.0
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:bd055c27d897f327ddb4e846782fccfda3b1d3d2397d5c764d8038547acde391
+  name: ""
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/webhook@sha256:25374b5e15738301b1173e7397248aa46419e164a99d2d8a1343204f02e0e75d
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:0ece04bedf01d08b7286dad564abfbe90a790a04ef80f8cbe2b534d0c8c0cd62
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:5e0349cc00c88a1d997d362dc0c1750263e331cfa12f0c92169d60770cb2f981
+name: tektoncd-operator.v0.60.0
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonChain
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonHub
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonInstallerSet
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonResult
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonTrigger
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.60.0
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:22ca40497d6f820d6b2034905f30d9c13fc46cc3e113dadbe332d00656648a70
+  name: ""
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/webhook@sha256:aa13f702ea1b0fa8bf6ccd7c2b99eeebe15f8df26ad2b80ea2f24a9f5b35b211
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:5e0349cc00c88a1d997d362dc0c1750263e331cfa12f0c92169d60770cb2f981
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:720017bc4a67889286b8c68ad9a0fc4514760b765b771b413d56e424f2802f7b
+name: tektoncd-operator.v0.61.0
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonChain
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonHub
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonInstallerSet
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonResult
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonTrigger
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.61.0
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:c91ed327f06ad60b3a43a2838eee6b833b78b00ffb482a9de531f452fb90c6fa
+  name: ""
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/webhook@sha256:38698adafe8317c6846e967c92c20db205f9a5152b255a92b8190fe0f78a272f
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:720017bc4a67889286b8c68ad9a0fc4514760b765b771b413d56e424f2802f7b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:cf2cf10697eb24df1a096185c5818bf2de57b230fea24dfc83c0467e2fac66f8
+name: tektoncd-operator.v0.68.1
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonChain
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonHub
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonInstallerSet
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonResult
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonTrigger
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.68.1
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:ff84e41f326537aa8ef79976e707c6974910455700b30f2f4c05d7cc100ba557
+  name: ""
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/webhook@sha256:7a015c6f820e29fd0a4627e21c16d5111da48086fe43df1d7e6673c7216fd700
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:cf2cf10697eb24df1a096185c5818bf2de57b230fea24dfc83c0467e2fac66f8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:ac45f42c4355b010db1e88b7b65ead16a263d86822e6aa63c2cca4039558c62e
+name: tektoncd-operator.v0.69.1
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonChain
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonHub
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonInstallerSet
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonResult
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonTrigger
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.69.1
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:142c59f97aac2fba714e928012b5576476313c7cd4394b568df656b0693dbea0
+  name: ""
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/webhook@sha256:6e56a9a25b74c3758fd9d2f57aa9e2984a0a41477b1a4cde63e4e20160d02800
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:ac45f42c4355b010db1e88b7b65ead16a263d86822e6aa63c2cca4039558c62e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/tektoncd-operator@sha256:167e859ff997df85c2a29247dc6db2bc53ab9d870e45bee0d24d8126f888f18c
+name: tektoncd-operator.v0.70.0
+package: tektoncd-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonChain
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonHub
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonInstallerSet
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonPipeline
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonResult
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: operator.tekton.dev
+    kind: TektonTrigger
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: tektoncd-operator
+    version: 0.70.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "operator.tekton.dev/v1alpha1",
+            "kind": "TektonChain",
+            "metadata": {
+              "name": "chain"
+            },
+            "spec": {
+              "targetNamespace": "tekton-pipelines"
+            }
+          },
+          {
+            "apiVersion": "operator.tekton.dev/v1alpha1",
+            "kind": "TektonConfig",
+            "metadata": {
+              "name": "config"
+            },
+            "spec": {
+              "profile": "all",
+              "pruner": {
+                "keep": 100,
+                "resources": [
+                  "pipelinerun",
+                  "taskrun"
+                ],
+                "schedule": "0 8 * * *"
+              },
+              "targetNamespace": "tekton-pipelines"
+            }
+          },
+          {
+            "apiVersion": "operator.tekton.dev/v1alpha1",
+            "kind": "TektonDashboard",
+            "metadata": {
+              "name": "dashboard"
+            },
+            "spec": {
+              "targetNamespace": "tekton-pipelines"
+            }
+          },
+          {
+            "apiVersion": "operator.tekton.dev/v1alpha1",
+            "kind": "TektonHub",
+            "metadata": {
+              "name": "hub"
+            },
+            "spec": {
+              "targetNamespace": "tekton-pipelines"
+            }
+          },
+          {
+            "apiVersion": "operator.tekton.dev/v1alpha1",
+            "kind": "TektonInstallerSet",
+            "metadata": {
+              "name": "foo"
+            },
+            "spec": {
+              "manifests": []
+            }
+          },
+          {
+            "apiVersion": "operator.tekton.dev/v1alpha1",
+            "kind": "TektonPipeline",
+            "metadata": {
+              "name": "pipeline"
+            },
+            "spec": {
+              "targetNamespace": "tekton-pipelines"
+            }
+          },
+          {
+            "apiVersion": "operator.tekton.dev/v1alpha1",
+            "kind": "TektonResult",
+            "metadata": {
+              "name": "result"
+            },
+            "spec": {
+              "auth_disable": true,
+              "db_enable_auto_migration": true,
+              "db_host": "tekton-results-postgres-service.tekton-pipelines.svc.cluster.local",
+              "db_port": 5432,
+              "db_user": "result",
+              "log_level": "debug",
+              "logging_pvc_name": "tekton-logs",
+              "logs_api": true,
+              "logs_buffer_size": 32768,
+              "logs_path": "/logs",
+              "logs_type": "File",
+              "prometheus_port": 9090,
+              "server_port": 8080,
+              "targetNamespace": "tekton-pipelines",
+              "tls_hostname_override": "tekton-results-api-service.tekton-pipelines.svc.cluster.local"
+            }
+          },
+          {
+            "apiVersion": "operator.tekton.dev/v1alpha1",
+            "kind": "TektonTrigger",
+            "metadata": {
+              "name": "trigger"
+            },
+            "spec": {
+              "targetNamespace": "tekton-pipelines"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Developer Tools, Integration & Delivery
+      certified: "false"
+      containerImage: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:581b4558f9f51dbc160157a0eac865071fd2a3388cfac4bb8fd1a6e4c294dad0
+      createdAt: "2024-02-21T07:25:08Z"
+      description: Tekton Pipelines is a Kubernetes-Native CI/CD solution for building
+        CI/CD pipelines.
+      operators.operatorframework.io/builder: operator-sdk-v1.32.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/tektoncd/operator
+      support: The Tetkon Authors
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: |
+          TektonChain installs Tekton Chain on a cluster. The operator installs Tekton Chain on a cluster
+          if an instance of this CRD is created on your cluster with name `chain`. At present, the operator honors only
+          one CustomResource instance with the name `chain` to ensure only one set of Tekton Chain exists on a cluster.
+        displayName: TektonChain
+        kind: TektonChain
+        name: tektonchains.operator.tekton.dev
+        version: v1alpha1
+      - description: |
+          TektonConfig installs Tekton Pipelines, Tekton Triggers and Tekton Dashboard on a cluster. The operator installs
+          the 3 components on a cluster if an instance of this CRD is created on your cluster with name `config`.
+          At present, the operator honors only one CustomResource instance with the name `config` to ensure only one set
+          of the three components (Pipelines, Triggers, Dashboard) exists on a cluster. An instance of this CRD will automatically
+          create instances of the other CRDs (TektonPipeline, TektonDashboard and TektonTriggers).
+        displayName: TektonConfig
+        kind: TektonConfig
+        name: tektonconfigs.operator.tekton.dev
+        version: v1alpha1
+      - description: |
+          TektonDashboard installs Tekton Dashboard on a cluster. The operator installs Tekton Dashboard on a cluster
+          if an instance of this CRD is created on your cluster with name `dashboard`. At present, the operator honors only
+          one CustomResource instance with the name `dashboard` to ensure only one set of Tekton Dashboard exists on a cluster.
+        displayName: TektonDashboard
+        kind: TektonDashboard
+        name: tektondashboards.operator.tekton.dev
+        version: v1alpha1
+      - description: |
+          TektonHub installs Tekton Hub on a cluster. The operator installs Tekton Hub on a cluster
+          if an instance of this CRD is created on your cluster with name `hub`. At present, the operator honors only
+          one CustomResource instance with the name `hub` to ensure only one set of Tekton Hub exists on a cluster.
+        displayName: TektonHubs
+        kind: TektonHub
+        name: tektonhubs.operator.tekton.dev
+        version: v1alpha1
+      - description: |
+          TektonInstallerSet internal CRD used by other component reconcilers to create kubernetes resources from their
+          release manifests
+        displayName: TektonInstallerSets
+        kind: TektonInstallerSet
+        name: tektoninstallersets.operator.tekton.dev
+        version: v1alpha1
+      - description: |
+          TektonPipeline installs Tekton Pipelines on a cluster. The operator installs Tekton Pipelines on a cluster
+          if an instance of this CRD is created on your cluster with name `pipeline`. At present, the operator honors only
+          one CustomResource instance with the name `pipeline` to ensure only one set of Tekton Pipeline exists on a cluster.
+        displayName: TektonPipeline
+        kind: TektonPipeline
+        name: tektonpipelines.operator.tekton.dev
+        version: v1alpha1
+      - description: |
+          TektonResult installs Tekton Results on a cluster. The operator installs Tekton Results on a cluster
+          if an instance of this CRD is created on your cluster with name `result`. At present, the operator honors only
+          one CustomResource instance with the name `result` to ensure only one set of Tekton Results exists on a cluster.
+        displayName: TektonResults
+        kind: TektonResult
+        name: tektonresults.operator.tekton.dev
+        version: v1alpha1
+      - description: |
+          TektonTrigger installs Tekton Triggers on a cluster. The operator installs Tekton Triggers on a cluster
+          if an instance of this CRD is created on your cluster with name `trigger`. At present, the operator honors only
+          one CustomResource instance with the name `trigger` to ensure only one set of Tekton Triggers exists on a cluster.
+        displayName: TektonTriggers
+        kind: TektonTrigger
+        name: tektontriggers.operator.tekton.dev
+        version: v1alpha1
+    description: |
+      Tekton is a powerful and flexible open-source framework for creating CI/CD systems, allowing developers to build,
+      test, and deploy across cloud providers and on-premise systems.
+
+      Read more: https://tekton.dev/docs/
+
+      Tekconcd Operator makes is easy to install and maintain Tekton Pipelines, Tekton Dashboard and Tekton Triggers on
+      you cluster.
+
+      Note: This operator creates an intance of this on install (with name: cluster). So additional steps
+
+      ## Tekton Pipeline
+
+      The Tekton Pipelines project provides k8s-style resources for declaring CI/CD-style pipelines.
+
+      Tekton Pipelines are Cloud Native:
+
+      Run on Kubernetes
+      Have Kubernetes clusters as a first class type
+      Use containers as their building blocks
+      Tekton Pipelines are Decoupled:
+
+      One Pipeline can be used to deploy to any k8s cluster
+      The Tasks which make up a Pipeline can easily be run in isolation
+      Resources such as git repos can easily be swapped between runs
+      Tekton Pipelines are Typed:
+
+      The concept of typed resources means that for a resource such as an Image, implementations can easily be swapped out (e.g. building with kaniko v.s. buildkit)
+
+      ## Tekton Dashboard
+
+      Tekton Dashboard is a general purpose, web-based UI for Tekton Pipelines and Tekton triggers resources.
+
+      It allows users to manage and view Tekton resource creation, execution, and completion.
+
+      Among other things, the Tekton Dashboard supports:
+
+      Filtering resources by label
+      Realtime view of PipelineRun and TaskRun logs
+      View resource details and YAML
+      Show resources for the whole cluster or limit visibility to a particular namespace
+      Import resources directly from a git repository
+      Adding functionality through extensions, like automatically triggering pipelines on git events (GitHub and GitLab supported)
+
+      ## Tekton Triggers
+
+      Triggers is a Kubernetes Custom Resource Definition (CRD) controller that allows you to extract information from events payloads (a "trigger") to create Kubernetes resources.
+    displayName: Tektoncd Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - tekton
+    - tektoncd
+    - build
+    - pipeline
+    - cicd
+    links:
+    - name: Tekton Documentation
+      url: https://tekton.dev/
+    - name: Tekton Pipeline
+      url: https://github.com/tektoncd/pipeline
+    - name: Tekton Dashboard
+      url: https://github.com/tektoncd/dashboard
+    - name: Tekton Triggers
+      url: https://github.com/tektoncd/triggers
+    maintainers:
+    - email: tekton-dev@googlegroups.com
+      name: The Tekton Authors
+    maturity: alpha
+    minKubeVersion: 1.25.0
+    provider:
+      name: The Tekton Authors
+relatedImages:
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/operator@sha256:581b4558f9f51dbc160157a0eac865071fd2a3388cfac4bb8fd1a6e4c294dad0
+  name: ""
+- image: gcr.io/tekton-releases/github.com/tektoncd/operator/cmd/kubernetes/webhook@sha256:6175983dfd6e3de3ebcd1eb1962ed3a086d08c0b73dd9ac1b04a24db04adc12d
+  name: ""
+- image: quay.io/operatorhubio/tektoncd-operator@sha256:167e859ff997df85c2a29247dc6db2bc53ab9d870e45bee0d24d8126f888f18c
+  name: ""
+schema: olm.bundle

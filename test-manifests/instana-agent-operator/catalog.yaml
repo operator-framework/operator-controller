@@ -1,0 +1,1396 @@
+---
+defaultChannel: stable
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIzLjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA5NDUuOCA5NDUuOCIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgOTQ1LjggOTQ1Ljg7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPHN0eWxlIHR5cGU9InRleHQvY3NzIj4KCS5zdDB7ZmlsbDojQjdDMUM2O30KCS5zdDF7ZmlsbDojMTcyNDI5O30KCS5zdDJ7ZmlsbDpub25lO30KCS5zdDN7b3BhY2l0eTowLjU7ZW5hYmxlLWJhY2tncm91bmQ6bmV3ICAgIDt9Cgkuc3Q0e2NsaXAtcGF0aDp1cmwoI1NWR0lEXzJfKTt9Cgkuc3Q1e2ZpbGw6I0ZGRkZGRjt9Cgkuc3Q2e2ZpbGw6dXJsKCNTVkdJRF8zXyk7fQoJLnN0N3tmaWxsOiMyMkQ4RDg7fQo8L3N0eWxlPgo8ZyBpZD0iR3J1cHBlXzFfeEEwX0JpbGRfMV8iPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTcxMC40LDM2My4xbC0yLjUtMC41YzAuOS0xMC4yLDEuNC0yMC44LDEuMS0zMC45Yy0wLjMtMTAuOC0zLjYtNTUuOC0xMi42LTgyLjQKCQkJYy00LjUtMTMuMi05LjMtMjUuOS0xOC4yLTM3LjNjLTEtMS4yLTItMi41LTMuMS0zLjhjLTEuMS0xLjQtMy40LTAuMy0zLDEuNWMxMS41LDQ5LjUsMTEsMTA0LjcsMi45LDE1NAoJCQljLTUuMywzMi4xLTEyLjgsNjkuNS0yOS42LDk3Yy0xOC42LDMwLjQtNTIuOCwzNy41LTgzLjcsNDIuMmMtMjkuMyw0LjUtODguOCw1LjEtODguOCw1LjFzLTU5LjYtMC43LTg4LjgtNS4xCgkJCWMtMzAuOC00LjctNjUuMS0xMS44LTgzLjctNDIuMmMtMTYuOC0yNy41LTI0LjMtNjUtMjkuNi05N2MtOC4xLTQ5LjItOC42LTEwNC40LDIuOS0xNTRjMC40LTEuNy0xLjgtMi44LTMtMS41CgkJCWMtMS4xLDEuMy0yLjEsMi42LTMuMSwzLjhjLTguOSwxMS40LTEzLjcsMjQtMTguMiwzNy4zYy05LDI2LjUtMTIuMyw3MS42LTEyLjYsODIuNGMtMC4zLDEwLjEsMC4yLDIwLjcsMS4xLDMwLjlsLTIuNSwwLjUKCQkJYy00LjcsMS03LjgsNC44LTcuMSw4LjlsMTQuOSw5NC43YzAuNiw0LjEsNC44LDcuMSw5LjYsN2wxMC44LTAuM2MyLjMsNS4yLDQuOCwxMC40LDcuNiwxNS40YzYuNywxMiwxNi4zLDIwLjksMjgsMjcuOAoJCQljMTEuMiw2LjcsMjMuNSwxMC4zLDM2LjEsMTMuMWMxNC43LDMuMywyOS42LDUuMyw0NC42LDdjMy45LDAuNSwxMC42LDEuMywxNC43LDEuOGMxLDAuMSwxLjIsMS41LDAuMiwxLjgKCQkJYy0xMS43LDMuNC0zNi42LDE0LjktNDcuNCwyNS4yYy0xMCw4LjgtMTkuMSwxOC40LTI2LjcsMjkuM2MtNi41LDkuNC0xMi40LDE5LjMtMTUuMywzMC42YzAsMC4xLDAsMC4xLDAsMC4yCgkJCWMtMi40LDkuNiwzLjMsMTkuNCwxMi43LDIyLjZjNDcuNCwxNS45LDk5LjcsMjQuNywxNTQuNywyNC43czEwNy4yLTguOCwxNTQuNy0yNC43YzkuNC0zLjIsMTUuMS0xMywxMi43LTIyLjZjMC0wLjEsMC0wLjEsMC0wLjIKCQkJYy0yLjktMTEuMy04LjctMjEuMS0xNS4zLTMwLjZjLTcuNi0xMC45LTE2LjctMjAuNi0yNi43LTI5LjNjLTEwLjktMTAuMy0zNS44LTIxLjgtNDcuNC0yNS4yYy0wLjktMC4zLTAuNy0xLjcsMC4yLTEuOAoJCQljNC4xLTAuNSwxMC44LTEuMywxNC43LTEuOGMxNS0xLjgsMjkuOS0zLjcsNDQuNi03YzEyLjYtMi44LDI0LjktNi40LDM2LjEtMTMuMWMxMS43LTYuOSwyMS4zLTE1LjgsMjgtMjcuOAoJCQljMi44LTUsNS4zLTEwLjIsNy42LTE1LjRsMTAuOCwwLjNjNC44LDAuMSw4LjktMi45LDkuNi03bDE0LjktOTQuN0M3MTguMSwzNjcuOSw3MTUsMzY0LjEsNzEwLjQsMzYzLjF6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTgwOSw4MTUuMWwtMjMuOS02Ni4zbC0wLjEtMC4zYy0zLjctOS40LTEyLjctMTUuNS0yMi44LTE1LjVzLTE5LDYuMS0yMi44LDE1LjRMNzE1LjIsODE1CgkJCWMtMC43LDEuOS0wLjgsMy45LTAuNCw1LjhjMS4xLDQuOSw1LjQsOC40LDEwLjIsOC40aDMzLjJjMi45LDAsNS4zLTEuOCw2LTQuNXMtMC42LTUuNS0zLjEtNi45bC0yMC42LTExLjRsMTguMy01MC41CgkJCWMwLjYtMS40LDEuOS0yLjIsMy40LTIuMnMyLjgsMC45LDMuNCwyLjJsMjMuOCw2Ni4xYzEuNSw0LjEsNS40LDYuOSw5LjgsNi45YzEuMiwwLDIuNC0wLjIsMy41LTAuNmMyLjYtMC45LDQuNy0yLjgsNS45LTUuNAoJCQlDODA5LjgsODIwLjUsODEwLDgxNy43LDgwOSw4MTUuMXogTTE4MC44LDgxNS43Yy0zLjUtMS45LTcuNS00LjEtOS4xLTV2LTU1LjhsNy4xLTRjMi4yLTEuMiwzLjYtMy42LDMuOC02LjMKCQkJYzAuMi0zLTAuOS01LjgtMy4yLTcuNmMtMS41LTEuMi0zLjItMS40LTQuNC0xLjRoLTI3LjZjLTEuMywwLTIuOSwwLjItNC40LDEuNGMtMi4yLDEuOC0zLjQsNC42LTMuMiw3LjZjMC4yLDIuNywxLjcsNS4xLDMuOCw2LjMKCQkJbDcuMSw0djU0LjVoLTQuOGMtNS4zLDAtOS44LDQuNy05LjgsMTAuM2MwLDUuNSw0LjUsMTAuMSw5LjgsMTAuMWgzMi44YzIuOCwwLDUuMS0xLjksNS45LTQuOUMxODUuNSw4MjIsMTg0LjYsODE3LjgsMTgwLjgsODE1LjcKCQkJeiBNNjg2LjksNzMzLjFjLTUuOCwwLTEwLjUsNC43LTEwLjUsMTAuNHY2NC4zaC0yLjJjLTAuMiwwLTAuMywwLTAuMywwbC0yOS44LTYxLjVjLTMuNi03LjItMTAuNy0xMS41LTE5LjEtMTEuNWgtMTEuNAoJCQljLTYsMC0xMC44LDQuNC0xMC44LDkuOXY3NC41YzAsNS43LDQuNywxMC40LDEwLjUsMTAuNHMxMC41LTQuNywxMC41LTEwLjR2LTYzLjdoMS4yYzAuMiwwLDAuMywwLDAuMywwbDI5LjksNjIuMgoJCQljMy43LDcuNSwxMSwxMi4yLDE5LjEsMTIuMmgxMi40YzUuNiwwLDEwLjctNS4zLDEwLjctMTEuMnYtNzUuMUM2OTcuNCw3MzcuOCw2OTIuNyw3MzMuMSw2ODYuOSw3MzMuMXogTTQ4MS4zLDczNi4zaC02Ni43CgkJCWMtNS44LDAtMTAuNCw0LjUtMTAuNCwxMC4zczQuNiwxMC4zLDEwLjQsMTAuM2gyMy4xVjgxOGMwLDUuOCw0LjUsMTAuNCwxMC4zLDEwLjRzMTAuMy00LjYsMTAuMy0xMC40di02MS4xaDIyLjkKCQkJYzUuOCwwLDEwLjQtNC41LDEwLjQtMTAuM1M0ODcuMSw3MzYuMyw0ODEuMyw3MzYuM3ogTTI4Ny40LDczNC45Yy01LjcsMC0xMC4zLDQuNy0xMC4zLDEwLjR2NjIuNWgtMi4yYy0wLjIsMC0wLjMsMC0wLjMsMAoJCQlsLTI5LjgtNjEuNWMtMy42LTcuMi0xMC43LTExLjUtMTkuMS0xMS41aC0xMS40Yy02LDAtMTAuOCw0LjQtMTAuOCw5Ljl2NzQuNWMwLDUuNyw0LjcsMTAuNCwxMC41LDEwLjRzMTAuNS00LjcsMTAuNS0xMC40di02My43CgkJCWgxLjJjMC4yLDAsMC4zLDAsMC4zLDBsMjkuOSw2Mi4yYzMuNyw3LjUsMTEsMTIuMiwxOS4xLDEyLjJoMTIuNGM1LjUsMCwxMC40LTUuMiwxMC40LTExLjJ2LTczLjMKCQkJQzI5Ny44LDczOS42LDI5My4xLDczNC45LDI4Ny40LDczNC45eiBNNTYwLjksNzQ4LjhsLTAuMS0wLjNjLTMuNy05LjQtMTIuNy0xNS41LTIyLjgtMTUuNXMtMTksNi4xLTIyLjgsMTUuNEw0OTEsODE1LjEKCQkJYy0wLjcsMS45LTAuOCwzLjktMC40LDUuOGMxLjEsNC45LDUuNCw4LjQsMTAuMiw4LjRINTM0YzIuOSwwLDUuMy0xLjgsNi00LjVzLTAuNi01LjUtMy4xLTYuOWwtMjAuNi0xMS40bDE4LjMtNTAuNQoJCQljMC42LTEuMywxLjktMi4yLDMuNC0yLjJzMi44LDAuOSwzLjQsMi4ybDIzLjgsNjYuMWMxLjUsNC4xLDUuNCw2LjksOS44LDYuOWMxLjIsMCwyLjQtMC4yLDMuNS0wLjZjNS40LTEuOSw4LjItNy45LDYuMy0xMy4zCgkJCUw1NjAuOSw3NDguOHogTTM3OC4zLDc4MC42bC0zMi0xNC43Yy0yLjktMS4yLTcuOC0zLjgtNy44LTcuM2MwLTIuMiwxLjgtNCw0LTRoMjhjMS43LDAsMywwLjgsMy43LDIuNGMxLjgsNC4zLDUuMiw2LjcsOS40LDYuNwoJCQljMSwwLDIuMS0wLjIsMy0wLjVjMi41LTAuOCw0LjYtMi42LDUuOC00LjljMS4yLTIuNCwxLjQtNSwwLjYtNy42Yy0zLjQtMTAuNS0xMS4yLTE2LTIyLjQtMTZoLTI4Yy0xMy4xLDAtMjMuOCwxMC43LTIzLjgsMjMuOAoJCQljMCwxMSw3LDIwLDE5LjcsMjUuNGwzMi4xLDE0LjhjMS4zLDAuNSw3LjcsMy4zLDcuNyw3LjJjMCwyLjItMS44LDQtNCw0aC0zNC41Yy0xLjksMC0zLjgtMS4yLTQuMy0yLjhjLTEuMy00LjEtNS4xLTYuOS05LjQtNi45CgkJCWMtMSwwLTIuMSwwLjItMy4xLDAuNWMtMi41LDAuOC00LjYsMi42LTUuOCw0LjljLTEuMSwyLjItMS40LDQuOC0wLjYsNy41YzIuOSwxMC43LDExLjIsMTYuNSwyMy4xLDE2LjVoMzQuNQoJCQljMTMuMSwwLDIzLjgtMTAuNywyMy44LTIzLjhDMzk4LDc5NS4xLDM5MC44LDc4NS44LDM3OC4zLDc4MC42eiIvPgoJCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik03MTAuNCwzNjMuMWwtMi41LTAuNWMwLjktMTAuMiwxLjQtMjAuOCwxLjEtMzAuOWMtMC4zLTEwLjgtMy42LTU1LjgtMTIuNi04Mi40CgkJCWMtNC41LTEzLjItOS4zLTI1LjktMTguMi0zNy4zYy0xLTEuMi0yLTIuNS0zLjEtMy44Yy0xLjEtMS40LTMuNC0wLjMtMywxLjVjMTEuNSw0OS41LDExLDEwNC43LDIuOSwxNTQKCQkJYy01LjMsMzIuMS0xMi44LDY5LjUtMjkuNiw5N2MtMTguNiwzMC40LTUyLjgsMzcuNS04My43LDQyLjJjLTI5LjMsNC41LTg4LjgsNS4xLTg4LjgsNS4xcy01OS42LTAuNy04OC44LTUuMQoJCQljLTMwLjgtNC43LTY1LjEtMTEuOC04My43LTQyLjJjLTE2LjgtMjcuNS0yNC4zLTY1LTI5LjYtOTdjLTguMS00OS4yLTguNi0xMDQuNCwyLjktMTU0YzAuNC0xLjctMS44LTIuOC0zLTEuNQoJCQljLTEuMSwxLjMtMi4xLDIuNi0zLjEsMy44Yy04LjksMTEuNC0xMy43LDI0LTE4LjIsMzcuM2MtOSwyNi41LTEyLjMsNzEuNi0xMi42LDgyLjRjLTAuMywxMC4xLDAuMiwyMC43LDEuMSwzMC45bC0yLjUsMC41CgkJCWMtNC43LDEtNy44LDQuOC03LjEsOC45bDE0LjksOTQuN2MwLjYsNC4xLDQuOCw3LjEsOS42LDdsMTAuOC0wLjNjMi4zLDUuMiw0LjgsMTAuNCw3LjYsMTUuNGM2LjcsMTIsMTYuMywyMC45LDI4LDI3LjgKCQkJYzExLjIsNi43LDIzLjUsMTAuMywzNi4xLDEzLjFjMTQuNywzLjMsMjkuNiw1LjMsNDQuNiw3YzMuOSwwLjUsMTAuNiwxLjMsMTQuNywxLjhjMSwwLjEsMS4yLDEuNSwwLjIsMS44CgkJCWMtMTEuNywzLjQtMzYuNiwxNC45LTQ3LjQsMjUuMmMtMTAsOC44LTE5LjEsMTguNC0yNi43LDI5LjNjLTYuNSw5LjQtMTIuNCwxOS4zLTE1LjMsMzAuNmMwLDAuMSwwLDAuMSwwLDAuMgoJCQljLTIuNCw5LjYsMy4zLDE5LjQsMTIuNywyMi42YzQ3LjQsMTUuOSw5OS43LDI0LjcsMTU0LjcsMjQuN3MxMDcuMi04LjgsMTU0LjctMjQuN2M5LjQtMy4yLDE1LjEtMTMsMTIuNy0yMi42YzAtMC4xLDAtMC4xLDAtMC4yCgkJCWMtMi45LTExLjMtOC43LTIxLjEtMTUuMy0zMC42Yy03LjYtMTAuOS0xNi43LTIwLjYtMjYuNy0yOS4zYy0xMC45LTEwLjMtMzUuOC0yMS44LTQ3LjQtMjUuMmMtMC45LTAuMy0wLjctMS43LDAuMi0xLjgKCQkJYzQuMS0wLjUsMTAuOC0xLjMsMTQuNy0xLjhjMTUtMS44LDI5LjktMy43LDQ0LjYtN2MxMi42LTIuOCwyNC45LTYuNCwzNi4xLTEzLjFjMTEuNy02LjksMjEuMy0xNS44LDI4LTI3LjgKCQkJYzIuOC01LDUuMy0xMC4yLDcuNi0xNS40bDEwLjgsMC4zYzQuOCwwLjEsOC45LTIuOSw5LjYtN2wxNC45LTk0LjdDNzE4LjEsMzY3LjksNzE1LDM2NC4xLDcxMC40LDM2My4xeiIvPgoJCTxnIGNsYXNzPSJzdDMiPgoJCQk8Zz4KCQkJCTxkZWZzPgoJCQkJCTxwYXRoIGlkPSJTVkdJRF8xXyIgZD0iTTY0MC4zLDYyNS42Yy0yLjktMTEuMy04LjctMjEuMS0xNS4zLTMwLjZjLTcuNi0xMC45LTE2LjctMjAuNi0yNi43LTI5LjMKCQkJCQkJYy0xMC45LTEwLjMtMzUuOC0yMS44LTQ3LjQtMjUuMmMtMC45LTAuMy0wLjctMS43LDAuMi0xLjhjNC4xLTAuNS00MC44LDEuNy03OC4yLDEuN3MtODIuMy0yLjItNzguMi0xLjcKCQkJCQkJYzEsMC4xLDEuMiwxLjUsMC4yLDEuOGMtMTEuNywzLjQtMzYuNiwxNC45LTQ3LjQsMjUuMmMtMTAsOC44LTE5LjEsMTguNC0yNi43LDI5LjNjLTYuNSw5LjQtMTIuNCwxOS4zLTE1LjMsMzAuNgoJCQkJCQljMCwwLjEsMCwwLjEsMCwwLjJjLTIuNCw5LjYsMy4zLDE5LjQsMTIuNywyMi42YzQ3LjQsMTUuOSw5OS43LDI0LjcsMTU0LjcsMjQuN3MxMDcuMi04LjgsMTU0LjctMjQuNwoJCQkJCQljOS40LTMuMiwxNS4xLTEzLDEyLjctMjIuNkM2NDAuMyw2MjUuNyw2NDAuMyw2MjUuNiw2NDAuMyw2MjUuNnoiLz4KCQkJCTwvZGVmcz4KCQkJCTxjbGlwUGF0aCBpZD0iU1ZHSURfMl8iPgoJCQkJCTx1c2UgeGxpbms6aHJlZj0iI1NWR0lEXzFfIiAgc3R5bGU9Im92ZXJmbG93OnZpc2libGU7Ii8+CgkJCQk8L2NsaXBQYXRoPgoJCQkJPGcgY2xhc3M9InN0NCI+CgkJCQkJCgkJCQkJCTxpbWFnZSBzdHlsZT0ib3ZlcmZsb3c6dmlzaWJsZTtvcGFjaXR5OjAuNzU7ZW5hYmxlLWJhY2tncm91bmQ6bmV3ICAgIDsiIHdpZHRoPSI1NzAiIGhlaWdodD0iMjE3IiB4bGluazpocmVmPSJFRTIyMjFEQURDNTc2RDE2LnBuZyIgIHRyYW5zZm9ybT0ibWF0cml4KDAuOTk4MiAwIDAgMC45OTU0IDE4OC42MTY3IDQxMi42ODI1KSI+CgkJCQkJPC9pbWFnZT4KCQkJCQk8Zz4KCQkJCQkJPGVsbGlwc2UgY2xhc3M9InN0NSIgY3g9IjQ3MyIgY3k9IjQ5Ny41IiByeD0iMjE1LjciIHJ5PSIzOC44Ii8+CgkJCQkJPC9nPgoJCQkJPC9nPgoJCQk8L2c+CgkJPC9nPgoJCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0yNjUuMiwyNjEuNmMtMi41LDM3LjYtMC4yLDc1LjMsNy4xLDExMi4yYzYuOCwzNC4xLDEyLjIsNzAuMSwzNS42LDk4LjJjMjAsMjQsNTUuNywzMC43LDg0LDM0LjEKCQkJYzI2LjgsMy4yLDgxLDMuOSw4MSwzLjlzNTQuMi0wLjcsODEtMy45YzI4LjQtMy4zLDY0LTEwLjEsODQtMzQuMWMyMy40LTI4LjEsMjguOC02NC4xLDM1LjYtOTguMmM3LjQtMzYuOSw5LjYtNzQuNiw3LjEtMTEyLjIKCQkJYy0wLjktMTQuNC0yLjgtMjkuMi01LjMtNDMuNmMtMS41LTktNi4xLTE3LjItMTIuOC0yMy4zYy04LjItNy41LTE4LjktMTYuMy0zMy4zLTI2LjZjLTEzLjMtOS42LTI3LjEtMTguNC00Mi4yLTI1LjIKCQkJYy0xOS40LTguOC0zOS40LTE2LTYwLjMtMjAuNGMtMTYuMi0zLjUtMzkuMi02LjUtNTQtNi41cy0zNy43LDMtNTQsNi41Yy0yMC45LDQuNS00MC44LDExLjYtNjAuMywyMC40CgkJCWMtMTUsNi44LTI4LjksMTUuNi00Mi4yLDI1LjJjLTE0LjQsMTAuNC0yNS4xLDE5LjEtMzMuMywyNi42Yy02LjcsNi4xLTExLjIsMTQuMy0xMi43LDIzLjNDMjY4LjEsMjMyLjUsMjY2LjIsMjQ3LjIsMjY1LjIsMjYxLjZ6CgkJCSIvPgoJCQoJCQk8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzNfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjMwNy40OTQ2IiB5MT0iNTA2LjcxMjMiIHgyPSI1NTcuNDM3IiB5Mj0iODA3LjQ3MjgiIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMSAwIDAgLTEgMCA5NDQuOCkiPgoJCQk8c3RvcCAgb2Zmc2V0PSIwIiBzdHlsZT0ic3RvcC1jb2xvcjojNDM1NjVFIi8+CgkJCTxzdG9wICBvZmZzZXQ9IjEiIHN0eWxlPSJzdG9wLWNvbG9yOiMxNzI0MjkiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxwYXRoIGNsYXNzPSJzdDYiIGQ9Ik01NDIuNCwyMzguNWM0NSwwLDg4LjQsNywxMjkuMSwyMGMtMS0xMi4xLTIuNi0yNC40LTQuNi0zNi41Yy0xLjUtOC42LTUuOC0xNi40LTEyLjItMjIuMwoJCQljLTcuOS03LjItMTguMS0xNS42LTMxLjktMjUuNWMtMTIuOC05LjItMjYtMTcuNi00MC40LTI0LjFjLTE4LjYtOC40LTM3LjctMTUuMy01Ny43LTE5LjZjLTE1LjUtMy4zLTM3LjYtNi4yLTUxLjctNi4yCgkJCXMtMzYuMiwyLjktNTEuNyw2LjJjLTIwLDQuMy0zOS4xLDExLjItNTcuNywxOS42Yy0xNC40LDYuNS0yNy42LDE1LTQwLjQsMjQuMWMtMTMuOCw5LjktMjQuMSwxOC4zLTMxLjksMjUuNQoJCQljLTYuNCw1LjktMTAuNywxMy43LTEyLjIsMjIuM2MtMi40LDEzLjktNC4xLDI4LTUsNDEuOGMtMS41LDIzLjItMS4xLDQ2LjQsMS4yLDY5LjRDMzQ4LjEsMjc0LDQ0MS4xLDIzOC41LDU0Mi40LDIzOC41eiIvPgoJCTxnPgoJCQkKCQkJCTxlbGxpcHNlIHRyYW5zZm9ybT0ibWF0cml4KDAuOTk3NiAtNi45NzE1ODZlLTAyIDYuOTcxNTg2ZS0wMiAwLjk5NzYgLTI4LjA1MTYgMjYuMDU5MykiIGNsYXNzPSJzdDciIGN4PSIzNTkuMyIgY3k9IjQxNC45IiByeD0iMjMuNiIgcnk9IjI5LjkiLz4KCQkJPHBhdGggY2xhc3M9InN0NyIgZD0iTTU4NC40LDQ0NC44YzEzLDAuOCwyNC41LTExLjksMjUuOC0yOC40cy04LjMtMzAuNi0yMS4yLTMxLjRjLTEzLTAuOC0yNC41LDExLjktMjUuOCwyOC40CgkJCQlTNTcxLjUsNDQzLjksNTg0LjQsNDQ0Ljh6Ii8+CgkJPC9nPgoJPC9nPgo8L2c+Cjwvc3ZnPgo=
+  mediatype: image/svg+xml
+name: instana-agent-operator
+schema: olm.package
+---
+entries:
+- name: instana-agent-operator.v1.0.0
+- name: instana-agent-operator.v1.0.2
+  replaces: instana-agent-operator.v1.0.0
+- name: instana-agent-operator.v1.0.4
+  replaces: instana-agent-operator.v1.0.2
+- name: instana-agent-operator.v1.0.5
+  replaces: instana-agent-operator.v1.0.4
+- name: instana-agent-operator.v1.0.6
+- name: instana-agent-operator.v1.0.7
+- name: instana-agent-operator.v1.0.8
+- name: instana-agent-operator.v1.0.9
+  replaces: instana-agent-operator.v1.0.5
+  skips:
+  - instana-agent-operator.v1.0.6
+  - instana-agent-operator.v1.0.7
+  - instana-agent-operator.v1.0.8
+name: beta
+package: instana-agent-operator
+schema: olm.channel
+---
+entries:
+- name: instana-agent-operator.v1.0.0
+- name: instana-agent-operator.v1.0.2
+  replaces: instana-agent-operator.v1.0.0
+- name: instana-agent-operator.v1.0.4
+  replaces: instana-agent-operator.v1.0.2
+- name: instana-agent-operator.v1.0.5
+  replaces: instana-agent-operator.v1.0.4
+- name: instana-agent-operator.v1.0.6
+- name: instana-agent-operator.v1.0.7
+- name: instana-agent-operator.v1.0.8
+- name: instana-agent-operator.v1.0.9
+  replaces: instana-agent-operator.v1.0.5
+  skips:
+  - instana-agent-operator.v1.0.6
+  - instana-agent-operator.v1.0.7
+  - instana-agent-operator.v1.0.8
+- name: instana-agent-operator.v2.0.0
+  replaces: instana-agent-operator.v1.0.9
+  skipRange: <2.0.0
+- name: instana-agent-operator.v2.0.1
+  replaces: instana-agent-operator.v2.0.0
+- name: instana-agent-operator.v2.0.10
+  replaces: instana-agent-operator.v2.0.9
+- name: instana-agent-operator.v2.0.11
+  replaces: instana-agent-operator.v2.0.10
+- name: instana-agent-operator.v2.0.12
+  replaces: instana-agent-operator.v2.0.11
+- name: instana-agent-operator.v2.0.13
+  replaces: instana-agent-operator.v2.0.12
+- name: instana-agent-operator.v2.0.14
+  replaces: instana-agent-operator.v2.0.13
+- name: instana-agent-operator.v2.0.15
+  replaces: instana-agent-operator.v2.0.14
+- name: instana-agent-operator.v2.0.16
+  replaces: instana-agent-operator.v2.0.15
+- name: instana-agent-operator.v2.0.17
+  replaces: instana-agent-operator.v2.0.16
+- name: instana-agent-operator.v2.0.18
+  replaces: instana-agent-operator.v2.0.17
+- name: instana-agent-operator.v2.0.19
+  replaces: instana-agent-operator.v2.0.18
+- name: instana-agent-operator.v2.0.2
+  replaces: instana-agent-operator.v2.0.1
+- name: instana-agent-operator.v2.0.27
+  replaces: instana-agent-operator.v2.0.19
+- name: instana-agent-operator.v2.0.3
+  replaces: instana-agent-operator.v2.0.2
+- name: instana-agent-operator.v2.0.30
+  replaces: instana-agent-operator.v2.0.27
+- name: instana-agent-operator.v2.0.31
+  replaces: instana-agent-operator.v2.0.30
+- name: instana-agent-operator.v2.0.32
+  replaces: instana-agent-operator.v2.0.31
+- name: instana-agent-operator.v2.0.4
+  replaces: instana-agent-operator.v2.0.3
+- name: instana-agent-operator.v2.0.5
+  replaces: instana-agent-operator.v2.0.4
+- name: instana-agent-operator.v2.0.7
+  replaces: instana-agent-operator.v2.0.5
+- name: instana-agent-operator.v2.0.8
+  replaces: instana-agent-operator.v2.0.7
+- name: instana-agent-operator.v2.0.9
+  replaces: instana-agent-operator.v2.0.8
+- name: instana-agent-operator.v2.1.0
+  replaces: instana-agent-operator.v2.0.32
+- name: instana-agent-operator.v2.1.1
+  replaces: instana-agent-operator.v2.1.0
+- name: instana-agent-operator.v2.1.2
+  replaces: instana-agent-operator.v2.1.1
+- name: instana-agent-operator.v2.1.5
+  replaces: instana-agent-operator.v2.1.2
+- name: instana-agent-operator.v2.1.6
+  replaces: instana-agent-operator.v2.1.5
+- name: instana-agent-operator.v2.1.7
+  replaces: instana-agent-operator.v2.1.6
+- name: instana-agent-operator.v2.1.8
+  replaces: instana-agent-operator.v2.1.7
+- name: instana-agent-operator.v2.1.9
+  replaces: instana-agent-operator.v2.1.8
+name: stable
+package: instana-agent-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:97c0a61e9846696b3767f827ba9072b6313c31e2827ee61f837f2729181adf10
+name: instana-agent-operator.v1.0.0
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 1.0.0
+relatedImages:
+- image: instana/instana-agent-operator:1.0.0
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:97c0a61e9846696b3767f827ba9072b6313c31e2827ee61f837f2729181adf10
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:33910bea67c6191df638a5e0479c56577d2021d34323a14692ef36c9bec2b1e5
+name: instana-agent-operator.v1.0.2
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 1.0.2
+relatedImages:
+- image: instana/instana-agent-operator:1.0.2
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:33910bea67c6191df638a5e0479c56577d2021d34323a14692ef36c9bec2b1e5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:5d4518e5bc51570eb2502e22d0f927510ef611ec18696e85835cba3df60a72ce
+name: instana-agent-operator.v1.0.4
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 1.0.4
+relatedImages:
+- image: instana/instana-agent-operator:1.0.4
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:5d4518e5bc51570eb2502e22d0f927510ef611ec18696e85835cba3df60a72ce
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:08a3784c78b422154b351edbbf7e525b53a125299caf6f68d438010360e58a70
+name: instana-agent-operator.v1.0.5
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 1.0.5
+relatedImages:
+- image: instana/instana-agent-operator:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:08a3784c78b422154b351edbbf7e525b53a125299caf6f68d438010360e58a70
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:a597ed577db4f19ff1520da48cb80a78529a86b67139465937d2ae8cb3cffdec
+name: instana-agent-operator.v1.0.6
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 1.0.6
+relatedImages:
+- image: instana/instana-agent-operator:1.0.6
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:a597ed577db4f19ff1520da48cb80a78529a86b67139465937d2ae8cb3cffdec
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:8e947491613a01c114679972a362d2c90719c3ce2025ec832a4ccc5edbb8c120
+name: instana-agent-operator.v1.0.7
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 1.0.7
+relatedImages:
+- image: instana/instana-agent-operator:1.0.7
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:8e947491613a01c114679972a362d2c90719c3ce2025ec832a4ccc5edbb8c120
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:95a0167dba9f89cf59b87a51cd02d000576d8d4dac8f6a5cfe83c7ff69888668
+name: instana-agent-operator.v1.0.8
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 1.0.8
+relatedImages:
+- image: instana/instana-agent-operator:1.0.8
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:95a0167dba9f89cf59b87a51cd02d000576d8d4dac8f6a5cfe83c7ff69888668
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:728dad0f9dd99732de6ed948848c14a06440a2d25f5c83256c6b04dc9b5bb529
+name: instana-agent-operator.v1.0.9
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 1.0.9
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+            {
+                "apiVersion": "instana.io/v1beta1",
+                "kind": "InstanaAgent",
+                "metadata": {
+                    "name": "instana-agent",
+                    "namespace": "instana-agent"
+                },
+                "spec": {
+                    "agent.zone.name": "my-zone",
+                    "agent.key": "replace-me",
+                    "agent.endpoint.host": "ingress-red-saas.instana.io",
+                    "agent.endpoint.port": 443,
+                    "agent.env": {
+                        "INSTANA_AGENT_TAGS": "example"
+                    },
+                    "cluster.name": "replace-me",
+                    "config.files": {
+                        "configuration.yaml": "# You can leave this empty, or use this to configure your instana agent.\n# See https://docs.instana.io/setup_and_manage/host_agent/on/kubernetes/\n"
+                    }
+                }
+            }
+        ]
+      capabilities: Basic Install
+      categories: Monitoring,OpenShift Optional
+      certified: "false"
+      containerImage: instana/instana-agent-operator:1.0.9
+      createdAt: "2021-10-08T07:41:13Z"
+      description: Fully automated Application Performance Monitoring (APM) for microservices.
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/instana/instana-agent-operator
+      support: Instana
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Instana Agent
+        displayName: Instana Agent
+        kind: InstanaAgent
+        name: agents.instana.io
+        specDescriptors:
+        - description: Name of the Kubernetes Cluster
+          displayName: zone
+          path: agent.zone.name
+        - description: Your Instana API key
+          displayName: key
+          path: agent.key
+        - description: Endpoint hostname the Instana agent should connect to. Might
+            be adjusted depending on your deployment type (SaaS or On-Premises) and
+            region.
+          displayName: endpoint.host
+          path: agent.endpoint.host
+        - description: Endpoint port the Instana agent should connect to. Might be
+            adjusted depending on your deployment type (SaaS or On-Premises) and region.
+          displayName: endpoint.port
+          path: agent.endpoint.port
+        - description: configuration.yaml file that will be copied into the Instana
+            agent instances.
+          displayName: configuration.yaml
+          path: config.files.configuration.yaml
+        version: v1beta1
+    description: |
+      # Instana
+
+      Instana is an [APM solution](https://www.instana.com/product-overview/) built for microservices that enables IT Ops to build applications faster and deliver higher quality services by automating monitoring, tracing and root cause analysis. The solution is optimized for [Kubernetes](https://www.instana.com/automatic-kubernetes-monitoring/) and [OpenShift](https://www.instana.com/blog/automatic-root-cause-analysis-for-openshift-applications/).
+
+      ## Instana Agent Operator
+
+      This is the Kubernetes Operator for installing the Instana Agent on Kubernetes or OpenShift.
+
+      ## Prerequisites for OpenShift
+
+      Before the agent will be able to run in OpenShift, you need to perform a couple of extra configuration steps.
+
+      You need to set up a project for the Instana Agent and configure it's permissions.
+
+      The project you create here needs to be the namespace where you create the Instana Agent custom resource that the operator will use to deploy the agent.
+
+      For example, create the `instana-agent` project:
+
+          oc new-project instana-agent
+
+      Then, ensure the `instana-agent` service account is in the privileged security context:
+
+          oc adm policy add-scc-to-user privileged -z instana-agent
+
+      This service account will be created by the operator.
+
+      Now you can proceed with installing the operator for the Instana agent.
+
+      ## Installation and Configuration
+
+      First, install this operator from [OperatorHub.io](https://operatorhub.io/), [OpenShift Container Platform](https://www.openshift.com/), or [OKD](https://www.okd.io/).
+
+      Second, create the target namespace where the Instana agent should be installed. The agent does not need to run in the same namespace as the operator. Most users create a new namespace `instana-agent` for running the agents.
+
+      Third, create a custom resource with the agent configuration in the target namespace. The operator will pick up the custom resource and install the Instana agent accordingly.
+
+      The following is a minimal template of the custom resource:
+
+      ```yaml
+      apiVersion: instana.io/v1beta1
+      kind: InstanaAgent
+      metadata:
+        name: instana-agent
+        namespace: instana-agent
+      spec:
+        agent.zone.name: my-zone # (optional) name of the zone of the host
+        agent.key: replace-me # replace with your Instana agent key
+        agent.endpoint.host: ingress-red-saas.instana.io # the monitoring ingress endpoint
+        agent.endpoint.port: 443 # the monitoring ingress endpoint port, wrapped in quotes
+        agent.env:
+          INSTANA_AGENT_TAGS: example
+        cluster.name: replace-me # replace with the name of your Kubernetes cluster
+        config.files:
+          configuration.yaml: |
+            # You can leave this empty, or use this to configure your instana agent.
+            # See https://docs.instana.io/setup_and_manage/host_agent/on/kubernetes/
+      ```
+
+      Save the template in a file `instana-agent.yaml` and edit the following values:
+
+      * If your target namespace is not `instana-agent`, replace the `namespace:` accordingly.
+      * `agent.key` must be set with your Instana agent key.
+      * `agent.endpoint` must be set with the monitoring ingress endpoint, generally either `saas-us-west-2.instana.io` or `saas-eu-west-1.instana.io`.
+      * `agent.endpoint.port` must be set with the monitoring ingress port, generally "443" (wrapped in quotes).
+      * `agent.zone.name` should be set with the name of the Kubernetes cluster that is be displayed in Instana.
+
+      For advanced configuration, you can edit the contents of the `configuration.yaml` file. View documentation [here](https://docs.instana.io/setup_and_manage/host_agent/on/kubernetes/).
+
+      Apply the custom resource with `kubectl apply -f instana-agent.yaml`. After some time, you should see `instana-agent` Pods being created on each node of your cluster, and your cluster should show on the infrastructure map on your Instana Web interface.
+
+      ## Uninstalling
+
+      In order to uninstall the Instana agent, simply remove the custom resource with `kubectl delete -f instana-agent.yaml`.
+
+      ## Source Code
+
+      The Instana agent operator is an open source project hosted on [https://github.com/instana/instana-agent-operator](https://github.com/instana/instana-agent-operator/).
+    displayName: Instana Agent Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - monitoring
+    - APM
+    - Instana
+    links:
+    - name: GitHub Repository
+      url: https://github.com/instana/instana-agent-operator
+    maintainers:
+    - email: support@instana.com
+      name: Instana
+    maturity: beta
+    minKubeVersion: 1.11.0
+    provider:
+      name: Instana
+relatedImages:
+- image: instana/instana-agent-operator:1.0.9
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:728dad0f9dd99732de6ed948848c14a06440a2d25f5c83256c6b04dc9b5bb529
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:b59a4dcb2a06a618398832ed85916e8931d11d0e2ad859ba58fe9a0302df85d2
+name: instana-agent-operator.v2.0.0
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.0
+relatedImages:
+- image: instana/instana-agent-operator:2.0.0
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:b59a4dcb2a06a618398832ed85916e8931d11d0e2ad859ba58fe9a0302df85d2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:d6543e1192e79e566668eb78f85b1c0e2ef5db3b545a7e9181f3d0a5f09932d0
+name: instana-agent-operator.v2.0.1
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.1
+relatedImages:
+- image: instana/instana-agent-operator:2.0.1
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:d6543e1192e79e566668eb78f85b1c0e2ef5db3b545a7e9181f3d0a5f09932d0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:2fcf5a346e1e5ac062fe059b6d2b68770ce101efd0431f6f7450cdcab6be4dae
+name: instana-agent-operator.v2.0.10
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.10
+relatedImages:
+- image: icr.io/instana/agent@sha256:449a433413c9a1c9241eeb5b3d155dc2312ce7254d496346260c7f49193f2322
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:61417f330b2eb7eff88ccb9812921b65a31bf350fe9efdcb6663a29759c47fe4
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:2fcf5a346e1e5ac062fe059b6d2b68770ce101efd0431f6f7450cdcab6be4dae
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:057ff62ab972a664c0bda993a4abd4e4bd2460439a4048df19b964114fbb3ac9
+name: instana-agent-operator.v2.0.11
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.11
+relatedImages:
+- image: icr.io/instana/agent@sha256:77a334d75475eee869bd293d3ace99aa15d98402a83cd38e9350217ac061beba
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:7546cc32d4dd1c4730bc24618a74fe4f607853945cfb2c65f216f1045bbeb907
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:057ff62ab972a664c0bda993a4abd4e4bd2460439a4048df19b964114fbb3ac9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:24b70b714d932a0650e92d9f757eddc2a1fe84f5d3dd59db4a753689cf8ec449
+name: instana-agent-operator.v2.0.12
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.12
+relatedImages:
+- image: icr.io/instana/agent@sha256:3594704f6774f22cccb12c98e4baa0171e8b08fafb46495c0e2fa70d80b4e759
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:fc41c8c1aa60d82c151171e684db4b1cb08f19949d28aa9b024d667be07061a4
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:24b70b714d932a0650e92d9f757eddc2a1fe84f5d3dd59db4a753689cf8ec449
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:526bf5ce90680fa65662f62e611b8539075e72cb55b782b4a93a9974d64129fd
+name: instana-agent-operator.v2.0.13
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.13
+relatedImages:
+- image: icr.io/instana/agent@sha256:bfc4fd3c7bf34bbcc713b05f437a001595f9e82c60b252ebb8c3bc5d22503311
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:818eb8c4886c68db4755c735dc106d3161f3eab04350b57528bc5578daf7ae15
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:526bf5ce90680fa65662f62e611b8539075e72cb55b782b4a93a9974d64129fd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:5bd3e82301524b53ad2e960a6657a4da7f89633659815bcb3d56affbc71c70fd
+name: instana-agent-operator.v2.0.14
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.14
+relatedImages:
+- image: icr.io/instana/agent@sha256:025523cda4b845ff1fcc90cbec21ac2aaca21319606fb079e0560dbf5916f3cb
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:cc9df0a8fc21454557346a85fed19db64f198dee89c90662dd0a7eeb18d01400
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:5bd3e82301524b53ad2e960a6657a4da7f89633659815bcb3d56affbc71c70fd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:04286da65733f544aea01823835a2bead8813a7c06b2dda043ad64486b814c92
+name: instana-agent-operator.v2.0.15
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.15
+relatedImages:
+- image: icr.io/instana/agent@sha256:91b75e700e62eb912691a27a90836aa543bdbd8b490819c9ae117e243addc806
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:076a561288d7656ed1e8e16a8e0c5a48e52b076ac2d3d02fd42616fdea1e7aa4
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:04286da65733f544aea01823835a2bead8813a7c06b2dda043ad64486b814c92
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:9fb3767103d8ea975ac694b3c16ec54614b614c00cf92669c45788c26b081ee7
+name: instana-agent-operator.v2.0.16
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.16
+relatedImages:
+- image: icr.io/instana/agent@sha256:91b75e700e62eb912691a27a90836aa543bdbd8b490819c9ae117e243addc806
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:c7ad38ffd6350944ddd3a57d8534bffbe9adb7db30c27e26deabadd9edb499db
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:9fb3767103d8ea975ac694b3c16ec54614b614c00cf92669c45788c26b081ee7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:4f5924bc714415366084c87ac4d8c5bc5c4754f47cec0da01e998cbc9f6fdb6f
+name: instana-agent-operator.v2.0.17
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.17
+relatedImages:
+- image: icr.io/instana/agent@sha256:91b75e700e62eb912691a27a90836aa543bdbd8b490819c9ae117e243addc806
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:0c252ff43b19c48fab4612590dafa13aa2e816f248a3053629c6ec148bded7ec
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:4f5924bc714415366084c87ac4d8c5bc5c4754f47cec0da01e998cbc9f6fdb6f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:22696b345d72249b2d716af7df9bd86bd9eca50ad4d6adb3ab597465a612dd33
+name: instana-agent-operator.v2.0.18
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.18
+relatedImages:
+- image: icr.io/instana/agent@sha256:72cf304cbd28766853d007cca98464495bf1ba21895edad0d2fe21910cc986c7
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:e64dfaea152f29125d91a1e07d23de7723d75a4d0e08db9dd244b3da4ab674a7
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:22696b345d72249b2d716af7df9bd86bd9eca50ad4d6adb3ab597465a612dd33
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:c5f4fd2f2c7c1e3244263433ab13bb6b6b6032cc1d3c25f07cdfffa99de71bd3
+name: instana-agent-operator.v2.0.19
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.19
+relatedImages:
+- image: icr.io/instana/agent@sha256:04d5336218ada24fd6a5bd3c81a34f7d24ba821b16b0178b45e637395c076d55
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:346009d5c6c7e8760e0bd9b7cae7e29c91b3f06e494582c4123b060a21f250ff
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:c5f4fd2f2c7c1e3244263433ab13bb6b6b6032cc1d3c25f07cdfffa99de71bd3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:fec637d6809322c9d60160b899a3d9f4a06cb432624f5adba756640b65c55dfd
+name: instana-agent-operator.v2.0.2
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.2
+relatedImages:
+- image: instana/agent@sha256:aaa9a53850cbb1a876cd1b85286380ea970973ec21d1532dffd3efbcf7320bb8
+  name: ""
+- image: instana/instana-agent-operator@sha256:6e44ea0498f98f82383dd47e988eaca1aabd5c65a3e61e6b2241be1ea12c6aa0
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:fec637d6809322c9d60160b899a3d9f4a06cb432624f5adba756640b65c55dfd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:e78411c28ecb3d59cd097d764a884cccee88826fc3d4758f449d804c29b83537
+name: instana-agent-operator.v2.0.27
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.27
+relatedImages:
+- image: icr.io/instana/agent@sha256:04d5336218ada24fd6a5bd3c81a34f7d24ba821b16b0178b45e637395c076d55
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:ef963e2ed099d5db51757c2f2823d2e1239babf556706d707a79147cc3e45ea5
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:e78411c28ecb3d59cd097d764a884cccee88826fc3d4758f449d804c29b83537
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:86d6ad2ad53e9c4523f154f36a1105cd9c4af0565f7a76ffb70387faf6a1cbed
+name: instana-agent-operator.v2.0.3
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.3
+relatedImages:
+- image: instana/agent@sha256:6acfc65f6bcfb653c89f0fd1ec61f59902296666b781c3c3f89688f32b7547ba
+  name: ""
+- image: instana/instana-agent-operator@sha256:36bfdad2a0d2a92ab119676e7c918919516c0ac33eab36a61129c7b614d3398c
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:86d6ad2ad53e9c4523f154f36a1105cd9c4af0565f7a76ffb70387faf6a1cbed
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:89560ab0b970727f4a0c5da4b92fddd3f1e4c4672f3b0d5476895ae7302ab9a6
+name: instana-agent-operator.v2.0.30
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.30
+relatedImages:
+- image: icr.io/instana/instana-agent-operator@sha256:99d1b354473585d1c3100416355bb88fb21baa066a6a18e1af856f107943a539
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:89560ab0b970727f4a0c5da4b92fddd3f1e4c4672f3b0d5476895ae7302ab9a6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:8ff897fa9e3997f3dde77df853b8b78401aa1158a09728660e9512425fb74015
+name: instana-agent-operator.v2.0.31
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.31
+relatedImages:
+- image: icr.io/instana/instana-agent-operator@sha256:a1c2f3e3b8f0e7185dbf20c1798a6dc65c0216925ea01f9ff50e298f06c02280
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:8ff897fa9e3997f3dde77df853b8b78401aa1158a09728660e9512425fb74015
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:a1605a487c0b84b087ca89443b8ceb3a64378c91afa7ce58263bde0a1cb7ef68
+name: instana-agent-operator.v2.0.32
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.32
+relatedImages:
+- image: icr.io/instana/agent@sha256:ff2b68d60826c4b105498a9265574d40e3b0453a1c78e7a830e247225e2d56b1
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:5c705d4ced6e44a46ab7a858f11eff1deadd20e17b50b747633798744b0ad728
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:a1605a487c0b84b087ca89443b8ceb3a64378c91afa7ce58263bde0a1cb7ef68
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:4f333a68ba39cb4bd31def8a100bb49d3eb4cf60226999090bb3908a2c3e4560
+name: instana-agent-operator.v2.0.4
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.4
+- type: olm.package.required
+  value:
+    packageName: cert-manager
+    versionRange: '>1.6.1'
+relatedImages:
+- image: instana/agent@sha256:3076921ebb8d3ff127511cc7289eacc2e0835ea88500bd4a2798ff2fdbe8b26a
+  name: ""
+- image: instana/instana-agent-operator@sha256:abc4ae48ee97f907cee54b63130d07bfcdbc3223392db1abaad72c6c330893a2
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:4f333a68ba39cb4bd31def8a100bb49d3eb4cf60226999090bb3908a2c3e4560
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:29ddcf0f08873ced4f5b69dcb2caeaf6ad1fc732d7e32bddc5a8c5dd761c2290
+name: instana-agent-operator.v2.0.5
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.5
+- type: olm.package.required
+  value:
+    packageName: cert-manager
+    versionRange: '>1.6.1'
+relatedImages:
+- image: icr.io/instana/agent@sha256:a7ef0f69babfcd46ec61bebb5036ec8eaf773211191e6721928e70b51c3de410
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:dfd04450a62008fa4cee15d7819d1ff8ea4deecdfadf4a570d414fd939276551
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:29ddcf0f08873ced4f5b69dcb2caeaf6ad1fc732d7e32bddc5a8c5dd761c2290
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:b8f9a9f41cb9c20eba2dd105c4dbef17ab964317d396df6bdbb2fda3d3e9efb7
+name: instana-agent-operator.v2.0.7
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.7
+- type: olm.package.required
+  value:
+    packageName: cert-manager
+    versionRange: '>1.6.1'
+relatedImages:
+- image: icr.io/instana/agent@sha256:4d000b370f865ef47c0417343aafbc0e65361d271be3a570021df57fa445cf7a
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:0f803cab97ae01bbc7b7499373fb8d5194951faf68c4a2f10d142da819cf73ac
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:b8f9a9f41cb9c20eba2dd105c4dbef17ab964317d396df6bdbb2fda3d3e9efb7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:2d8e20edad24984ebaed22500ed4cb73d1aa99a583ac4b4f28409b4c0ab43024
+name: instana-agent-operator.v2.0.8
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.8
+- type: olm.package.required
+  value:
+    packageName: cert-manager
+    versionRange: '>1.6.1'
+relatedImages:
+- image: icr.io/instana/agent@sha256:941feb9381c2c8e3f53cf62523c69ed013b05b9117c992e0c05367a5a14cfc52
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:04f0e89990a2a84f8570f0d4de82969bd8bd62965571fe883981de65f7f2fe62
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:2d8e20edad24984ebaed22500ed4cb73d1aa99a583ac4b4f28409b4c0ab43024
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:a62e48c3842bb6a3d7fcb04b284402ffa31b17b2ae46785042fd037d6db2c216
+name: instana-agent-operator.v2.0.9
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.0.9
+- type: olm.package.required
+  value:
+    packageName: cert-manager
+    versionRange: '>1.6.1'
+relatedImages:
+- image: icr.io/instana/agent@sha256:6eca9565b304fe4ed51e7abd0a675d2fedd8ca29f1927b5492a0de422f7699d6
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:bd626093181779aecfd9eb2f182d026e250025d9269b68fd7cf5632744ec6760
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:a62e48c3842bb6a3d7fcb04b284402ffa31b17b2ae46785042fd037d6db2c216
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:8e047cc5347a2f2312cb1026fbf0b2b837180c653ed2bdf5f20ba06dc7b20e91
+name: instana-agent-operator.v2.1.0
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.1.0
+relatedImages:
+- image: icr.io/instana/agent@sha256:ff2b68d60826c4b105498a9265574d40e3b0453a1c78e7a830e247225e2d56b1
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:80d53914fcb7cae2d08dad0f5701d6ad3167ab126960e408ef9f3f56355713ad
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:8e047cc5347a2f2312cb1026fbf0b2b837180c653ed2bdf5f20ba06dc7b20e91
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:c33f4b7b801744c83dcbbcb391aac059820ee2c7c8f39d282c23ad9239b51e33
+name: instana-agent-operator.v2.1.1
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.1.1
+relatedImages:
+- image: icr.io/instana/agent@sha256:37dc23b56fa63754df150c3b9ce368921a442bbf0b97259815c08613ff2e4144
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:703d24357e8beac5ac26bf6cf1b2b7c9773d472713829128f044d768b266a2bc
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:c33f4b7b801744c83dcbbcb391aac059820ee2c7c8f39d282c23ad9239b51e33
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:7ade777d9d70006753e15979767b6975e4ab9205d41bf8c66084bcbfcb21fa99
+name: instana-agent-operator.v2.1.2
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.1.2
+relatedImages:
+- image: icr.io/instana/agent@sha256:c1d76f096aca0f42fcca9d1c2d5c21411e7b3e2831ea525eb648be5aed898064
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:2808bf662aae56d8f38837353752723b30a202f2aa625fe7fec9cc7e695dab01
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:7ade777d9d70006753e15979767b6975e4ab9205d41bf8c66084bcbfcb21fa99
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:0a5231355250478eaee6f9ee3e54547abefda0b92236a985ec07fb4630f371a9
+name: instana-agent-operator.v2.1.5
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.1.5
+relatedImages:
+- image: icr.io/instana/agent@sha256:1e91aa19c2269664b2427250a5be41dd29c1f12d03e614f249f17bc51213402b
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:c12630d25d4a38e2e86b71e9c4093da6b1a8243a9c024a27c940bd08b4551153
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:0a5231355250478eaee6f9ee3e54547abefda0b92236a985ec07fb4630f371a9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:97f6794099432c58297f12289a4b9015d22665c99d8f7e7b64cbac58a761e9e1
+name: instana-agent-operator.v2.1.6
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.1.6
+relatedImages:
+- image: icr.io/instana/agent@sha256:7d66a4a5aaf4da8d3a625cffa874d9d6de702c3175a841db1349bb5f515c227e
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:0c3a89c92545fe5e05790c3c93520033a972db31a87f6bca7301b9f7c7134592
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:97f6794099432c58297f12289a4b9015d22665c99d8f7e7b64cbac58a761e9e1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:7eb985c85229f274e56f7cca1956733b5634679b82804b3660a5822bbaeeccb5
+name: instana-agent-operator.v2.1.7
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.1.7
+relatedImages:
+- image: icr.io/instana/agent@sha256:ba2c6c5d3268062bd568084230a649cc43268d3e8026f6bbab60f70aa1baa2a8
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:b41788ae7f753b21959467bfef50a65be0c99829d108f23e475e7045a3a5a0b4
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:7eb985c85229f274e56f7cca1956733b5634679b82804b3660a5822bbaeeccb5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:b92cb1e9d31dfdccbbb8da7358f842f9cf78c06f00ae2054c568f441bfc22e9a
+name: instana-agent-operator.v2.1.8
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.1.8
+relatedImages:
+- image: icr.io/instana/agent@sha256:8c046f33a3b93dc15b9d77c6831affd1de55609fd0605185ba49e271a0763736
+  name: ""
+- image: icr.io/instana/instana-agent-operator@sha256:df540bf6ae030b3fa509972d652f911461fd4e7b609a25e9750f9fbb1eb64d83
+  name: ""
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:b92cb1e9d31dfdccbbb8da7358f842f9cf78c06f00ae2054c568f441bfc22e9a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/instana-agent-operator@sha256:72b2b02517e2db8e9b9aa94325514d0bd833986bf7c93ce7e0f89172692aec49
+name: instana-agent-operator.v2.1.9
+package: instana-agent-operator
+properties:
+- type: olm.gvk
+  value:
+    group: instana.io
+    kind: InstanaAgent
+    version: v1
+- type: olm.package
+  value:
+    packageName: instana-agent-operator
+    version: 2.1.9
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "instana.io/v1",
+            "kind": "InstanaAgent",
+            "metadata": {
+              "name": "instana-agent",
+              "namespace": "instana-agent"
+            },
+            "spec": {
+              "agent": {
+                "configuration_yaml": "# You can leave this empty, or use this to configure your instana agent.\n# See https://github.com/instana/instana-agent-operator/blob/main/config/samples/instana_v1_extended_instanaagent.yaml for the extended version.\n",
+                "endpointHost": "ingress-red-saas.instana.io",
+                "endpointPort": "443",
+                "env": {},
+                "key": "replace-key"
+              },
+              "cluster": {
+                "name": "my-cluster"
+              },
+              "opentelemetry": {
+                "grpc": {
+                  "enabled": true
+                },
+                "http": {
+                  "enabled": true
+                }
+              },
+              "zone": {
+                "name": "edited-zone"
+              }
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Monitoring,Logging & Tracing,OpenShift Optional
+      certified: "false"
+      containerImage: icr.io/instana/instana-agent-operator@sha256:e63bae4d753d07f37ba4a8a324ee7e81c68fe0d051e7524803d8e71a76959a15
+      description: Fully automated Application Performance Monitoring (APM) for microservices.
+      features.operators.openshift.io/disconnected: "false"
+      features.operators.openshift.io/fips-compliant: "true"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      operators.operatorframework.io/builder: operator-sdk-v1.15.0+git
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/instana/instana-agent-operator
+      support: Instana
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: InstanaAgent is the Schema for the agents API
+        displayName: Instana Agent
+        kind: InstanaAgent
+        name: agents.instana.io
+        resources:
+        - kind: DaemonSet
+          name: instana-agent
+          version: v1
+        - kind: Pod
+          name: instana-agent
+          version: v1
+        - kind: Secret
+          name: instana-agent
+          version: v1
+        specDescriptors:
+        - description: Key is the secret token which your agent uses to authenticate
+            to Instana's servers.
+          displayName: Agent Key
+          path: agent.key
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        version: v1
+    description: |
+      # Instana
+
+      Instana is an [APM solution](https://www.instana.com/product-overview/) built for microservices that enables IT Ops to build applications faster and deliver higher quality services by automating monitoring, tracing and root cause analysis. The solution is optimized for [Kubernetes](https://www.instana.com/automatic-kubernetes-monitoring/) and [OpenShift](https://www.instana.com/blog/automatic-root-cause-analysis-for-openshift-applications/).
+
+      ## Instana Agent Operator
+
+      This is the Kubernetes Operator for installing the Instana Agent on Kubernetes or OpenShift.
+
+      ## Prerequisites for OpenShift
+
+      Before the agent will be able to run in OpenShift, you need to perform a couple of extra configuration steps.
+
+      You need to set up a project for the Instana Agent and configure it's permissions.
+
+      The project you create here needs to be the namespace where you create the Instana Agent custom resource that the operator will use to deploy the agent.
+
+      For example, create the `instana-agent` project:
+
+          oc new-project instana-agent
+
+      Then, ensure the `instana-agent` service account is in the privileged security context:
+
+          oc adm policy add-scc-to-user privileged -z instana-agent
+
+      This service account will be created by the operator.
+
+      Now you can proceed with installing the operator for the Instana agent.
+
+      ## Installation and Configuration
+
+      First, install this operator from [OperatorHub.io](https://operatorhub.io/), [OpenShift Container Platform](https://www.openshift.com/), or [OKD](https://www.okd.io/).
+
+      Second, create a custom resource with the agent configuration in the target namespace (for now, this MUST always be the `instana-agent` namespace). The operator will pick up the custom resource and install the Instana agent accordingly.
+
+      The following is a minimal template of the custom resource:
+
+      ```yaml
+      apiVersion: instana.io/v1
+      kind: InstanaAgent
+      metadata:
+        name: instana-agent
+        namespace: instana-agent
+      spec:
+        zone:
+          name: my-zone # (optional) name of the zone of the host
+        cluster:
+          name: replace-me # replace with the name of your Kubernetes cluster
+        agent:
+          key: replace-me # replace with your Instana agent key
+          endpointHost: ingress-red-saas.instana.io # the monitoring ingress endpoint
+          endpointPort: "443" # the monitoring ingress endpoint port, wrapped in quotes
+          env:
+            INSTANA_AGENT_TAGS: example
+          configuration_yaml: |
+            # You can leave this empty, or use this to configure your instana agent.
+            # See https://ibm.biz/monitoring-k8s
+      ```
+
+      Save the template in a file `instana-agent.yaml` and edit the following values:
+
+      * If your target namespace is not `instana-agent`, replace the `namespace:` accordingly.
+      * `agent.key` must be set with your Instana agent key.
+      * `agent.endpointHost` must be set with the monitoring ingress endpoint, generally either `saas-us-west-2.instana.io` or `saas-eu-west-1.instana.io`.
+      * `agent.endpointPort` must be set with the monitoring ingress port, generally "443" (wrapped in quotes).
+      * `zone.name` should be set with the name of the Kubernetes cluster that is be displayed in Instana.
+
+      For advanced configuration, you can edit the contents of the `configuration.yaml` file. View documentation [here](https://ibm.biz/monitoring-k8s).
+
+      Apply the custom resource with `kubectl apply -f instana-agent.yaml`. After some time, you should see `instana-agent` Pods being created on each node of your cluster, and your cluster should show on the infrastructure map on your Instana Web interface.
+
+      ## Uninstalling
+
+      In order to uninstall the Instana agent, simply remove the custom resource with `kubectl delete -f instana-agent.yaml`.
+
+      ## Source Code
+
+      The Instana agent operator is an open source project hosted on [https://github.com/instana/instana-agent-operator](https://github.com/instana/instana-agent-operator/).
+    displayName: Instana Agent Operator
+    installModes:
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - monitoring
+    - APM
+    - Instana
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: GitHub Repository
+      url: https://github.com/instana/instana-agent-operator
+    maintainers:
+    - email: support@instana.com
+      name: Instana
+    maturity: stable
+    minKubeVersion: 1.11.0
+    provider:
+      name: Instana
+relatedImages:
+- image: icr.io/instana/agent@sha256:4c52f1e6102f7d2cdacaa3d29191259532ccd31dbd082b0c23cbd86809d502d8
+  name: instana-agent
+- image: icr.io/instana/instana-agent-operator@sha256:e63bae4d753d07f37ba4a8a324ee7e81c68fe0d051e7524803d8e71a76959a15
+  name: instana-agent-operator
+- image: quay.io/operatorhubio/instana-agent-operator@sha256:72b2b02517e2db8e9b9aa94325514d0bd833986bf7c93ce7e0f89172692aec49
+  name: ""
+schema: olm.bundle

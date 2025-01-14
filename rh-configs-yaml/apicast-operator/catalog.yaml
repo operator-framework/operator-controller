@@ -1,0 +1,3661 @@
+{
+  "schema": "olm.package",
+  "name": "apicast-operator",
+  "defaultChannel": "threescale-2.14",
+  "icon": {
+    "base64data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2Q3MWUwMDt9LmNscy0ye2ZpbGw6I2MyMWEwMDt9LmNscy0ze2ZpbGw6I2ZmZjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPnByb2R1Y3RpY29uc18xMDE3X1JHQl9BUEkgZmluYWwgY29sb3I8L3RpdGxlPjxnIGlkPSJMYXllcl8xIiBkYXRhLW5hbWU9IkxheWVyIDEiPjxjaXJjbGUgY2xhc3M9ImNscy0xIiBjeD0iNTAiIGN5PSI1MCIgcj0iNTAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMC43MSA1MCkgcm90YXRlKC00NSkiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik04NS4zNiwxNC42NEE1MCw1MCwwLDAsMSwxNC42NCw4NS4zNloiLz48cGF0aCBjbGFzcz0iY2xzLTMiIGQ9Ik01MC4yNSwzMC44M2EyLjY5LDIuNjksMCwxLDAtMi42OC0yLjY5QTIuNjUsMi42NSwwLDAsMCw1MC4yNSwzMC44M1pNNDMuMzYsMzkuNGEzLjM1LDMuMzUsMCwwLDAsMy4zMiwzLjM0LDMuMzQsMy4zNCwwLDAsMCwwLTYuNjdBMy4zNSwzLjM1LDAsMCwwLDQzLjM2LDM5LjRabTMuOTIsOS44OUEyLjY4LDIuNjgsMCwxLDAsNDQuNiw1MiwyLjcsMi43LDAsMCwwLDQ3LjI4LDQ5LjI5Wk0zMi42MywyOS42NWEzLjI2LDMuMjYsMCwxLDAtMy4yNC0zLjI2QTMuMjYsMy4yNiwwLDAsMCwzMi42MywyOS42NVpNNDAuNTMsMzRhMi43NywyLjc3LDAsMCwwLDAtNS41MywyLjc5LDIuNzksMCwwLDAtMi43NiwyLjc3QTIuODUsMi44NSwwLDAsMCw0MC41MywzNFptMS43Ni05LjMxYTQuNCw0LjQsMCwxLDAtNC4zOC00LjRBNC4zNyw0LjM3LDAsMCwwLDQyLjI5LDI0LjcxWk0zMi43OCw0OWE3LDcsMCwxLDAtNy03QTcsNywwLDAsMCwzMi43OCw0OVptMzIuMTMtNy43YTQuMjMsNC4yMywwLDAsMCw0LjMsNC4zMSw0LjMxLDQuMzEsMCwxLDAtNC4zLTQuMzFabTYuOSwxMC4wNmEzLjA4LDMuMDgsMCwxLDAsMy4wOC0zLjA5QTMuMDksMy4wOSwwLDAsMCw3MS44MSw1MS4zOFpNNzMuOSwzNC43N2E0LjMxLDQuMzEsMCwxLDAtNC4zLTQuMzFBNC4yOCw0LjI4LDAsMCwwLDczLjksMzQuNzdaTTUyLjE2LDQ1LjA2YTMuNjUsMy42NSwwLDEsMCwzLjY1LTMuNjZBMy42NCwzLjY0LDAsMCwwLDUyLjE2LDQ1LjA2Wk01NSwyMmEzLjE3LDMuMTcsMCwwLDAsMy4xNi0zLjE3QTMuMjMsMy4yMywwLDAsMCw1NSwxNS42MywzLjE3LDMuMTcsMCwwLDAsNTUsMjJabS0uNDcsMTAuMDlBNS4zNyw1LjM3LDAsMCwwLDYwLDM3LjU0YTUuNDgsNS40OCwwLDEsMC01LjQ1LTUuNDhaTTY2LjI1LDI1LjVhMi42OSwyLjY5LDAsMSwwLTIuNjgtMi42OUEyLjY1LDIuNjUsMCwwLDAsNjYuMjUsMjUuNVpNNDUuNyw2My4xYTMuNDIsMy40MiwwLDEsMC0zLjQxLTMuNDJBMy40MywzLjQzLDAsMCwwLDQ1LjcsNjMuMVptMTQsMTEuMTlhNC40LDQuNCwwLDEsMCw0LjM4LDQuNEE0LjM3LDQuMzcsMCwwLDAsNTkuNzMsNzQuMjlaTTYyLjMsNTAuNTFhOS4yLDkuMiwwLDEsMCw5LjE2LDkuMkE5LjIyLDkuMjIsMCwwLDAsNjIuMyw1MC41MVpNNTAuMSw2Ni43N2EyLjY5LDIuNjksMCwxLDAsMi42OCwyLjY5QTIuNywyLjcsMCwwLDAsNTAuMSw2Ni43N1pNODEuMjUsNDEuMTJhMi43LDIuNywwLDAsMC0yLjY4LDIuNjksMi42NSwyLjY1LDAsMCwwLDIuNjgsMi42OSwyLjY5LDIuNjksMCwwLDAsMC01LjM3Wk00NC40OSw3Ni40N2EzLjczLDMuNzMsMCwwLDAtMy43MywzLjc0LDMuNzcsMy43NywwLDEsMCwzLjczLTMuNzRaTTc5LjA2LDU2LjcyYTQsNCwwLDEsMCw0LDRBNCw0LDAsMCwwLDc5LjA2LDU2LjcyWm0tNiwxMS43OEEzLjA5LDMuMDksMCwwLDAsNzAsNzEuNmEzLDMsMCwwLDAsMy4wOCwzLjA5LDMuMDksMy4wOSwwLDAsMCwwLTYuMTlaTTI4LjMsNjhhNC4xNiw0LjE2LDAsMCwwLTQuMTQsNC4xNUE0LjIxLDQuMjEsMCwwLDAsMjguMyw3Ni4zYTQuMTUsNC4xNSwwLDAsMCwwLTguM1ptLTguMjItOWEzLDMsMCwxLDAsMywzQTMuMDUsMy4wNSwwLDAsMCwyMC4wOCw1OVptMS44NC05Ljc0YTMsMywwLDEsMCwzLDNBMy4wNSwzLjA1LDAsMCwwLDIxLjkxLDQ5LjIyWk0yMi4zNyw0MmEzLjI0LDMuMjQsMCwxLDAtMy4yNCwzLjI2QTMuMjYsMy4yNiwwLDAsMCwyMi4zNyw0MlpNNDMuMTEsNzAuMmEzLjgsMy44LDAsMCwwLTMuODEtMy43NCwzLjczLDMuNzMsMCwwLDAtMy43MywzLjc0QTMuOCwzLjgsMCwwLDAsMzkuMyw3NCwzLjg3LDMuODcsMCwwLDAsNDMuMTEsNzAuMlpNMzcuNTYsNTguNDNhNC42OCw0LjY4LDAsMCwwLTQuNjItNC42NCw0LjYzLDQuNjMsMCwwLDAtNC42Miw0LjY0LDQuNTgsNC41OCwwLDAsMCw0LjYyLDQuNjRBNC42Myw0LjYzLDAsMCwwLDM3LjU2LDU4LjQzWk0yMy4xMSwzMy44MmEyLjUyLDIuNTIsMCwxLDAtMi41MS0yLjUyQTIuNTMsMi41MywwLDAsMCwyMy4xMSwzMy44MloiLz48L2c+PC9zdmc+",
+    "mediatype": "image/svg+xml"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "threescale-2.11",
+  "package": "apicast-operator",
+  "entries": [
+    {
+      "name": "apicast-operator.v0.5.0",
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.0-0.1638885516.p",
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.0-0.1638984223.p",
+      "skips": [
+        "apicast-operator.v0.5.0-0.1638885516.p",
+        "apicast-operator.v0.5.0"
+      ],
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.1",
+      "replaces": "apicast-operator.v0.5.0-0.1638984223.p"
+    },
+    {
+      "name": "apicast-operator.v0.5.2"
+    },
+    {
+      "name": "apicast-operator.v0.5.2-0.1646742993.p"
+    },
+    {
+      "name": "apicast-operator.v0.5.2-0.1649688685.p",
+      "replaces": "apicast-operator.v0.5.1",
+      "skips": [
+        "apicast-operator.v0.5.2-0.1646742993.p",
+        "apicast-operator.v0.5.2"
+      ]
+    },
+    {
+      "name": "apicast-operator.v0.5.3",
+      "replaces": "apicast-operator.v0.5.2-0.1649688685.p"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "threescale-2.12",
+  "package": "apicast-operator",
+  "entries": [
+    {
+      "name": "apicast-operator.v0.5.0",
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.0-0.1638885516.p",
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.0-0.1638984223.p",
+      "skips": [
+        "apicast-operator.v0.5.0-0.1638885516.p",
+        "apicast-operator.v0.5.0"
+      ],
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.1",
+      "replaces": "apicast-operator.v0.5.0-0.1638984223.p"
+    },
+    {
+      "name": "apicast-operator.v0.5.2"
+    },
+    {
+      "name": "apicast-operator.v0.5.2-0.1646742993.p"
+    },
+    {
+      "name": "apicast-operator.v0.5.2-0.1649688685.p",
+      "replaces": "apicast-operator.v0.5.1",
+      "skips": [
+        "apicast-operator.v0.5.2-0.1646742993.p",
+        "apicast-operator.v0.5.2"
+      ]
+    },
+    {
+      "name": "apicast-operator.v0.5.3",
+      "replaces": "apicast-operator.v0.5.2-0.1649688685.p"
+    },
+    {
+      "name": "apicast-operator.v0.6.0"
+    },
+    {
+      "name": "apicast-operator.v0.6.1",
+      "replaces": "apicast-operator.v0.5.3",
+      "skips": [
+        "apicast-operator.v0.6.0"
+      ]
+    },
+    {
+      "name": "apicast-operator.v0.6.2",
+      "replaces": "apicast-operator.v0.6.1"
+    },
+    {
+      "name": "apicast-operator.v0.6.3",
+      "replaces": "apicast-operator.v0.6.2"
+    },
+    {
+      "name": "apicast-operator.v0.6.4",
+      "replaces": "apicast-operator.v0.6.3"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "threescale-2.13",
+  "package": "apicast-operator",
+  "entries": [
+    {
+      "name": "apicast-operator.v0.7.5",
+      "skipRange": ">=0.6.2 <0.7.5"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "threescale-2.14",
+  "package": "apicast-operator",
+  "entries": [
+    {
+      "name": "apicast-operator.v0.8.1",
+      "skipRange": ">=0.6.2 <0.8.1"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "threescale-mas",
+  "package": "apicast-operator",
+  "entries": [
+    {
+      "name": "apicast-operator.v0.5.0",
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.0-0.1638885516.p",
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.0-0.1638984223.p",
+      "skips": [
+        "apicast-operator.v0.5.0-0.1638885516.p",
+        "apicast-operator.v0.5.0"
+      ],
+      "skipRange": ">=0.4.0 <0.5.0"
+    },
+    {
+      "name": "apicast-operator.v0.5.1",
+      "replaces": "apicast-operator.v0.5.0-0.1638984223.p"
+    },
+    {
+      "name": "apicast-operator.v0.5.2"
+    },
+    {
+      "name": "apicast-operator.v0.5.2-0.1646742993.p"
+    },
+    {
+      "name": "apicast-operator.v0.5.2-0.1649688685.p",
+      "replaces": "apicast-operator.v0.5.1",
+      "skips": [
+        "apicast-operator.v0.5.2-0.1646742993.p",
+        "apicast-operator.v0.5.2"
+      ]
+    },
+    {
+      "name": "apicast-operator.v0.6.0-mas",
+      "replaces": "apicast-operator.v0.5.2-0.1649688685.p"
+    },
+    {
+      "name": "apicast-operator.v0.7.0-mas",
+      "replaces": "apicast-operator.v0.6.0-mas"
+    },
+    {
+      "name": "apicast-operator.v0.7.1-mas",
+      "replaces": "apicast-operator.v0.7.0-mas"
+    },
+    {
+      "name": "apicast-operator.v0.7.2-mas"
+    },
+    {
+      "name": "apicast-operator.v0.7.3-mas",
+      "replaces": "apicast-operator.v0.7.1-mas",
+      "skips": [
+        "apicast-operator.v0.7.2-mas"
+      ]
+    },
+    {
+      "name": "apicast-operator.v0.7.4-mas",
+      "replaces": "apicast-operator.v0.7.3-mas"
+    },
+    {
+      "name": "apicast-operator.v0.7.5-mas",
+      "replaces": "apicast-operator.v0.7.4-mas"
+    },
+    {
+      "name": "apicast-operator.v0.7.6-mas",
+      "replaces": "apicast-operator.v0.7.5-mas"
+    },
+    {
+      "name": "apicast-operator.v0.7.7-mas",
+      "replaces": "apicast-operator.v0.7.6-mas"
+    },
+    {
+      "name": "apicast-operator.v0.7.8-mas",
+      "replaces": "apicast-operator.v0.7.7-mas"
+    },
+    {
+      "name": "apicast-operator.v0.7.9-mas",
+      "replaces": "apicast-operator.v0.7.8-mas"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.5.0",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:dd0064cef53df333a09ffc4157cdc5a0e0b0148387c5398f23fae61955f8d15a",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.5.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:e6ef541eabe7294978e9f629c008b2f876592c54744e1679a7287532a261e8e5",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "olm.skipRange": ">=0.4.0 <0.5.0",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:b1e7e399175b0afafbf75ffd105fde52bf2b9c340cd4091116e2ac9467f3b0ba"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:dd0064cef53df333a09ffc4157cdc5a0e0b0148387c5398f23fae61955f8d15a"
+    },
+    {
+      "name": "apicast-rhel7-operator-e6ef541eabe7294978e9f629c008b2f876592c54744e1679a7287532a261e8e5-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:e6ef541eabe7294978e9f629c008b2f876592c54744e1679a7287532a261e8e5"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:e6ef541eabe7294978e9f629c008b2f876592c54744e1679a7287532a261e8e5"
+    },
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:484e26e348354e6dd28934aedbcd139c786284a88a4e16a7652b5a52bd0beeac"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.5.0-0.1638885516.p",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:ba8eee775a76734923be5cc708efbfcd707b70aa09b702e37eab86275122bf1b",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.5.0+0.1638885516.p"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:520e43cee8391ac299fdb7b9f6db845a497e04a68c5058f2d38571fdaabf9672",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "olm.skipRange": ">=0.4.0 <0.5.0",
+          "olm.substitutesFor": "apicast-operator.v0.5.0",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:b1e7e399175b0afafbf75ffd105fde52bf2b9c340cd4091116e2ac9467f3b0ba"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:ba8eee775a76734923be5cc708efbfcd707b70aa09b702e37eab86275122bf1b"
+    },
+    {
+      "name": "apicast-rhel7-operator-520e43cee8391ac299fdb7b9f6db845a497e04a68c5058f2d38571fdaabf9672-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:520e43cee8391ac299fdb7b9f6db845a497e04a68c5058f2d38571fdaabf9672"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:520e43cee8391ac299fdb7b9f6db845a497e04a68c5058f2d38571fdaabf9672"
+    },
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:484e26e348354e6dd28934aedbcd139c786284a88a4e16a7652b5a52bd0beeac"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.5.0-0.1638984223.p",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:cf7151b6af04f5a2aaf2c3123020abf03a778d0f5efc56470533b0e3be135439",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.5.0+0.1638984223.p"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:e6ef541eabe7294978e9f629c008b2f876592c54744e1679a7287532a261e8e5",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "olm.skipRange": ">=0.4.0 <0.5.0",
+          "olm.substitutesFor": "apicast-operator.v0.5.0",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:c3f31617cdf80bbec0fa712af6b6e3f149cc577c0788aee3ef2e28ec800a9996"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:cf7151b6af04f5a2aaf2c3123020abf03a778d0f5efc56470533b0e3be135439"
+    },
+    {
+      "name": "apicast-rhel7-operator-e6ef541eabe7294978e9f629c008b2f876592c54744e1679a7287532a261e8e5-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:e6ef541eabe7294978e9f629c008b2f876592c54744e1679a7287532a261e8e5"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:e6ef541eabe7294978e9f629c008b2f876592c54744e1679a7287532a261e8e5"
+    },
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:484e26e348354e6dd28934aedbcd139c786284a88a4e16a7652b5a52bd0beeac"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.5.1",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:3cdddf4944527a760c6b9b83a80761ca103a54bef52c29c6554b64fcf932892d",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.5.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:793291fef1b7600168c184230db1c98141159b19f0a9cb84d6cb20f0392fb67b",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:14c01cbc43b3756850fa9732d9a2f588792ec375d6834866f04a28fbc6c04738"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:3cdddf4944527a760c6b9b83a80761ca103a54bef52c29c6554b64fcf932892d"
+    },
+    {
+      "name": "apicast-rhel7-operator-793291fef1b7600168c184230db1c98141159b19f0a9cb84d6cb20f0392fb67b-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:793291fef1b7600168c184230db1c98141159b19f0a9cb84d6cb20f0392fb67b"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:793291fef1b7600168c184230db1c98141159b19f0a9cb84d6cb20f0392fb67b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.5.2",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:39ac97f6c5640fad1c6a3bf6fa4e36acde3b2520dbd380dd906cc2111922ab6e",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.5.2"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:0b73523d16d880f1e5ecaa76048334de29881208fab57616cb3465cb11b357ec",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:14c01cbc43b3756850fa9732d9a2f588792ec375d6834866f04a28fbc6c04738"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:39ac97f6c5640fad1c6a3bf6fa4e36acde3b2520dbd380dd906cc2111922ab6e"
+    },
+    {
+      "name": "apicast-rhel7-operator-0b73523d16d880f1e5ecaa76048334de29881208fab57616cb3465cb11b357ec-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:0b73523d16d880f1e5ecaa76048334de29881208fab57616cb3465cb11b357ec"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:0b73523d16d880f1e5ecaa76048334de29881208fab57616cb3465cb11b357ec"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.5.2-0.1646742993.p",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:eb0c678691e1e44911d91e98fd70a3698bd71a6e444bca768214988e85420d26",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.5.2+0.1646742993.p"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:6da7250636e07de57555fafa39f8ee44cf1b403289aca59c2ad5f2465dd5b98b",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "olm.substitutesFor": "apicast-operator.v0.5.2",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:14c01cbc43b3756850fa9732d9a2f588792ec375d6834866f04a28fbc6c04738"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:eb0c678691e1e44911d91e98fd70a3698bd71a6e444bca768214988e85420d26"
+    },
+    {
+      "name": "apicast-rhel7-operator-6da7250636e07de57555fafa39f8ee44cf1b403289aca59c2ad5f2465dd5b98b-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:6da7250636e07de57555fafa39f8ee44cf1b403289aca59c2ad5f2465dd5b98b"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:6da7250636e07de57555fafa39f8ee44cf1b403289aca59c2ad5f2465dd5b98b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.5.2-0.1649688685.p",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:d9b7ba360a53a6f40a02948a51b74953dceb6532bed2ac71270b8f3c21746fec",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.5.2+0.1649688685.p"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:bcb2325fb47a8a6299642e437c67f100fa8bdd37404fd72fc7b04aeed86cfe0c",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "olm.substitutesFor": "apicast-operator.v0.5.2-0.1646742993.p",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:14c01cbc43b3756850fa9732d9a2f588792ec375d6834866f04a28fbc6c04738"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:d9b7ba360a53a6f40a02948a51b74953dceb6532bed2ac71270b8f3c21746fec"
+    },
+    {
+      "name": "apicast-rhel7-operator-bcb2325fb47a8a6299642e437c67f100fa8bdd37404fd72fc7b04aeed86cfe0c-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:bcb2325fb47a8a6299642e437c67f100fa8bdd37404fd72fc7b04aeed86cfe0c"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:bcb2325fb47a8a6299642e437c67f100fa8bdd37404fd72fc7b04aeed86cfe0c"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.5.3",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:9db455e082454734d2a17811dcfec53d3d60c28df6e7fe8bc979a45b28a35061",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.5.3"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:ccd64090b85536ddaf1b81ca07d40279c9f277b1c5911628f11d678b98dc3bad",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.11/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:f0e9f64c353fdbee3bf7ec0eaf070c3b75330ef659a881ec4ebc874ba584d085"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:9db455e082454734d2a17811dcfec53d3d60c28df6e7fe8bc979a45b28a35061"
+    },
+    {
+      "name": "apicast-rhel7-operator-ccd64090b85536ddaf1b81ca07d40279c9f277b1c5911628f11d678b98dc3bad-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:ccd64090b85536ddaf1b81ca07d40279c9f277b1c5911628f11d678b98dc3bad"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:ccd64090b85536ddaf1b81ca07d40279c9f277b1c5911628f11d678b98dc3bad"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.6.0",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:e7c3be65e5067ae7ad9f94ed8628e40ce43c04a6614646ea7b1e1a7e3890560d",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.6.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:8ec67ef519c009145ebd757b7ec69a638d14d4dd82a968559d16e71571effe7b",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:d7af57e97f10c4f2d8ac1ae8f4c4436b6323d2d2ba60dbbb3b50d6328c92133f"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:e7c3be65e5067ae7ad9f94ed8628e40ce43c04a6614646ea7b1e1a7e3890560d"
+    },
+    {
+      "name": "apicast-rhel7-operator-8ec67ef519c009145ebd757b7ec69a638d14d4dd82a968559d16e71571effe7b-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:8ec67ef519c009145ebd757b7ec69a638d14d4dd82a968559d16e71571effe7b"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:8ec67ef519c009145ebd757b7ec69a638d14d4dd82a968559d16e71571effe7b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.6.0-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:fca62b03989aa8e7cba260d211588670a7047b153a65ebab3d0edf36da27341b",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.6.0-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:440629bc4407bf3b07b397f064dc5a4f712d539766af2334f4e948bb53ad457b",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway - Managed Application Services",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:fa44e65ff88bd58a9ab26d278e852667af2ea557040484925078d7d3c0183e44"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:fca62b03989aa8e7cba260d211588670a7047b153a65ebab3d0edf36da27341b"
+    },
+    {
+      "name": "apicast-rhel7-operator-440629bc4407bf3b07b397f064dc5a4f712d539766af2334f4e948bb53ad457b-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:440629bc4407bf3b07b397f064dc5a4f712d539766af2334f4e948bb53ad457b"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:440629bc4407bf3b07b397f064dc5a4f712d539766af2334f4e948bb53ad457b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.6.1",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:7fa978192ef7008e44072114d1470bded8d4652315c150757507c45e6b48189d",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.6.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:1e8eb8d2a8abb13eba0a2b3ff6c1539adbd0986ea96f27a15b404156bc053a32",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:33c614270adc42b75b60e2addf1d7176add51d1e7a3a02b8cbe94dfde196c155"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:7fa978192ef7008e44072114d1470bded8d4652315c150757507c45e6b48189d"
+    },
+    {
+      "name": "apicast-rhel7-operator-1e8eb8d2a8abb13eba0a2b3ff6c1539adbd0986ea96f27a15b404156bc053a32-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:1e8eb8d2a8abb13eba0a2b3ff6c1539adbd0986ea96f27a15b404156bc053a32"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:1e8eb8d2a8abb13eba0a2b3ff6c1539adbd0986ea96f27a15b404156bc053a32"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.6.2",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:343de5c9a36dd3fadef9ae14c702bdaf0ff14ec2c4244161e6a6a5c5f50d78a2",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.6.2"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:429840b879e01050368fa8a1a8bcd02ff92663605a691bf5d13ffe20081d083b",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:a20c723b459006fdd542facd3a878f3579cad06cfc1152d8902c1fd621309c95"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:343de5c9a36dd3fadef9ae14c702bdaf0ff14ec2c4244161e6a6a5c5f50d78a2"
+    },
+    {
+      "name": "apicast-rhel7-operator-429840b879e01050368fa8a1a8bcd02ff92663605a691bf5d13ffe20081d083b-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:429840b879e01050368fa8a1a8bcd02ff92663605a691bf5d13ffe20081d083b"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:429840b879e01050368fa8a1a8bcd02ff92663605a691bf5d13ffe20081d083b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.6.3",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:91a57e5d0957ea66a91de062c638e1f1108c335c402448796efe489dde2372d0",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.6.3"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:4047b1e6b2dada4db6d8d3168f122156e69d4faf2ee65c531e88ee5ba1036c41",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:972791892dc2e05eb65d8d3539f4704e0900a101cb8d6fed95a0d03d46b085b5"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:91a57e5d0957ea66a91de062c638e1f1108c335c402448796efe489dde2372d0"
+    },
+    {
+      "name": "apicast-rhel7-operator-4047b1e6b2dada4db6d8d3168f122156e69d4faf2ee65c531e88ee5ba1036c41-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:4047b1e6b2dada4db6d8d3168f122156e69d4faf2ee65c531e88ee5ba1036c41"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:4047b1e6b2dada4db6d8d3168f122156e69d4faf2ee65c531e88ee5ba1036c41"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.6.4",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:8650430afd813fd749fcd80ad5f6fd0aeaab3df048e8fe34e6aa72a07ab801fc",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.6.4"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:8c7fe66b8d4044ad965e7b3d149e9d8e3846ac4e55465873f7095a25b297b3df",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:12f7a8e69a1369a51bbcd2b34d4ec8c66dd1fc9fb515349a04e7b202953423e3"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:8650430afd813fd749fcd80ad5f6fd0aeaab3df048e8fe34e6aa72a07ab801fc"
+    },
+    {
+      "name": "apicast-rhel7-operator-8c7fe66b8d4044ad965e7b3d149e9d8e3846ac4e55465873f7095a25b297b3df-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:8c7fe66b8d4044ad965e7b3d149e9d8e3846ac4e55465873f7095a25b297b3df"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:8c7fe66b8d4044ad965e7b3d149e9d8e3846ac4e55465873f7095a25b297b3df"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.0-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:f9c104d17dc4eb5d35a7f5ac289267c1540ba1e9ebfb4e45208c1a8a5e4f883b",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.0-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:56d3c847bbe56eabdd0ce4e5dfe39520cd18d1f3b6256a1eb0451b2607f8f64b",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway - Managed Application Services",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:df0d4958733702adbea1d361c6b39103e34ee4b270ea04488f275ea3ed578ec6"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:f9c104d17dc4eb5d35a7f5ac289267c1540ba1e9ebfb4e45208c1a8a5e4f883b"
+    },
+    {
+      "name": "apicast-rhel7-operator-56d3c847bbe56eabdd0ce4e5dfe39520cd18d1f3b6256a1eb0451b2607f8f64b-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:56d3c847bbe56eabdd0ce4e5dfe39520cd18d1f3b6256a1eb0451b2607f8f64b"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:56d3c847bbe56eabdd0ce4e5dfe39520cd18d1f3b6256a1eb0451b2607f8f64b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.1-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:2add8bbd72c0e04475adea54b5977e2651f702e137ba6c6e9c5e5100af6ed206",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.1-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62cc74480e4d4744de71a215d44193e975a055407054f5cbf34f7c35902fe122",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway - Managed Application Services",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:7bfd5d3b177ca3776956ae2eb9dc5efa72471eaa2d44c93abc6a862a5db216a4"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:2add8bbd72c0e04475adea54b5977e2651f702e137ba6c6e9c5e5100af6ed206"
+    },
+    {
+      "name": "apicast-rhel7-operator-62cc74480e4d4744de71a215d44193e975a055407054f5cbf34f7c35902fe122-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62cc74480e4d4744de71a215d44193e975a055407054f5cbf34f7c35902fe122"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62cc74480e4d4744de71a215d44193e975a055407054f5cbf34f7c35902fe122"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.2-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:8fc36112ed52262465df759be70d09ee56087be2f8f89734fa0c71538ecd603a",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.2-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62ac9cba35aa348a1a8bf2b7f6219bcbac085699a82c65b7708166e0d943dc08",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:8b7b53ba1f91bf58473c277cd5cbfe0ae0aac1602b8fe77f0ed30b5c1fc7cab3"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:8fc36112ed52262465df759be70d09ee56087be2f8f89734fa0c71538ecd603a"
+    },
+    {
+      "name": "apicast-rhel7-operator-62ac9cba35aa348a1a8bf2b7f6219bcbac085699a82c65b7708166e0d943dc08-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62ac9cba35aa348a1a8bf2b7f6219bcbac085699a82c65b7708166e0d943dc08"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62ac9cba35aa348a1a8bf2b7f6219bcbac085699a82c65b7708166e0d943dc08"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.3-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:59cee15c55d95898776a0394fbd2a4acb5bccd6bc42b217a540e34321d14a0e0",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.3-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62ac9cba35aa348a1a8bf2b7f6219bcbac085699a82c65b7708166e0d943dc08",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:879f7e812544331a6561ab469be3515e09c8ffd4390695c0b394ebf2fd83681e"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:59cee15c55d95898776a0394fbd2a4acb5bccd6bc42b217a540e34321d14a0e0"
+    },
+    {
+      "name": "apicast-rhel7-operator-62ac9cba35aa348a1a8bf2b7f6219bcbac085699a82c65b7708166e0d943dc08-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62ac9cba35aa348a1a8bf2b7f6219bcbac085699a82c65b7708166e0d943dc08"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:62ac9cba35aa348a1a8bf2b7f6219bcbac085699a82c65b7708166e0d943dc08"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.4-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:c44ce4771b8081eba11931a91db7f2dcc317ced800f2b4a7e24a9843e5cdf3ca",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.4-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:497b9ab7a98344df4b8dae4f0f57ed9a60d899b258a7deb4b6a15bf83aca2653",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:879f7e812544331a6561ab469be3515e09c8ffd4390695c0b394ebf2fd83681e"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:c44ce4771b8081eba11931a91db7f2dcc317ced800f2b4a7e24a9843e5cdf3ca"
+    },
+    {
+      "name": "apicast-rhel7-operator-497b9ab7a98344df4b8dae4f0f57ed9a60d899b258a7deb4b6a15bf83aca2653-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:497b9ab7a98344df4b8dae4f0f57ed9a60d899b258a7deb4b6a15bf83aca2653"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:497b9ab7a98344df4b8dae4f0f57ed9a60d899b258a7deb4b6a15bf83aca2653"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.5",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:ed063f507fa8e2f378d0adbde823c110484d0212d124cc72d67efa987e86444e",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.5"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:bde44c0fb9f13f212184b24e0bef45db734a8439a92179a2089e5aebd6b87b63",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "olm.skipRange": ">=0.6.2 <0.7.5",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.13/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Miguel Soriano",
+            "email": "msoriano+apicastoperator@redhat.com"
+          },
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:88dc7a289c803248efbe151999707325b1bc0aac2d26827ea1707e46e5c71652"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:ed063f507fa8e2f378d0adbde823c110484d0212d124cc72d67efa987e86444e"
+    },
+    {
+      "name": "apicast-rhel7-operator-bde44c0fb9f13f212184b24e0bef45db734a8439a92179a2089e5aebd6b87b63-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:bde44c0fb9f13f212184b24e0bef45db734a8439a92179a2089e5aebd6b87b63"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:bde44c0fb9f13f212184b24e0bef45db734a8439a92179a2089e5aebd6b87b63"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.5-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:3095ca0c03d49db902424b8548c7214e8a6a015a33d6ac1ddba71264690b6ac4",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.5-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:7a21fc171ae7bd145448445687ee8e74b6a00ff7fee9fbf5aa5effc8599c5d83",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:c17b0c561562ee1024bb9f0b8ea06b567b13e51f11c29004d60096f85bae6148"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:3095ca0c03d49db902424b8548c7214e8a6a015a33d6ac1ddba71264690b6ac4"
+    },
+    {
+      "name": "apicast-rhel7-operator-7a21fc171ae7bd145448445687ee8e74b6a00ff7fee9fbf5aa5effc8599c5d83-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:7a21fc171ae7bd145448445687ee8e74b6a00ff7fee9fbf5aa5effc8599c5d83"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:7a21fc171ae7bd145448445687ee8e74b6a00ff7fee9fbf5aa5effc8599c5d83"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.6-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:d67ce47043a8b5e3bdda16edd247e7bf362fd8ebb3c718a1dcf6733814d32c93",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.6-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:3c3564e702b349fb73487eefe5111980a22edd688333d0b28040fb099f3ecff4",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:bf0433d020c7529d783df56c8d8ba566159ac06402dc19dbcf0cb86225506a29"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:d67ce47043a8b5e3bdda16edd247e7bf362fd8ebb3c718a1dcf6733814d32c93"
+    },
+    {
+      "name": "apicast-rhel7-operator-3c3564e702b349fb73487eefe5111980a22edd688333d0b28040fb099f3ecff4-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:3c3564e702b349fb73487eefe5111980a22edd688333d0b28040fb099f3ecff4"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:3c3564e702b349fb73487eefe5111980a22edd688333d0b28040fb099f3ecff4"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.7-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:73b1fd1403d6d8191b7661a7067a93f16d49960203fdf3bda7db326f43df1140",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.7-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:258842351071e71be7dcc342d466f0d62e7f2aea6c229197716183b6ded31352",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:32385d7ec09c695efdc9d72ce2148e9101eb7c715c044382d550de0be6ebbef8"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:73b1fd1403d6d8191b7661a7067a93f16d49960203fdf3bda7db326f43df1140"
+    },
+    {
+      "name": "apicast-rhel7-operator-258842351071e71be7dcc342d466f0d62e7f2aea6c229197716183b6ded31352-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:258842351071e71be7dcc342d466f0d62e7f2aea6c229197716183b6ded31352"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:258842351071e71be7dcc342d466f0d62e7f2aea6c229197716183b6ded31352"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.8-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:d6328a00fa7d3cfd10a82d0eae35d48162f25c366f249a4db17da9426f8e46fb",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.8-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:ee138d45be9180412de794d42fc9287a8b379fea1edc715d747b2dd952d903b9",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:a03a1ae7f01259192b8d7b4ecee6ddfcdc0cd9e2d24a8c2306accb93ee767135"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:d6328a00fa7d3cfd10a82d0eae35d48162f25c366f249a4db17da9426f8e46fb"
+    },
+    {
+      "name": "apicast-rhel7-operator-ee138d45be9180412de794d42fc9287a8b379fea1edc715d747b2dd952d903b9-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:ee138d45be9180412de794d42fc9287a8b379fea1edc715d747b2dd952d903b9"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:ee138d45be9180412de794d42fc9287a8b379fea1edc715d747b2dd952d903b9"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.7.9-mas",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:d3a608b37aa089ea46e803696ba4957585b875f8a810f517e891f385ad105937",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.7.9-mas"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:3fd03155935a1a1946669db9dadc8e82737de46e1fcb0ba92a9815a277ae35aa",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-mas/apicast-gateway-rhel8@sha256:ea2229948fea841343fcaa337bb7e2854acf5f563d3ffb0af8bda1c21ec2a91f"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-mas/apicast-operator-bundle@sha256:d3a608b37aa089ea46e803696ba4957585b875f8a810f517e891f385ad105937"
+    },
+    {
+      "name": "apicast-rhel7-operator-3fd03155935a1a1946669db9dadc8e82737de46e1fcb0ba92a9815a277ae35aa-annotation",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:3fd03155935a1a1946669db9dadc8e82737de46e1fcb0ba92a9815a277ae35aa"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-mas/apicast-rhel7-operator@sha256:3fd03155935a1a1946669db9dadc8e82737de46e1fcb0ba92a9815a277ae35aa"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "apicast-operator.v0.8.1",
+  "package": "apicast-operator",
+  "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:bcc5ed9560667c7347f3044c7fa6148e3867c17e93e83595a62794339a5a6b0d",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "apps.3scale.net",
+        "kind": "APIcast",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "apicast-operator",
+        "version": "0.8.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"apps.3scale.net/v1alpha1\",\n    \"kind\": \"APIcast\",\n    \"metadata\": {\n      \"name\": \"example-apicast\"\n    },\n    \"spec\": {\n      \"adminPortalCredentialsRef\": {\n        \"name\": \"mysecretname\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "Integration & Delivery",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:21db8c1bde63b5d574b66b46ec3ee95eb05a3c34b9541ca32d5bbf4daf18daf4",
+          "createdAt": "2019-10-27T22:40:00Z",
+          "description": "APIcast is an API gateway to be used together with Red Hat 3scale",
+          "olm.skipRange": ">=0.6.2 <0.8.1",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\", \"Red Hat 3scale API Management\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+          "repository": "https://github.com/3scale/apicast-operator",
+          "support": "Red Hat",
+          "tectonic-visibility": "ocs"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "apicasts.apps.3scale.net",
+              "version": "v1alpha1",
+              "kind": "APIcast",
+              "displayName": "APIcast",
+              "description": "APIcast is the Schema for the apicasts API."
+            }
+          ]
+        },
+        "description": "APIcast is an API gateway to be used together with Red Hat 3scale. This Operator supports standalone deployment of the gateway as opposed to the built-in APIcast as part of a 3scale installation.\n\n### Supported Features\n* **Installer** A way to install an APIcast gateway instance on Kubernetes\n* **Upgrade** Upgrade from previously installed APIcast gateway instance\n* **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed\n\n### Upgrading your installation\nThe APIcast Operator understands how to run and upgrade between a set of APIcast versions.\nSee [the upgrade guide](https://github.com/3scale/apicast-operator) for more information.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.12/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator).\n\n### Getting help\nIf you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.\n\n### Contributing\nYou can contribute by:\n\n* Raising any issues you find using APIcast Operator\n* Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)\n* Improving [documentation](https://github.com/3scale/apicast-operator)\n* Talking about APIcast Operator\n\nAll bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).\n\n### License\nAPIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)",
+        "displayName": "Red Hat Integration - 3scale APIcast gateway",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "3scale",
+          "API",
+          "api",
+          "APIcast",
+          "apicast",
+          "gateway",
+          "api-gateway",
+          "openresty"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "GitHub",
+            "url": "https://github.com/3scale/apicast-operator"
+          },
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.14/html/installing_3scale/installing-apicast#deploying-apicast-gateway-self-managed-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Eguzki Astiz",
+            "email": "eastizle+apicastoperator@redhat.com"
+          }
+        ],
+        "maturity": "stable",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "apicast",
+      "image": "registry.redhat.io/3scale-amp2/apicast-gateway-rhel8@sha256:68b310ed3cfd65db893ba015ef1d5442365201c0ced006c1915e90edb99933ea"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator-metadata@sha256:bcc5ed9560667c7347f3044c7fa6148e3867c17e93e83595a62794339a5a6b0d"
+    },
+    {
+      "name": "apicast-rhel7-operator-21db8c1bde63b5d574b66b46ec3ee95eb05a3c34b9541ca32d5bbf4daf18daf4-annotation",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:21db8c1bde63b5d574b66b46ec3ee95eb05a3c34b9541ca32d5bbf4daf18daf4"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/3scale-amp2/apicast-rhel7-operator@sha256:21db8c1bde63b5d574b66b46ec3ee95eb05a3c34b9541ca32d5bbf4daf18daf4"
+    }
+  ]
+}

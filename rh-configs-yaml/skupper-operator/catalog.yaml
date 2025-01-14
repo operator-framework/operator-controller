@@ -1,0 +1,3396 @@
+{
+  "schema": "olm.package",
+  "name": "skupper-operator",
+  "defaultChannel": "stable",
+  "icon": {
+    "base64data": "PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=",
+    "mediatype": "image/svg+xml"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "alpha",
+  "package": "skupper-operator",
+  "entries": [
+    {
+      "name": "skupper-operator.v1.0.4"
+    },
+    {
+      "name": "skupper-operator.v1.0.5"
+    },
+    {
+      "name": "skupper-operator.v1.0.6"
+    },
+    {
+      "name": "skupper-operator.v1.0.7"
+    },
+    {
+      "name": "skupper-operator.v1.0.8"
+    },
+    {
+      "name": "skupper-operator.v1.2.0"
+    },
+    {
+      "name": "skupper-operator.v1.2.1"
+    },
+    {
+      "name": "skupper-operator.v1.2.2",
+      "replaces": "skupper-operator.v1.0.2",
+      "skips": [
+        "skupper-operator.v1.2.0",
+        "skupper-operator.v1.2.1",
+        "skupper-operator.v1.0.3",
+        "skupper-operator.v1.0.4",
+        "skupper-operator.v1.0.5",
+        "skupper-operator.v1.0.6",
+        "skupper-operator.v1.0.7",
+        "skupper-operator.v1.0.8"
+      ]
+    },
+    {
+      "name": "skupper-operator.v1.4.1-rh-1",
+      "replaces": "skupper-operator.v1.2.2"
+    },
+    {
+      "name": "skupper-operator.v1.4.2-rh-2",
+      "replaces": "skupper-operator.v1.4.1-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.3-rh-6",
+      "replaces": "skupper-operator.v1.4.2-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.4.4-rh-1",
+      "replaces": "skupper-operator.v1.4.3-rh-6"
+    },
+    {
+      "name": "skupper-operator.v1.4.5-rh-4",
+      "replaces": "skupper-operator.v1.4.4-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.7-rh-1",
+      "replaces": "skupper-operator.v1.4.5-rh-4"
+    },
+    {
+      "name": "skupper-operator.v1.4.7-rh-2",
+      "replaces": "skupper-operator.v1.4.7-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.7-rh-3",
+      "replaces": "skupper-operator.v1.4.7-rh-2",
+      "skips": [
+        "skupper-operator.v1.4.7-rh-1"
+      ]
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable",
+  "package": "skupper-operator",
+  "entries": [
+    {
+      "name": "skupper-operator.v1.0.4"
+    },
+    {
+      "name": "skupper-operator.v1.0.5"
+    },
+    {
+      "name": "skupper-operator.v1.0.6"
+    },
+    {
+      "name": "skupper-operator.v1.0.7"
+    },
+    {
+      "name": "skupper-operator.v1.0.8"
+    },
+    {
+      "name": "skupper-operator.v1.2.0"
+    },
+    {
+      "name": "skupper-operator.v1.2.1"
+    },
+    {
+      "name": "skupper-operator.v1.2.2",
+      "replaces": "skupper-operator.v1.0.2",
+      "skips": [
+        "skupper-operator.v1.2.0",
+        "skupper-operator.v1.2.1",
+        "skupper-operator.v1.0.3",
+        "skupper-operator.v1.0.4",
+        "skupper-operator.v1.0.5",
+        "skupper-operator.v1.0.6",
+        "skupper-operator.v1.0.7",
+        "skupper-operator.v1.0.8"
+      ]
+    },
+    {
+      "name": "skupper-operator.v1.4.1-rh-1",
+      "replaces": "skupper-operator.v1.2.2"
+    },
+    {
+      "name": "skupper-operator.v1.4.2-rh-2",
+      "replaces": "skupper-operator.v1.4.1-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.3-rh-6",
+      "replaces": "skupper-operator.v1.4.2-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.4.4-rh-1",
+      "replaces": "skupper-operator.v1.4.3-rh-6"
+    },
+    {
+      "name": "skupper-operator.v1.5.3-rh-3",
+      "replaces": "skupper-operator.v1.4.4-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.5.4-rh-2",
+      "replaces": "skupper-operator.v1.5.3-rh-3"
+    },
+    {
+      "name": "skupper-operator.v1.5.5-rh-1",
+      "replaces": "skupper-operator.v1.5.4-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.8.1-rh-3",
+      "replaces": "skupper-operator.v1.5.5-rh-1",
+      "skipRange": ">1.4.0-rh-1 <1.8.1-rh-3"
+    },
+    {
+      "name": "skupper-operator.v1.8.2-rh-2",
+      "replaces": "skupper-operator.v1.8.1-rh-3",
+      "skipRange": ">1.4.0-rh-1 <1.8.2-rh-2"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-1",
+  "package": "skupper-operator",
+  "entries": [
+    {
+      "name": "skupper-operator.v1.0.4"
+    },
+    {
+      "name": "skupper-operator.v1.0.5"
+    },
+    {
+      "name": "skupper-operator.v1.0.6"
+    },
+    {
+      "name": "skupper-operator.v1.0.7"
+    },
+    {
+      "name": "skupper-operator.v1.0.8"
+    },
+    {
+      "name": "skupper-operator.v1.2.0"
+    },
+    {
+      "name": "skupper-operator.v1.2.1"
+    },
+    {
+      "name": "skupper-operator.v1.2.2",
+      "replaces": "skupper-operator.v1.0.2",
+      "skips": [
+        "skupper-operator.v1.2.0",
+        "skupper-operator.v1.2.1",
+        "skupper-operator.v1.0.3",
+        "skupper-operator.v1.0.4",
+        "skupper-operator.v1.0.5",
+        "skupper-operator.v1.0.6",
+        "skupper-operator.v1.0.7",
+        "skupper-operator.v1.0.8"
+      ]
+    },
+    {
+      "name": "skupper-operator.v1.4.1-rh-1",
+      "replaces": "skupper-operator.v1.2.2"
+    },
+    {
+      "name": "skupper-operator.v1.4.2-rh-2",
+      "replaces": "skupper-operator.v1.4.1-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.3-rh-6",
+      "replaces": "skupper-operator.v1.4.2-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.4.4-rh-1",
+      "replaces": "skupper-operator.v1.4.3-rh-6"
+    },
+    {
+      "name": "skupper-operator.v1.5.3-rh-3",
+      "replaces": "skupper-operator.v1.4.4-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.5.4-rh-2",
+      "replaces": "skupper-operator.v1.5.3-rh-3"
+    },
+    {
+      "name": "skupper-operator.v1.5.5-rh-1",
+      "replaces": "skupper-operator.v1.5.4-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.8.1-rh-3",
+      "replaces": "skupper-operator.v1.5.5-rh-1",
+      "skipRange": ">1.4.0-rh-1 <1.8.1-rh-3"
+    },
+    {
+      "name": "skupper-operator.v1.8.2-rh-2",
+      "replaces": "skupper-operator.v1.8.1-rh-3",
+      "skipRange": ">1.4.0-rh-1 <1.8.2-rh-2"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-1.4",
+  "package": "skupper-operator",
+  "entries": [
+    {
+      "name": "skupper-operator.v1.0.4"
+    },
+    {
+      "name": "skupper-operator.v1.0.5"
+    },
+    {
+      "name": "skupper-operator.v1.0.6"
+    },
+    {
+      "name": "skupper-operator.v1.0.7"
+    },
+    {
+      "name": "skupper-operator.v1.0.8"
+    },
+    {
+      "name": "skupper-operator.v1.2.0"
+    },
+    {
+      "name": "skupper-operator.v1.2.1"
+    },
+    {
+      "name": "skupper-operator.v1.2.2",
+      "replaces": "skupper-operator.v1.0.2",
+      "skips": [
+        "skupper-operator.v1.2.0",
+        "skupper-operator.v1.2.1",
+        "skupper-operator.v1.0.3",
+        "skupper-operator.v1.0.4",
+        "skupper-operator.v1.0.5",
+        "skupper-operator.v1.0.6",
+        "skupper-operator.v1.0.7",
+        "skupper-operator.v1.0.8"
+      ]
+    },
+    {
+      "name": "skupper-operator.v1.4.1-rh-1",
+      "replaces": "skupper-operator.v1.2.2"
+    },
+    {
+      "name": "skupper-operator.v1.4.2-rh-2",
+      "replaces": "skupper-operator.v1.4.1-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.3-rh-6",
+      "replaces": "skupper-operator.v1.4.2-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.4.4-rh-1",
+      "replaces": "skupper-operator.v1.4.3-rh-6"
+    },
+    {
+      "name": "skupper-operator.v1.4.5-rh-4",
+      "replaces": "skupper-operator.v1.4.4-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.7-rh-1",
+      "replaces": "skupper-operator.v1.4.5-rh-4"
+    },
+    {
+      "name": "skupper-operator.v1.4.7-rh-2",
+      "replaces": "skupper-operator.v1.4.7-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.7-rh-3",
+      "replaces": "skupper-operator.v1.4.7-rh-2",
+      "skips": [
+        "skupper-operator.v1.4.7-rh-1"
+      ]
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-1.5",
+  "package": "skupper-operator",
+  "entries": [
+    {
+      "name": "skupper-operator.v1.0.4"
+    },
+    {
+      "name": "skupper-operator.v1.0.5"
+    },
+    {
+      "name": "skupper-operator.v1.0.6"
+    },
+    {
+      "name": "skupper-operator.v1.0.7"
+    },
+    {
+      "name": "skupper-operator.v1.0.8"
+    },
+    {
+      "name": "skupper-operator.v1.2.0"
+    },
+    {
+      "name": "skupper-operator.v1.2.1"
+    },
+    {
+      "name": "skupper-operator.v1.2.2",
+      "replaces": "skupper-operator.v1.0.2",
+      "skips": [
+        "skupper-operator.v1.2.0",
+        "skupper-operator.v1.2.1",
+        "skupper-operator.v1.0.3",
+        "skupper-operator.v1.0.4",
+        "skupper-operator.v1.0.5",
+        "skupper-operator.v1.0.6",
+        "skupper-operator.v1.0.7",
+        "skupper-operator.v1.0.8"
+      ]
+    },
+    {
+      "name": "skupper-operator.v1.4.1-rh-1",
+      "replaces": "skupper-operator.v1.2.2"
+    },
+    {
+      "name": "skupper-operator.v1.4.2-rh-2",
+      "replaces": "skupper-operator.v1.4.1-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.3-rh-6",
+      "replaces": "skupper-operator.v1.4.2-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.4.4-rh-1",
+      "replaces": "skupper-operator.v1.4.3-rh-6"
+    },
+    {
+      "name": "skupper-operator.v1.5.3-rh-3",
+      "replaces": "skupper-operator.v1.4.4-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.5.4-rh-2",
+      "replaces": "skupper-operator.v1.5.3-rh-3"
+    },
+    {
+      "name": "skupper-operator.v1.5.5-rh-1",
+      "replaces": "skupper-operator.v1.5.4-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.5.5-rh-4"
+    },
+    {
+      "name": "skupper-operator.v1.5.5-rh-5",
+      "replaces": "skupper-operator.v1.5.5-rh-1",
+      "skips": [
+        "skupper-operator.v1.5.5-rh-2",
+        "skupper-operator.v1.5.5-rh-3",
+        "skupper-operator.v1.5.5-rh-4"
+      ]
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-1.8",
+  "package": "skupper-operator",
+  "entries": [
+    {
+      "name": "skupper-operator.v1.0.4"
+    },
+    {
+      "name": "skupper-operator.v1.0.5"
+    },
+    {
+      "name": "skupper-operator.v1.0.6"
+    },
+    {
+      "name": "skupper-operator.v1.0.7"
+    },
+    {
+      "name": "skupper-operator.v1.0.8"
+    },
+    {
+      "name": "skupper-operator.v1.2.0"
+    },
+    {
+      "name": "skupper-operator.v1.2.1"
+    },
+    {
+      "name": "skupper-operator.v1.2.2",
+      "replaces": "skupper-operator.v1.0.2",
+      "skips": [
+        "skupper-operator.v1.2.0",
+        "skupper-operator.v1.2.1",
+        "skupper-operator.v1.0.3",
+        "skupper-operator.v1.0.4",
+        "skupper-operator.v1.0.5",
+        "skupper-operator.v1.0.6",
+        "skupper-operator.v1.0.7",
+        "skupper-operator.v1.0.8"
+      ]
+    },
+    {
+      "name": "skupper-operator.v1.4.1-rh-1",
+      "replaces": "skupper-operator.v1.2.2"
+    },
+    {
+      "name": "skupper-operator.v1.4.2-rh-2",
+      "replaces": "skupper-operator.v1.4.1-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.4.3-rh-6",
+      "replaces": "skupper-operator.v1.4.2-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.4.4-rh-1",
+      "replaces": "skupper-operator.v1.4.3-rh-6"
+    },
+    {
+      "name": "skupper-operator.v1.5.3-rh-3",
+      "replaces": "skupper-operator.v1.4.4-rh-1"
+    },
+    {
+      "name": "skupper-operator.v1.5.4-rh-2",
+      "replaces": "skupper-operator.v1.5.3-rh-3"
+    },
+    {
+      "name": "skupper-operator.v1.5.5-rh-1",
+      "replaces": "skupper-operator.v1.5.4-rh-2"
+    },
+    {
+      "name": "skupper-operator.v1.8.1-rh-3",
+      "replaces": "skupper-operator.v1.5.5-rh-1",
+      "skipRange": ">1.4.0-rh-1 <1.8.1-rh-3"
+    },
+    {
+      "name": "skupper-operator.v1.8.2-rh-2",
+      "replaces": "skupper-operator.v1.8.1-rh-3",
+      "skipRange": ">1.4.0-rh-1 <1.8.2-rh-2"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.0.4",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:7bfd653df138d8db91a8f8118a6a1281cf8053146009da840f368a26dd66aa65",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.0.4"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:fec0b1c65995cf71188aaebe8227066ad058b035e519b6c774e5be17cce22f29",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Skupper Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Application Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Skupper enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Skupper instance.\n\nThe Skupper operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nSkupper operator will create the Skupper instance and configure the site.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Skupper",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "service",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Skupper Operator",
+            "url": "https://github.com/skupperproject/skupper-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Skupper Community",
+            "email": "skupper@googlegroups.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:7bfd653df138d8db91a8f8118a6a1281cf8053146009da840f368a26dd66aa65"
+    },
+    {
+      "name": "skupper-site-controller-rhel8-fec0b1c65995cf71188aaebe8227066ad058b035e519b6c774e5be17cce22f29-annotation",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:fec0b1c65995cf71188aaebe8227066ad058b035e519b6c774e5be17cce22f29"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:fec0b1c65995cf71188aaebe8227066ad058b035e519b6c774e5be17cce22f29"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.0.5",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:3476af8f2b72c6fb91f6d52c53bb254ed31753a7a5a3006504856a375120e301",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.0.5"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:d46adb8e9df4dd345d808999117f8fa9707b1bb1a9844e086d42beadddb6fb25",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Skupper Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Application Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Skupper enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Skupper instance.\n\nThe Skupper operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nSkupper operator will create the Skupper instance and configure the site.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Skupper",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "service",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Skupper Operator",
+            "url": "https://github.com/skupperproject/skupper-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Skupper Community",
+            "email": "skupper@googlegroups.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:3476af8f2b72c6fb91f6d52c53bb254ed31753a7a5a3006504856a375120e301"
+    },
+    {
+      "name": "skupper-site-controller-rhel8-d46adb8e9df4dd345d808999117f8fa9707b1bb1a9844e086d42beadddb6fb25-annotation",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:d46adb8e9df4dd345d808999117f8fa9707b1bb1a9844e086d42beadddb6fb25"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:d46adb8e9df4dd345d808999117f8fa9707b1bb1a9844e086d42beadddb6fb25"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.0.6",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:e0330659d1fb014a3e8df749bee1ec65d4777c962290a0057f0fd4aa23cbb913",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.0.6"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:4bb792f2f3d0653954ff2faf962a42536f4263fc1dbab8a5614bd62cc14a15cb",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Skupper Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Application Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Skupper enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Skupper instance.\n\nThe Skupper operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nSkupper operator will create the Skupper instance and configure the site.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Skupper",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "service",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Skupper Operator",
+            "url": "https://github.com/skupperproject/skupper-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Skupper Community",
+            "email": "skupper@googlegroups.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:e0330659d1fb014a3e8df749bee1ec65d4777c962290a0057f0fd4aa23cbb913"
+    },
+    {
+      "name": "skupper-site-controller-rhel8-4bb792f2f3d0653954ff2faf962a42536f4263fc1dbab8a5614bd62cc14a15cb-annotation",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:4bb792f2f3d0653954ff2faf962a42536f4263fc1dbab8a5614bd62cc14a15cb"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:4bb792f2f3d0653954ff2faf962a42536f4263fc1dbab8a5614bd62cc14a15cb"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.0.7",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:d01e63ba08234bbd57603ff87fc6e12ef17b9f38f8b3e82384cd1fa056682094",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.0.7"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:c75ae8e0ac1bdcef9ca5f2d87b8eb627cb32300725194ed8c7a8985884b4baa3",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Skupper Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Application Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Skupper enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Skupper instance.\n\nThe Skupper operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nSkupper operator will create the Skupper instance and configure the site.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Skupper",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "service",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Skupper Operator",
+            "url": "https://github.com/skupperproject/skupper-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Skupper Community",
+            "email": "skupper@googlegroups.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:d01e63ba08234bbd57603ff87fc6e12ef17b9f38f8b3e82384cd1fa056682094"
+    },
+    {
+      "name": "skupper-site-controller-rhel8-c75ae8e0ac1bdcef9ca5f2d87b8eb627cb32300725194ed8c7a8985884b4baa3-annotation",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:c75ae8e0ac1bdcef9ca5f2d87b8eb627cb32300725194ed8c7a8985884b4baa3"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:c75ae8e0ac1bdcef9ca5f2d87b8eb627cb32300725194ed8c7a8985884b4baa3"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.0.8",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:c6326cfed7803fb257e7ac8b70ebce634e79f928aefdc7d6afa8a34dccd3caba",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.0.8"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:6f493cc0da5d08ec1c759197653e149d071ceed8fad5b2c685501316bada6957",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Skupper Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Application Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Skupper enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Skupper instance.\n\nThe Skupper operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nSkupper operator will create the Skupper instance and configure the site.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Skupper",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "service",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Skupper Operator",
+            "url": "https://github.com/skupperproject/skupper-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Skupper Community",
+            "email": "skupper@googlegroups.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:c6326cfed7803fb257e7ac8b70ebce634e79f928aefdc7d6afa8a34dccd3caba"
+    },
+    {
+      "name": "skupper-site-controller-rhel8-6f493cc0da5d08ec1c759197653e149d071ceed8fad5b2c685501316bada6957-annotation",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:6f493cc0da5d08ec1c759197653e149d071ceed8fad5b2c685501316bada6957"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:6f493cc0da5d08ec1c759197653e149d071ceed8fad5b2c685501316bada6957"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.2.0",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:5eda053b874b649b90c060ed0c19f87e1934c85b60f3c676d639c1185cc0ae96",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.2.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:efd67bce1dc76321bbf895bd1f8f4a2f45d4a70f98bad58d1e046f5c61ed6e80",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Skupper Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Application Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Skupper enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Skupper instance.\n\nThe Skupper operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nSkupper operator will create the Skupper instance and configure the site.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Skupper",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "service",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Skupper Operator",
+            "url": "https://github.com/skupperproject/skupper-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Skupper Community",
+            "email": "skupper@googlegroups.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:5eda053b874b649b90c060ed0c19f87e1934c85b60f3c676d639c1185cc0ae96"
+    },
+    {
+      "name": "skupper-site-controller-rhel8-efd67bce1dc76321bbf895bd1f8f4a2f45d4a70f98bad58d1e046f5c61ed6e80-annotation",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:efd67bce1dc76321bbf895bd1f8f4a2f45d4a70f98bad58d1e046f5c61ed6e80"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:efd67bce1dc76321bbf895bd1f8f4a2f45d4a70f98bad58d1e046f5c61ed6e80"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.2.1",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:2e7a0a8a3d323c7a81d54ef46e1f26d903c87a3b3d102b83f8a12bfe2dea329a",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.2.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:5896b23bd2ebfad3be7aacf64044db0e5c6ce5080db51a07826d0082e452849b",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Skupper Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Application Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Skupper enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Skupper instance.\n\nThe Skupper operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nSkupper operator will create the Skupper instance and configure the site.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Skupper",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "service",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Skupper Operator",
+            "url": "https://github.com/skupperproject/skupper-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Skupper Community",
+            "email": "skupper@googlegroups.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:2e7a0a8a3d323c7a81d54ef46e1f26d903c87a3b3d102b83f8a12bfe2dea329a"
+    },
+    {
+      "name": "skupper-site-controller-rhel8-5896b23bd2ebfad3be7aacf64044db0e5c6ce5080db51a07826d0082e452849b-annotation",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:5896b23bd2ebfad3be7aacf64044db0e5c6ce5080db51a07826d0082e452849b"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:5896b23bd2ebfad3be7aacf64044db0e5c6ce5080db51a07826d0082e452849b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.2.2",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:94ab993ba6bb3419561b61c3fdd0cd9cd13bed01c6e24b48f8b07993c45ca6f7",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.2.2"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:e6ee005b0090e2a9e931a5ce62e26fb53051d62ab7d30d51413f5626683ffda8",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Skupper Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Application Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Skupper enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Skupper instance.\n\nThe Skupper operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nSkupper operator will create the Skupper instance and configure the site.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Skupper",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "service",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Skupper Operator",
+            "url": "https://github.com/skupperproject/skupper-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Skupper Community",
+            "email": "skupper@googlegroups.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/application-interconnect/skupper-operator-bundle@sha256:94ab993ba6bb3419561b61c3fdd0cd9cd13bed01c6e24b48f8b07993c45ca6f7"
+    },
+    {
+      "name": "skupper-site-controller-rhel8-e6ee005b0090e2a9e931a5ce62e26fb53051d62ab7d30d51413f5626683ffda8-annotation",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:e6ee005b0090e2a9e931a5ce62e26fb53051d62ab7d30d51413f5626683ffda8"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/application-interconnect/skupper-site-controller-rhel8@sha256:e6ee005b0090e2a9e931a5ce62e26fb53051d62ab7d30d51413f5626683ffda8"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.4.1-rh-1",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:dea3dad6de9ec414929aeaae2e19e57cb908d8ae364a121f547ac5b76092c7ea",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.4.1-rh-1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:5a0db21160ccd7484bf754a1dde4535c59c558ba9231a31373686a451cb40b62",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:dea3dad6de9ec414929aeaae2e19e57cb908d8ae364a121f547ac5b76092c7ea"
+    },
+    {
+      "name": "skupper-site-controller-rhel9-5a0db21160ccd7484bf754a1dde4535c59c558ba9231a31373686a451cb40b62-annotation",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:5a0db21160ccd7484bf754a1dde4535c59c558ba9231a31373686a451cb40b62"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:5a0db21160ccd7484bf754a1dde4535c59c558ba9231a31373686a451cb40b62"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.4.2-rh-2",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:9604c7bf32fca73437c380860aba613a6114de1d73b143074db2d62964d274a9",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.4.2-rh-2"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:b747b4ff9db17d70d49fa107aed9fbcd8fdb84ad70be18faef8da5416808c965",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:70957772b9b3ddeb07efac5bfbf3b24e3c0f7a1d40055b1e46a6a00c25fd11cf"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:55e181d2fc584579df64c39acda45e700f1d4b6266f84ea6a0599bff60621dac"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:29af1545148827f1c38f96172c4c7e752a1c80fafdefa1c59316f7cc5201ebeb"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:9604c7bf32fca73437c380860aba613a6114de1d73b143074db2d62964d274a9"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:acfba75668f881f1b87232ffbfd23f31f808bbc74d631c564b98251e8d1fecce"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:3037331c4e042602d7ac07145a9e59efd8711656039b155c71f88ae3e3369cfc"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:b747b4ff9db17d70d49fa107aed9fbcd8fdb84ad70be18faef8da5416808c965"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.4.3-rh-6",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:0dc569d8a1fd4571337d479246b1f460f25086bbb9ab4fac076580358305feb6",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.4.3-rh-6"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:253ddd7d106586dcacd870cc3250f41559eb35cf4952d69e5e29fef63d6598f2",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:62fdde504a8e55669286c525b2d3f224740800843c0a0732d18d5b1024716551"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:4cb1a94d620febe1e3412a234b8bbd5768dfbd446d8280d527fba75ad0e1ede5"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:1202d408b3a723fa662ab594e992351875cd4446aeb153657c17d9c2999df535"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:e66a26151d21f79c05bcf94a27cd435be903ff3c3493f06eed18ce53f79f8fc6"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:0dc569d8a1fd4571337d479246b1f460f25086bbb9ab4fac076580358305feb6"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:6e2df96a72cea0f4fc833cfb3e4114f28c7895f28bdea4ceba89555d5455cbaa"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:e03480a672509cdc2d8108c85b9b4f541af69ea53cd9dc037f07809e020ec681"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:253ddd7d106586dcacd870cc3250f41559eb35cf4952d69e5e29fef63d6598f2"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.4.4-rh-1",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:7aac076ebafa8ba270fa133794b27e901f687e1705107fb6936ed91ae3e2afe2",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.4.4-rh-1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:ef5d995cc9e1c28b706e781e37f91b0066470a0b71daecd9a158d3a47cd57007",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:219bf2d14157acd90298df58bfe77c2e3ed51ce0c743c2e51b3ed54b73dafc14"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:df4e6ab507b8ecd5482e6c552a5fbf6a3ffe01b9cdd61ed7aed409bd46da6b85"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:679681cc7173cdac3ec9d11a64eebd12e0363ae42884a1a012a2f8bdeb278fb1"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:57c490d03bf30570b0a4a08fa32012b2f8bf814594d2b759a76bdadc04f99593"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:7aac076ebafa8ba270fa133794b27e901f687e1705107fb6936ed91ae3e2afe2"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:1c69e307c6fae628683c79abc17b9477a55950eee25af2aeb3df5cf7b5fe1c47"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:8a13e185bf49274ab1f93737a420f358e3f98a8d4cc8f3c92f95b1da35f52413"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:ef5d995cc9e1c28b706e781e37f91b0066470a0b71daecd9a158d3a47cd57007"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.4.5-rh-4",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:fa023abc1d035d287121e6d96a97fab219fe6297c0c3205b4d08ad955520efdd",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.4.5-rh-4"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:d700ba188b2b9c8df7dddab41020774fee1f8ee39b05757cda128406abf3c06b",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:e52f88555004b575104691fe96f758ee5e6ec832b99107a5a18fc8379d29afda"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:a9fe6cd4201f2cc926791a3c8613911e46ade279a386f8084c63afd9a07b2a59"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:35d12cbc9a85a8d558e4e42e7b7bb65f835834cf0bd05eb540ce690a67df83a8"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:3acbad453b2afac7a32e7887fe5c8d93fec78870c6187b4b46e7776d2b1a925e"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:fa023abc1d035d287121e6d96a97fab219fe6297c0c3205b4d08ad955520efdd"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:95feb5aceae8872f3cbdaf12352448e1ad726fd81e510a0c7736278fc561a1b8"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:33fb0a0f740ae1fc166b1be15725d12b25597216b263060beea994d412de5a4c"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:d700ba188b2b9c8df7dddab41020774fee1f8ee39b05757cda128406abf3c06b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.4.7-rh-1",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:8dfcba321df37b69848ae80b106e00cf3ea0228a5e355ab033aa345140b14966",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.4.7-rh-1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:69ccea38f8c6256cb44781dd835f023f752cee95754fd06fb4fc23fcce0da66a",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:2f9603d72bad86ae8cc51d0f9677acfcde77ada268dc28675420793223ba56e2"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:fe9fd68f1b501f4207f44a6b2f2a8c9e7c86bc21be0a27a7764dc23ece3128dc"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:48948c6ef74d4bb5ce699f5724b7bdc5ffb9959965fa92d8247213093002022f"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:04858dff5de507b6603f3f48885234f565ea0e59581ab0624082f69bbe7ac567"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:8dfcba321df37b69848ae80b106e00cf3ea0228a5e355ab033aa345140b14966"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:cfc1147cc3f8354e8b0ede50d2f38cdf2df7815cb555a48c9eefecc24efa5687"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:4cf5be886a1c26faa6a816a36ae1aa8db20595dbe76cb452e543fa845dcb6ee6"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:69ccea38f8c6256cb44781dd835f023f752cee95754fd06fb4fc23fcce0da66a"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.4.7-rh-2",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:b6d7798d7fdfd40662f0d479efe7eb35414cbbd3643ea02cd05c71aeea020ffb",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.4.7-rh-2"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:836380428f4e8244269c344d5cb2cca29eec28f0bdae20ac396040151725ac89",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:4f8d66597feeb32bb18699326029f9a71a5aca4a57679d636b876377c2e95695"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:baf5189676a5dc386e41c1e2a0455db4ec3394b47a411cb604c3fa1933e270a5"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:b6abe64c8905363141fe62f619d69c3dca37bd63cbaa6a118c5e4882f28396d1"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:360311c0c7221b3f6a317ec849d845f53c721c81b4c530bf4dfa6a7528b1582a"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:b6d7798d7fdfd40662f0d479efe7eb35414cbbd3643ea02cd05c71aeea020ffb"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:bb714d12ac7c5c85be2a04531d30e648721bf66bd6ba74bd733fcdc9c323c7e2"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:9b265376f86abe872b3f69ac05a016cc9d3cd5baec324f597a53ace9bdf5cfbb"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:836380428f4e8244269c344d5cb2cca29eec28f0bdae20ac396040151725ac89"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.4.7-rh-3",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:32c03556f3eb7f87c0624b105e8d9aac7dcfaea71adf16e4e9825586829880c1",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.4.7-rh-3"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:2a4260f3e79fb102dbdbe2370c45a6154650cacaee401dd279f9524c79621b8f",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:234af927030921ab8f7333f61f967b4b4dee37a1b3cf85689e9e63240dd62800"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:6bb860a20062fd2415956b07f932b4572271565ce0df1b13050327e028bf5643"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:0c0fa07d185ba22fe85577ea011780a4640aa730d0a4883ff8a02cad524276e9"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:1e565407477e2dc97b61580b595486d564271cf11814a3d99736494407807b1c"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:32c03556f3eb7f87c0624b105e8d9aac7dcfaea71adf16e4e9825586829880c1"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:2ba3b7457ccad6e1f58b9f3975f07cc9911a0da7963fb8f7d9836f0a62ddf3b1"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:34d48fad84ecab18b6e1cc04524d4c3060ebf271e509c059a68629d680eb2810"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:2a4260f3e79fb102dbdbe2370c45a6154650cacaee401dd279f9524c79621b8f"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.5.3-rh-3",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:b519fc58904f982ab0e04bf5e799c23b0a8e929f0439cd423dc8dcfd51605932",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.5.3-rh-3"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:aa9e11275217aaf6d0f70230e2e9d566f16eab051dec700556bf8e8ce56356b6",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:5b8fc2860c680dcec713ae9631082b917efe2d375f85d8a2eb5b90b3862aea78"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:7e4bfab5f2cf13d1904022de294a905f3e0ce1fd213a837b111d7b8677182990"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:cdd325d04e08e6931babe1ce3361188f6c42795fcb76bcc0460ac97cf4435041"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:0c4f0bd5b4edf807c87f6e624bad52c53846f621dda91c943f9d936650fd2389"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:b519fc58904f982ab0e04bf5e799c23b0a8e929f0439cd423dc8dcfd51605932"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:b40f6e3a271e93e2081699a188c066a1ca9883c075ba3003de09ec373f540bd8"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:d740b9efa3969a373b4f15ed522e5a45c77095a4f5d3d288dabef0db57160335"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:aa9e11275217aaf6d0f70230e2e9d566f16eab051dec700556bf8e8ce56356b6"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.5.4-rh-2",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:e8abb03720a450190a62c9f4a43bd3afdc09f30d7bedcdf22be97138263dd2a7",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.5.4-rh-2"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:acff25d58a76994604c98b7455b2f6e6ada16a20a2145fd0cc5dbb1802f604cf",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:e52f88555004b575104691fe96f758ee5e6ec832b99107a5a18fc8379d29afda"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:a9fe6cd4201f2cc926791a3c8613911e46ade279a386f8084c63afd9a07b2a59"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:5b7646bd6e60e9621501f0b1e8c7e871640ae085c7a1a03d188c28f7e21df418"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:d803a9cc6493da36aa7d46cbf110dedf79cf4aff8cbd17c99a9faa45d726bc10"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:e8abb03720a450190a62c9f4a43bd3afdc09f30d7bedcdf22be97138263dd2a7"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:7d9b58cf52ed9196010b5475f89ebb0a8deefa24ddd56f8ea6005b9fcddbdb57"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:5daace59ae50ce4bbd56136d06be045993123ecca99d442b4d371064af5a3f70"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:acff25d58a76994604c98b7455b2f6e6ada16a20a2145fd0cc5dbb1802f604cf"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.5.5-rh-1",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:74218a033df2286ceffa2a4b3ac851bb852bb57970ef050f189e2d61ccb0e289",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.5.5-rh-1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:356c6cfe49e5f2d401fde88c17e53eb37dd03e1a9113f1f342f98fadba792f50",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:2f9603d72bad86ae8cc51d0f9677acfcde77ada268dc28675420793223ba56e2"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:fe9fd68f1b501f4207f44a6b2f2a8c9e7c86bc21be0a27a7764dc23ece3128dc"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:9a537331e0f512c14f4dfb7b111d70b0d38d8a7dba5c93695be264294f415692"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:17b39dd196bf7df07cb73c244a9b7c5c7d21e053eb72f4c06f494d7e50f09623"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:74218a033df2286ceffa2a4b3ac851bb852bb57970ef050f189e2d61ccb0e289"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:980a3ff2dc51c5a648380b7f5b7cea768ed23fb3b50f5b133feff82a0926e4a5"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:662c316102f23e7ef4203a79172db290336cfd2309017ed512b65d1b4925fc6d"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:356c6cfe49e5f2d401fde88c17e53eb37dd03e1a9113f1f342f98fadba792f50"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.5.5-rh-4",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:1a2e41708c18de011215f3bb4332ec3616cbc7b7122908af1bc83e6b98ea7efd",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.5.5-rh-4"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:06c0196cf843bceffe308e5c66059358fad4afa39e727701d253db4c881051d5",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:4f8d66597feeb32bb18699326029f9a71a5aca4a57679d636b876377c2e95695"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:baf5189676a5dc386e41c1e2a0455db4ec3394b47a411cb604c3fa1933e270a5"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:56a40ea765e98f2577f9f5c6c00b609a6d7dd8b5b29d594bd6d4ab45924f7369"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:58eabeacddca2d08bff4c70d320cd0e32bbb021719c2258966aecd825e56e6d1"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:1a2e41708c18de011215f3bb4332ec3616cbc7b7122908af1bc83e6b98ea7efd"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:05be086febb9250d7ce8d96c48b94fe6507b74b1e503b48572c9aed0c4455253"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:c1942cab84412f5dcbeaa18498ab91b4ec62e2caacdc824b953caaa8ebbaba9f"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:06c0196cf843bceffe308e5c66059358fad4afa39e727701d253db4c881051d5"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.5.5-rh-5",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:f934d109a75fbac4316db68a7409a95bf848d6c99eacd925ff352204e891f1a0",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.5.5-rh-5"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:75a3ae748ab3009d18d2bc8dffe951e0e6b5ba2015f4d35b728be9e217f32999",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:7b72deb1268a1357df4e7f769c5501bea8aa8994306ec76776f4f6ac7b62fdbd"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:1f8227a0e594aa43575a081049a3cc0bf78690506ac4c05aa1a1091af13b41c6"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:121c9c7be95d3aef3f00f0d5d10792edfda8832e010d350d679f5edf1a25ea4c"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:ec3a43754d53ceba441702e13c31a9e1afc342f2a08fdc1daf556159561ac617"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:f934d109a75fbac4316db68a7409a95bf848d6c99eacd925ff352204e891f1a0"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:2daf55d3f9c38a3139291be9a53f02ea9f294769719ec2dd1adeaec9cd97544d"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:3b0d038dc60c01e9047d77c05b4cf1f1b5b0f0aba6cd25a484296679b4e19aba"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:75a3ae748ab3009d18d2bc8dffe951e0e6b5ba2015f4d35b728be9e217f32999"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.8.1-rh-3",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:2911a4ae101a8caf9a6b583fb6b2cb45dcef2bbcb5e48878c7c2fc86b669ffd5",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.8.1-rh-3"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:e2e2818cc5dc6092b7579a55658f02eb5884e9e01c4aa87b7d317f897c7c0f2b",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">1.4.0-rh-1 <1.8.1-rh-3",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:4f8d66597feeb32bb18699326029f9a71a5aca4a57679d636b876377c2e95695"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:baf5189676a5dc386e41c1e2a0455db4ec3394b47a411cb604c3fa1933e270a5"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:65fc88e0d018fe1a593430b949cf8aa805ff0ad14963270cea72413a1a3be788"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:4d362ccbca836ae0be5eaae12dc409e979485757c9628dd60537bdd38b50fbdf"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:2911a4ae101a8caf9a6b583fb6b2cb45dcef2bbcb5e48878c7c2fc86b669ffd5"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:3e3cc571cfd9bb720ef69fe99851b4af7130f3583a116c91ee36e926f196574f"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:d393298b8a2b8d630c147bc9efb7d62345788527f497852967c9825649595e29"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:e2e2818cc5dc6092b7579a55658f02eb5884e9e01c4aa87b7d317f897c7c0f2b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "skupper-operator.v1.8.2-rh-2",
+  "package": "skupper-operator",
+  "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:f9f3bddfdeda2acb61ed1ffab330c162b55736eb95694447cf3602693665c1dc",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "skupper-operator",
+        "version": "1.8.2-rh-2"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Integration & Delivery, Networking, Streaming & Messaging",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:c93ef58c45cba73c233ff171f990a7359ef51cfc67f36026e643fe76fbf6dfa1",
+          "createdAt": "2021-04-14T08:00:00Z",
+          "description": "Red Hat Service Interconnect Operator provides the ability to create a service network",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">1.4.0-rh-1 <1.8.2-rh-2",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"Red Hat Service Interconnect\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.4.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/skupperproject/skupper-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {},
+        "description": "Red Hat Service Interconnect enables communication between services running in different network locations.\nIt allows geographically distributed services to connect as if they were all running in the same site.\n\nEach site is a namespace with a running Red Hat Service Interconnect instance.\n\nThe Red Hat Service Interconnect operator allows you create and manage sites.\nThe operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.\n\nTo get started, create the following ConfigMap in the desired namespace, the\nRed Hat Service Interconnect operator will create and configure the site instance.\n\n      apiVersion: v1\n      kind: ConfigMap\n      metadata:\n        name: skupper-site\n\nThe operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.\n",
+        "displayName": "Red Hat Service Interconnect",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "skupper",
+          "rhsi",
+          "service",
+          "interconnect",
+          "mesh",
+          "van"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Red Hat Service Interconnect",
+            "url": "https://www.redhat.com/en/technologies/cloud-computing/service-interconnect"
+          },
+          {
+            "name": "Skupper",
+            "url": "https://skupper.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Andy Smith",
+            "email": "ansmith@redhat.com"
+          },
+          {
+            "name": "Fernando Giorgetti",
+            "email": "fgiorget@redhat.com"
+          },
+          {
+            "name": "Gordon Sim",
+            "email": "gsim@redhat.com"
+          },
+          {
+            "name": "Noe Luaces",
+            "email": "nluaces@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.19.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "ose-oauth-proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:234af927030921ab8f7333f61f967b4b4dee37a1b3cf85689e9e63240dd62800"
+    },
+    {
+      "name": "ose-prometheus",
+      "image": "registry.redhat.io/openshift4/ose-prometheus@sha256:6bb860a20062fd2415956b07f932b4572271565ce0df1b13050327e028bf5643"
+    },
+    {
+      "name": "skupper-config-sync",
+      "image": "registry.redhat.io/service-interconnect/skupper-config-sync-rhel9@sha256:d20e842e892be34641e69dc4048f6a969d746d5a6fb0b021ac8d7581fe329af1"
+    },
+    {
+      "name": "skupper-flow-collector",
+      "image": "registry.redhat.io/service-interconnect/skupper-flow-collector-rhel9@sha256:2af3dfae96fc6f8d6f9d3afd113598b08ad7ae8c5a455d169e4a39c9d6d8f7d8"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/service-interconnect/skupper-operator-bundle@sha256:f9f3bddfdeda2acb61ed1ffab330c162b55736eb95694447cf3602693665c1dc"
+    },
+    {
+      "name": "skupper-router",
+      "image": "registry.redhat.io/service-interconnect/skupper-router-rhel9@sha256:e43eb8cbdeb0bb32c188afee91a803325d9b661c3dd44a2f3cb3b5f7f19dc42e"
+    },
+    {
+      "name": "skupper-service-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-service-controller-rhel9@sha256:db254972979e45c98e2a5f06619f7d3a16c23349c04d89ca94f33fa2b680c1ad"
+    },
+    {
+      "name": "skupper-site-controller",
+      "image": "registry.redhat.io/service-interconnect/skupper-site-controller-rhel9@sha256:c93ef58c45cba73c233ff171f990a7359ef51cfc67f36026e643fe76fbf6dfa1"
+    }
+  ]
+}

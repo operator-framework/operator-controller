@@ -1,0 +1,779 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-cloudfront-controller
+schema: olm.package
+---
+entries:
+- name: ack-cloudfront-controller.v0.0.1
+- name: ack-cloudfront-controller.v0.0.10
+  replaces: ack-cloudfront-controller.v0.0.9
+- name: ack-cloudfront-controller.v0.0.11
+  replaces: ack-cloudfront-controller.v0.0.10
+- name: ack-cloudfront-controller.v0.0.12
+  replaces: ack-cloudfront-controller.v0.0.11
+- name: ack-cloudfront-controller.v0.0.13
+  replaces: ack-cloudfront-controller.v0.0.12
+- name: ack-cloudfront-controller.v0.0.14
+  replaces: ack-cloudfront-controller.v0.0.13
+- name: ack-cloudfront-controller.v0.0.15
+  replaces: ack-cloudfront-controller.v0.0.14
+- name: ack-cloudfront-controller.v0.0.2
+  replaces: ack-cloudfront-controller.v0.0.1
+- name: ack-cloudfront-controller.v0.0.3
+  replaces: ack-cloudfront-controller.v0.0.2
+- name: ack-cloudfront-controller.v0.0.4
+  replaces: ack-cloudfront-controller.v0.0.3
+- name: ack-cloudfront-controller.v0.0.5
+  replaces: ack-cloudfront-controller.v0.0.4
+- name: ack-cloudfront-controller.v0.0.6
+  replaces: ack-cloudfront-controller.v0.0.5
+- name: ack-cloudfront-controller.v0.0.8
+  replaces: ack-cloudfront-controller.v0.0.6
+- name: ack-cloudfront-controller.v0.0.9
+  replaces: ack-cloudfront-controller.v0.0.8
+- name: ack-cloudfront-controller.v1.0.0
+  replaces: ack-cloudfront-controller.v0.0.15
+name: alpha
+package: ack-cloudfront-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:56f7387832265302b17546ae42752b49a71e3cce2820f3e4f1943672bbc58aa3
+name: ack-cloudfront-controller.v0.0.1
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:56f7387832265302b17546ae42752b49a71e3cce2820f3e4f1943672bbc58aa3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:fa7334232256961e158743d453a5bc87f3067ccdca6551c035a79adb76327a48
+name: ack-cloudfront-controller.v0.0.10
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:fa7334232256961e158743d453a5bc87f3067ccdca6551c035a79adb76327a48
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:5da295b0ec3f3bca5e8603c63edc35c37e04ee5b0e37ae50fdd302038279a0ef
+name: ack-cloudfront-controller.v0.0.11
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:5da295b0ec3f3bca5e8603c63edc35c37e04ee5b0e37ae50fdd302038279a0ef
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:c90187ab944b32cea85a8d9e1956b7a89b0e3cfda890bcd8abbc29506be06385
+name: ack-cloudfront-controller.v0.0.12
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginAccessControl
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:c90187ab944b32cea85a8d9e1956b7a89b0e3cfda890bcd8abbc29506be06385
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:af586f9b8dfef095e3edd967c07a2f08edb568bd3075c4e70d2d2c5e0e19962a
+name: ack-cloudfront-controller.v0.0.13
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginAccessControl
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:af586f9b8dfef095e3edd967c07a2f08edb568bd3075c4e70d2d2c5e0e19962a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:4ed75f9e56cd3fc6faa8c512c2af3c8f70686e078550fdf8f4f835f34817157a
+name: ack-cloudfront-controller.v0.0.14
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginAccessControl
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:4ed75f9e56cd3fc6faa8c512c2af3c8f70686e078550fdf8f4f835f34817157a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:86a7ed264b7a32ab00794c166103e8b93032c473cd443172109f3a00be8d71ce
+name: ack-cloudfront-controller.v0.0.15
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginAccessControl
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:86a7ed264b7a32ab00794c166103e8b93032c473cd443172109f3a00be8d71ce
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:04654e54fc0596764eb28e4ad454fc5f34dfa52ef514ee6ebb4c12b3d69aa638
+name: ack-cloudfront-controller.v0.0.2
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:04654e54fc0596764eb28e4ad454fc5f34dfa52ef514ee6ebb4c12b3d69aa638
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:aabc40d4c56f470c49c2ea5e8c73b2539bfe7086e44643f43ef0d906e5a352cf
+name: ack-cloudfront-controller.v0.0.3
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:aabc40d4c56f470c49c2ea5e8c73b2539bfe7086e44643f43ef0d906e5a352cf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:d9fda72e0bb296d938721e448c3d7ced9dbfbf9a9aba0b49d0b242b58790e981
+name: ack-cloudfront-controller.v0.0.4
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:d9fda72e0bb296d938721e448c3d7ced9dbfbf9a9aba0b49d0b242b58790e981
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:ac9ca9d7bbabd9775bff229647c2c2fbc55817c9581a2b893be4e031771c427c
+name: ack-cloudfront-controller.v0.0.5
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:ac9ca9d7bbabd9775bff229647c2c2fbc55817c9581a2b893be4e031771c427c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:113f7da040fa72320acfb1b421e3af5d45700b4866ccb4ef1f1016cce3f42cc7
+name: ack-cloudfront-controller.v0.0.6
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:113f7da040fa72320acfb1b421e3af5d45700b4866ccb4ef1f1016cce3f42cc7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:a7d8a596c81fe52e76bec54cfc24c18fe34053b749228818eb611b7d784de668
+name: ack-cloudfront-controller.v0.0.8
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:a7d8a596c81fe52e76bec54cfc24c18fe34053b749228818eb611b7d784de668
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:5a37b753edd9976dbf295b2fe0d53f48087b07ab9b3fff75e990a36587d28d3b
+name: ack-cloudfront-controller.v0.0.9
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:5a37b753edd9976dbf295b2fe0d53f48087b07ab9b3fff75e990a36587d28d3b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:75dd88e9aaca0f3fd4fd8cadcd8153949962368c58b77b76c4d77c3d85cf255f
+name: ack-cloudfront-controller.v1.0.0
+package: ack-cloudfront-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: CachePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Distribution
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginAccessControl
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: OriginRequestPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudfront.services.k8s.aws
+    kind: ResponseHeadersPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudfront-controller
+    version: 1.0.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "cloudfront.services.k8s.aws/v1alpha1",
+            "kind": "CachePolicy",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "cloudfront.services.k8s.aws/v1alpha1",
+            "kind": "Distribution",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "cloudfront.services.k8s.aws/v1alpha1",
+            "kind": "Function",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:1.0.0
+      createdAt: "2024-09-03T21:08:14Z"
+      description: AWS CloudFront controller is a service controller for managing
+        CloudFront resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: CachePolicy represents the state of an AWS cloudfront CachePolicy
+          resource.
+        displayName: CachePolicy
+        kind: CachePolicy
+        name: cachepolicies.cloudfront.services.k8s.aws
+        version: v1alpha1
+      - description: Distribution represents the state of an AWS cloudfront Distribution
+          resource.
+        displayName: Distribution
+        kind: Distribution
+        name: distributions.cloudfront.services.k8s.aws
+        version: v1alpha1
+      - description: Function represents the state of an AWS cloudfront Function resource.
+        displayName: Function
+        kind: Function
+        name: functions.cloudfront.services.k8s.aws
+        version: v1alpha1
+      - description: OriginAccessControl represents the state of an AWS cloudfront
+          OriginAccessControl resource.
+        displayName: OriginAccessControl
+        kind: OriginAccessControl
+        name: originaccesscontrols.cloudfront.services.k8s.aws
+        version: v1alpha1
+      - description: OriginRequestPolicy represents the state of an AWS cloudfront
+          OriginRequestPolicy resource.
+        displayName: OriginRequestPolicy
+        kind: OriginRequestPolicy
+        name: originrequestpolicies.cloudfront.services.k8s.aws
+        version: v1alpha1
+      - description: ResponseHeadersPolicy represents the state of an AWS cloudfront
+          ResponseHeadersPolicy resource.
+        displayName: ResponseHeadersPolicy
+        kind: ResponseHeadersPolicy
+        name: responseheaderspolicies.cloudfront.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon CloudFront resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon CloudFront**
+
+      Amazon CloudFront is a web service that speeds up distribution of your static and dynamic web content, such as .html, .css, .js, and image files, to your users. CloudFront delivers your content through a worldwide network of data centers called edge locations.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project. This project is currently in **developer preview**.
+    displayName: AWS Controllers for Kubernetes - Amazon CloudFront
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - cloudfront
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon CloudFront Developer Resources
+      url: https://aws.amazon.com/cloudfront/developer-resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: cloudfront maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudfront-controller:1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudfront-controller@sha256:75dd88e9aaca0f3fd4fd8cadcd8153949962368c58b77b76c4d77c3d85cf255f
+  name: ""
+schema: olm.bundle

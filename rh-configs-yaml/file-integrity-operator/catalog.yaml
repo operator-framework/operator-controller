@@ -1,0 +1,866 @@
+{
+  "schema": "olm.package",
+  "name": "file-integrity-operator",
+  "defaultChannel": "stable",
+  "icon": {
+    "base64data": "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",
+    "mediatype": "image/png"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "4.7",
+  "package": "file-integrity-operator",
+  "entries": [
+    {
+      "name": "file-integrity-operator.v0.1.13",
+      "skipRange": ">=0.1.6 <0.1.13"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "release-0.1",
+  "package": "file-integrity-operator",
+  "entries": [
+    {
+      "name": "file-integrity-operator.v0.1.32",
+      "skipRange": ">=0.1.6 <0.1.32"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable",
+  "package": "file-integrity-operator",
+  "entries": [
+    {
+      "name": "file-integrity-operator.v1.3.3",
+      "skipRange": ">=1.0.0 <1.3.3"
+    },
+    {
+      "name": "file-integrity-operator.v1.3.4",
+      "replaces": "file-integrity-operator.v1.3.3",
+      "skipRange": ">=1.0.0 <1.3.4"
+    },
+    {
+      "name": "file-integrity-operator.v1.3.5",
+      "replaces": "file-integrity-operator.v1.3.4",
+      "skipRange": ">=1.0.0 <1.3.5"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "v1",
+  "package": "file-integrity-operator",
+  "entries": [
+    {
+      "name": "file-integrity-operator.v1.0.0",
+      "skipRange": ">=0.1.6 <1.0.0"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "file-integrity-operator.v0.1.13",
+  "package": "file-integrity-operator",
+  "image": "registry.redhat.io/openshift4/file-integrity-rhel8-operator-metadata@sha256:7fb2750941193d64f8cca278ff7d81d3ca5e29a2ad0568dff7ddae4396548bb3",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrity",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrityNodeStatus",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "file-integrity-operator",
+        "version": "0.1.13"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"fileintegrity.openshift.io/v1alpha1\",\n    \"kind\": \"FileIntegrity\",\n    \"metadata\": {\n      \"name\": \"example-fileintegrity\",\n      \"namespace\": \"openshift-file-integrity\"\n    },\n    \"spec\": {\n      \"config\": {},\n      \"debug\": false\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "olm.skipRange": ">=0.1.6 <0.1.13",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-file-integrity",
+          "operators.openshift.io/infrastructure-features": "[\"Disconnected\"]",
+          "repository": "https://github.com/openshift/file-integrity-operator"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "fileintegrities.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrity",
+              "description": "FileIntegrity is the Schema for the fileintegrities API"
+            },
+            {
+              "name": "fileintegritynodestatuses.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrityNodeStatus",
+              "description": "FileIntegrityNodeStatus defines the status of a specific node"
+            }
+          ]
+        },
+        "description": "An operator that manages file integrity checks on nodes.",
+        "displayName": "File Integrity Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "Integrity",
+          "security"
+        ],
+        "links": [
+          {
+            "name": "File Integrity Operator",
+            "url": "https://file-integrity-operator.domain"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Matt Rogers",
+            "email": "mrogers@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://github.com/openshift/file-integrity-operator"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/openshift4/file-integrity-rhel8-operator-metadata@sha256:7fb2750941193d64f8cca278ff7d81d3ca5e29a2ad0568dff7ddae4396548bb3"
+    },
+    {
+      "name": "file-integrity-operator",
+      "image": "registry.redhat.io/openshift4/file-integrity-rhel8-operator@sha256:a65f1244636649734763164a5d6155a6f6a7b79b3950ecc03fb3c58188583599"
+    },
+    {
+      "name": "aide",
+      "image": "registry.redhat.io/openshift4/file-integrity-rhel8-operator@sha256:a65f1244636649734763164a5d6155a6f6a7b79b3950ecc03fb3c58188583599"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/openshift4/file-integrity-rhel8-operator@sha256:a65f1244636649734763164a5d6155a6f6a7b79b3950ecc03fb3c58188583599"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "file-integrity-operator.v0.1.32",
+  "package": "file-integrity-operator",
+  "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:57e796822bcd705974c0efcd6c190ce39eac2e70b9d6a0c27f69d85dfe966db2",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrity",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrityNodeStatus",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "file-integrity-operator",
+        "version": "0.1.32"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"fileintegrity.openshift.io/v1alpha1\",\n    \"kind\": \"FileIntegrity\",\n    \"metadata\": {\n      \"name\": \"example-fileintegrity\",\n      \"namespace\": \"openshift-file-integrity\"\n    },\n    \"spec\": {\n      \"config\": {},\n      \"debug\": false\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "olm.skipRange": ">=0.1.6 <0.1.32",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-file-integrity",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.14.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/openshift/file-integrity-operator"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "fileintegrities.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrity",
+              "displayName": "File Integrity",
+              "description": "FileIntegrity is the Schema for the fileintegrities API"
+            },
+            {
+              "name": "fileintegritynodestatuses.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrityNodeStatus",
+              "description": "FileIntegrityNodeStatus defines the status of a specific node"
+            }
+          ]
+        },
+        "description": "An operator that manages file integrity checks on nodes.",
+        "displayName": "File Integrity Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "Integrity",
+          "security"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported",
+          "operatorframework.io/os.linux": "supported",
+          "operatorframework.io/os.zos": "supported"
+        },
+        "links": [
+          {
+            "name": "File Integrity Operator upstream repo",
+            "url": "https://github.com/openshift/file-integrity-operator"
+          },
+          {
+            "name": "File Integrity Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/file_integrity_operator/file-integrity-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Matt Rogers",
+            "email": "mrogers@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://github.com/openshift/file-integrity-operator"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:57e796822bcd705974c0efcd6c190ce39eac2e70b9d6a0c27f69d85dfe966db2"
+    },
+    {
+      "name": "file-integrity-operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:c3e34e6198eadb48c007cd949d8be38e26ef7d15d2f9047a8c3c89c03201e4ea"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:c3e34e6198eadb48c007cd949d8be38e26ef7d15d2f9047a8c3c89c03201e4ea"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "file-integrity-operator.v1.0.0",
+  "package": "file-integrity-operator",
+  "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:f234e8af232f2d3a9472307ae82834f96756841b8d60b8c42ac4f9ca3fd17545",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrity",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrityNodeStatus",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "file-integrity-operator",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"fileintegrity.openshift.io/v1alpha1\",\n    \"kind\": \"FileIntegrity\",\n    \"metadata\": {\n      \"name\": \"example-fileintegrity\",\n      \"namespace\": \"openshift-file-integrity\"\n    },\n    \"spec\": {\n      \"config\": {},\n      \"debug\": false\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "olm.skipRange": ">=0.1.6 <1.0.0",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-file-integrity",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.14.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/openshift/file-integrity-operator"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "fileintegrities.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrity",
+              "displayName": "File Integrity",
+              "description": "FileIntegrity is the Schema for the fileintegrities API"
+            },
+            {
+              "name": "fileintegritynodestatuses.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrityNodeStatus",
+              "description": "FileIntegrityNodeStatus defines the status of a specific node"
+            }
+          ]
+        },
+        "description": "An operator that manages file integrity checks on nodes.",
+        "displayName": "File Integrity Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "Integrity",
+          "security"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported",
+          "operatorframework.io/os.linux": "supported",
+          "operatorframework.io/os.zos": "supported"
+        },
+        "links": [
+          {
+            "name": "File Integrity Operator upstream repo",
+            "url": "https://github.com/openshift/file-integrity-operator"
+          },
+          {
+            "name": "File Integrity Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/file_integrity_operator/file-integrity-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Matt Rogers",
+            "email": "mrogers@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://github.com/openshift/file-integrity-operator"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:f234e8af232f2d3a9472307ae82834f96756841b8d60b8c42ac4f9ca3fd17545"
+    },
+    {
+      "name": "file-integrity-operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:dd1dfeccf59214a0de653c3a4c4dbbc8c41640954318d13386cda73891660e4f"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:dd1dfeccf59214a0de653c3a4c4dbbc8c41640954318d13386cda73891660e4f"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "file-integrity-operator.v1.3.3",
+  "package": "file-integrity-operator",
+  "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:c8fcc9135d41c190c4507735d514cf5edf0cc47460365704c6b4446804920137",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrity",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrityNodeStatus",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "file-integrity-operator",
+        "version": "1.3.3"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"fileintegrity.openshift.io/v1alpha1\",\n    \"kind\": \"FileIntegrity\",\n    \"metadata\": {\n      \"name\": \"example-fileintegrity\",\n      \"namespace\": \"openshift-file-integrity\"\n    },\n    \"spec\": {\n      \"config\": {},\n      \"debug\": false\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "createdAt": "2023-10-10T02:05:54Z",
+          "olm.skipRange": ">=1.0.0 <1.3.3",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-file-integrity",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.27.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/openshift/file-integrity-operator"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "fileintegrities.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrity",
+              "displayName": "File Integrity",
+              "description": "FileIntegrity is the Schema for the fileintegrities API"
+            },
+            {
+              "name": "fileintegritynodestatuses.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrityNodeStatus",
+              "description": "FileIntegrityNodeStatus defines the status of a specific node"
+            }
+          ]
+        },
+        "description": "An operator that manages file integrity checks on nodes.",
+        "displayName": "File Integrity Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "Integrity",
+          "security"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported",
+          "operatorframework.io/os.linux": "supported",
+          "operatorframework.io/os.zos": "supported"
+        },
+        "links": [
+          {
+            "name": "File Integrity Operator upstream repo",
+            "url": "https://github.com/openshift/file-integrity-operator"
+          },
+          {
+            "name": "File Integrity Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/file_integrity_operator/file-integrity-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://github.com/openshift/file-integrity-operator"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:c8fcc9135d41c190c4507735d514cf5edf0cc47460365704c6b4446804920137"
+    },
+    {
+      "name": "file-integrity-operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:74af6d4a7d72d793a54cf2e8f8cf3acbed132c1fc6107db1661683a3a6aebe8d"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:74af6d4a7d72d793a54cf2e8f8cf3acbed132c1fc6107db1661683a3a6aebe8d"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "file-integrity-operator.v1.3.4",
+  "package": "file-integrity-operator",
+  "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:d6ef6a601b1a3fe536f19c5ce5062657b61a0ce4726551a336f11c63b785fcd3",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrity",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrityNodeStatus",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "file-integrity-operator",
+        "version": "1.3.4"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"fileintegrity.openshift.io/v1alpha1\",\n    \"kind\": \"FileIntegrity\",\n    \"metadata\": {\n      \"name\": \"example-fileintegrity\",\n      \"namespace\": \"openshift-file-integrity\"\n    },\n    \"spec\": {\n      \"config\": {},\n      \"debug\": false\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "createdAt": "2024-05-13T22:06:52Z",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=1.0.0 <1.3.4",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-file-integrity",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.27.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/openshift/file-integrity-operator"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "fileintegrities.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrity",
+              "displayName": "File Integrity",
+              "description": "FileIntegrity is the Schema for the fileintegrities API"
+            },
+            {
+              "name": "fileintegritynodestatuses.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrityNodeStatus",
+              "description": "FileIntegrityNodeStatus defines the status of a specific node"
+            }
+          ]
+        },
+        "description": "An operator that manages file integrity checks on nodes.",
+        "displayName": "File Integrity Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "Integrity",
+          "security"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported",
+          "operatorframework.io/os.linux": "supported",
+          "operatorframework.io/os.zos": "supported"
+        },
+        "links": [
+          {
+            "name": "File Integrity Operator upstream repo",
+            "url": "https://github.com/openshift/file-integrity-operator"
+          },
+          {
+            "name": "File Integrity Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/file_integrity_operator/file-integrity-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://github.com/openshift/file-integrity-operator"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:d6ef6a601b1a3fe536f19c5ce5062657b61a0ce4726551a336f11c63b785fcd3"
+    },
+    {
+      "name": "file-integrity-operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:caf04345dea29bde930995e1a6c40da5b5f3abdf55077a77610ea0269449f350"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:caf04345dea29bde930995e1a6c40da5b5f3abdf55077a77610ea0269449f350"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "file-integrity-operator.v1.3.5",
+  "package": "file-integrity-operator",
+  "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:48456462a52fbb20281f65e1dad577ce2c61f86d439c28ba88070eaa11351e7e",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrity",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "fileintegrity.openshift.io",
+        "kind": "FileIntegrityNodeStatus",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "file-integrity-operator",
+        "version": "1.3.5"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"fileintegrity.openshift.io/v1alpha1\",\n    \"kind\": \"FileIntegrity\",\n    \"metadata\": {\n      \"name\": \"example-fileintegrity\",\n      \"namespace\": \"openshift-file-integrity\"\n    },\n    \"spec\": {\n      \"config\": {},\n      \"debug\": false\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "createdAt": "2024-05-13T22:06:52Z",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=1.0.0 <1.3.5",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-file-integrity",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.27.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/openshift/file-integrity-operator"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "fileintegrities.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrity",
+              "displayName": "File Integrity",
+              "description": "FileIntegrity is the Schema for the fileintegrities API"
+            },
+            {
+              "name": "fileintegritynodestatuses.fileintegrity.openshift.io",
+              "version": "v1alpha1",
+              "kind": "FileIntegrityNodeStatus",
+              "description": "FileIntegrityNodeStatus defines the status of a specific node"
+            }
+          ]
+        },
+        "description": "An operator that manages file integrity checks on nodes.",
+        "displayName": "File Integrity Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "Integrity",
+          "security"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported",
+          "operatorframework.io/os.linux": "supported",
+          "operatorframework.io/os.zos": "supported"
+        },
+        "links": [
+          {
+            "name": "File Integrity Operator upstream repo",
+            "url": "https://github.com/openshift/file-integrity-operator"
+          },
+          {
+            "name": "File Integrity Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/file_integrity_operator/file-integrity-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://github.com/openshift/file-integrity-operator"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-operator-bundle@sha256:48456462a52fbb20281f65e1dad577ce2c61f86d439c28ba88070eaa11351e7e"
+    },
+    {
+      "name": "file-integrity-operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:6faa0d5a7b47300a6a20c30dbb8d07b5fedb3cb51eb2be670261379ff448f563"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-file-integrity-rhel8-operator@sha256:6faa0d5a7b47300a6a20c30dbb8d07b5fedb3cb51eb2be670261379ff448f563"
+    }
+  ]
+}

@@ -1,0 +1,664 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-mq-controller
+schema: olm.package
+---
+entries:
+- name: ack-mq-controller.v0.0.10
+  replaces: ack-mq-controller.v0.0.9
+- name: ack-mq-controller.v0.0.11
+  replaces: ack-mq-controller.v0.0.10
+- name: ack-mq-controller.v0.0.12
+  replaces: ack-mq-controller.v0.0.11
+- name: ack-mq-controller.v0.0.13
+  replaces: ack-mq-controller.v0.0.12
+- name: ack-mq-controller.v0.0.14
+  replaces: ack-mq-controller.v0.0.13
+- name: ack-mq-controller.v0.0.15
+  replaces: ack-mq-controller.v0.0.14
+- name: ack-mq-controller.v0.0.16
+  replaces: ack-mq-controller.v0.0.15
+- name: ack-mq-controller.v0.0.17
+  replaces: ack-mq-controller.v0.0.16
+- name: ack-mq-controller.v0.0.18
+  replaces: ack-mq-controller.v0.0.17
+- name: ack-mq-controller.v0.0.19
+  replaces: ack-mq-controller.v0.0.18
+- name: ack-mq-controller.v0.0.20
+  replaces: ack-mq-controller.v0.0.19
+- name: ack-mq-controller.v0.0.21
+  replaces: ack-mq-controller.v0.0.20
+- name: ack-mq-controller.v0.0.22
+  replaces: ack-mq-controller.v0.0.21
+- name: ack-mq-controller.v0.0.23
+  replaces: ack-mq-controller.v0.0.22
+- name: ack-mq-controller.v0.0.24
+  replaces: ack-mq-controller.v0.0.23
+- name: ack-mq-controller.v0.0.25
+  replaces: ack-mq-controller.v0.0.24
+- name: ack-mq-controller.v0.0.26
+  replaces: ack-mq-controller.v0.0.25
+- name: ack-mq-controller.v0.0.27
+  replaces: ack-mq-controller.v0.0.26
+- name: ack-mq-controller.v0.0.29
+  replaces: ack-mq-controller.v0.0.27
+- name: ack-mq-controller.v0.0.31
+  replaces: ack-mq-controller.v0.0.29
+- name: ack-mq-controller.v0.0.34
+  replaces: ack-mq-controller.v0.0.31
+- name: ack-mq-controller.v0.0.35
+  replaces: ack-mq-controller.v0.0.34
+- name: ack-mq-controller.v0.0.36
+  replaces: ack-mq-controller.v0.0.35
+- name: ack-mq-controller.v0.0.7
+- name: ack-mq-controller.v0.0.8
+  replaces: ack-mq-controller.v0.0.7
+- name: ack-mq-controller.v0.0.9
+  replaces: ack-mq-controller.v0.0.8
+name: alpha
+package: ack-mq-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:276c988836691a6cfdc1044b9432e0847e274c52e5de5c1e28313f2cac3f5441
+name: ack-mq-controller.v0.0.10
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:276c988836691a6cfdc1044b9432e0847e274c52e5de5c1e28313f2cac3f5441
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:55a041790a99adfc12e05666e34c18a81540e42f888ac10f12a27c1fd49ce1c7
+name: ack-mq-controller.v0.0.11
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:55a041790a99adfc12e05666e34c18a81540e42f888ac10f12a27c1fd49ce1c7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:35dc0415e78a346f4e6f8bf0dc02dd66a6893004dc108a7311893da83f8fbc6e
+name: ack-mq-controller.v0.0.12
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:35dc0415e78a346f4e6f8bf0dc02dd66a6893004dc108a7311893da83f8fbc6e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:92fcbd02a85b97bb28ed2f1d02cf00d7780f91914bd0d0e4a3e38286d9f0adcd
+name: ack-mq-controller.v0.0.13
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:92fcbd02a85b97bb28ed2f1d02cf00d7780f91914bd0d0e4a3e38286d9f0adcd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:3708a1da28d25cdd8204e4e6ed96010c988bcbb77780039a6da564a0e104aa2e
+name: ack-mq-controller.v0.0.14
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:3708a1da28d25cdd8204e4e6ed96010c988bcbb77780039a6da564a0e104aa2e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:fa9e50bdd5d19b8dec7f01ccc20dfb06afca86182f2e35914087962099e5b1fb
+name: ack-mq-controller.v0.0.15
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:fa9e50bdd5d19b8dec7f01ccc20dfb06afca86182f2e35914087962099e5b1fb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:c983f8129d078efd66e3a86be794880436bf7fc23b9d60e7075c33137abf9810
+name: ack-mq-controller.v0.0.16
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:c983f8129d078efd66e3a86be794880436bf7fc23b9d60e7075c33137abf9810
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:a11defcadc4d32ae6677590bd204a44ab69a2df55439f6fa78d065bbc7e5c79f
+name: ack-mq-controller.v0.0.17
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:a11defcadc4d32ae6677590bd204a44ab69a2df55439f6fa78d065bbc7e5c79f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:1fc437d7cd19950541791a9ef8ebc25da4aa6c449f3b510252f8010f56f3f4ed
+name: ack-mq-controller.v0.0.18
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.18
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.18
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:1fc437d7cd19950541791a9ef8ebc25da4aa6c449f3b510252f8010f56f3f4ed
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:6ff5ffff042914b2a4b45f3dfb6dfeaf8445a748bbbadf5854b5d320cc5b3eeb
+name: ack-mq-controller.v0.0.19
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:6ff5ffff042914b2a4b45f3dfb6dfeaf8445a748bbbadf5854b5d320cc5b3eeb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:9fe8c90273dada8dfee045050eb8ce2c48772f1d727c77e8c1caf6171d2e5a59
+name: ack-mq-controller.v0.0.20
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.20
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.20
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:9fe8c90273dada8dfee045050eb8ce2c48772f1d727c77e8c1caf6171d2e5a59
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:1c18960292b8742b3c5b8e8531e6ef177765844c0b713ffeb0a27ace821357d7
+name: ack-mq-controller.v0.0.21
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.21
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.21
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:1c18960292b8742b3c5b8e8531e6ef177765844c0b713ffeb0a27ace821357d7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:0604892dd398d9fcabbcb1402abeb6c1f65235dca3ef95de13232eb997056fda
+name: ack-mq-controller.v0.0.22
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.22
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.22
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:0604892dd398d9fcabbcb1402abeb6c1f65235dca3ef95de13232eb997056fda
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:d4aa35ee96f429cae186f2ea1e337a666b9f9e1a649c68a6a1b65e62e8a14b11
+name: ack-mq-controller.v0.0.23
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.23
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.23
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:d4aa35ee96f429cae186f2ea1e337a666b9f9e1a649c68a6a1b65e62e8a14b11
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:64c085125a58eb572106a4748951d93f6a91c51c687748491c1b74858e7fef76
+name: ack-mq-controller.v0.0.24
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.24
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.24
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:64c085125a58eb572106a4748951d93f6a91c51c687748491c1b74858e7fef76
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:3dd2fbd43270844b9316de91a0865b732e18f22abef6ef5d2bdb376a87642cbf
+name: ack-mq-controller.v0.0.25
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.25
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.25
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:3dd2fbd43270844b9316de91a0865b732e18f22abef6ef5d2bdb376a87642cbf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:1c4e4aab4d3a57c1bd6c7eaffb0b7adb51430343334a8c378e706073a67d2c7c
+name: ack-mq-controller.v0.0.26
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.26
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.26
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:1c4e4aab4d3a57c1bd6c7eaffb0b7adb51430343334a8c378e706073a67d2c7c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:c5e7c17b31bb71554d2dea267b992eb5738bf247b9cfa0f0a880375792b3a335
+name: ack-mq-controller.v0.0.27
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.27
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.27
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:c5e7c17b31bb71554d2dea267b992eb5738bf247b9cfa0f0a880375792b3a335
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:188399c6431b584c7fadb4264af6fb9046d1e2f4c2120a500eb664dd4e9bd90d
+name: ack-mq-controller.v0.0.29
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.29
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:0.0.29
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:188399c6431b584c7fadb4264af6fb9046d1e2f4c2120a500eb664dd4e9bd90d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:fdefb9c985923d2be98b75d1011871c1ff6bb6a14c334673c951be3bf7f2cf4a
+name: ack-mq-controller.v0.0.31
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.31
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:0.0.31
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:fdefb9c985923d2be98b75d1011871c1ff6bb6a14c334673c951be3bf7f2cf4a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:7e76283b58e07ebe6da7c3953cdb36b6a5a04cd6fe725b961275a057ac81b063
+name: ack-mq-controller.v0.0.34
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.34
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:0.0.34
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:7e76283b58e07ebe6da7c3953cdb36b6a5a04cd6fe725b961275a057ac81b063
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:cf6c5f16f6d90e5c9ac3db539771a0d2ec34c21a8a6d984d02311fb1a872d5a8
+name: ack-mq-controller.v0.0.35
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.35
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:0.0.35
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:cf6c5f16f6d90e5c9ac3db539771a0d2ec34c21a8a6d984d02311fb1a872d5a8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:eeab3fc42f6903767b5172cfacf90f6631497640bc72983978b4d2fa5b3d2c71
+name: ack-mq-controller.v0.0.36
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.36
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "mq.services.k8s.aws/v1alpha1",
+            "kind": "Broker",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/mq-controller:0.0.36
+      createdAt: "2024-08-30T23:31:15Z"
+      description: AWS MQ controller is a service controller for managing MQ resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Broker represents the state of an AWS mq Broker resource.
+        displayName: Broker
+        kind: Broker
+        name: brokers.mq.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon MQ resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon MQ**
+
+      Amazon MQ is a managed message broker service for Apache ActiveMQ and RabbitMQ that makes it easy to set up and operate message brokers on AWS. Amazon MQ reduces your operational responsibilities by managing the provisioning, setup, and maintenance of message brokers for you. Because Amazon MQ connects to your current applications with industry-standard APIs and protocols, you can easily migrate to AWS without having to rewrite code.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project. This project is currently in **developer preview**.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon MQ
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - mq
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon MQ Developer Resources
+      url: https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: mq maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:0.0.36
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:eeab3fc42f6903767b5172cfacf90f6631497640bc72983978b4d2fa5b3d2c71
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:cb22c668eb731d448465004c4ae67dd8f1824d8213583a8de22dfb69b89c07ed
+name: ack-mq-controller.v0.0.7
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:cb22c668eb731d448465004c4ae67dd8f1824d8213583a8de22dfb69b89c07ed
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:2f606a593dfc09874aed4dbff7dea5a0b06715e76af3913a69043abe48407bff
+name: ack-mq-controller.v0.0.8
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:2f606a593dfc09874aed4dbff7dea5a0b06715e76af3913a69043abe48407bff
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-mq-controller@sha256:b869538384620899c1585b57079051d32cb24796411b2e500b8f167441987dea
+name: ack-mq-controller.v0.0.9
+package: ack-mq-controller
+properties:
+- type: olm.gvk
+  value:
+    group: mq.services.k8s.aws
+    kind: Broker
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-mq-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/mq-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-mq-controller@sha256:b869538384620899c1585b57079051d32cb24796411b2e500b8f167441987dea
+  name: ""
+schema: olm.bundle

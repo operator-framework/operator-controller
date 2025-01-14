@@ -1,0 +1,191 @@
+---
+defaultChannel: stable-v1
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE2LjAuNCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgogICAgIHdpZHRoPSI2MDBweCIgaGVpZ2h0PSIxOTkuNDlweCIgdmlld0JveD0iMCAwIDYwMCAxOTkuNDkiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDYwMCAxOTkuNDkiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8Zz4KCTxnPgoJCTxwYXRoIGZpbGw9IiNDMEMwQzAiIGQ9Ik0xODMuMzA0LDc1LjUwMWMtMTIuOTQ5LDAtMjAsNS4zOTgtMjcuMDE5LDEwLjQ2OVYzNi42NjloLTIyLjI5OXY5NS40N2wyMi4zODMsMjIuMzh2LTUzLjY4MwoJCQljNi41OTMtNS4wMzQsMTEuNTExLTcuMzYxLDIwLjUxNy03LjM2MWM1LjY3MywwLDkuMzc1LDMuMDQ1LDkuMzc1LDExLjQ4NXY1Ni44NjJoMjIuMzgydi01Ni41MQoJCQlDMjA4LjY0Myw4OS4xMzUsMjAzLjA2LDc1LjUwMSwxODMuMzA0LDc1LjUwMXoiLz4KICAgICAgICA8cGF0aCBmaWxsPSIjQzBDMEMwIiBkPSJNMjE1LjQyMiwxMzIuMTkyYzAtMTIuMzUsNi42NzYtMjMuMjc5LDI0Ljg3My0yMy4yNzljMCwwLDI0LjkyOSwwLjE1NiwyNC45MjksMGMwLDAsMC4xNjUtNS4yODIsMC01LjQ0MQoJCQljMC05LjA0OC00LjIyOS0xMC40NjktMTEuMzQ3LTEwLjQ2OWMtNy4zNzgsMC0yOC42NjgsMS4zMjQtMzUuNjQ4LDEuODI3VjgxLjAxN2MxMS4xNzktNC4zNDIsMjIuODUyLTUuNjA2LDM4LjY4LTUuNjc5CgkJCWMxOC4yOC0wLjA3NSwzMC43MDIsNi4yNDEsMzAuNzAyLDI3LjI1NXY1OS4yM2gtMTcuNjcybC00LjcxNC05LjM1Yy0wLjkzMSwxLjg0LTEyLjg0MywxMC41NzItMjUuODExLDEwLjMwOAoJCQljLTE2LjMzNC0wLjQzNy0yMy45OTEtMTEuNTYtMjMuOTkxLTIyLjU5OVYxMzIuMTkyeiBNMjQ1Ljc0MiwxNDQuNzk1YzkuMzYyLDAsMTkuNDgyLTYuNTY4LDE5LjQ4Mi02LjU2OFYxMjIuNjdsLTIwLjUzMiwxLjU4MgoJCQljLTUuOTEsMC41NTMtNi44ODQsNC45MjMtNi44ODQsOC42MzV2NC4xMjVDMjM3LjgwOCwxNDQuMDcsMjQxLjYyNSwxNDQuNzk1LDI0NS43NDIsMTQ0Ljc5NXoiLz4KICAgICAgICA8cGF0aCBmaWxsPSIjQzBDMEMwIiBkPSJNMzExLjk0Miw3Ni45MzdsMTcuMDA4LDU4LjY2N2wxNS4yMDctNTguNjY3aDIyLjI4bC01LjkwNywyMi44NjdsMTQuMDYyLDM1LjhsMTYuNzQ2LTU4LjY2N2gyNC4wMjkKCQkJbC0yNy40MzMsODQuODg2aC0yNS4wMjVsLTEyLjcwMy0zMC43NTJsLTkuNjAyLDMwLjc1MkgzMTUuMTVsLTI3LjE0OS04NC44ODZIMzExLjk0MnoiLz4KICAgICAgICA8cGF0aCBmaWxsPSIjQzBDMEMwIiBkPSJNNDIwLjA2Miw4MS40MTJsMTMuNzA5LTQuNjM0bDMuNzU4LTIzLjY2MmgxOC42MjV2MjMuNjYyaDE4Ljk3N3YxNy4xMDRoLTE4Ljk3N3YzNC4wNDkKCQkJYzAsMTIuNTAzLDIuODgyLDE1LjE3Myw3LjI2NywxNi44MDFjMCwwLDkuNTkyLDMuMzU3LDEwLjcwMywzLjM1N3YxMy43NDloLTE5LjUxM2MtMTIuNTY3LDAtMjAuODQtNy44NDktMjAuODQtMzAuMzg5VjkzLjg4MgoJCQloLTEzLjcwOVY4MS40MTJ6Ii8+CiAgICAgICAgPHBhdGggZmlsbD0iI0MwQzBDMCIgZD0iTTQ4NC42MjMsNTAuMTYyYzAtMi4zOTgsMS4yNzctNCwzLjgzOS00aDE2Ljc4NmMyLjM5NSwwLDMuNTg0LDEuNzY1LDMuNTg0LDR2MTQuMTcxCgkJCWMwLDIuMzk0LTEuMzQ5LDMuNjc4LTMuNTg0LDMuNjc4aC0xNi43ODZjLTIuMjM5LDAtMy44MzktMS40MzYtMy44MzktMy42NzhWNTAuMTYyeiBNNDg1LjQzMSw3Ni45MzdoMjIuMzc2djg0Ljg4NmgtMjIuMzc2CgkJCVY3Ni45Mzd6Ii8+CiAgICAgICAgPHBhdGggZmlsbD0iI0MwQzBDMCIgZD0iTTU1OS42MzcsNzYuMTQyYzI5LjIzMywwLDM4LjcyOSwxMC43MDgsMzguNzI5LDQ0LjQzNWMwLDMxLjQ5Ni05LjA1NSw0Mi4wNDQtMzguNzI5LDQyLjA0NAoJCQljLTI5LjMxMywwLTM4LjcyNi0xMS42Ny0zOC43MjYtNDIuMDQ0QzUyMC45MTEsODUuODkzLDUzMC45NDgsNzYuMTQyLDU1OS42MzcsNzYuMTQyeiBNNTU5LjYzNywxNDQuNjM5CgkJCWMxMi42MTEsMCwxNi4zNS0xLjcxMSwxNi4zNS0yNC4wNjJjMC0yMy43NzItMy4wMS0yNi40NTMtMTYuMzUtMjYuNDUzYy0xMy4yNDMsMC0xNi4zNDIsMi42OTMtMTYuMzQyLDI2LjQ1MwoJCQlDNTQzLjI5NSwxNDIuNTQ0LDU0Ny43NDQsMTQ0LjYzOSw1NTkuNjM3LDE0NC42Mzl6Ii8+Cgk8L2c+CiAgICA8cGF0aCBmaWxsPSIjQzBDMEMwIiBkPSJNMjAuNTc1LDEzMi41MTRjMTEuNzM2LDExLjc0MSwyNy4zNSwxOC4yMTQsNDMuOTUzLDE4LjIxNGMxMS40MDksMCwyMi42MjUtMy4xODcsMzIuNDQxLTkuMjExbDIuMDc3LTEuMjcKCQlsMjEuOTIsMjEuOTI5aDM0LjMzOGwtMzkuMDk5LTM5LjFsMS4yNzQtMi4wNjdjMTUuMDkxLTI0LjU5MywxMS4zOS01Ni4wMDctOC45OTctNzYuMzkzCgkJQzk2Ljc0MiwzMi44NzYsODEuMTI5LDI2LjQwOSw2NC41MjgsMjYuNDA5Yy0xNi42MDQsMC0zMi4yMDYsNi40NjgtNDMuOTQ3LDE4LjIwN0M4LjgzOCw1Ni4zNTgsMi4zNjUsNzEuOTcsMi4zNjUsODguNTY5CgkJQzIuMzY1LDEwNS4xNjcsOC44MzIsMTIwLjc3NSwyMC41NzUsMTMyLjUxNHogTTM3Ljc0NSw2MS43ODVjNy4xNDgtNy4xNTYsMTYuNjYzLTExLjA5NSwyNi43ODMtMTEuMDk1CgkJYzEwLjExNywwLDE5LjYyOSwzLjkzOSwyNi43OCwxMS4wOTVjNy4xNTUsNy4xNTgsMTEuMDk1LDE2LjY2OCwxMS4wOTUsMjYuNzg1YzAsMTAuMTIxLTMuOTQsMTkuNjMtMTEuMDk4LDI2Ljc4MwoJCWMtNy4xNDYsNy4xNTMtMTYuNjYsMTEuMDkyLTI2Ljc3NywxMS4wOTJjLTEwLjEyLDAtMTkuNjM0LTMuOTM4LTI2Ljc4Ni0xMS4wOTJjLTcuMTU0LTcuMTYxLTExLjA5NS0xNi42NjctMTEuMDk1LTI2Ljc4MwoJCUMyNi42NDcsNzguNDUzLDMwLjU4OCw2OC45NDIsMzcuNzQ1LDYxLjc4NXoiLz4KICAgIDxnPgoJCTxwYXRoIGZpbGw9IiNFQzc5MjkiIGQ9Ik04MC4xOTcsOTIuOTI2djAuMDkzYzAuNDY5LDAuODU0LDAuNzMzLDEuODI0LDAuNzQ2LDIuODYyYzAsMy4yNjktMi42NTUsNS45MjItNS45MjUsNS45MjIKCQkJYy0zLjI3LDAtNS45MTgtMi42NTMtNS45MTgtNS45MjJjMC0xLjQ0MiwwLjUxNS0yLjc2NywxLjM3OC0zLjc5NmMwLDAsMTQuNDY0LTIwLjEzNy01Ljc4NS0zMy40OThjMCwwLDUuODc1LDE1Ljg2LTguMTI5LDIyLjUyNwoJCQljMCwwLTMuODY2LDIuNzI5LDAuNC02LjMzNWMwLDAtMTEuODksNi42ODMtMTEuODksMjIuODE0YzAsNy4yOTEsMy43NzYsMTMuNjkxLDkuNDc0LDE3LjM3NgoJCQljLTAuMTc3LTAuNjU4LTAuMjg5LTEuNDExLTAuMjg5LTIuMjk5YzAuMDA2LTYuNDY5LDUuODA0LTE0LjAzMSw3LjU4Ni0xNC4wMTljMCwwLDAuNDUsNy42NjQsMi41MDYsMTEuMjc3CgkJCWMxLjYyLDMuMDU4LDAuNjM2LDYuNDQ0LTEuNTEzLDguMTM4YzAuOTYyLDAuMTM5LDEuOTQ0LDAuMjM0LDIuOTQ3LDAuMjM0YzUuNDY4LDAsMTAuNDQ2LTIuMTIyLDE0LjE0Ny01LjU5MQoJCQljMCwwLTAuMDA2LTAuMDE4LTAuMDA2LTAuMDIzQzg2LjgzMywxMDMuNjA1LDgyLjgyOCw5Ni4yMjQsODAuMTk3LDkyLjkyNnoiLz4KCTwvZz4KPC9nPgo8L3N2Zz4=
+  mediatype: image/svg+xml
+name: hawtio-operator
+schema: olm.package
+---
+entries:
+- name: hawtio-operator.v1.0.1
+- name: hawtio-operator.v1.1.0
+  replaces: hawtio-operator.v1.0.1
+  skipRange: '>=1.0.0 <1.0.2'
+name: latest
+package: hawtio-operator
+schema: olm.channel
+---
+entries:
+- name: hawtio-operator.v1.0.1
+- name: hawtio-operator.v1.1.0
+  replaces: hawtio-operator.v1.0.1
+  skipRange: '>=1.0.0 <1.0.2'
+name: stable-v1
+package: hawtio-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/hawtio-operator@sha256:1333d6dbdccc34eb0a6be3a9d89696d383e07e46f3e1efaa4858c68ea25dd0fa
+name: hawtio-operator.v1.0.1
+package: hawtio-operator
+properties:
+- type: olm.gvk
+  value:
+    group: hawt.io
+    kind: Hawtio
+    version: v1
+- type: olm.gvk
+  value:
+    group: hawt.io
+    kind: Hawtio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: hawtio-operator
+    version: 1.0.1
+relatedImages:
+- image: quay.io/hawtio/operator:1.0.1
+  name: ""
+- image: quay.io/operatorhubio/hawtio-operator@sha256:1333d6dbdccc34eb0a6be3a9d89696d383e07e46f3e1efaa4858c68ea25dd0fa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/hawtio-operator@sha256:1c31ae74de490f8c4de960c1db005564464970a3c82800be495c065d0642ae31
+name: hawtio-operator.v1.1.0
+package: hawtio-operator
+properties:
+- type: olm.gvk
+  value:
+    group: hawt.io
+    kind: Hawtio
+    version: v1
+- type: olm.gvk
+  value:
+    group: hawt.io
+    kind: Hawtio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: hawtio-operator
+    version: 1.1.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "hawt.io/v1",
+            "kind": "Hawtio",
+            "metadata": {
+              "name": "hawtio-online"
+            },
+            "spec": {
+              "auth": {
+                "clientCertCheckSchedule": "* */12 * * *",
+                "clientCertExpirationPeriod": 24
+              },
+              "replicas": 1,
+              "resources": {
+                "limits": {
+                  "cpu": "1",
+                  "memory": "200Mi"
+                },
+                "requests": {
+                  "cpu": "200m",
+                  "memory": "32Mi"
+                }
+              },
+              "type": "Cluster",
+              "version": "1.12"
+            }
+          },
+          {
+            "apiVersion": "hawt.io/v1alpha1",
+            "kind": "Hawtio",
+            "metadata": {
+              "name": "hawtio-online"
+            },
+            "spec": {
+              "auth": {
+                "clientCertCheckSchedule": "* */12 * * *",
+                "clientCertExpirationPeriod": 24
+              },
+              "replicas": 1,
+              "resources": {
+                "limits": {
+                  "cpu": "1",
+                  "memory": "200Mi"
+                },
+                "requests": {
+                  "cpu": "200m",
+                  "memory": "32Mi"
+                }
+              },
+              "type": "Cluster",
+              "version": "1.12"
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Integration & Delivery
+      certified: "false"
+      containerImage: quay.io/hawtio/operator:1.1.0
+      createdAt: "2024-05-29T17:01:38Z"
+      description: Hawtio eases the discovery and management of Java applications
+        deployed on OpenShift.
+      olm.skipRange: '>=1.0.0 <1.0.2'
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+      repository: https://github.com/hawtio/hawtio-operator
+      support: Red Hat
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: An Hawtio console that eases the discovery and management of
+          hawtio-enabled applications
+        displayName: Hawtio
+        kind: Hawtio
+        name: hawtios.hawt.io
+        version: v1
+      - kind: Hawtio
+        name: hawtios.hawt.io
+        version: v1alpha1
+    description: |
+      Hawtio
+      ==============
+
+      The Hawtio console eases the discovery and management of Java applications deployed on OpenShift.
+
+      To secure the communication between the Hawtio console and the Jolokia agents, a client certificate is automatically generated.
+
+      Note that the client certificate CN (defaults to `hawtio-online.hawtio.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/manual/agents.html#jvm-agent).
+    displayName: Hawtio Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - Hawtio
+    - Java
+    - Management
+    - Console
+    links:
+    - name: Hawtio Web site
+      url: https://hawt.io
+    maintainers:
+    - email: hawtio@googlegroups.com
+      name: The Hawtio team
+    maturity: alpha
+    minKubeVersion: 1.11.0
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/hawtio/operator:1.1.0
+  name: ""
+- image: quay.io/operatorhubio/hawtio-operator@sha256:1c31ae74de490f8c4de960c1db005564464970a3c82800be495c065d0642ae31
+  name: ""
+schema: olm.bundle

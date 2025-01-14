@@ -1,0 +1,124 @@
+---
+defaultChannel: stable
+icon:
+  base64data: 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
+  mediatype: image/png
+name: nuxeo-operator
+schema: olm.package
+---
+entries:
+- name: nuxeo-operator.v0.7.1
+name: stable
+package: nuxeo-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/nuxeo-operator@sha256:0c7887301cfc505ee9cde3abf8ed4f5b52388f0f63ba060b3aa22a5f9cf485a9
+name: nuxeo-operator.v0.7.1
+package: nuxeo-operator
+properties:
+- type: olm.gvk
+  value:
+    group: appzygy.net
+    kind: Nuxeo
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: nuxeo-operator
+    version: 0.7.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "appzygy.net/v1alpha1",
+            "kind": "Nuxeo",
+            "metadata": {
+              "name": "nuxeo-sample"
+            },
+            "spec": {
+              "access": {
+                "hostname": "nuxeo-server.apps-crc.testing"
+              },
+              "nodeSets": [
+                {
+                  "interactive": true,
+                  "name": "cluster",
+                  "nuxeoConfig": {
+                    "nuxeoPackages": [
+                      "nuxeo-web-ui"
+                    ]
+                  },
+                  "replicas": 1
+                }
+              ],
+              "nuxeoImage": "nuxeo:LTS-2019",
+              "version": "10.10"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Application Runtime
+      certified: "false"
+      containerImage: docker.io/appzygy/nuxeo-operator:0.7.1
+      createdAt: "2020-09-26T00:00:00Z"
+      description: |
+        The Nuxeo Operator manages a Nuxeo cluster, integrating it
+        with backing services like Kafka, Elastic Search, MongoDB, and PostgreSQL
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      operators.operatorframework.io/builder: operator-sdk-v1.0.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+      repository: https://github.com/aceeric/nuxeo-operator
+      support: https://github.com/aceeric/nuxeo-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Nuxeo Cluster
+        displayName: Nuxeo
+        kind: Nuxeo
+        name: nuxeos.appzygy.net
+        version: v1alpha1
+    description: |
+      The Nuxeo Operator manages a Nuxeo cluster and integrates it with backing services like
+      Kafka, Elastic Search, MongoDB, and PostgreSQL. The operator supports the ability to configure many Nuxeo
+      runtime options, like JAVA_OPTS, templates, nuxeo.conf settings, custom contributions, cluster size,
+      and so on. Backing service integration is done declaratively. And some backing services are supported via
+      built-in configurations so that with just a few lines of YAML is is possible to run Nuxeo with those
+      backing services.
+    displayName: Nuxeo Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - nuxeo
+    - digital
+    - asset
+    - management
+    - kafka
+    - elasticsearch
+    - postgres
+    - mongodb
+    links:
+    - name: Nuxeo Operator
+      url: https://github.com/aceeric/nuxeo-operator
+    - name: Nuxeo Digital Asset Management
+      url: https://www.nuxeo.com/
+    maintainers:
+    - name: Eric Ace
+    maturity: alpha
+    provider:
+      name: Eric Ace
+relatedImages:
+- image: docker.io/appzygy/nuxeo-operator:0.7.1
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/nuxeo-operator@sha256:0c7887301cfc505ee9cde3abf8ed4f5b52388f0f63ba060b3aa22a5f9cf485a9
+  name: ""
+schema: olm.bundle

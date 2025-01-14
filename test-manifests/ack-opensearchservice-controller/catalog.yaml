@@ -1,0 +1,533 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-opensearchservice-controller
+schema: olm.package
+---
+entries:
+- name: ack-opensearchservice-controller.v0.0.10
+  replaces: ack-opensearchservice-controller.v0.0.9
+- name: ack-opensearchservice-controller.v0.0.11
+  replaces: ack-opensearchservice-controller.v0.0.10
+- name: ack-opensearchservice-controller.v0.0.12
+  replaces: ack-opensearchservice-controller.v0.0.11
+- name: ack-opensearchservice-controller.v0.0.13
+  replaces: ack-opensearchservice-controller.v0.0.12
+- name: ack-opensearchservice-controller.v0.0.14
+  replaces: ack-opensearchservice-controller.v0.0.13
+- name: ack-opensearchservice-controller.v0.0.15
+  replaces: ack-opensearchservice-controller.v0.0.14
+- name: ack-opensearchservice-controller.v0.0.17
+  replaces: ack-opensearchservice-controller.v0.0.15
+- name: ack-opensearchservice-controller.v0.0.19
+  replaces: ack-opensearchservice-controller.v0.0.17
+- name: ack-opensearchservice-controller.v0.0.23
+  replaces: ack-opensearchservice-controller.v0.0.19
+- name: ack-opensearchservice-controller.v0.0.24
+  replaces: ack-opensearchservice-controller.v0.0.23
+- name: ack-opensearchservice-controller.v0.0.26
+  replaces: ack-opensearchservice-controller.v0.0.24
+- name: ack-opensearchservice-controller.v0.0.27
+  replaces: ack-opensearchservice-controller.v0.0.26
+- name: ack-opensearchservice-controller.v0.0.28
+  replaces: ack-opensearchservice-controller.v0.0.27
+- name: ack-opensearchservice-controller.v0.0.4
+- name: ack-opensearchservice-controller.v0.0.5
+  replaces: ack-opensearchservice-controller.v0.0.4
+- name: ack-opensearchservice-controller.v0.0.6
+  replaces: ack-opensearchservice-controller.v0.0.5
+- name: ack-opensearchservice-controller.v0.0.7
+  replaces: ack-opensearchservice-controller.v0.0.6
+- name: ack-opensearchservice-controller.v0.0.8
+  replaces: ack-opensearchservice-controller.v0.0.7
+- name: ack-opensearchservice-controller.v0.0.9
+  replaces: ack-opensearchservice-controller.v0.0.8
+- name: ack-opensearchservice-controller.v1.0.0
+  replaces: ack-opensearchservice-controller.v0.0.28
+name: alpha
+package: ack-opensearchservice-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:736545051e499f84b387f785572af26caf35d39db9dfb50ee5d460b7b53642b6
+name: ack-opensearchservice-controller.v0.0.10
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:736545051e499f84b387f785572af26caf35d39db9dfb50ee5d460b7b53642b6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:8a167ca00c459de4834687b009f5c48c2fe52079a1877e2f000272a2d3967b2e
+name: ack-opensearchservice-controller.v0.0.11
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:8a167ca00c459de4834687b009f5c48c2fe52079a1877e2f000272a2d3967b2e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:e14fb0b98267f6afd8b671599dda103a0ef5b8d0944a9092ccde3df0f77446f8
+name: ack-opensearchservice-controller.v0.0.12
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:e14fb0b98267f6afd8b671599dda103a0ef5b8d0944a9092ccde3df0f77446f8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:bbe0b6b5e40463f4b7526d2b95ed15ae96c6e71881ec91a9506a1e41c853ae1c
+name: ack-opensearchservice-controller.v0.0.13
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:bbe0b6b5e40463f4b7526d2b95ed15ae96c6e71881ec91a9506a1e41c853ae1c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:0ed353b7a56ac5acc649cfa149dfa9bf58989f093b40119854a5d1ad1a5d111c
+name: ack-opensearchservice-controller.v0.0.14
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:0ed353b7a56ac5acc649cfa149dfa9bf58989f093b40119854a5d1ad1a5d111c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:75fd106318ca1bd7d8b04a048bd671978db2756523e52290fed3f5f609f108d0
+name: ack-opensearchservice-controller.v0.0.15
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:75fd106318ca1bd7d8b04a048bd671978db2756523e52290fed3f5f609f108d0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:20f4505e5c4a4e041ef5e4e599a69ba26e35f6481ed413c7480c3f352ab840d7
+name: ack-opensearchservice-controller.v0.0.17
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:20f4505e5c4a4e041ef5e4e599a69ba26e35f6481ed413c7480c3f352ab840d7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:59ea420c53c93aa78af9bdcae3e7fe41f469e1a82e6897c1577b9ec7a3e08f1a
+name: ack-opensearchservice-controller.v0.0.19
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:59ea420c53c93aa78af9bdcae3e7fe41f469e1a82e6897c1577b9ec7a3e08f1a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:e595ae48aef240ce626108abd72f2b12bc317384728d9e8d97ce65867e2976ee
+name: ack-opensearchservice-controller.v0.0.23
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.23
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:0.0.23
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:e595ae48aef240ce626108abd72f2b12bc317384728d9e8d97ce65867e2976ee
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:d3efcf287231a85354a8e0256f45e4614cc70f84dbb9a2833be1a389d090d726
+name: ack-opensearchservice-controller.v0.0.24
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.24
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:0.0.24
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:d3efcf287231a85354a8e0256f45e4614cc70f84dbb9a2833be1a389d090d726
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:da802b07fb9fb7e34e5c412c45aa68d5d29ac6b845b98886ed4bc2f8cb2eae69
+name: ack-opensearchservice-controller.v0.0.26
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.26
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:0.0.26
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:da802b07fb9fb7e34e5c412c45aa68d5d29ac6b845b98886ed4bc2f8cb2eae69
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:a724662a8a8d1a51ce11564054fb72a7bea9f73663ac267a9638b66a169fcc94
+name: ack-opensearchservice-controller.v0.0.27
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.27
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:0.0.27
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:a724662a8a8d1a51ce11564054fb72a7bea9f73663ac267a9638b66a169fcc94
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:5bb8201c7dded97bcccf16261c787772e6fadb81a21cee2cc07887610973b599
+name: ack-opensearchservice-controller.v0.0.28
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.28
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:0.0.28
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:5bb8201c7dded97bcccf16261c787772e6fadb81a21cee2cc07887610973b599
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:d1704a3a17b4f8bc39e73f10eb446a5fcfc95eb68fb701e9ac54b9d680d55b7a
+name: ack-opensearchservice-controller.v0.0.4
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:d1704a3a17b4f8bc39e73f10eb446a5fcfc95eb68fb701e9ac54b9d680d55b7a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:c0412ffc76baf278f842bf910cbd147d3d253189d49e8fe60d45138a0c314544
+name: ack-opensearchservice-controller.v0.0.5
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:c0412ffc76baf278f842bf910cbd147d3d253189d49e8fe60d45138a0c314544
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:dd152e507fbae290b612e5a781d5ec30e7741e6f6dd8bae9df6420a69b7fecf2
+name: ack-opensearchservice-controller.v0.0.6
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:dd152e507fbae290b612e5a781d5ec30e7741e6f6dd8bae9df6420a69b7fecf2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:4ee9369b8c482ed2e6000cff3cacb19033105ce08ac33ab952be7e0ab9071496
+name: ack-opensearchservice-controller.v0.0.7
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:4ee9369b8c482ed2e6000cff3cacb19033105ce08ac33ab952be7e0ab9071496
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:0c24110b3cdf31e4ae145a7d6cbb25d9134fb88df83c29086eeb84b047d5c2cd
+name: ack-opensearchservice-controller.v0.0.8
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:0c24110b3cdf31e4ae145a7d6cbb25d9134fb88df83c29086eeb84b047d5c2cd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:484ecc3aead10b41681442f21ef07bb96c37e7fa96b9a1a03baad5015777f1d7
+name: ack-opensearchservice-controller.v0.0.9
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:484ecc3aead10b41681442f21ef07bb96c37e7fa96b9a1a03baad5015777f1d7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:abd1587225859cbc39df4db3ad0b36f9724d0ce376d3cf9dc2e1c85a183d875b
+name: ack-opensearchservice-controller.v1.0.0
+package: ack-opensearchservice-controller
+properties:
+- type: olm.gvk
+  value:
+    group: opensearchservice.services.k8s.aws
+    kind: Domain
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-opensearchservice-controller
+    version: 1.0.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "opensearchservice.services.k8s.aws/v1alpha1",
+            "kind": "Domain",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:1.0.0
+      createdAt: "2024-09-03T22:49:23Z"
+      description: AWS OpenSearch Service controller is a service controller for managing
+        OpenSearch Service resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Domain represents the state of an AWS opensearchservice Domain
+          resource.
+        displayName: Domain
+        kind: Domain
+        name: domains.opensearchservice.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage OpenSearch Service resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon OpenSearch Service**
+
+      Amazon OpenSearch Service (successor to Amazon Elasticsearch Service) is a managed service that makes it easy to deploy, operate, and scale OpenSearch clusters in the AWS Cloud. Amazon OpenSearch Service supports OpenSearch and legacy Elasticsearch OSS. When you create a cluster, you have the option of which search engine to use. OpenSearch Service offers broad compatibility with Elasticsearch OSS 7.10, the final open source version of the software. For information about what changed with the recent service renaming, and the actions you might need to take, see [Amazon OpenSearch Service - Summary of changes](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/rename.html).
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project. This project is currently in **developer preview**.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon OpenSearch Service
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - opensearchservice
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon OpenSearch Service Developer Resources
+      url: https://aws.amazon.com/opensearch-service/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: opensearch service maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/opensearchservice-controller:1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-opensearchservice-controller@sha256:abd1587225859cbc39df4db3ad0b36f9724d0ce376d3cf9dc2e1c85a183d875b
+  name: ""
+schema: olm.bundle

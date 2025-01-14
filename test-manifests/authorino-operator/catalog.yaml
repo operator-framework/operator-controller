@@ -1,0 +1,622 @@
+---
+defaultChannel: stable
+icon:
+  base64data: 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
+  mediatype: image/png
+name: authorino-operator
+schema: olm.package
+---
+entries:
+- name: authorino-operator.v0.0.1
+- name: authorino-operator.v0.4.0
+  replaces: authorino-operator.v0.0.1
+- name: authorino-operator.v0.5.0
+  replaces: authorino-operator.v0.4.0
+- name: authorino-operator.v0.6.0
+  replaces: authorino-operator.v0.5.0
+- name: authorino-operator.v0.7.0
+  replaces: authorino-operator.v0.6.0
+- name: authorino-operator.v0.8.0
+  replaces: authorino-operator.v0.7.0
+name: alpha
+package: authorino-operator
+schema: olm.channel
+---
+entries:
+- name: authorino-operator.v0.0.1
+- name: authorino-operator.v0.10.0
+  replaces: authorino-operator.v0.9.0
+- name: authorino-operator.v0.11.0
+  replaces: authorino-operator.v0.10.0
+- name: authorino-operator.v0.11.1
+  replaces: authorino-operator.v0.11.0
+- name: authorino-operator.v0.12.0
+  replaces: authorino-operator.v0.11.1
+- name: authorino-operator.v0.13.0
+  replaces: authorino-operator.v0.12.0
+- name: authorino-operator.v0.4.0
+  replaces: authorino-operator.v0.0.1
+- name: authorino-operator.v0.5.0
+  replaces: authorino-operator.v0.4.0
+- name: authorino-operator.v0.6.0
+  replaces: authorino-operator.v0.5.0
+- name: authorino-operator.v0.7.0
+  replaces: authorino-operator.v0.6.0
+- name: authorino-operator.v0.8.0
+  replaces: authorino-operator.v0.7.0
+- name: authorino-operator.v0.9.0
+  replaces: authorino-operator.v0.8.0
+name: stable
+package: authorino-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:c4c82726085f90aef607a26f7abe8219b144fb909f60caf2f83461998954cf56
+name: authorino-operator.v0.0.1
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.3scale.net
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.0.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/3scale/authorino-operator:v0.0.1
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:c4c82726085f90aef607a26f7abe8219b144fb909f60caf2f83461998954cf56
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:0c2c14e0812ad014bb5c9201555cb9b90896efc556551d883e13df2ca93f5521
+name: authorino-operator.v0.10.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.10.0
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.10.0
+  name: ""
+- image: quay.io/kuadrant/authorino:v0.16.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:0c2c14e0812ad014bb5c9201555cb9b90896efc556551d883e13df2ca93f5521
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:04dc669d5d55258a4ad8ba33e50ef0a22d41bc1027f17896856e61efa42e1ded
+name: authorino-operator.v0.11.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.11.0
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.11.0
+  name: ""
+- image: quay.io/kuadrant/authorino:v0.17.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:04dc669d5d55258a4ad8ba33e50ef0a22d41bc1027f17896856e61efa42e1ded
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:4c5f057747fc753a0ad7625654ea674d6ef276deebc07c27b4dba43d6ca44a38
+name: authorino-operator.v0.11.1
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.maxOpenShiftVersion
+  value: "4.14"
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.11.1
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.11.1
+  name: ""
+- image: quay.io/kuadrant/authorino:v0.17
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:4c5f057747fc753a0ad7625654ea674d6ef276deebc07c27b4dba43d6ca44a38
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:4039e0b5c542eacfb87d3c1cd06a02194f1d7bffbd20501e677b8b3d26ec3f31
+name: authorino-operator.v0.12.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.12.0
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.12.0
+  name: ""
+- image: quay.io/kuadrant/authorino:v0.18.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:4039e0b5c542eacfb87d3c1cd06a02194f1d7bffbd20501e677b8b3d26ec3f31
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:0a5dc4df1b3c04d390d473918c4dfac7a351ac4745162701550c9689db8b57aa
+name: authorino-operator.v0.13.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.13.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "authorino.kuadrant.io/v1beta1",
+            "kind": "AuthConfig",
+            "metadata": {
+              "name": "my-api-protection"
+            },
+            "spec": {
+              "hosts": [
+                "my-api.io"
+              ],
+              "identity": [
+                {
+                  "apiKey": {
+                    "selector": {
+                      "matchLabels": {
+                        "group": "friends"
+                      }
+                    }
+                  },
+                  "credentials": {
+                    "in": "authorization_header",
+                    "keySelector": "APIKEY"
+                  },
+                  "name": "api-key-users"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "authorino.kuadrant.io/v1beta2",
+            "kind": "AuthConfig",
+            "metadata": {
+              "name": "my-api-protection"
+            },
+            "spec": {
+              "authentication": {
+                "api-key-users": {
+                  "apiKey": {
+                    "selector": {
+                      "matchLabels": {
+                        "group": "friends"
+                      }
+                    }
+                  },
+                  "credentials": {
+                    "authorizationHeader": {
+                      "prefix": "APIKEY"
+                    }
+                  }
+                }
+              },
+              "hosts": [
+                "my-api.io"
+              ]
+            }
+          },
+          {
+            "apiVersion": "operator.authorino.kuadrant.io/v1beta1",
+            "kind": "Authorino",
+            "metadata": {
+              "name": "authorino-sample"
+            },
+            "spec": {
+              "listener": {
+                "tls": {
+                  "enabled": false
+                }
+              },
+              "oidcServer": {
+                "tls": {
+                  "enabled": false
+                }
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Integration & Delivery
+      containerImage: quay.io/kuadrant/authorino-operator:v0.13.0
+      createdAt: "2024-10-02T16:41:48Z"
+      operators.operatorframework.io/builder: operator-sdk-v1.32.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/Kuadrant/authorino-operator
+      support: kuadrant
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: API to describe the desired protection for a service
+        displayName: AuthConfig
+        kind: AuthConfig
+        name: authconfigs.authorino.kuadrant.io
+        version: v1beta1
+      - description: API to describe the desired protection for a service
+        displayName: AuthConfig
+        kind: AuthConfig
+        name: authconfigs.authorino.kuadrant.io
+        version: v1beta2
+      - description: API to create instances of authorino
+        displayName: Authorino
+        kind: Authorino
+        name: authorinos.operator.authorino.kuadrant.io
+        version: v1beta1
+    description: The operator to manage instances of Authorino
+    displayName: Authorino Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - Authorino
+    - Authorino Operator
+    - Kuadrant
+    - Authorization
+    - Authentication
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: Authorino Operator
+      url: https://github.com/Kuadrant/authorino-operator
+    - name: Authorino
+      url: https://github.com/Kuadrant/authorino
+    maintainers:
+    - email: dcesare@redhat.com
+      name: Didier Di Cesare
+    - email: eastizle@redhat.com
+      name: Eguzki Astiz Lezaun
+    - email: mcassola@redhat.com
+      name: Guilherme Cassolato
+    maturity: alpha
+    minKubeVersion: 1.25.0
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.13.0
+  name: ""
+- image: quay.io/kuadrant/authorino:v0.18.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:0a5dc4df1b3c04d390d473918c4dfac7a351ac4745162701550c9689db8b57aa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:0daba10903152cf02d1be46fcc6ff317c53626ebf66fa87dd155d54c968151b6
+name: authorino-operator.v0.4.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.4.0
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.4.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:0daba10903152cf02d1be46fcc6ff317c53626ebf66fa87dd155d54c968151b6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:541e9a2d8ad3959c09b2569a6a5e32596f554be37dea53d7befc0f0cfa298996
+name: authorino-operator.v0.5.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.5.0
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:541e9a2d8ad3959c09b2569a6a5e32596f554be37dea53d7befc0f0cfa298996
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:cf6c5f94d81a1012feb51f791eaf414aae7bb5440836bd3748215b32d26078de
+name: authorino-operator.v0.6.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.6.0
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.6.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:cf6c5f94d81a1012feb51f791eaf414aae7bb5440836bd3748215b32d26078de
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:040c62095772ae3ce825e074f43610fc528c5ef2eace7b285c23791434d12a84
+name: authorino-operator.v0.7.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.7.0
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.7.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:040c62095772ae3ce825e074f43610fc528c5ef2eace7b285c23791434d12a84
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:b41f89972481aa14f8beddaf1ee2d120917657e74adde2ae571ec9ba8a7bc186
+name: authorino-operator.v0.8.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.8.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "operator.authorino.kuadrant.io/v1beta1",
+            "kind": "Authorino",
+            "metadata": {
+              "name": "authorino-sample"
+            },
+            "spec": {
+              "listener": {
+                "tls": {
+                  "enabled": false
+                }
+              },
+              "oidcServer": {
+                "tls": {
+                  "enabled": false
+                }
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Integration & Delivery
+      containerImage: quay.io/kuadrant/authorino-operator:v0.8.0
+      createdAt: 2021-12-08T10-00-00Z
+      operators.operatorframework.io/builder: operator-sdk-v1.22.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/Kuadrant/authorino-operator
+      support: kuadrant
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: API to describe the desired protection for a service
+        displayName: AuthConfig
+        kind: AuthConfig
+        name: authconfigs.authorino.kuadrant.io
+        version: v1beta1
+      - description: API to create instances of authorino
+        displayName: Authorino
+        kind: Authorino
+        name: authorinos.operator.authorino.kuadrant.io
+        version: v1beta1
+    description: The operator to manage instances of Authorino
+    displayName: Authorino Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - Authorino
+    - Authorino Operator
+    - Kuadrant
+    - Authorization
+    - Authentication
+    links:
+    - name: Authorino Operator
+      url: https://github.com/Kuadrant/authorino-operator
+    - name: Authorino
+      url: https://github.com/Kuadrant/authorino
+    maintainers:
+    - email: dcesare@redhat.com
+      name: Didier Di Cesare
+    - email: eastizle@redhat.com
+      name: Eguzki Astiz Lezaun
+    - email: mcassola@redhat.com
+      name: Guilherme Cassolato
+    maturity: alpha
+    minKubeVersion: 1.8.0
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:b41f89972481aa14f8beddaf1ee2d120917657e74adde2ae571ec9ba8a7bc186
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/authorino-operator@sha256:8e89bb9bd9ea2eebae66daf8723c16a37447c486a3670296121eef1f2ed37ded
+name: authorino-operator.v0.9.0
+package: authorino-operator
+properties:
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: authorino.kuadrant.io
+    kind: AuthConfig
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: operator.authorino.kuadrant.io
+    kind: Authorino
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: authorino-operator
+    version: 0.9.0
+relatedImages:
+- image: quay.io/kuadrant/authorino-operator:v0.9.0
+  name: ""
+- image: quay.io/kuadrant/authorino:v0.15.0
+  name: ""
+- image: quay.io/operatorhubio/authorino-operator@sha256:8e89bb9bd9ea2eebae66daf8723c16a37447c486a3670296121eef1f2ed37ded
+  name: ""
+schema: olm.bundle

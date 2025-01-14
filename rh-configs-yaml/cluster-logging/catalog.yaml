@@ -1,0 +1,1986 @@
+{
+  "schema": "olm.package",
+  "name": "cluster-logging",
+  "defaultChannel": "stable-6.1",
+  "icon": {
+    "base64data": "PHN2ZyBpZD0iYWZiNDE1NDktYzU3MC00OWI3LTg1Y2QtNjU3NjAwZWRmMmUxIiBkYXRhLW5hbWU9IkxheWVyIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDcyMS4xNSA3MjEuMTUiPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAuYTQ0OGZkZWEtNGE0Yy00Njc4LTk3NmEtYzM3ODUzMDhhZTA2IHsKICAgICAgICBmaWxsOiAjZGIzOTI3OwogICAgICB9CgogICAgICAuZTEzMzA4YjgtNzQ4NS00Y2IwLTk3NjUtOGE1N2I5M2Y5MWE2IHsKICAgICAgICBmaWxsOiAjY2IzNzI4OwogICAgICB9CgogICAgICAuZTc3Mjg2ZjEtMjJkYS00NGQxLThlZmItMWQxNGIwY2NhZTYyIHsKICAgICAgICBmaWxsOiAjZmZmOwogICAgICB9CgogICAgICAuYTA0MjBjYWMtZWJlNi00YzE4LWI5ODEtYWJiYTBiYTliMzY1IHsKICAgICAgICBmaWxsOiAjZTVlNWU0OwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8Y2lyY2xlIGNsYXNzPSJhNDQ4ZmRlYS00YTRjLTQ2NzgtOTc2YS1jMzc4NTMwOGFlMDYiIGN4PSIzNjAuNTgiIGN5PSIzNjAuNTgiIHI9IjM1OC4yOCIvPgogIDxwYXRoIGNsYXNzPSJlMTMzMDhiOC03NDg1LTRjYjAtOTc2NS04YTU3YjkzZjkxYTYiIGQ9Ik02MTMuNTQsMTA3LjMsMTA2Ljg4LDYxNGMxNDAsMTM4LjUxLDM2NS44MiwxMzguMDYsNTA1LjI2LTEuMzlTNzUyLDI0Ny4zMyw2MTMuNTQsMTA3LjNaIi8+CiAgPGc+CiAgICA8Y2lyY2xlIGNsYXNzPSJlNzcyODZmMS0yMmRhLTQ0ZDEtOGVmYi0xZDE0YjBjY2FlNjIiIGN4PSIyMzQuNyIgY3k9IjM1Ny4zIiByPSI0Ny43MiIvPgogICAgPGNpcmNsZSBjbGFzcz0iZTc3Mjg2ZjEtMjJkYS00NGQxLThlZmItMWQxNGIwY2NhZTYyIiBjeD0iMjM0LjciIGN5PSIxODIuOTQiIHI9IjQ3LjcyIi8+CiAgICA8Y2lyY2xlIGNsYXNzPSJlNzcyODZmMS0yMmRhLTQ0ZDEtOGVmYi0xZDE0YjBjY2FlNjIiIGN4PSIyMzQuNyIgY3k9IjUzOC4yMSIgcj0iNDcuNzIiLz4KICA8L2c+CiAgPHBvbHlnb24gY2xhc3M9ImU3NzI4NmYxLTIyZGEtNDRkMS04ZWZiLTFkMTRiMGNjYWU2MiIgcG9pbnRzPSI0MzUuMTkgMzQ3LjMgMzkwLjU0IDM0Ny4zIDM5MC41NCAxNzIuOTQgMzE2LjE2IDE3Mi45NCAzMTYuMTYgMTkyLjk0IDM3MC41NCAxOTIuOTQgMzcwLjU0IDM0Ny4zIDMxNi4xNiAzNDcuMyAzMTYuMTYgMzY3LjMgMzcwLjU0IDM2Ny4zIDM3MC41NCA1MjEuNjcgMzE2LjE2IDUyMS42NyAzMTYuMTYgNTQxLjY3IDM5MC41NCA1NDEuNjcgMzkwLjU0IDM2Ny4zIDQzNS4xOSAzNjcuMyA0MzUuMTkgMzQ3LjMiLz4KICA8cG9seWdvbiBjbGFzcz0iZTc3Mjg2ZjEtMjJkYS00NGQxLThlZmItMWQxNGIwY2NhZTYyIiBwb2ludHM9IjU5OS43NCAzMTcuMDMgNTU3Ljk3IDMxNy4wMyA1NTAuOTcgMzE3LjAzIDU1MC45NyAzMTAuMDMgNTUwLjk3IDI2OC4yNiA1NTAuOTcgMjY4LjI2IDQ2NC4zNiAyNjguMjYgNDY0LjM2IDQ0Ni4zNCA1OTkuNzQgNDQ2LjM0IDU5OS43NCAzMTcuMDMgNTk5Ljc0IDMxNy4wMyIvPgogIDxwb2x5Z29uIGNsYXNzPSJhMDQyMGNhYy1lYmU2LTRjMTgtYjk4MS1hYmJhMGJhOWIzNjUiIHBvaW50cz0iNTk5Ljc0IDMxMC4wMyA1NTcuOTcgMjY4LjI2IDU1Ny45NyAzMTAuMDMgNTk5Ljc0IDMxMC4wMyIvPgo8L3N2Zz4K",
+    "mediatype": "image/svg+xml"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-6.1",
+  "package": "cluster-logging",
+  "entries": [
+    {
+      "name": "cluster-logging.v6.1.0",
+      "skipRange": ">=5.9.0-0 <6.1.0"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "cluster-logging.v6.1.0",
+  "package": "cluster-logging",
+  "image": "registry.redhat.io/openshift-logging/cluster-logging-operator-bundle@sha256:4a3c1daf16e39b0a2ba14106ee05b251156b9c59578ef0b33f1b37dc0c14c72a",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "logging.openshift.io",
+        "kind": "LogFileMetricExporter",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "observability.openshift.io",
+        "kind": "ClusterLogForwarder",
+        "version": "v1"
+      }
+    },
+    {
+      "type": "olm.maxOpenShiftVersion",
+      "value": 4.18
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "cluster-logging",
+        "version": "6.1.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"logging.openshift.io/v1alpha1\",\n    \"kind\": \"LogFileMetricExporter\",\n    \"metadata\": {\n      \"name\": \"instance\",\n      \"namespace\": \"openshift-logging\"\n    },\n    \"spec\": {\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"500m\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"128Mi\"\n        }\n      },\n      \"tolerations\": [\n        {\n          \"effect\": \"NoSchedule\",\n          \"key\": \"node-role.kubernetes.io/master\",\n          \"operator\": \"Exists\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"observability.openshift.io/v1\",\n    \"kind\": \"ClusterLogForwarder\",\n    \"metadata\": {\n      \"name\": \"logging\",\n      \"namespace\": \"openshift-logging\"\n    },\n    \"spec\": {\n      \"outputs\": [\n        {\n          \"lokiStack\": {\n            \"authentication\": {\n              \"token\": {\n                \"from\": \"serviceAccount\"\n              }\n            },\n            \"target\": {\n              \"name\": \"logging-loki\"\n            }\n          },\n          \"name\": \"logging-loki\",\n          \"tls\": {\n            \"ca\": {\n              \"configMapName\": \"openshift-service-ca.crt\",\n              \"key\": \"service-ca.crt\"\n            }\n          },\n          \"type\": \"lokiStack\"\n        }\n      ],\n      \"pipelines\": [\n        {\n          \"inputRefs\": [\n            \"application\",\n            \"infrastructure\"\n          ],\n          \"name\": \"logs-to-loki\",\n          \"outputRefs\": [\n            \"logging-loki\"\n          ]\n        }\n      ],\n      \"serviceAccount\": {\n        \"name\": \"log-collector\"\n      }\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Logging & Tracing",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/openshift-logging/cluster-logging-rhel9-operator@sha256:0ff659d739d36c72123c634849392da20c1a4ff44150c912ba4a8e56f095dffa",
+          "createdAt": "2024-10-17T17:40:37Z",
+          "description": "The Red Hat OpenShift Logging Operator for OCP provides a means for configuring and managing log collection and forwarding.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "true",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=5.9.0-0 <6.1.0",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"observability.openshift.io/v1\",\n  \"kind\": \"ClusterLogForwarder\",\n  \"metadata\": {\n    \"name\": \"logging\"\n  }\n}\n",
+          "operatorframework.io/suggested-namespace": "openshift-logging",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\",\"proxy-aware\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-unknown",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v4",
+          "support": "AOS Logging (aos-logging@redhat.com)",
+          "target.workload.openshift.io/management": "{\"effect\": \"PreferredDuringScheduling\"}"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "clusterlogforwarders.observability.openshift.io",
+              "version": "v1",
+              "kind": "ClusterLogForwarder",
+              "displayName": "Cluster Log Forwarder",
+              "description": "ClusterLogForwarder is an API to configure forwarding logs.\n\n\nYou configure forwarding by specifying a list of `pipelines`,\nwhich forward from a set of named inputs to a set of named outputs.",
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Forwarder Conditions",
+                  "description": "Conditions of the log forwarder.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                },
+                {
+                  "path": "filterConditions",
+                  "displayName": "Filter Conditions",
+                  "description": "FilterConditions maps filter name to condition of the filter.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                },
+                {
+                  "path": "inputConditions",
+                  "displayName": "Input Conditions",
+                  "description": "InputConditions maps input name to condition of the input.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                },
+                {
+                  "path": "outputConditions",
+                  "displayName": "Output Conditions",
+                  "description": "OutputConditions maps output name to condition of the output.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                },
+                {
+                  "path": "pipelineConditions",
+                  "displayName": "Pipeline Conditions",
+                  "description": "PipelineConditions maps pipeline name to condition of the pipeline.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "collector",
+                  "displayName": "Collector Resources and Placement",
+                  "description": "Specification of the Collector deployment to define\nresource limits and workload placement",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "collector.nodeSelector",
+                  "displayName": "Node Selector",
+                  "description": "Define nodes for scheduling the pods."
+                },
+                {
+                  "path": "collector.resources",
+                  "displayName": "Collector Resource Requirements",
+                  "description": "The resource requirements for the collector",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:resourceRequirements"
+                  ]
+                },
+                {
+                  "path": "collector.tolerations",
+                  "displayName": "Tolerations",
+                  "description": "Define the tolerations the collector pods will accept"
+                },
+                {
+                  "path": "filters",
+                  "displayName": "Log Forwarder Pipeline Filters",
+                  "description": "Filters are applied to log records passing through a pipeline.\nThere are different types of filter that can select and modify log records in different ways.\nSee [FilterTypeSpec] for a list of filter types."
+                },
+                {
+                  "path": "filters[0].drop",
+                  "displayName": "Drop Filters",
+                  "description": "A drop filter applies a sequence of tests to a log record and drops the record if any test passes.\nEach test contains a sequence of conditions, all conditions must be true for the test to pass.\nA DropTestsSpec contains an array of tests which contains an array of conditions"
+                },
+                {
+                  "path": "filters[0].drop[0].test",
+                  "displayName": "Drop Filter Conditions",
+                  "description": "DropConditions is an array of DropCondition which are conditions that are ANDed together"
+                },
+                {
+                  "path": "filters[0].drop[0].test[0].field",
+                  "displayName": "Field Path",
+                  "description": "A dot delimited path to a field in the log record. It must start with a `.`.\nThe path can contain alpha-numeric characters and underscores (a-zA-Z0-9_).\nIf segments contain characters outside of this range, the segment must be quoted.\nExamples: `.kubernetes.namespace_name`, `.log_type`, '.kubernetes.labels.foobar', `.kubernetes.labels.\"foo-bar/baz\"`"
+                },
+                {
+                  "path": "filters[0].drop[0].test[0].matches",
+                  "displayName": "Drop Match Expression",
+                  "description": "A regular expression that the field will match.\nIf the value of the field defined in the DropTest matches the regular expression, the log record will be dropped.\nMust define only one of matches OR notMatches"
+                },
+                {
+                  "path": "filters[0].drop[0].test[0].notMatches",
+                  "displayName": "Keep Match Expression",
+                  "description": "A regular expression that the field does not match.\nIf the value of the field defined in the DropTest does not match the regular expression, the log record will be dropped.\nMust define only one of matches or notMatches"
+                },
+                {
+                  "path": "filters[0].kubeAPIAudit",
+                  "displayName": "Kubernetes API Audit Filter"
+                },
+                {
+                  "path": "filters[0].name",
+                  "displayName": "Filter Name",
+                  "description": "Name used to refer to the filter from a \"pipeline\"."
+                },
+                {
+                  "path": "filters[0].openshiftLabels",
+                  "displayName": "Labels",
+                  "description": "Labels applied to log records passing through a pipeline.\nThese labels appear in the `openshift.labels` map in the log record."
+                },
+                {
+                  "path": "filters[0].prune",
+                  "displayName": "Prune Filters",
+                  "description": "The PruneFilterSpec consists of two arrays, namely in and notIn, which dictate the fields to be pruned."
+                },
+                {
+                  "path": "filters[0].prune.in",
+                  "displayName": "Fields to be dropped",
+                  "description": "`In` is an array of dot-delimited field paths. Fields included here are removed from the log record.\n\n\nEach field path expression must start with a \".\"\n\n\nThe path can contain alphanumeric characters and underscores (a-zA-Z0-9_).\n\n\nIf segments contain characters outside of this range, the segment must be quoted otherwise paths do NOT need to be quoted.\n\n\nExamples:\n\n\n - `.kubernetes.namespace_name`\n\n\n - `.log_type`\n\n\n - '.kubernetes.labels.foobar'\n\n\n - `.kubernetes.labels.\"foo-bar/baz\"`\n\n\nNOTE1: `In` CANNOT contain `.log_type` or `.message` as those fields are required and cannot be pruned.\n\n\nNOTE2: If this filter is used in a pipeline with GoogleCloudLogging, `.hostname` CANNOT be added to this list as it is a required field."
+                },
+                {
+                  "path": "filters[0].prune.notIn",
+                  "displayName": "Fields to be kept",
+                  "description": "`NotIn` is an array of dot-delimited field paths. All fields besides the ones listed here are removed from the log record.\n\n\nEach field path expression must start with a \".\"\n\n\nThe path can contain alphanumeric characters and underscores (a-zA-Z0-9_).\n\n\nIf segments contain characters outside of this range, the segment must be quoted otherwise paths do NOT need to be quoted.\n\n\nExamples:\n\n\n - `.kubernetes.namespace_name`\n\n\n - `.log_type`\n\n\n - '.kubernetes.labels.foobar'\n\n\n - `.kubernetes.labels.\"foo-bar/baz\"`\n\n\nNOTE1: `NotIn` MUST contain `.log_type` and `.message` as those fields are required and cannot be pruned.\n\n\nNOTE2: If this filter is used in a pipeline with GoogleCloudLogging, `.hostname` MUST be added to this list as it is a required field."
+                },
+                {
+                  "path": "filters[0].type",
+                  "displayName": "Filter Type",
+                  "description": "Type of filter."
+                },
+                {
+                  "path": "inputs",
+                  "displayName": "Log Forwarder Inputs",
+                  "description": "Inputs are named filters for log messages to be forwarded.\n\n\nThere are three built-in inputs named `application`, `infrastructure` and\n`audit`. You don't need to define inputs here if those are sufficient for\nyour needs. See `inputRefs` for more."
+                },
+                {
+                  "path": "inputs[0].application",
+                  "displayName": "Application Logs Input",
+                  "description": "Application, named set of `application` logs that\ncan specify a set of match criteria"
+                },
+                {
+                  "path": "inputs[0].application.excludes",
+                  "displayName": "Exclude",
+                  "description": "Excludes is the set of namespaces and containers to ignore when collecting logs.\n\n\nTakes precedence over Includes option."
+                },
+                {
+                  "path": "inputs[0].application.excludes[0].container",
+                  "displayName": "Container Glob",
+                  "description": "Container spec the containers from which to collect logs\nSupports glob patterns and presumes \"*\" if omitted.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "inputs[0].application.excludes[0].namespace",
+                  "displayName": "Namespace Glob",
+                  "description": "Namespace specs the namespace from which to collect logs\nSupports glob patterns and presumes \"*\" if omitted.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "inputs[0].application.includes",
+                  "displayName": "Include",
+                  "description": "Includes is the set of namespaces and containers to include when collecting logs.\n\n\nNote: infrastructure namespaces are still excluded for \"*\" values unless a qualifying glob pattern is specified."
+                },
+                {
+                  "path": "inputs[0].application.includes[0].container",
+                  "displayName": "Container Glob",
+                  "description": "Container spec the containers from which to collect logs\nSupports glob patterns and presumes \"*\" if omitted.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "inputs[0].application.includes[0].namespace",
+                  "displayName": "Namespace Glob",
+                  "description": "Namespace specs the namespace from which to collect logs\nSupports glob patterns and presumes \"*\" if omitted.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "inputs[0].application.selector",
+                  "displayName": "Pod Selector",
+                  "description": "Selector for logs from pods with matching labels.\n\n\nOnly messages from pods with these labels are collected.\n\n\nIf absent or empty, logs are collected regardless of labels.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:selector:core:v1:Pod"
+                  ]
+                },
+                {
+                  "path": "inputs[0].application.tuning",
+                  "displayName": "Input Tuning",
+                  "description": "Tuning is the container input tuning spec for this container sources"
+                },
+                {
+                  "path": "inputs[0].application.tuning.rateLimitPerContainer",
+                  "displayName": "Per-Container Rate Limit",
+                  "description": "RateLimitPerContainer is the limit applied to each container\nby this input. This limit is applied per collector deployment."
+                },
+                {
+                  "path": "inputs[0].application.tuning.rateLimitPerContainer.maxRecordsPerSecond",
+                  "displayName": "Max Records Per Second",
+                  "description": "MaxRecordsPerSecond is the maximum number of log records\nallowed per input/output in a pipeline",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "inputs[0].audit",
+                  "displayName": "Audit Logs Input",
+                  "description": "Audit, enables `audit` logs."
+                },
+                {
+                  "path": "inputs[0].audit.sources",
+                  "displayName": "Log Sources",
+                  "description": "Sources defines the list of audit sources to collect.\nThis field is optional and its exclusion results in the collection of all audit sources."
+                },
+                {
+                  "path": "inputs[0].infrastructure",
+                  "displayName": "Infrastructure Logs Input",
+                  "description": "Infrastructure, Enables `infrastructure` logs."
+                },
+                {
+                  "path": "inputs[0].infrastructure.sources",
+                  "displayName": "Log Sources",
+                  "description": "Sources defines the list of infrastructure sources to collect.\nThis field is optional and omission results in the collection of all infrastructure sources."
+                },
+                {
+                  "path": "inputs[0].name",
+                  "displayName": "Input Name",
+                  "description": "Name used to refer to the input of a `pipeline`."
+                },
+                {
+                  "path": "inputs[0].receiver",
+                  "displayName": "Log Receiver",
+                  "description": "Receiver to receive logs from non-cluster sources."
+                },
+                {
+                  "path": "inputs[0].receiver.http",
+                  "displayName": "HTTP Receiver Configuration"
+                },
+                {
+                  "path": "inputs[0].receiver.http.format",
+                  "displayName": "Data Format",
+                  "description": "Format is the format of incoming log data."
+                },
+                {
+                  "path": "inputs[0].receiver.port",
+                  "displayName": "Listen Port",
+                  "description": "Port the Receiver listens on. It must be a value between 1024 and 65535",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "inputs[0].receiver.tls",
+                  "displayName": "TLS Options",
+                  "description": "TLS contains settings for controlling options of TLS connections.\n\n\nThe operator will request certificates from the cluster's cert signing service when TLS is not defined.\nThe certificates are injected into a secret named \"<clusterlogforwarder.name>-<input.name>\" which is mounted into\nthe collector. The collector is configured to use the public and private key provided by the service"
+                },
+                {
+                  "path": "inputs[0].receiver.type",
+                  "displayName": "Receiver Type",
+                  "description": "Type of Receiver plugin."
+                },
+                {
+                  "path": "inputs[0].type",
+                  "displayName": "Input Type",
+                  "description": "Type of output sink."
+                },
+                {
+                  "path": "managementState",
+                  "displayName": "Management State",
+                  "description": "Indicator if the resource is 'Managed' or 'Unmanaged' by the operator."
+                },
+                {
+                  "path": "outputs",
+                  "displayName": "Log Forwarder Outputs",
+                  "description": "Outputs are named destinations for log messages."
+                },
+                {
+                  "path": "outputs[0].azureMonitor",
+                  "displayName": "Azure Monitor"
+                },
+                {
+                  "path": "outputs[0].azureMonitor.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].azureMonitor.authentication.sharedKey",
+                  "displayName": "Shared Key",
+                  "description": "SharedKey points to the secret containing the shared key used for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].azureMonitor.authentication.sharedKey.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].azureMonitor.authentication.sharedKey.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].azureMonitor.azureResourceId",
+                  "displayName": "Azure Resource ID",
+                  "description": "AzureResourceId the Resource ID of the Azure resource the data should be associated with.\nhttps://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-collector-api?tabs=powershell#request-headers",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].azureMonitor.customerId",
+                  "displayName": "Customer ID",
+                  "description": "CustomerId che unique identifier for the Log Analytics workspace.\nhttps://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-collector-api?tabs=powershell#request-uri-parameters",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].azureMonitor.host",
+                  "displayName": "Azure Host",
+                  "description": "Host alternative host for dedicated Azure regions. (for example for China region)\nhttps://docs.azure.cn/en-us/articles/guidance/developerdifferences#check-endpoints-in-azure",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].azureMonitor.logType",
+                  "displayName": "Log Type",
+                  "description": "LogType the record type of the data that is being submitted.\nCan only contain letters, numbers, and underscores (_), and may not exceed 100 characters.\nhttps://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-collector-api?tabs=powershell#request-headers",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].azureMonitor.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].azureMonitor.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].azureMonitor.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].azureMonitor.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].azureMonitor.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].cloudwatch",
+                  "displayName": "Amazon CloudWatch"
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.awsAccessKey",
+                  "displayName": "Access Key",
+                  "description": "AWSAccessKey points to the AWS access key id and secret to be used for authentication."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.awsAccessKey.keyId",
+                  "displayName": "Secret with Access Key ID",
+                  "description": "KeyId points to the AWS access key id to be used for authentication."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.awsAccessKey.keyId.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.awsAccessKey.keyId.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.awsAccessKey.keySecret",
+                  "displayName": "Secret with Access Key Secret",
+                  "description": "KeySecret points to the AWS access key secret to be used for authentication."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.awsAccessKey.keySecret.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.awsAccessKey.keySecret.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole",
+                  "displayName": "Amazon IAM Role",
+                  "description": "IAMRole points to the secret containing the role ARN to be used for authentication.\nThis can be used for authentication in STS-enabled clusters when additionally specifying\na web identity token"
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole.roleARN",
+                  "displayName": "RoleARN Secret",
+                  "description": "RoleARN points to the secret containing the role ARN to be used for authentication.\nThis is used for authentication in STS-enabled clusters."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole.roleARN.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole.roleARN.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole.token",
+                  "displayName": "Token",
+                  "description": "Token specifies a bearer token to be used for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole.token.from",
+                  "displayName": "Token Source",
+                  "description": "From is the source from where to find the token"
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole.token.secret",
+                  "displayName": "Token Secret",
+                  "description": "Use Secret if the value should be sourced from a Secret in the same namespace."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole.token.secret.key",
+                  "displayName": "Key Name",
+                  "description": "Name of the key used to get the value from the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.iamRole.token.secret.name",
+                  "displayName": "Secret Name",
+                  "description": "Name of secret",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.authentication.type",
+                  "displayName": "Authentication Type",
+                  "description": "Type is the type of cloudwatch authentication to configure"
+                },
+                {
+                  "path": "outputs[0].cloudwatch.groupName",
+                  "displayName": "Group Name",
+                  "description": "GroupName defines the strategy for grouping logstreams\n\n\nThe GroupName can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.region",
+                  "displayName": "Amazon Region",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].cloudwatch.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].cloudwatch.tuning.compression",
+                  "displayName": "Compression",
+                  "description": "Compression causes data to be compressed before sending over the network.\nIt is an error if the compression type is not supported by the output."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].cloudwatch.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].cloudwatch.url",
+                  "displayName": "Destination URL",
+                  "description": "URL to send log records to.\n\n\nThe 'username@password' part of `url` is ignored.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch",
+                  "displayName": "ElasticSearch"
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.password",
+                  "displayName": "Password",
+                  "description": "Password to use for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.password.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.password.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.token",
+                  "displayName": "Bearer Token",
+                  "description": "Token specifies a bearer token to be used for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.token.from",
+                  "displayName": "Token Source",
+                  "description": "From is the source from where to find the token"
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.token.secret",
+                  "displayName": "Token Secret",
+                  "description": "Use Secret if the value should be sourced from a Secret in the same namespace."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.token.secret.key",
+                  "displayName": "Key Name",
+                  "description": "Name of the key used to get the value from the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.token.secret.name",
+                  "displayName": "Secret Name",
+                  "description": "Name of secret",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.username",
+                  "displayName": "Username",
+                  "description": "Username to use for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.username.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch.authentication.username.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch.index",
+                  "displayName": "Log Index",
+                  "description": "Index is the index for the logs. This supports template syntax to allow dynamic per-event values.\n\n\nThe Index can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].elasticsearch.tuning.compression",
+                  "displayName": "Compression",
+                  "description": "Compression causes data to be compressed before sending over the network."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].elasticsearch.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].elasticsearch.url",
+                  "displayName": "Destination URL",
+                  "description": "URL to send log records to.\nBasic TLS is enabled if the URL scheme requires it (for example 'https' or 'tls').\nThe 'username@password' part of `url` is ignored.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].elasticsearch.version",
+                  "displayName": "ElasticSearch Version",
+                  "description": "Version specifies the version of Elasticsearch to be used.\nMust be one of: 6-8",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging",
+                  "displayName": "Google Cloud Logging"
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.authentication.credentials",
+                  "displayName": "Secret with Credentials File",
+                  "description": "Credentials points to the secret containing the `google-application-credentials.json`."
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.authentication.credentials.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.authentication.credentials.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.id",
+                  "displayName": "Logging ID",
+                  "description": "ID must be one of the required ID fields for the output"
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.id.type",
+                  "displayName": "Logging ID Type",
+                  "description": "Type is the ID type provided"
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.id.value",
+                  "displayName": "Logging ID Value",
+                  "description": "Value is the value of the ID",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.logId",
+                  "displayName": "Log Stream ID",
+                  "description": "LogId is the log ID to which to publish logs. This identifies log stream.\n\n\nThe LogId can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].googleCloudLogging.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].http",
+                  "displayName": "HTTP Output"
+                },
+                {
+                  "path": "outputs[0].http.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].http.authentication.password",
+                  "displayName": "Password",
+                  "description": "Password to use for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].http.authentication.password.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].http.authentication.password.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].http.authentication.token",
+                  "displayName": "Bearer Token",
+                  "description": "Token specifies a bearer token to be used for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].http.authentication.token.from",
+                  "displayName": "Token Source",
+                  "description": "From is the source from where to find the token"
+                },
+                {
+                  "path": "outputs[0].http.authentication.token.secret",
+                  "displayName": "Token Secret",
+                  "description": "Use Secret if the value should be sourced from a Secret in the same namespace."
+                },
+                {
+                  "path": "outputs[0].http.authentication.token.secret.key",
+                  "displayName": "Key Name",
+                  "description": "Name of the key used to get the value from the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].http.authentication.token.secret.name",
+                  "displayName": "Secret Name",
+                  "description": "Name of secret",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].http.authentication.username",
+                  "displayName": "Username",
+                  "description": "Username to use for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].http.authentication.username.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].http.authentication.username.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].http.headers",
+                  "displayName": "Headers",
+                  "description": "Headers specify optional headers to be sent with the request"
+                },
+                {
+                  "path": "outputs[0].http.method",
+                  "displayName": "HTTP Method",
+                  "description": "Method specifies the Http method to be used for sending logs. If not set, 'POST' is used."
+                },
+                {
+                  "path": "outputs[0].http.timeout",
+                  "displayName": "Timeout",
+                  "description": "Timeout specifies the Http request timeout in seconds. If not set, 10secs is used.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "outputs[0].http.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].http.tuning.compression",
+                  "displayName": "Compression",
+                  "description": "Compression causes data to be compressed before sending over the network."
+                },
+                {
+                  "path": "outputs[0].http.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].http.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].http.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].http.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].http.url",
+                  "displayName": "Destination URL",
+                  "description": "URL to send log records to.\nBasic TLS is enabled if the URL scheme requires it (for example 'https' or 'tls').\nThe 'username@password' part of `url` is ignored.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].kafka",
+                  "displayName": "Apache Kafka"
+                },
+                {
+                  "path": "outputs[0].kafka.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].kafka.authentication.sasl",
+                  "displayName": "SASL Options",
+                  "description": "SASL contains options configuring SASL authentication."
+                },
+                {
+                  "path": "outputs[0].kafka.authentication.sasl.mechanism",
+                  "displayName": "SASL Mechanism",
+                  "description": "Mechanism sets the SASL mechanism to use.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].kafka.authentication.sasl.password",
+                  "displayName": "Secret with Password",
+                  "description": "Username points to the secret to be used as SASL password."
+                },
+                {
+                  "path": "outputs[0].kafka.authentication.sasl.password.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].kafka.authentication.sasl.password.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].kafka.authentication.sasl.username",
+                  "displayName": "Secret with Username",
+                  "description": "Username points to the secret to be used as SASL username."
+                },
+                {
+                  "path": "outputs[0].kafka.authentication.sasl.username.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].kafka.authentication.sasl.username.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].kafka.brokers",
+                  "displayName": "Kafka Brokers",
+                  "description": "Brokers specifies the list of broker endpoints of a Kafka cluster.\n\n\nThe list represents only the initial set used by the collector's Kafka client for the\nfirst connection only. The collector's Kafka client fetches constantly an updated list\nfrom Kafka. These updates are not reconciled back to the collector configuration.\n\n\nIf none provided the target URL from the OutputSpec is used as fallback."
+                },
+                {
+                  "path": "outputs[0].kafka.topic",
+                  "displayName": "Kafka Topic",
+                  "description": "Topic specifies the target topic to send logs to. The value when not specified is 'topic'\n\n\nThe Topic can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].kafka.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].kafka.tuning.compression",
+                  "displayName": "Compression",
+                  "description": "Compression causes data to be compressed before sending over the network."
+                },
+                {
+                  "path": "outputs[0].kafka.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].kafka.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].kafka.url",
+                  "displayName": "Destination URL",
+                  "description": "URL to send log records to.\n\n\nThe 'username@password' part of `url` is ignored.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].loki",
+                  "displayName": "Grafana Loki"
+                },
+                {
+                  "path": "outputs[0].loki.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].loki.authentication.password",
+                  "displayName": "Password",
+                  "description": "Password to use for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].loki.authentication.password.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].loki.authentication.password.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].loki.authentication.token",
+                  "displayName": "Bearer Token",
+                  "description": "Token specifies a bearer token to be used for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].loki.authentication.token.from",
+                  "displayName": "Token Source",
+                  "description": "From is the source from where to find the token"
+                },
+                {
+                  "path": "outputs[0].loki.authentication.token.secret",
+                  "displayName": "Token Secret",
+                  "description": "Use Secret if the value should be sourced from a Secret in the same namespace."
+                },
+                {
+                  "path": "outputs[0].loki.authentication.token.secret.key",
+                  "displayName": "Key Name",
+                  "description": "Name of the key used to get the value from the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].loki.authentication.token.secret.name",
+                  "displayName": "Secret Name",
+                  "description": "Name of secret",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].loki.authentication.username",
+                  "displayName": "Username",
+                  "description": "Username to use for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].loki.authentication.username.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].loki.authentication.username.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].loki.labelKeys",
+                  "displayName": "Stream Label Configuration",
+                  "description": "LabelKeys can be used to customize which log record keys are mapped to Loki stream labels.\n\n\nIf LabelKeys is not set, the default keys are:\n\n\n- log_type\n\n\n- kubernetes.container_name\n\n\n- kubernetes.namespace_name\n\n\n- kubernetes.pod_name\n\n\nOne additional label \"kubernetes_host\" is not part of the label keys configuration. It contains the hostname\nwhere the collector is running and is always present.\n\n\nNote: Loki label names must match the regular expression \"[a-zA-Z_:][a-zA-Z0-9_:]*\"\nLog record keys may contain characters like \".\" and \"/\" that are not allowed in Loki labels.\nLog record keys are translated to Loki labels by replacing any illegal characters with '_'.\n\n\nFor example the default log record keys translate to these Loki labels:\n\n\n- log_type\n\n\n- kubernetes_container_name\n\n\n- kubernetes_namespace_name\n\n\n- kubernetes_pod_name\n\n\nNote: the set of labels should be small, Loki imposes limits on the size and number of labels allowed.\nSee https://grafana.com/docs/loki/latest/configuration/#limits_config for more.\nLoki queries can also query based on any log record field (not just labels) using query filters."
+                },
+                {
+                  "path": "outputs[0].loki.tenantKey",
+                  "displayName": "Tenant Key",
+                  "description": "TenantKey is the tenant for the logs. This supports vector's template syntax to allow dynamic per-event values.\n\n\nThe TenantKey can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].loki.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].loki.tuning.compression",
+                  "displayName": "Compression",
+                  "description": "Compression causes data to be compressed before sending over the network."
+                },
+                {
+                  "path": "outputs[0].loki.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].loki.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].loki.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].loki.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].loki.url",
+                  "displayName": "Destination URL",
+                  "description": "URL to send log records to.\nBasic TLS is enabled if the URL scheme requires it (for example 'https' or 'tls').\nThe 'username@password' part of `url` is ignored.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].lokiStack",
+                  "displayName": "LokiStack"
+                },
+                {
+                  "path": "outputs[0].lokiStack.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].lokiStack.authentication.token",
+                  "displayName": "Bearer Token",
+                  "description": "Token specifies a bearer token to be used for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].lokiStack.authentication.token.from",
+                  "displayName": "Token Source",
+                  "description": "From is the source from where to find the token"
+                },
+                {
+                  "path": "outputs[0].lokiStack.authentication.token.secret",
+                  "displayName": "Token Secret",
+                  "description": "Use Secret if the value should be sourced from a Secret in the same namespace."
+                },
+                {
+                  "path": "outputs[0].lokiStack.authentication.token.secret.key",
+                  "displayName": "Key Name",
+                  "description": "Name of the key used to get the value from the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].lokiStack.authentication.token.secret.name",
+                  "displayName": "Secret Name",
+                  "description": "Name of secret",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].lokiStack.dataModel",
+                  "displayName": "Data Model",
+                  "description": "DataModel can be used to customize how log data is stored in LokiStack.\n\n\nThere are two different models to choose from:\n\n\n - Viaq\n - Otel\n\n\nWhen the data model is not set, it currently defaults to the \"Viaq\" data model."
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys",
+                  "displayName": "Stream Label Configuration",
+                  "description": "LabelKeys can be used to customize which log record keys are mapped to Loki stream labels.\n\n\nNote: Loki label names must match the regular expression \"[a-zA-Z_:][a-zA-Z0-9_:]*\"\nLog record keys may contain characters like \".\" and \"/\" that are not allowed in Loki labels.\nLog record keys are translated to Loki labels by replacing any illegal characters with '_'.\n\n\nFor example the default log record keys translate to these Loki labels:\n\n\n- log_type\n\n\n- kubernetes_container_name\n\n\n- kubernetes_namespace_name\n\n\n- kubernetes_pod_name\n\n\nNote: the set of labels should be small, Loki imposes limits on the size and number of labels allowed.\nSee https://grafana.com/docs/loki/latest/configuration/#limits_config for more.\nLoki queries can also query based on any log record field (not just labels) using query filters."
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.application",
+                  "displayName": "Application Tenant Configuration",
+                  "description": "Application contains the label keys configuration for the \"application\" tenant."
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.application.ignoreGlobal",
+                  "displayName": "Ignore Global Settings",
+                  "description": "If IgnoreGlobal is true, then the tenant will not use the labels configured in the Global section of the label\nkeys configuration.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.application.labelKeys",
+                  "displayName": "Label Keys",
+                  "description": "LabelKeys contains a list of log record keys that are mapped to Loki stream labels.\n\n\nBy default, this list is combined with the labels specified in the Global configuration.\nThis behavior can be changed by setting IgnoreGlobal to true."
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.audit",
+                  "displayName": "Audit Tenant Configuration",
+                  "description": "Audit contains the label keys configuration for the \"audit\" tenant."
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.audit.ignoreGlobal",
+                  "displayName": "Ignore Global Settings",
+                  "description": "If IgnoreGlobal is true, then the tenant will not use the labels configured in the Global section of the label\nkeys configuration.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.audit.labelKeys",
+                  "displayName": "Label Keys",
+                  "description": "LabelKeys contains a list of log record keys that are mapped to Loki stream labels.\n\n\nBy default, this list is combined with the labels specified in the Global configuration.\nThis behavior can be changed by setting IgnoreGlobal to true."
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.global",
+                  "displayName": "Global Configuration",
+                  "description": "Global contains a list of record keys which are used for all tenants.\n\n\nIf LabelKeys is not set, the default keys are:\n\n\n - log_type\n\n\n - kubernetes.container_name\n\n\n - kubernetes.namespace_name\n\n\n - kubernetes.pod_name\n\n\nOne additional label \"kubernetes_host\" is not part of the label keys configuration. It contains the hostname\nwhere the collector is running and is always present."
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.infrastructure",
+                  "displayName": "Infrastructure Tenant Configuration",
+                  "description": "Infrastructure contains the label keys configuration for the \"infrastructure\" tenant."
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.infrastructure.ignoreGlobal",
+                  "displayName": "Ignore Global Settings",
+                  "description": "If IgnoreGlobal is true, then the tenant will not use the labels configured in the Global section of the label\nkeys configuration.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "outputs[0].lokiStack.labelKeys.infrastructure.labelKeys",
+                  "displayName": "Label Keys",
+                  "description": "LabelKeys contains a list of log record keys that are mapped to Loki stream labels.\n\n\nBy default, this list is combined with the labels specified in the Global configuration.\nThis behavior can be changed by setting IgnoreGlobal to true."
+                },
+                {
+                  "path": "outputs[0].lokiStack.target",
+                  "displayName": "Target LokiStack Reference",
+                  "description": "Target points to the LokiStack resources that should be used as a target for the output."
+                },
+                {
+                  "path": "outputs[0].lokiStack.target.name",
+                  "displayName": "LokiStack Name",
+                  "description": "Name of the in-cluster LokiStack resource.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].lokiStack.target.namespace",
+                  "displayName": "LokiStack Namespace",
+                  "description": "Namespace of the in-cluster LokiStack resource.\n\n\nIf unset, this defaults to \"openshift-logging\".",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].lokiStack.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].lokiStack.tuning.compression",
+                  "displayName": "Compression",
+                  "description": "Compression causes data to be compressed before sending over the network."
+                },
+                {
+                  "path": "outputs[0].lokiStack.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].lokiStack.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].lokiStack.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].lokiStack.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].name",
+                  "displayName": "Output Name",
+                  "description": "Name used to refer to the output from a `pipeline`."
+                },
+                {
+                  "path": "outputs[0].otlp",
+                  "displayName": "OpenTelemetry Output"
+                },
+                {
+                  "path": "outputs[0].otlp.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.password",
+                  "displayName": "Password",
+                  "description": "Password to use for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.password.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.password.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.token",
+                  "displayName": "Bearer Token",
+                  "description": "Token specifies a bearer token to be used for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.token.from",
+                  "displayName": "Token Source",
+                  "description": "From is the source from where to find the token"
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.token.secret",
+                  "displayName": "Token Secret",
+                  "description": "Use Secret if the value should be sourced from a Secret in the same namespace."
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.token.secret.key",
+                  "displayName": "Key Name",
+                  "description": "Name of the key used to get the value from the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.token.secret.name",
+                  "displayName": "Secret Name",
+                  "description": "Name of secret",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.username",
+                  "displayName": "Username",
+                  "description": "Username to use for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.username.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].otlp.authentication.username.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].otlp.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].otlp.tuning.compression",
+                  "displayName": "Compression",
+                  "description": "Compression causes data to be compressed before sending over the network.\nIt is an error if the compression type is not supported by the output.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].otlp.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].otlp.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].otlp.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].otlp.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].otlp.url",
+                  "displayName": "Destination URL",
+                  "description": "URL to send log records to.\n\n\nAn absolute URL, with a valid http scheme. Must terminate with `/v1/logs`\n\n\nBasic TLS is enabled if the URL scheme requires it (for example 'https').\nThe 'username@password' part of `url` is ignored.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].rateLimit",
+                  "displayName": "Rate Limiting",
+                  "description": "Limit imposes a limit in records-per-second on the total aggregate rate of logs forwarded\nto this output from any given collector container. The total log flow from an individual collector\ncontainer to this output cannot exceed the limit.  Generally, one collector is deployed per cluster node\nLogs may be dropped to enforce the limit. Missing or 0 means no rate limit."
+                },
+                {
+                  "path": "outputs[0].rateLimit.maxRecordsPerSecond",
+                  "displayName": "Max Records Per Second",
+                  "description": "MaxRecordsPerSecond is the maximum number of log records\nallowed per input/output in a pipeline",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "outputs[0].splunk",
+                  "displayName": "Splunk"
+                },
+                {
+                  "path": "outputs[0].splunk.authentication",
+                  "displayName": "Authentication Options",
+                  "description": "Authentication sets credentials for authenticating the requests."
+                },
+                {
+                  "path": "outputs[0].splunk.authentication.token",
+                  "displayName": "Splunk HEC Token",
+                  "description": "Token points to the secret containing the Splunk HEC token used for authenticating requests."
+                },
+                {
+                  "path": "outputs[0].splunk.authentication.token.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].splunk.authentication.token.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].splunk.index",
+                  "displayName": "Index",
+                  "description": "Index is the index for the logs. This supports template syntax to allow dynamic per-event values.\n\n\nThe Index can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].splunk.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].splunk.tuning.compression",
+                  "displayName": "Compression",
+                  "description": "Compression causes data to be compressed before sending over the network."
+                },
+                {
+                  "path": "outputs[0].splunk.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].splunk.tuning.maxRetryDuration",
+                  "displayName": "Maximum Retry Duration",
+                  "description": "MaxRetryDuration is the maximum time to wait between retry attempts after a delivery failure."
+                },
+                {
+                  "path": "outputs[0].splunk.tuning.maxWrite",
+                  "displayName": "Batch Size",
+                  "description": "MaxWrite limits the maximum payload in terms of bytes of a single \"send\" to the output."
+                },
+                {
+                  "path": "outputs[0].splunk.tuning.minRetryDuration",
+                  "displayName": "Minimum Retry Duration",
+                  "description": "MinRetryDuration is the minimum time to wait between attempts to retry after delivery a failure."
+                },
+                {
+                  "path": "outputs[0].splunk.url",
+                  "displayName": "Destination URL",
+                  "description": "URL to send log records to.\nBasic TLS is enabled if the URL scheme requires it (for example 'https' or 'tls').\nThe 'username@password' part of `url` is ignored.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].syslog",
+                  "displayName": "Syslog Output"
+                },
+                {
+                  "path": "outputs[0].syslog.appName",
+                  "displayName": "App Name",
+                  "description": "AppName is APP-NAME part of the syslog-msg header.\n\n\nAppName needs to be specified if using rfc5424. The maximum length of the final values is truncated to 48\nThis supports template syntax to allow dynamic per-event values.\n\n\nThe AppName can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}\n\n\nTODO: DETERMIN HOW to default the app name that isnt based on fluentd assumptions of \"tag\" when this is empty",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].syslog.enrichment",
+                  "displayName": "Enrichment Type",
+                  "description": "Enrichment is an additional modification the log message before forwarding it to the receiver",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].syslog.facility",
+                  "displayName": "Facility",
+                  "description": "Facility to set on outgoing syslog records.\n\n\nFacility values are defined in https://tools.ietf.org/html/rfc5424#section-6.2.1.\n\n\nThe value can be a decimal integer. Facility keywords are not standardized,\nthis API recognizes at least the following case-insensitive keywords\n(defined by https://en.wikipedia.org/wiki/Syslog#Facility_Levels):\n\n\n    kernel user mail daemon auth syslog lpr news\n    uucp cron authpriv ftp ntp security console solaris-cron\n    local0 local1 local2 local3 local4 local5 local6 local7",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].syslog.msgId",
+                  "displayName": "MSGID",
+                  "description": "MsgId is MSGID part of the syslog-msg header. This supports template syntax to allow dynamic per-event values.\n\n\nThe MsgId can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}\n\n\nMsgId needs to be specified if using rfc5424.  The maximum length of the final values is truncated to 32",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].syslog.payloadKey",
+                  "displayName": "Payload Key",
+                  "description": "PayloadKey specifies record field to use as payload. This supports template syntax to allow dynamic per-event values.\n\n\nThe PayloadKey must be a single field path encased in single curly brackets `{}`.\n\n\nField paths must only contain alphanumeric and underscores. Any field with other characters must be quoted.\n\n\nIf left empty, Syslog will use the whole message as the payload key\n\n\nExample:\n\n\n 1. {.bar}\n\n\n 2. {.foo.bar.baz}\n\n\n 3. {.foo.bar.\"baz/with/slashes\"}",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].syslog.procId",
+                  "displayName": "PROCID",
+                  "description": "ProcId is PROCID part of the syslog-msg header. This supports template syntax to allow dynamic per-event values.\n\n\nThe ProcId can be a combination of static and dynamic values consisting of field paths followed by `||` followed by another field path or a static value.\n\n\nA dynamic value is encased in single curly brackets `{}` and MUST end with a static fallback value separated with `||`.\n\n\nStatic values can only contain alphanumeric characters along with dashes, underscores, dots and forward slashes.\n\n\nExample:\n\n\n 1. foo-{.bar||\"none\"}\n\n\n 2. {.foo||.bar||\"missing\"}\n\n\n 3. foo.{.bar.baz||.qux.quux.corge||.grault||\"nil\"}-waldo.fred{.plugh||\"none\"}\n\n\nProcId needs to be specified if using rfc5424. The maximum length of the final values is truncated to 128",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].syslog.rfc",
+                  "displayName": "Syslog RFC"
+                },
+                {
+                  "path": "outputs[0].syslog.severity",
+                  "displayName": "Severity",
+                  "description": "Severity to set on outgoing syslog records.\n\n\nSeverity values are defined in https://tools.ietf.org/html/rfc5424#section-6.2.1\n\n\nThe value can be a decimal integer or one of these case-insensitive keywords:\n\n\n    Emergency Alert Critical Error Warning Notice Informational Debug",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].syslog.tuning",
+                  "displayName": "Tuning Options",
+                  "description": "Tuning specs tuning for the output"
+                },
+                {
+                  "path": "outputs[0].syslog.tuning.deliveryMode",
+                  "displayName": "Delivery Mode"
+                },
+                {
+                  "path": "outputs[0].syslog.url",
+                  "displayName": "Destination URL",
+                  "description": "An absolute URL, with a scheme. Valid schemes are: `tcp`, `tls`, `udp` and `udps`\nFor example, to send syslog records using secure UDP:\n    url: udps://syslog.example.com:1234",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls",
+                  "displayName": "TLS Options",
+                  "description": "TLS contains settings for controlling options on TLS client connections."
+                },
+                {
+                  "path": "outputs[0].tls.ca",
+                  "displayName": "Certificate Authority Bundle",
+                  "description": "CA can be used to specify a custom list of trusted certificate authorities."
+                },
+                {
+                  "path": "outputs[0].tls.ca.configMapName",
+                  "displayName": "ConfigMap Name",
+                  "description": "ConfigMapName contains the name of the ConfigMap containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.ca.key",
+                  "displayName": "Key Name",
+                  "description": "Name of the key used to get the value in either the referenced ConfigMap or Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.ca.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.certificate",
+                  "displayName": "Certificate",
+                  "description": "Certificate points to the server certificate to use."
+                },
+                {
+                  "path": "outputs[0].tls.certificate.configMapName",
+                  "displayName": "ConfigMap Name",
+                  "description": "ConfigMapName contains the name of the ConfigMap containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.certificate.key",
+                  "displayName": "Key Name",
+                  "description": "Name of the key used to get the value in either the referenced ConfigMap or Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.certificate.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.insecureSkipVerify",
+                  "displayName": "Skip Certificate Validation",
+                  "description": "If InsecureSkipVerify is true, then the TLS client will be configured to skip validating server certificates.\n\n\nThis option is *not* recommended for production configurations.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.key",
+                  "displayName": "Certificate Key",
+                  "description": "Key points to the private key of the server certificate."
+                },
+                {
+                  "path": "outputs[0].tls.key.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.key.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.keyPassphrase",
+                  "displayName": "Certificate Key Passphrase",
+                  "description": "KeyPassphrase points to the passphrase used to unlock the private key."
+                },
+                {
+                  "path": "outputs[0].tls.keyPassphrase.key",
+                  "displayName": "Key Name",
+                  "description": "Key contains the name of the key inside the referenced Secret.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.keyPassphrase.secretName",
+                  "displayName": "Secret Name",
+                  "description": "SecretName contains the name of the Secret containing the referenced value.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "outputs[0].tls.securityProfile",
+                  "displayName": "TLS Security Profile",
+                  "description": "TLSSecurityProfile is the security profile to apply to the output connection."
+                },
+                {
+                  "path": "outputs[0].type",
+                  "displayName": "Output Type",
+                  "description": "Type of output sink."
+                },
+                {
+                  "path": "pipelines",
+                  "displayName": "Log Forwarder Pipelines",
+                  "description": "Pipelines forward the messages selected by a set of inputs to a set of outputs."
+                },
+                {
+                  "path": "pipelines[0].filterRefs",
+                  "displayName": "Filters",
+                  "description": "Filters lists the names of filters to be applied to records going through this pipeline.\n\n\nEach filter is applied in order.\nIf a filter drops a records, subsequent filters are not applied."
+                },
+                {
+                  "path": "pipelines[0].inputRefs",
+                  "displayName": "Inputs",
+                  "description": "InputRefs lists the names (`input.name`) of inputs to this pipeline.\n\n\nThe following built-in input names are always available:\n\n\n - `application` selects all logs from application pods.\n\n\n - `infrastructure` selects logs from openshift and kubernetes pods and some node logs.\n\n\n - `audit` selects node logs related to security audits."
+                },
+                {
+                  "path": "pipelines[0].name",
+                  "displayName": "Name",
+                  "description": "Name of the pipeline",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "pipelines[0].outputRefs",
+                  "displayName": "Outputs",
+                  "description": "OutputRefs lists the names (`output.name`) of outputs from this pipeline."
+                },
+                {
+                  "path": "serviceAccount",
+                  "displayName": "Service Account",
+                  "description": "ServiceAccount points to the ServiceAccount resource used by the collector pods."
+                },
+                {
+                  "path": "serviceAccount.name",
+                  "displayName": "ServiceAccount Name",
+                  "description": "Name of the ServiceAccount to use to deploy the Forwarder.  The ServiceAccount is created by the administrator",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "logfilemetricexporters.logging.openshift.io",
+              "version": "v1alpha1",
+              "kind": "LogFileMetricExporter",
+              "displayName": "Log File Metric Exporter",
+              "description": "A Log File Metric Exporter instance. LogFileMetricExporter is the Schema for the logFileMetricExporters API",
+              "resources": [
+                {
+                  "name": "",
+                  "kind": "DaemonSet",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "Pod",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "Service",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "ServiceMonitor",
+                  "version": "v1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Log File Metrics Exporter Conditions",
+                  "description": "Conditions of the Log File Metrics Exporter.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:logFileMetricsExporterConditions"
+                  ]
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "nodeSelector",
+                  "displayName": "LogFileMetricExporter Node Selector",
+                  "description": "Define which Nodes the Pods are scheduled on.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap"
+                  ]
+                },
+                {
+                  "path": "resources",
+                  "displayName": "LogFileMetricExporter Resource Requirements",
+                  "description": "The resource requirements for the LogFileMetricExporter",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:resourceRequirements"
+                  ]
+                },
+                {
+                  "path": "tolerations",
+                  "displayName": "LogFileMetricExporter Pod Tolerations",
+                  "description": "Define the tolerations the Pods will accept",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:selector:core:v1:Toleration"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "description": "# Red Hat OpenShift Logging\nThe Red Hat OpenShift Logging Operator orchestrates log collection and forwarding to Red Had managed log stores and\nother third-party receivers.\n\n##Features\n* **Create/Destroy**: Deploy log collectors and forwarders to support observability of OCP cluster.\n* **Simplified Configuration**: Spec collectors using a simplified API to configure log collection from opinionated sources to one or more third-party receivers.\n\n## Prerequisites and Requirements\n### Red Hat OpenShift Logging Namespace\nIt is recommended to deploy the Red Hat OpenShift Logging Operator to the **openshift-logging** namespace. This namespace\nmust be explicitly created by a cluster administrator (e.g. `oc create ns openshift-logging`). To enable metrics\nservice discovery add namespace label `openshift.io/cluster-monitoring: \"true\"`.\n\nFor additional installation documentation see [Deploying cluster logging](https://docs.openshift.com/container-platform/latest/logging/cluster-logging-deploying.html)\nin the OpenShift product documentation.",
+        "displayName": "Red Hat OpenShift Logging",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "logging",
+          "observability",
+          "loki",
+          "vector",
+          "otlp"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.arm64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://github.com/openshift/cluster-logging-operator/blob/master/README.adoc"
+          },
+          {
+            "name": "Red Hat OpenShift Logging Operator",
+            "url": "https://github.com/openshift/cluster-logging-operator"
+          },
+          {
+            "name": "Vector",
+            "url": "https://vector.dev/"
+          }
+        ],
+        "minKubeVersion": "1.18.3",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/openshift-logging/cluster-logging-operator-bundle@sha256:4a3c1daf16e39b0a2ba14106ee05b251156b9c59578ef0b33f1b37dc0c14c72a"
+    },
+    {
+      "name": "cluster-logging-rhel9-operator-0ff659d739d36c72123c634849392da20c1a4ff44150c912ba4a8e56f095dffa-annotation",
+      "image": "registry.redhat.io/openshift-logging/cluster-logging-rhel9-operator@sha256:0ff659d739d36c72123c634849392da20c1a4ff44150c912ba4a8e56f095dffa"
+    },
+    {
+      "name": "cluster-logging-operator",
+      "image": "registry.redhat.io/openshift-logging/cluster-logging-rhel9-operator@sha256:0ff659d739d36c72123c634849392da20c1a4ff44150c912ba4a8e56f095dffa"
+    },
+    {
+      "name": "log_file_metric_exporter",
+      "image": "registry.redhat.io/openshift-logging/log-file-metric-exporter-rhel9@sha256:491cf8c7dcd979fbfa1fdc849385365b8b1ea6a7afcf267c595b767e69a93257"
+    },
+    {
+      "name": "vector",
+      "image": "registry.redhat.io/openshift-logging/vector-rhel9@sha256:cdb377d7a5140bfbad47681ed476c4d3138400c475c4fc7a36d77a3873710659"
+    }
+  ]
+}

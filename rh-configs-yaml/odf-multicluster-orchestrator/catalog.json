@@ -1,0 +1,281 @@
+{
+    "schema": "olm.package",
+    "name": "odf-multicluster-orchestrator",
+    "defaultChannel": "stable-4.17",
+    "icon": {
+        "base64data": "PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-4.17",
+    "package": "odf-multicluster-orchestrator",
+    "entries": [
+        {
+            "name": "odf-multicluster-orchestrator.v4.17.0-rhodf",
+            "skipRange": ">=4.2.0 <4.17.0-rhodf"
+        },
+        {
+            "name": "odf-multicluster-orchestrator.v4.17.1-rhodf",
+            "replaces": "odf-multicluster-orchestrator.v4.17.0-rhodf",
+            "skipRange": ">=4.2.0 <4.17.1-rhodf"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "odf-multicluster-orchestrator.v4.17.0-rhodf",
+    "package": "odf-multicluster-orchestrator",
+    "image": "registry.redhat.io/odf4/odf-multicluster-operator-bundle@sha256:c05b5597918214f845c7243b7407b6cc3c88f644eec504585bd411727376b898",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "multicluster.odf.openshift.io",
+                "kind": "MirrorPeer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "odf-multicluster-orchestrator",
+                "version": "4.17.0-rhodf"
+            }
+        },
+        {
+            "type": "olm.package.required",
+            "value": {
+                "packageName": "odr-hub-operator",
+                "versionRange": "<=4.17.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"multicluster.odf.openshift.io/v1alpha1\",\n    \"kind\": \"MirrorPeer\",\n    \"metadata\": {\n      \"name\": \"mirrorpeer-sample\"\n    },\n    \"spec\": {\n      \"items\": [\n        {\n          \"clusterName\": \"local-cluster\",\n          \"storageClusterRef\": {\n            \"name\": \"ocs-storagecluster\",\n            \"namespace\": \"openshift-storage\"\n          }\n        },\n        {\n          \"clusterName\": \"spoke-cluster\",\n          \"storageClusterRef\": {\n            \"name\": \"ocs-storagecluster\",\n            \"namespace\": \"openshift-storage\"\n          }\n        }\n      ],\n      \"manageS3\": false,\n      \"schedulingIntervals\": [\n        \"5m\"\n      ]\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "console.openshift.io/plugins": "[\"odf-multicluster-console\"]",
+                    "createdAt": "2024-10-17T11:38:21Z",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "true",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=4.2.0 <4.17.0-rhodf",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\",\"OpenShift Data Foundation Essentials\",\"OpenShift Data Foundation Advanced\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.34.1",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "mirrorpeers.multicluster.odf.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "MirrorPeer",
+                            "displayName": "Mirror Peer",
+                            "description": "MirrorPeer is the Schema for the mirrorpeers API"
+                        }
+                    ]
+                },
+                "description": "Orchestrator for OpenShift Data Foundation clusters running across multiple OpenShift clusters.\nIt uses Red Hat Advanced Cluster Management for Kubernetes as the multicluster control plane.\n",
+                "displayName": "ODF Multicluster Orchestrator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "odf",
+                    "multicluster",
+                    "orchestrator",
+                    "storage",
+                    "acm"
+                ],
+                "labels": {
+                    "full_version": "4.17.0-126",
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "ODF Multicluster Orchestrator",
+                        "url": "https://github.com/red-hat-storage/odf-multicluster-orchestrator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Umanga Chapagain",
+                        "email": "uchapaga@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "odf-multicluster-console",
+            "image": "registry.redhat.io/odf4/odf-multicluster-console-rhel9@sha256:c55d6f123e7701f8abd58dfc2ab5846d4261f0afdccfab9ff70f5df1166bf54b"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/odf4/odf-multicluster-operator-bundle@sha256:c05b5597918214f845c7243b7407b6cc3c88f644eec504585bd411727376b898"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/odf4/odf-multicluster-rhel9-operator@sha256:2f723a2b74abfe10fbd8694c2338ffb7b6e0e2f2bc0691ef08b04b7569f2fefd"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "odf-multicluster-orchestrator.v4.17.1-rhodf",
+    "package": "odf-multicluster-orchestrator",
+    "image": "registry.redhat.io/odf4/odf-multicluster-operator-bundle@sha256:f6e581bec8e759e91a96dd06590707fe3e60dcb1ba6cfa8e001b45ea0f327055",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "multicluster.odf.openshift.io",
+                "kind": "MirrorPeer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "odf-multicluster-orchestrator",
+                "version": "4.17.1-rhodf"
+            }
+        },
+        {
+            "type": "olm.package.required",
+            "value": {
+                "packageName": "odr-hub-operator",
+                "versionRange": "<=4.17.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"multicluster.odf.openshift.io/v1alpha1\",\n    \"kind\": \"MirrorPeer\",\n    \"metadata\": {\n      \"name\": \"mirrorpeer-sample\"\n    },\n    \"spec\": {\n      \"items\": [\n        {\n          \"clusterName\": \"local-cluster\",\n          \"storageClusterRef\": {\n            \"name\": \"ocs-storagecluster\",\n            \"namespace\": \"openshift-storage\"\n          }\n        },\n        {\n          \"clusterName\": \"spoke-cluster\",\n          \"storageClusterRef\": {\n            \"name\": \"ocs-storagecluster\",\n            \"namespace\": \"openshift-storage\"\n          }\n        }\n      ],\n      \"manageS3\": false,\n      \"schedulingIntervals\": [\n        \"5m\"\n      ]\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "console.openshift.io/plugins": "[\"odf-multicluster-console\"]",
+                    "createdAt": "2024-12-09T12:01:11Z",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "true",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=4.2.0 <4.17.1-rhodf",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\",\"OpenShift Data Foundation Essentials\",\"OpenShift Data Foundation Advanced\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.34.1",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "mirrorpeers.multicluster.odf.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "MirrorPeer",
+                            "displayName": "Mirror Peer",
+                            "description": "MirrorPeer is the Schema for the mirrorpeers API"
+                        }
+                    ]
+                },
+                "description": "Orchestrator for OpenShift Data Foundation clusters running across multiple OpenShift clusters.\nIt uses Red Hat Advanced Cluster Management for Kubernetes as the multicluster control plane.\n",
+                "displayName": "ODF Multicluster Orchestrator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "odf",
+                    "multicluster",
+                    "orchestrator",
+                    "storage",
+                    "acm"
+                ],
+                "labels": {
+                    "full_version": "4.17.1-4",
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "ODF Multicluster Orchestrator",
+                        "url": "https://github.com/red-hat-storage/odf-multicluster-orchestrator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Umanga Chapagain",
+                        "email": "uchapaga@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "odf-multicluster-console",
+            "image": "registry.redhat.io/odf4/odf-multicluster-console-rhel9@sha256:9569ec8a2bdb386ab6d76d2ba28831f1bb5a9d2c4c557eb9d648cfa7d4ea715a"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/odf4/odf-multicluster-operator-bundle@sha256:f6e581bec8e759e91a96dd06590707fe3e60dcb1ba6cfa8e001b45ea0f327055"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/odf4/odf-multicluster-rhel9-operator@sha256:daa6cdcdd14a34cd8a9aaae8c493c150a8682ba2937942c57ec4531cddd3dea8"
+        }
+    ]
+}

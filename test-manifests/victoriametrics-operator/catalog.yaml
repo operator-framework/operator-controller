@@ -1,0 +1,4332 @@
+---
+defaultChannel: beta
+icon:
+  base64data: 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
+  mediatype: image/png
+name: victoriametrics-operator
+schema: olm.package
+---
+entries:
+- name: victoriametrics-operator.v0.10.0
+  replaces: victoriametrics-operator.v0.9.1
+- name: victoriametrics-operator.v0.11.0
+  replaces: victoriametrics-operator.v0.10.0
+- name: victoriametrics-operator.v0.12.1
+  replaces: victoriametrics-operator.v0.11.0
+- name: victoriametrics-operator.v0.12.2
+  replaces: victoriametrics-operator.v0.12.1
+- name: victoriametrics-operator.v0.13.1
+  replaces: victoriametrics-operator.v0.12.2
+- name: victoriametrics-operator.v0.14.1
+  replaces: victoriametrics-operator.v0.13.1
+- name: victoriametrics-operator.v0.15.2
+  replaces: victoriametrics-operator.v0.14.1
+- name: victoriametrics-operator.v0.16.0
+  replaces: victoriametrics-operator.v0.15.2
+- name: victoriametrics-operator.v0.17.1
+  replaces: victoriametrics-operator.v0.16.0
+- name: victoriametrics-operator.v0.17.2
+  replaces: victoriametrics-operator.v0.17.1
+- name: victoriametrics-operator.v0.18.0
+  replaces: victoriametrics-operator.v0.17.2
+- name: victoriametrics-operator.v0.18.1
+  replaces: victoriametrics-operator.v0.18.0
+- name: victoriametrics-operator.v0.18.2
+  replaces: victoriametrics-operator.v0.18.1
+- name: victoriametrics-operator.v0.19.0
+  replaces: victoriametrics-operator.v0.18.2
+- name: victoriametrics-operator.v0.19.1
+  replaces: victoriametrics-operator.v0.19.0
+- name: victoriametrics-operator.v0.20.1
+  replaces: victoriametrics-operator.v0.19.1
+- name: victoriametrics-operator.v0.21.0
+  replaces: victoriametrics-operator.v0.20.1
+- name: victoriametrics-operator.v0.22.0
+  replaces: victoriametrics-operator.v0.21.0
+- name: victoriametrics-operator.v0.22.1
+  replaces: victoriametrics-operator.v0.22.0
+- name: victoriametrics-operator.v0.23.3
+  replaces: victoriametrics-operator.v0.22.1
+- name: victoriametrics-operator.v0.24.0
+  replaces: victoriametrics-operator.v0.23.3
+- name: victoriametrics-operator.v0.25.0
+  replaces: victoriametrics-operator.v0.24.0
+- name: victoriametrics-operator.v0.25.1
+  replaces: victoriametrics-operator.v0.25.0
+- name: victoriametrics-operator.v0.26.2
+  replaces: victoriametrics-operator.v0.25.1
+- name: victoriametrics-operator.v0.27.2
+  replaces: victoriametrics-operator.v0.26.2
+- name: victoriametrics-operator.v0.29.1
+  replaces: victoriametrics-operator.v0.27.2
+- name: victoriametrics-operator.v0.32.0
+  replaces: victoriametrics-operator.v0.29.1
+- name: victoriametrics-operator.v0.32.1
+  replaces: victoriametrics-operator.v0.32.0
+- name: victoriametrics-operator.v0.33.0
+  replaces: victoriametrics-operator.v0.32.1
+- name: victoriametrics-operator.v0.39.4
+  replaces: victoriametrics-operator.v0.33.0
+- name: victoriametrics-operator.v0.4.0
+- name: victoriametrics-operator.v0.46.2
+  replaces: victoriametrics-operator.v0.39.4
+- name: victoriametrics-operator.v0.46.3
+  replaces: victoriametrics-operator.v0.46.2
+- name: victoriametrics-operator.v0.46.4
+  replaces: victoriametrics-operator.v0.46.3
+- name: victoriametrics-operator.v0.47.0
+  replaces: victoriametrics-operator.v0.46.4
+- name: victoriametrics-operator.v0.47.2
+  replaces: victoriametrics-operator.v0.47.0
+- name: victoriametrics-operator.v0.47.3
+  replaces: victoriametrics-operator.v0.47.2
+- name: victoriametrics-operator.v0.48.3
+  replaces: victoriametrics-operator.v0.47.3
+- name: victoriametrics-operator.v0.6.1
+  replaces: victoriametrics-operator.v0.4.0
+- name: victoriametrics-operator.v0.7.3
+  replaces: victoriametrics-operator.v0.6.1
+- name: victoriametrics-operator.v0.8.0
+  replaces: victoriametrics-operator.v0.7.3
+- name: victoriametrics-operator.v0.9.1
+  replaces: victoriametrics-operator.v0.8.0
+name: beta
+package: victoriametrics-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:6a3841e18ab0a5159591d7a3fd9fec706f725ca8913c77d65fdc7e80f9df1243
+name: victoriametrics-operator.v0.10.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.10.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:6a3841e18ab0a5159591d7a3fd9fec706f725ca8913c77d65fdc7e80f9df1243
+  name: ""
+- image: victoriametrics/operator:v0.10.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:81cfd82c444893934028b89d76a7d333d9c166cc0bb8f7caf1f51c5bd95f0443
+name: victoriametrics-operator.v0.11.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.11.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:81cfd82c444893934028b89d76a7d333d9c166cc0bb8f7caf1f51c5bd95f0443
+  name: ""
+- image: victoriametrics/operator:v0.11.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:952f8f847ede219599f8ca5b6989e74a19810c2ee83f0caace23ae3244595571
+name: victoriametrics-operator.v0.12.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.12.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:952f8f847ede219599f8ca5b6989e74a19810c2ee83f0caace23ae3244595571
+  name: ""
+- image: victoriametrics/operator:v0.12.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:9cadfb64c4346629d4d1dd6a078803319f496c4b13169315b43713e28b56d59a
+name: victoriametrics-operator.v0.12.2
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.12.2
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:9cadfb64c4346629d4d1dd6a078803319f496c4b13169315b43713e28b56d59a
+  name: ""
+- image: victoriametrics/operator:v0.12.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:3f5a17a32ac21ae5079ce96e80b2e3fa1c6ee192b28edb3188934f495b698e00
+name: victoriametrics-operator.v0.13.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.13.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:3f5a17a32ac21ae5079ce96e80b2e3fa1c6ee192b28edb3188934f495b698e00
+  name: ""
+- image: victoriametrics/operator:v0.13.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:75a07a70bc786ec522aff1468980597cdf66e0e56d46fac51afa4e18483ea54e
+name: victoriametrics-operator.v0.14.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.14.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:75a07a70bc786ec522aff1468980597cdf66e0e56d46fac51afa4e18483ea54e
+  name: ""
+- image: victoriametrics/operator:v0.14.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:407da0f8fc2ba8eec1a74fe19208517619aa746e748e2ac6c885b437e8362042
+name: victoriametrics-operator.v0.15.2
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.maxOpenShiftVersion
+  value: "4.8"
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.15.2
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:407da0f8fc2ba8eec1a74fe19208517619aa746e748e2ac6c885b437e8362042
+  name: ""
+- image: victoriametrics/operator:v0.15.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:a967a8ce1587e65dad17cc243f2880077c0b75480e25ac4f03468b2ecf089354
+name: victoriametrics-operator.v0.16.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.16.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:a967a8ce1587e65dad17cc243f2880077c0b75480e25ac4f03468b2ecf089354
+  name: ""
+- image: victoriametrics/operator:v0.16.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:16ca5b5676874a106f443d4abdf44814e79a2aa3da0d750e1daee19123ac110e
+name: victoriametrics-operator.v0.17.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.maxOpenShiftVersion
+  value: "4.8"
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.17.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:16ca5b5676874a106f443d4abdf44814e79a2aa3da0d750e1daee19123ac110e
+  name: ""
+- image: victoriametrics/operator:v0.17.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:63afa63b9634cdfee7d0ca7045628872476944e22b244d318829ef3fd7b90072
+name: victoriametrics-operator.v0.17.2
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.maxOpenShiftVersion
+  value: "4.8"
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.17.2
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:63afa63b9634cdfee7d0ca7045628872476944e22b244d318829ef3fd7b90072
+  name: ""
+- image: victoriametrics/operator:v0.17.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:e5d14900b6eeda0a0e541c7d38d9fd141822938083a579e6a681eeaffaa742bc
+name: victoriametrics-operator.v0.18.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.18.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:e5d14900b6eeda0a0e541c7d38d9fd141822938083a579e6a681eeaffaa742bc
+  name: ""
+- image: victoriametrics/operator:v0.18.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:8ac3d95a71e3f088b663394a060f2ebce53c951a2aa37bff710b491ea55ee294
+name: victoriametrics-operator.v0.18.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.18.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:8ac3d95a71e3f088b663394a060f2ebce53c951a2aa37bff710b491ea55ee294
+  name: ""
+- image: victoriametrics/operator:v0.18.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:41e22cc81fa1d8da19996666a8b3b8024976ac432759154b613be4b24eef2a87
+name: victoriametrics-operator.v0.18.2
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.18.2
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:41e22cc81fa1d8da19996666a8b3b8024976ac432759154b613be4b24eef2a87
+  name: ""
+- image: victoriametrics/operator:v0.18.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:1845a6a40a1f7e71323ffcc63cf51076330130855a6f910c0069dafeca127951
+name: victoriametrics-operator.v0.19.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.19.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:1845a6a40a1f7e71323ffcc63cf51076330130855a6f910c0069dafeca127951
+  name: ""
+- image: victoriametrics/operator:v0.19.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:fb159bfd9f1575356a77c74a91b42e13184233a1bacbb710f05f111f67db4bcb
+name: victoriametrics-operator.v0.19.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.19.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:fb159bfd9f1575356a77c74a91b42e13184233a1bacbb710f05f111f67db4bcb
+  name: ""
+- image: victoriametrics/operator:v0.19.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:cbb0d91e1574584ff9d73db6cf4d0cca694b8ced751d67d0c6699fcb1c4082f0
+name: victoriametrics-operator.v0.20.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.20.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:cbb0d91e1574584ff9d73db6cf4d0cca694b8ced751d67d0c6699fcb1c4082f0
+  name: ""
+- image: victoriametrics/operator:v0.20.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:b7e2b4be44b3c6744d0b1aefeddaae3cc35c0b531b8759e90bb147b3e78b73dc
+name: victoriametrics-operator.v0.21.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.21.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:b7e2b4be44b3c6744d0b1aefeddaae3cc35c0b531b8759e90bb147b3e78b73dc
+  name: ""
+- image: victoriametrics/operator:v0.21.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:6f4041d6c03e0cfd92db133bf03cc36e52a8ad36e8a53b27acb24cfe43b60170
+name: victoriametrics-operator.v0.22.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.22.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:6f4041d6c03e0cfd92db133bf03cc36e52a8ad36e8a53b27acb24cfe43b60170
+  name: ""
+- image: victoriametrics/operator:v0.22.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:6184fe007571ce6ea6691be01bc1596027baeb4f7508bec6396f6a85b7be11be
+name: victoriametrics-operator.v0.22.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.22.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:6184fe007571ce6ea6691be01bc1596027baeb4f7508bec6396f6a85b7be11be
+  name: ""
+- image: victoriametrics/operator:v0.22.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:5f8dad250272e9b9f20a0f3dfd542ec5813600579a8335baafddeac862008441
+name: victoriametrics-operator.v0.23.3
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.23.3
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:5f8dad250272e9b9f20a0f3dfd542ec5813600579a8335baafddeac862008441
+  name: ""
+- image: victoriametrics/operator:v0.23.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:4a1ae7c7f3a9707cf0f7297d95e35b894f79cc775ad9aeb5729dece88fb16e2a
+name: victoriametrics-operator.v0.24.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.24.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:4a1ae7c7f3a9707cf0f7297d95e35b894f79cc775ad9aeb5729dece88fb16e2a
+  name: ""
+- image: victoriametrics/operator:v0.24.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:d0254471c46be98826dacd33c1175b4f730d57aac2e4aa2d176d98051599a60e
+name: victoriametrics-operator.v0.25.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.25.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:d0254471c46be98826dacd33c1175b4f730d57aac2e4aa2d176d98051599a60e
+  name: ""
+- image: victoriametrics/operator:v0.25.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:23bf213043a377fba9108d284a4ecab734656e5a142ce53fd6b6928ff8326c23
+name: victoriametrics-operator.v0.25.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.25.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:23bf213043a377fba9108d284a4ecab734656e5a142ce53fd6b6928ff8326c23
+  name: ""
+- image: victoriametrics/operator:v0.25.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:6a48ac32c0d5a412be2aad48e1be985b7fff882fe341cecdf68c061e6a04fd1b
+name: victoriametrics-operator.v0.26.2
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.26.2
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.26.2
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:6a48ac32c0d5a412be2aad48e1be985b7fff882fe341cecdf68c061e6a04fd1b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:ef4ce7e62bc03de040e3d0491c8f21eb82f6218e91d122d55d5845ae77cd276c
+name: victoriametrics-operator.v0.27.2
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.27.2
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.27.2
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:ef4ce7e62bc03de040e3d0491c8f21eb82f6218e91d122d55d5845ae77cd276c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:5e070f0b0d8ef517438ccf176b3278726e8e0a7b5eca5ebd9de750f9f64c602d
+name: victoriametrics-operator.v0.29.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.29.1
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.29.1
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:5e070f0b0d8ef517438ccf176b3278726e8e0a7b5eca5ebd9de750f9f64c602d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:d5f1c9444ae8d62492069f7306f223351638d21eada75994022e60d166f7f082
+name: victoriametrics-operator.v0.32.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.32.0
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.32.0
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:d5f1c9444ae8d62492069f7306f223351638d21eada75994022e60d166f7f082
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:474624968eecd13077e1345a9af896c4f16fc7b1a954a258128325c69af2a4e0
+name: victoriametrics-operator.v0.32.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.32.1
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.32.1
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:474624968eecd13077e1345a9af896c4f16fc7b1a954a258128325c69af2a4e0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:52d989164c373a1c39ffc4487fce425b7eb6ca10a7417321880223d8c0f165ff
+name: victoriametrics-operator.v0.33.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.33.0
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.33.0
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:52d989164c373a1c39ffc4487fce425b7eb6ca10a7417321880223d8c0f165ff
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:92f4967ac1eaa2b7428111061097dd913d5429ee7e8f286f43f6e86c0416c45f
+name: victoriametrics-operator.v0.39.4
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.39.4
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.39.4
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:92f4967ac1eaa2b7428111061097dd913d5429ee7e8f286f43f6e86c0416c45f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:c8a70ae56f7b9c63e45d278e35724bde5aa37ab4098c91508e7463fede210c44
+name: victoriametrics-operator.v0.4.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.4.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:c8a70ae56f7b9c63e45d278e35724bde5aa37ab4098c91508e7463fede210c44
+  name: ""
+- image: victoriametrics/operator:v0.4.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:8636a92b0302b1637ba337dfc4335e1ad8fd8f79a6220c7e8376ed3f20340308
+name: victoriametrics-operator.v0.46.2
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMScrapeConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.46.2
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.46.2
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:8636a92b0302b1637ba337dfc4335e1ad8fd8f79a6220c7e8376ed3f20340308
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:1624c74b3f5355d7e09914695fec4fef90bd28803c0d9d44c0c034b09fed5b2f
+name: victoriametrics-operator.v0.46.3
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMScrapeConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.46.3
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.46.3
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:1624c74b3f5355d7e09914695fec4fef90bd28803c0d9d44c0c034b09fed5b2f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:dd887759c8769a72df7a9b36b0e7b040147559d80f6be983989ae580ea77bf8e
+name: victoriametrics-operator.v0.46.4
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMScrapeConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.46.4
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.46.4
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:dd887759c8769a72df7a9b36b0e7b040147559d80f6be983989ae580ea77bf8e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:3c360a5429b7006b0e6d2b97f6e4099cac104b67ea7bb30c9d1316a5ca33f868
+name: victoriametrics-operator.v0.47.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VLogs
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMScrapeConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.47.0
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.47.0
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:3c360a5429b7006b0e6d2b97f6e4099cac104b67ea7bb30c9d1316a5ca33f868
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:4f74b72118459c9989308fa8f6c1f0f5cc8cd582ce772ac208b6a84102820bda
+name: victoriametrics-operator.v0.47.2
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VLogs
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMScrapeConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.47.2
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.47.2
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:4f74b72118459c9989308fa8f6c1f0f5cc8cd582ce772ac208b6a84102820bda
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:33c392b96211bbc7466783c5e486315fd4557a3b72894d27a94ba8b646d86f0e
+name: victoriametrics-operator.v0.47.3
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VLogs
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMScrapeConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.47.3
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.47.3
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:33c392b96211bbc7466783c5e486315fd4557a3b72894d27a94ba8b646d86f0e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:10722aa2aebe53132a921a69d27d26c0178af0f1238e908bced92f6d693a33cb
+name: victoriametrics-operator.v0.48.3
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VLogs
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanagerConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAuth
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMScrapeConfig
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMStaticScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMUser
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.48.3
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VLogs",
+            "metadata": {
+              "name": "example-vlogs"
+            },
+            "spec": {
+              "retentionPeriod": "2"
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMAgent",
+            "metadata": {
+              "name": "sample"
+            },
+            "spec": {
+              "extraArgs": {
+                "memory.allowedPercent": "40"
+              },
+              "remoteWrite": [
+                {
+                  "url": "http://vmsingle-example-vmsingle-pvc.default.svc:8429/api/v1/write"
+                }
+              ],
+              "replicaCount": 1,
+              "resources": {
+                "limits": {
+                  "cpu": "500m",
+                  "memory": "850Mi"
+                },
+                "requests": {
+                  "cpu": "50m",
+                  "memory": "350Mi"
+                }
+              },
+              "selectAllByDefault": true
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMAlert",
+            "metadata": {
+              "name": "example-vmalert"
+            },
+            "spec": {
+              "datasource": {
+                "url": "http://vmsingle-example-vmsingle-pvc.default.svc:8429"
+              },
+              "evaluationInterval": "30s",
+              "notifier": {
+                "url": "http://vmalertmanager-example-alertmanager.default.svc:9093"
+              },
+              "replicaCount": 1,
+              "selectAllByDefault": true
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMAlertmanager",
+            "metadata": {
+              "name": "example-alertmanager"
+            },
+            "spec": {
+              "configSecret": "vmalertmanager-example-alertmanager",
+              "replicaCount": 2,
+              "selectAllByDefault": true,
+              "storage": {
+                "volumeClaimTemplate": {
+                  "spec": {
+                    "resources": {
+                      "requests": {
+                        "storage": "2Gi"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMAlertmanagerConfig",
+            "metadata": {
+              "name": "example-email-web"
+            },
+            "spec": {
+              "receivers": [
+                {
+                  "email_configs": [
+                    {
+                      "from": "alerting@example.com",
+                      "smarthost": "example.com:25",
+                      "text": "ALARM",
+                      "to": "some-email@example.com"
+                    }
+                  ],
+                  "name": "email",
+                  "webhook_configs": [
+                    {
+                      "url": "http://some-other-wh"
+                    }
+                  ]
+                }
+              ],
+              "route": {
+                "group_interval": "1m",
+                "receiver": "email",
+                "routes": [
+                  {
+                    "receiver": "email"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMAuth",
+            "metadata": {
+              "name": "vmauth-sample"
+            },
+            "spec": {
+              "image": {
+                "pullPolicy": "IfNotPresent",
+                "repository": "victoriametrics/vmauth"
+              },
+              "replicaCount": 1,
+              "resources": {
+                "limits": {
+                  "cpu": "500m",
+                  "memory": "850Mi"
+                },
+                "requests": {
+                  "cpu": "250m",
+                  "memory": "350Mi"
+                }
+              },
+              "selectAllByDefault": true
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMCluster",
+            "metadata": {
+              "name": "example-vmcluster-persistent"
+            },
+            "spec": {
+              "replicationFactor": 2,
+              "retentionPeriod": "4",
+              "vminsert": {
+                "replicaCount": 2,
+                "resources": {
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "1000Mi"
+                  },
+                  "requests": {
+                    "cpu": "0.5",
+                    "memory": "500Mi"
+                  }
+                }
+              },
+              "vmselect": {
+                "cacheMountPath": "/select-cache",
+                "replicaCount": 2,
+                "resources": {
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "1000Mi"
+                  },
+                  "requests": {
+                    "cpu": "0.5",
+                    "memory": "500Mi"
+                  }
+                },
+                "storage": {
+                  "volumeClaimTemplate": {
+                    "spec": {
+                      "resources": {
+                        "requests": {
+                          "storage": "2Gi"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "vmstorage": {
+                "replicaCount": 2,
+                "resources": {
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "1500Mi"
+                  }
+                },
+                "storage": {
+                  "volumeClaimTemplate": {
+                    "spec": {
+                      "resources": {
+                        "requests": {
+                          "storage": "10Gi"
+                        }
+                      }
+                    }
+                  }
+                },
+                "storageDataPath": "/vm-data"
+              }
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMNodeScrape",
+            "metadata": {
+              "name": "cadvisor-metrics"
+            },
+            "spec": {
+              "bearerTokenFile": "/var/run/secrets/kubernetes.io/serviceaccount/token",
+              "interval": "10s",
+              "relabelConfigs": [
+                {
+                  "action": "labelmap",
+                  "regex": "__meta_kubernetes_node_label_(.+)"
+                },
+                {
+                  "replacement": "kubernetes.default.svc:443",
+                  "targetLabel": "__address__"
+                },
+                {
+                  "regex": "(.+)",
+                  "replacement": "/api/v1/nodes/$1/proxy/metrics/cadvisor",
+                  "sourceLabels": [
+                    "__meta_kubernetes_node_name"
+                  ],
+                  "targetLabel": "__metrics_path__"
+                }
+              ],
+              "scheme": "https",
+              "scrapeTimeout": "2s",
+              "selector": {},
+              "tlsConfig": {
+                "caFile": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+                "insecureSkipVerify": true
+              }
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMPodScrape",
+            "metadata": {
+              "name": "example-pod-scrape"
+            },
+            "spec": {
+              "podMetricsEndpoints": [
+                {
+                  "port": "metrics",
+                  "scheme": "http"
+                }
+              ],
+              "selector": {
+                "matchLabels": {
+                  "app.kubernetes.io/name": "example-application",
+                  "monitored-by": "vm-operator"
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMProbe",
+            "metadata": {
+              "name": "probe-agent"
+            },
+            "spec": {
+              "interval": "2s",
+              "jobName": "static-probe",
+              "module": "http_2xx",
+              "targets": {
+                "staticConfig": {
+                  "targets": [
+                    "vmagent-example-vmagent.default.svc:8429/health"
+                  ]
+                }
+              },
+              "vmProberSpec": {
+                "url": "prometheus-blackbox-exporter.default.svc:9115"
+              }
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMRule",
+            "metadata": {
+              "name": "example-vmrule"
+            },
+            "spec": {
+              "groups": [
+                {
+                  "name": "kafka",
+                  "rules": [
+                    {
+                      "alert": "coordinator down",
+                      "annotations": {
+                        "description": "kafka coorinator is down",
+                        "value": "{{ $value }}"
+                      },
+                      "expr": "ml_app_gauge{exec_context=\"consumer_group_state\"} == 0",
+                      "for": "60s",
+                      "labels": {
+                        "job": "{{ $labels.job }}",
+                        "severity": "critical"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMScrapeConfig",
+            "metadata": {
+              "name": "mongodb"
+            },
+            "spec": {
+              "consulSDConfigs": [
+                {
+                  "server": "https://consul-dns:8500",
+                  "services": [
+                    "mongodb"
+                  ]
+                }
+              ],
+              "relabelConfigs": [
+                {
+                  "action": "replace",
+                  "sourceLabels": [
+                    "__meta_consul_service"
+                  ],
+                  "targetLabel": "job"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMServiceScrape",
+            "metadata": {
+              "name": "example-scrape"
+            },
+            "spec": {
+              "endpoints": [
+                {
+                  "port": "http"
+                }
+              ],
+              "namespaceSelector": {},
+              "selector": {
+                "matchLabels": {
+                  "app.kubernetes.io/name": "example-application",
+                  "monitored-by": "vm-operator"
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMSingle",
+            "metadata": {
+              "name": "example-vmsingle"
+            },
+            "spec": {
+              "retentionPeriod": "1"
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMSingle",
+            "metadata": {
+              "name": "example-vmsingle-pvc"
+            },
+            "spec": {
+              "removePvcAfterDelete": true,
+              "retentionPeriod": "1",
+              "storage": {
+                "accessModes": [
+                  "ReadWriteOnce"
+                ],
+                "resources": {
+                  "requests": {
+                    "storage": "1Gi"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMStaticScrape",
+            "metadata": {
+              "name": "vmstaticscrape-sample"
+            },
+            "spec": {
+              "jobName": "static",
+              "targetEndpoints": [
+                {
+                  "labels": {
+                    "env": "dev",
+                    "project": "operator"
+                  },
+                  "targets": [
+                    "192.168.0.1:9100",
+                    "196.168.0.50:9100"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "operator.victoriametrics.com/v1beta1",
+            "kind": "VMUser",
+            "metadata": {
+              "name": "vmuser-tenant-1"
+            },
+            "spec": {
+              "bearerToken": "some-token",
+              "targetRefs": [
+                {
+                  "crd": {
+                    "kind": "VMCluster/vminsert",
+                    "name": "test-persistent",
+                    "namespace": "vm"
+                  },
+                  "target_path_suffix": "/insert/1"
+                },
+                {
+                  "crd": {
+                    "kind": "VMCluster/vmselect",
+                    "name": "test-persistent",
+                    "namespace": "vm"
+                  },
+                  "target_path_suffix": "/select/1"
+                },
+                {
+                  "paths": [
+                    "/internal/resetRollupResultCache"
+                  ],
+                  "static": {
+                    "url": "http://vmselect-test-persistent.default.svc:8481/"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      capabilities: Deep Insights
+      categories: Monitoring
+      certified: "false"
+      containerImage: docker.io/victoriametrics/operator:v0.48.3
+      createdAt: "2024-09-29T20:37:01Z"
+      description: Provides monitoring capabilites for kubernetes clusters and applications
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "false"
+      features.operators.openshift.io/fips-compliant: "true"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      operatorhub.io/ui-metadata-max-k8s-version: "1.30"
+      operators.openshift.io/infrastructure-features: '[fips]'
+      operators.operatorframework.io.bundle.channel.default.v1: beta
+      operators.operatorframework.io.bundle.channels.v1: beta
+      operators.operatorframework.io/builder: operator-sdk-unknown
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+      repository: https://github.com/VictoriaMetrics/operator
+      support: VictoriaMetrics
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: VLogs is the Schema for the vlogs API
+        displayName: VLogs
+        kind: VLogs
+        name: vlogs.operator.victoriametrics.com
+        specDescriptors:
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1beta1
+      - description: VMAgent - is a tiny but brave agent, which helps you collect
+          metrics from various sources and stores them in VictoriaMetrics or any other
+          Prometheus-compatible storage system that supports the remote_write protocol.
+        displayName: VMAgent
+        kind: VMAgent
+        name: vmagents.operator.victoriametrics.com
+        specDescriptors:
+        - description: ConfigReloaderResources config-reloader container resource
+            request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: configReloaderResources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: RelabelConfig ConfigMap with global relabel config -remoteWrite.relabelConfig
+            This relabeling is applied to all the collected metrics before sending
+            them to remote storage.
+          displayName: Key at Configmap with relabelConfig name
+          path: relabelConfig
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:ConfigMapKeySelector
+        - description: ConfigMap with relabeling config which is applied to metrics
+            before sending them to the corresponding -remoteWrite.url
+          displayName: Key at Configmap with relabelConfig for remoteWrite
+          path: remoteWrite[0].urlRelabelConfig
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:ConfigMapKeySelector
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1beta1
+      - description: VMAlertmanagerConfig is the Schema for the vmalertmanagerconfigs
+          API
+        displayName: VMAlertmanager Config
+        kind: VMAlertmanagerConfig
+        name: vmalertmanagerconfigs.operator.victoriametrics.com
+        version: v1beta1
+      - description: VMAlertmanager represents Victoria-Metrics deployment for Alertmanager.
+        displayName: VMAlertmanager
+        kind: VMAlertmanager
+        name: vmalertmanagers.operator.victoriametrics.com
+        specDescriptors:
+        - description: ConfigReloaderResources config-reloader container resource
+            request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: configReloaderResources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: 'ConfigSecret is the name of a Kubernetes Secret in the same
+            namespace as the VMAlertmanager object, which contains configuration for
+            this VMAlertmanager, configuration must be inside secret key: alertmanager.yaml.
+            It must be created by user. instance. Defaults to ''vmalertmanager-<alertmanager-name>''
+            The secret is mounted into /etc/alertmanager/config.'
+          displayName: Secret with alertmanager config
+          path: configSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1beta1
+      - description: VMAlert  executes a list of given alerting or recording rules
+          against configured address.
+        displayName: VMAlert
+        kind: VMAlert
+        name: vmalerts.operator.victoriametrics.com
+        specDescriptors:
+        - description: ConfigReloaderResources config-reloader container resource
+            request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: configReloaderResources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1beta1
+      - description: VMAuth is the Schema for the vmauths API
+        displayName: VMAuth
+        kind: VMAuth
+        name: vmauths.operator.victoriametrics.com
+        specDescriptors:
+        - description: ConfigReloaderResources config-reloader container resource
+            request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: configReloaderResources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1beta1
+      - description: VMCluster is fast, cost-effective and scalable time-series database.
+          Cluster version with
+        displayName: VMCluster
+        kind: VMCluster
+        name: vmclusters.operator.victoriametrics.com
+        specDescriptors:
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: vminsert.replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: vminsert.resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: vmselect.replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: vmselect.resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: vmstorage.replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: vmstorage.resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1beta1
+      - description: VMNodeScrape defines discovery for targets placed on kubernetes
+          nodes, usually its node-exporters and other host services. InternalIP is
+          used as __address__ for scraping.
+        displayName: VMNode Scrape
+        kind: VMNodeScrape
+        name: vmnodescrapes.operator.victoriametrics.com
+        version: v1beta1
+      - description: VMPodScrape is scrape configuration for pods, it generates vmagent's
+          config for scraping pod targets based on selectors.
+        displayName: VMPod Scrape
+        kind: VMPodScrape
+        name: vmpodscrapes.operator.victoriametrics.com
+        version: v1beta1
+      - description: VMProbe defines a probe for targets, that will be executed with
+          prober, like blackbox exporter. It helps to monitor reachability of target
+          with various checks.
+        displayName: VMProbe
+        kind: VMProbe
+        name: vmprobes.operator.victoriametrics.com
+        version: v1beta1
+      - description: VMRule defines rule records for vmalert application
+        displayName: VMRule
+        kind: VMRule
+        name: vmrules.operator.victoriametrics.com
+        version: v1beta1
+      - description: VMScrapeConfig specifies a set of targets and parameters describing
+          how to scrape them.
+        displayName: VMScrape Config
+        kind: VMScrapeConfig
+        name: vmscrapeconfigs.operator.victoriametrics.com
+        version: v1beta1
+      - description: VMServiceScrape is scrape configuration for endpoints associated
+          with kubernetes service, it generates scrape configuration for vmagent based
+          on selectors. result config will scrape service endpoints
+        displayName: VMService Scrape
+        kind: VMServiceScrape
+        name: vmservicescrapes.operator.victoriametrics.com
+        version: v1beta1
+      - description: VMSingle  is fast, cost-effective and scalable time-series database.
+        displayName: VMSingle
+        kind: VMSingle
+        name: vmsingles.operator.victoriametrics.com
+        specDescriptors:
+        - description: ReplicaCount is the expected size of the Application.
+          displayName: Number of pods
+          path: replicaCount
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom
+        - description: Resources container resource request and limits, https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            if not defined default resources from operator config will be used
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1beta1
+      - description: VMStaticScrape  defines static targets configuration for scraping.
+        displayName: VMStatic Scrape
+        kind: VMStaticScrape
+        name: vmstaticscrapes.operator.victoriametrics.com
+        version: v1beta1
+      - description: VMUser is the Schema for the vmusers API
+        displayName: VMUser
+        kind: VMUser
+        name: vmusers.operator.victoriametrics.com
+        version: v1beta1
+    description: |
+      Operator manages VictoriaMetrics applications and provides monitoring features for applications running inside and outside kubernetes cluster. It has support for prometheus-operator objects and
+      provides migration mechanism.
+
+      Operator desinged to use existing installation of VictoriaMetrics inside or outside kubernetes cluster or it could
+      bring own resources and fully manages them.
+
+       You can read more about operator at docs:
+        - quick start [doc](https://github.com/VictoriaMetrics/operator/blob/master/docs/quick-start.md)
+        - high availability [doc](https://github.com/VictoriaMetrics/operator/blob/master/docs/high-availability.md)
+        - design and description of implementation [design](https://github.com/VictoriaMetrics/operator/blob/master/docs/design.md)
+        - operator objects description [doc](https://github.com/VictoriaMetrics/operator/blob/master/docs/api.md)
+
+      # VictoriaMetrics
+      * VictoriaMetrics can be used as long-term storage for Prometheus or for [vmagent](https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmagent/README.md).
+      See [these docs](https://github.com/VictoriaMetrics/VictoriaMetrics#prometheus-setup) for details.
+      * Supports [Prometheus querying API](https://prometheus.io/docs/prometheus/latest/querying/api/), so it can be used as Prometheus drop-in replacement in Grafana.
+      VictoriaMetrics implements [MetricsQL](https://github.com/VictoriaMetrics/VictoriaMetrics/wiki/MetricsQL) query language, which is inspired by PromQL.
+      * Supports global query view. Multiple Prometheus instances may write data into VictoriaMetrics. Later this data may be used in a single query.
+      * High performance and good scalability for both [inserts](https://medium.com/@valyala/high-cardinality-tsdb-benchmarks-victoriametrics-vs-timescaledb-vs-influxdb-13e6ee64dd6b)
+      and [selects](https://medium.com/@valyala/when-size-matters-benchmarking-victoriametrics-vs-timescale-and-influxdb-6035811952d4).
+      [Outperforms InfluxDB and TimescaleDB by up to 20x](https://medium.com/@valyala/measuring-vertical-scalability-for-time-series-databases-in-google-cloud-92550d78d8ae).
+      * [Uses 10x less RAM than InfluxDB](https://medium.com/@valyala/insert-benchmarks-with-inch-influxdb-vs-victoriametrics-e31a41ae2893) when working with millions of unique time series (aka high cardinality).
+      * Optimized for time series with high churn rate. Think about [prometheus-operator](https://github.com/coreos/prometheus-operator) metrics from frequent deployments in Kubernetes.
+      * High data compression, so [up to 70x more data points](https://medium.com/@valyala/when-size-matters-benchmarking-victoriametrics-vs-timescale-and-influxdb-6035811952d4)
+      may be crammed into limited storage comparing to TimescaleDB.
+      * Optimized for storage with high-latency IO and low IOPS (HDD and network storage in AWS, Google Cloud, Microsoft Azure, etc). See [graphs from these benchmarks](https://medium.com/@valyala/high-cardinality-tsdb-benchmarks-victoriametrics-vs-timescaledb-vs-influxdb-13e6ee64dd6b).
+      * A single-node VictoriaMetrics may substitute moderately sized clusters built with competing solutions such as Thanos, M3DB, Cortex, InfluxDB or TimescaleDB.
+      See [vertical scalability benchmarks](https://medium.com/@valyala/measuring-vertical-scalability-for-time-series-databases-in-google-cloud-92550d78d8ae),
+      [comparing Thanos to VictoriaMetrics cluster](https://medium.com/@valyala/comparing-thanos-to-victoriametrics-cluster-b193bea1683)
+      and [Remote Write Storage Wars](https://promcon.io/2019-munich/talks/remote-write-storage-wars/) talk
+      from [PromCon 2019](https://promcon.io/2019-munich/talks/remote-write-storage-wars/).
+      * Easy operation:
+          * VictoriaMetrics consists of a single [small executable](https://medium.com/@valyala/stripping-dependency-bloat-in-victoriametrics-docker-image-983fb5912b0d) without external dependencies.
+          * All the configuration is done via explicit command-line flags with reasonable defaults.
+          * All the data is stored in a single directory pointed by `-storageDataPath` flag.
+          * Easy and fast backups from [instant snapshots](https://medium.com/@valyala/how-victoriametrics-makes-instant-snapshots-for-multi-terabyte-time-series-data-e1f3fb0e0282)
+          to S3 or GCS with [vmbackup](https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmbackup/README.md) / [vmrestore](https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/vmrestore/README.md).
+          See [this article](https://medium.com/@valyala/speeding-up-backups-for-big-time-series-databases-533c1a927883) for more details.
+      * Storage is protected from corruption on unclean shutdown (i.e. OOM, hardware reset or `kill -9`) thanks to [the storage architecture](https://medium.com/@valyala/how-victoriametrics-makes-instant-snapshots-for-multi-terabyte-time-series-data-e1f3fb0e0282).
+      * Supports metrics' scraping, ingestion and [backfilling](https://github.com/VictoriaMetrics/VictoriaMetrics#backfilling) via the following protocols:
+        * [Metrics from Prometheus exporters](https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md#text-based-format)
+          such as [node_exporter](https://github.com/prometheus/node_exporter). See [these docs](https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-scrape-prometheus-exporters-such-as-node-exporter) for details.
+          * [Prometheus remote write API](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write)
+          * [InfluxDB line protocol](https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-send-data-from-influxdb-compatible-agents-such-as-telegraf) over HTTP, TCP and UDP.
+          * [Graphite plaintext protocol](https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-send-data-from-graphite-compatible-agents-such-as-statsd) with [tags](https://graphite.readthedocs.io/en/latest/tags.html#carbon)
+          if `-graphiteListenAddr` is set.
+          * [OpenTSDB put message](https://github.com/VictoriaMetrics/VictoriaMetrics#sending-data-via-telnet-put-protocol) if `-opentsdbListenAddr` is set.
+          * [HTTP OpenTSDB /api/put requests](https://github.com/VictoriaMetrics/VictoriaMetrics#sending-opentsdb-data-via-http-apiput-requests) if `-opentsdbHTTPListenAddr` is set.
+          * [How to import time series data](https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-import-time-series-data).
+          * [Prometheus exposition format](https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-import-data-in-prometheus-exposition-format).
+          * [Arbitrary CSV data](https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-import-csv-data).
+      * Supports metrics' relabeling. See [these docs](https://github.com/VictoriaMetrics/VictoriaMetrics#relabeling) for details.
+      * Ideally works with big amounts of time series data from Kubernetes, IoT sensors, connected cars, industrial telemetry, financial data and various Enterprise workloads.
+    displayName: VictoriaMetrics Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - monitoring
+    - prometheus
+    - victoriametrics
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/arch.ppc64le: supported
+    links:
+    - name: VictoriaMetrics
+      url: https://victoriametrics.com
+    maintainers:
+    - email: nik@victoriametrics.com
+      name: f41gh7
+    - email: info@victoriametrics.com
+      name: info
+    maturity: beta
+    minKubeVersion: 1.23.0
+    provider:
+      name: VictoriaMetrics
+relatedImages:
+- image: docker.io/victoriametrics/operator:v0.48.3
+  name: ""
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:10722aa2aebe53132a921a69d27d26c0178af0f1238e908bced92f6d693a33cb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:cbb6184fedd040b513cb1f140536245281f7b55a22f10fdd30da1a8dc9c519c4
+name: victoriametrics-operator.v0.6.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.6.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:cbb6184fedd040b513cb1f140536245281f7b55a22f10fdd30da1a8dc9c519c4
+  name: ""
+- image: victoriametrics/operator:v0.6.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:dfddc4581bb8d9ccc5b988b25fb1dfe3b97031a8082412dac17cf1c990bb36f4
+name: victoriametrics-operator.v0.7.3
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.7.3
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:dfddc4581bb8d9ccc5b988b25fb1dfe3b97031a8082412dac17cf1c990bb36f4
+  name: ""
+- image: victoriametrics/operator:v0.7.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:8f206062e2ae12c2543c5ee4f8b43ec932174eff243434979e7a72ef86121231
+name: victoriametrics-operator.v0.8.0
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.8.0
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:8f206062e2ae12c2543c5ee4f8b43ec932174eff243434979e7a72ef86121231
+  name: ""
+- image: victoriametrics/operator:v0.8.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/victoriametrics-operator@sha256:0e4dff8572338f4d49767ed15210a84254163f44ee3f09dd373434aab10aee5d
+name: victoriametrics-operator.v0.9.1
+package: victoriametrics-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAgent
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlert
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMAlertmanager
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMNodeScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMPodScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMProbe
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMRule
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMServiceScrape
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: operator.victoriametrics.com
+    kind: VMSingle
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: victoriametrics-operator
+    version: 0.9.1
+relatedImages:
+- image: quay.io/operatorhubio/victoriametrics-operator@sha256:0e4dff8572338f4d49767ed15210a84254163f44ee3f09dd373434aab10aee5d
+  name: ""
+- image: victoriametrics/operator:v0.9.1
+  name: ""
+schema: olm.bundle

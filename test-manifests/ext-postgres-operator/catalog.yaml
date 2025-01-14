@@ -1,0 +1,202 @@
+---
+defaultChannel: alpha
+name: ext-postgres-operator
+schema: olm.package
+---
+entries:
+- name: ext-postgres-operator.v0.2.0
+- name: ext-postgres-operator.v0.3.0
+  replaces: ext-postgres-operator.v0.2.0
+- name: ext-postgres-operator.v0.4.1
+  replaces: ext-postgres-operator.v0.3.0
+name: alpha
+package: ext-postgres-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ext-postgres-operator@sha256:4bfc7c2d5c52a82a60e516172c1286472d1ecde0bc28fa36294500a721ffe154
+name: ext-postgres-operator.v0.2.0
+package: ext-postgres-operator
+properties:
+- type: olm.gvk
+  value:
+    group: db.movetokube.com
+    kind: Postgres
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ext-postgres-operator
+    version: 0.2.0
+relatedImages:
+- image: movetokube/postgres-operator:0.2
+  name: ""
+- image: quay.io/operatorhubio/ext-postgres-operator@sha256:4bfc7c2d5c52a82a60e516172c1286472d1ecde0bc28fa36294500a721ffe154
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ext-postgres-operator@sha256:cf662b6ba16460d8a0879b4f463a613463b2e4e3af0cd4e64fc92fb06b469b26
+name: ext-postgres-operator.v0.3.0
+package: ext-postgres-operator
+properties:
+- type: olm.gvk
+  value:
+    group: db.movetokube.com
+    kind: Postgres
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: db.movetokube.com
+    kind: PostgresUser
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ext-postgres-operator
+    version: 0.3.0
+relatedImages:
+- image: movetokube/postgres-operator:0.3
+  name: ""
+- image: quay.io/operatorhubio/ext-postgres-operator@sha256:cf662b6ba16460d8a0879b4f463a613463b2e4e3af0cd4e64fc92fb06b469b26
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ext-postgres-operator@sha256:5dadc96e9b9ed922a17ad638a545608cfbc5a7a115016ab598e723e11feeebfa
+name: ext-postgres-operator.v0.4.1
+package: ext-postgres-operator
+properties:
+- type: olm.gvk
+  value:
+    group: db.movetokube.com
+    kind: Postgres
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: db.movetokube.com
+    kind: PostgresUser
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ext-postgres-operator
+    version: 0.4.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "db.movetokube.com/v1alpha1",
+            "kind": "Postgres",
+            "metadata": {
+              "name": "my-db",
+              "namespace": "app"
+            },
+            "spec": {
+              "database": "test-db",
+              "dropOnDelete": false,
+              "masterRole": "test-db-group",
+              "schemas": [
+                "stores",
+                "customers"
+              ]
+            }
+          },
+          {
+            "apiVersion": "db.movetokube.com/v1alpha1",
+            "kind": "PostgresUser",
+            "metadata": {
+              "name": "my-db-user",
+              "namespace": "app"
+            },
+            "spec": {
+              "database": "my-db",
+              "privileges": "OWNER",
+              "role": "username",
+              "secretName": "my-secret"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Database
+      containerImage: movetokube/postgres-operator:0.4.1
+      createdAt: "2019-12-19T14:12:00Z"
+      description: Manage databases and roles in external PostgreSQL server or cluster
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/movetokube/postgres-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a resource for managing external PostgreSQL database
+          and associated group role
+        displayName: postgres.db.movetokube.com
+        kind: Postgres
+        name: postgres.db.movetokube.com
+        version: v1alpha1
+      - description: Represents a resource for managing external PostgreSQL user role
+        displayName: postgresusers.db.movetokube.com
+        kind: PostgresUser
+        name: postgresusers.db.movetokube.com
+        version: v1alpha1
+    description: "ext-postgres-operator is an external PostgreSQL database operator.
+      This is a very light-weight basic operator which\ndoes not provide a PostgreSQL
+      server, but rather manages databases inside an existing PostgreSQL database
+      server (or cluster). \n## Features\n* Creates a database from a CR\n* Creates
+      a role with random username and password from a CR\n* If the database exist,
+      it will only create a role\n* Multiple user roles can own one database\n* Creates
+      Kubernetes secret with postgres_uri in the same namespace as CR\n* Support for
+      AWS RDS and Azure Database for PostgresSQL\n\n## Cloud specific configuration\n###
+      AWS\nIn order for this operator to work correctly with AWS RDS, you need to
+      set `POSTGRES_CLOUD_PROVIDER` to `AWS` either in \nthe ext-postgres-operator
+      kubernetes secret or directly in the deployment manifest (`operator.yaml`).\n###
+      Azure Database for PostgreSQL\nIn order for this operator to work correctly
+      with Azure managed PostgreSQL database, two env variables needs to be provided
+      for the operator:\n* `POSTGRES_CLOUD_PROVIDER` set to `Azure`\n * `POSTGRES_DEFAULT_DATABASE`
+      set to your default database, i.e. `postgres`  \n## Installation\nThis operator
+      requires a Kubernetes Secret to be created in the same namespace as operator
+      itself. \nSecret should contain these keys: POSTGRES\\_HOST, POSTGRES\\_USER,
+      POSTGRES\\_PASS, POSTGRES\\_URI\\_ARGS, POSTGRES\\_CLOUD\\_PROVIDER, POSTGRES\\_DEFAULT\\_DATABASE.\n
+      Example: \n\n```yaml\napiVersion: v1\nkind: Secret\nmetadata:\n  name: ext-postgres-operator\n
+      namespace: operators\ntype: Opaque\ndata:\n  POSTGRES_HOST: cG9zdGdyZXM=\n  POSTGRES_USER:
+      cG9zdGdyZXM=\n  POSTGRES_PASS: YWRtaW4=\n  POSTGRES_URI_ARGS: IA==\n  POSTGRES_CLOUD_PROVIDER:
+      QVdT\n  POSTGRES_DEFAULT_DATABASE: cG9zdGdyZXM=\n```\n\n \n## CRs\n### Postgres\n```yaml\napiVersion:
+      db.movetokube.com/v1alpha1\nkind: Postgres\nmetadata:\n  name: my-db\n  namespace:
+      app\nspec:\n  database: test-db  # Name of database created in PostgreSQL\n
+      \ dropOnDelete: false # Set to true if you want the operator to drop the database
+      and role when this CR is deleted\n  masterRole: test-db-group\n schemas: # List
+      of schemas the operator should create in database\n  - stores\n  - customers\n
+      ```\n\nThis creates a database called `test-db` and a role `test-db-group` that
+      is set as the owner of the database.\nReader and writer roles are also created.
+      These roles have read and write permissions to all tables in the schemas created
+      by the operator, if any.\n\n### PostgresUser\n ```yaml\napiVersion: db.movetokube.com/v1alpha1\nkind:
+      PostgresUser\nmetadata:\n name: my-db-user\n  namespace: app\nspec:\n  role:
+      username\n  database: my-db  # This references the Postgres CR\n  secretName:
+      my-secret\n  privileges: OWNER  # Can be OWNER/READ/WRITE\n```\n\nThis creates
+      a user role `username-<hash>`  and grants role `test-db-group`, `test-db-writer`
+      or `test-db-reader` depending on `privileges` property. Its credentials are
+      put in secret `my-secret-my-db-user`.\n\n`PostgresUser` needs to reference a
+      `Postgres` in the same namespace.\n\nTwo `Postgres` referencing the same database
+      can exist in more than one namespace. The last CR referencing a database will
+      drop the group role and transfer database ownership to the role used by the
+      operator."
+    displayName: Ext Postgres Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    links:
+    - name: movetokube.com
+      url: https://movetokube.com
+    maintainers:
+    - email: tomas@movetokube.com
+      name: Tomas Adomavicius
+    maturity: alpha
+    provider:
+      name: movetokube.com
+relatedImages:
+- image: movetokube/postgres-operator:0.4.1
+  name: ""
+- image: quay.io/operatorhubio/ext-postgres-operator@sha256:5dadc96e9b9ed922a17ad638a545608cfbc5a7a115016ab598e723e11feeebfa
+  name: ""
+schema: olm.bundle

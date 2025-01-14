@@ -1,0 +1,1617 @@
+{
+    "schema": "olm.package",
+    "name": "sandboxed-containers-operator",
+    "defaultChannel": "stable",
+    "icon": {
+        "base64data": "iVBORw0KGgoAAAANSUhEUgAAAXwAAAF8CAYAAADM5wDKAAAACXBIWXMAAG66AABuugHW3rEXAAAgAElEQVR4nO3dX2xVZb7/8VWtoKC0xMQfP9BfC0NoSEbbymQycYSWGx1vaHE05hhMS9RELoQyZCInMaEkJoOZGIpeMBeattF4MtGRXW4cvaGFGTOZDLbgJKSGI+1ROBwTQ8scEATtL59lF7MH27LXs55n/X2/kh3mT3e79trw2U+/z3d9V9XU1JQHAMi/m3iPAaAYCHwAKAgCHwAKgsAHgIIg8AGgIAh8ACgIAh8ACoLAB4CCIPABoCCqeaPd2Llz54MXL178yblz51ouX768+OzZsw0XLly4VT/s448/rs3hSwZCuf/++yf09QsXLry0ZMmS0fnz559bvHjx0IIFC/62Z8+eP3E27WO0ggVbt27tUrB/+eWX946Pjy8dHR29LfMvCkhYQ0PD13V1dWdqamq+WLJkSenVV1/t4T2JhsAP6cUXX6z76quvnjtz5swvRkdHGwh3ID76EGhoaBhdunTpH++8887fvfTSS+Oc/soR+BXYsWPHE59//vmW48eP/5SAB9JDHwD33XffX++55579r7zyyu95a+ZG4M9CIX/y5MmdR48e/fHp06fZ6wBSbtmyZVfXrFnz95UrV+4h/GdG4JfRRutnn3320kcfffRzQh7ILoX/Aw888OcVK1a8yAbwPxH4nuc9/fTTr4+MjPyS7hkgf9QN1NTU9Ic33njjmaK/vYUNfG2+fvrpp/2s5oFiCFb9q1at6ijqZm/hAl9lmxMnTrw2ODjYeP78+aoUHBKAGC1atGiqtbX12OrVq58vWrmnMIGvoB8eHu778MMPf5SCwwGQAg899NB/Njc3dxYl+HMf+EHp5p133mlJweEASKHHH398qBClHgV+Xh+bNm06sGjRou/0Mnnw4MFjroeyQpmR50zM5Qpfow7ee++936Z1M7ampsZramqa8f9rbW2N/XgAVwYHB2f8ziMjI97k5GQqz7s2dx999NFf53GUQ64CX+Wbw4cP/+XIkSNLkj6WxsZGr76+3g92PWpra6/9CeB7ExMTfvgHf+oxNjbmHTt2LPEztHbt2rPr1q37WZ7KPLkJ/KeeeurAwYMH25LovKmrq/NX5kG4s0oHotNvB8GHgP7z+Hj8uauOng0bNgy8+eabG/PwlmY+8LWqf//990fivmiqra3ND/b29nZ/JQ/ALa38S6WSH/4DAwOxnm1dvPXII480ZX21n+nA37Jly2/efvvtF+JY1avurnAPHgCSpfAPHnHsB2i1/+STT768f//+f8/qW5/JwNeq/pNPPikdPHhw5p1Pi7SSV8B3dnbG+RIBhNDX1+cHfxwr/w0bNozce++97Vlc7Wcu8HUBValU+tDlmGKt5ru6uvyQp1wDZIfKPgr/np4ep6t+jWVub29/KHMXbGWph/S55577jcu++rq6uqne3t4pANmnf8v6N+0qL5RFyqQsZWhmDlQXRLh641paWqYOHDjAP3Egh/RvW//GXeVHli7WykRJ5+GHHz7pYgaO2in16x9tlED+qbtHZVoX7Z2ayfPBBx+sTPtJvCkFxzArbc6uWbPmnO2wV42+t7fXr/cR9kAx6N+6/s3r374ywCZllLJKmZXmk5naFb5O3LvvvnvC9ubsrl27/A1ZrngFiktX9mpjd/fu3VbPgTZzH3vssdVp7eBJZeC76MRpaWnx3+DZZtgAKB5dxasF4NDQkLXXnuoOnrRtKvzqV796wmYnTk1NzdTevXvZiwMwK2WEssJmB4+yjE3bOezYseOJ119//T9sXTmrAWa6GINeegA3ovq+LrK0NbhNV+Y+88wz//bKK6/8Pi0nPzWbtirj2Ax71er16xphD6ASygplhrLDBmWZMk3ZlpY3IBUrfJsbtNp916qe7hsAptTCqdW+jat107SRm3jg2wx7lXD0RtGBAyAqdfJo4WijxJOW0E+8pKPRxjbCvqOjw/91jLAHYIOyRJmibIlKGaesS/qNSTTwdQWtjTn2qrnpilkAsE3ZYqOur6xT5iX5BiUW+LpDlY0raHXVXHd3t52DAoAZKGOUNVEp85R9SZ3jRAJfNy556623It1FJBiPwJx6AHFQ1tgYy6DsUwYm8abFvmmrFqX9+/cfjtJ+qROuzVmumgUQN9X1tZkbpYNHPfpbtmxZF/fVuLGu8NWRo5EJhD2ArFL2KIOirPSVgcrCuIetxRr4ui1hlI4cwh5AGtgIfWWhMjHOlxNb4KtmFfUetAw/A5AWyiJlUhTKxDjr+bEEvn5tefvtt1+I8j3YoAWQNsFGbhTKxrhKO7EEvi44iFK3Vw8sYQ8gjZRNUfr0lY1xXZTlPPDVcxrl4ipd5UafPYA0U0ZFuSJXGRlHf77Ttkz9mvLaa6+dMl3dazaOWqAAIAtU1zedvaNWzeeff365y3k7Tlf4hw8f/otp2AcdOQCQFVE6d5SVykyXL9VZ4G/durXryJEjS0yfrxHHDEIDkCXKLGWXKWWmstPVS3YW+O+9995vTZ+rDRDm2QPIImVXlE3cKNl5I04CX5sPp0+frjZ5rur2bNICyDJlmLLMhLLT1Qau9cDXRu3BgwfbTJ4b3K0KALJOWWZaz1eGuujNtx74n376ab/pRq0+FbkHLYA8UJaZViuUocpS26fBalumJmG+/PLLR0ye29LSQlcOgNxRTX9oaMjoZb3wwgtrbU7UtLrCHx4eNr7tVNSZFACQRlGyLUqmzsRa4Gt1b3oHK+1oMxQNQB4p20y7dpSpylZbp8Va4J84ceI1k+dpU6Ory1nbKQAkThlnuoFrmq0zsRL42k0eHBw06kHSrztcYAUgz5RxpqUdZautjh0rgW/amVNXV8cUTACFoKxT5oVls2PHSuB/9NFHPzd5Xl+f1f0IAEg108wzzdjrRQ78p59++nWTq2rVhsn4BABFosxT9oWljFXWRj1VkQN/ZGTklybPY6MWQBGZZp9p1paLFPhqFzK5uYnqWO3t7VF+NABkkrLPpJavrI3aohkp8D/77LOXTJ7HcDQARWaagaaZG4g0WuHuu+++ErZ+r17UiYkJ458JAHmgVs3JyclQr2TZsmVXv/jii1tMX77xCn/Hjh1PmGzWUrsHALMsVOYqe01Pn3Hgnzx5cqfJ8+i7BwDzLDTNXi9K4B89evTHYZ/T1tbG+GMAmB6frEwMyyR7A0aBb1rOoTMHAP7JJBOjlHWMAv/zzz/fEvY52qylnAMA/6RMNBmqZpLBnmngHz9+/Kdhn8PqHgB+yCQbTTLYMwl8TW0bHR29LezzCHwA+CGTbFQGm0zQDB34X3311XNhn+MR+AAwI9NsNMni0IF/5syZX4R9jslONAAUhUlGmmRx6MAfHR1tCPscpmICwOxMMtIki0OPVqiqqgo9i+HUqVP03wPALMbGxrzly5eHPj1TU1OhbjwVaoW/devW0NcCayocYQ8As1NGmkzQDJvJoQL/7NmzoXcXKOcAwI2ZZOW5c+dC3U0lVOBPTk7eHfaAmpqawj4FAArHJCu//PLLe8N8fajAHx8fXxr2gAh8ALgxk6wMm8mhNm1NNmyjzNsHgCKpqgq1BxtkbMVPqniFb3JrrcbGxrBPAYDCMsnMMNlcceBfvHjxJ2EPhO4cAKicSWaGyeaKAz/sbrBH/R4AQjHJzDDZXHHgX758eXEcBw8ARWWSmWGyueLAP3v2bOjLeHWTXgCAu8wMk80VB/6FCxduDXsgrPABoHImmRkmm43vaVsJVvgAUDnXmVlxH37YHnzdtmtiYsL0uApncHCw6KcAM2A0SfEo9CcnJ0O97kp78UPfiLxSlHMqUyqVvK6uLl0xl4XDRcw0UKunp4cbCBWIsnNoaMjJC3Za0sHcdAPjjRs3EvaYlf5u6O+I/q4AURH4CdHKvr+/v5CvHeHp74r+zgBREPgJURkHCIO/M4iKwE+ANmgp4yAs/Z1hcx9RVBT4JoPTaMkEgHSpKPD37Nnzp7BHTZcOAITnMjsp6QBAirisjhD4AFAQBD4AFASBDwAFQeADQEE4m6UDu/bu3UvnU86MjIx427dvL/ppQIwI/IxQ2DM5EUAUlHQAoCAIfAAoCAIfAAqCwAeAgiDwAaAgCHwAKAgCHwAKgsAHgIIg8AGgIAh8ACgIAh8ACoLAB4CCIPABoCAIfAAoCAIfAAqCwAeAgiDwAaAgCHwAKAgCHwAKgsAHgIIg8AGgIAh8ACgIAh8ACoLAB4CCIPABoCAIfAAoCAIfAAqCwAeAgiDwAaAgCHwAKAgCHwAKgsAHgIIg8AGgIAh8ACgIAh8ACqKaNxpIxm0nT3oPhvzJeo7X2so7BiMEPuDItyMj3ndjY97V6T+vPcbH/R+4yvO8g2F/9LPPeueefdb/jzfV1Xk31ddfe1Q3Nfl/3tzUxFuKGRH4gAUK96uDg3646z9/e+yY89OqDw7/w2No6Af/382NjX7w39La6v/JhwA8Ah8wo5X6lVLJu6KQHxz0piYnU3Um9YGjxzf9/f5/r6qp8apbW/0PgFva2/3fBFA8BD5QIQX7Nwr5UulaWSYr9IF0ZWDAf3jbt/vlIAX//M5OVv8FQuADc1B55nJfn/dNX1/qVvFR6APr8r59/oPwLw7aMoHrTE1MeJd7erzJ+nrvfHOzH4p5CvvrBeGv16rXrNeuc4D8IfCBaSrZXOjs9CYWL/Yubt+eubKNDXrNeu06BzoXOifIDwIfhadyzT9aW71/rF9/bZMTnn8udE50bnSOkH0EPgpLIaYSxoXNm72rM7Q24ns6NzpHOlcEf7YR+Cic8qAvYtnGlM4VwZ9tBD4KQ/VolScI+miC4Ne5pMafLQQ+ck8XSWkDUvVoSjf26FzqnP5ve7t/jpF+9OEj19Ri+HV3d6raKoMZOFJ93SC0/zl71rt06dK1/1533RWxwYq6fCZP0nQx1/nBQW9+V5d3W3d3Ko4JMyPwkUu6YEqr+jhm2swmmGejcNdIg2DI2VzCDjzQ61TPvEY86EMgrjk+19MH6qXdu/2rkBf29XEBV0oR+MgdregVPnGrbmm5Nq/m+pW7K0Gwlv88fQAo+IM5P3GWsfRhowu4bt21i9V+ChH4yA2tcFVPjmuFq4FkGkkwr73dD9yq2tpUnEodR3XZh44+AMrnAMVR3mK1n05s2iIX1CZ4vqnJedgr5Od1dHi3Hzjg1U5M+IGm0E9L2M9Ex6Zj1LHqmHXseg16LS7pveCirXQh8JFpWr2qVq82QZcrV5VrFvb2/kvIZ1V5+Os16bW5ovdE743eI+bzJI/AR2aphOOvIB2NQwhW8zWnTnl3DA568zo7c/eXRa9Jr02v0eWq3x/T0Nrq7y0gOQQ+MknB4aqEo9DTpmPN2Ji/Ei7CzUL0GvVa9Zr12l0Ef1Di4WKt5BD4yBy/Xt/cbL2EUx706jBJc13eFb1mvXZXwa/3zB9SR10/EQQ+MkUXUqkmbNv8bdsKHfTXKw9+nRvb9B5e7OpK0SsuBgIfmaGNP81qt0kblqpfL+jpIehnoHOic6NzZHtzVzdduZDDfZE0I/CRCQoGm5uzGm+g9kRtWHJD7xvTOdK50jnTubNF7ymhHx8CH6lnO+xVolg0MpLp1sqk6Jzp3Nks8xD68SHwkWo2w14bkHccOkT5JqKgzKNzaWu1T+jHg8BHatkM+1va2vwNyLhm3BSBzqX/m1Jbm5VXS+i7R+AjlWyG/YK9e73bSyVW9Q7onOrc6hzbQOi7ReAjddR6aSPsVcJZNDzsz2mHWzrHOtc2+vb13tOy6QaBj1TRBTk2Wi81i17lBiY1xkfnWmUznfuo1LKpaZuwi8BHavg3LbFwUZVqyrRbJkMlHn/uUEdH5J/PKt8+Ah+pEAxCi8ofXUy9PlE695rLEzX0dQtHhq3ZReAjcRqbqxuXRJ2No4BZyIyW1NB7oXk8URD4dhH4SJx+dY869ZKwTyfN49HMfaQDgY9EaZM2akcOYZ9umrlvGvrsw9hF4CMxqttH3Zgj7LNBoR+2vKMWTy6Us4vAR2Ki1u0J+2xReSfMRi7XT9hH4CMRX3d3R6rbq/WSsM+eSrt39DX6gIBdBD5ip86LS7t3G/9YXdhD2GdX0L0z01W5wV3HeH/dqM7ji0K6RZmVokDIc5/9YNn9Xmtra72mnF4prNX7rV1d/v1tr063XlY3Nfk1e66hcIfAR6w0JydKKSevV9D29PT4j/Hx8X/53+vq6rzu7m6vM4cDxRTsmq/PfQniQ0kHsVFXztcR6rKayJi32Tha0dfX13vbt2//QdiL/rfNmzd7ra2t/7L6B0wQ+IiNwt60K0ebtHnq2hgbG/Pa29u99evXzxj01xsaGvK/Vit9PRcwQeAjFqrVml5gpbp9XjbxJiYm/BLN8uXLvYGBgdDP7+/v9+v63XSwwACBj1hEKeXkZZO2r6/PL9/sjtChJJOTk/730PcqMUIYIRD4cE7jE64ODRn9GN0sO+tXW6r2rlW5avGTEQfElVMpaOPGjX59f4QhY6gAgQ/nTFf3ukF2li++Ua1dNXfV3o9FHA43F9X3m5ub/Z+lkhEwGwIfTml1/10Fm5IzWdDTk8lSTlCn16q+39J9eSuhn6Uyj9o7gZkQ+HDKdHVf3dKSyf5s1dQV9Kqx2yzfVEo/Uy2eCn7aOHE9Ah/ORFndZ60rRzV01dJVU6+kzdI1HYNKSTom2jgRIPDhzGXD0NZGbVauplX5RrVz1dCHDDemXdIxqQVUJSbq+yDw4YQ/I8UgANVzn5WNWoWoSidx1ulNBW2cfQwlKzQCH04Yr+67ulK/URuMQ0iqTm9Kx6rWUO0xUN8vJgIf1umm5CZX1fqjcVM8PkG1cNXEKx2HYKqtrc1raWlx9v3VIqrXoNEO1PeLhcCHdd/kbHWv2ndXV5dfC3dZp29sbPQOHTrkd/poBX7gwAF/WqYrGu0QjGmgvl8MBD6su2TQB57W1X0wDmHfvn3OfkZNTY3X29t7rdMnEKzAd+3a5X+NC8GYBgU/9f38I/Bhle5mZdKKqZ77NK3uXY1DuN62bduuXZE7G63A9TUdIe4HG1b5GGbGNOQXgQ+rTDdr09KZUz622OU4BNXoT5065V8VW1vBB52+Rivw4eFhp/V9xjTkG4EPq0zq97qqNum++6hjiyulmrzq9EGnT1hBh41KQC7r+8GYBsYw5wuBD2vUe29yg5P5Cd++TyvnYByCK6rB792791qnT1Ragav0Ekd9nzHM+UHgw5pvDEJBm7XzEgr8YJNUtWuXbZaqvSvouyxvSqvMoxW4Xofr+n4whpk2zmwj8GHNFYPAT2pAmlasCjCXbZaqtavmrt8gKqnTmwquoFWpSK2druhc6TchNnWzi8CHFbpBuUl3zrwEAj/oinHVfaPaunrog06fuAQdNqrvuyzz6OewoZtNBD6sMFndq5yTxApfZRAXYa+QVU1dodue4Gjn4EbnOhYXdO6YuZ9NBD6suGIwmyXJco5tqqEr6PVh4rJ8U6mgvq/WTxdtnGziZhOBDyuuGgR+EuUcb3qFaovCVLXz4IrctAluhKJjtNnG6fIaBbhD4CMyXV1r0o6Z5ZuTB+MQFKY22ixdCzps1Brqqr6P9CPwEZnJ6l4XW2XxfrWi2viNxiGklVpDdewa6YDiIfAR2VWDNr0sru41tlg18bTU6U3p2LXp6npMA9KHwEdk3xoE/i0ZCvxgHII2KtNYpzcVjGlQCyllnmIg8BHZtwYbeFla4Svks1CnN6UW0jivF0ByCHxEYrK6v9nh1aAAZkfgI5LvDGar3MxqEkgEgY9ITDZskx6FDBQVgY9ITFb4WdqwBfKEwEckJoHPCh9IBoGPSAh8IDsIfEQSdiTyTQ5vywdgbgQ+YsXqHkhONec+G9J4l6HbTp70VqXgOABUhsDPiO3bt6fuQB/0PO9gyOdkeUImkHWUdACgIAh8ACgIAh8ACoLAR6zGDfr2AdhB4CNW395+OyccSAiBD2P/j1MHZAqBD2P/ZfDEhVevcsKBhBD4CdDdk+oKOmLg/yxZkoKjAIqJwE+IbiINAHEi8BOi+4h2dHQU8rUDSAaBn6C+vj7vwIEDhS3vAIgXs3QSppW+HhqONjExkalj1/A079lnQz3n6uCgs+MBMDcCPyWasnhj79ZW71zIwAeQHEo6iJXJHbIA2EHgI5KbGxtDPT3sHbIA2EPgI5Kq2trQT/82hTdzAYqAwEckJrcsnMrY5jSQFwQ+IjEJ/Ct06gCJIPARSbVBdxElHSAZBD4iMVnhE/hAMgh8RHKzwQpfnTrU8YH4EfiIrLqlJfS3yNIVt2NjY95gjvcdSqWSf6U38o/AR2Qmq/yrGQqY8fFxb/369f4IjLEcXTimkNeo7o0bN3qTk5MpOCK4RuAjMpON2yulUuZO/MDAgLd8+XKvu7s7c3OPyunYu7q6vObmZm9oaCg9BwbnCHxEZrLC//bYsczW8Xfv3u3V19f7006zRvdh0LHv27cvc8eO6Ah8RKbAr6qpCf1tsrjKD6gEsnnzZr8kkoX6vo5RQb99+3bKNwVG4MOK6tbW0N8mqQuwagw+nGajkojq+52dnams7+uY9KGkYxy3OMeoMeQMJaQDgQ8r5rW3h/42Sa3w2w2O9Ub6+/v9Eddpqe/rGHQs2nNwUad3cQ7hHoEPK0xW+FOTk4mEvoLQ5io/oFKJ6vsK/lKC5SrtLah8o2NxQedOm77IHgIfVuiK27CjkuWbBIIx2HB1EfredBunWh1VSomzv111en3YaG/BVZ1e50w/p9ZgSiqSR+DDGqM6fqmUSLeOShIKrhaDi8YqpVKKWh9V33dZ5lGdXj9Ddfpjx445+zk6V/oAy+Td2eAj8GHN/M7O0N8qqbKON31bSYV+b2+v0xvJq76v3yrUEmlTUKfX69DPcEXnRjfbDzp9kF0EPqxRe+ZNBsF5OeF+dq2OtXLdtWuXs5+hEotaIhWYNto4VZJS0KtO77J8o3Oi3yDYpM0HAh9W3WIQDFeHhhKfoKmatFbLp06d8tra2pz9nGBMg+r7Jm2cwTgE1elttller6Ojwz8+nRPkB4EPq0zKOnLJcrnDlFbg6rA5dOiQ015z1ffVMqlul0rq+/oa/SbiehyC6vTDw8P+bxBszOYPgQ+rVNYx6tbp7/e+S9GFS0GHjer7rrp5RCMObjSmQatsfY3rOr1ea9Dpg3wi8GGd6So/6Vr+TIIraLdt2+bsZwRjGoJN5IB+0wj66V3X6fXh1mn4viE7CHxYN8808Ht6UjlQTaUNddiovu+yjVMtlcEY5mBsscs6vfYqFPT6DYLyTTEQ+LCuqrbWm9fREfrbqkUzLbX8mQQdNqrvu2zj1Bhml3V67U3oNQS/QaA4CHw4cavhpfdpXeWXCzpsVApxWd+3TceqOn3Q6YPiIfDhhDZvTW59qFX+xYzMaVEpRMHfYfDbTNyCfnrq9MVG4MOZ2wx7uNPWsTMX1b7VYaNWRpf1fVM6Ju09UKeHR+DDJc3WMWnRlAsZW4kGHTYaQeCyvl8pHYPq9IxDQDkCH06Z1vJ19W0W74ilDptgTEMS9X39zL1791678QlQjsCHU2rRNJmv402v8rN439tgTIOCP876vq4VUNAzqx6zIfDh3ELDC6q0gft1hme5BFfQqrTisr4fjEPQtQLU6TEXAh/OqZZv0rEjl/ft865m4CbhcwludG57TEP52GLGIaASBD5iYdqxI//b3p7J0s71gjENUccwM7YYpgh8xEKrfJOrb73p0k7WunZmE3UMs/YEgnEIQFgEPmKzoKfHqzIsaVwZGPCvws2L8jHMlbRxqk6vrw1uUA6YIPARG83YiVLaubh9e+I3SrEtGNOgVsqZgr98bDFtloiqmjOIOM3v6vLHIH9reLPtf7S2ejVjY/6HR56olVKP8vHIKv+wGQubCHzETm2a55ubjX6s6vkK/TsGB3MX+t70ih9whZIOYqfBardG6FTRbwd52cQF4kTgIxGq5ZvO2fGmN3EJfSAcZ4E/krPNNdh3e6lk3LXjTU/VzMooZaBSgwYXGu7cufPBSr7OWeBXcid+FNtN9fV+q2YUuhL3mxTeCxeI0549e/5UyY+jpINEabia6QVZgQubNxP6QAUIfCROq/wo9XxvOvQp7wBzI/CROLVXRq3ne9PlHTZygdkR+EgF1fPvsDAVUxu5WZ2jD7hWNTU1VdGPqKqqquwLp2miHxu3CEu1eJVnolKJKK8XZyHfdIX15ORkqNc4NTVVVcnXVbzCv//++0Old9gDBrzpTdwoF2UFdHHWZH197mbvIP/CZmeYbHZa0mGFDxO6KCtq5443PYZBIxzo4EFWuM7MigN/4cKFl8J+cy6+ginN27ER+t50B09ebqKCfDPJzDDZXHHgL1myZDTsgbDCRxQ2Q1+jGM43NWX+donIN5PMDJPNFQf+/Pnzz4U9EFb4iMpm6H83Pu79Y/16v1+f1T7SyCQzw2RzxYG/ePHiobAHQuDDBpuh703367PaRxqZZGaYbK448BcsWPC3sAeiO/kANtgO/WC1r9r+d/w9RUqYZGaYbK64D98z6MX3vu8PDfsUYFZfd3d7l3bvtnqCdIWvxjvM4ypdJKyqqqJ2+n9RaQ++F7Yts6Gh4euwB2My6hOYjVo2F/b2Wj0/at9UJw89+0iSSVaGzeRQgV9XV3cm7AFRx4dtWonfcehQ5Nk712P4GpJkkpVhMzlU4N91112fhD0gAh8uVLe2eotGRiJP2Sx3dWiIej4SY5KVYTM5VOCbdOpQ0oErwcA1q5u5BD4SYpKVYTM51KatZ7hxe+rUKa++vj7s04CKXe7p8Td0pyLOcFKpSL89AHFSd87y5ctD/8QwG7aeySwdk43bUqkU9ilAKPO7uvzVvs0SDxAXk4w0yWKTwA89YoGyDuJwc1OTX9ePMm1T3wOIm2GHTugsDh34S5cu/WPY5wwMDIR9CmBMrZsqzYRd7c/fto35+UiESUaaZHHowL/zzjt/F/Y5HmUdxOzPREcAAAlWSURBVCzo4tFqv5L2TX046IMCiJtpNppkcejAf+mll8ap4yMrFOIK/lva2mY9Yv1/3B0LSTGt3yuLwz6v2uQ13nfffX8dHR1tCfMcAh9JUfumbpKuK2m/KZX8oWkKd9Xr57W3U7dHokyyURlscsxGgX/PPffs9zwvVODrtl19fX1eJ/NKkBAF+22EO1JEmWhyO9jpDA4tdB9+4O67775y+vTpUB8YbW1trPQBYFp7e3voDdtly5Zd/eKLL24xOYfG97Rds2bN38M+Ry+MkckA8P3FVibdOSbZGzAO/JUrV+4xeV4fN5QGAOMsNM1eL0pJxzMs69TU1HCvWwCFV1tbG7p+H6Wc40VZ4csDDzzw57DPCTZvAaCoTDdrTTK3XKTAX7FixYsmz+vmAhcABWaagaaZG4hU0vG+30A49/HHH4e+YuXAgQP+DjUAFIk6FTdu3Bj6Fd9///0TR48eXRzlVEVa4UtTU9MfTJ7X09MT9UcDQOaYZp9p1paLvML3DDdv5dChQ14rs8cBFISmYq5fvz70i426WRuIvML3ImwkcNUtgCIxzbyom7UBK4G/atWqjkWLFoX+VWF8fJyOHQCFoKxT5oWlbFXG2jhHVko63vdjE4YPHjwYelCJ+vJ1xVktkwoB5JSuPdJtXk1aMTds2DAyMDDQbOPMWFnhy+rVq583eZ5OABu4APJMGWcS9l6EbJ2JtRW+PPzwwyc//PDDH5k8d3h4WLvQ1o4FANJgZGTEa242W6A/9NBD//nBBx+stPUyrK3wpbm52XgXtqury+ahAEAqRMm2KJk6E6uBv2fPnj89/vjjQybPHRoaorQDIFeUaco2E8pSZarN82E18L0IHTve9OXGjE8GkAfKMtMRCjY7c8pZD3zdZ3HDhg3hhzxPb+AybgFAHijLTDdqlaEm96y9EaubtuVMr76VXbt2MWANQGYpv3bv3m10+Lauqp2J9RV+4NFHH/216XN1onQJMgBkjbLLNOy9iNl5I85W+LJu3br/PnLkyBKT53JBFoCsiXKBlaxdu/bs4cOH/6+rl+1she99H/g/M93A1QljsBqALFFmmYa9slKZ6fLlOg38KBu4cuzYMQasAcgEZZUyy5SrjdpyTks6AdObpATYxAWQZlE2aT1LNzephNMVfuCRRx5pMi3teNObuEzVBJBGyqYoYa9sVEbG8dJiCXz9mvLkk0++HOV7bN68mdAHkCrKJGVTFMpG16WcQCwlnYDpCOWAOnfU8sSQNQBJ01C0KJu0nuXRx5WIZYUfuPfee9sbGhq+Nn1+0LmjEw0ASbER9spCZWKcLyHWwNevLe3t7Q9FqecT+gCSZCPslYHKwrhKOYFYA9+bnqgZtZ4fhD41fQBxUuZEDXtvum5vexJmJWKt4Zd76qmnDrz11luRf53p7e2lVx+AczY2aGXTpk2lN998c2MS71hige9FvENWOfr0AbgUtc8+YPsOVmElGviehYuyAh0dHZR4AFinCkJ/f3/kbxvXxVVzib2Gfz1dcBClcyegN0TtmhpeBABRKUuUKTbCXhkX18VVc0k88LVL/dhjj622EfqaY6FJdYxWBhCFMkRZEmU2TkDZpoyLuyNnJokHvmepXTOg3fP169dT0wdgRNmhDInaieNNt1+mJey9NNTwy+3YseOJ119//T/Onz9fZeP7NTY2eqVSyf+kBoC56P4bui2hjVW9Nx32zzzzzL+98sorv0/LiU/FCj+gE6MTZGOl702XeFSD053jAWA2yghlRZ7D3kvbCj+wc+fOB0ul0oejo6O32fqeLS0t195UAPCmr5rt6uryhoaGrJ0P1exVok7iwqobSWXgy4svvlj37rvvnrAZ+t50z77eYG6dCBSXOnC0ALTRW18uTRu0M0lt4HvTof/++++P2OjTL6epm3qzuUIXKB5dr6NFn41N2XLqs1frZVrD3kt74AdsXZF7vbq6umuzMQDkm1ottcgbH7efx0lfQVupVG3azkYnUvMnbH9fvfFqv1Lgq5sHQP7o37b+jevfuouwVzZlIex9WuFn5fHcc8/9ZtGiRd/psF086urqpnp7e6cAZJ/+LevftKu8UBYpk7KUoZko6ZRz0cFzPdX4VePTr3/08APZoV56lWm1R2e7Rl8uzZ04c8lc4HvTm7mffPJJKcrtEivV1tbmX4zBBi+QXgp5lW4GBgacH6NuS6g7VaV5c3Y2mQz8wJYtW37z9ttvv2Dryty5aNWv4A8eAJKlgA8eLlfzAV1MpRuX7N+//9+z+tZnOvA9h62bN6KVvzaCFP6UfQD3VK5RuKvbJo6VfLkstFxWIvOBH9AdtA4ePNgWx2r/emrvVPjrKl49aPMEolOw60pYPfSfXXTY3IhW9Rs2bBhI6g5VtuUm8L3p1f7hw4f/cuTIkSVJH4sGt2nlH3wI6Mre4E8A39MVrwr04E89tJK3NdMmirVr155dt27dz7K+qi+Xq8APbN26teu999777enTp6vTcUQ/pNk+M+G3A+TJbPemULDHUXc3sWzZsquPPvror1999dX8TV3MUg9p2MemTZsOuOzb58GDR34eygplRp4zMZcr/HIq83z66af977zzzsxLagCF9/jjjw+tWrWqI0/lm5nkPvADumBreHi4z8VMHgDZpBk4zc3NnVm7gMpUYQI/oOA/ceLEa4ODg41JdPQASJY6b1pbW4+tXr36+aIEfaBwgR8ISj0fffTRz9O8uQvADm3GPvDAA38uQulmNoUN/HJPP/306yMjI7+M++ItAO7poqmmpqY/vPHGG88U/XQT+GVU7vnss89eYtUPZFuwml+xYsWLRSvbzIXAn8WOHTueOHny5M6jR4/+mPAH0k8hv2bNmr+vXLlyT9puHp4WBH4FFP6ff/75luPHj//U5VhmAOFoTPF9993313vuuWc/IX9jBH5I2uz96quvnjtz5swvRkdHG/gAAOKjgG9oaBhdunTpH++8887fFXXz1RSBb4FGOZw7d67lyy+/vHd8fHwpHwJAdAr3urq6M3fdddcnixcvHsrlqIOYEfiOaAP44sWLP9EHweXLlxefPXu24cKFC7fqp9ENBHzfPaM/Fy5ceGnJkiWj8+fPP6dgX7Bgwd/YaHWDwAeAgriJNxoAioHAB4CCIPABoCAIfAAoCAIfAAqCwAeAgiDwAaAgCHwAKAgCHwCKwPO8/w8voWTcCTSV0AAAAABJRU5ErkJggg==",
+        "mediatype": "image/png"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "preview-1.0",
+    "package": "sandboxed-containers-operator",
+    "entries": [
+        {
+            "name": "sandboxed-containers-operator.v1.0.2",
+            "skipRange": "<1.0.2"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "preview-1.1",
+    "package": "sandboxed-containers-operator",
+    "entries": [
+        {
+            "name": "sandboxed-containers-operator.v1.0.2",
+            "skipRange": "<1.0.2"
+        },
+        {
+            "name": "sandboxed-containers-operator.v1.1.0",
+            "replaces": "sandboxed-containers-operator.v1.0.2"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable",
+    "package": "sandboxed-containers-operator",
+    "entries": [
+        {
+            "name": "sandboxed-containers-operator.v1.5.0",
+            "skipRange": ">=1.1.0 <1.5.0"
+        },
+        {
+            "name": "sandboxed-containers-operator.v1.5.1",
+            "replaces": "sandboxed-containers-operator.v1.5.0",
+            "skipRange": ">=1.1.0 <1.5.1"
+        },
+        {
+            "name": "sandboxed-containers-operator.v1.5.2",
+            "replaces": "sandboxed-containers-operator.v1.5.1",
+            "skipRange": ">=1.1.0 <1.5.2"
+        },
+        {
+            "name": "sandboxed-containers-operator.v1.5.3",
+            "replaces": "sandboxed-containers-operator.v1.5.2",
+            "skipRange": ">=1.1.0 <1.5.3"
+        },
+        {
+            "name": "sandboxed-containers-operator.v1.6.0",
+            "replaces": "sandboxed-containers-operator.v1.5.3",
+            "skipRange": ">=1.1.0 <1.6.0"
+        },
+        {
+            "name": "sandboxed-containers-operator.v1.7.0",
+            "replaces": "sandboxed-containers-operator.v1.6.0",
+            "skipRange": ">=1.1.0 <1.7.0"
+        },
+        {
+            "name": "sandboxed-containers-operator.v1.8.1",
+            "replaces": "sandboxed-containers-operator.v1.7.0",
+            "skipRange": ">=1.1.0 <1.8.1"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-1.2",
+    "package": "sandboxed-containers-operator",
+    "entries": [
+        {
+            "name": "sandboxed-containers-operator.v1.2.2",
+            "skipRange": ">=1.1.0 <1.2.2"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-1.3",
+    "package": "sandboxed-containers-operator",
+    "entries": [
+        {
+            "name": "sandboxed-containers-operator.v1.3.3",
+            "skipRange": ">=1.1.0 <1.3.3"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.0.2",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-operator-bundle@sha256:2808a0397495982b4ea0001ede078803a043d5c9b0285662b08044fe4c11f243",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.0.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-rhel8-operator@sha256:051bd7f1dad8cc3251430fee32184be8d64077aba78580184cef0255d267bdcf",
+                    "createdAt": "2021-06-07-13:38:06",
+                    "olm.skipRange": "<1.0.2",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        }
+                    ]
+                },
+                "description": "# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Details\nOpenShift sandboxed containers based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift’s Defense-in-Depth strategy. For more information\n[see](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5).\n\n# Features & benefits\n- **Isolated Developer Environments & Priviliges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as CAP_ADMIN or CAP_BPF. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select preview-1.0 from the list of available Update Channel options.\n  This ensures that you install the version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    openshift-sandboxed-containers-operator namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    openshift-sandboxed-containers-operator causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a KataConfig CRD instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.openshift.com/container-platform/4.8/sandboxed_containers/understanding-sandboxed-containers.html).",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "kernel-isolated containers"
+                ],
+                "links": [
+                    {
+                        "name": "OpenShift sandboxed containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-operator-bundle@sha256:2808a0397495982b4ea0001ede078803a043d5c9b0285662b08044fe4c11f243"
+        },
+        {
+            "name": "osc-rhel8-operator-051bd7f1dad8cc3251430fee32184be8d64077aba78580184cef0255d267bdcf-annotation",
+            "image": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-rhel8-operator@sha256:051bd7f1dad8cc3251430fee32184be8d64077aba78580184cef0255d267bdcf"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-rhel8-operator@sha256:c6c589d5e47ba9564c66c84fc2bc7e5e046dae1d56a3dc99d7343f01e42e4d31"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.1.0",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-operator-bundle@sha256:a91cee14f47824ce49759628d06bf4e48276e67dae00b50123d3233d78531720",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.1.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-rhel8-operator@sha256:b1e824e126c579db0f56d04c3d1796d82ed033110c6bc923de66d95b67099611",
+                    "createdAt": "2021-10-08T13:20:20.250789Z",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.2.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v2",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift’s Defense-in-Depth strategy. For more information\n[see](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5).\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `preview-1.1` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CRD instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.openshift.com/container-platform/4.8/sandboxed_containers/understanding-sandboxed-containers.html).",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "kernel-isolated containers"
+                ],
+                "links": [
+                    {
+                        "name": "OpenShift sandboxed containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-operator-bundle@sha256:a91cee14f47824ce49759628d06bf4e48276e67dae00b50123d3233d78531720"
+        },
+        {
+            "name": "osc-rhel8-operator-b1e824e126c579db0f56d04c3d1796d82ed033110c6bc923de66d95b67099611-annotation",
+            "image": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-rhel8-operator@sha256:b1e824e126c579db0f56d04c3d1796d82ed033110c6bc923de66d95b67099611"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers-tech-preview/osc-rhel8-operator@sha256:b1e824e126c579db0f56d04c3d1796d82ed033110c6bc923de66d95b67099611"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.2.2",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:ff2bb666c2696fed365df55de78141a02e372044647b8031e6d06e7583478af4",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.2.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel8-operator@sha256:8f30a9129d817c3f4e404d2c43fb47e196d8c8da3badba4c48f65d440a4d7584",
+                    "createdAt": "2021-11-22T14:44:50.817336Z",
+                    "olm.skipRange": ">=1.1.0 <1.2.2",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.13.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable-1.2` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.openshift.com/container-platform/4.9/sandboxed_containers/understanding-sandboxed-containers.html)",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:ff2bb666c2696fed365df55de78141a02e372044647b8031e6d06e7583478af4"
+        },
+        {
+            "name": "osc-rhel8-operator-8f30a9129d817c3f4e404d2c43fb47e196d8c8da3badba4c48f65d440a4d7584-annotation",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel8-operator@sha256:8f30a9129d817c3f4e404d2c43fb47e196d8c8da3badba4c48f65d440a4d7584"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel8-operator@sha256:a660f0b54b9139bed9a3aeef3408001c0d50ba60648364a98a09059b466fbcc1"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.3.3",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:8da62ba1c19c905bc1b87a6233ead475b047a766dc2acb7569149ac5cfe7f0f1",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.3.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "olm.skipRange": ">=1.1.0 <1.3.3",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.24.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable-1.3` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.openshift.com/container-platform/latest/sandboxed_containers/understanding-sandboxed-containers.html)",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:8da62ba1c19c905bc1b87a6233ead475b047a766dc2acb7569149ac5cfe7f0f1"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel8-operator@sha256:5d2b03721043e5221dfb0cf164cf59eba396ba3aae40a56c53aa3496c625eea0"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:cb836456974e510eb4bccbffadbc6d99d5f57c36caec54c767a158ffd8a025d5"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.5.0",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:e51e8c3e5fc5fc24c1488303e2d92adf101813d1593add947558336c40127dc4",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPod",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPodConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.5.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "createdAt": "2023-10-11T15:39:40Z",
+                    "olm.skipRange": ">=1.1.0 <1.5.0",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.26.1",
+                    "operators.operatorframework.io/internal-objects": "[\"peerpods.confidentialcontainers.org\",\"peerpodconfigs.confidentialcontainers.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        },
+                        {
+                            "name": "peerpodconfigs.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPodConfig"
+                        },
+                        {
+                            "name": "peerpods.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPod"
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.openshift.com/container-platform/latest/sandboxed_containers/understanding-sandboxed-containers.html)",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "caa",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-rhel9@sha256:e019aab1ccdcc8e2715a2b28e97c91593b09482a0e386818233696d53db50169"
+        },
+        {
+            "name": "peerpods_webhook",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-webhook-rhel9@sha256:5fcfb830c241e138c80cb861a0b2eb30adf4cc01cc1d97498184f25687efdea3"
+        },
+        {
+            "name": "kata_monitor",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-monitor-rhel9@sha256:399a26d78ad52ed98171573b3750da7524e344bce8057bece91e951be1c854d9"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:e51e8c3e5fc5fc24c1488303e2d92adf101813d1593add947558336c40127dc4"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel9-operator@sha256:ce162893d62e6cc436a1f08dc873bbe012ad644c48eef167eb90be45222225c1"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:97cade2c1ee468261aec5400728c8d44de387b459134aec7a4c3b5ec5a335d2c"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.5.1",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:3e1f6c1b475783a9c40fa75a77e4ba5192f042dda225f0288333849a7457a810",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPod",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPodConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.5.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "createdAt": "2023-10-11T15:39:40Z",
+                    "olm.skipRange": ">=1.1.0 <1.5.1",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.26.1",
+                    "operators.operatorframework.io/internal-objects": "[\"peerpods.confidentialcontainers.org\",\"peerpodconfigs.confidentialcontainers.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        },
+                        {
+                            "name": "peerpodconfigs.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPodConfig"
+                        },
+                        {
+                            "name": "peerpods.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPod"
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.openshift.com/container-platform/latest/sandboxed_containers/understanding-sandboxed-containers.html)",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "caa",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-rhel9@sha256:c6c79548af11059de87ae53ccd6a785fe24bc1d24b4b33cab5bbf56350c3a26d"
+        },
+        {
+            "name": "peerpods_webhook",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-webhook-rhel9@sha256:cc9857a1aaae502c533920709c71b93c9af9878a5a3478b24e6b489ba3f72abc"
+        },
+        {
+            "name": "kata_monitor",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-monitor-rhel9@sha256:7ea161001256beeb1de762c432a0f6cec052aec6d0226a1ceb51215ae988206a"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:3e1f6c1b475783a9c40fa75a77e4ba5192f042dda225f0288333849a7457a810"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel9-operator@sha256:eb92aaee855b014b9b382a54a81e93353f052767dc7167e0f387547ab59b89ab"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:f11f71448986aa17abec9caadb568a6cc34ef1a7898e6dc20bc6a512830ba476"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.5.2",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:94242bcaeb70f40d450104651b66ac4d6c5b3eb97bc6f97c3db9f6d94bed95d1",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPod",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPodConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.5.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "createdAt": "2023-10-11T15:39:40Z",
+                    "olm.skipRange": ">=1.1.0 <1.5.2",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.26.1",
+                    "operators.operatorframework.io/internal-objects": "[\"peerpods.confidentialcontainers.org\",\"peerpodconfigs.confidentialcontainers.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        },
+                        {
+                            "name": "peerpodconfigs.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPodConfig"
+                        },
+                        {
+                            "name": "peerpods.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPod"
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.openshift.com/container-platform/latest/sandboxed_containers/understanding-sandboxed-containers.html)",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "caa",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-rhel9@sha256:532398dc576b0972025ec7bcd2dcc3550a70040b721c567fef1d1421b0af93fd"
+        },
+        {
+            "name": "peerpods_webhook",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-webhook-rhel9@sha256:92276802bcddcdfcf86e08f8db2d2e0e3c33564788f40644b0facbd1a0ec7fd6"
+        },
+        {
+            "name": "kata_monitor",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-monitor-rhel9@sha256:789475fad3aebeeea44d326055624a15ae1da93ae069a9e7698d2a4c89ce02b2"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:94242bcaeb70f40d450104651b66ac4d6c5b3eb97bc6f97c3db9f6d94bed95d1"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel9-operator@sha256:5b33130845b4ef704ca8aed2973394768ee396bd958ee516bfc29d034a7be156"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:62c44057a27abd41cf3daf60b8736da59a82dadb65fa6c32bef65d19bd49ea49"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.5.3",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:c19bc8e134b41ebac75312d72213b2eccccf96a8f6029bf530f0606b7c3f0e3e",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPod",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPodConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.5.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "createdAt": "2024-04-02T18:50:49Z",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=1.1.0 <1.5.3",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.26.1",
+                    "operators.operatorframework.io/internal-objects": "[\"peerpods.confidentialcontainers.org\",\"peerpodconfigs.confidentialcontainers.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        },
+                        {
+                            "name": "peerpodconfigs.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPodConfig"
+                        },
+                        {
+                            "name": "peerpods.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPod"
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://access.redhat.com/documentation/en-us/openshift_sandboxed_containers)",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "caa",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-rhel9@sha256:922cc1dcaf459a8df430cf959b68c934c87074b71e85918c086a127dc29a4aae"
+        },
+        {
+            "name": "peerpods_webhook",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-webhook-rhel9@sha256:8071f29d07857cd55b22918ea696651934ac9eb8074687c5e8904d752dea8a05"
+        },
+        {
+            "name": "kata_monitor",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-monitor-rhel9@sha256:0f17d17a4d5a4535f734bc769c9a10db9073c202a023687aeb4aa80a498ab462"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:c19bc8e134b41ebac75312d72213b2eccccf96a8f6029bf530f0606b7c3f0e3e"
+        },
+        {
+            "name": "podvm_payload",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-podvm-payload-rhel9@sha256:025ec1bfb9aad85236e07d12b85818dee0b6c7b22d02298fdd38cd90a0895840"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel9-operator@sha256:21d4a5e1064bdb48dedce5df41e012eb969a8d3aff336dbfdb76c6c33b9cc379"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:063f7f9ee19b67e2184b2b461c86e15608951864bb84c7398b2e441f9ec6164f"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.6.0",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:73c56ddfb2e16e4db400584b24b227b25655e2215fd2538292cbea2adc19c5fe",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPod",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPodConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.6.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "createdAt": "2024-04-25T11:00:42Z",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=1.1.0 <1.6.0",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.26.1",
+                    "operators.operatorframework.io/internal-objects": "[\"peerpods.confidentialcontainers.org\",\"peerpodconfigs.confidentialcontainers.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        },
+                        {
+                            "name": "peerpodconfigs.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPodConfig"
+                        },
+                        {
+                            "name": "peerpods.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPod"
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.openshift.com/container-platform/latest/sandboxed_containers/understanding-sandboxed-containers.html)",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "caa",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-rhel9@sha256:94c9f6fb8f67574d02efb5c6b2ead4b192731b58128868669a771535f478980c"
+        },
+        {
+            "name": "peerpods_webhook",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-webhook-rhel9@sha256:ce80a169800590c48049c2df3448f46692b60d81c49d9d343feb3174cc323f58"
+        },
+        {
+            "name": "kata_monitor",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-monitor-rhel9@sha256:1a1243abf4c5bd9e904354f565071a5764d72605f26b28b77c6f88c194fbc614"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:73c56ddfb2e16e4db400584b24b227b25655e2215fd2538292cbea2adc19c5fe"
+        },
+        {
+            "name": "podvm_builder",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-podvm-builder-rhel9@sha256:de4b9c55c2be77fc13ebcbf676e21dc94b1f84fc5c5b08b43a4e1ffd01c2afc4"
+        },
+        {
+            "name": "podvm_payload",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-podvm-payload-rhel9@sha256:69ba1a61a3ec416986e441be099d889cf555edfc0681904dbfe568c4d58b0011"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel9-operator@sha256:a994a76bada125766e05cdc317af3b64c835b6d359e1684e912cc5644f5428cb"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:0c2e9805d2c48d3cea7a9e348f0c37de435302e2e244415541c8a6fd75d77132"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.7.0",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:db15fe5c4123283ae5a214cb96f6d08a157b8215952febe6bd1590321af41961",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPod",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPodConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.7.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "createdAt": "2024-04-25T11:00:42Z",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=1.1.0 <1.7.0",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.26.1",
+                    "operators.operatorframework.io/internal-objects": "[\"peerpods.confidentialcontainers.org\",\"peerpodconfigs.confidentialcontainers.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        },
+                        {
+                            "name": "peerpodconfigs.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPodConfig"
+                        },
+                        {
+                            "name": "peerpods.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPod"
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the official documentation [here](https://docs.redhat.com/en/documentation/openshift_sandboxed_containers)",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "minKubeVersion": "1.28.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "caa",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-rhel9@sha256:b92928ae2bd615c2e2b81f75a27cb2c65e232e6c726ecdaf792dba10cce17e3c"
+        },
+        {
+            "name": "peerpods_webhook",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-webhook-rhel9@sha256:f1da678da50cf652c85b3cc95395aa59bbe80b0bc2dcb044806a3c8dc26e09ec"
+        },
+        {
+            "name": "kata_monitor",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-monitor-rhel9@sha256:f287a1d6818d9e0aadc8ff21a003fa0dfbdee8bbd01e3acb322afe55d5e7e9bf"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:db15fe5c4123283ae5a214cb96f6d08a157b8215952febe6bd1590321af41961"
+        },
+        {
+            "name": "podvm_builder",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-podvm-builder-rhel9@sha256:2b64f6557cb23e4c323af60540bbafeedf6905f6d04620d47d94b3428d148a71"
+        },
+        {
+            "name": "podvm_payload",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-podvm-payload-rhel9@sha256:a4e71da0ab07e6c4a197f4a3ab7bc0025f595fb22ef1130c1c03c31b13fd8091"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel9-operator@sha256:193bd9bf6c3110eebf0f51b4543c4311bc23213151eda0996f22a779518d17b5"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:f6c37678f1eb3279e603f63d2a821b72394c52d25c2ed5058dc29d4caa15d504"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "sandboxed-containers-operator.v1.8.1",
+    "package": "sandboxed-containers-operator",
+    "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:ccdf9c3017206956153283b49ead9c0d30716673b5ec846467679d7af1f56d27",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPod",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "confidentialcontainers.org",
+                "kind": "PeerPodConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "kataconfiguration.openshift.io",
+                "kind": "KataConfig",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "sandboxed-containers-operator",
+                "version": "1.8.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"kataconfiguration.openshift.io/v1\",\n    \"kind\": \"KataConfig\",\n    \"metadata\": {\n      \"name\": \"example-kataconfig\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "createdAt": "2024-11-19T13:55:17Z",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=1.1.0 <1.8.1",
+                    "operatorframework.io/suggested-namespace": "openshift-sandboxed-containers-operator",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.36.1",
+                    "operators.operatorframework.io/internal-objects": "[\"peerpods.confidentialcontainers.org\",\"peerpodconfigs.confidentialcontainers.org\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v4",
+                    "repository": "https://github.com/openshift/sandboxed-containers-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "kataconfigs.kataconfiguration.openshift.io",
+                            "version": "v1",
+                            "kind": "KataConfig",
+                            "description": "The kataconfig CR represent a installation of Kata in a cluster and its current state."
+                        },
+                        {
+                            "name": "peerpodconfigs.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPodConfig"
+                        },
+                        {
+                            "name": "peerpods.confidentialcontainers.org",
+                            "version": "v1alpha1",
+                            "kind": "PeerPod"
+                        }
+                    ]
+                },
+                "description": "OpenShift sandboxed containers, based on the Kata Containers open source\nproject, provides an Open Container Initiative (OCI) compliant container\nruntime using lightweight virtual machines, running your workloads in their own\nisolated kernel and therefore contributing an additional layer of isolation\nback to OpenShift's Defense-in-Depth strategy. Click [this link](https://catalog.redhat.com/software/operators/detail/5ee0d499fdbe7cddc2c91cf5) for\nmore information.\n\n# Requirements\nYour cluster must be installed on bare metal infrastructure with Red Hat Enterprise Linux CoreOS workers.\n\n# Features & benefits\n- **Isolated Developer Environments & Privileges Scoping**\n  As a developer working on debugging an application using state-of-the-art\n  tooling you might need elevated privileges such as `CAP_ADMIN` or `CAP_BPF`. With\n  OpenShift sandboxed containers, any impact will be limited to a separate\n  dedicated kernel.\n\n- **Legacy Containerized Workload Isolation**\n  You are mid-way in converting a containerized monolith into cloud-native\n  microservices. However, the monolith still runs on your cluster unpatched and\n  unmaintained. OpenShift sandboxed containers helps isolate it in its own kernel\n  to reduce risk.\n\n- **Safe Multi-tenancy & Resource Sharing (CI/CD Jobs, CNFs, ..)**\n  If you are providing a service to multiple tenants, it could mean that the\n  service workloads are sharing the same resources (e.g., worker node). By\n  deploying in a dedicated kernel, the impact of these workloads have on one\n  another is greatly reduced.\n\n- **Additional Isolation with Native Kubernetes User Experience**\n  OpenShift sandboxed containers is used as a compliant OCI runtime.\n  Therefore, many operational patterns used with normal containers are still\n  preserved including but not limited to image scanning, GitOps, Imagestreams,\n  and so on.\n\n# How to install\n  Read the information about the Operator and click Install.\n\n  On the Install Operator page:\n\n  - Select `stable` from the list of available Update Channel options.\n  This ensures that you install the latest version of OpenShift sandboxed containers\n  that is compatible with your OpenShift Container Platform version.\n\n  - For Installed Namespace, ensure that the Operator recommended namespace\n    option is selected. This installs the Operator in the mandatory\n    `openshift-sandboxed-containers-operator` namespace, which is automatically\n    created if it does not exist. Attempting to install the OpenShift\n    sandboxed containers Operator in a namespace other than\n    `openshift-sandboxed-containers-operator` causes the installation to fail.\n\n  - For Approval Strategy, ensure that Automatic, which is the default value,\n    is selected. OpenShift sandboxed containers automatically updates when a new\n    z-stream release is available.\n\n  - Click Install to make the Operator available to the OpenShift sandboxed\n    containers namespace.\n\n  - The OpenShift sandboxed containers Operator is now installed on your\n    cluster. You can trigger the Operator by enabling the runtime on your cluster.\n    You can do this by creating a `KataConfig` CustomResourceDefinition(CRD) instance. For this click\n    on \"create instance\" on the operator overview page.\n\n# Documentation\nSee the [OpenShift sandboxed containers documentation](https://docs.redhat.com/en/documentation/openshift_sandboxed_containers/).",
+                "displayName": "OpenShift sandboxed containers Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "sandboxed-containers",
+                    "kata"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Sandboxed Containers Operator",
+                        "url": "https://www.github.com/openshift/sandboxed-containers-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "'Red Hat",
+                        "email": "support@redhat.com'"
+                    }
+                ],
+                "maturity": "beta",
+                "minKubeVersion": "1.28.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "caa",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-rhel9@sha256:1f219e03b1152c0306a131f3f416f3fa51bddd6152ddf356d0927409e6c09f8f"
+        },
+        {
+            "name": "peerpods_webhook",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-cloud-api-adaptor-webhook-rhel9@sha256:21f48d1294ca4f6ba04f85ec5106b0251e154238455490e8ff798ddfa18f257c"
+        },
+        {
+            "name": "metrics-server",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-monitor-rhel9@sha256:9605499f6bc9364de89c889857480b957888765901a53ff996d378d205c37090"
+        },
+        {
+            "name": "kata_monitor",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-monitor-rhel9@sha256:9605499f6bc9364de89c889857480b957888765901a53ff996d378d205c37090"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-operator-bundle@sha256:ccdf9c3017206956153283b49ead9c0d30716673b5ec846467679d7af1f56d27"
+        },
+        {
+            "name": "podvm_builder",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-podvm-builder-rhel9@sha256:6efed048487f32a36c8f6ed5fb953b5befcf0c0f852d4524cbd89d6d326803db"
+        },
+        {
+            "name": "podvm_payload",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-podvm-payload-rhel9@sha256:ea5cc32d40fcf3ddb54f2c254cc1efa0ac2b6b36a048c8706ecc35789b70b4e4"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-sandboxed-containers/osc-rhel9-operator@sha256:0cde5b081a235d0654303119dafaac6127733ac326207450d6141dd08910c85e"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:1172e150fff22c5eeab572f26961f3f53fbf896ee76d08c7503cfe2777c55458"
+        }
+    ]
+}

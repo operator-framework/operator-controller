@@ -1,0 +1,1046 @@
+---
+defaultChannel: stable
+icon:
+  base64data: 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
+  mediatype: image/png
+name: kuadrant-operator
+schema: olm.package
+---
+entries:
+- name: kuadrant-operator.v0.2.0
+- name: kuadrant-operator.v0.2.1
+  replaces: kuadrant-operator.v0.2.0
+- name: kuadrant-operator.v0.3.0
+  replaces: kuadrant-operator.v0.2.1
+- name: kuadrant-operator.v0.3.1
+  replaces: kuadrant-operator.v0.3.0
+name: alpha
+package: kuadrant-operator
+schema: olm.channel
+---
+entries:
+- name: kuadrant-operator.v0.10.0
+  replaces: kuadrant-operator.v0.7.1
+- name: kuadrant-operator.v0.11.0
+  replaces: kuadrant-operator.v0.10.0
+- name: kuadrant-operator.v0.4.0
+- name: kuadrant-operator.v0.4.1
+  replaces: kuadrant-operator.v0.4.0
+- name: kuadrant-operator.v0.5.0
+  replaces: kuadrant-operator.v0.4.1
+- name: kuadrant-operator.v0.6.0
+  replaces: kuadrant-operator.v0.5.0
+- name: kuadrant-operator.v0.6.1
+  replaces: kuadrant-operator.v0.6.0
+- name: kuadrant-operator.v0.7.0
+  replaces: kuadrant-operator.v0.6.1
+- name: kuadrant-operator.v0.7.1
+  replaces: kuadrant-operator.v0.7.0
+name: stable
+package: kuadrant-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:437f694ff634ac7549a90809e1af017684802dbf23197411f3aa0296313b903d
+name: kuadrant-operator.v0.10.0
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: TLSPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.10.0
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.12.0
+- type: olm.package.required
+  value:
+    packageName: dns-operator
+    versionRange: 0.6.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.10.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.5.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:0.10.0
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:437f694ff634ac7549a90809e1af017684802dbf23197411f3aa0296313b903d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:47e45862b648863c4671da89b2f91f68e47877dc633446ce878ac8c6150d16d9
+name: kuadrant-operator.v0.11.0
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: TLSPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.11.0
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.13.0
+- type: olm.package.required
+  value:
+    packageName: dns-operator
+    versionRange: 0.6.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.11.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "kuadrant.io/v1alpha1",
+            "kind": "DNSPolicy",
+            "metadata": {
+              "name": "dnspolicy-sample"
+            },
+            "spec": {
+              "healthCheck": {
+                "endpoint": "/",
+                "protocol": "HTTP"
+              },
+              "targetRef": {
+                "group": "gateway.networking.k8s.io",
+                "kind": "Gateway",
+                "name": "example-gateway"
+              }
+            }
+          },
+          {
+            "apiVersion": "kuadrant.io/v1alpha1",
+            "kind": "TLSPolicy",
+            "metadata": {
+              "name": "tlspolicy-sample"
+            },
+            "spec": {
+              "issuerRef": {
+                "group": "cert-manager.io",
+                "kind": "ClusterIssuer",
+                "name": "self-signed-ca"
+              },
+              "targetRef": {
+                "group": "gateway.networking.k8s.io",
+                "kind": "Gateway",
+                "name": "example-gateway"
+              }
+            }
+          },
+          {
+            "apiVersion": "kuadrant.io/v1beta1",
+            "kind": "Kuadrant",
+            "metadata": {
+              "name": "kuadrant-sample"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "kuadrant.io/v1beta2",
+            "kind": "AuthPolicy",
+            "metadata": {
+              "name": "toystore"
+            },
+            "spec": {
+              "rules": {
+                "authentication": {
+                  "apikey": {
+                    "apiKey": {
+                      "selector": {}
+                    }
+                  },
+                  "credentials": {
+                    "authorizationHeader": {
+                      "prefix": "APIKEY"
+                    }
+                  }
+                }
+              },
+              "targetRef": {
+                "group": "gateway.networking.k8s.io",
+                "kind": "HTTPRoute",
+                "name": "toystore"
+              }
+            }
+          },
+          {
+            "apiVersion": "kuadrant.io/v1beta2",
+            "kind": "RateLimitPolicy",
+            "metadata": {
+              "name": "toystore"
+            },
+            "spec": {
+              "limits": {
+                "toys": {
+                  "rates": [
+                    {
+                      "duration": 1,
+                      "limit": 50,
+                      "unit": "minute"
+                    }
+                  ]
+                }
+              },
+              "targetRef": {
+                "group": "gateway.networking.k8s.io",
+                "kind": "HTTPRoute",
+                "name": "toystore"
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Integration & Delivery
+      containerImage: quay.io/kuadrant/kuadrant-operator:v0.11.0
+      createdAt: "2024-10-02T20:30:45Z"
+      operators.operatorframework.io/builder: operator-sdk-v1.32.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/Kuadrant/kuadrant-operator
+      support: kuadrant
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: AuthPolicy enables authentication and authorization for service
+          workloads in a Gateway API network
+        displayName: AuthPolicy
+        kind: AuthPolicy
+        name: authpolicies.kuadrant.io
+        version: v1beta2
+      - description: DNSPolicy configures how North-South based traffic should be
+          balanced and reach the gateways
+        displayName: DNSPolicy
+        kind: DNSPolicy
+        name: dnspolicies.kuadrant.io
+        version: v1alpha1
+      - description: Kuadrant configures installations of Kuadrant Service Protection
+          components
+        displayName: Kuadrant
+        kind: Kuadrant
+        name: kuadrants.kuadrant.io
+        version: v1beta1
+      - description: RateLimitPolicy enables rate limiting for service workloads in
+          a Gateway API network
+        displayName: RateLimitPolicy
+        kind: RateLimitPolicy
+        name: ratelimitpolicies.kuadrant.io
+        version: v1beta2
+      - description: TLSPolicy provides tls for gateway listeners by managing the
+          lifecycle of tls certificates
+        displayName: TLSPolicy
+        kind: TLSPolicy
+        name: tlspolicies.kuadrant.io
+        version: v1alpha1
+    description: A Kubernetes Operator to manage the lifecycle of the Kuadrant system
+    displayName: Kuadrant Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - api
+    - api-management
+    - Kuadrant
+    - kubernetes
+    - openshift
+    - cloud-service-protection
+    - rate-limiting
+    - authentication
+    - authorization
+    links:
+    - name: Kuadrant Operator
+      url: https://github.com/Kuadrant/kuadrant-operator
+    - name: Kuadrant Docs
+      url: https://kuadrant.io
+    maintainers:
+    - email: eastizle@redhat.com
+      name: Eguzki Astiz Lezaun
+    - email: mcassola@redhat.com
+      name: Guilherme Cassolato
+    - email: didier@redhat.com
+      name: Didier Di Cesare
+    maturity: alpha
+    minKubeVersion: 1.19.0
+    provider:
+      name: Red Hat
+      url: https://github.com/Kuadrant/kuadrant-operator
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.6.0
+  name: wasmshim
+- image: quay.io/kuadrant/kuadrant-operator:v0.11.0
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:47e45862b648863c4671da89b2f91f68e47877dc633446ce878ac8c6150d16d9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:3d97098940d27dd73f6cd30b2d50b430e3a7e28842275375986a0d342a42a2ff
+name: kuadrant-operator.v0.2.0
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.2.0
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.5.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.4.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.1.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.2.0
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:3d97098940d27dd73f6cd30b2d50b430e3a7e28842275375986a0d342a42a2ff
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:231ac6937c615a9e380fbcab850655f9d1345d83fc5659e2bce9725d7f5443ab
+name: kuadrant-operator.v0.2.1
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.2.1
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.5.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.4.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.1.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.2.1
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:231ac6937c615a9e380fbcab850655f9d1345d83fc5659e2bce9725d7f5443ab
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:5607e77cc2421266f1f14dad3f3284bf7985bed76ce3b846936fc8176fdd3edd
+name: kuadrant-operator.v0.3.0
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.3.0
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.6.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.5.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.2.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.3.0
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:5607e77cc2421266f1f14dad3f3284bf7985bed76ce3b846936fc8176fdd3edd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:f895cb68a57a27745e8fceaac1302afb80fca64e3781b2853c622b9c7c001b60
+name: kuadrant-operator.v0.3.1
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.3.1
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.7.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.5.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "kuadrant.io/v1beta1",
+            "kind": "AuthPolicy",
+            "metadata": {
+              "name": "toystore"
+            },
+            "spec": {
+              "authScheme": {
+                "identity": [
+                  {
+                    "apiKey": {
+                      "allNamespaces": true,
+                      "selector": {
+                        "matchLabels": {
+                          "app": "toystore"
+                        }
+                      }
+                    },
+                    "credentials": {
+                      "in": "authorization_header",
+                      "keySelector": "APIKEY"
+                    },
+                    "name": "friends"
+                  }
+                ],
+                "response": [
+                  {
+                    "json": {
+                      "properties": [
+                        {
+                          "name": "userID",
+                          "valueFrom": {
+                            "authJSON": "auth.identity.metadata.annotations.secret\\.kuadrant\\.io/user-id"
+                          }
+                        }
+                      ]
+                    },
+                    "name": "rate-limit-apikey",
+                    "wrapper": "envoyDynamicMetadata",
+                    "wrapperKey": "ext_auth_data"
+                  }
+                ]
+              },
+              "rules": null,
+              "targetRef": {
+                "group": "gateway.networking.k8s.io",
+                "kind": "HTTPRoute",
+                "name": "toystore"
+              }
+            }
+          },
+          {
+            "apiVersion": "kuadrant.io/v1beta1",
+            "kind": "Kuadrant",
+            "metadata": {
+              "name": "kuadrant-sample"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "kuadrant.io/v1beta1",
+            "kind": "RateLimitPolicy",
+            "metadata": {
+              "name": "toystore"
+            },
+            "spec": {
+              "rateLimits": [
+                {
+                  "configurations": [
+                    {
+                      "actions": [
+                        {
+                          "metadata": {
+                            "default_value": "no-user",
+                            "descriptor_key": "userID",
+                            "metadata_key": {
+                              "key": "envoy.filters.http.ext_authz",
+                              "path": [
+                                {
+                                  "segment": {
+                                    "key": "ext_auth_data"
+                                  }
+                                },
+                                {
+                                  "segment": {
+                                    "key": "userID"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "limits": [
+                    {
+                      "conditions": [],
+                      "maxValue": 2,
+                      "seconds": 10,
+                      "variables": [
+                        "userID"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "targetRef": {
+                "group": "gateway.networking.k8s.io",
+                "kind": "HTTPRoute",
+                "name": "toystore"
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Integration & Delivery
+      containerImage: quay.io/kuadrant/kuadrant-operator:v0.3.1
+      createdAt: "2023-06-01T12:24:17Z"
+      operators.operatorframework.io/builder: operator-sdk-v1.28.1
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/Kuadrant/kuadrant-operator
+      support: kuadrant
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Enable AuthN and AuthZ based access control on workloads
+        displayName: AuthPolicy
+        kind: AuthPolicy
+        name: authpolicies.kuadrant.io
+        version: v1beta1
+      - description: Kuadrant is the Schema for the kuadrants API
+        displayName: Kuadrant
+        kind: Kuadrant
+        name: kuadrants.kuadrant.io
+        version: v1beta1
+      - description: Enable access control on workloads based on HTTP rate limiting
+        displayName: RateLimitPolicy
+        kind: RateLimitPolicy
+        name: ratelimitpolicies.kuadrant.io
+        version: v1beta1
+    description: A Kubernetes Operator to manage the lifecycle of the Kuadrant system
+    displayName: Kuadrant Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - api
+    - api-management
+    - Kuadrant
+    - kubernetes
+    - openshift
+    - cloud-service-protection
+    - rate-limiting
+    - authentication
+    - authorization
+    links:
+    - name: Kuadrant Operator
+      url: https://github.com/Kuadrant/kuadrant-operator
+    - name: Kuadrant Docs
+      url: https://kuadrant.io
+    maintainers:
+    - email: eastizle@redhat.com
+      name: Eguzki Astiz Lezaun
+    - email: mcassola@redhat.com
+      name: Guilherme Cassolato
+    - email: didier@redhat.com
+      name: Didier Di Cesare
+    maturity: alpha
+    minKubeVersion: 1.8.0
+    provider:
+      name: Red Hat
+      url: https://github.com/Kuadrant/kuadrant-operator
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.2.0
+  name: wasmshim
+- image: quay.io/kuadrant/kuadrant-operator:v0.3.1
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:f895cb68a57a27745e8fceaac1302afb80fca64e3781b2853c622b9c7c001b60
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:2bb6070c26d5dbc7946a69564ca979e46927c258b49d603f0e76edb59fe96dc0
+name: kuadrant-operator.v0.4.0
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.4.0
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.9.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.6.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.3.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.4.0
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:2bb6070c26d5dbc7946a69564ca979e46927c258b49d603f0e76edb59fe96dc0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:2392a0cc7b0b4bad379d5057064bb9b59f9dfd68aa304bdc56167780e75b3533
+name: kuadrant-operator.v0.4.1
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.4.1
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.9.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.6.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.3.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.4.1
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:2392a0cc7b0b4bad379d5057064bb9b59f9dfd68aa304bdc56167780e75b3533
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:6b062234de5a598aebde85d470b0143e875e29110ffef7d19dfa159d5be01843
+name: kuadrant-operator.v0.5.0
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.5.0
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.10.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.7.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.3.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:6b062234de5a598aebde85d470b0143e875e29110ffef7d19dfa159d5be01843
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:1fa7f2772b65a59464cba122879095ac53afaaba54531808249f3da192984eac
+name: kuadrant-operator.v0.6.0
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSHealthCheckProbe
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSRecord
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: ManagedZone
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: TLSPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.6.0
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.10.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.7.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.3.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.6.0
+  name: ""
+- image: quay.io/kuadrant/policy-controller:release-0.3
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:1fa7f2772b65a59464cba122879095ac53afaaba54531808249f3da192984eac
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:7c3f64338c89fba787016165c9807b7a7f10246161bdd00aeec8ed0dbc96cf5d
+name: kuadrant-operator.v0.6.1
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSHealthCheckProbe
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSRecord
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: ManagedZone
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: TLSPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.6.1
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.10.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.7.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.3.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.6.1
+  name: ""
+- image: quay.io/kuadrant/policy-controller:release-0.3
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:7c3f64338c89fba787016165c9807b7a7f10246161bdd00aeec8ed0dbc96cf5d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:a6fddcfbf49ce73a927f3d89441012047d222215f14dd10b5049328689e504b3
+name: kuadrant-operator.v0.7.0
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: TLSPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.7.0
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.11.0
+- type: olm.package.required
+  value:
+    packageName: cert-manager
+    versionRange: 1.14.2
+- type: olm.package.required
+  value:
+    packageName: dns-operator
+    versionRange: 0.2.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.8.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.4.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.7.0
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:a6fddcfbf49ce73a927f3d89441012047d222215f14dd10b5049328689e504b3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kuadrant-operator@sha256:d0dc9d19d3e46152c387cfeb9de61dca17a9f0df8508c4a0f258df20b5d041be
+name: kuadrant-operator.v0.7.1
+package: kuadrant-operator
+properties:
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: AuthPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: DNSPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: Kuadrant
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: RateLimitPolicy
+    version: v1beta2
+- type: olm.gvk
+  value:
+    group: kuadrant.io
+    kind: TLSPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kuadrant-operator
+    version: 0.7.1
+- type: olm.package.required
+  value:
+    packageName: authorino-operator
+    versionRange: 0.11.1
+- type: olm.package.required
+  value:
+    packageName: cert-manager
+    versionRange: 1.14.2
+- type: olm.package.required
+  value:
+    packageName: dns-operator
+    versionRange: 0.2.0
+- type: olm.package.required
+  value:
+    packageName: limitador-operator
+    versionRange: 0.8.0
+relatedImages:
+- image: oci://quay.io/kuadrant/wasm-shim:v0.4.0
+  name: ""
+- image: quay.io/kuadrant/kuadrant-operator:v0.7.1
+  name: ""
+- image: quay.io/operatorhubio/kuadrant-operator@sha256:d0dc9d19d3e46152c387cfeb9de61dca17a9f0df8508c4a0f258df20b5d041be
+  name: ""
+schema: olm.bundle

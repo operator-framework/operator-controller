@@ -1,0 +1,2062 @@
+{
+    "schema": "olm.package",
+    "name": "cluster-observability-operator",
+    "defaultChannel": "development",
+    "icon": {
+        "base64data": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0idXVpZC1kMWI4NDIzOC0wYzgxLTQ5MjctOGQ4Mi03OTcyN2Y5OGZjYWMiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDM4IDM4Ij4KPHRpdGxlPkNsdXN0ZXIgb2JzZXJ2YWJpbGl0eTwvdGl0bGU+CjxkZXNjPmNsb3VkPC9kZXNjPgo8bWV0YWRhdGE+PD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgOC4wLWMwMDEgMS4wMDAwMDAsIDAwMDAvMDAvMDAtMDA6MDA6MDAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iCiAgICAgICAgICAgIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIgogICAgICAgICAgICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iPgogICAgICAgICA8IS0tIG1ldGFkYXRhIGZpZWxkcyAtLT4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9InciPz48L21ldGFkYXRhPgo8ZGVmcz48c3R5bGU+LnV1aWQtMjRiMGQ5N2ItNjgxZS00ZGE2LWExYzctNzY3MWFlNTc1MzJhe2ZpbGw6I2UwZTBlMDt9LnV1aWQtMjRiMGQ5N2ItNjgxZS00ZGE2LWExYzctNzY3MWFlNTc1MzJhLC51dWlkLTk3YzFlYzg0LTliODEtNDU2ZS05OWFhLTcxMzc1MGViNjllMCwudXVpZC1mMDMyMTc4ZS1iZDUwLTRkZTctYjc3My02NjViZmQ1YzViYjgsLnV1aWQtNGJlZjgyMGItNTZjOS00N2U3LTgyYTMtMmRiOGQ4YzdiMTEye3N0cm9rZS13aWR0aDowcHg7fS51dWlkLTk3YzFlYzg0LTliODEtNDU2ZS05OWFhLTcxMzc1MGViNjllMHtmaWxsOiMwMDA7fS51dWlkLWYwMzIxNzhlLWJkNTAtNGRlNy1iNzczLTY2NWJmZDVjNWJiOHtmaWxsOiNlMDA7fS51dWlkLTRiZWY4MjBiLTU2YzktNDdlNy04MmEzLTJkYjhkOGM3YjExMntmaWxsOiNmZmY7fTwvc3R5bGU+PC9kZWZzPgo8cmVjdCBjbGFzcz0idXVpZC00YmVmODIwYi01NmM5LTQ3ZTctODJhMy0yZGI4ZDhjN2IxMTIiIHg9IjEiIHk9IjEiIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiIgcng9IjkiIHJ5PSI5Ii8+CjxwYXRoIGNsYXNzPSJ1dWlkLTI0YjBkOTdiLTY4MWUtNGRhNi1hMWM3LTc2NzFhZTU3NTMyYSIgZD0iTTI4LDIuMjVjNC4yNzM0LDAsNy43NSwzLjQ3NjYsNy43NSw3Ljc1djE4YzAsNC4yNzM0LTMuNDc2Niw3Ljc1LTcuNzUsNy43NUgxMGMtNC4yNzM0LDAtNy43NS0zLjQ3NjYtNy43NS03Ljc1VjEwYzAtNC4yNzM0LDMuNDc2Ni03Ljc1LDcuNzUtNy43NWgxOE0yOCwxSDEwQzUuMDI5NCwxLDEsNS4wMjk0LDEsMTB2MThjMCw0Ljk3MDYsNC4wMjk0LDksOSw5aDE4YzQuOTcwNiwwLDktNC4wMjk0LDktOVYxMGMwLTQuOTcwNi00LjAyOTQtOS05LTloMFoiLz4KPHBhdGggY2xhc3M9InV1aWQtZjAzMjE3OGUtYmQ1MC00ZGU3LWI3NzMtNjY1YmZkNWM1YmI4IiBkPSJNMjEuMzc1LDE5YzAsLjM0NTIuMjgwMy42MjUuNjI1LjYyNXMuNjI1LS4yNzk4LjYyNS0uNjI1YzAtMS45OTktMS42MjYtMy42MjUtMy42MjUtMy42MjUtLjM0NDcsMC0uNjI1LjI3OTgtLjYyNS42MjVzLjI4MDMuNjI1LjYyNS42MjVjMS4zMDk2LDAsMi4zNzUsMS4wNjU0LDIuMzc1LDIuMzc1WiIvPgo8cGF0aCBjbGFzcz0idXVpZC1mMDMyMTc4ZS1iZDUwLTRkZTctYjc3My02NjViZmQ1YzViYjgiIGQ9Ik0xOSwxMy4zNzVjLS43ODIyLDAtMS41MzkxLjE1NzctMi4yNS40NjgzLS4zMTY0LjEzODItLjQ2MDkuNTA2OC0uMzIyMy44MjMyLjEzNzcuMzE2NC41MDc4LjQ1ODUuODIyMy4zMjIzLjU1MjctLjI0MTIsMS4xNDE2LS4zNjM4LDEuNzUtLjM2MzgsMi40MTIxLDAsNC4zNzUsMS45NjI0LDQuMzc1LDQuMzc1cy0xLjk2MjksNC4zNzUtNC4zNzUsNC4zNzUtNC4zNzUtMS45NjI0LTQuMzc1LTQuMzc1YzAtLjYwODkuMTIyMS0xLjE5NzMuMzYzMy0xLjc0OTUuMTM4Ny0uMzE2NC0uMDA1OS0uNjg1MS0uMzIyMy0uODIzMi0uMzE0NS0uMTM5Mi0uNjgzNi4wMDU0LS44MjIzLjMyMjMtLjMxMTUuNzExNC0uNDY4OCwxLjQ2ODMtLjQ2ODgsMi4yNTA1LDAsMy4xMDE2LDIuNTIzNCw1LjYyNSw1LjYyNSw1LjYyNXM1LjYyNS0yLjUyMzQsNS42MjUtNS42MjUtMi41MjM0LTUuNjI1LTUuNjI1LTUuNjI1WiIvPgo8cGF0aCBjbGFzcz0idXVpZC05N2MxZWM4NC05YjgxLTQ1NmUtOTlhYS03MTM3NTBlYjY5ZTAiIGQ9Ik0zMC40NjY4LDE4LjczODhjLTIuMDU2Ni00LjQ3MzEtNi41NTc2LTcuMzYzOC0xMS40NjY4LTcuMzYzOHMtOS40MTAyLDIuODkwNi0xMS40NjY4LDcuMzYzOGMtLjA3NTIuMTY2LS4wNzUyLjM1NjQsMCwuNTIyNSwyLjA1NjYsNC40NzMxLDYuNTU3Niw3LjM2MzgsMTEuNDY2OCw3LjM2MzhzOS40MTAyLTIuODkwNiwxMS40NjY4LTcuMzYzOGMuMDc1Mi0uMTY2LjA3NTItLjM1NjQsMC0uNTIyNVpNMTksMjUuMzc1Yy00LjMyNjIsMC04LjMwMDgtMi40OTI3LTEwLjIwNjEtNi4zNzUsMS45MDUzLTMuODgyMyw1Ljg3OTktNi4zNzUsMTAuMjA2MS02LjM3NXM4LjMwMDgsMi40OTI3LDEwLjIwNjEsNi4zNzVjLTEuOTA1MywzLjg4MjMtNS44Nzk5LDYuMzc1LTEwLjIwNjEsNi4zNzVaIi8+CjxwYXRoIGNsYXNzPSJ1dWlkLTk3YzFlYzg0LTliODEtNDU2ZS05OWFhLTcxMzc1MGViNjllMCIgZD0iTTE1LjQ0MjQsMTQuNTU4MWMtLjI0NDEtLjI0NDEtLjY0MDYtLjI0NDEtLjg4NDgsMC0uMjQzMi4yNDQxLS4yNDMyLjYzOTYsMCwuODgzOGw0LDRjLjEyMjEuMTIyMS4yODIyLjE4MzEuNDQyNC4xODMxcy4zMjAzLS4wNjEuNDQyNC0uMTgzMWMuMjQzMi0uMjQ0MS4yNDMyLS42Mzk2LDAtLjg4MzhsLTQtNFoiLz4KPC9zdmc+Cg==",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "development",
+    "package": "cluster-observability-operator",
+    "entries": [
+        {
+            "name": "cluster-observability-operator.0.1.1"
+        },
+        {
+            "name": "cluster-observability-operator.0.1.2",
+            "replaces": "cluster-observability-operator.0.1.1",
+            "skipRange": ">=0.1.0 <0.1.2"
+        },
+        {
+            "name": "cluster-observability-operator.0.1.3",
+            "replaces": "cluster-observability-operator.0.1.2",
+            "skipRange": ">=0.1.0 <0.1.3"
+        },
+        {
+            "name": "cluster-observability-operator.0.2.0",
+            "replaces": "cluster-observability-operator.0.1.3",
+            "skipRange": ">=0.2.0 <0.2.0"
+        },
+        {
+            "name": "cluster-observability-operator.0.3.2",
+            "replaces": "cluster-observability-operator.0.2.0",
+            "skipRange": ">=0.3.0 <0.3.2"
+        },
+        {
+            "name": "cluster-observability-operator.0.4.1",
+            "replaces": "cluster-observability-operator.0.3.2",
+            "skipRange": ">=0.4.0 <0.4.1"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "cluster-observability-operator.0.1.1",
+    "package": "cluster-observability-operator",
+    "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:9462df4357c5a14224b26795dfdff6730fff0c7b59d3f21e66de42b27b7f4161",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Alertmanager",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "AlertmanagerConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "MonitoringStack",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PodMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Probe",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Prometheus",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusAgent",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusRule",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ScrapeConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ServiceMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosQuerier",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosRuler",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cluster-observability-operator",
+                "version": "0.1.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"MonitoringStack\",\n    \"metadata\": {\n      \"labels\": {\n        \"mso\": \"example\"\n      },\n      \"name\": \"sample-monitoring-stack\"\n    },\n    \"spec\": {\n      \"logLevel\": \"debug\",\n      \"resourceSelector\": {\n        \"matchLabels\": {\n          \"app\": \"demo\"\n        }\n      },\n      \"retention\": \"1d\"\n    }\n  },\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"ThanosQuerier\",\n    \"metadata\": {\n      \"name\": \"example-thanos\"\n    },\n    \"spec\": {\n      \"selector\": {\n        \"matchLabels\": {\n          \"mso\": \"example\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Monitoring",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:6cbb2e41fd4a0dfaeaf87dcbc5e466a931fc25206abd99d95be5d4d7069a7b04",
+                    "createdAt": "2024-01-23T15:52:54Z",
+                    "description": "A Go based Kubernetes operator to setup and manage highly available Monitoring Stack using Prometheus, Alertmanager and Thanos Querier.",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.31.0",
+                    "operators.operatorframework.io/internal-objects": "[\n  \"prometheuses.monitoring.rhobs\", \"alertmanagers.monitoring.rhobs\",\n  \"thanosrulers.monitoring.rhobs\"\n]",
+                    "operators.operatorframework.io/project_layout": "unknown",
+                    "repository": "https://github.com/rhobs/observability-operator"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "alertmanagerconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "AlertmanagerConfig",
+                            "displayName": "AlertmanagerConfig",
+                            "description": "AlertmanagerConfig configures the Prometheus Alertmanager, specifying how alerts should be grouped, inhibited and notified to external systems"
+                        },
+                        {
+                            "name": "alertmanagers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Alertmanager",
+                            "displayName": "Alertmanager",
+                            "description": "Alertmanager describes an Alertmanager cluster"
+                        },
+                        {
+                            "name": "monitoringstacks.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "MonitoringStack",
+                            "displayName": "MonitoringStack",
+                            "description": "MonitoringStack is the Schema for the monitoringstacks API"
+                        },
+                        {
+                            "name": "podmonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PodMonitor",
+                            "displayName": "PodMonitor",
+                            "description": "PodMonitor defines monitoring for a set of pods"
+                        },
+                        {
+                            "name": "probes.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Probe",
+                            "displayName": "Probe",
+                            "description": "Probe defines monitoring for a set of static targets or ingresses"
+                        },
+                        {
+                            "name": "prometheusagents.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "PrometheusAgent",
+                            "displayName": "PrometheusAgent",
+                            "description": "PrometheusAgent defines a Prometheus agent deployment"
+                        },
+                        {
+                            "name": "prometheuses.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Prometheus",
+                            "displayName": "Prometheus",
+                            "description": "Prometheus defines a Prometheus deployment"
+                        },
+                        {
+                            "name": "prometheusrules.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PrometheusRule",
+                            "displayName": "PrometheusRule",
+                            "description": "PrometheusRule defines recording and alerting rules for a Prometheus instance"
+                        },
+                        {
+                            "name": "scrapeconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ScrapeConfig",
+                            "displayName": "ScrapeConfig",
+                            "description": "ScrapeConfig defines a namespaced Prometheus scrape_config to be aggregated across multiple namespaces into the Prometheus configuration"
+                        },
+                        {
+                            "name": "servicemonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ServiceMonitor",
+                            "displayName": "ServiceMonitor",
+                            "description": "ServiceMonitor defines monitoring for a set of services"
+                        },
+                        {
+                            "name": "thanosqueriers.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ThanosQuerier",
+                            "displayName": "ThanosQuerier",
+                            "description": "ThanosQuerier outlines the Thanos querier components, managed by this stack"
+                        },
+                        {
+                            "name": "thanosrulers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ThanosRuler",
+                            "displayName": "ThanosRuler",
+                            "description": "ThanosRuler defines a ThanosRuler deployment"
+                        }
+                    ]
+                },
+                "description": "Cluster Observability Operator is a Go based Kubernetes operator to setup and manage highly available Monitoring stack using Prometheus, Alertmanager and Thanos Querier.\n### Supported Features\n- Setup multiple Highly Available Monitoring stack using Prometheus, Alertmanager and Thanos Querier\n- Customizable configuration for managing Prometheus deployments\n- Customizable configuration for managing Alertmanager deployments\n- Customizable configuration for managing Thanos Querier deployments\n### Documentation\n- **[Documentation](https://github.com/rhobs/observability-operator/tree/main/docs)**\n- **[Developer Docs](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md)**\n### Contributing\n**[See Contribution Guidelines](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md#contributions)** to contribute to the project by\n- Raising Bugs and Feature Requests\n- Fixing Issues by opening a Pull Request\n- Improving Documentation\n###  License\nLicensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)\n\n",
+                "displayName": "Cluster Observability Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "observability",
+                    "monitoring",
+                    "prometheus",
+                    "thanos"
+                ],
+                "links": [
+                    {
+                        "name": "Observability Operator",
+                        "url": "https://rhobs-handbook.netlify.app/products/observability-operator"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/rhobs/observability-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jan Fajerski",
+                        "email": "jfajersk@redhat.com"
+                    },
+                    {
+                        "name": "Sunil Thaha",
+                        "email": "sthaha@redhat.com"
+                    },
+                    {
+                        "name": "Simon Pasquier",
+                        "email": "spasquie@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:9462df4357c5a14224b26795dfdff6730fff0c7b59d3f21e66de42b27b7f4161"
+        },
+        {
+            "name": "cluster-observability-rhel8-operator-6cbb2e41fd4a0dfaeaf87dcbc5e466a931fc25206abd99d95be5d4d7069a7b04-annotation",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:6cbb2e41fd4a0dfaeaf87dcbc5e466a931fc25206abd99d95be5d4d7069a7b04"
+        },
+        {
+            "name": "operator",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:6cbb2e41fd4a0dfaeaf87dcbc5e466a931fc25206abd99d95be5d4d7069a7b04"
+        },
+        {
+            "name": "prometheus-operator-admission-webhook",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-admission-webhook-rhel8@sha256:8404461c19e9ddc2835598f6a5156224577a22e0daedffbf7e6271b1f1793bee"
+        },
+        {
+            "name": "alertmanager",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-alertmanager-rhel8@sha256:9e4fe938f1a2678c99e45f9027d0e84fa2269eb9a11928d0ed7629231685e0cd"
+        },
+        {
+            "name": "prometheus_config_reloader",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-config-reloader-rhel8@sha256:94a888738ae8adb9d106236a6d2df9bd9cc33e7546d561855dd393407e670f18"
+        },
+        {
+            "name": "prometheus-operator",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8-operator@sha256:8bf2674208303f89db20018e694b5de56a139873064ff32bd3f315f1da5aa979"
+        },
+        {
+            "name": "prometheus",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8@sha256:52312cf361f7b139dcfe8fc00ca8558807bb6d19158b35638b92e95bb54414f5"
+        },
+        {
+            "name": "thanos",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-thanos-rhel8@sha256:79d1a7f1568800f06a7146e219852a42a3ccd265e626d2d476640f83f2c901bd"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "cluster-observability-operator.0.1.2",
+    "package": "cluster-observability-operator",
+    "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:64c6d96205ef04b9f48fed6ab9c7cabf03e429b5092a4d0fee47d7d350d451f2",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Alertmanager",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "AlertmanagerConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "MonitoringStack",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PodMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Probe",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Prometheus",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusAgent",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusRule",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ScrapeConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ServiceMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosQuerier",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosRuler",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cluster-observability-operator",
+                "version": "0.1.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"MonitoringStack\",\n    \"metadata\": {\n      \"labels\": {\n        \"mso\": \"example\"\n      },\n      \"name\": \"sample-monitoring-stack\"\n    },\n    \"spec\": {\n      \"logLevel\": \"debug\",\n      \"resourceSelector\": {\n        \"matchLabels\": {\n          \"app\": \"demo\"\n        }\n      },\n      \"retention\": \"1d\"\n    }\n  },\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"ThanosQuerier\",\n    \"metadata\": {\n      \"name\": \"example-thanos\"\n    },\n    \"spec\": {\n      \"selector\": {\n        \"matchLabels\": {\n          \"mso\": \"example\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Monitoring",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:432d5ae986f81a8525edc690c958c0fa0e71ce9b4229bb5449d21924b23370b9",
+                    "createdAt": "2024-03-13T07:58:48Z",
+                    "description": "A Go based Kubernetes operator to setup and manage highly available Monitoring Stack using Prometheus, Alertmanager and Thanos Querier.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=0.1.0 <0.1.2",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.31.0",
+                    "operators.operatorframework.io/internal-objects": "[\n  \"prometheuses.monitoring.rhobs\", \"alertmanagers.monitoring.rhobs\",\n  \"thanosrulers.monitoring.rhobs\"\n]",
+                    "operators.operatorframework.io/project_layout": "unknown",
+                    "repository": "https://github.com/rhobs/observability-operator",
+                    "support": "Cluster Observability (https://issues.redhat.com/projects/COO/)"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "alertmanagerconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "AlertmanagerConfig",
+                            "displayName": "AlertmanagerConfig",
+                            "description": "AlertmanagerConfig configures the Prometheus Alertmanager, specifying how alerts should be grouped, inhibited and notified to external systems"
+                        },
+                        {
+                            "name": "alertmanagers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Alertmanager",
+                            "displayName": "Alertmanager",
+                            "description": "Alertmanager describes an Alertmanager cluster"
+                        },
+                        {
+                            "name": "monitoringstacks.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "MonitoringStack",
+                            "displayName": "MonitoringStack",
+                            "description": "MonitoringStack is the Schema for the monitoringstacks API"
+                        },
+                        {
+                            "name": "podmonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PodMonitor",
+                            "displayName": "PodMonitor",
+                            "description": "PodMonitor defines monitoring for a set of pods"
+                        },
+                        {
+                            "name": "probes.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Probe",
+                            "displayName": "Probe",
+                            "description": "Probe defines monitoring for a set of static targets or ingresses"
+                        },
+                        {
+                            "name": "prometheusagents.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "PrometheusAgent",
+                            "displayName": "PrometheusAgent",
+                            "description": "PrometheusAgent defines a Prometheus agent deployment"
+                        },
+                        {
+                            "name": "prometheuses.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Prometheus",
+                            "displayName": "Prometheus",
+                            "description": "Prometheus defines a Prometheus deployment"
+                        },
+                        {
+                            "name": "prometheusrules.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PrometheusRule",
+                            "displayName": "PrometheusRule",
+                            "description": "PrometheusRule defines recording and alerting rules for a Prometheus instance"
+                        },
+                        {
+                            "name": "scrapeconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ScrapeConfig",
+                            "displayName": "ScrapeConfig",
+                            "description": "ScrapeConfig defines a namespaced Prometheus scrape_config to be aggregated across multiple namespaces into the Prometheus configuration"
+                        },
+                        {
+                            "name": "servicemonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ServiceMonitor",
+                            "displayName": "ServiceMonitor",
+                            "description": "ServiceMonitor defines monitoring for a set of services"
+                        },
+                        {
+                            "name": "thanosqueriers.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ThanosQuerier",
+                            "displayName": "ThanosQuerier",
+                            "description": "ThanosQuerier outlines the Thanos querier components, managed by this stack"
+                        },
+                        {
+                            "name": "thanosrulers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ThanosRuler",
+                            "displayName": "ThanosRuler",
+                            "description": "ThanosRuler defines a ThanosRuler deployment"
+                        }
+                    ]
+                },
+                "description": "Cluster Observability Operator is a Go based Kubernetes operator to setup and manage highly available Monitoring stack using Prometheus, Alertmanager and Thanos Querier.\n### Supported Features\n- Setup multiple Highly Available Monitoring stack using Prometheus, Alertmanager and Thanos Querier\n- Customizable configuration for managing Prometheus deployments\n- Customizable configuration for managing Alertmanager deployments\n- Customizable configuration for managing Thanos Querier deployments\n### Documentation\n- **[Documentation](https://github.com/rhobs/observability-operator/tree/main/docs)**\n- **[Developer Docs](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md)**\n### Contributing\n**[See Contribution Guidelines](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md#contributions)** to contribute to the project by\n- Raising Bugs and Feature Requests\n- Fixing Issues by opening a Pull Request\n- Improving Documentation\n###  License\nLicensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)\n\n",
+                "displayName": "Cluster Observability Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "observability",
+                    "monitoring",
+                    "prometheus",
+                    "thanos"
+                ],
+                "links": [
+                    {
+                        "name": "Cluster Observability Operator",
+                        "url": "https://rhobs-handbook.netlify.app/products/observability-operator"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/rhobs/observability-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jan Fajerski",
+                        "email": "jfajersk@redhat.com"
+                    },
+                    {
+                        "name": "Sunil Thaha",
+                        "email": "sthaha@redhat.com"
+                    },
+                    {
+                        "name": "Simon Pasquier",
+                        "email": "spasquie@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:64c6d96205ef04b9f48fed6ab9c7cabf03e429b5092a4d0fee47d7d350d451f2"
+        },
+        {
+            "name": "cluster-observability-rhel8-operator-432d5ae986f81a8525edc690c958c0fa0e71ce9b4229bb5449d21924b23370b9-annotation",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:432d5ae986f81a8525edc690c958c0fa0e71ce9b4229bb5449d21924b23370b9"
+        },
+        {
+            "name": "operator",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:432d5ae986f81a8525edc690c958c0fa0e71ce9b4229bb5449d21924b23370b9"
+        },
+        {
+            "name": "prometheus-operator-admission-webhook",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-admission-webhook-rhel8@sha256:9882a697908094e520c0775c92da444e401e0381b4a2a1976423bc54890adcbc"
+        },
+        {
+            "name": "alertmanager",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-alertmanager-rhel8@sha256:b9fb0d8b15933bfba826f4ae735a95bc72f9ec01962ed86511b83b9670cbdfec"
+        },
+        {
+            "name": "prometheus_config_reloader",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-config-reloader-rhel8@sha256:7e44dc726fb98a65ed0479fc5dccb330800349ca3da95a35514877d4810e3233"
+        },
+        {
+            "name": "prometheus-operator",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8-operator@sha256:3907d9642cd3526c0f534a6185ccd0e5aac163274450886c5fa53febf5030754"
+        },
+        {
+            "name": "prometheus",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8@sha256:f16159edceb8a65c5c68d1e9456df6cf0b29f4255aa8dd004c92495b3deede29"
+        },
+        {
+            "name": "thanos",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-thanos-rhel8@sha256:e74004d3ceff21bede31c039aa3bb077d29cf399d69f715e0ac04a7583102592"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "cluster-observability-operator.0.1.3",
+    "package": "cluster-observability-operator",
+    "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:149cb521550a9459df6e47b6af576228227fb9d7bd8471fe887660d3a4dc8156",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Alertmanager",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "AlertmanagerConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "MonitoringStack",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PodMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Probe",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Prometheus",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusAgent",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusRule",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ScrapeConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ServiceMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosQuerier",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosRuler",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cluster-observability-operator",
+                "version": "0.1.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"MonitoringStack\",\n    \"metadata\": {\n      \"labels\": {\n        \"mso\": \"example\"\n      },\n      \"name\": \"sample-monitoring-stack\"\n    },\n    \"spec\": {\n      \"logLevel\": \"debug\",\n      \"resourceSelector\": {\n        \"matchLabels\": {\n          \"app\": \"demo\"\n        }\n      },\n      \"retention\": \"1d\"\n    }\n  },\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"ThanosQuerier\",\n    \"metadata\": {\n      \"name\": \"example-thanos\"\n    },\n    \"spec\": {\n      \"selector\": {\n        \"matchLabels\": {\n          \"mso\": \"example\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Monitoring",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:f79f877be6808ee45ca4b88b618208e9e48842e9a3399599abfb7624cdc671b1",
+                    "createdAt": "2024-03-13T07:58:48Z",
+                    "description": "A Go based Kubernetes operator to setup and manage highly available Monitoring Stack using Prometheus, Alertmanager and Thanos Querier.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=0.1.0 <0.1.3",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.31.0",
+                    "operators.operatorframework.io/internal-objects": "[\n  \"prometheuses.monitoring.rhobs\", \"alertmanagers.monitoring.rhobs\",\n  \"thanosrulers.monitoring.rhobs\"\n]",
+                    "operators.operatorframework.io/project_layout": "unknown",
+                    "repository": "https://github.com/rhobs/observability-operator",
+                    "support": "Cluster Observability (https://issues.redhat.com/projects/COO/)"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "alertmanagerconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "AlertmanagerConfig",
+                            "displayName": "AlertmanagerConfig",
+                            "description": "AlertmanagerConfig configures the Prometheus Alertmanager, specifying how alerts should be grouped, inhibited and notified to external systems"
+                        },
+                        {
+                            "name": "alertmanagers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Alertmanager",
+                            "displayName": "Alertmanager",
+                            "description": "Alertmanager describes an Alertmanager cluster"
+                        },
+                        {
+                            "name": "monitoringstacks.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "MonitoringStack",
+                            "displayName": "MonitoringStack",
+                            "description": "MonitoringStack is the Schema for the monitoringstacks API"
+                        },
+                        {
+                            "name": "podmonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PodMonitor",
+                            "displayName": "PodMonitor",
+                            "description": "PodMonitor defines monitoring for a set of pods"
+                        },
+                        {
+                            "name": "probes.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Probe",
+                            "displayName": "Probe",
+                            "description": "Probe defines monitoring for a set of static targets or ingresses"
+                        },
+                        {
+                            "name": "prometheusagents.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "PrometheusAgent",
+                            "displayName": "PrometheusAgent",
+                            "description": "PrometheusAgent defines a Prometheus agent deployment"
+                        },
+                        {
+                            "name": "prometheuses.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Prometheus",
+                            "displayName": "Prometheus",
+                            "description": "Prometheus defines a Prometheus deployment"
+                        },
+                        {
+                            "name": "prometheusrules.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PrometheusRule",
+                            "displayName": "PrometheusRule",
+                            "description": "PrometheusRule defines recording and alerting rules for a Prometheus instance"
+                        },
+                        {
+                            "name": "scrapeconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ScrapeConfig",
+                            "displayName": "ScrapeConfig",
+                            "description": "ScrapeConfig defines a namespaced Prometheus scrape_config to be aggregated across multiple namespaces into the Prometheus configuration"
+                        },
+                        {
+                            "name": "servicemonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ServiceMonitor",
+                            "displayName": "ServiceMonitor",
+                            "description": "ServiceMonitor defines monitoring for a set of services"
+                        },
+                        {
+                            "name": "thanosqueriers.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ThanosQuerier",
+                            "displayName": "ThanosQuerier",
+                            "description": "ThanosQuerier outlines the Thanos querier components, managed by this stack"
+                        },
+                        {
+                            "name": "thanosrulers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ThanosRuler",
+                            "displayName": "ThanosRuler",
+                            "description": "ThanosRuler defines a ThanosRuler deployment"
+                        }
+                    ]
+                },
+                "description": "Cluster Observability Operator is a Go based Kubernetes operator to setup and manage highly available Monitoring stack using Prometheus, Alertmanager and Thanos Querier.\n### Supported Features\n- Setup multiple Highly Available Monitoring stack using Prometheus, Alertmanager and Thanos Querier\n- Customizable configuration for managing Prometheus deployments\n- Customizable configuration for managing Alertmanager deployments\n- Customizable configuration for managing Thanos Querier deployments\n### Documentation\n- **[Documentation](https://github.com/rhobs/observability-operator/tree/main/docs)**\n- **[Developer Docs](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md)**\n### Contributing\n**[See Contribution Guidelines](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md#contributions)** to contribute to the project by\n- Raising Bugs and Feature Requests\n- Fixing Issues by opening a Pull Request\n- Improving Documentation\n###  License\nLicensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)\n\n",
+                "displayName": "Cluster Observability Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "observability",
+                    "monitoring",
+                    "prometheus",
+                    "thanos"
+                ],
+                "links": [
+                    {
+                        "name": "Cluster Observability Operator",
+                        "url": "https://rhobs-handbook.netlify.app/products/observability-operator"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/rhobs/observability-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jan Fajerski",
+                        "email": "jfajersk@redhat.com"
+                    },
+                    {
+                        "name": "Sunil Thaha",
+                        "email": "sthaha@redhat.com"
+                    },
+                    {
+                        "name": "Simon Pasquier",
+                        "email": "spasquie@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:149cb521550a9459df6e47b6af576228227fb9d7bd8471fe887660d3a4dc8156"
+        },
+        {
+            "name": "cluster-observability-rhel8-operator-f79f877be6808ee45ca4b88b618208e9e48842e9a3399599abfb7624cdc671b1-annotation",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:f79f877be6808ee45ca4b88b618208e9e48842e9a3399599abfb7624cdc671b1"
+        },
+        {
+            "name": "operator",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:f79f877be6808ee45ca4b88b618208e9e48842e9a3399599abfb7624cdc671b1"
+        },
+        {
+            "name": "prometheus-operator-admission-webhook",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-admission-webhook-rhel8@sha256:8eb23d623e15a3c0a7f21cf6c2fbf621d8420bab5173384d5ddedecd1b36bd0e"
+        },
+        {
+            "name": "alertmanager",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-alertmanager-rhel8@sha256:2e4463a350f37d11fb7cfbd8e9e1cf2a638da7c8661b2b41238da6897cb2629c"
+        },
+        {
+            "name": "prometheus_config_reloader",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-config-reloader-rhel8@sha256:6f9e35387b243e9d70ff2641fc833d2e3fbc5959219387ebbda53cfae72e24c3"
+        },
+        {
+            "name": "prometheus-operator",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8-operator@sha256:d7883b79107a536a068d40176300562487d09b110cb867769077381e5d2419c5"
+        },
+        {
+            "name": "prometheus",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8@sha256:413a2908d78a1411aa64ded51cad236fc37892c9591e4c23b81b8dd79a13b232"
+        },
+        {
+            "name": "thanos",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-thanos-rhel8@sha256:a27b421013fac269b9607e3c10cd67000e571708e6b5a6dd1d7ab4aa73672e63"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "cluster-observability-operator.0.2.0",
+    "package": "cluster-observability-operator",
+    "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:51a82611a184122efad183774d0bfbb1502c171c34509ca72d64f6a8d2e69ec1",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Alertmanager",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "AlertmanagerConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "MonitoringStack",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PodMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Probe",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Prometheus",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusAgent",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusRule",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ScrapeConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ServiceMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosQuerier",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosRuler",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "observability.openshift.io",
+                "kind": "UIPlugin",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cluster-observability-operator",
+                "version": "0.2.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"MonitoringStack\",\n    \"metadata\": {\n      \"labels\": {\n        \"mso\": \"example\"\n      },\n      \"name\": \"sample-monitoring-stack\"\n    },\n    \"spec\": {\n      \"logLevel\": \"debug\",\n      \"resourceSelector\": {\n        \"matchLabels\": {\n          \"app\": \"demo\"\n        }\n      },\n      \"retention\": \"1d\"\n    }\n  },\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"ThanosQuerier\",\n    \"metadata\": {\n      \"name\": \"example-thanos\"\n    },\n    \"spec\": {\n      \"selector\": {\n        \"matchLabels\": {\n          \"mso\": \"example\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Monitoring",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:4792082901c9c099aa3c59bf66d21becce737ba270407fea1a916f35cf1379fe",
+                    "createdAt": "2024-04-22T15:11:06Z",
+                    "description": "A Go based Kubernetes operator to setup and manage highly available Monitoring Stack using Prometheus, Alertmanager and Thanos Querier.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=0.2.0 <0.2.0",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.34.1",
+                    "operators.operatorframework.io/internal-objects": "[\n  \"prometheuses.monitoring.rhobs\", \"alertmanagers.monitoring.rhobs\",\n  \"thanosrulers.monitoring.rhobs\"\n]",
+                    "operators.operatorframework.io/project_layout": "unknown",
+                    "repository": "https://github.com/rhobs/observability-operator",
+                    "support": "Cluster Observability (https://issues.redhat.com/projects/COO/)"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "alertmanagerconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "AlertmanagerConfig",
+                            "displayName": "AlertmanagerConfig",
+                            "description": "AlertmanagerConfig configures the Prometheus Alertmanager, specifying how alerts should be grouped, inhibited and notified to external systems"
+                        },
+                        {
+                            "name": "alertmanagers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Alertmanager",
+                            "displayName": "Alertmanager",
+                            "description": "Alertmanager describes an Alertmanager cluster"
+                        },
+                        {
+                            "name": "monitoringstacks.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "MonitoringStack",
+                            "displayName": "MonitoringStack",
+                            "description": "MonitoringStack is the Schema for the monitoringstacks API"
+                        },
+                        {
+                            "name": "podmonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PodMonitor",
+                            "displayName": "PodMonitor",
+                            "description": "PodMonitor defines monitoring for a set of pods"
+                        },
+                        {
+                            "name": "probes.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Probe",
+                            "displayName": "Probe",
+                            "description": "Probe defines monitoring for a set of static targets or ingresses"
+                        },
+                        {
+                            "name": "prometheusagents.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "PrometheusAgent",
+                            "displayName": "PrometheusAgent",
+                            "description": "PrometheusAgent defines a Prometheus agent deployment"
+                        },
+                        {
+                            "name": "prometheuses.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Prometheus",
+                            "displayName": "Prometheus",
+                            "description": "Prometheus defines a Prometheus deployment"
+                        },
+                        {
+                            "name": "prometheusrules.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PrometheusRule",
+                            "displayName": "PrometheusRule",
+                            "description": "PrometheusRule defines recording and alerting rules for a Prometheus instance"
+                        },
+                        {
+                            "name": "scrapeconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ScrapeConfig",
+                            "displayName": "ScrapeConfig",
+                            "description": "ScrapeConfig defines a namespaced Prometheus scrape_config to be aggregated across multiple namespaces into the Prometheus configuration"
+                        },
+                        {
+                            "name": "servicemonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ServiceMonitor",
+                            "displayName": "ServiceMonitor",
+                            "description": "ServiceMonitor defines monitoring for a set of services"
+                        },
+                        {
+                            "name": "thanosqueriers.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ThanosQuerier",
+                            "displayName": "ThanosQuerier",
+                            "description": "ThanosQuerier outlines the Thanos querier components, managed by this stack"
+                        },
+                        {
+                            "name": "thanosrulers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ThanosRuler",
+                            "displayName": "ThanosRuler",
+                            "description": "ThanosRuler defines a ThanosRuler deployment"
+                        },
+                        {
+                            "name": "uiplugins.observability.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "UIPlugin",
+                            "displayName": "UIPlugin",
+                            "description": "UIPlugin defines a console plugin for observability"
+                        }
+                    ]
+                },
+                "description": "Cluster Observability Operator is a Go based Kubernetes operator to setup and manage highly available Monitoring stack using Prometheus, Alertmanager and Thanos Querier.\n### Supported Features\n- Setup multiple Highly Available Monitoring stack using Prometheus, Alertmanager and Thanos Querier\n- Customizable configuration for managing Prometheus deployments\n- Customizable configuration for managing Alertmanager deployments\n- Customizable configuration for managing Thanos Querier deployments\n### Documentation\n- **[Documentation](https://github.com/rhobs/observability-operator/tree/main/docs)**\n- **[Developer Docs](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md)**\n### Contributing\n**[See Contribution Guidelines](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md#contributions)** to contribute to the project by\n- Raising Bugs and Feature Requests\n- Fixing Issues by opening a Pull Request\n- Improving Documentation\n###  License\nLicensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)\n\n",
+                "displayName": "Cluster Observability Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "observability",
+                    "monitoring",
+                    "prometheus",
+                    "thanos"
+                ],
+                "links": [
+                    {
+                        "name": "Cluster Observability Operator",
+                        "url": "https://rhobs-handbook.netlify.app/products/observability-operator"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/rhobs/observability-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jan Fajerski",
+                        "email": "jfajersk@redhat.com"
+                    },
+                    {
+                        "name": "Sunil Thaha",
+                        "email": "sthaha@redhat.com"
+                    },
+                    {
+                        "name": "Simon Pasquier",
+                        "email": "spasquie@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:51a82611a184122efad183774d0bfbb1502c171c34509ca72d64f6a8d2e69ec1"
+        },
+        {
+            "name": "cluster-observability-rhel8-operator-4792082901c9c099aa3c59bf66d21becce737ba270407fea1a916f35cf1379fe-annotation",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:4792082901c9c099aa3c59bf66d21becce737ba270407fea1a916f35cf1379fe"
+        },
+        {
+            "name": "operator",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:4792082901c9c099aa3c59bf66d21becce737ba270407fea1a916f35cf1379fe"
+        },
+        {
+            "name": "prometheus-operator-admission-webhook",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-admission-webhook-rhel8@sha256:5fb9b54b672f628ebf1bdf4be5eaeda8ae13b044c6fc4cebbd2919d3cbe7d3ac"
+        },
+        {
+            "name": "console_dashboards_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-dashboards-plugin-rhel8@sha256:ca9271e9dae2074ee0930085cf73b2abfa2a078532348fb91ca413d09b2a2da8"
+        },
+        {
+            "name": "alertmanager",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-alertmanager-rhel8@sha256:cfd18e83d64a55ac310937eefe83fc5b9e98660962a127cd4f8d9a382764c171"
+        },
+        {
+            "name": "prometheus_config_reloader",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-config-reloader-rhel8@sha256:521d7b7b8339c314e0086c792f09f4a01788ddd239ec766662f523298a1b60b9"
+        },
+        {
+            "name": "prometheus-operator",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8-operator@sha256:ea0c96c491b5c631af43d1901bc66f6348913fbdef5016594613e270cea1e4a2"
+        },
+        {
+            "name": "prometheus",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8@sha256:6bbb1aebb1cfdc3310e398ec7720ca1d4a9a89cecf7406412071bfaceb0d3cb3"
+        },
+        {
+            "name": "thanos",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-thanos-rhel8@sha256:09eab2acb7ea4241a4c60cf134c10f1250b772967dc6c495bc91653f4de1deeb"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "cluster-observability-operator.0.3.2",
+    "package": "cluster-observability-operator",
+    "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:de85c87a09dad70fcbd43d558b71ac5b9e72bb71190c763f42fc164c4e7b508c",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Alertmanager",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "AlertmanagerConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "MonitoringStack",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PodMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Probe",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Prometheus",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusAgent",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusRule",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ScrapeConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ServiceMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosQuerier",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosRuler",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "observability.openshift.io",
+                "kind": "UIPlugin",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cluster-observability-operator",
+                "version": "0.3.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"MonitoringStack\",\n    \"metadata\": {\n      \"labels\": {\n        \"mso\": \"example\"\n      },\n      \"name\": \"sample-monitoring-stack\"\n    },\n    \"spec\": {\n      \"logLevel\": \"debug\",\n      \"resourceSelector\": {\n        \"matchLabels\": {\n          \"app\": \"demo\"\n        }\n      },\n      \"retention\": \"1d\"\n    }\n  },\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"ThanosQuerier\",\n    \"metadata\": {\n      \"name\": \"example-thanos\"\n    },\n    \"spec\": {\n      \"selector\": {\n        \"matchLabels\": {\n          \"mso\": \"example\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Monitoring",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:3bfbf735639ac47a1e57cd6f790143801aa62ac58bec4a8777411856be831f59",
+                    "createdAt": "2024-08-07T10:19:11Z",
+                    "description": "A Go based Kubernetes operator to setup and manage highly available Monitoring Stack using Prometheus, Alertmanager and Thanos Querier.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=0.3.0 <0.3.2",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.34.1",
+                    "operators.operatorframework.io/internal-objects": "[\n  \"prometheuses.monitoring.rhobs\", \"alertmanagers.monitoring.rhobs\",\n  \"thanosrulers.monitoring.rhobs\"\n]",
+                    "operators.operatorframework.io/project_layout": "unknown",
+                    "repository": "https://github.com/rhobs/observability-operator",
+                    "support": "Cluster Observability (https://issues.redhat.com/projects/COO/)"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "alertmanagerconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "AlertmanagerConfig",
+                            "displayName": "AlertmanagerConfig",
+                            "description": "AlertmanagerConfig configures the Prometheus Alertmanager, specifying how alerts should be grouped, inhibited and notified to external systems"
+                        },
+                        {
+                            "name": "alertmanagers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Alertmanager",
+                            "displayName": "Alertmanager",
+                            "description": "Alertmanager describes an Alertmanager cluster"
+                        },
+                        {
+                            "name": "monitoringstacks.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "MonitoringStack",
+                            "displayName": "MonitoringStack",
+                            "description": "MonitoringStack is the Schema for the monitoringstacks API"
+                        },
+                        {
+                            "name": "podmonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PodMonitor",
+                            "displayName": "PodMonitor",
+                            "description": "PodMonitor defines monitoring for a set of pods"
+                        },
+                        {
+                            "name": "probes.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Probe",
+                            "displayName": "Probe",
+                            "description": "Probe defines monitoring for a set of static targets or ingresses"
+                        },
+                        {
+                            "name": "prometheusagents.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "PrometheusAgent",
+                            "displayName": "PrometheusAgent",
+                            "description": "PrometheusAgent defines a Prometheus agent deployment"
+                        },
+                        {
+                            "name": "prometheuses.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Prometheus",
+                            "displayName": "Prometheus",
+                            "description": "Prometheus defines a Prometheus deployment"
+                        },
+                        {
+                            "name": "prometheusrules.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PrometheusRule",
+                            "displayName": "PrometheusRule",
+                            "description": "PrometheusRule defines recording and alerting rules for a Prometheus instance"
+                        },
+                        {
+                            "name": "scrapeconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ScrapeConfig",
+                            "displayName": "ScrapeConfig",
+                            "description": "ScrapeConfig defines a namespaced Prometheus scrape_config to be aggregated across multiple namespaces into the Prometheus configuration"
+                        },
+                        {
+                            "name": "servicemonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ServiceMonitor",
+                            "displayName": "ServiceMonitor",
+                            "description": "ServiceMonitor defines monitoring for a set of services"
+                        },
+                        {
+                            "name": "thanosqueriers.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ThanosQuerier",
+                            "displayName": "ThanosQuerier",
+                            "description": "ThanosQuerier outlines the Thanos querier components, managed by this stack"
+                        },
+                        {
+                            "name": "thanosrulers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ThanosRuler",
+                            "displayName": "ThanosRuler",
+                            "description": "ThanosRuler defines a ThanosRuler deployment"
+                        },
+                        {
+                            "name": "uiplugins.observability.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "UIPlugin",
+                            "displayName": "UIPlugin",
+                            "description": "UIPlugin defines a console plugin for observability"
+                        }
+                    ]
+                },
+                "description": "Cluster Observability Operator is a Go based Kubernetes operator to setup and manage highly available Monitoring stack using Prometheus, Alertmanager and Thanos Querier.\n### Supported Features\n- Setup multiple Highly Available Monitoring stack using Prometheus, Alertmanager and Thanos Querier\n- Customizable configuration for managing Prometheus deployments\n- Customizable configuration for managing Alertmanager deployments\n- Customizable configuration for managing Thanos Querier deployments\n### Documentation\n- **[Documentation](https://github.com/rhobs/observability-operator/tree/main/docs)**\n- **[Developer Docs](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md)**\n### Contributing\n**[See Contribution Guidelines](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md#contributions)** to contribute to the project by\n- Raising Bugs and Feature Requests\n- Fixing Issues by opening a Pull Request\n- Improving Documentation\n###  License\nLicensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)\n\n",
+                "displayName": "Cluster Observability Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "observability",
+                    "monitoring",
+                    "prometheus",
+                    "thanos"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Cluster Observability Operator",
+                        "url": "https://rhobs-handbook.netlify.app/products/observability-operator"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/rhobs/observability-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jan Fajerski",
+                        "email": "jfajersk@redhat.com"
+                    },
+                    {
+                        "name": "Sunil Thaha",
+                        "email": "sthaha@redhat.com"
+                    },
+                    {
+                        "name": "Simon Pasquier",
+                        "email": "spasquie@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:de85c87a09dad70fcbd43d558b71ac5b9e72bb71190c763f42fc164c4e7b508c"
+        },
+        {
+            "name": "operator",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:3bfbf735639ac47a1e57cd6f790143801aa62ac58bec4a8777411856be831f59"
+        },
+        {
+            "name": "cluster-observability-rhel8-operator-3bfbf735639ac47a1e57cd6f790143801aa62ac58bec4a8777411856be831f59-annotation",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:3bfbf735639ac47a1e57cd6f790143801aa62ac58bec4a8777411856be831f59"
+        },
+        {
+            "name": "prometheus-operator-admission-webhook",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-admission-webhook-rhel8@sha256:13352f531b51300447bb5792c69a17a017ebb29af5a61c29302de69e54463c4b"
+        },
+        {
+            "name": "console_dashboards_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-dashboards-plugin-rhel8@sha256:5387b70663254fe426776a01154c2038ecbb6a2ac607340f100cbf5b11b6d1c0"
+        },
+        {
+            "name": "console_distributed_tracing_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-distributed-tracing-plugin-rhel8@sha256:e7092829621e706d5e5b8a22b74009c2c994966a9f2ea4e1139e5a75533b8f1f"
+        },
+        {
+            "name": "console_logging_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-logging-plugin-rhel8@sha256:9c390cc044b838f5ee0f652ae317bda45afde1f5e422a6998e4b3045370fac89"
+        },
+        {
+            "name": "console_troubleshooting_panel_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-troubleshooting-panel-plugin-rhel8@sha256:cbff15042c00672667266ba72f929a7a408423a10870aa442a19c16564b2f206"
+        },
+        {
+            "name": "korrel8r",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-korrel8r-rhel8@sha256:a4ad1c40155a8f1c768912b892f4a84251f1187c0263420ba78d8ac767fbd4a4"
+        },
+        {
+            "name": "alertmanager",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-alertmanager-rhel8@sha256:6b4f9abefc240c93c53a2e699f2227857db171189ef1448f96030fbf8daa858b"
+        },
+        {
+            "name": "prometheus_config_reloader",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-config-reloader-rhel8@sha256:a7389a32a51751cb5cbf677b2c263cb148503a5628231937b3d6eda6130f6ea0"
+        },
+        {
+            "name": "prometheus-operator",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8-operator@sha256:5a2e535f3251286928003a1044752312df0e15a4c2e6738b0ed0b9220e9e539c"
+        },
+        {
+            "name": "prometheus",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8@sha256:4fb30dc2c067dc90c521c679bbaad5357b012c2cc320b7b289efc03fba6740a6"
+        },
+        {
+            "name": "thanos",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-thanos-rhel8@sha256:2dc139f06510f478bfe99c7d6222c31985c84bdfef42c187e9eed0195e9c98f2"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "cluster-observability-operator.0.4.1",
+    "package": "cluster-observability-operator",
+    "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:55ce1ea85a4099f326cae033a63e73c66d0a0d68b5f01c694ee7238b3bb8d79c",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Alertmanager",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "AlertmanagerConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "MonitoringStack",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PodMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Probe",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "Prometheus",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusAgent",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "PrometheusRule",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ScrapeConfig",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ServiceMonitor",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosQuerier",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "monitoring.rhobs",
+                "kind": "ThanosRuler",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "observability.openshift.io",
+                "kind": "UIPlugin",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cluster-observability-operator",
+                "version": "0.4.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"MonitoringStack\",\n    \"metadata\": {\n      \"labels\": {\n        \"mso\": \"example\"\n      },\n      \"name\": \"sample-monitoring-stack\"\n    },\n    \"spec\": {\n      \"logLevel\": \"debug\",\n      \"resourceSelector\": {\n        \"matchLabels\": {\n          \"app\": \"demo\"\n        }\n      },\n      \"retention\": \"1d\"\n    }\n  },\n  {\n    \"apiVersion\": \"monitoring.rhobs/v1alpha1\",\n    \"kind\": \"ThanosQuerier\",\n    \"metadata\": {\n      \"name\": \"example-thanos\"\n    },\n    \"spec\": {\n      \"selector\": {\n        \"matchLabels\": {\n          \"mso\": \"example\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Monitoring",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:b03b908f50e6ea300d11f4a01810f67ecdcf80ce63b1dfde193257f59c3ea980",
+                    "createdAt": "2024-10-08T12:44:05Z",
+                    "description": "A Go based Kubernetes operator to setup and manage highly available Monitoring Stack using Prometheus, Alertmanager and Thanos Querier.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=0.4.0 <0.4.1",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.36.1",
+                    "operators.operatorframework.io/internal-objects": "[\n  \"prometheuses.monitoring.rhobs\",\n  \"alertmanagers.monitoring.rhobs\",\n  \"thanosrulers.monitoring.rhobs\",\n  \"prometheusagents.monitoring.rhobs\",\n]",
+                    "operators.operatorframework.io/project_layout": "unknown",
+                    "repository": "https://github.com/rhobs/observability-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "alertmanagerconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "AlertmanagerConfig",
+                            "displayName": "AlertmanagerConfig",
+                            "description": "AlertmanagerConfig configures the Prometheus Alertmanager, specifying how alerts should be grouped, inhibited and notified to external systems"
+                        },
+                        {
+                            "name": "alertmanagers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Alertmanager",
+                            "displayName": "Alertmanager",
+                            "description": "Alertmanager describes an Alertmanager cluster"
+                        },
+                        {
+                            "name": "monitoringstacks.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "MonitoringStack",
+                            "displayName": "MonitoringStack",
+                            "description": "MonitoringStack is the Schema for the monitoringstacks API"
+                        },
+                        {
+                            "name": "podmonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PodMonitor",
+                            "displayName": "PodMonitor",
+                            "description": "PodMonitor defines monitoring for a set of pods"
+                        },
+                        {
+                            "name": "probes.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Probe",
+                            "displayName": "Probe",
+                            "description": "Probe defines monitoring for a set of static targets or ingresses"
+                        },
+                        {
+                            "name": "prometheusagents.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "PrometheusAgent",
+                            "displayName": "PrometheusAgent",
+                            "description": "PrometheusAgent defines a Prometheus agent deployment"
+                        },
+                        {
+                            "name": "prometheuses.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "Prometheus",
+                            "displayName": "Prometheus",
+                            "description": "Prometheus defines a Prometheus deployment"
+                        },
+                        {
+                            "name": "prometheusrules.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "PrometheusRule",
+                            "displayName": "PrometheusRule",
+                            "description": "PrometheusRule defines recording and alerting rules for a Prometheus instance"
+                        },
+                        {
+                            "name": "scrapeconfigs.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ScrapeConfig",
+                            "displayName": "ScrapeConfig",
+                            "description": "ScrapeConfig defines a namespaced Prometheus scrape_config to be aggregated across multiple namespaces into the Prometheus configuration"
+                        },
+                        {
+                            "name": "servicemonitors.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ServiceMonitor",
+                            "displayName": "ServiceMonitor",
+                            "description": "ServiceMonitor defines monitoring for a set of services"
+                        },
+                        {
+                            "name": "thanosqueriers.monitoring.rhobs",
+                            "version": "v1alpha1",
+                            "kind": "ThanosQuerier",
+                            "displayName": "ThanosQuerier",
+                            "description": "ThanosQuerier outlines the Thanos querier components, managed by this stack"
+                        },
+                        {
+                            "name": "thanosrulers.monitoring.rhobs",
+                            "version": "v1",
+                            "kind": "ThanosRuler",
+                            "displayName": "ThanosRuler",
+                            "description": "ThanosRuler defines a ThanosRuler deployment"
+                        },
+                        {
+                            "name": "uiplugins.observability.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "UIPlugin",
+                            "displayName": "UIPlugin",
+                            "description": "UIPlugin defines a console plugin for observability"
+                        }
+                    ]
+                },
+                "description": "Cluster Observability Operator is a Go based Kubernetes operator to setup and manage highly available Monitoring stack using Prometheus, Alertmanager and Thanos Querier.\n### Supported Features\n- Setup multiple Highly Available Monitoring stack using Prometheus, Alertmanager and Thanos Querier\n- Customizable configuration for managing Prometheus deployments\n- Customizable configuration for managing Alertmanager deployments\n- Customizable configuration for managing Thanos Querier deployments\n### Documentation\n- **[Documentation](https://github.com/rhobs/observability-operator/tree/main/docs)**\n- **[Developer Docs](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md)**\n### Contributing\n**[See Contribution Guidelines](https://github.com/rhobs/observability-operator/blob/main/docs/developer.md#contributions)** to contribute to the project by\n- Raising Bugs and Feature Requests\n- Fixing Issues by opening a Pull Request\n- Improving Documentation\n###  License\nLicensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)\n\n",
+                "displayName": "Cluster Observability Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "observability",
+                    "monitoring",
+                    "prometheus",
+                    "thanos"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/rhobs/observability-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jan Fajerski",
+                        "email": "jfajersk@redhat.com"
+                    },
+                    {
+                        "name": "Simon Pasquier",
+                        "email": "spasquie@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-operator-bundle@sha256:55ce1ea85a4099f326cae033a63e73c66d0a0d68b5f01c694ee7238b3bb8d79c"
+        },
+        {
+            "name": "operator",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:b03b908f50e6ea300d11f4a01810f67ecdcf80ce63b1dfde193257f59c3ea980"
+        },
+        {
+            "name": "cluster-observability-rhel8-operator-b03b908f50e6ea300d11f4a01810f67ecdcf80ce63b1dfde193257f59c3ea980-annotation",
+            "image": "registry.redhat.io/cluster-observability-operator/cluster-observability-rhel8-operator@sha256:b03b908f50e6ea300d11f4a01810f67ecdcf80ce63b1dfde193257f59c3ea980"
+        },
+        {
+            "name": "prometheus-operator-admission-webhook",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-admission-webhook-rhel8@sha256:b23662e54b2be330230910915e5e79c923439fcc20f4dba5574f39474efd022c"
+        },
+        {
+            "name": "console_dashboards_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-dashboards-plugin-rhel8@sha256:f6f7370c7c6602d29c11606ce399dcc009c3d92cf2945f51058ba710661bde7c"
+        },
+        {
+            "name": "console_distributed_tracing_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-distributed-tracing-plugin-rhel8@sha256:babd40bc984360ae3c232415e9afc6da73b9a0b361ac51bbb0f4ec0bfa109873"
+        },
+        {
+            "name": "console_logging_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-logging-plugin-rhel8@sha256:fd0828e617f69010b4e3ef4ca586330b9460d3195c1fb846ff14b0d39b5fecf5"
+        },
+        {
+            "name": "console_troubleshooting_panel_plugin",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-console-troubleshooting-panel-plugin-rhel8@sha256:8d7ed1ffb1efbbdf83162abba051366ca4fc21cb8fb3bc7947ba63e4a626b216"
+        },
+        {
+            "name": "korrel8r",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-korrel8r-rhel8@sha256:3e844ddd5d2e6e8d5fa5938347fe6c2153fa39597305e63cfe2780bc8c49c233"
+        },
+        {
+            "name": "alertmanager",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-alertmanager-rhel8@sha256:ed5c91eed5036a306c1276124ecc695c663077ad5f91e14877cee9389af3f6b3"
+        },
+        {
+            "name": "prometheus_config_reloader",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-config-reloader-rhel8@sha256:2b4c9da57d230e4641f2de2c6e81b965b7f4086c677391a33af90c9330c5d9ca"
+        },
+        {
+            "name": "prometheus-operator",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8-operator@sha256:05c03d0475687f25738d8cfc2f6c64d54b9f633c5b3f20a07f597379dfd40f83"
+        },
+        {
+            "name": "prometheus",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-prometheus-rhel8@sha256:231f8e9904172abe12a8a426bc9002fac5367436c74e6b7ad00c843c700ab9e9"
+        },
+        {
+            "name": "thanos",
+            "image": "registry.redhat.io/cluster-observability-operator/coo-thanos-rhel8@sha256:2dbd724e8c15a3e3ee809cb36ae1c481e27d1c492e0fe8d9dcce7971ba46a62f"
+        }
+    ]
+}

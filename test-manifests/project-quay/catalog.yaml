@@ -1,0 +1,4359 @@
+---
+defaultChannel: stable-3.12
+icon:
+  base64data: iVBORw0KGgoAAAANSUhEUgAAAUAAAACECAYAAADhnvK8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAAuIwAALiMBeKU/dgAAQABJREFUeAHtfQl4XMWRf3W/OXRYki0fsuX7AIMvjIUPGQwyt7lCNthAAqyNhQ0s7JI9kt1kd/9KNtn9YLMhG7IEG5v7SHAS7vuwABtjG9lcBozv+75lHTPzXv9/9cYjaUYz772ZN7Jk+7U/eWb6qK6u7q6urq6uJvKCRwGPAh4FPAp4FPAo4FHAo4BHAY8CHgU8CngU8CjgUcCjgEcBjwIeBTwKeBTwKOBRwKOARwGPAh4FPAp4FPAo4FHAo4BHAY8CHgU8CngU8CjgUcCjgEcBjwIeBTwKeBTwKOBRwKOARwGPAh4FPAp4FPAo4FHAo4BHAY8CHgU8CngU8CjgUaADUUB0IFyaUamo8lGgNtgc4eJbUacwLagKuYAQX3TK3UHSg774yAx/FY1roAXT9AxLn7rFBkzPoY1Hw0QLPNqduqMgKy3PzkTOCirNQPz6zjFSz5tAShnNsel/M4SQxV1L1u9S6lUSQqUPoVUJGWgQlwtp9HeHm0EykCd7nmG8v4Hos1a1tEdERYWP6od0pUiDJMqLx0CGFBmBCDUcaKBVVN+ujOfsGd0pL/dC6inW0Me0Ih5R75dHgfQo0PEY4JApwXBY/6UwGi8mw90Cr+XmUOmIkZvHL65b8RLR9vRIkyT3xJl9ww0Nc0j4SsgNbzYM6tS1O/UaNvql4jnquprZAtJMO4faQYNJo8fIl4OFQm8mvBDYJfjrSVO7yFf8KU0IvUdHpn5LqxbUtgvGPvl91PsbUr6lNOXuC+j1BxrbBY9YpWWz8rAwyHajRwwP7zMjCnQ8Btil33lE6gIVcTmuIxHqPHQoFZ8xvN/hgwduBHV+jT83UqCgsLhF+UQJ6S531OAvJWcOo9xu3S/V8jaPA16LM+q9rBYK5JE0JmDRmUMkmiUrRX5U0wN/pxMZs0gE76Ii/wNUdvXvqebluqyi4ASYJneQQRtIGOto8043/emkNvs8/sg0ChYVIuNv7TN7OToaBToWAyyb5ScRuYvIx5POVRCBAPU5ZywJ8DwptZnlb2x5dMnlffdnDHTs9BLS5AwyXM45SLU5XbtRyYgR2JWLHE3z3VGxcOHS6smTIxnjlo2CQlfm8qD8r9Cyh15JCrLi7j7U2PhjMsR/kSxhWj6aNF9bRn788AIqn7mCVN5uWjXf5UqUBUSVNpl01Q2QPAaYBXIebxDQ93Sg4A+PIald5mp7yc2B9Fc8cBB1xl+ksYFI852Za2jfc9FSQVrgRnCsgZCCXIBBUTDQnmedTcHCzhQJNZKQ8ho6eNoId0CzWFroqQ+fqh/YSocP/AOkr+Uk1T9Sn6m5WazZKShFS+avpaUPHHZaoG3zqSBWWZfblbbF0IOemgIdRwI0lfDanSRFrlsGKHw+6jV2HHipRgaYIUs2hq7uGP/avj8uvaJr+hPnvDuYW1WS4ZJc0BsGu3ShXqPPxhkK1GzQBcpgXoGu18+m59RdNE00695S91n7pqxaEKJxs/4E4v6K+hb2pq20tgmhITgh57DW1MsJKptVSDKUS9KnKCL3U83ceF0nn+b20vIoogfMcsIIk1ZfR0sW4KAlZRA06uY8Kt7SSNXVqaVm3k2EajtRTiCKkzPY0UqT4bVbHqWNj2E1PRbKwfwPQ2tKPF6xKg6f2omoezQxJ2KgrcdfPRDDzft0TAGXM9pxPfYZ64cMgzh0LTMFV0GPUOHAwdR18GlgelF+YkTCJAL+0blGwxWA/Ye04YdC38MkHobDgbSLxhXQDeoxYiTlFncFY47yAiPcQEKjaZOD23+zkGh1XP6O+kNFtpHwS2z9OsehWFx3cfR31et0zq7TyB+ejtPj8eD0EfIZ/4i0z4/lZ+bYlXKMiygiLkW/D4QUxSZZm0kFF9KIytfpy0N7k542l/8wh4wjt9GhoSBXdfIT9LJZRTi0mUD5hVeQipwJuFCtyK2k57xDZTe+SjXP7kMclsXEUCXp7E1dKc93KfC6CLqTAcjBmG2kHuot6jrrbTC2/TRkip8inf+KCkRXLNZnIE8jFXSeRSoUNSsT6hDa93grhp9Ynfe73SnQQbbAUzUMstuxxYQyOcm4TINM2FJS77Kx5IMOEGLWsZIK4KUQEfqbqc+p9LZt595aALxuTwOF5Fkh/fk6FVDpmLHAq5mRKpYC/bnFOICYSVWqg/RH8iY0xfpkARYqyD2iWSLiREE3gVbTaeKWYeSLPElKnA/m9xmYzyYwk2Z93Zg7B5OP5pCusd6sBNvp9/H3Hr7nofx/UifxJE3sPBK/W9PDOIIxIv6HgkY50luH4TOLya/+HfXNx4I1BHW/j/yvmrsKKf6D/AUPUtlNPVsXBPbnbjiTgv7HSRe/xja/Gwn1gYmXos6A92sw8d9R+Q87U9chQTDYa1DiGsApAXz80RT8XQHJGExXTKKCEKRDL3R0CnQMCfCcrqMwUW5wL/3pVDRoCHXDCWtM+ot1gBEJQWgJlO+lHd9F3DOxeNtPXbsBk3JMS6ZlW6ZVBjBi8IteY8ZQfvcewC1+52bgxFtJ3/TJIzY/vpBgadeRA2/9DHE5FpcNpLQtcagKrR7xoyAo/wrM4wVsP39L1Q/Gm8ucXzmQQpGnQFM/mMsNtHhuNRhIbKUiHHDgVFzei03lszS+8npaOi8mNUar0rCd1nUQLIkd0vgfFILh/Q/KTwADu52W9H6NqKp5SzHxtrFgTo+SP+dXNGD6zPgt7awR6KOngQs2tvp1tHjeIlTYjNe4ykk4BJsG6dMPnPbT1KlsjgOZtQj5jO3U9/A083fsvwWekXaMFB35s/UKe7yxZd2fL1yJCdGl5XhLHw1IedD59RpTRv5gEPOjeeyasPAbFm2aIdXsioW7oa9xEEbe0QWT4jZMiujWxkGRpFnA/PwFBdTrrDFITsCLY7BV1/yB7kZu4K+hC2xfyUEkEi7WIkjpZbO6kdH5CjCZyWAyT2CLdyiWan4q1uH5RkPa2kB9D93bivkRtpiN4k7Q8zQwsXvA/BbGMT8GsmT+MpD7bwG/Ez5/BN1aVD8YV1GKH0bB5UiBukL/Z1ryME6yWzA/LvLRw8uxJf45vn0XukfeGkcD16HoR2TI7uiMvwPz+xAJ8R21DHFLSv8OzG+XWYgZXJTJcT5lfo/FecwvStcT4P/2lwAbhpyGwX4dS0iuAvRrBX37UzfY/hn4niyw3k1q/nI6Gr4Q6S8lyxMXlxu+HKv+GACMi077B4SVHsNGUH5JSSvJNAaLpUIp6MaL83Y/9A7R+lj8cf1k3iewpSubznqtaJDMkAN+bP+guDQmoq+uR8IHkLAeimVp+lTYwhv6UQpo9x9jDk1J5pexu3uAqd2CrelfiBlKqrBk7hc0fuYjYLT/SDldfoFs36TK2hTPhx5aBMxVLabeh8H8UgSV/wapukNo50XIsdLMFSwajHJ/Bbx+TUvn16QoiegEhpo6o5dyglCgnRkgpApDTCdN9HC7xRTgHj3PHkOB3DzS+eQ3WWApUEo/2NkdZS9vf6fm6tLUJ3XD74SUGJqNLRMYgIuAOv15nagXcGMxMhWbV8wAA8E+ekP9TVRV9Qv8JefiLlCxLSqweTXoBvC7cojQUP5ja2pAZypUHqQj6CnxW9ALpOp/Tx8/EZWEWgIV5IP0t4UWzfu2ZXTz98bRsPHsAX3ngua4FN8M/XnyaT8lnwLTdcAAfQZWFwEFq/gHWp7vxxY3uS3priMh6ulfj3axjjEaAupcbB8C0Dj+ORblfZ4aFGhfBnh+UT8KY8K5lf5wkJBX0ou6D4Puz+YU2QhDCpS+Cwr1MCvR303ZzQUNkBKZEbiU/iA9doVUWlDaO6X0F8NBQXJVPt/NF066a/57VLUtFn/cPnmnL9Q2MMG1LApGuTU+DXEEBh8bSNM+p0W/t5FOcdSUKvjUGaBnCLDtT7uNwAZ05kGAwum7gyBUf6DMhyg9qNR/pWUJnYJg5gVNeRSNAF6HIOWua4rzvpwSFGhPBigpJH4AkayfO/MSFkqIesK2LgenrCmlv1h3Yjsq/cFcwwjPrnh0w+LqGQPjTzI5H9/vFASzBnKuf4rBj/tUpOXA1A0nv3ylNpX0FyuidDBnf3CIXteAbaa6n7lRLO24fAJdMrRnafmclzOvD5JjqmDAbIRNRiI58QcjyfIXlB6l+q216IeiZMmt4gzzpBZDiU9n1eRW6S0jpBaCZU7Lw6Yi1HOU/P3qW2bzvp/8FGg/Blh+ey+IRLdgq+WOypAezatlI0fZSn+xisxTV803BReYzkbcklh806eGO7FKXmiaTjRFZvAF9rDFQ0+jon59HePGdcKJza2TXtv55IdX0J4ManVXRBoumb5V9ZJVDj7SD9nX0XjID/VDALpGSIwOgpKNpsgq1X/D6NNCjwdYQsPSFjjcDJXLspX7Rp4PqSXY5gLet5OEAu3HAA2YGkjJ1souSAnmCQZaMmo05RTiwBYSlJPAtndaILeTrkdml32iPqk5p4U3FvM2QwPs/mDhj71g5gF3kIN+6oX7yFLzRW+kOABmGm37/cNkKHItsj/soMiJk0WpjejzIAVz+wDpHZaIR3b1wkFwZ4jNGyzzxRI1bN2VjKDLfLT8QWzh0wnGJpj0FNHRYHeU2pJOyWje4yypp4+gVyIFBWSK+LaNngSfbkLNdMVfGENIf8HOXagnGGC622gDpmRC+q4u2LJteFxjexzFfWS2c3PD/AAxolPn/oOoy4CBtrq/uPrxg08fYNFz2+jnN3ROTDuhf0v6FK1roLDiE1jr4M/HwYTAykHLrDMeS80JgHEZ62FbeCWxaVU6QUjcbRa40xs6L51iZt6oZqN95lHayHoFEinQPh3XqMGCXhuRLtOKRz4q/fHVsryusNBIYfoSX6b5Fx84CJ+/GKeMM+GNJTph2JRCF2yTCAW5m605pD84tCktK4OkiauoaW7zWQqEYfSYokBgSjPGJ8G3I4fW4bChGqZFP6CxM/qmbNGom2EtLmaS0D+jQNeoqUrKzMcSogbXf0TfXUZHTi+zyx6X7vPVQEexGkxwBo27hfWUyQPvDniMtAwKukNSzuxKW5bzvncIChx/Blg2FQpncRtan1pZ7oQ0END8BYWmYwEn2ZPl4UMHWCBfFz48YrCZLkPDoR/CfWQ3zA+QoPsr6NuXugw5HfM9A5USGCbMejRIgrMrnnNotJ2sgR0tjh0paPQ/aFwxVoZ/ognTB8QzFJhFld/em/Jz/gajYxgONO6jxfcdcdwMEXkEdopbKKB+RmNvG24eZrUszJLh2beW0oTKMxHdPP4W/f4AFqn7gdc5RDmzzTzUUooEXuMrS6g77pILfWhLkNBTrkedA4mN5puCWbYZflO896WjUSC9rUI2sPcXXQ4GeI473R8QgXlK9zOHqfySniLx2ptTNM0bGMEgADTcQnf/9ue07PMZwK2YYWcewLx8UpWOOUcEcAJseyqdoqKouY5Wrneqn4wsL6fI1rGi+UCe/1mFj+YtpPG33Qdd4N/C8UEe+WAUPXb6djAf5vp8T/BKfH4HffAQ7gq/YAWqVdrHj22kcbf9GJLcfbir+9+wN3wGjOtruEcL4Xhdo1rqRQExGdJeMW6Y3Akvzs0HLNqhZyhSNIJ8Pjh99XWn8UNeIzVot1mHJrpBJJ+MTcHVwO0+xH3ZXLf+JlbR6ykvMhNM9x0wSIj/Gm6U9F5GS59ucdDSXML71nEocHwZILsMUmI2Fl/NFQnMKSb39hw5qg7asn64HJoxOAO6OlzfurGf7FK9mQ9mkty/Tw84rIFz8zbB9q+zoRK8paQDiKVADca5If/tMNp+19JoOx24qfIqH+7x6p9CNxt/vS1V/mTxgnCYIPOSJbWIU9Tv4O9oaxeccCtecKpwSXs3dHcwghTdwbxCYDT3Ur8+j+AxK2enWi2A07KH36Txs46CeHeAGd0DyW4/+f1gRPDbR6Iz2DO37zncMIkX89kF16U3/ysdlpuBw/eAAwywtT0oz3gVo0w94v+PcnwvtqyO8nLeprrwk0ibgTvEF+EwBfhjS+zvfAfyeQwwjlgd78fxZYD5XS7AADzX9QED80+98cXCgYO+xlbxXpA1Y4bKW1TN5+8fCdf/F7ZcpZAaXPaSFqFQ469zOncpNyLGjSxlZhp002hbToYh3ATAeC9TOI7KDczZTJsOTaeIb6Oj/MkyGcF5FGiwY4DwcmU6CniGJt7+Dg4ucHtDDQI4OOzBCawBZ6tL523Fg0eZh6VzF1H51BoSxaNx53gkmBl8EsoGMOfVVN/wKX362MGkwN96Evo8up8mzvwLFCxjoMvoCwYNRqlvguuuZVT92M5W5Vj3OPWHP6YtDRVIOw3NgH8zsYp67d7SKq8X0eEoYL1dySa67EVEdX4OEtZVrraYJsa4mXC09rLvPvXMuv1bdi7B9bZB7HIuowD3WeG6OvXZk4+J2m3bwEpdqEUFyirja/p2ZfnFz742Fqz0RWzP8yARZIQaF9ICcH8Xql+QI3vf/PoVAvZqp3iYeHsPMLWNIPQ9YJRzT3FqeM13SQEXsz3NmkNdIMXAySR2FO4ChD2l3qNAxSfPnyV2a8J4UvP5MgYqwbT2fvOV4Zr5caMEPDoL9TgdqDnUJ9hjka7ri4Tmd9VcduOlNP/ldfomSCRegFIVSyDfU3Z7UuXR0qOAe4WXMxqy+YDPmA0GkYvB66xMslym9KfqMP7xItnsqH5I+J40wo3boXhOVsImDg+9NdSrHTU1PKls8toks/Rn6JvxaPoznPOxyaJBRvQ5iMZVOxNxGwDJk02jbc0Pp6zBShhtu+Omyas4wWI1+PyDfaCSB04wxD10OyAFjo8E2K12NE7PpkC/45IELP0Zi6n/wQ9igN67omSdEuKPsLtLm4PxmyH713xrHNm2BZ4CM2GgMSzMT7yqpp7BLYQtsVhVGHxLb2xcwW+UuAl8dQ879WsLtmyMN9p2A/REKsueeWJ/KoLDCUjaEbn+RGqCh2vHpEDbM0A2HDW027BqF7qSsliIEgoKZnoISvS4S+uQsh4Fk9ibnhQoKBJuUNtq4CPT0DMX0bhfTX+pajtOCB9v2c3Vk3vUgsnOwd3ekFspUPoCxcIXnFFRdcxou2VFJ/v3TvUXUUHjDeaflHdC1F5IXetXn+zN9trX9hRoewboM86E+PId18bFfNBrGDVws/5WIlkWXtbzK6gWn+c7t06D9Ek6uH6DcXjjBolrG06LpcgHGzZFf6IP5qxJzBCo3f8KHj76SvjcSZh8z1lJMS0y9rRBiXWc9L+FHwbqvpuhsZmOhWQt1Cn/TNET25O+6V4D25YCbcwAYUFPxLZe3cC9Mm+JKZ8pPOohH27tZh1gYargMyLzlIocRB4H9cDzZyhMWyH94dlMO9Nda3gmbsY+2IHNT5bxzWnD92N//TB8EOKY2sycLJttHJvTyECgp1/Jv8ZW20kjbWGeMBnEgfth2HwzFtGbKSc0kxY98tkJg7uHaIemQNtOpHGdB2PVvj4r0p9SX0H1k/JGRPHVfVdQKPy69NtLc7ipQYe2bDIOrV0jYQToroPYJtEwXqIlc1rcDogHKXX5Zz3UuIY9HLgJCp6uIQX+oOKFjf3cwDmOZTG+qo79ubAwZyPlRXM3w43+Btji4VDJCx4FskMBl7PfCgkMfLHlZmwv2e+fVUbrtKjQxG6OHsZ7DftTZV4AE5RJr22Zo+k6risJ3DhJfSaicPtje80K+CYOSVx9SgXSPp5xM3BzQhqwR0vtEund75TsOv+VbY/7Nd8v4YIrYy5ous33B/obvuANaN+9LPnaI3lcckQfKw9qeC4zkI+Fih+3D+B1qlzYEEcJLGfBRChcB08wYbwZUg9vObVUd7QW19HYR6CL7UGq9pm7j1SJLeL3oBcrUH9VNnAArKlpCBWuX45j3DGeuqcxDri91dxWq/YKeNTRqNopXBNmhoa4Lboi+jWNNnG9jGPmdHQx+1shHh9x3vo+FA7eZEnm+BIpfvF40tdAfrB9r6Fn7eEle3M7vycCwWtgGpMUHkthBzdvNvZ/+xV0fxnzoihslv6U/gb1nfIJffxo0vpikQElntXDjbOF5huYkYOEGCDzihxNv+QPW554m2h7LLpdPofizeRCgg89rSeusg2Frvd0EGQIxNRSSP5w5RXJx+n6MSKzCYCvjvx0EGZM27DwrKdO/m9owu2rKWzspJzIblr8iHPHB1YNNp/HzBtnlaU5DdoZ2roNN0++bo7L8Fv5D7uQqnVor4kbQ1t/uJS23h93oJdWzWXTh5KffSumw3vQLfK0vXgh79OUdQ2/M5/qjHE0QXfIzEFDOXgNfTR/U0qYThPKbx+NOdXVUXZVLCjYuBFPdLXSvTsqj0xtxQAF7rDegAkxwNWtD24FGxcrGBcvnb/LrlELpg0Pnf/6ljkwErsY5ZLfwMA83LlyhYrUN7iX/hSu1yt9Li2YZivivnN16eaKl7Y/gzv5PwEDxMqVWTBftvMFhobz+BUz+l1mUFyWGj29M86k+oKZwbjdfxGEiXFgan3wBzvFY00zZZJEwQRpsZabSfx+SGQbBXzLKKy9B8cFH1Fd3Rb64hl3Nn6q00BIoU+iMvsJLGFUHcFD7ET/4JIqaMrBkWDsTzsyKVWQhruHK2gr7k9nFCDh+rSfoJ3wXemoxmgt/DaDYXxOfaZeTVvjrSma0OgZyqda9V9Y2AY4stwQoKEunkD5H+HPSrJsqiLplyF3F5Je91ssmkMx5xMHT0IRJEsYwzcE/h4JHYwBjp1eAuY3PQHj9H/y+GXj4gjeqXAYSo70Wbg7d9vHmj94Id+iaBlY+qvdsdPY+/WXuHeqtUzK4DvWDhV+n/r3X+TQZScZOfrjIhKegbpLXakFeLz7aGbFy6v/UH310L0ZIJ9ZETZoL2ociLovh0SOR8IJj53gl/kMCMa9Ey868cOaDZr7o2B/wANDFzXUKX8BjZ/xGu1S6+MeLk8HY6EDrurZzG2tCjOPNGCilYXATlWJXziMb2RryLwKKDhXAJ6ZhnMLSsC4LwHt4XnGrr4WlZhZxUTqlz8UzDe5FPgu3j6eUAnPNvJfME5jS1YLIIlfAVTQdVRx569wSNn6vnRi9lS/ux45Dyd95RhX9pMTtvC4Evkt5fneSwXOSTz3fvaD1Hgwn+loQljXHjUuroEC3GFYME3Ua7AVxDqHPXB83/Gb3zs/XaHCtbXY/sanOQQfzWYWxQA2aA48lsRzWQtAH1zad43S1QLpT99ouyVY8w1hLTCKRP6VLePb9Ds7Cu1eNwXupH4DdeevMPHKwTjAaFj4zXzRN8syDMXvD8txAHUfUfABKgleRWfPwPY60yCYI6OwzR9fzUz5GHy6dbM5lE19TfhIHOvjbZJMQ1jAY7YsidLfaZ2cD+2VWi5FApdYVh3QHgPsHdhJIZsNfHMMaP2oofEyS5iWiZBoJXaNpqcoHk82dfKdWqEedcVwUUv2GSBPFAGvygnMx7LtyRKjhN+RaFycLGtiXKMefAMu4FbG3cDAVYqj+/Yau1Z9lgXpjxco42Pqqb2bWLfdb5+U841QCGYz9otcSlg8ydAKGFjPGv/amuxILykrQ8L4yj4kcm7Dm52/x7i8zGRWTqQ9K5jJ0kyYfM9XXYi/h7A1voPKbumXLOspHgcaiSn4y3AV5/GjT4l3RptAUbZpVepPjuexaUwmbqAhUyAFZxDG4YlcQ13iyGKEd4Yqspn80rx2mkFtTUWyzwBF8AroDs5yL/2Zq2lS4+Im7FN8Wfyd7kfAXuYKqYVjHchjZefnn6nQwUPupT+WLhVOfl+eyyeYaYV3lpesUkbkpXSMtpNVwLpAmPCMy1OF1it5ssLpxJXN6oeJBiej9HNMiJ7u+9VB5aZESLyQ/jsFcn6Kg5IBDkqdOlnG/Q2c9qoLHDGLZFQxr6SKs0lEBiVLbopTxiPYZ+5zJMuYMOW51L10WFP5dL4Ifs7UB7UFS3+2ARxcPmuaRtlmtc6QXQZYfktvsOZ/wZ87uLywKWMtOuh+a/RTpxp5/gWQtN7ltzlY93dk23Zjx7Kl7k9+WT1hRN6EXvKl1LVbpFQJuAkM34eDkM14lMkio01SVO/jg/H3v058c2cPm9yZJY+vLMObKY9iu3sXJhsOOBwNzszqalUKdfG22OD3mY3HIYXiwMULUQo0XAbzsgGZ9wfzD19n6Om/Z0nRZfM/Ryc8ZO5KLTNyIkuVeEtHF7iqWJXe/DffYWFHyQ7Glyn9qa/hSTwrB4DpIWpHBD34V9ja4SEMBw2xgsXu0YmehWnJJqtsVml8DxfSynysXg28T9j52QoVOnqEN45WxazTzKLwRiNxI6UmfekvBvySawauMYzQn4Ub34MAxm+awORneCAUviYGO2ufUcnvp6DfZHNwmzqZrEF3CIiHAU8sOh///Ru2bIMdFjyZs2GzKfGshFv1FeaowGGW+QxsKnLBzjSsPYVT461gbqkyNcezhzKBFxUnbunbHOngmwhWoE1DsOA5yMwDwngKJlNZMQHLHgOciJe8hJpurtpOmpEqT1T620K6D/t7l4a+nfLfEfAwXLd/P+356ksYZrvQu5n4cnl4o5H6+6nQdxJfJYQhlXwcrq52YpvupEjyPDzeIJkpqc0475WDXZJnyiC2YnoO7tveBehwXotpki7z4z7kldr84++xP47D97QCGskTQ+K1Nz+coPKzCqdyGF+JeWac72D7ay2FRJnVKOrSMMSSnIMOQBdIzzs7LmCmChvQCDw/OQ0VVdgGqRswLrDDQD9bBZM3qI1o+x+tsqWTlj0GqOdcBQYD9+M2jbDFjlEy/kRXlWRs2xOronpyl4NKE4/sWLlCbzyEpyDcSH8MVKhG0o152TDYVZ16r8LDRy/BMDqGbkafLAXCIWyZTzvq4gQuoeoG/6UYyNMRaz8oWxY1GR0ilIAphPgY9HoRY/pZ80+IF8BKP8L3HWaRtBghxpRhnhL/gDoVXtWyylPuu1Aw8PZB1WTB3wTsUwnGWZY05nkq8UKjMdmShvx8ATv5FcYea3jHoAiov5S6vtWLfKkqqd90OsZKBaTMVDma43lBJTC/K/ttbI509y07DHDk97uASLcCufQmTCLuZoepXRjsT1BVlQOKJAJo/furZ57euPOzlTgyd8n9zDu/6hMKBt9uXUv6MdWTRUTXfI9AF7jfzYlw1F5UBkmXlee+uAfvGbsMZbPwAhrdA2YF+7I0usAcnLiZosQfYKD6C+hvfwYYVdDV/AzwqqAbqsKc5e8/x4B/EpNps6MJ1dQcc2HFOJP3RJ+tbEo4tb4oc/ubetXkflBiK5jQfNDaugNZGOfTZH4u1CpE5OdY+F9zJAWyZKnh1UepRluBbE7z4/BD4uaH2b/N0YnfmDcYxg68F/1UtngDV2Hd8EQkUv3Oz78ElCzLivSn9Bcpr9+qVFWlF18ld371Be4GQ8xyyf/QQbi1gFMxfkM2S6FAHPm0Ts97A4+nf99wcV9a8auPmq/cJ0MVQO1lV+j5dAxI7VwHW6zmanhwCvoETO5x8kfeJn+/dVRdlfx+1lTYe23r8jbgw9QFnm3IwCNZNoM/VpNps6eVUcCYiqj/jUWfMp8saBDoZkkvZoDhb8DY3sCXA/jsmjI/S11KjKWjg/rhfvD6lHSsmRumcyvn49GwawGvKCU8EwD6UmidSDOuw88l+EvdueNx84PqrzOFk9S5jqGFdlHkeRpw+BtafiwqCx8M1V2ogLdepSoxAXKs2mpbiSn9GfuRD8aNKSaPLZCEDOUbT8dpFyaLCTwhMY2fpu7Q+AKPqL+SRinbrK9fcVojJGe48dIPYxDY5k+VwZQCJa7+GbIST2jmpcpnG29OMNhwCgo47ksmrZLY7kLK6186F+qB1Zb9x1uqj+auo5zej+KWwc+A0/vOu4dnCYyvhZxBo6BzPtVCft5ZaPtASwaE7sAhXQ31O7QDzG21tdQGekpIX8I3yZaURsEn2BHA7tXBODUZtLqaRt1ubciuHZ2A9gy3XWzN6av2YXw/duxFQVt0nWZw0BobUHWNeOpSTrRthA2YY4R9nYpzV9pmdZYBdx5930dWnEhZ7wTswZl7wcfoo4d22+dNL0ehkkvh6+89NtdxE6K6QK2iSJOZm4vk50/C6j3GcV/ywBRiHWzF/gNM7dV0bsWYTHLpvLcxSbFVxjOSThcAsyswafJysOs41YLC6S/UHRZCFcY6bpiIZSajkLTUdnHh02RpXGFrurIETht0MQ91481lG7qbfaQNoJzwBRY5JR6+h/QnHAhOYFNCf40G9P7MAl5GSe4YYNmsPDSA3d3nW3eKDW5RDn/INFt5/YFGm9zOksdVDgDVbnSW2SKXOTEVthQ+W280FlBSJr18dWkd9CvQ1+gYWJl3h4LuRUlZqBt6ZcWjGzCo0g2w3VJqKga3zQQ7BpcngZCNWFt+B2njzXRra8q/dG412v4b/Eb77WbWsVLm/WNjmuVNhqYKTpIvo27Ox2JxsaVelumnYxelG1+ZrVb6YuS33lxyssLd4HM397SlVFBfhMVxMZR8tlkxjlhSx5XYFG7JxleWYvfDt4qsYUV5w2GMkUfSWmCtoTalZj7jGESOgfuoWoWjE5ymKpN9ARqGsQSPci9NlppRnBCsXB1kOWCcAOYOYHf3Sx7Kit1RsipzffUfGBF9hdvbIXjkhE+EL6Ue/jOS1WMZF50AafQlJoHCdcBA+GmX2xK2NVuAiVDtaHvFjYjeOphIEg+XnyqhIO9MrDhnWDMMzCOhVsMMZZdJlojvU/QR1CtWRAIDEqIXhRzsHNhdmSTY1sIawhIm6jP7SFXQuBLoF5MFAUsDrbf9/ESb+BnccGBZMihu49wxQB16P6GcSQxWmDIx+cGjgm8dOxawAmemKdUJneSufSYgZoBw3slssI0C7H1YF9hgO6hs6ufFFH+5EfKhT9IMIRxiCdnLeTPh2FSpefTho3vSrKl19pq5h7DFmYu6G1onJosxJ21X6K8mJks9KePCOjMM650WL9ZCLoeRftikQUFoG8bUauuFxaSlhvE3BWXs2BpyGO9AwlxhLwUyXA1eoRoub9UfA6bztnca4q1FSRMbvngApuvi4kGr+ltEuGMQRugLcPrlaGgLkBl8NVcLbTzVDh6ZQenkRZR4FeqQnY63VcmhIBb6Q6ldS+Uzi1NmcZlQavjLcC3ubFeOUoGD9OFQ39AX5QQC36SNkibPw+Rx1pGmVGysp4Ce+dY3EUGVXw1pYBVwSExJ/psvd0s5KXniSRbLDgYkS0xgKlbB1IOoj5qy8PMBhoAe0IamvHIKeQHxHWO7sARe2TWWAh14YRXIpeDmjA3rW4YecgQqnBCVElsmJH7n4agvgR+5DxJTsvXbhjI21Sx7AiczfGEa0oCrgA6QEMM1cYutMtZpPfm9vwSRX7Re/RwAYx2JkGVQAF/mIHfaWSoWKrxQ4r8VTLYbP4KecTCZErYm0Ce+c0nxofTgQE9jqHPQj86KmQueeDcr0l+sxqUP8FbtzbQWLMMow80QnFif5KGkxxC0cLQlw2Bpibe7YZXg408tsd1mmgxQ9CfROMYRJQ16BbhgsbJZL83xDDObBjEsDq6g72HxKrIdb+x0xMBjYzw22ii4Y4CMVI56FQT+zJYYdg2IdsJ1VL79dLusjtLZlEZEHgWR4c3CXrJPDZOZAm/zqZLY1XqWg3F400gIXleRntxszml1AqfIeDRpeZ7U0zfUPs9fCOZzmuUEa4mIqViPLGwZlZ3vYiG21c4IwZNLqQFU2NXa1CI7iLUvlLBvMhZyG4ZhTuU1VKhvjUPWj+2qIid6wAAOQ3gbbB+WwmGq0J9ARpsVG3NHaLAbxA4qFsb9DYyetWtYV2MZmLkqYyVeA8zeLiNJhe4ZIOuA2GW9cOkgzjw6F70hwdwEPN1wrOZm9u2/Evq715wKNs0FE76xFCg12CzlVSSkuPuJ5y2lFrgFdtoleJzdBSyTXGFDqEdevap/+obakTycAPLTpQ6CWZVxFL4BP3eQO70sfpjDGAaMdx0OS8mTq7FPepWcYLn5lkbU+YE14kwzA2Yvia/mGUWbkbDWfifEzMq4kM7FOy9OQiAHB1fsscluqpo88mriZxQ4GKEKtOc0ewaILbZhPEa85W7D4HCk2WAQVn8BsjAVcQsOzjAlnCqaJiw2dTpJhrfmvB7dnvXn4FzAbsWxhGeuVnlYkiphgAtFdHZCxVs7TscNvev4zV83wXT8Gol8bgj5SkZwhIJJghN7LIaOAa/UDsrzZ/9UvI72AvwW+0nFePCEhV90fovkZA51Q/pCuMCbK3bCFlZpJRa1IgXb7ykH9oAMX8CTk4H7/E7CBw9uwTh4BoXMyZGyCMOV8kwK+McjPx9LXo+8MHq1KMZ8RMGUh2+FtXFwy7Gi6K2EaxrBD8uwG3IXwWRSYhDAMJGyEs6pvCu323CoINzo10xMuGmygoJ5E8yfLv/D7Q08HEU/gGTZBw5SM4cGfoRRpRvwmffhFb0yO5GNwNGpU+/CPDgFXnWrfvBo5kinKGmeXuKOcDpB4dnVkzvgoEfifrYFw4guSodJC9ckJYWmFqG8FYAoPxICz5jCK7PTEBDPoiAWLBs2omC8LXGNbmLlYDDAC1hUtQ7gI4Z6ipY/ttM6n/tUG8zTqCBH+yMatsGWGLYgwRhIuwmieKltVpsMV+NamD8YuKW0bJzPn5eHq+HWY8ASXJQ5F8D2rJKm4HEgl+GCl3cNIJ+8wXIldFCH0Pw4+A19G1LGXxxkT55F80EvY7eViRVFPoN245cLYsZgJflk6TIdXKQB3E/SUFUlIWBBL2dzkd1Mhv3fLkjPyYKhL4dEhYMEmz7mHpV0KZX/MDcZmFZxix7G1tr4sy1cwg5HqYtgqX8nYFg/GmVKf2odntR9rlV9bRCRPQZY/dAmSFl/AI7uJgYzGgmDz7D4K7ftrRNiPDpncmHPntTltKFggO62mubKJbRLaW9tmVvcpNSn4fBjMD/SnnHAeIbghqvEkaeWXN13W8ZwyEjPx56kttPLSEpPh6nImc4qc+K0X8mXt5egh8+DKYgNDuY0/ijlK3r7CjYDwNfYitrAYUYlRpJ+yOlBJCQ13+OYF7ssmWBUeOA7zLc4YA/wQKn/kVb+H+Pc5sGOIukgoEiGnkYDYXzpEqzCEZCQ02lS5q+CTXltTRDbwkolZKFAx5eOgXf3nBzoSVzw52hHFsMpwgw317AueWtPKR40ugmrMlhY5viwS32c/G7wS8ULT+ZBKRgQphEMGKe2VdDx2l5aAdu2kzUE1AQwrV62YxZLIFbChSnJsJavl7J+EMPNKvBQlBK7HN+FVtni0vJW4+BKvWLPXPlqHHumiSsd/8PkG8w/dPARy5zx5Vz8csmpEmr+ePBqrCB/siV0QrFWP/lAWYhRsB+6slWaw4gGVTAaD0dfzk9IGrpBRX37yqLBQxROmR1CSJUN5RVdQ0E1PFUOu/hwOPRdGC2f6Ur6QyV46wQGKfof3rmy3wa7Oq3TbRTZiYWldKG0TASW8BveshNirH9Km9sE1qU7cCpUQQbx9tfG2I6Zmr4fTHKFZWMM4wMsuHaiZJTtKLwY59S+sro6Av3eo4ANyd2OwVpxP2DPJ8oKB6pLBnxr2ZYsJmaXAVIVKy8ftxWJHTUALrKlvJUq7okenzsqE83ExsWGitwK85Li6LZXQWgLUunZ55AWwJu8bqVAicevdfXXxL7t0gyTXtsBuzU5HSigrM2AsIDNDz0Z4dB2iN1PYeBkDojrSLe8YocJbRT4ZDedYMD4+2QM5ZVdMI8qwFisW8fbWkVfUO5a6wMDnx8MEjaxdkzKPKCAR6BOxf2tK26RujfvE8B+24EU2KJQ4lduB3ud1sE/wEeOU8gyAwTW+Wu+BBN82R0xuPVYrKQcS/W1F6dLC1G7bbiUvu9ge9hUlB2Odh40UBQOGOBeCjQHJV7UWt/ltKYKHH7B7J4ifdpZBlzZuwl8aw3r5Z8/qFvkfrXEC03p4WK0od4Nd7jTC62347oPHsBdrC7p1d82uSNyDET8/rYM0GRoOOVlScwqBL+Bp3X4tLTTA7JwIAhb1cgFVuDi0niLrSQ8Gqkj9gw2rmTzD/Mgx3iVwv4vmiPb/lv2GSB3hA/X45SCohxTNNPAMo2CbZpStxE7XXUYqmBcbAjjryEhxRsXo2P9wRzRa/QYPECvQQp0CDBZNh4kUvQlTb+JkUyWJVlcxfMbOhuGUQm64NpG5giwThODeXfECD1O06bZb2uSIdMyTsJzcDpBCUgnbRSUSu9UV4iDrTAR9SH0LwjssGvYJKmjBWn6/gtYowW0lYGnAS30fzEA5lZVVjujCeBK3ApJZ4dTX78YyCyyZbAxfOI+UZ+hDuLa2yNNjhzi0tvuBwSSNgi781dQccObpMkb3Z28mlLguVQbngQsX3eC6dsvbT8t4A98TyXR9bEusPi0oaKgtC8d2rwR1jZp72CbUTANPMX1NO62+Xh+ZkNzgsU3n/9izRcYaz5qbpHNLomdp0ZC9a9onfpn5zaG0PbaSxrHsDLbDVMGNtHI0rstLdrL1+fTs+tTik1y4oPPB4kEimTleDttw2jiwaf8JdhbtWPNBpTTLbYoLYHybYyIje+/WH4FFYACzcpnXh6LSv6Jp2Z1HHZJnVdeG4bPem44K9hcxH2xNTm8hNjPnzxK42+dD9CT8ZcDAAkZLH6aC3rkXcqDuc5xDm3DAFkkLp8JkVjiEEMUpkWMlgQwu0rmo9Nug21SNbFVu1XASu57dev3SQb68TsZrQImbyAvV5SUlemHt26WEMJ4wmUWWIITEoadOrv1udcOSMXC3Z3EUdgQ8tMBLqU/Q9cPSF0+shAPK9nV6yhdRbbjeRisNg5nr6JSen0fS+WwLctimHJ3gPbX93HOjDGZlQ7cE4KgMKQJHgDOdJVSZekkWQIOb6pASqvAY07BDN4XSKG/hMdrIU6HWGQFBd2FMahUAAv5D8GwbCoFKI06QSCxH/HRsY3rkepclPqjNRItUiO+d7D7g3coeOlxPMaBjsIrdpLmtbrG1wJ0W33N/hY4hmlIW4JHTN7PTCSOAeFPDAIp8YBO3diWscm+V7yws7+Q/hutJpDCnOk+9AyR36tXFuwCwc4MebMjo+26yHnCp52XatFP1p5kcVHD58jbOf46KJ6zFHR+zc0pMzMnJd6mre+dpdqbweyvZ8cGgOtEeuCJA+lHBLY0A4h9C/FCCQ/Tsd92nyI7Ok1FRXY1NaULaiBfcWv9JWcIG5eBAebaksEkk4ATA8LcgMmM3Z8yRjTVb/fF1LPwKXQa6gHTryPUXwTm7pT4rPtjz9WHDy+yQ6kt0tuOAZoODOU8dA462fFIbN1GcyXhl6ggPU2tst6q+I3rpCaHWN2tVZACg/kFsudZozHGbIdYa3xaxvB2UIPRdkR+t2V04vfy57bkohl4OgAOLblMhoHHJFxmHQE555kPKmUIp1UxXy22wLC/srlwYJbjSScglRONagXHdYQxDIsd+toJA2Q8cCMlt7G1BNiYW4tU/rMP3B9KdU9L35USqoDU5GSsm3kOUsPBhlagzFsY8tK0RqbZBm6H3Z9DujJSJiyahCdInTnJiDWkkb1DKQdOErgAMz+Iy0o+QasWOOuvWD1Z+mw7BsgIavpCbAeWOJpYlg3ijtWm0MZtZ6XKNumNjb0wMW8x79jajB72u9dj2EjK7daDDxNSgXQWz0bbpCyNtnPztbE4+b3Ire6PX/eEzvv9A/u0j5wh5zDXkgX12IJ85WzyAiYbrBrqAofQnWdT8nwAd6aYZb2REl9T9YDW2/Ca0gYMAZhUOB3eMGvak+9eClTGIEeNNe3dwLxjnpvjCh0dgvky0nYbHVemDX4wAxSyHwXxxm86YSW8Qwla75z2OMTR9GXpVJHNvE5HSGZ18hsC7DZdCeg6nKyMKaqJSgTd4CRhBlVUJdVbyojvWjCIYU6Mi00psKhIlpw12sBESWNZTIKfabStnZXKaHvqc6sCOk5+hekXLXNmy74KgGo9ND3zPr+l59EkmLiLUvyGq8M+MieHqKDz7sjeaTCf9AtW/DttBuNqLE1uMwY7MiE2OYPEfQJXYI38eqCLwONSE0NNyckWDHBXlBw/pV8M5lHgnA62lWWega8aGRLb4DSDIue6aSiioE5xZxOWJnots7ctA+Sa5OEXsX2Fp1+3VWGgSu1matzEitm4cPHL2/tJIX4EyY6lsbi0VD9YCiw9Z5zs1LsUQri9/jgVnGPxbLT9L3D9jS1QfNhdVHwRjLC/ZyQ7lInPavlLwpBbhcMvbvHVvWGZMdNEFYTfRLxP7IQJMgOU8nQKRa7PtLpW5RrCV2CMjHEm+TADMaDnEy+1ghOLEHCm6agtKCD58EJzJ9E2bhyCg5fRps46hoPVpyDglxDKpwIPvGTobAgnFG6Dn+biTvDicju2Sm0YjAA6tH2CW65kjzVvr4R8CGPRpRSIqoTAKZa8PVFfE9HUjdIX7AezAnt8YjkgVQY7dRI9zy5zKwPyZGTmPIiO+qbFwPMnS38ybNwOvPMc67VaAjj2nXV/uNJXhwOcuWv5MfW2CEd3bwSOK8AMnEGP3mSZmRUp8FL2sahmoWLYRzqonhdTRasosuvrlLkN+Rn6xQk0wML8Y0knHbu3xIp1eYk5Ph3VCKt8Kb5MBEHhQrz6xu7jXS/IrUBnFME7LylLKRSakFH5E6CQw9HusiV1DR9A1/ahaymQVySSl9PWwiZvLBWvbuiJ8TIdd2LTbguMkqlk2AiZV9JDd31HWBFsrMSMlo8n7exUWI47eBe6lv740XQVeSfUqD522ROpi69awCd3CxxJTSYUUwocReHwramBOkw5GLwBEthExxOf5QVhvEA1L9elrEHT+EbSPoyXlFmaE8yFcyJt6wwJNIMw/m48KSB+gJIOJBngo+t7gNs3rWqSGm9/cVDWKiVJBOCwujTTPyeomrWiAh/07ydpcDI63DedjSSVMRc0T0NES1ItDwwpO0NrUBldtjlPzve0YM6QltfekpRMHgUGGCwoED1xO8Tx1iU5JMSCOQsxHLhdy1mmPqc0X0TOhsfnTm6kP140YDoTioTV3CXT+rJ5R9sFv3gFjHarI6ZhTlLYoEnxt1Q+44KMkTrvDn6O85/Qn/ZmH2YlGLKG2ouvf7Gsk69+SbxV4/RkmzCudPr7Vi+YWVZyLFHUT4cHFWfbXxMf8SktPcRtaA5ls/y4B+uQ0TDzUzi0MtBf5qkrn7w6/+NyQu0CkOb6U31jKVCpyfB+5NzEJxWsDhif9EChTfDUD79FoghGklo5dE2ZV8EdIsS1NOaW+695Rm09vG77TMOIZNwOdpRbMmKU2FHzCdXvx+09JxMmGfbMEARfcRNgzkOe3pu3YwReKb8cD54ny+04Tvqhhw6FF+fm+KodF8o046ID22hc0bNQ5v8TGLl9MCcHrgQK/700vvIeWjovPQl14u0jIEH+CkTHGxFOKgRK3D965CWKaGstEeSrX+OG4DaSuMgyXyzRtCOG4X6D/+9w0PY/xI9qOQkTbr0GHf/3wB9KWicFmOmot4gWxA+MXDWQwg51oCYI9b8Ya9WA5aTS+DzmWKV/hjAxw/6mFveLGIT9DUsJC+MBnfi/MmYcaTe9ZsEhmnDrXGx1xqNs5pKneQKpdcPbBTc1bD3wleYLDtfD2L1lGPgwJLdLsSwaMHBL/d49fbGSZwiJi2FMa9oYbfz5V/nygufrYdVF6S5UdnzyqysdHqIeeuuy0uyf/LZqKSalH9eZdPl9dBEMkh0wJcEKNJhKCPG/NGH2vRQe8zLVzLY+1WNd27Yul0Pt8CPUg8emDBg4tkImSQSGjSJsa32/p5o51nVwaaG/iv9+gr/OtozCZArs5EG7hxq2daHzZ8+nD+asSYJENGp8ZQkk1+vx4w5ISP1t4ZulQCojchBMvPVBVki/EGOvELBSVhlNAAxlHIJK6R1a/sh6m8ypk8dVvg1azkid4VgKoyMl3I6HWTpdaJv/BMvgZran39Rw/StgEJ/jwGC0KykQx23kEzcf3LrpQKdefWAcbTdoUqMqNObFancgL/BvGNC/cTRZUoFjNJQe1PILftp4pK6n5gdqLgLf+YW35+WHA3lvugCTXtHF69dBcnoQffRLR2TlNgucviswQanuJf/yi2n87FdgoLyCaMDeJklq6nMa7fywmEL1o2mrvAK8dQq2YYNBMBg3OkSRpT9Df4SOHvrcUYna2rWU3/kd3Em/zl7SAUSzLXpPMMFKatAnQarlC/7wTiJ2wg61lvwqB/dpuyPuTOQG44a9nqFjoXAY+ICJGVdYJEivVXB9vw30QAPtJGGGoetfwxPzFoe1Js+mqZib/MJow5NnM2PNcS0vpqtn5dHLc1PrXS1AdNSk48sAa57dG70jLB5wRRBzlVS9d335ZWmnns7HX7I6pRYkvbH+pTq/+AvuSl6G1c6lAwdF4bq6kQc2rNO6n3Gm7XhOhpMZx9Ifv2KitDk1aT90nhKqgwRsHY8OeIQKxKVQV1zgaKEyGYeCFKeGgFH0gHx/IdX7MUG3bqEJtx00K938JnRI2C5LXx9wARitG5DKEJwyP1b2G1RDjZEHcWvAmcjP+cZPn0sqwHfScx1VFmWCXcHc2BszOpAO4TteVsPJrQ6FrBC4X6wK0TPA38DplNPAkptqwH9zqebheOl17O7eSHOuGpK0mJbNjYfhFI1Yvj3bt1Bxn9Vo41j7PsbOhp+p2KHzVbp2M1qOoZ7NTxZ/jm+Q8PiqjNVYZd3VC9Ft9xefaw0H92PhzKwZUfOS0GFJ8uG99808QnpgLgY2DhowWDMOYFyRiA86RWHe+wUjyyRIvvURCa+ivMgrmZR3VWYVXuMSkf8HGNsc9xMzjijzwDZOHwrpbjLoOA0MY0b0T+Pvk9EoXhU6m3k5v6Ng9i8ODfR/p08f2+SoSCxTJAApjp7HRI/F2H+aeDFD19kp6QATZ+J7tPow4D4YzKo72gfx3HEDwEAw3hUOHyKS8YkPvsZJSIcPPgfwWGmt6MN4ABn8Wvs67lHTR46GOqMlYCvpE5dkUFOHLpLGqMhSOxY/sgMd+IQLLWAUEWBev38f7fwCO+p0BneLZsB2EGNOf22zVvuZGe3ftxQD+210dotcGXzFtvrA+rV0cNNG7L4yhcXCBs2rnlyKid8O4XDtEkhp/w56HMHsdY4AT5boHzy2Kr77DGbH0h4/vHRsu+tgnjdXiLolS2CRX5A8tPAY9OZku298Jz2i/wodvck0GbHL3zLdbAf+Mz+R0PT7WFzLvJbf0QZlbIfm5j5cf2u9hdTpSnS2AyLzYmrsBxNtbURtWX+KRKE+AF24VfbBbLu43PY+vj2kDpXDAdGzji8s5tTTGBAb05pYrdDgwaBo16crqeEI/AOky2gw3nQ9VK8ZLYyL2WjbEHMBF1sshp9pENhWN9COlTXQ8zs4SEioRuKpS2WEvvVFIn9KSDp+P3n7aNT9CVLQz0EKHMBkMFTMSQOUW36m1QLUya8nK3Uf1QWeIO6fTEKndV9g+/ozIILyGbQjkzqbymAcSVwCUPovMbY+bYqOfZl0d3es4OchPRaT+pPHuEFfUsG321NnSiOlUdWAJgecjXXgJ9RZtHnTkDRq6PBZj/doiBLko754Vd541jRpcEMiDIi6Pbtoz6ov05YCNb8fg0l/t64uwbi4ob46K0bb2PLs+/Zbqt0OJytamtt9DQzUMJ54+5q+O9yQx3XZpU8fxv27R8GAfgpGtC9tCcoNAqaBr0D9qorq6h+kL36PiZphML0h1/4ZEu1/mQz1uDFBTC8J+xpd/YYa9WeSOj9oqMNhCm5bOBTEQAF79/dOyVSEp1SV8ZUj9YApJ2oFJHwXOdAT2VwAAAzSSURBVAV/IuRrHwZIVXBCIB+Dvm2nuxWZD80U7fi0hkJ1dc52EdwrfMAQ0UNCyYdaGRez0baEFOjWaBt1RI7W0vYVn5gCkNPBYHp8CUc254W1p4GnOeyclm2TfMue2Ed1R5+A5PG3YCBfRJmgG+nYDkvANpkfHvoW+t/DM/LD9PmTrb0+24FJTGdm3qA/BInnP9C32DKkuSglwrP7bbaBsHVXvyK9/n+huzyYtIiGE3HY9SRNS4xkLx4k3Ov/YnDZ1lEl0UnG0lt9om8UTu/dXBlsBbN9I9qJAaLReWvgMsd4zrUUCH1b7fYdtHc13n12KGlJmKdgLC1SdfvfT0r+8ME3IQV+4nqSQELd8/XXdHTnDse4CR9bhahn3ri25+akuLVH5BfPHICJ4wtYsGah+sfAmGuzzwiPMT54vgX8ZzDTZtN+jI+audnTgbKrprDAvXT9HmznVkXbkO0pgHbwgYdQ69CGH5Me/g3VPJVckufbFXzLwpH0BzzxDgwVqNbbaFdjAldUTcbqBAhv09U42lTUz0nuEyFPtnvfeZt5W6JHeHuF6xcYNBkHlgJ12oabHOFG+F2wO3Vl6U83dBhAz62eNrw2abVstM3mCoCcNN1pJMy6wtBP7vgMOms7vAAz+tRleGejQY8jv7u6neLoNB8r75f2WQYzlCowkNmgzUvA8bDJRExpKtM+xBDk8sr04PwGhsKdePDk32jJwUW0Gu7Ush2YoR4OPoexdxtAP4D6trlvwzHmbUp9Agxb4VEwPH7VEH6SluNEPVXwR8Zi+zsomsxT0eIPCz1w/YzeTbhClwq203gt/CkY6wGTBlb1cxrbvEs8Ncun+VZBILN5pmPRnlhd8BMHVVSmg8cKC0dpzkRvR6AyyGQEVuFNjRdA1FsdGaqmqoKlwG1baP+aNbjWNhJjO/UtJtO4OBL+5EhO7hupwJnxkaMvkz//SwyMUY4U1EmB8YCB2+Ivv6TSsnGU360rmpmar0ktgMOTo38OdlqbYCibFHg7REJ1sRJ+7Mpm7YFJxHLSjFHwonIRzEPOAzJQjrNbqdTta40w6CPU1/hvESb3e7gWt5JC4a3Y8rbtrZdVD2Lhq1pK5es3kwqCkdNFWIgr8AkTHXikbrlYJZPO4tK5VQZOdo01GCvVGHxv40WSL2nlum1EWOStguE7G2YCu83xZccCWBkijLdaXaGzgu8kbUn9Thrvr0abJzjvO8XX4h7FX3IVjUF7gSsWluTJzWgh3YBtpPJZ06m5QNa/2ZE96xW2AjhxdjmI8CYGIK4h2RGsVenmCDC94qFn0MgbfoBxyBJFcljSF8DV4dCs6qt6z28unPSboAmVd2NS485lOpM6ERbwANMbMPkiGnThJWCAyfuaT7HxQtN+Q8mLqq/skeVtTiJOWfo9YHoOlfhwLREORTU5FDSfBMLfiT+H4wr9RJE5uNf7nxQ4sCfjU143zamo8FH9kK4wLekB01Q8ckWngxkMBki4V9Nx6wMPCQnidzeiT2gp8yEqvDfCkp7Yihm8Dh38Lenat+Rr3EOH6/c4NtQ+99ahuNLZkyIO3HZpEKnCcjVUAsm3025oMH72MEj1PXBYYz/QfVjRdf0gLXskajqWrN6xtw0nDbaSTuBJ1Llvx3Jiu8R2CA4HahtixpOop/8JiMxTXUmBGJ+sAxx5w03U7fShSaVAlv7gnOALylcXOrKvO/uuUgo0LARHPT1zKRC04/vGXbvS2dNnUrAIap8kUqAWyCU91PD4nroDs1ZNGw4znBMsVKAf68EMlXgZp4rOrjqao09uACP5F/p4zh/bvcXDpwaosLATpFAwPV8umHoQ1/v4+htz6mjQzFPdRrQRfRSpp3CglvaFamnjYw2xLGl8Yo9YlUZ2SOBtE9ATVWnyAktc0oRnCattWnwMapqNbiNcJlZeiK0Uu/Zxdl0pFRqQAruPHEnDp96AHGhaghTIhs+GXn9P9ZV9f4sMyUXEeNiCxlX+BJz1F64YIFeFRX7QpZfTgEkVYMLxt5hY+lNS1OpG4+UfXtF/cTwKJ9iv8TNvBXPAjRq+6uOMxOgrHIjR7ygn9CieRkx+Wtq+ZEicJ04a1r4Ye7U7ogBrKds/NEq4UVLVUcWpC3QgAe5fuw6Pnm9pdepqSn96aI0/kgOnn45mJiMCsTLyNLY4m7EVdoFYdP6w0XbjEZwbgOG1DIwbRdQb2i4DhqkneGjU/4ItMQ4z4tuYulXgJcIYBAb4j7g/PA93h6cRGwenFxIZVHql7XMzw2v5Z1/Cy3FCUKCtB45zIoyf8R288focJK2A80JJckLHBjf3dMZ3rzO3nrEcMhCAXz39X6uvLPlP6G/SWMGrJI3f/kscZvyz2y0613ralVdT3/HlzVt0MAowxHp4fbkGesl3Yvie0J/jbi0n6V8AltEbi4ezppgHC6IBfQPjXH0NpMgVYKSf407yBqgg9kGerCMtBE8TWD2MnDw8ntsDjHMw/BGcRVrkRVo870NnFXm5PAo0U6B9T4Gb8cArrrnvUn5oCUS3C1xtN/kGxurV5g2Mwt59wLN0zB/Y1oX1zQGDnkmP+TGC0E/IWY9jCzsdUmBPcNWWWKfxPWqus3PlSioZdRb5AnwPGQ9r4EaKHgq9f0SJj9IA1rGz6r5PwKB+AYew94OJ5TgSuFldIaBvUziAUAIHEAImIvDEorSj6ETc55U4ePDzK364YxzKx6qBd1Z8+dDTdcapK+vfPAbYsUdFh8SuWbnb3ujtWR6i3mOgXKZreeOZMTqQJIwQBAkwva5Dh4JfYcZA+tPDjXPea1j8F1qwIA3p7xgWQwoOUqRLf0gl4xL1imnhiQO0UO0RysN7xIWl7AGJJ70I41zxxx9d0+vLtGB15Mw7agzqftZa0Auv5YmJQDW9nYYw9YeQ8qgLmGcJPntjRPQHlIH46484eKGmHma6Ija90WnikKfoq6/S71sA8cKpS4HMGU1b0Kze/wZ2TCvAvdxBhxS456tVVLdrNyQsbH3D4V1+oT9G06Y53I8lVM9G24bA+8ZZMNqGRMrX48JwloDnMvlA5OOQOvheQo0n/k+++sVXwEg9GJW60+CBzMbMP/xnsjSsaiz5xf6Yn8bSWSIXYgRtL2BG6QWPAmlRoGMxQL7wLulhjG5z2KfVkpaZMV9COGzY8Sl4KXtlNvQ/R/L7r2mZJe3vdQe/Ahw28Ui7aFwBGG0f2bKZDqxbCz4vdaGLOYu/c0b2bzzEVdpOP/gKmIKXaNLvB5OC2YhL2iVrhjlUJOz4aESyZC/Oo4AVBdpgRFpV5yDNn/MCGODX2LdiZYckmOkf3vbY/c03uCGy9bAWzINfPdOA1QECKbKweygN5h0KLpX43ZBM8RJ45Ah2gNs//5Iaaw9/FtHCr6Wo8eSIXjpvK4U1+OMzfgLBDY5WXUr3yajCvvSELE+W5MV5FLCiQMc5BIlh+eEDe7WJt/+39AcvcXyCGCsb92mQ3tAIJrhq9ZExw1bFJWX6Y0d4ha9P3q+F5h94bG+WGSQ4E67bhyupG9a/9Nk9kzN385RZ7ce/FN9eGD7zUVzkhxQu7sIfv3/Ll7Kzg4v5sDmBAVZhQcehlRc8CjikQMdjgOAseqPxvJ5HH1DIwRUhq4aGSezevKm2djhvv7IQYO0fGfx3uECPx6tDYVfbdK2+Vmzbvn5PFrA6MUCsmr+fhkx5k7r1XgOr76tx4vt9bInPwtYYPc48yw05TUY6mio29qBqSJle8CjgkAJpaKYdQvSyeRSwo0D5zGIcKg2ESvBCmLnAH546G1JhkVnM1OmZJxw2UHjo4o8ZqBn0/eChk/E2sbMX446V8j5ObQrERs+pTQWv9e1DAb4H3kUUUJBwE8Q3AZIhtrH6cDCyPvgrhKQN3V7CEDUFRZb4xBEwUHhSEaugV1xEquEDOlK70rEjgvZpsVdrB6NAwujqYNh56JwiFMBD6aNycigHRtNKy4MxfA8wtl7wKFKMzyI4JMCJGILiayXwQajTAdz+2AVv0TvxPi48PR9ooFXwvkx42N0LHgXSoIDHANMglpf1eFEADBEOlehovqRCXcNpFkyjc6JKwvwGg/bUGrS2HsyumhmeG+Xh8WqQV49HAY8CHgU8CngU8CjgUcCjgEcBjwIeBTwKeBTwKOBRwKOARwGPAh4FPAp4FPAo4FHAo4BHAY8CHgU8CngU8CjgUcCjgEcBjwIeBTwKeBTwKOBRwKOARwGPAh4FPAp4FPAo4FHAo4BHAY8CHgU8CngU8CjgUcCjgEcBjwIeBTwKeBTwKOBRwKOARwGPAh4FPAp4FPAo4FHAo4BHAY8CHgU8CngU8CjgUcCjgEcBjwIeBTwKeBTwKOBRwKOARwGPAh4FPAp4FPAocGpR4P8D562jRcudh/kAAAAASUVORK5CYII=
+  mediatype: image/png
+name: project-quay
+schema: olm.package
+---
+entries:
+- name: quay-operator.v3.10.0-nightly.20230913
+  skipRange: '>=3.6.x <3.10.0-nightly.20230913'
+- name: quay-operator.v3.10.0-nightly.20230914
+  replaces: quay-operator.v3.10.0-nightly.20230913
+  skipRange: '>=3.6.x <3.10.0-nightly.20230914'
+- name: quay-operator.v3.10.0-nightly.20230915
+  replaces: quay-operator.v3.10.0-nightly.20230914
+  skipRange: '>=3.6.x <3.10.0-nightly.20230915'
+- name: quay-operator.v3.10.0-nightly.20230916
+  replaces: quay-operator.v3.10.0-nightly.20230915
+  skipRange: '>=3.6.x <3.10.0-nightly.20230916'
+- name: quay-operator.v3.10.0-nightly.20230917
+  replaces: quay-operator.v3.10.0-nightly.20230916
+  skipRange: '>=3.6.x <3.10.0-nightly.20230917'
+- name: quay-operator.v3.10.0-nightly.20230918
+  replaces: quay-operator.v3.10.0-nightly.20230917
+  skipRange: '>=3.6.x <3.10.0-nightly.20230918'
+- name: quay-operator.v3.10.0-nightly.20230919
+  replaces: quay-operator.v3.10.0-nightly.20230918
+  skipRange: '>=3.6.x <3.10.0-nightly.20230919'
+- name: quay-operator.v3.10.0-nightly.20230920
+  replaces: quay-operator.v3.10.0-nightly.20230919
+  skipRange: '>=3.6.x <3.10.0-nightly.20230920'
+- name: quay-operator.v3.10.0-nightly.20230921
+  replaces: quay-operator.v3.10.0-nightly.20230920
+  skipRange: '>=3.6.x <3.10.0-nightly.20230921'
+- name: quay-operator.v3.10.0-nightly.20230922
+  replaces: quay-operator.v3.10.0-nightly.20230921
+  skipRange: '>=3.6.x <3.10.0-nightly.20230922'
+- name: quay-operator.v3.10.0-nightly.20230923
+  replaces: quay-operator.v3.10.0-nightly.20230922
+  skipRange: '>=3.6.x <3.10.0-nightly.20230923'
+- name: quay-operator.v3.10.0-nightly.20230925
+  replaces: quay-operator.v3.10.0-nightly.20230923
+  skipRange: '>=3.6.x <3.10.0-nightly.20230925'
+- name: quay-operator.v3.10.0-nightly.20230926
+  replaces: quay-operator.v3.10.0-nightly.20230925
+  skipRange: '>=3.6.x <3.10.0-nightly.20230926'
+- name: quay-operator.v3.10.0-nightly.20230928
+  replaces: quay-operator.v3.10.0-nightly.20230926
+  skipRange: '>=3.6.x <3.10.0-nightly.20230928'
+- name: quay-operator.v3.10.0-nightly.20230929
+  replaces: quay-operator.v3.10.0-nightly.20230928
+  skipRange: '>=3.6.x <3.10.0-nightly.20230929'
+- name: quay-operator.v3.10.0-nightly.20230930
+  replaces: quay-operator.v3.10.0-nightly.20230929
+  skipRange: '>=3.6.x <3.10.0-nightly.20230930'
+- name: quay-operator.v3.10.0-nightly.20231002
+  replaces: quay-operator.v3.10.0-nightly.20230930
+  skipRange: '>=3.6.x <3.10.0-nightly.20231002'
+- name: quay-operator.v3.10.0-nightly.20231005
+  replaces: quay-operator.v3.10.0-nightly.20231002
+  skipRange: '>=3.6.x <3.10.0-nightly.20231005'
+- name: quay-operator.v3.10.0-nightly.20231006
+  replaces: quay-operator.v3.10.0-nightly.20231005
+  skipRange: '>=3.6.x <3.10.0-nightly.20231006'
+- name: quay-operator.v3.10.0-nightly.20231007
+  replaces: quay-operator.v3.10.0-nightly.20231006
+  skipRange: '>=3.6.x <3.10.0-nightly.20231007'
+- name: quay-operator.v3.10.0-nightly.20231008
+  replaces: quay-operator.v3.10.0-nightly.20231007
+  skipRange: '>=3.6.x <3.10.0-nightly.20231008'
+- name: quay-operator.v3.10.0-nightly.20231009
+  replaces: quay-operator.v3.10.0-nightly.20231008
+  skipRange: '>=3.6.x <3.10.0-nightly.20231009'
+- name: quay-operator.v3.10.0-nightly.20231010
+  replaces: quay-operator.v3.10.0-nightly.20231009
+  skipRange: '>=3.6.x <3.10.0-nightly.20231010'
+- name: quay-operator.v3.10.0-nightly.20231011
+  replaces: quay-operator.v3.10.0-nightly.20231010
+  skipRange: '>=3.6.x <3.10.0-nightly.20231011'
+- name: quay-operator.v3.10.0-nightly.20231012
+  replaces: quay-operator.v3.10.0-nightly.20231011
+  skipRange: '>=3.6.x <3.10.0-nightly.20231012'
+- name: quay-operator.v3.10.0-nightly.20231013
+  replaces: quay-operator.v3.10.0-nightly.20231012
+  skipRange: '>=3.6.x <3.10.0-nightly.20231013'
+- name: quay-operator.v3.10.0-nightly.20231014
+  replaces: quay-operator.v3.10.0-nightly.20231013
+  skipRange: '>=3.6.x <3.10.0-nightly.20231014'
+name: candidate-3.10
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.9.0-nightly.20230711
+  skipRange: '>=3.6.x <3.9.0-nightly.20230711'
+- name: quay-operator.v3.9.0-nightly.20230712
+  replaces: quay-operator.v3.9.0-nightly.20230711
+  skipRange: '>=3.6.x <3.9.0-nightly.20230712'
+- name: quay-operator.v3.9.0-nightly.20230714
+  replaces: quay-operator.v3.9.0-nightly.20230712
+  skipRange: '>=3.6.x <3.9.0-nightly.20230714'
+- name: quay-operator.v3.9.0-nightly.20230715
+  replaces: quay-operator.v3.9.0-nightly.20230714
+  skipRange: '>=3.6.x <3.9.0-nightly.20230715'
+- name: quay-operator.v3.9.0-nightly.20230716
+  replaces: quay-operator.v3.9.0-nightly.20230715
+  skipRange: '>=3.6.x <3.9.0-nightly.20230716'
+- name: quay-operator.v3.9.0-nightly.20230717
+  replaces: quay-operator.v3.9.0-nightly.20230716
+  skipRange: '>=3.6.x <3.9.0-nightly.20230717'
+- name: quay-operator.v3.9.0-nightly.20230720
+  replaces: quay-operator.v3.9.0-nightly.20230717
+  skipRange: '>=3.6.x <3.9.0-nightly.20230720'
+- name: quay-operator.v3.9.0-nightly.20230721
+  replaces: quay-operator.v3.9.0-nightly.20230720
+  skipRange: '>=3.6.x <3.9.0-nightly.20230721'
+- name: quay-operator.v3.9.0-nightly.20230722
+  replaces: quay-operator.v3.9.0-nightly.20230721
+  skipRange: '>=3.6.x <3.9.0-nightly.20230722'
+- name: quay-operator.v3.9.0-nightly.20230723
+  replaces: quay-operator.v3.9.0-nightly.20230722
+  skipRange: '>=3.6.x <3.9.0-nightly.20230723'
+- name: quay-operator.v3.9.0-nightly.20230724
+  replaces: quay-operator.v3.9.0-nightly.20230723
+  skipRange: '>=3.6.x <3.9.0-nightly.20230724'
+- name: quay-operator.v3.9.0-nightly.20230812
+  replaces: quay-operator.v3.9.0-nightly.20230724
+  skipRange: '>=3.6.x <3.9.0-nightly.20230812'
+name: candidate-3.9
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.7.0-rc.1
+  skipRange: '>=3.3.x <3.7.0-rc.1'
+- name: quay-operator.v3.7.0-rc.2
+  replaces: quay-operator.v3.7.0-rc.1
+  skipRange: '>=3.3.x <3.7.0-rc.2'
+- name: quay-operator.v3.7.0-rc.3
+  replaces: quay-operator.v3.7.0-rc.2
+  skipRange: '>=3.3.x <3.7.0-rc.3'
+- name: quay-operator.v3.7.0-rc.4
+  replaces: quay-operator.v3.7.0-rc.3
+  skipRange: '>=3.3.x <3.7.0-rc.4'
+name: preview-3.7
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.8.0-rc.1
+  skipRange: '>=3.3.x <3.8.0-rc.1'
+- name: quay-operator.v3.8.0-rc.2
+  replaces: quay-operator.v3.8.0-rc.1
+  skipRange: '>=3.6.x <3.8.0-rc.2'
+- name: quay-operator.v3.8.0-rc.3
+  replaces: quay-operator.v3.8.0-rc.2
+  skipRange: '>=3.6.x <3.8.0-rc.3'
+- name: quay-operator.v3.8.0-rc.4
+  replaces: quay-operator.v3.8.0-rc.3
+  skipRange: '>=3.6.x <3.8.0-rc.4'
+- name: quay-operator.v3.8.0-rc.5
+  replaces: quay-operator.v3.8.0-rc.4
+  skipRange: '>=3.6.x <3.8.0-rc.5'
+- name: quay-operator.v3.8.0-rc.6
+  replaces: quay-operator.v3.8.0-rc.5
+  skipRange: '>=3.6.x <3.8.0-rc.6'
+- name: quay-operator.v3.8.0-rc.7
+  replaces: quay-operator.v3.8.0-rc.6
+  skipRange: '>=3.6.x <3.8.0-rc.7'
+name: preview-3.8
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.10.0
+  skipRange: '>=3.6.x <3.10.0'
+- name: quay-operator.v3.10.1
+  replaces: quay-operator.v3.10.0
+  skipRange: '>=3.6.x <3.10.1'
+- name: quay-operator.v3.10.2
+  replaces: quay-operator.v3.10.1
+  skipRange: '>=3.6.x <3.10.2'
+- name: quay-operator.v3.10.3
+  replaces: quay-operator.v3.10.2
+  skipRange: '>=3.6.x <3.10.3'
+- name: quay-operator.v3.10.4
+  replaces: quay-operator.v3.10.3
+  skipRange: '>=3.6.x <3.10.4'
+- name: quay-operator.v3.10.5
+  replaces: quay-operator.v3.10.4
+  skipRange: '>=3.6.x <3.10.5'
+- name: quay-operator.v3.10.6
+  replaces: quay-operator.v3.10.5
+  skipRange: '>=3.6.x <3.10.6'
+name: stable-3.10
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.11.0
+  skipRange: '>=3.6.x <3.11.0'
+- name: quay-operator.v3.11.1
+  replaces: quay-operator.v3.11.0
+  skipRange: '>=3.6.x <3.11.1'
+- name: quay-operator.v3.11.2
+  replaces: quay-operator.v3.11.1
+  skipRange: '>=3.6.x <3.11.2'
+- name: quay-operator.v3.11.3
+  replaces: quay-operator.v3.11.2
+  skipRange: '>=3.6.x <3.11.3'
+- name: quay-operator.v3.11.4
+  replaces: quay-operator.v3.11.3
+  skipRange: '>=3.6.x <3.11.4'
+- name: quay-operator.v3.11.5
+  replaces: quay-operator.v3.11.4
+  skipRange: '>=3.6.x <3.11.5'
+- name: quay-operator.v3.11.6
+  replaces: quay-operator.v3.11.5
+  skipRange: '>=3.6.x <3.11.6'
+name: stable-3.11
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.12.0
+  skipRange: '>=3.6.x <3.12.0'
+- name: quay-operator.v3.12.1
+  replaces: quay-operator.v3.12.0
+  skipRange: '>=3.6.x <3.12.1'
+- name: quay-operator.v3.12.2
+  replaces: quay-operator.v3.12.1
+  skipRange: '>=3.6.x <3.12.2'
+- name: quay-operator.v3.12.3
+  replaces: quay-operator.v3.12.2
+  skipRange: '>=3.6.x <3.12.3'
+name: stable-3.12
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.6.2
+  skipRange: '>=3.5.x <3.6.2'
+name: stable-3.6
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.7.0
+  skipRange: '>=3.4.x <3.7.0'
+- name: quay-operator.v3.7.1
+  replaces: quay-operator.v3.7.0
+  skipRange: '>=3.3.x <3.7.1'
+- name: quay-operator.v3.7.10
+  replaces: quay-operator.v3.7.9
+  skipRange: '>=3.3.x <3.7.10'
+- name: quay-operator.v3.7.11
+  replaces: quay-operator.v3.7.10
+  skipRange: '>=3.3.x <3.7.11'
+- name: quay-operator.v3.7.2
+  replaces: quay-operator.v3.7.1
+  skipRange: '>=3.3.x <3.7.2'
+- name: quay-operator.v3.7.3
+  replaces: quay-operator.v3.7.2
+  skipRange: '>=3.3.x <3.7.3'
+- name: quay-operator.v3.7.4
+  replaces: quay-operator.v3.7.3
+  skipRange: '>=3.3.x <3.7.4'
+- name: quay-operator.v3.7.5
+  replaces: quay-operator.v3.7.4
+  skipRange: '>=3.3.x <3.7.5'
+- name: quay-operator.v3.7.6
+  replaces: quay-operator.v3.7.5
+  skipRange: '>=3.3.x <3.7.6'
+- name: quay-operator.v3.7.7
+  replaces: quay-operator.v3.7.6
+  skipRange: '>=3.3.x <3.7.7'
+- name: quay-operator.v3.7.8
+  replaces: quay-operator.v3.7.7
+  skipRange: '>=3.3.x <3.7.8'
+- name: quay-operator.v3.7.9
+  replaces: quay-operator.v3.7.8
+  skipRange: '>=3.3.x <3.7.9'
+name: stable-3.7
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.8.0
+  skipRange: '>=3.6.x <3.8.0'
+- name: quay-operator.v3.8.1
+  replaces: quay-operator.v3.8.0
+  skipRange: '>=3.6.x <3.8.1'
+- name: quay-operator.v3.8.10
+  replaces: quay-operator.v3.8.8
+  skipRange: '>=3.6.x <3.8.10'
+- name: quay-operator.v3.8.11
+  replaces: quay-operator.v3.8.10
+  skipRange: '>=3.6.x <3.8.11'
+- name: quay-operator.v3.8.12
+  replaces: quay-operator.v3.8.11
+  skipRange: '>=3.6.x <3.8.12'
+- name: quay-operator.v3.8.13
+  replaces: quay-operator.v3.8.12
+  skipRange: '>=3.6.x <3.8.13'
+- name: quay-operator.v3.8.2
+  replaces: quay-operator.v3.8.1
+  skipRange: '>=3.6.x <3.8.2'
+- name: quay-operator.v3.8.3
+  replaces: quay-operator.v3.8.2
+  skipRange: '>=3.6.x <3.8.3'
+- name: quay-operator.v3.8.4
+  replaces: quay-operator.v3.8.3
+  skipRange: '>=3.6.x <3.8.4'
+- name: quay-operator.v3.8.5
+  replaces: quay-operator.v3.8.4
+  skipRange: '>=3.6.x <3.8.5'
+- name: quay-operator.v3.8.6
+  replaces: quay-operator.v3.8.5
+  skipRange: '>=3.6.x <3.8.6'
+- name: quay-operator.v3.8.7
+  replaces: quay-operator.v3.8.6
+  skipRange: '>=3.6.x <3.8.7'
+- name: quay-operator.v3.8.8
+  replaces: quay-operator.v3.8.7
+  skipRange: '>=3.6.x <3.8.8'
+name: stable-3.8
+package: project-quay
+schema: olm.channel
+---
+entries:
+- name: quay-operator.v3.9.0
+  skipRange: '>=3.6.x <3.9.0'
+- name: quay-operator.v3.9.1
+  replaces: quay-operator.v3.9.0
+  skipRange: '>=3.6.x <3.9.1'
+- name: quay-operator.v3.9.2
+  replaces: quay-operator.v3.9.1
+  skipRange: '>=3.6.x <3.9.2'
+- name: quay-operator.v3.9.3
+  replaces: quay-operator.v3.9.2
+  skipRange: '>=3.6.x <3.9.3'
+- name: quay-operator.v3.9.4
+  replaces: quay-operator.v3.9.3
+  skipRange: '>=3.6.x <3.9.4'
+- name: quay-operator.v3.9.5
+  replaces: quay-operator.v3.9.4
+  skipRange: '>=3.6.x <3.9.5'
+- name: quay-operator.v3.9.6
+  replaces: quay-operator.v3.9.5
+  skipRange: '>=3.6.x <3.9.6'
+name: stable-3.9
+package: project-quay
+schema: olm.channel
+---
+image: quay.io/operatorhubio/project-quay@sha256:d036c898dcb371283da7059798a7ccf5b757771aa972c183e8310211cce5b724
+name: quay-operator.v3.10.0
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:d036c898dcb371283da7059798a7ccf5b757771aa972c183e8310211cce5b724
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:97e5bfdca007faa674fc94ee6473f9fa6226c9cdd00e9a74e93d6eddbe051961
+name: quay-operator.v3.10.0-nightly.20230913
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230913
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:97e5bfdca007faa674fc94ee6473f9fa6226c9cdd00e9a74e93d6eddbe051961
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230913
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:8189977dfb248520ade3260f38b9e61203027a6f1dcc6a15a6187a47bfa28f6c
+name: quay-operator.v3.10.0-nightly.20230914
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230914
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:8189977dfb248520ade3260f38b9e61203027a6f1dcc6a15a6187a47bfa28f6c
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230914
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:0e4768640e66623fcbc09b3253a397271c7de8b9cddebb540b755985bfcc5bb2
+name: quay-operator.v3.10.0-nightly.20230915
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230915
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:0e4768640e66623fcbc09b3253a397271c7de8b9cddebb540b755985bfcc5bb2
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230915
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:cc74c8b31090c90e61ac9ead29fab1f03b0a5061c2da2f4b43db738196bc63bc
+name: quay-operator.v3.10.0-nightly.20230916
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230916
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:cc74c8b31090c90e61ac9ead29fab1f03b0a5061c2da2f4b43db738196bc63bc
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230916
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:5625efbd9bbabdfbdd4431d7745e5592d43ba0e258519a4756e0b4de54d35712
+name: quay-operator.v3.10.0-nightly.20230917
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230917
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:5625efbd9bbabdfbdd4431d7745e5592d43ba0e258519a4756e0b4de54d35712
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230917
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:ba298c85ab1af8f64b4f0ec5e590a2fbef8809f05c6c94b75069c2c44aaacfb8
+name: quay-operator.v3.10.0-nightly.20230918
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230918
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:ba298c85ab1af8f64b4f0ec5e590a2fbef8809f05c6c94b75069c2c44aaacfb8
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230918
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:2ee9d7d68183da39d5a0d23dbda8013ad56c7539aa4751db6a616befc336b1f4
+name: quay-operator.v3.10.0-nightly.20230919
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230919
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:2ee9d7d68183da39d5a0d23dbda8013ad56c7539aa4751db6a616befc336b1f4
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230919
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b47f3c442d3f6f045a7d75f023beb393164179f4250ca2536312df7574f66a3c
+name: quay-operator.v3.10.0-nightly.20230920
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230920
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b47f3c442d3f6f045a7d75f023beb393164179f4250ca2536312df7574f66a3c
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230920
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b1643553698188a70b4fd77a46c2437cf17d0679d346f65224f17951d4712ef9
+name: quay-operator.v3.10.0-nightly.20230921
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230921
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b1643553698188a70b4fd77a46c2437cf17d0679d346f65224f17951d4712ef9
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230921
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:abd3eed749462ec7194203549c587d09a2bcc6bdbb76acc50417242316c9b820
+name: quay-operator.v3.10.0-nightly.20230922
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230922
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:abd3eed749462ec7194203549c587d09a2bcc6bdbb76acc50417242316c9b820
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230922
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:2eb207db88d820b403d9569bcf671d995021a4cd507caa06cf1df6dc9c686857
+name: quay-operator.v3.10.0-nightly.20230923
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230923
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:2eb207db88d820b403d9569bcf671d995021a4cd507caa06cf1df6dc9c686857
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230923
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:d0f8b715b573d51a2d5d599c913870a43e53451fbf288d5ecb6311e2d0deac1c
+name: quay-operator.v3.10.0-nightly.20230925
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230925
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:d0f8b715b573d51a2d5d599c913870a43e53451fbf288d5ecb6311e2d0deac1c
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230925
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:c153dc11685d5be4c40bc1b076c55570d105176d9fbec5f4f695a348113777e8
+name: quay-operator.v3.10.0-nightly.20230926
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230926
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:c153dc11685d5be4c40bc1b076c55570d105176d9fbec5f4f695a348113777e8
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230926
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:86fa6d670c86e6b5a5d453988f0d73005d6a8dd00559780a774b95d4b8427bda
+name: quay-operator.v3.10.0-nightly.20230928
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230928
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:86fa6d670c86e6b5a5d453988f0d73005d6a8dd00559780a774b95d4b8427bda
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230928
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b177d63be7ffb60fcf83bde30ec09d9f7bff09eb5a127b0cfe44abb1706bf3a3
+name: quay-operator.v3.10.0-nightly.20230929
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230929
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b177d63be7ffb60fcf83bde30ec09d9f7bff09eb5a127b0cfe44abb1706bf3a3
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230929
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:dc6c56d08ce9616ec761a83f4c79f6ee8fbfdcc2a312a687c51c45178465bd93
+name: quay-operator.v3.10.0-nightly.20230930
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20230930
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:dc6c56d08ce9616ec761a83f4c79f6ee8fbfdcc2a312a687c51c45178465bd93
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20230930
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:e96014129c281c56990b4c0cc5c4fceeaf36be6bccd71701b7f2c2adb14eb550
+name: quay-operator.v3.10.0-nightly.20231002
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231002
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:e96014129c281c56990b4c0cc5c4fceeaf36be6bccd71701b7f2c2adb14eb550
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231002
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:6dd34c6f7e520238c77c1451f0acb8ec120ac691a1bad2bc48061072c641478e
+name: quay-operator.v3.10.0-nightly.20231005
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231005
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:6dd34c6f7e520238c77c1451f0acb8ec120ac691a1bad2bc48061072c641478e
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231005
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:06d4113353b51df345e762a80997252aabe73aa9cd382654a2929e33fc3bed78
+name: quay-operator.v3.10.0-nightly.20231006
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231006
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:06d4113353b51df345e762a80997252aabe73aa9cd382654a2929e33fc3bed78
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231006
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:39706d97899a1cba3fd1f3476cfabea379c6470bbfb2da95db07ae19e9708c1b
+name: quay-operator.v3.10.0-nightly.20231007
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231007
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:39706d97899a1cba3fd1f3476cfabea379c6470bbfb2da95db07ae19e9708c1b
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231007
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:73f9b253c4c82fa40d7b932768670f049b6c692588857098c535fe476f943ea1
+name: quay-operator.v3.10.0-nightly.20231008
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231008
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:73f9b253c4c82fa40d7b932768670f049b6c692588857098c535fe476f943ea1
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231008
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:8dda476daea90041ea5192a1ba85fdf07c8efeca1919592b25c302098f7ff588
+name: quay-operator.v3.10.0-nightly.20231009
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231009
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:8dda476daea90041ea5192a1ba85fdf07c8efeca1919592b25c302098f7ff588
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231009
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:f74de65a0c8bc29a5a5045770b70d78bfcc060a105267e4b14d87ae67f1ec1e4
+name: quay-operator.v3.10.0-nightly.20231010
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231010
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:f74de65a0c8bc29a5a5045770b70d78bfcc060a105267e4b14d87ae67f1ec1e4
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231010
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:5c2a677d3c08aa125700b7f01310676dc581c43321eb439a1647d654872ed00f
+name: quay-operator.v3.10.0-nightly.20231011
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231011
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:5c2a677d3c08aa125700b7f01310676dc581c43321eb439a1647d654872ed00f
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231011
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:79867c24932d1830d2a73b1ddb8f3d1209f94b996875273c2818d4b527e5e2bf
+name: quay-operator.v3.10.0-nightly.20231012
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231012
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:79867c24932d1830d2a73b1ddb8f3d1209f94b996875273c2818d4b527e5e2bf
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231012
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:fa3271549f0ccb2ba95e50de768443ad2c355400c8415944184043e809fed4b8
+name: quay-operator.v3.10.0-nightly.20231013
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231013
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:fa3271549f0ccb2ba95e50de768443ad2c355400c8415944184043e809fed4b8
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231013
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b23a367e1bc0d17fb0dead3c4ad278763ae4f5fafc20265c6d7f3991c20060dc
+name: quay-operator.v3.10.0-nightly.20231014
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.0-nightly.20231014
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.10.0-nightly.20231014
+      createdAt: 2023-10-14 06:26 UTC
+      description: Opinionated deployment of Quay on Kubernetes.
+      olm.skipRange: '>=3.6.x <3.10.0-nightly.20231014'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      quay-version: 3.10.0-nightly.20231014
+      repository: https://github.com/quay/quay-operator
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Name of the secret containing credentials for the Quay config
+            editor.
+          displayName: Config Editor Credentials Secret
+          path: configEditorCredentialsSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Externally accessible URL for the config editor UI.
+          displayName: Config Editor Endpoint
+          path: configEditorEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b23a367e1bc0d17fb0dead3c4ad278763ae4f5fafc20265c6d7f3991c20060dc
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.0-nightly.20231014
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:9b2c35a5a22d6773dcef0ee1b45d751f33bed8a246f2b01d188a4609bfeab213
+name: quay-operator.v3.10.1
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.1
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:9b2c35a5a22d6773dcef0ee1b45d751f33bed8a246f2b01d188a4609bfeab213
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:040d6bf182f03089a3e254dfcca7d98b8506c6a69e9f1bdc982581c873734378
+name: quay-operator.v3.10.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.2
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:040d6bf182f03089a3e254dfcca7d98b8506c6a69e9f1bdc982581c873734378
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:609a6748cfbfd0c9f4e31f107a6a20ce14e9ac497d6e1a440f97cd5044294109
+name: quay-operator.v3.10.3
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.3
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:609a6748cfbfd0c9f4e31f107a6a20ce14e9ac497d6e1a440f97cd5044294109
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:e7bfd8ecfd831cc66c63596619913fc67090e120f92c7f39643032388979a3ac
+name: quay-operator.v3.10.4
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.4
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:e7bfd8ecfd831cc66c63596619913fc67090e120f92c7f39643032388979a3ac
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:ce9f1c7f4ac0a3b861340217ed19949386518df00527a6eb359eb6f338bff1ac
+name: quay-operator.v3.10.5
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.5
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:ce9f1c7f4ac0a3b861340217ed19949386518df00527a6eb359eb6f338bff1ac
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b85a6b761635f98349f61c752eec394b369d732f740535670dc77237eebe6147
+name: quay-operator.v3.10.6
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.10.6
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.10.6
+      createdAt: "2024-06-14T13:24:04Z"
+      description: Opinionated deployment of Quay on Kubernetes.
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "true"
+      features.operators.openshift.io/proxy-aware: "true"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      olm.skipRange: '>=3.6.x <3.10.6'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      quay-version: 3.10.6
+      repository: https://github.com/quay/quay-operator
+      support: Project Quay
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b85a6b761635f98349f61c752eec394b369d732f740535670dc77237eebe6147
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.10.6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:1eb8ad6d396ba36a3510bd988eed9abf66e56697e30763ef3c82d2a3d39c9624
+name: quay-operator.v3.11.0
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.11.0
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:1eb8ad6d396ba36a3510bd988eed9abf66e56697e30763ef3c82d2a3d39c9624
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.11.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b7b4d019d23f3a1ce3d86cb25e38f49ed565248225851d115ac4c50627a3dbfe
+name: quay-operator.v3.11.1
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.11.1
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b7b4d019d23f3a1ce3d86cb25e38f49ed565248225851d115ac4c50627a3dbfe
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.11.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:2abf26500670489469abceb9e312b7b7d3b963e1b095625902b31f90e9388d42
+name: quay-operator.v3.11.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.11.2
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:2abf26500670489469abceb9e312b7b7d3b963e1b095625902b31f90e9388d42
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.11.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:e43ebcf21c3a8f6fb7406a472c4f0b5f0eea0a4f06f512736f71c697742c00bf
+name: quay-operator.v3.11.3
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.11.3
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:e43ebcf21c3a8f6fb7406a472c4f0b5f0eea0a4f06f512736f71c697742c00bf
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.11.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:995b3a3ab5cf3505b0faa6b191e1cf992036115828aa51770e6bd2be88fa2a29
+name: quay-operator.v3.11.4
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.11.4
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:995b3a3ab5cf3505b0faa6b191e1cf992036115828aa51770e6bd2be88fa2a29
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.11.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:d83fb9a3ddc13afe2ca549e776b3ff6250a8a6ff7ef4d62c334e61ccea3b1949
+name: quay-operator.v3.11.5
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.11.5
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:d83fb9a3ddc13afe2ca549e776b3ff6250a8a6ff7ef4d62c334e61ccea3b1949
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.11.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:dd7f8f3cfd9cb60a199d336451e069ee8395c1cc55f345ba9d3de320f297b6f9
+name: quay-operator.v3.11.6
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.11.6
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.11.6
+      createdAt: "2024-10-01T16:20:18Z"
+      description: Opinionated deployment of Quay on Kubernetes.
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "true"
+      features.operators.openshift.io/proxy-aware: "true"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      olm.skipRange: '>=3.6.x <3.11.6'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      quay-version: 3.11.6
+      repository: https://github.com/quay/quay-operator
+      support: Project Quay
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:dd7f8f3cfd9cb60a199d336451e069ee8395c1cc55f345ba9d3de320f297b6f9
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.11.6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:62a404c009f12522b19a00f596daeb7814a397e8bfce67bee3839c3fcd9f41b9
+name: quay-operator.v3.12.0
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.12.0
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:62a404c009f12522b19a00f596daeb7814a397e8bfce67bee3839c3fcd9f41b9
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.12.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:81699d805208232bc36451a0b783fb7eae18b6377e08506c7512e173e5f82eb2
+name: quay-operator.v3.12.1
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.12.1
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:81699d805208232bc36451a0b783fb7eae18b6377e08506c7512e173e5f82eb2
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.12.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:da17c3ba59cb71d22767702a03d5a9094391551c60b7dc1d76a337aa91c94df2
+name: quay-operator.v3.12.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.12.2
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:da17c3ba59cb71d22767702a03d5a9094391551c60b7dc1d76a337aa91c94df2
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.12.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:095959af372d9125ba93ef009e60953cf32fda825571596cc4614a7923218e7f
+name: quay-operator.v3.12.3
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.12.3
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.12.3
+      createdAt: "2024-10-03T14:05:44Z"
+      description: Opinionated deployment of Quay on Kubernetes.
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "true"
+      features.operators.openshift.io/proxy-aware: "true"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      olm.skipRange: '>=3.6.x <3.12.3'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      quay-version: 3.12.3
+      repository: https://github.com/quay/quay-operator
+      support: Project Quay
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:095959af372d9125ba93ef009e60953cf32fda825571596cc4614a7923218e7f
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.12.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:c54c195f201dc1c38f3444e8e41e15d31733673410b67732a46453ef630f75aa
+name: quay-operator.v3.6.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.6.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: "[\n  {\n    \"apiVersion\": \"quay.redhat.com/v1\",\n    \"kind\":
+        \"QuayRegistry\",\n    \"metadata\": {\n      \"name\": \"example-registry\"\n
+        \   },\n    \"spec\": {\n      \"components\": [\n        {\"kind\": \"clair\",
+        \"managed\": true},\n        {\"kind\": \"postgres\", \"managed\": true},\n
+        \       {\"kind\": \"objectstorage\", \"managed\": true},\n        {\"kind\":
+        \"redis\", \"managed\": true},\n        {\"kind\": \"horizontalpodautoscaler\",
+        \"managed\": true},\n        {\"kind\": \"route\", \"managed\": true},\n        {\"kind\":
+        \"mirror\", \"managed\": true},\n        {\"kind\": \"monitoring\", \"managed\":
+        true},\n        {\"kind\": \"tls\", \"managed\": true}\n      ]\n    }\n  },
+        \n  {\n    \"apiVersion\": \"redhatcop.redhat.io/v1alpha1\",\n    \"kind\":
+        \"QuayEcosystem\",\n    \"metadata\": {\n      \"name\": \"example-quayecosystem\"\n
+        \   },\n    \"spec\": {}\n  }\n]"
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:v3.6.2
+      createdAt: 2021-04-23 10:04 UTC
+      description: Opinionated deployment of Quay on Kubernetes.
+      olm.skipRange: '>=3.5.x <3.6.2'
+      operators.openshift.io/infrastructure-features: '["disconnected"]'
+      operators.operatorframework.io/internal-objects: '["quayecosystems.redhatcop.redhat.io"]'
+      quay-version: v3.6.2
+      repository: https://github.com/quay/quay-operator
+      support: Quay Team
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Name of the secret containing credentials for the Quay config
+            editor.
+          displayName: Config Editor Credentials Secret
+          path: configEditorCredentialsSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Externally accessible URL for the config editor UI.
+          displayName: Config Editor Endpoint
+          path: configEditorEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+      - description: '[DEPRECATED] Old representation of a full Quay installation.'
+        displayName: Quay Ecosystem
+        kind: QuayEcosystem
+        name: quayecosystems.redhatcop.redhat.io
+        version: v1alpha1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Project Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    - quay
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:c54c195f201dc1c38f3444e8e41e15d31733673410b67732a46453ef630f75aa
+  name: ""
+- image: quay.io/projectquay/quay-operator:v3.6.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:d1c03e3f880c00e7eb1aa32d592b42647b7d43c00716f0c284d693b4512f9144
+name: quay-operator.v3.7.0
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.0
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:d1c03e3f880c00e7eb1aa32d592b42647b7d43c00716f0c284d693b4512f9144
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:f732993602e6a0f96a7a456f1a5d17f28a8e54ca37fe47c7de84953a3c5d3b78
+name: quay-operator.v3.7.0-rc.1
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.0-rc.1
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:f732993602e6a0f96a7a456f1a5d17f28a8e54ca37fe47c7de84953a3c5d3b78
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.0-rc.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:d9e99e0721496577f6fc2a316b7bc4086b8d770cd1b1e2d54c995ac16a3ce762
+name: quay-operator.v3.7.0-rc.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.0-rc.2
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:d9e99e0721496577f6fc2a316b7bc4086b8d770cd1b1e2d54c995ac16a3ce762
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.0-rc.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:9e54e71c42fcad7108245b45aa3766a9652d4adf61d7e722ea9583d4f30d1b77
+name: quay-operator.v3.7.0-rc.3
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.0-rc.3
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:9e54e71c42fcad7108245b45aa3766a9652d4adf61d7e722ea9583d4f30d1b77
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.0-rc.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:967b62dab581c9a393e4341810a27e8ab01e5d5f91e18c1ebbfeee08af487420
+name: quay-operator.v3.7.0-rc.4
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.0-rc.4
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.7.0-rc.4
+      createdAt: 2022-05-17 14:05 UTC
+      description: Opinionated deployment of Quay on Kubernetes.
+      olm.skipRange: '>=3.3.x <3.7.0-rc.4'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      operators.operatorframework.io/internal-objects: '["quayecosystems.redhatcop.redhat.io"]'
+      quay-version: 3.7.0-rc.4
+      repository: https://github.com/quay/quay-operator
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Name of the secret containing credentials for the Quay config
+            editor.
+          displayName: Config Editor Credentials Secret
+          path: configEditorCredentialsSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Externally accessible URL for the config editor UI.
+          displayName: Config Editor Endpoint
+          path: configEditorEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+      - description: '[DEPRECATED] Old representation of a full Quay installation.'
+        displayName: Quay Ecosystem
+        kind: QuayEcosystem
+        name: quayecosystems.redhatcop.redhat.io
+        version: v1alpha1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:967b62dab581c9a393e4341810a27e8ab01e5d5f91e18c1ebbfeee08af487420
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.0-rc.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:62853d8a63a9b1ab30ff26a79edcf896b69b91eb5c4f99d28ef58464838913bb
+name: quay-operator.v3.7.1
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.1
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:62853d8a63a9b1ab30ff26a79edcf896b69b91eb5c4f99d28ef58464838913bb
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:e8fe148390b2f031254b0c942d0090a6989e57fd679431c8f8a381ddb8baa8b2
+name: quay-operator.v3.7.10
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.10
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:e8fe148390b2f031254b0c942d0090a6989e57fd679431c8f8a381ddb8baa8b2
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.10
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:122fefb47033fd20c3c0fbce24eb4f7ce5798311b3fe347f7f91ba2bdf159148
+name: quay-operator.v3.7.11
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.11
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.7.11
+      createdAt: 2023-02-22 10:02 UTC
+      description: Opinionated deployment of Quay on Kubernetes.
+      olm.skipRange: '>=3.3.x <3.7.11'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      operators.operatorframework.io/internal-objects: '["quayecosystems.redhatcop.redhat.io"]'
+      quay-version: 3.7.11
+      repository: https://github.com/quay/quay-operator
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Name of the secret containing credentials for the Quay config
+            editor.
+          displayName: Config Editor Credentials Secret
+          path: configEditorCredentialsSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Externally accessible URL for the config editor UI.
+          displayName: Config Editor Endpoint
+          path: configEditorEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+      - description: '[DEPRECATED] Old representation of a full Quay installation.'
+        displayName: Quay Ecosystem
+        kind: QuayEcosystem
+        name: quayecosystems.redhatcop.redhat.io
+        version: v1alpha1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:122fefb47033fd20c3c0fbce24eb4f7ce5798311b3fe347f7f91ba2bdf159148
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.11
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b86c55f55aa9d6ffecfc2949919f445fdb8f734516e75b4037cf8f0e1fe3a5b1
+name: quay-operator.v3.7.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.2
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b86c55f55aa9d6ffecfc2949919f445fdb8f734516e75b4037cf8f0e1fe3a5b1
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:73e394d4a0995877f9dc540684b33bc25841c7800eb24ccb72cbbe0442812ae8
+name: quay-operator.v3.7.3
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.3
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:73e394d4a0995877f9dc540684b33bc25841c7800eb24ccb72cbbe0442812ae8
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:be06e8d5d4e97d6767076ab3ad1fd1b07331569f804ee7899e69f16f3bcd8808
+name: quay-operator.v3.7.4
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.4
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:be06e8d5d4e97d6767076ab3ad1fd1b07331569f804ee7899e69f16f3bcd8808
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:457857c1bcb20cf35b280693e76b6f58fae9ec6656cc6c2243b6e2e027505de1
+name: quay-operator.v3.7.5
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.5
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:457857c1bcb20cf35b280693e76b6f58fae9ec6656cc6c2243b6e2e027505de1
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:fd5f469ea270059d5ccdc32d75b05924de52a7ad6847f0eff1367b70ef68209a
+name: quay-operator.v3.7.6
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.6
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:fd5f469ea270059d5ccdc32d75b05924de52a7ad6847f0eff1367b70ef68209a
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b39ebefc1fcf68d42a7566dd5fc8326f3333d5f124e80798f459d06e093e221d
+name: quay-operator.v3.7.7
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.7
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b39ebefc1fcf68d42a7566dd5fc8326f3333d5f124e80798f459d06e093e221d
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:6a5e01ebeb7ee799c19e6cef764923ffd75e5d44e2feb7840c2be37e54d5c1af
+name: quay-operator.v3.7.8
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.8
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:6a5e01ebeb7ee799c19e6cef764923ffd75e5d44e2feb7840c2be37e54d5c1af
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:06d014eed933b2c3b17c6bf79c7aaf6f096feb478967ea3d90c1d30e8b008dc7
+name: quay-operator.v3.7.9
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.7.9
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:06d014eed933b2c3b17c6bf79c7aaf6f096feb478967ea3d90c1d30e8b008dc7
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.7.9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:b5e5f5285e15b14981aec9f1962e0946cbe02481c18e320c9b7f0cfcad5ff540
+name: quay-operator.v3.8.0
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.0
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:b5e5f5285e15b14981aec9f1962e0946cbe02481c18e320c9b7f0cfcad5ff540
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:543bcca25118b38ab6f993e3fde96345d4882ae946ca479d74336406ffb6a5c2
+name: quay-operator.v3.8.0-rc.1
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.0-rc.1
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:543bcca25118b38ab6f993e3fde96345d4882ae946ca479d74336406ffb6a5c2
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.0-rc.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:1ac86971459f55e74578c1b50d79ae59c381f6ff67b2122428e895aefe30adf1
+name: quay-operator.v3.8.0-rc.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.0-rc.2
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:1ac86971459f55e74578c1b50d79ae59c381f6ff67b2122428e895aefe30adf1
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.0-rc.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:13ff68b583945354f53d4d2a6e8deeb34df2c09939857d01bb61b4e7e7f7bd80
+name: quay-operator.v3.8.0-rc.3
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.0-rc.3
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:13ff68b583945354f53d4d2a6e8deeb34df2c09939857d01bb61b4e7e7f7bd80
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.0-rc.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:80e91be5db87b79f89c231e567b889c4d0ed799397417542262cd0c52384a75c
+name: quay-operator.v3.8.0-rc.4
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.0-rc.4
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:80e91be5db87b79f89c231e567b889c4d0ed799397417542262cd0c52384a75c
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.0-rc.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:aeac94f69762da279737268cf28c6b4a1eee66c979356159555c1d8328fdc884
+name: quay-operator.v3.8.0-rc.5
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.0-rc.5
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:aeac94f69762da279737268cf28c6b4a1eee66c979356159555c1d8328fdc884
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.0-rc.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:90798a68b59b33a34a56dc68b9a0a49ddb634552006a597e68d603adc38b2542
+name: quay-operator.v3.8.0-rc.6
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.0-rc.6
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:90798a68b59b33a34a56dc68b9a0a49ddb634552006a597e68d603adc38b2542
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.0-rc.6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:24bb04fdcde51b59a2b280260b2ed6b4271dabf2ea9ef85dd901cdf5df175a4a
+name: quay-operator.v3.8.0-rc.7
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.0-rc.7
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.8.0-rc.7
+      createdAt: 2022-11-29 15:11 UTC
+      description: Opinionated deployment of Quay on Kubernetes.
+      olm.skipRange: '>=3.6.x <3.8.0-rc.7'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      operators.operatorframework.io/internal-objects: '["quayecosystems.redhatcop.redhat.io"]'
+      quay-version: 3.8.0-rc.7
+      repository: https://github.com/quay/quay-operator
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Name of the secret containing credentials for the Quay config
+            editor.
+          displayName: Config Editor Credentials Secret
+          path: configEditorCredentialsSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Externally accessible URL for the config editor UI.
+          displayName: Config Editor Endpoint
+          path: configEditorEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+      - description: '[DEPRECATED] Old representation of a full Quay installation.'
+        displayName: Quay Ecosystem
+        kind: QuayEcosystem
+        name: quayecosystems.redhatcop.redhat.io
+        version: v1alpha1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:24bb04fdcde51b59a2b280260b2ed6b4271dabf2ea9ef85dd901cdf5df175a4a
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.0-rc.7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:40afa031dac8baa97295b8b368b6c6d6198f747d3ddf500500e5d08373c06603
+name: quay-operator.v3.8.1
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.1
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:40afa031dac8baa97295b8b368b6c6d6198f747d3ddf500500e5d08373c06603
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:2cd327001cf2f0813d0ecd87c1c18fd9856856f7f1d5529a68748ba79ef5c39d
+name: quay-operator.v3.8.10
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.10
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:2cd327001cf2f0813d0ecd87c1c18fd9856856f7f1d5529a68748ba79ef5c39d
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.10
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:109783db2d1d0e3253b540b5c5c62f133f08dd6c4cf3e9977433010633535d4f
+name: quay-operator.v3.8.11
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.11
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:109783db2d1d0e3253b540b5c5c62f133f08dd6c4cf3e9977433010633535d4f
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.11
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:6c1a8257516f3058e719e67bc5afdda57a1547295951cd2204fc143524096419
+name: quay-operator.v3.8.12
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.12
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:6c1a8257516f3058e719e67bc5afdda57a1547295951cd2204fc143524096419
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.12
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:0ebfebfe5f5779066f295b31e2f238964b2eb67b77f6347d496718842cd28a56
+name: quay-operator.v3.8.13
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.13
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.8.13
+      createdAt: 2023-10-17 16:13 UTC
+      description: Opinionated deployment of Quay on Kubernetes.
+      olm.skipRange: '>=3.6.x <3.8.13'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      operators.operatorframework.io/internal-objects: '["quayecosystems.redhatcop.redhat.io"]'
+      quay-version: 3.8.13
+      repository: https://github.com/quay/quay-operator
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Name of the secret containing credentials for the Quay config
+            editor.
+          displayName: Config Editor Credentials Secret
+          path: configEditorCredentialsSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Externally accessible URL for the config editor UI.
+          displayName: Config Editor Endpoint
+          path: configEditorEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+      - description: '[DEPRECATED] Old representation of a full Quay installation.'
+        displayName: Quay Ecosystem
+        kind: QuayEcosystem
+        name: quayecosystems.redhatcop.redhat.io
+        version: v1alpha1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:0ebfebfe5f5779066f295b31e2f238964b2eb67b77f6347d496718842cd28a56
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.13
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:777b5a6961dfb5c81537953116aab7de357c765fc532f18b7bf03d4dd3918635
+name: quay-operator.v3.8.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.2
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:777b5a6961dfb5c81537953116aab7de357c765fc532f18b7bf03d4dd3918635
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:af5a2c7f8cf3b3f3736dbd7437d3aa84dd0e169f8d9174954f35f10ae3c7a40d
+name: quay-operator.v3.8.3
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.3
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:af5a2c7f8cf3b3f3736dbd7437d3aa84dd0e169f8d9174954f35f10ae3c7a40d
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:851e4c4a6b46a7e3dbb57cec3bc7622bfb788885541d239621bf0df634f7a630
+name: quay-operator.v3.8.4
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.4
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:851e4c4a6b46a7e3dbb57cec3bc7622bfb788885541d239621bf0df634f7a630
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:fc37389432a5162baee02dc1d0a32238e240330d2aa37598277a27533d21e42f
+name: quay-operator.v3.8.5
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.5
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:fc37389432a5162baee02dc1d0a32238e240330d2aa37598277a27533d21e42f
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:74ce31b4e96bddb79866ebb9f9ed1fdb7b8b09ec166395beef121ca453a29edb
+name: quay-operator.v3.8.6
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.6
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:74ce31b4e96bddb79866ebb9f9ed1fdb7b8b09ec166395beef121ca453a29edb
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:d2f05af9c541f6d83d2a37dd4ec53e3a55c56da8312fbbaefe52dada7e8f1ffd
+name: quay-operator.v3.8.7
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.7
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:d2f05af9c541f6d83d2a37dd4ec53e3a55c56da8312fbbaefe52dada7e8f1ffd
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:8434595e7490e83c9c135ee3b5f2a2576b8b4bbf88224b138b539572e9a90273
+name: quay-operator.v3.8.8
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.gvk
+  value:
+    group: redhatcop.redhat.io
+    kind: QuayEcosystem
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.8.8
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:8434595e7490e83c9c135ee3b5f2a2576b8b4bbf88224b138b539572e9a90273
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.8.8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:01a9e941e6bb055bc4fee6112b1d6ded892470710049bd60a055712f989ed428
+name: quay-operator.v3.9.0
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:01a9e941e6bb055bc4fee6112b1d6ded892470710049bd60a055712f989ed428
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:a093fbcdd5b0cdfe5a1a53ce3d2ddb47b20f5e17b47403acae8217d63447da30
+name: quay-operator.v3.9.0-nightly.20230711
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230711
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:a093fbcdd5b0cdfe5a1a53ce3d2ddb47b20f5e17b47403acae8217d63447da30
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230711
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:1a0b17009b5a16a0cac6df66c4d787a39c44ccdeb02ffbb49127953e05d310f1
+name: quay-operator.v3.9.0-nightly.20230712
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230712
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:1a0b17009b5a16a0cac6df66c4d787a39c44ccdeb02ffbb49127953e05d310f1
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230712
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:8752ec8b875464a3ee0d5c4b643f64e4d245277c168a84f2b50467d6c5cf22b6
+name: quay-operator.v3.9.0-nightly.20230714
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230714
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:8752ec8b875464a3ee0d5c4b643f64e4d245277c168a84f2b50467d6c5cf22b6
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230714
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:1c9e0b473f6f229dc6541f3e3a9a66b37acd78f2e00421e6a8f12b61e64c3c16
+name: quay-operator.v3.9.0-nightly.20230715
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230715
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:1c9e0b473f6f229dc6541f3e3a9a66b37acd78f2e00421e6a8f12b61e64c3c16
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230715
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:d1d3c6f2c61263208e4d7a4fefa382c8424d65450daeedda1809d6c5b92478ca
+name: quay-operator.v3.9.0-nightly.20230716
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230716
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:d1d3c6f2c61263208e4d7a4fefa382c8424d65450daeedda1809d6c5b92478ca
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230716
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:bbcdd3d51694a6e3d0f2d50fffbff86bfd38a0ec22c0075685e4093cce2df84e
+name: quay-operator.v3.9.0-nightly.20230717
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230717
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:bbcdd3d51694a6e3d0f2d50fffbff86bfd38a0ec22c0075685e4093cce2df84e
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230717
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:5b81ac537f41df2f92e619932d5deae3418bf6e1eeea84e09a4f431948e9ece4
+name: quay-operator.v3.9.0-nightly.20230720
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230720
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:5b81ac537f41df2f92e619932d5deae3418bf6e1eeea84e09a4f431948e9ece4
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230720
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:13ee9ad373329a2398eb5d390b803ddca9e83965d941782e49e83a5522556109
+name: quay-operator.v3.9.0-nightly.20230721
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230721
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:13ee9ad373329a2398eb5d390b803ddca9e83965d941782e49e83a5522556109
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230721
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:38f18c5aab6dc469f7497e47311e7c951008440323a5a76aa563ca37dba031e2
+name: quay-operator.v3.9.0-nightly.20230722
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230722
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:38f18c5aab6dc469f7497e47311e7c951008440323a5a76aa563ca37dba031e2
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230722
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:16e063c45b7771d447570d31ad5cb35e01f096c1431043801db107b05fcde459
+name: quay-operator.v3.9.0-nightly.20230723
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230723
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:16e063c45b7771d447570d31ad5cb35e01f096c1431043801db107b05fcde459
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230723
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:66e0e03c12be9852d0e5f320e302b01ef0424d40af46e5b4b0a828077eb0aedc
+name: quay-operator.v3.9.0-nightly.20230724
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230724
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:66e0e03c12be9852d0e5f320e302b01ef0424d40af46e5b4b0a828077eb0aedc
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230724
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:fefbd6412802d45d23201a6f38c5656bbc68c0413e82fc673b173c2a46438d0e
+name: quay-operator.v3.9.0-nightly.20230812
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.0-nightly.20230812
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.9.0-nightly.20230812
+      createdAt: 2023-08-12 06:06 UTC
+      description: Opinionated deployment of Quay on Kubernetes.
+      olm.skipRange: '>=3.6.x <3.9.0-nightly.20230812'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      quay-version: 3.9.0-nightly.20230812
+      repository: https://github.com/quay/quay-operator
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Name of the secret containing credentials for the Quay config
+            editor.
+          displayName: Config Editor Credentials Secret
+          path: configEditorCredentialsSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Externally accessible URL for the config editor UI.
+          displayName: Config Editor Endpoint
+          path: configEditorEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:fefbd6412802d45d23201a6f38c5656bbc68c0413e82fc673b173c2a46438d0e
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.0-nightly.20230812
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:3423f52439de9c84ca81aded3cbdc5955044e74e77819bbb12c2624260c52464
+name: quay-operator.v3.9.1
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.1
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:3423f52439de9c84ca81aded3cbdc5955044e74e77819bbb12c2624260c52464
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:5a7a3cefb8b61e672c97d0d9d7f6ece6181be711e72c0d7c541e49b97a3df899
+name: quay-operator.v3.9.2
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.2
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:5a7a3cefb8b61e672c97d0d9d7f6ece6181be711e72c0d7c541e49b97a3df899
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:f044c992a24d64fc9672800e9365245fea2ba7042e553f31c406c66c1b8aec55
+name: quay-operator.v3.9.3
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.3
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:f044c992a24d64fc9672800e9365245fea2ba7042e553f31c406c66c1b8aec55
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:bfd977b74f8e12ddf72902c376362c340cfc639931e9093ac2d932833fcbf350
+name: quay-operator.v3.9.4
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.4
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:bfd977b74f8e12ddf72902c376362c340cfc639931e9093ac2d932833fcbf350
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:e30b18870ba1a597a5dd5b141f9b366e8db9c176dc32bbf245cd9d45a3c4117d
+name: quay-operator.v3.9.5
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.5
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:e30b18870ba1a597a5dd5b141f9b366e8db9c176dc32bbf245cd9d45a3c4117d
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/project-quay@sha256:855f4bd5fd4923ab4ca7435b54a798f18743b715805932b2642f4dca1e6e19a6
+name: quay-operator.v3.9.6
+package: project-quay
+properties:
+- type: olm.gvk
+  value:
+    group: quay.redhat.com
+    kind: QuayRegistry
+    version: v1
+- type: olm.package
+  value:
+    packageName: project-quay
+    version: 3.9.6
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "quay.redhat.com/v1",
+            "kind": "QuayRegistry",
+            "metadata": {
+              "name": "example-registry"
+            },
+            "spec": {
+              "components": [
+                {"kind": "clair", "managed": true},
+                {"kind": "postgres", "managed": true},
+                {"kind": "objectstorage", "managed": true},
+                {"kind": "redis", "managed": true},
+                {"kind": "horizontalpodautoscaler", "managed": true},
+                {"kind": "route", "managed": true},
+                {"kind": "mirror", "managed": true},
+                {"kind": "monitoring", "managed": true},
+                {"kind": "tls", "managed": true},
+                {"kind": "quay", "managed": true},
+                {"kind": "clairpostgres", "managed": true}
+              ]
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      containerImage: quay.io/projectquay/quay-operator:3.9.6
+      createdAt: 2024-01-18 16:08 UTC
+      description: Opinionated deployment of Quay on Kubernetes.
+      olm.skipRange: '>=3.6.x <3.9.6'
+      operators.openshift.io/infrastructure-features: '["disconnected", "proxy-aware",
+        "fips"]'
+      quay-version: 3.9.6
+      repository: https://github.com/quay/quay-operator
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a full Quay registry installation.
+        displayName: Quay Registry
+        kind: QuayRegistry
+        name: quayregistries.quay.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: ""
+        - kind: ReplicaSet
+          name: ""
+          version: ""
+        - kind: Pod
+          name: ""
+          version: ""
+        - kind: Secret
+          name: ""
+          version: ""
+        - kind: Job
+          name: ""
+          version: ""
+        - kind: ConfigMap
+          name: ""
+          version: ""
+        - kind: ServiceAccount
+          name: ""
+          version: ""
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: ""
+        - kind: Ingress
+          name: ""
+          version: ""
+        - kind: Route
+          name: ""
+          version: ""
+        - kind: Role
+          name: ""
+          version: ""
+        - kind: Rolebinding
+          name: ""
+          version: ""
+        - kind: HorizontalPodAutoscaler
+          name: ""
+          version: ""
+        - kind: ServiceMonitor
+          name: ""
+          version: ""
+        - kind: PrometheusRule
+          name: ""
+          version: ""
+        specDescriptors:
+        - description: Name of the Quay config secret containing base configuration
+            and custom SSL certificates.
+          displayName: Config Bundle Secret
+          path: configBundleSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Declares how the Operator should handle supplemental Quay services.
+          displayName: Components
+          path: components
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: The unique name of this type of component.
+          displayName: Kind
+          path: components[0].kind
+        - description: Indicates whether lifecycle of this component is managed by
+            the Operator or externally.
+          displayName: Managed
+          path: components[0].managed
+        statusDescriptors:
+        - description: The currently installed version of all Quay components.
+          displayName: Current Version
+          path: currentVersion
+        - description: Observed conditions of Quay components.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: Name of the secret containing credentials for the Quay config
+            editor.
+          displayName: Config Editor Credentials Secret
+          path: configEditorCredentialsSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Externally accessible URL for container pull/push and web frontend.
+          displayName: Registry Endpoint
+          path: registryEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Externally accessible URL for the config editor UI.
+          displayName: Config Editor Endpoint
+          path: configEditorEndpoint
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+    description: Opinionated deployment of Quay on Kubernetes.
+    displayName: Quay
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - open source
+    - containers
+    - registry
+    links:
+    - name: Source Code
+      url: https://github.com/quay/quay-operator
+    maintainers:
+    - email: quay-sig@googlegroups.com
+      name: Project Quay Contributors
+    maturity: stable
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/project-quay@sha256:855f4bd5fd4923ab4ca7435b54a798f18743b715805932b2642f4dca1e6e19a6
+  name: ""
+- image: quay.io/projectquay/quay-operator:3.9.6
+  name: ""
+schema: olm.bundle

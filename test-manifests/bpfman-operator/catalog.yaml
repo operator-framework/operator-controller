@@ -1,0 +1,639 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjwhLS0gQ3JlYXRlZCB3aXRoIFZlY3Rvcm5hdG9yIChodHRwOi8vdmVjdG9ybmF0b3IuaW8vKSAtLT4KPHN2ZyBoZWlnaHQ9IjEwMCUiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3R5bGU9ImZpbGwtcnVsZTpub256ZXJvO2NsaXAtcnVsZTpldmVub2RkO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDsiIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgd2lkdGg9IjEwMCUiIHhtbDpzcGFjZT0icHJlc2VydmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6dmVjdG9ybmF0b3I9Imh0dHA6Ly92ZWN0b3JuYXRvci5pbyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMS40NTY4MyAxLjQ1NjgzIC0xLjQ1NjgzIDEuNDU2ODMgNzkxLjI0NCAtNzA0LjEzMykiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBpZD0iTGluZWFyR3JhZGllbnQiIHgxPSIzNjguNDYyIiB4Mj0iMjQyLjMzMSIgeTE9IjQyNy4wNTMiIHkyPSI1NTMuNjE0Ij4KPHN0b3Agb2Zmc2V0PSIwLjQyMjU5MiIgc3RvcC1jb2xvcj0iIzMzMzEyYyIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmM2M2MjIiLz4KPC9saW5lYXJHcmFkaWVudD4KPHBhdGggZD0iTTQzNS4xMTMgNDQ4LjQxM0M0MzUuMTEzIDM3NS43MjMgNDkzLjc5MyAyNjguNjkyIDUxMS4yMDkgMjY4LjY5MkM1MjguNjI1IDI2OC42OTIgNTg4Ljg3MyAzNzAuOTU3IDU4OC44NzMgNDQzLjY0NkM1ODguODczIDUxNi4zMzYgNTMyLjc4NSA2MDAuNzc3IDUxMS4yMDkgNjAwLjc3N0M0ODkuNjMzIDYwMC43NzcgNDM1LjExMyA1MjEuMTAzIDQzNS4xMTMgNDQ4LjQxM1oiIGlkPSJGaWxsIi8+CjxwYXRoIGQ9Ik00MzUuMTEzIDQ0OC40MTNDNDM1LjExMyAzNzUuNzIzIDQ5My43OTMgMjY4LjY5MiA1MTEuMjA5IDI2OC42OTJDNTI4LjYyNSAyNjguNjkyIDU4OC44NzMgMzcwLjk1NyA1ODguODczIDQ0My42NDZDNTg4Ljg3MyA1MTYuMzM2IDUzMi43ODUgNjAwLjc3NyA1MTEuMjA5IDYwMC43NzdDNDg5LjYzMyA2MDAuNzc3IDQzNS4xMTMgNTIxLjEwMyA0MzUuMTEzIDQ0OC40MTNaIiBpZD0iRmlsbF8yIi8+CjxwYXRoIGQ9Ik00MzUuMTEzIDQ0OC40MTNDNDM1LjExMyAzNzUuNzIzIDQ5My43OTMgMjY4LjY5MiA1MTEuMjA5IDI2OC42OTJDNTI4LjYyNSAyNjguNjkyIDU4OC44NzMgMzcwLjk1NyA1ODguODczIDQ0My42NDZDNTg4Ljg3MyA1MTYuMzM2IDUzMi43ODUgNjAwLjc3NyA1MTEuMjA5IDYwMC43NzdDNDg5LjYzMyA2MDAuNzc3IDQzNS4xMTMgNTIxLjEwMyA0MzUuMTEzIDQ0OC40MTNaIiBpZD0iRmlsbF8zIi8+CjxwYXRoIGQ9Ik00MzUuMTIgMzY4LjgzOEM0MzUuMTIgMzY4LjgzOCA0NzQuMjE5IDM3OC4yNjMgNTEyLjAwNyAzNzguMzM1QzU0OS43OTYgMzc4LjQwNyA1ODguODggMzY5LjM4NSA1ODguODggMzY5LjM4NSIgaWQ9IkZpbGxfNCIvPgo8L2RlZnM+CjxnIGlkPSJMYXllci0xIiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9IkxheWVyIDEiPgo8ZyBvcGFjaXR5PSIxIiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ikdyb3VwIDEyIj4KPHBhdGggZD0iTTE4Ni4yMzMgMzg3LjI3OEMxODYuMjMzIDIwNy4zNjQgMzMyLjA4NCA2MS41MTM5IDUxMS45OTggNjEuNTEzOUM2OTEuOTE2IDYxLjUxMzkgODM3Ljc2NyAyMDcuMzY0IDgzNy43NjcgMzg3LjI3OEM4MzcuNzY3IDU2Ny4xOTMgNjkxLjkxNiA3MTMuMDQzIDUxMS45OTggNzEzLjA0M0MzMzIuMDg0IDcxMy4wNDMgMTg2LjIzMyA1NjcuMTkzIDE4Ni4yMzMgMzg3LjI3OCIgZmlsbD0iI2YyOGYyMiIgZmlsbC1ydWxlPSJub256ZXJvIiBvcGFjaXR5PSIxIiBzdHJva2U9Im5vbmUiIHZlY3Rvcm5hdG9yOmxheWVyTmFtZT0icGF0aCIvPgo8ZyBvcGFjaXR5PSIxIiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ikdyb3VwIDEzIj4KPHBhdGggZD0iTTIwMS4zMzEgNDg1LjQ4NUMyMDQuODQ3IDQ4MS41MzQgMjA4LjE4MiA0NzcuNTkzIDIxMS4yOTQgNDczLjY2QzI3MS4zODUgMzk3LjYzNiAyNDkuMTUgMzQzLjc2OSAxOTguMTU5IDI5OS45OTFDMTkwLjQ0MyAzMjcuNzg0IDE4Ni4yMzUgMzU3LjAzIDE4Ni4yMzUgMzg3LjI3N0MxODYuMjM1IDQyMS41MDkgMTkxLjU0NCA0NTQuNDkgMjAxLjMzMSA0ODUuNDg1IiBmaWxsPSIjZTBmMjIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0ibm9uZSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJwYXRoIi8+CjxwYXRoIGQ9Ik00MjEuMTYzIDQwNS4wOThDNDQzLjY2IDMyMy4yNzkgMzQxLjE0MSAyNTIuNjQxIDI0Ni4xNzkgMTk5LjA4QzIzOSAyMDkuMTk4IDIzMi4zNDIgMjE5LjcwMyAyMjYuMzM4IDIzMC42MjlDMzA5LjI2NSAyNzguMTY5IDM5MC43NjkgMzQyLjM1OSAzNTYuNjU0IDQyMy4zMDFDMzM0LjIyNSA0NzYuNTA1IDI3OC43MTMgNTEzLjMwNyAyMzIuNzA4IDU1NS4wMDFDMjM4LjYxNCA1NjQuODE4IDI0NS4wMjcgNTc0LjI5MiAyNTEuOTA0IDU4My4zOTZDMzA5Ljk0NCA1MjQuODAxIDM5OS4zNTMgNDg0LjQyNyA0MjEuMTYzIDQwNS4wOTgiIGZpbGw9IiNlMGYyMjIiIGZpbGwtcnVsZT0ibm9uemVybyIgb3BhY2l0eT0iMSIgc3Ryb2tlPSJub25lIiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9InBhdGgiLz4KPHBhdGggZD0iTTU5Ny45MjMgMzIzLjgwN0M2MjkuMjkyIDQ0Mi45OTkgNDU0LjQwMiA1MTkuMzQxIDM4OC45NiA1OTIuMzA1QzM2Ni4zMDQgNjE3LjU2NiAzNDguODAxIDYzOS4xODcgMzM5LjMwNiA2NjMuNDY0QzM0OC43NTggNjY5LjM4NyAzNTguNTE1IDY3NC44NTggMzY4LjU4NiA2NzkuODAxQzM3My43NzQgNjU2LjU2NSAzODQuNTUgNjMyLjg1MSA0MDIuODQgNjA4LjIzNUM0NzEuODAyIDUxNS40MTcgNjUwLjg2NSA0NTUuNTg1IDYyNi4zMTMgMzE4LjkwM0M2MDcuNzE4IDIxNS4zODYgNDk4LjE3NiAxNjEuODQyIDQ2MS45MjQgNjUuMzQ5N0M0MzguOTk3IDY4Ljg4NzIgNDE2Ljg5NSA3NC44NzQ4IDM5NS44MDggODIuOTI5OEM0NDcuMzAxIDE3My44MTMgNTcwLjgyNiAyMjAuODQxIDU5Ny45MjMgMzIzLjgwNyIgZmlsbD0iI2UwZjIyMiIgZmlsbC1ydWxlPSJub256ZXJvIiBvcGFjaXR5PSIxIiBzdHJva2U9Im5vbmUiIHZlY3Rvcm5hdG9yOmxheWVyTmFtZT0icGF0aCIvPgo8cGF0aCBkPSJNNzA1LjQ4MSAzMDQuMzA1Qzc0MC4zNzkgNDYwLjIwOSA1MTkuNjMxIDUyMy4yNjUgNDQ2LjAyNiA2MzAuMzQ1QzQzMC40ODQgNjUyLjk0OSA0MjMuMDc4IDY3Ni4zNzEgNDIxLjI1OSA3MDAuMTQxQzQzNC4zMjYgNzAzLjkyMyA0NDcuNjk4IDcwNi45NzUgNDYxLjM4NCA3MDkuMTExQzQ2Mi43NzIgNjg0LjQ2OSA0NjkuOCA2NjAuMjI2IDQ4NS4xMTUgNjM2Ljg4N0M1NTguODAxIDUyNC41ODUgNzg2Ljk3MiA0NjguMDg4IDc2MC4xMDggMzA4LjUxM0M3NDcuMzg1IDIzMi45MjcgNzAwLjQ0MyAxNzQuMzU0IDY3NS4zNDEgMTA1LjQ2NUM2NTAuMDI4IDkwLjc2MDggNjIyLjU5NiA3OS4yOTMgNTkzLjU0OSA3MS44MDUzQzYxOC4xODYgMTU1Ljg1OSA2ODUuNzY0IDIxNi4yMzcgNzA1LjQ4MSAzMDQuMzA1IiBmaWxsPSIjZTBmMjIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0ibm9uZSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJwYXRoIi8+CjxwYXRoIGQ9Ik0zMjQuMzM5IDYxMS4yMjNDMzgxLjUzNyA1MzUuNzk2IDU2My4wOCA0NjMuODc3IDU1Mi43MyAzNTIuNzQ4QzU0My41OTIgMjU0LjY0OCA0MDIuNjYzIDE5NC4wNzYgMzE2LjE1NSAxMjYuOTYyQzMwNi40NDEgMTM0LjI4MiAyOTcuMiAxNDIuMTc0IDI4OC4zNzUgMTUwLjUxM0MzODUuNjg1IDIxMS44NTQgNTE1Ljk3MSAyNzcuNDc2IDUxMy40MzUgMzY1LjIzOUM1MTAuMDk5IDQ4MC42MzIgMzQ3LjM3NCA1MzMuNDMyIDI4NC44ODEgNjIwLjcxM0MyOTEuNzU0IDYyNy40MDIgMjk4Ljg5MyA2MzMuODEgMzA2LjMzNCA2MzkuODc1QzMxMS4xNzQgNjMwLjI4MSAzMTcuMTMxIDYyMC43MjYgMzI0LjMzOSA2MTEuMjIzIiBmaWxsPSIjZTBmMjIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0ibm9uZSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJwYXRoIi8+CjxwYXRoIGQ9Ik02MzguNDgxIDYyOS41MjRDNjc3LjY2OCA1NjEuMTY0IDc1MS4wODggNTI2LjczOSA4MjEuNTI0IDQ4OC44NjZDODIzLjkxIDQ4MS41ODkgODI2LjA4NCA0NzQuMjE4IDgyNy45NjMgNDY2LjcyMUM3NTkuNDc4IDUxNC4zNjQgNjc2LjQyNiA1NDcuODQzIDYyNC42NzkgNjE3LjQzM0M2MDQuOTcxIDY0My45MzYgNTk3Ljc2NyA2NzIuMTkzIDU5OC41MTEgNzAxLjM0QzYwNi43MTYgNjk5LjA4NCA2MTQuODE0IDY5Ni41NzMgNjIyLjc0NCA2OTMuNzA2QzYyMi4yNzYgNjcxLjQ0NiA2MjYuNzkzIDY0OS45MDcgNjM4LjQ4MSA2MjkuNTI0IiBmaWxsPSIjZTBmMjIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0ibm9uZSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJwYXRoIi8+CjxwYXRoIGQ9Ik02ODYuNDcxIDY0NC43NjRDNjgzLjU3OCA2NTEuNzQ0IDY4MS43IDY1OC44NjIgNjgwLjYxMiA2NjYuMDYyQzczMS43MzYgNjM1LjA3NiA3NzMuNTgxIDU5MC4zODIgODAxLjIyNyA1MzcuMTI2Qzc0OS41NDkgNTY0LjQzMyA3MDYuMTc0IDU5Ny4yMjUgNjg2LjQ3MSA2NDQuNzY0IiBmaWxsPSIjZTBmMjIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0ibm9uZSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJwYXRoIi8+CjxwYXRoIGQ9Ik04MzYuNjY2IDQxMi45MTlDODM3LjMyOCA0MDQuNDQ3IDgzNy43NjcgMzk1LjkxNSA4MzcuNzY3IDM4Ny4yOEM4MzcuNzY3IDM3MC42OCA4MzYuNTA3IDM1NC4zODEgODM0LjExMyAzMzguNDUxQzgyMi42OCA0NzIuMzY1IDYzNC41MjEgNTIwLjkyMyA1NjMuMzkzIDYyMC4wNjhDNTQwLjY1OSA2NTEuNzU5IDUzMC41NjIgNjgyLjM3NiA1MjguNjE5IDcxMi42MjNDNTM4LjA0MSA3MTIuMTUgNTQ3LjMzNCA3MTEuMTk2IDU1Ni41MzMgNzA5LjkzN0M1NTcuNDc4IDY4Mi44MjMgNTY0Ljg1OCA2NTUuNTggNTgxLjg3MSA2MjguMDY3QzYzNy45ODEgNTM3LjMyNSA3NzQuNjg5IDQ5OC43MDUgODM2LjY2NiA0MTIuOTE5IiBmaWxsPSIjZTBmMjIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0ibm9uZSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJwYXRoIi8+CjwvZz4KPC9nPgo8ZyBvcGFjaXR5PSIxIiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ikdyb3VwIDEzIj4KPHBhdGggZD0iTTQzNS4xMTMgNDQ4LjQxM0M0MzUuMTEzIDM3NS43MjMgNDkzLjc5MyAyNjguNjkyIDUxMS4yMDkgMjY4LjY5MkM1MjguNjI1IDI2OC42OTIgNTg4Ljg3MyAzNzAuOTU3IDU4OC44NzMgNDQzLjY0NkM1ODguODczIDUxNi4zMzYgNTMyLjc4NSA2MDAuNzc3IDUxMS4yMDkgNjAwLjc3N0M0ODkuNjMzIDYwMC43NzcgNDM1LjExMyA1MjEuMTAzIDQzNS4xMTMgNDQ4LjQxM1oiIGZpbGw9InVybCgjTGluZWFyR3JhZGllbnQpIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0iIzMzMzEyYyIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMjQuNDgxOSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJPdmFsIDEiLz4KPHBhdGggZD0iTTQzOS4yMzMgMjY4LjY5MkM0MzkuMjMzIDI2OC42OTIgNDQxLjE1MiAxOTUuOTMzIDUxMS45OTMgMTk1LjkzM0M1ODIuODM0IDE5NS45MzMgNTg0Ljc1MiAyNjguNjkyIDU4NC43NTIgMjY4LjY5Mkw0MzkuMjMzIDI2OC42OTJaIiBmaWxsPSIjZjNjNjIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0iIzMzMzEyYyIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMjQuNDgxOSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJPdmFsIDIiLz4KPHBhdGggZD0iTTQ4MC4xODggMTk1LjkzM0M0ODAuMTg4IDE5NS45MzMgNDY3LjUxOCAxNjYuMzQ1IDQ0Mi4zMjQgMTc1LjU1OCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMSIgc3Ryb2tlPSIjMzMzMTJjIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMjQuNDgxOSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJDdXJ2ZSAyIi8+CjxwYXRoIGQ9Ik01NDUuMzM3IDE5NS45MzNDNTQ1LjMzNyAxOTUuOTMzIDU1OC4wMDYgMTY2LjM0NSA1ODMuMjAxIDE3NS41NTgiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjEiIHN0cm9rZT0iIzMzMzEyYyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjI0LjQ4MTkiIHZlY3Rvcm5hdG9yOmxheWVyTmFtZT0iQ3VydmUgMyIvPgo8ZyBvcGFjaXR5PSIxIiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ikdyb3VwIDIiPgo8dXNlIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjEiIHN0cm9rZT0iI2YyYWMyMiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMjQuNDgxOSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJPdmFsIDUiIHhsaW5rOmhyZWY9IiNGaWxsIi8+CjxjbGlwUGF0aCBjbGlwLXJ1bGU9Im5vbnplcm8iIGlkPSJDbGlwUGF0aCI+Cjx1c2UgeGxpbms6aHJlZj0iI0ZpbGwiLz4KPC9jbGlwUGF0aD4KPGcgY2xpcC1wYXRoPSJ1cmwoI0NsaXBQYXRoKSI+CjxwYXRoIGQ9Ik00MzUuMTEzIDQyNS4yMzhDNDM1LjExMyA0MjUuMjM4IDQ3NC4yMTIgNDM0LjY2MyA1MTIgNDM0LjczNUM1NDkuNzg4IDQzNC44MDcgNTg4Ljg3MyA0MjUuNzg1IDU4OC44NzMgNDI1Ljc4NSIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMSIgc3Ryb2tlPSIjZjJkZTIyIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIgc3Ryb2tlLXdpZHRoPSIyNC40ODE5IiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9IkN1cnZlIDQiLz4KPC9nPgo8L2c+CjxnIG9wYWNpdHk9IjEiIHZlY3Rvcm5hdG9yOmxheWVyTmFtZT0iR3JvdXAgMyI+Cjx1c2UgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMSIgc3Ryb2tlPSIjZjNjNjIyIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyNC40ODE5IiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ik92YWwgNCIgeGxpbms6aHJlZj0iI0ZpbGxfMiIvPgo8Y2xpcFBhdGggY2xpcC1ydWxlPSJub256ZXJvIiBpZD0iQ2xpcFBhdGhfMiI+Cjx1c2UgeGxpbms6aHJlZj0iI0ZpbGxfMiIvPgo8L2NsaXBQYXRoPgo8ZyBjbGlwLXBhdGg9InVybCgjQ2xpcFBhdGhfMikiPgo8cGF0aCBkPSJNNDM5LjIzMyA0ODEuNjUzQzQzOS4yMzMgNDgxLjY1MyA0NzUuNjIgNDkzLjg5MiA1MTIgNDkzLjg5MkM1NDguMzggNDkzLjg5MiA1ODQuNzUyIDQ4MS42NTMgNTg0Ljc1MiA0ODEuNjUzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIxIiBzdHJva2U9IiNmM2M2MjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIgc3Ryb2tlLXdpZHRoPSIyNC40ODE5IiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9IkN1cnZlIDUiLz4KPC9nPgo8L2c+CjxnIG9wYWNpdHk9IjEiIHZlY3Rvcm5hdG9yOmxheWVyTmFtZT0iR3JvdXAgNCI+Cjx1c2UgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMSIgc3Ryb2tlPSIjZjJkZTIyIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyNC40ODE5IiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ik92YWwgMyIgeGxpbms6aHJlZj0iI0ZpbGxfMyIvPgo8Y2xpcFBhdGggY2xpcC1ydWxlPSJub256ZXJvIiBpZD0iQ2xpcFBhdGhfMyI+Cjx1c2UgeGxpbms6aHJlZj0iI0ZpbGxfMyIvPgo8L2NsaXBQYXRoPgo8ZyBjbGlwLXBhdGg9InVybCgjQ2xpcFBhdGhfMykiPgo8cGF0aCBkPSJNNDYxLjI1NiA1NDAuMTc0QzQ2MS4yNTYgNTQwLjE3NCA0ODcuNDU5IDU0OS41ODYgNTExLjk5MyA1NDkuNTIzQzUzNi41MjcgNTQ5LjQ2MSA1NTkuMzkxIDUzOS45MjUgNTU5LjM5MSA1MzkuOTI1IiBmaWxsPSJub25lIiBvcGFjaXR5PSIxIiBzdHJva2U9IiNmMmRlMjIiIHN0cm9rZS1saW5lY2FwPSJzcXVhcmUiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIHN0cm9rZS13aWR0aD0iMjQuNDgxOSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJDdXJ2ZSA2Ii8+CjwvZz4KPC9nPgo8ZyBvcGFjaXR5PSIxIiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ikdyb3VwIDEiPgo8dXNlIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjEiIHN0cm9rZT0iI2YzYzYyMiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIHN0cm9rZS13aWR0aD0iMjQuNDgxOSIgdmVjdG9ybmF0b3I6bGF5ZXJOYW1lPSJDdXJ2ZSA3IiB4bGluazpocmVmPSIjRmlsbF80Ii8+CjxjbGlwUGF0aCBjbGlwLXJ1bGU9Im5vbnplcm8iIGlkPSJDbGlwUGF0aF80Ij4KPHVzZSB4bGluazpocmVmPSIjRmlsbF80Ii8+CjwvY2xpcFBhdGg+CjxnIGNsaXAtcGF0aD0idXJsKCNDbGlwUGF0aF80KSI+CjxwYXRoIGQ9Ik00MzUuMTEzIDQ0OC40MTNDNDM1LjExMyAzNzUuNzIzIDQ5My43OTMgMjY4LjY5MiA1MTEuMjA5IDI2OC42OTJDNTI4LjYyNSAyNjguNjkyIDU4OC44NzMgMzcwLjk1NyA1ODguODczIDQ0My42NDZDNTg4Ljg3MyA1MTYuMzM2IDUzMi43ODUgNjAwLjc3NyA1MTEuMjA5IDYwMC43NzdDNDg5LjYzMyA2MDAuNzc3IDQzNS4xMTMgNTIxLjEwMyA0MzUuMTEzIDQ0OC40MTNaIiBmaWxsPSJub25lIiBvcGFjaXR5PSIxIiBzdHJva2U9IiNmM2M2MjIiIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjI0LjQ4MTkiIHZlY3Rvcm5hdG9yOmxheWVyTmFtZT0iT3ZhbCA0Ii8+CjwvZz4KPC9nPgo8cGF0aCBkPSJNNDM1LjExMyA0NDguNDEzQzQzNS4xMTMgMzc1LjcyMyA0OTMuNzkzIDI2OC42OTIgNTExLjIwOSAyNjguNjkyQzUyOC42MjUgMjY4LjY5MiA1ODguODczIDM3MC45NTcgNTg4Ljg3MyA0NDMuNjQ2QzU4OC44NzMgNTE2LjMzNiA1MzIuNzg1IDYwMC43NzcgNTExLjIwOSA2MDAuNzc3QzQ4OS42MzMgNjAwLjc3NyA0MzUuMTEzIDUyMS4xMDMgNDM1LjExMyA0NDguNDEzWiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMSIgc3Ryb2tlPSIjMzMzMTJjIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyNC40ODE5IiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ik92YWwgMyIvPgo8cGF0aCBkPSJNNDkwLjQ1MyAyNjkuNDQ2QzQ1MC4xMjUgMjY5LjgwMyAzNjEuNTgxIDI4NS40MjggMjk4LjI2OSAzMjUuNTU2QzE5NS4wNDcgMzkwLjk3OCAyNjQuMjI0IDQ2OS4wODkgMzI2LjIxMSA0NjguMjI5QzQyMi4xODYgNDY2Ljg5NyA1MTEuOTg5IDMwMC4yNjIgNTExLjk4OSAyNzMuODU2QzUxMS45ODkgMjcyLjExMiA1MDkuMTIgMjcwLjgzOSA1MDMuOTYxIDI3MC4xMkM1MDAuNDU1IDI2OS42MzEgNDk1Ljg5MiAyNjkuMzk4IDQ5MC40NTMgMjY5LjQ0NlpNNTExLjk4OSAyNzMuODU2QzUxMS45ODkgMzAwLjI2MiA2MDEuNzkyIDQ2Ni44OTcgNjk3Ljc2NyA0NjguMjI5Qzc1OS43NTQgNDY5LjA4OSA4MjguOTYzIDM5MC45NzggNzI1Ljc0MSAzMjUuNTU2QzY1NC4yMzkgMjgwLjIzNyA1NTAuNTA5IDI2Ni4xOTIgNTIwLjQ0NSAyNzAuMDc2QzUxNS4wMTYgMjcwLjc3NyA1MTEuOTg5IDI3Mi4wNjQgNTExLjk4OSAyNzMuODU2WiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJub256ZXJvIiBvcGFjaXR5PSIxIiBzdHJva2U9IiMzMzMxMmMiIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjI0LjQ4MTkiIHZlY3Rvcm5hdG9yOmxheWVyTmFtZT0iQ3VydmUgMSIvPgo8L2c+CjxnIG9wYWNpdHk9IjEiIHZlY3Rvcm5hdG9yOmxheWVyTmFtZT0iR3JvdXAgMTQiPgo8cGF0aCBkPSJNMTU0LjkxOSA5MjQuNTMzQzE0NS4zOTQgOTI0LjUzMyAxMzcuMTYxIDkyMi41MTcgMTMwLjIyMSA5MTguNDg1QzEyMy4yOCA5MTQuNDU0IDExNy45NjkgOTA4LjI2NCAxMTQuMjg2IDg5OS45MThDMTEwLjYwMyA4OTEuNTcxIDEwOC43NjEgODgwLjk5MiAxMDguNzYxIDg2OC4xODJDMTA4Ljc2MSA4NTUuMzQzIDExMC42ODQgODQ0Ljc4NCAxMTQuNTMxIDgzNi41MDZDMTE4LjM3NyA4MjguMjI4IDEyMy43ODQgODIyLjA2IDEzMC43NTEgODE4LjAwMkMxMzcuNzE4IDgxMy45NDQgMTQ1Ljc3NCA4MTEuOTE0IDE1NC45MTkgODExLjkxNEMxNjUuMjY1IDgxMS45MTQgMTc0LjU1MSA4MTQuMjIyIDE4Mi43NzggODE4LjgzN0MxOTEuMDA1IDgyMy40NTIgMTk3LjUyIDgyOS45NjcgMjAyLjMyNCA4MzguMzgxQzIwNy4xMjggODQ2Ljc5NiAyMDkuNTMgODU2LjczIDIwOS41MyA4NjguMTgyQzIwOS41MyA4NzkuNjM1IDIwNy4xMjggODg5LjU2OSAyMDIuMzI0IDg5Ny45ODNDMTk3LjUyIDkwNi4zOTggMTkxLjAwNSA5MTIuOTI3IDE4Mi43NzggOTE3LjU2OUMxNzQuNTUxIDkyMi4yMTIgMTY1LjI2NSA5MjQuNTMzIDE1NC45MTkgOTI0LjUzM1pNOTAuMzA5NyA5MjIuOTg3TDkwLjMwOTcgNzcxLjkxM0wxMjIuMDcyIDc3MS45MTNMMTIyLjA3MiA4MzUuNTcxTDEyMC4wMzYgODY4LjA1OEwxMjAuNTcgOTAwLjU0OUwxMjAuNTcgOTIyLjk4N0w5MC4zMDk3IDkyMi45ODdaTTE0OS40NTQgODk4LjUyNkMxNTQuNzMgODk4LjUyNiAxNTkuNDYzIDg5Ny4zMjIgMTYzLjY1MiA4OTQuOTE1QzE2Ny44NDEgODkyLjUwOCAxNzEuMTc5IDg4OS4wMDcgMTczLjY2OCA4ODQuNDEyQzE3Ni4xNTcgODc5LjgxNyAxNzcuNDAxIDg3NC40MDcgMTc3LjQwMSA4NjguMTgyQzE3Ny40MDEgODYxLjgyMiAxNzYuMTU3IDg1Ni4zOTEgMTczLjY2OCA4NTEuODkxQzE3MS4xNzkgODQ3LjM5IDE2Ny44NDEgODQzLjkzNyAxNjMuNjUyIDg0MS41MjlDMTU5LjQ2MyA4MzkuMTIyIDE1NC43MyA4MzcuOTE5IDE0OS40NTQgODM3LjkxOUMxNDQuMTc3IDgzNy45MTkgMTM5LjQ0NCA4MzkuMTIyIDEzNS4yNTQgODQxLjUyOUMxMzEuMDY0IDg0My45MzcgMTI3LjcyNSA4NDcuMzkgMTI1LjIzNiA4NTEuODkxQzEyMi43NDcgODU2LjM5MSAxMjEuNTAzIDg2MS44MjIgMTIxLjUwMyA4NjguMTgyQzEyMS41MDMgODc0LjQwNyAxMjIuNzQ3IDg3OS44MTcgMTI1LjIzNiA4ODQuNDEyQzEyNy43MjUgODg5LjAwNyAxMzEuMDY0IDg5Mi41MDggMTM1LjI1NCA4OTQuOTE1QzEzOS40NDQgODk3LjMyMiAxNDQuMTc3IDg5OC41MjYgMTQ5LjQ1NCA4OTguNTI2WiIgZmlsbD0iI2YzYzYyMiIgZmlsbC1ydWxlPSJub256ZXJvIiBvcGFjaXR5PSIxIiBzdHJva2U9Im5vbmUiLz4KPHBhdGggZD0iTTI5NS40NzYgOTI0LjUzM0MyODYuMzMxIDkyNC41MzMgMjc4LjI3NSA5MjIuNTA0IDI3MS4zMDggOTE4LjQ0NkMyNjQuMzQxIDkxNC4zODcgMjU4LjkzNCA5MDguMTk4IDI1NS4wODggODk5Ljg3OEMyNTEuMjQyIDg5MS41NTggMjQ5LjMxOSA4ODEuMDE5IDI0OS4zMTkgODY4LjI2MkMyNDkuMzE5IDg1NS4zMTYgMjUxLjE2IDg0NC43MDQgMjU0Ljg0MyA4MzYuNDI1QzI1OC41MjYgODI4LjE0NiAyNjMuODM4IDgyMS45OTEgMjcwLjc3OCA4MTcuOTYxQzI3Ny43MTkgODEzLjkzIDI4NS45NTEgODExLjkxNCAyOTUuNDc2IDgxMS45MTRDMzA1LjgyMiA4MTEuOTE0IDMxNS4xMDggODE0LjIzNSAzMjMuMzM1IDgxOC44NzdDMzMxLjU2MiA4MjMuNTE4IDMzOC4wNzcgODMwLjA0NiAzNDIuODgxIDgzOC40NjFDMzQ3LjY4NSA4NDYuODc2IDM1MC4wODcgODU2LjgwOSAzNTAuMDg3IDg2OC4yNjJDMzUwLjA4NyA4NzkuNzE3IDM0Ny42ODUgODg5LjY1MSAzNDIuODgxIDg5OC4wNjZDMzM4LjA3NyA5MDYuNDgxIDMzMS41NjIgOTEyLjk5NSAzMjMuMzM1IDkxNy42MUMzMTUuMTA4IDkyMi4yMjUgMzA1LjgyMiA5MjQuNTMzIDI5NS40NzYgOTI0LjUzM1pNMjMwLjg2NyA5NjIuNDg2TDIzMC44NjcgODEzLjQ1N0wyNjEuMTI4IDgxMy40NTdMMjYxLjEyOCA4MzUuODk1TDI2MC41OTMgODY4LjM4NkwyNjIuNjI5IDkwMC44NzdMMjYyLjYyOSA5NjIuNDg2TDIzMC44NjcgOTYyLjQ4NlpNMjkwLjAxMSA4OTguNTI2QzI5NS4yODggODk4LjUyNiAzMDAuMDIgODk3LjMyMiAzMDQuMjA5IDg5NC45MTVDMzA4LjM5OCA4OTIuNTA4IDMxMS43MzYgODg5LjAyIDMxNC4yMjUgODg0LjQ1MkMzMTYuNzE0IDg3OS44ODMgMzE3Ljk1OSA4NzQuNDg3IDMxNy45NTkgODY4LjI2MkMzMTcuOTU5IDg2MS45MDEgMzE2LjcxNCA4NTYuNDU4IDMxNC4yMjUgODUxLjkzMUMzMTEuNzM2IDg0Ny40MDQgMzA4LjM5OCA4NDMuOTM3IDMwNC4yMDkgODQxLjUyOUMzMDAuMDIgODM5LjEyMiAyOTUuMjg4IDgzNy45MTkgMjkwLjAxMSA4MzcuOTE5QzI4NC43MzQgODM3LjkxOSAyODAuMDAxIDgzOS4xMjIgMjc1LjgxMSA4NDEuNTI5QzI3MS42MjEgODQzLjkzNyAyNjguMjgyIDg0Ny40MDQgMjY1Ljc5MyA4NTEuOTMxQzI2My4zMDQgODU2LjQ1OCAyNjIuMDYgODYxLjkwMSAyNjIuMDYgODY4LjI2MkMyNjIuMDYgODc0LjQ4NyAyNjMuMzA0IDg3OS44ODMgMjY1Ljc5MyA4ODQuNDUyQzI2OC4yODIgODg5LjAyIDI3MS42MjEgODkyLjUwOCAyNzUuODExIDg5NC45MTVDMjgwLjAwMSA4OTcuMzIyIDI4NC43MzQgODk4LjUyNiAyOTAuMDExIDg5OC41MjZaIiBmaWxsPSIjZjNjNjIyIiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0ibm9uZSIvPgo8cGF0aCBkPSJNMzc1LjI4NiA5MjIuOTg3TDM3NS4yODYgODEwLjk3QzM3NS4yODYgNzk4LjYzIDM3OC45NDEgNzg4Ljc3OCAzODYuMjQ5IDc4MS40MTRDMzkzLjU1OCA3NzQuMDQ5IDQwNC4wMDYgNzcwLjM2NiA0MTcuNTk1IDc3MC4zNjZDNDIyLjE1MiA3NzAuMzY2IDQyNi41ODEgNzcwLjgyOCA0MzAuODggNzcxLjc1MkM0MzUuMTc5IDc3Mi42NzYgNDM4LjgyIDc3NC4xMjkgNDQxLjgwNCA3NzYuMTEyTDQzMy41MTQgNzk5LjExQzQzMS43NzUgNzk3LjkzOSA0MjkuNzk4IDc5NyA0MjcuNTgyIDc5Ni4yOTNDNDI1LjM2NyA3OTUuNTg1IDQyMy4wNjMgNzk1LjIzMiA0MjAuNjcxIDc5NS4yMzJDNDE2LjAyMiA3OTUuMjMyIDQxMi40MzMgNzk2LjU1NyA0MDkuOTA1IDc5OS4yMDhDNDA3LjM3NyA4MDEuODU5IDQwNi4xMTMgODA1Ljg3NCA0MDYuMTEzIDgxMS4yNTNMNDA2LjExMyA4MjEuNDYyTDQwNy4wNDkgODM1LjExNkw0MDcuMDQ5IDkyMi45ODdMMzc1LjI4NiA5MjIuOTg3Wk0zNTguMjk1IDg0MC4yNkwzNTguMjk1IDgxNS44ODJMNDM0LjI3NCA4MTUuODgyTDQzNC4yNzQgODQwLjI2TDM1OC4yOTUgODQwLjI2WiIgZmlsbD0iI2YzYzYyMiIgZmlsbC1ydWxlPSJub256ZXJvIiBvcGFjaXR5PSIxIiBzdHJva2U9Im5vbmUiLz4KPC9nPgo8ZyBvcGFjaXR5PSIxIiB2ZWN0b3JuYXRvcjpsYXllck5hbWU9Ikdyb3VwIDE1Ij4KPHBhdGggZD0iTTYyMi45MDYgODExLjkxNEM2MzEuNTY4IDgxMS45MTQgNjM5LjI1OCA4MTMuNjI0IDY0NS45NzcgODE3LjA0NEM2NTIuNjk2IDgyMC40NjQgNjU3Ljk2OSA4MjUuNzM3IDY2MS43OTYgODMyLjg2MkM2NjUuNjIzIDgzOS45ODcgNjY3LjUzNyA4NDkuMTQgNjY3LjUzNyA4NjAuMzIxTDY2Ny41MzcgOTIyLjk4N0w2MzUuNzc1IDkyMi45ODdMNjM1Ljc3NSA4NjUuMDY4QzYzNS43NzUgODU2LjI2MiA2MzMuOTQ1IDg0OS43NjUgNjMwLjI4NyA4NDUuNTc4QzYyNi42MjggODQxLjM5IDYyMS41MzMgODM5LjI5NiA2MTUuMDAxIDgzOS4yOTZDNjEwLjMyIDgzOS4yOTYgNjA2LjE1NyA4NDAuMzQzIDYwMi41MTEgODQyLjQzOEM1OTguODY1IDg0NC41MzIgNTk2LjAyOSA4NDcuNjczIDU5NC4wMDMgODUxLjg2MUM1OTEuOTc2IDg1Ni4wNDggNTkwLjk2MyA4NjEuNDMyIDU5MC45NjMgODY4LjAxMUw1OTAuOTYzIDkyMi45ODdMNTU5LjE5NyA5MjIuOTg3TDU1OS4xOTcgODY1LjA2OEM1NTkuMTk3IDg1Ni4yNjIgNTU3LjM5NSA4NDkuNzY1IDU1My43OTEgODQ1LjU3OEM1NTAuMTg2IDg0MS4zOSA1NDUuMDY0IDgzOS4yOTYgNTM4LjQyMyA4MzkuMjk2QzUzMy43NDUgODM5LjI5NiA1MjkuNTgyIDg0MC4zNDMgNTI1LjkzNSA4NDIuNDM4QzUyMi4yODggODQ0LjUzMiA1MTkuNDUyIDg0Ny42NzMgNTE3LjQyNSA4NTEuODYxQzUxNS4zOTkgODU2LjA0OCA1MTQuMzg1IDg2MS40MzIgNTE0LjM4NSA4NjguMDExTDUxNC4zODUgOTIyLjk4N0w0ODIuNjIzIDkyMi45ODdMNDgyLjYyMyA4MTMuNDU3TDUxMi44ODQgODEzLjQ1N0w1MTIuODg0IDg0My4zMzZMNTA3LjExOSA4MzQuNjIzQzUxMC45MTggODI3LjE4OSA1MTYuMzI1IDgyMS41NDYgNTIzLjM0MiA4MTcuNjkzQzUzMC4zNTkgODEzLjg0MSA1MzguMzM0IDgxMS45MTQgNTQ3LjI2NyA4MTEuOTE0QzU1Ny4yODYgODExLjkxNCA1NjYuMDYzIDgxNC40MzkgNTczLjU5NiA4MTkuNDg4QzU4MS4xMjkgODI0LjUzNiA1ODYuMTQ0IDgzMi4zMTIgNTg4LjY0IDg0Mi44MTVMNTc3LjQyIDgzOS43MTZDNTgxLjA4MSA4MzEuMjI0IDU4Ni45MzYgODI0LjQ2NyA1OTQuOTg3IDgxOS40NDZDNjAzLjAzOCA4MTQuNDI1IDYxMi4zNDQgODExLjkxNCA2MjIuOTA2IDgxMS45MTRaIiBmaWxsPSIjOTk5OTk5IiBmaWxsLXJ1bGU9Im5vbnplcm8iIG9wYWNpdHk9IjEiIHN0cm9rZT0ibm9uZSIvPgo8cGF0aCBkPSJNNzYzLjIzOCA5MjIuOTg3TDc2My4yMzggOTAxLjY0TDc2MS4zMzMgODk2LjgzNkw3NjEuMzMzIDg1OC42MzhDNzYxLjMzMyA4NTEuODE2IDc1OS4yNiA4NDYuNTI5IDc1NS4xMTUgODQyLjc3OEM3NTAuOTY5IDgzOS4wMjcgNzQ0LjU5MSA4MzcuMTUyIDczNS45ODEgODM3LjE1MkM3MzAuMjIgODM3LjE1MiA3MjQuNTE2IDgzOC4wNTUgNzE4Ljg2NyA4MzkuODYxQzcxMy4yMTggODQxLjY2NyA3MDguMzk3IDg0NC4xMzIgNzA0LjQwMyA4NDcuMjU2TDY5My4wNjIgODI1LjE1MkM2OTkuMDg1IDgyMC44MzQgNzA2LjI5NiA4MTcuNTQ4IDcxNC42OTQgODE1LjI5NUM3MjMuMDkzIDgxMy4wNDEgNzMxLjYzNiA4MTEuOTE0IDc0MC4zMjMgODExLjkxNEM3NTcuMDg3IDgxMS45MTQgNzcwLjA3MyA4MTUuODQyIDc3OS4yODIgODIzLjY5NkM3ODguNDkgODMxLjU1MSA3OTMuMDk1IDg0My43OTMgNzkzLjA5NSA4NjAuNDIzTDc5My4wOTUgOTIyLjk4N0w3NjMuMjM4IDkyMi45ODdaTTcyOS45NTggOTI0LjUzM0M3MjEuNDM5IDkyNC41MzMgNzE0LjEyNSA5MjMuMDk1IDcwOC4wMTcgOTIwLjIxOEM3MDEuOTA5IDkxNy4zNDEgNjk3LjIzMiA5MTMuMzkyIDY5My45ODcgOTA4LjM3QzY5MC43NDIgOTAzLjM0OSA2ODkuMTIgODk3LjY5IDY4OS4xMiA4OTEuMzkzQzY4OS4xMiA4ODQuOTM3IDY5MC43MDYgODc5LjI1OSA2OTMuODc5IDg3NC4zNTlDNjk3LjA1MiA4NjkuNDU5IDcwMi4wOTggODY1LjYxNyA3MDkuMDE3IDg2Mi44MzNDNzE1LjkzNyA4NjAuMDQ5IDcyNC45NjEgODU4LjY1OCA3MzYuMDg5IDg1OC42NThMNzY1LjA3NCA4NTguNjU4TDc2NS4wNzQgODc3LjE2Nkw3MzkuNjExIDg3Ny4xNjZDNzMyLjEwMyA4NzcuMTY2IDcyNi45NjMgODc4LjM3NyA3MjQuMTkxIDg4MC43OThDNzIxLjQxOSA4ODMuMjE5IDcyMC4wMzMgODg2LjMxOCA3MjAuMDMzIDg5MC4wOTVDNzIwLjAzMyA4OTQuMDY2IDcyMS42MTEgODk3LjI0NyA3MjQuNzY3IDg5OS42NDFDNzI3LjkyMiA5MDIuMDM0IDczMi4yNjIgOTAzLjIzMSA3MzcuNzg0IDkwMy4yMzFDNzQzLjExOCA5MDMuMjMxIDc0Ny45MDcgOTAxLjk5MyA3NTIuMTUxIDg5OS41MThDNzU2LjM5NSA4OTcuMDQzIDc1OS40NTYgODkzLjMxOCA3NjEuMzMzIDg4OC4zNDJMNzY2LjEzIDkwMy4wOTFDNzYzLjg3NSA5MTAuMDYgNzU5LjY5MyA5MTUuMzc2IDc1My41ODEgOTE5LjAzOUM3NDcuNDcgOTIyLjcwMiA3MzkuNTk2IDkyNC41MzMgNzI5Ljk1OCA5MjQuNTMzWiIgZmlsbD0iIzk5OTk5OSIgZmlsbC1ydWxlPSJub256ZXJvIiBvcGFjaXR5PSIxIiBzdHJva2U9Im5vbmUiLz4KPHBhdGggZD0iTTg4OC4yMDcgODExLjkxNEM4OTYuOTIyIDgxMS45MTQgOTA0LjY5OSA4MTMuNjI0IDkxMS41NCA4MTcuMDQ0QzkxOC4zODEgODIwLjQ2NCA5MjMuNzgzIDgyNS43MzcgOTI3Ljc0NiA4MzIuODYyQzkzMS43MDkgODM5Ljk4NyA5MzMuNjkgODQ5LjE0IDkzMy42OSA4NjAuMzIxTDkzMy42OSA5MjIuOTg3TDkwMS45MjggOTIyLjk4N0w5MDEuOTI4IDg2NS4wNjhDOTAxLjkyOCA4NTYuMjYyIDg5OS45OSA4NDkuNzY1IDg5Ni4xMTMgODQ1LjU3OEM4OTIuMjM2IDg0MS4zOSA4ODYuODAxIDgzOS4yOTYgODc5LjgwOCA4MzkuMjk2Qzg3NC43MiA4MzkuMjk2IDg3MC4xNzcgODQwLjM1NiA4NjYuMTggODQyLjQ3N0M4NjIuMTgyIDg0NC41OTggODU5LjA3NSA4NDcuODIgODU2Ljg1OCA4NTIuMTQyQzg1NC42NDIgODU2LjQ2NSA4NTMuNTM0IDg2Mi4wMjMgODUzLjUzNCA4NjguODE5TDg1My41MzQgOTIyLjk4N0w4MjEuNzcyIDkyMi45ODdMODIxLjc3MiA4MTMuNDU3TDg1Mi4wMzIgODEzLjQ1N0w4NTIuMDMyIDg0My44MjNMODQ2LjM0NyA4MzQuNzAyQzg1MC4yODEgODI3LjI3MSA4NTUuOTA3IDgyMS42MTUgODYzLjIyMyA4MTcuNzM1Qzg3MC41MzkgODEzLjg1NSA4NzguODY3IDgxMS45MTQgODg4LjIwNyA4MTEuOTE0WiIgZmlsbD0iIzk5OTk5OSIgZmlsbC1ydWxlPSJub256ZXJvIiBvcGFjaXR5PSIxIiBzdHJva2U9Im5vbmUiLz4KPC9nPgo8L2c+Cjwvc3ZnPgo=
+  mediatype: image/svg+xml
+name: bpfman-operator
+schema: olm.package
+---
+entries:
+- name: bpfman-operator.v0.4.1
+- name: bpfman-operator.v0.5.0
+  replaces: bpfman-operator.v0.4.1
+- name: bpfman-operator.v0.5.1
+  replaces: bpfman-operator.v0.5.0
+name: alpha
+package: bpfman-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/bpfman-operator@sha256:b25ba705383f861e7d5f84c6313c1c7355ee7db86cad4f7f889edb42e413a1ff
+name: bpfman-operator.v0.4.1
+package: bpfman-operator
+properties:
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: BpfProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: FentryProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: FexitProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: KprobeProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: TcProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: TracepointProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: UprobeProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: XdpProgram
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: bpfman-operator
+    version: 0.4.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/bpfman/bpfman-operator:v0.4.1
+  name: ""
+- image: quay.io/operatorhubio/bpfman-operator@sha256:b25ba705383f861e7d5f84c6313c1c7355ee7db86cad4f7f889edb42e413a1ff
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/bpfman-operator@sha256:cedcd402c714615abeb18b6a82da46c13fb15b7e67abf6ca3b0ec4ad788f8657
+name: bpfman-operator.v0.5.0
+package: bpfman-operator
+properties:
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: BpfApplication
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: BpfProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: FentryProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: FexitProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: KprobeProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: TcProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: TracepointProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: UprobeProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: XdpProgram
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: bpfman-operator
+    version: 0.5.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/bpfman/bpfman-operator:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/bpfman-operator@sha256:cedcd402c714615abeb18b6a82da46c13fb15b7e67abf6ca3b0ec4ad788f8657
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/bpfman-operator@sha256:1d887d54c0feb6f8335472853214915cbe93f57f6560898da9b7b8e44ce94b26
+name: bpfman-operator.v0.5.1
+package: bpfman-operator
+properties:
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: BpfApplication
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: BpfProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: FentryProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: FexitProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: KprobeProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: TcProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: TracepointProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: UprobeProgram
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: bpfman.io
+    kind: XdpProgram
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: bpfman-operator
+    version: 0.5.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "bpfman.io/v1alpha1",
+            "kind": "BpfApplication",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "bpfapplication"
+              },
+              "name": "bpfapplication-sample"
+            },
+            "spec": {
+              "bytecode": {
+                "image": {
+                  "url": "quay.io/bpfman-bytecode/go-app-counter:v0.5.1"
+                }
+              },
+              "nodeselector": {},
+              "programs": [
+                {
+                  "kprobe": {
+                    "bpffunctionname": "kprobe_counter",
+                    "func_name": "try_to_wake_up",
+                    "offset": 0,
+                    "retprobe": false
+                  },
+                  "type": "Kprobe"
+                },
+                {
+                  "tracepoint": {
+                    "bpffunctionname": "tracepoint_kill_recorder",
+                    "names": [
+                      "syscalls/sys_enter_kill"
+                    ]
+                  },
+                  "type": "Tracepoint"
+                },
+                {
+                  "tc": {
+                    "bpffunctionname": "stats",
+                    "direction": "ingress",
+                    "interfaceselector": {
+                      "primarynodeinterface": true
+                    },
+                    "priority": 55
+                  },
+                  "type": "TC"
+                },
+                {
+                  "type": "Uprobe",
+                  "uprobe": {
+                    "bpffunctionname": "uprobe_counter",
+                    "containers": {
+                      "containernames": [
+                        "bpfman",
+                        "bpfman-agent"
+                      ],
+                      "namespace": "bpfman",
+                      "pods": {
+                        "matchLabels": {
+                          "name": "bpfman-daemon"
+                        }
+                      }
+                    },
+                    "func_name": "malloc",
+                    "retprobe": false,
+                    "target": "libc"
+                  }
+                },
+                {
+                  "type": "XDP",
+                  "xdp": {
+                    "bpffunctionname": "xdp_stats",
+                    "interfaceselector": {
+                      "primarynodeinterface": true
+                    },
+                    "priority": 55
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "bpfman.io/v1alpha1",
+            "kind": "FentryProgram",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "fentryprogram"
+              },
+              "name": "fentry-example"
+            },
+            "spec": {
+              "bpffunctionname": "test_fentry",
+              "bytecode": {
+                "image": {
+                  "url": "quay.io/bpfman-bytecode/fentry:v0.5.1"
+                }
+              },
+              "func_name": "do_unlinkat",
+              "nodeselector": {}
+            }
+          },
+          {
+            "apiVersion": "bpfman.io/v1alpha1",
+            "kind": "FexitProgram",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "fexitprogram"
+              },
+              "name": "fexit-example"
+            },
+            "spec": {
+              "bpffunctionname": "test_fexit",
+              "bytecode": {
+                "image": {
+                  "url": "quay.io/bpfman-bytecode/fexit:v0.5.1"
+                }
+              },
+              "func_name": "do_unlinkat",
+              "nodeselector": {}
+            }
+          },
+          {
+            "apiVersion": "bpfman.io/v1alpha1",
+            "kind": "KprobeProgram",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "kprobeprogram"
+              },
+              "name": "kprobe-example"
+            },
+            "spec": {
+              "bpffunctionname": "my_kprobe",
+              "bytecode": {
+                "image": {
+                  "url": "quay.io/bpfman-bytecode/kprobe:v0.5.1"
+                }
+              },
+              "func_name": "try_to_wake_up",
+              "globaldata": {
+                "GLOBAL_u32": [
+                  13,
+                  12,
+                  11,
+                  10
+                ],
+                "GLOBAL_u8": [
+                  1
+                ]
+              },
+              "nodeselector": {},
+              "offset": 0,
+              "retprobe": false
+            }
+          },
+          {
+            "apiVersion": "bpfman.io/v1alpha1",
+            "kind": "TcProgram",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "tcprogram"
+              },
+              "name": "tc-pass-all-nodes"
+            },
+            "spec": {
+              "bpffunctionname": "pass",
+              "bytecode": {
+                "image": {
+                  "url": "quay.io/bpfman-bytecode/tc_pass:v0.5.1"
+                }
+              },
+              "direction": "ingress",
+              "globaldata": {
+                "GLOBAL_u32": [
+                  13,
+                  12,
+                  11,
+                  10
+                ],
+                "GLOBAL_u8": [
+                  1
+                ]
+              },
+              "interfaceselector": {
+                "primarynodeinterface": true
+              },
+              "nodeselector": {},
+              "priority": 0
+            }
+          },
+          {
+            "apiVersion": "bpfman.io/v1alpha1",
+            "kind": "TracepointProgram",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "tracepointprogram"
+              },
+              "name": "tracepoint-example"
+            },
+            "spec": {
+              "bpffunctionname": "enter_openat",
+              "bytecode": {
+                "image": {
+                  "url": "quay.io/bpfman-bytecode/tracepoint:v0.5.1"
+                }
+              },
+              "globaldata": {
+                "GLOBAL_u32": [
+                  13,
+                  12,
+                  11,
+                  10
+                ],
+                "GLOBAL_u8": [
+                  1
+                ]
+              },
+              "names": [
+                "syscalls/sys_enter_openat"
+              ],
+              "nodeselector": {}
+            }
+          },
+          {
+            "apiVersion": "bpfman.io/v1alpha1",
+            "kind": "UprobeProgram",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "uprobeprogram"
+              },
+              "name": "uprobe-example"
+            },
+            "spec": {
+              "bpffunctionname": "my_uprobe",
+              "bytecode": {
+                "image": {
+                  "url": "quay.io/bpfman-bytecode/uprobe:v0.5.1"
+                }
+              },
+              "func_name": "syscall",
+              "globaldata": {
+                "GLOBAL_u32": [
+                  13,
+                  12,
+                  11,
+                  10
+                ],
+                "GLOBAL_u8": [
+                  1
+                ]
+              },
+              "nodeselector": {},
+              "retprobe": false,
+              "target": "libc"
+            }
+          },
+          {
+            "apiVersion": "bpfman.io/v1alpha1",
+            "kind": "XdpProgram",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "xdpprogram"
+              },
+              "name": "xdp-pass-all-nodes"
+            },
+            "spec": {
+              "bpffunctionname": "pass",
+              "bytecode": {
+                "image": {
+                  "url": "quay.io/bpfman-bytecode/xdp_pass:v0.5.1"
+                }
+              },
+              "globaldata": {
+                "GLOBAL_u32": [
+                  13,
+                  12,
+                  11,
+                  10
+                ],
+                "GLOBAL_u8": [
+                  1
+                ]
+              },
+              "interfaceselector": {
+                "primarynodeinterface": true
+              },
+              "nodeselector": {},
+              "priority": 0
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: OpenShift Optional
+      containerImage: quay.io/bpfman/bpfman-operator:v0.5.1
+      createdAt: "2024-08-01T17:48:50Z"
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "true"
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "true"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      operatorframework.io/suggested-namespace: bpfman
+      operatorframework.io/suggested-namespace-template: |-
+        {
+          "apiVersion": "v1",
+          "kind": "Namespace",
+          "metadata": {
+            "name": "bpfman",
+            "labels": {
+              "pod-security.kubernetes.io/enforce": "privileged",
+              "pod-security.kubernetes.io/audit": "privileged",
+              "pod-security.kubernetes.io/warn": "privileged",
+            },
+            "annotations": {
+              "openshift.io/node-selector": ""
+            },
+          }
+        }
+      operators.openshift.io/infrastructure-features: '["csi", "disconnected"]'
+      operators.openshift.io/valid-subscription: '["OpenShift Kubernetes Engine",
+        "OpenShift Container Platform", "OpenShift Platform Plus"]'
+      operators.operatorframework.io/builder: operator-sdk-v1.27.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/bpfman/bpfman
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: BpfApplication is the Schema for the bpfapplications API
+        displayName: Bpf Application
+        kind: BpfApplication
+        name: bpfapplications.bpfman.io
+        version: v1alpha1
+      - description: BpfProgram is the Schema for the BpfProgram API
+        displayName: Bpf Program
+        kind: BpfProgram
+        name: bpfprograms.bpfman.io
+        version: v1alpha1
+      - description: FentryProgram is the Schema for the Fentryprograms API
+        displayName: Fentry Program
+        kind: FentryProgram
+        name: fentryprograms.bpfman.io
+        version: v1alpha1
+      - description: FexitProgram is the Schema for the Fexitprograms API
+        displayName: Fexit Program
+        kind: FexitProgram
+        name: fexitprograms.bpfman.io
+        version: v1alpha1
+      - description: KprobeProgram is the Schema for the Kprobeprograms API
+        displayName: Kprobe Program
+        kind: KprobeProgram
+        name: kprobeprograms.bpfman.io
+        version: v1alpha1
+      - description: TcProgram is the Schema for the Tcprograms API
+        displayName: Tc Program
+        kind: TcProgram
+        name: tcprograms.bpfman.io
+        version: v1alpha1
+      - description: TracepointProgram is the Schema for the Tracepointprograms API
+        displayName: Tracepoint Program
+        kind: TracepointProgram
+        name: tracepointprograms.bpfman.io
+        version: v1alpha1
+      - description: UprobeProgram is the Schema for the Uprobeprograms API
+        displayName: Uprobe Program
+        kind: UprobeProgram
+        name: uprobeprograms.bpfman.io
+        version: v1alpha1
+      - description: XdpProgram is the Schema for the Xdpprograms API
+        displayName: Xdp Program
+        kind: XdpProgram
+        name: xdpprograms.bpfman.io
+        version: v1alpha1
+    description: "The bpfman Operator is a Kubernetes Operator for deploying [bpfman](https://bpfman.netlify.app/),
+      a system daemon\nfor managing eBPF programs. It deploys bpfman itself along
+      with CRDs to make deploying\neBPF programs in Kubernetes much easier.\n\n##
+      Quick Start\n\nTo get bpfman up and running quickly simply click 'install' to
+      deploy the bpfman-operator in the bpfman namespace via operator-hub.\n## Configuration\n\nThe
+      `bpfman-config` configmap is automatically created in the `bpfman` namespace
+      and used to configure the bpfman deployment.\n\nTo edit the config simply run\n\n```bash\nkubectl
+      edit cm bpfman-config\n```\n\nThe following fields are adjustable\n\n- `bpfman.agent.image`:
+      The image used for the bpfman-agent, defaults to `quay.io/bpfman/bpfman-agent:v0.5.1`\n-
+      `bpfman.image`: The image used for bpfman, defaults to `quay.io/bpfman/bpfman:v0.5.1`\n-
+      `bpfman.log.level`: the log level for bpfman, currently supports `debug`, `info`,
+      `warn`, `error`, and `fatal`, defaults to `info`\n- `bpfman.agent.log.level`:
+      the log level for the bpfman-agent currently supports `info`, `debug`, and `trace`
+      \n\nThe bpfman operator deploys eBPF programs via CRDs. The following CRDs are
+      currently available, \n\n- XdpProgram\n- TcProgram\n- TracepointProgram\n- KprobeProgram\n-
+      UprobeProgram\n- FentryProgram\n- FexitProgram\n\n## More information\n\nPlease
+      checkout the [bpfman community website](https://bpfman.io/) for more information."
+    displayName: Bpfman Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - ebpf
+    - kubernetes
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+    links:
+    - name: bpfman website
+      url: https://bpfman.io/
+    maintainers:
+    - email: astoycos@gmail.com
+      name: Andrew Stoycos
+    - email: afredette@redhat.com
+      name: Andre Fredette
+    maturity: alpha
+    provider:
+      name: The bpfman Community
+      url: https://bpfman.io/
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/bpfman/bpfman-operator:v0.5.1
+  name: ""
+- image: quay.io/operatorhubio/bpfman-operator@sha256:1d887d54c0feb6f8335472853214915cbe93f57f6560898da9b7b8e44ce94b26
+  name: ""
+schema: olm.bundle

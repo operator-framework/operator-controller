@@ -1,0 +1,913 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-memorydb-controller
+schema: olm.package
+---
+entries:
+- name: ack-memorydb-controller.v0.0.10
+  replaces: ack-memorydb-controller.v0.0.9
+- name: ack-memorydb-controller.v0.0.11
+  replaces: ack-memorydb-controller.v0.0.10
+- name: ack-memorydb-controller.v0.0.12
+  replaces: ack-memorydb-controller.v0.0.11
+- name: ack-memorydb-controller.v0.0.3
+- name: ack-memorydb-controller.v0.0.4
+  replaces: ack-memorydb-controller.v0.0.3
+- name: ack-memorydb-controller.v0.0.5
+  replaces: ack-memorydb-controller.v0.0.4
+- name: ack-memorydb-controller.v0.0.6
+  replaces: ack-memorydb-controller.v0.0.5
+- name: ack-memorydb-controller.v0.0.7
+  replaces: ack-memorydb-controller.v0.0.6
+- name: ack-memorydb-controller.v0.0.8
+  replaces: ack-memorydb-controller.v0.0.7
+- name: ack-memorydb-controller.v0.0.9
+  replaces: ack-memorydb-controller.v0.0.8
+- name: ack-memorydb-controller.v1.0.0
+  replaces: ack-memorydb-controller.v0.0.12
+- name: ack-memorydb-controller.v1.0.1
+  replaces: ack-memorydb-controller.v1.0.0
+- name: ack-memorydb-controller.v1.0.2
+  replaces: ack-memorydb-controller.v1.0.1
+- name: ack-memorydb-controller.v1.0.3
+  replaces: ack-memorydb-controller.v1.0.2
+- name: ack-memorydb-controller.v1.0.4
+  replaces: ack-memorydb-controller.v1.0.3
+- name: ack-memorydb-controller.v1.0.5
+  replaces: ack-memorydb-controller.v1.0.4
+name: alpha
+package: ack-memorydb-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:198a239d0ed6dfaa2c036a4720dd8f38a4827768bbcb04b8394309ba3b95e19c
+name: ack-memorydb-controller.v0.0.10
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:198a239d0ed6dfaa2c036a4720dd8f38a4827768bbcb04b8394309ba3b95e19c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:0283e5c653b1b0e035dd798b69e20a683543dbeed9839bcf6a161353629ca2e4
+name: ack-memorydb-controller.v0.0.11
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:0283e5c653b1b0e035dd798b69e20a683543dbeed9839bcf6a161353629ca2e4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:2cdafea03584120c38bcef348a842b83928a9b5fdea7e11f626274e04f8c39b5
+name: ack-memorydb-controller.v0.0.12
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:2cdafea03584120c38bcef348a842b83928a9b5fdea7e11f626274e04f8c39b5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:d6a144ba269019488050088b8d1de198fcb0a57683a227cff0b92e8a6b38c2ca
+name: ack-memorydb-controller.v0.0.3
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:d6a144ba269019488050088b8d1de198fcb0a57683a227cff0b92e8a6b38c2ca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:2739ed6ed799c571556d428b2044f594ce4a0259e4e9c3cb463e92665d73b270
+name: ack-memorydb-controller.v0.0.4
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:2739ed6ed799c571556d428b2044f594ce4a0259e4e9c3cb463e92665d73b270
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:9e7d666fabbfa02b2299a123e227dd154aae82d6a1b4cace28db2d287d839160
+name: ack-memorydb-controller.v0.0.5
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:9e7d666fabbfa02b2299a123e227dd154aae82d6a1b4cace28db2d287d839160
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:6af18c2814b2f6ea6de7ff97b1d160105246cab607b1b4ca6d5c0e2dec30aea4
+name: ack-memorydb-controller.v0.0.6
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:6af18c2814b2f6ea6de7ff97b1d160105246cab607b1b4ca6d5c0e2dec30aea4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:9f54a1047c68dbd12fe9b3ca9adf4d40daa023e4abf2f036fc555a9ed6a5645c
+name: ack-memorydb-controller.v0.0.7
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:9f54a1047c68dbd12fe9b3ca9adf4d40daa023e4abf2f036fc555a9ed6a5645c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:167554cd093e01ee605ef1fb3dacfce91f2f978b2ad76ed92acf9aec969b624c
+name: ack-memorydb-controller.v0.0.8
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:167554cd093e01ee605ef1fb3dacfce91f2f978b2ad76ed92acf9aec969b624c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:6bd89d617c855dd710199f4e27e60f44e74ccd57d9d5c2c0076ca3d308001d59
+name: ack-memorydb-controller.v0.0.9
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:6bd89d617c855dd710199f4e27e60f44e74ccd57d9d5c2c0076ca3d308001d59
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:69089203f121377d3d5187e3671f262d94463cf23a127fd988a0dab810c2cb82
+name: ack-memorydb-controller.v1.0.0
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:69089203f121377d3d5187e3671f262d94463cf23a127fd988a0dab810c2cb82
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:535b57fd4134947c33bd5d4a1c406d87c0ba6467c83c3e3ed6a3e3b0d8163d26
+name: ack-memorydb-controller.v1.0.1
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:535b57fd4134947c33bd5d4a1c406d87c0ba6467c83c3e3ed6a3e3b0d8163d26
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:04774fd2745226a97e98389e514316e10db80db0867b38636fedde3dd46c10bc
+name: ack-memorydb-controller.v1.0.2
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:04774fd2745226a97e98389e514316e10db80db0867b38636fedde3dd46c10bc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:7833a2965b0bb234563aa63d5403c096d0e4f887197e623eeab56e5de429f1ee
+name: ack-memorydb-controller.v1.0.3
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:7833a2965b0bb234563aa63d5403c096d0e4f887197e623eeab56e5de429f1ee
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:379731b42f032293e91f2cae38c76ec6a266e307f8be604070a8d649b66cdff7
+name: ack-memorydb-controller.v1.0.4
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 1.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:1.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:379731b42f032293e91f2cae38c76ec6a266e307f8be604070a8d649b66cdff7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-memorydb-controller@sha256:2c6dbc43c281a86cea69f531053d8bbdef54069a92532ec959663a06d189cad7
+name: ack-memorydb-controller.v1.0.5
+package: ack-memorydb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ACL
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: ParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: Snapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: SubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: memorydb.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-memorydb-controller
+    version: 1.0.5
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "memorydb.services.k8s.aws/v1alpha1",
+            "kind": "ACL",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "memorydb.services.k8s.aws/v1alpha1",
+            "kind": "Cluster",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "memorydb.services.k8s.aws/v1alpha1",
+            "kind": "ParameterGroup",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "memorydb.services.k8s.aws/v1alpha1",
+            "kind": "Snapshot",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "memorydb.services.k8s.aws/v1alpha1",
+            "kind": "SubnetGroup",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "memorydb.services.k8s.aws/v1alpha1",
+            "kind": "User",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/memorydb-controller:1.0.5
+      createdAt: "2024-08-30T23:28:25Z"
+      description: Amazon MemoryDB for Redis controller is a service controller for
+        managing MemoryDB resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: ACL represents the state of an AWS memorydb ACL resource.
+        displayName: ACL
+        kind: ACL
+        name: acls.memorydb.services.k8s.aws
+        version: v1alpha1
+      - description: Cluster represents the state of an AWS memorydb Cluster resource.
+        displayName: Cluster
+        kind: Cluster
+        name: clusters.memorydb.services.k8s.aws
+        version: v1alpha1
+      - description: ParameterGroup represents the state of an AWS memorydb ParameterGroup
+          resource.
+        displayName: ParameterGroup
+        kind: ParameterGroup
+        name: parametergroups.memorydb.services.k8s.aws
+        version: v1alpha1
+      - description: Snapshot represents the state of an AWS memorydb Snapshot resource.
+        displayName: Snapshot
+        kind: Snapshot
+        name: snapshots.memorydb.services.k8s.aws
+        version: v1alpha1
+      - description: SubnetGroup represents the state of an AWS memorydb SubnetGroup
+          resource.
+        displayName: SubnetGroup
+        kind: SubnetGroup
+        name: subnetgroups.memorydb.services.k8s.aws
+        version: v1alpha1
+      - description: User represents the state of an AWS memorydb User resource.
+        displayName: User
+        kind: User
+        name: users.memorydb.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon MemoryDB for Redis resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon MemoryDB for Redis**
+
+      MemoryDB for Redis is a durable, in-memory database service that delivers ultra-fast performance. It is purpose-built for modern applications with microservices architectures.
+      MemoryDB is compatible with Redis, a popular open source data store, enabling you to quickly build applications using the same flexible and friendly Redis data structures, APIs, and commands that they already use today. With MemoryDB, all of your data is stored in memory, which enables you to achieve microsecond read and single-digit millisecond write latency and high throughput. MemoryDB also stores data durably across multiple Availability Zones (AZs) using a Multi-AZ transactional log to enable fast failover, database recovery, and node restarts.
+      Delivering both in-memory performance and Multi-AZ durability, MemoryDB can be used as a high-performance primary database for your microservices applications, eliminating the need to separately manage both a cache and durable database.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - MemoryDB
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - memorydb
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon MemoryDB for Redis Developer Resources
+      url: https://docs.aws.amazon.com/memorydb/?id=docs_gateway
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: memorydb maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/memorydb-controller:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-memorydb-controller@sha256:2c6dbc43c281a86cea69f531053d8bbdef54069a92532ec959663a06d189cad7
+  name: ""
+schema: olm.bundle

@@ -1,0 +1,245 @@
+{
+    "schema": "olm.package",
+    "name": "amq-streams-console",
+    "defaultChannel": "alpha",
+    "icon": {
+        "base64data": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDM4IDM4Ij48ZGVmcz48c3R5bGU+LmNscy0xLC5jbHMtMiwuY2xzLTMsLmNscy00e3N0cm9rZS13aWR0aDowcHg7fS5jbHMtMntmaWxsOiNlMGUwZTA7fS5jbHMtM3tmaWxsOiNmZmY7fS5jbHMtNHtmaWxsOiNlMDA7fTwvc3R5bGU+PC9kZWZzPjxnIGlkPSJCb3VuZGluZ19zaGFwZSI+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxIiB5PSIxIiB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHJ4PSI5IiByeT0iOSIvPjxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTI4LDIuMjVjNC4yNywwLDcuNzUsMy40OCw3Ljc1LDcuNzV2MThjMCw0LjI3LTMuNDgsNy43NS03Ljc1LDcuNzVIMTBjLTQuMjcsMC03Ljc1LTMuNDgtNy43NS03Ljc1VjEwYzAtNC4yNywzLjQ4LTcuNzUsNy43NS03Ljc1aDE4TTI4LDFIMTBDNS4wMywxLDEsNS4wMywxLDEwdjE4YzAsNC45Nyw0LjAzLDksOSw5aDE4YzQuOTcsMCw5LTQuMDMsOS05VjEwYzAtNC45Ny00LjAzLTktOS05aDBaIi8+PC9nPjxnIGlkPSJJY29ucyI+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNMTcsMTguNjJjLTEuNzIsMC0zLjEyLTEuNC0zLjEyLTMuMTJzMS40LTMuMTIsMy4xMi0zLjEyLDMuMTIsMS40LDMuMTIsMy4xMi0xLjQsMy4xMi0zLjEyLDMuMTJaTTE3LDEzLjYyYy0xLjAzLDAtMS44OC44NC0xLjg4LDEuODhzLjg0LDEuODgsMS44OCwxLjg4LDEuODgtLjg0LDEuODgtMS44OC0uODQtMS44OC0xLjg4LTEuODhaIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNMjMsMTguNjJjLS4zNCwwLS42Mi0uMjgtLjYyLS42MnYtNWMwLS4zNS4yOC0uNjIuNjItLjYycy42Mi4yOC42Mi42MnY1YzAsLjM1LS4yOC42Mi0uNjIuNjJaIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNMjEsMjUuNjJjLTEuNzIsMC0zLjEyLTEuNC0zLjEyLTMuMTJzMS40LTMuMTIsMy4xMi0zLjEyLDMuMTIsMS40LDMuMTIsMy4xMi0xLjQsMy4xMi0zLjEyLDMuMTJaTTIxLDIwLjYyYy0xLjAzLDAtMS44OC44NC0xLjg4LDEuODhzLjg0LDEuODgsMS44OCwxLjg4LDEuODgtLjg0LDEuODgtMS44OC0uODQtMS44OC0xLjg4LTEuODhaIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTEuNDQsOS41NmMtLjA4LS4wOC0uMTgtLjEzLS4yOS0uMTUtLjAyLDAtLjA1LS4wMS0uMDctLjAxLS4xMS0uMDEtLjIyLS4wMS0uMzIuMDMsMCwwLDAsMCwwLDAtLjA3LjAzLS4xMy4wNy0uMTguMTIsMCwwLS4wMSwwLS4wMi4wMWwtMiwyYy0uMjQuMjQtLjI0LjY0LDAsLjg4LjEyLjEyLjI4LjE4LjQ0LjE4cy4zMi0uMDYuNDQtLjE4bC45My0uOTN2OC40OWMwLC4zNS4yOC42Mi42Mi42MnMuNjItLjI4LjYyLS42MnYtOC40OWwuOTMuOTNjLjI0LjI0LjY0LjI0Ljg4LDBzLjI0LS42NCwwLS44OGwtMi0yWiIvPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTI5LjQ0LDI1LjU2Yy0uMjQtLjI0LS42NC0uMjQtLjg4LDBsLS45My45M3YtOC40OWMwLS4zNS0uMjgtLjYyLS42Mi0uNjJzLS42Mi4yOC0uNjIuNjJ2OC40OWwtLjkzLS45M2MtLjI0LS4yNC0uNjQtLjI0LS44OCwwLS4yNC4yNC0uMjQuNjQsMCwuODhsMiwyYy4wNi4wNi4xMy4xMS4yMS4xNC4wOC4wMy4xNi4wNS4yNC4wNXMuMTYtLjAyLjI0LS4wNWMwLDAsMCwwLDAsMCwuMDctLjAzLjEzLS4wNy4xOC0uMTIsMCwwLC4wMSwwLC4wMi0uMDFsMi0yYy4yNC0uMjQuMjQtLjY0LDAtLjg4WiIvPjxwYXRoIGNsYXNzPSJjbHMtNCIgZD0iTTE1LDI1LjYyYy0uMzUsMC0uNjItLjI4LS42Mi0uNjJ2LTVjMC0uMzUuMjgtLjYyLjYyLS42MnMuNjIuMjguNjIuNjJ2NWMwLC4zNS0uMjguNjItLjYyLjYyWiIvPjxwYXRoIGNsYXNzPSJjbHMtNCIgZD0iTTI3LDE4LjYyYy0uMzQsMC0uNjItLjI4LS42Mi0uNjJ2LTVjMC0uMzUuMjgtLjYyLjYyLS42MnMuNjIuMjguNjIuNjJ2NWMwLC4zNS0uMjguNjItLjYyLjYyWiIvPjxwYXRoIGNsYXNzPSJjbHMtNCIgZD0iTTExLDI1LjYyYy0uMzUsMC0uNjItLjI4LS42Mi0uNjJ2LTVjMC0uMzUuMjgtLjYyLjYyLS42MnMuNjIuMjguNjIuNjJ2NWMwLC4zNS0uMjguNjItLjYyLjYyWiIvPjxwYXRoIGNsYXNzPSJjbHMtNCIgZD0iTTIwLjEyLDE1LjVjMC0xLjcyLTEuNC0zLjEyLTMuMTItMy4xMnMtMy4xMiwxLjQtMy4xMiwzLjEyLDEuNCwzLjEyLDMuMTIsMy4xMiwzLjEyLTEuNCwzLjEyLTMuMTJaTTE3LDE3LjM4Yy0xLjAzLDAtMS44OC0uODQtMS44OC0xLjg4cy44NC0xLjg4LDEuODgtMS44OCwxLjg4Ljg0LDEuODgsMS44OC0uODQsMS44OC0xLjg4LDEuODhaIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNMjMsMTguNjJjLjM0LDAsLjYyLS4yOC42Mi0uNjJ2LTVjMC0uMzUtLjI4LS42Mi0uNjItLjYycy0uNjIuMjgtLjYyLjYydjVjMCwuMzUuMjguNjIuNjIuNjJaIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNMjEsMTkuMzhjLTEuNzIsMC0zLjEyLDEuNC0zLjEyLDMuMTJzMS40LDMuMTIsMy4xMiwzLjEyLDMuMTItMS40LDMuMTItMy4xMi0xLjQtMy4xMi0zLjEyLTMuMTJaTTIxLDI0LjM4Yy0xLjAzLDAtMS44OC0uODQtMS44OC0xLjg4cy44NC0xLjg4LDEuODgtMS44OCwxLjg4Ljg0LDEuODgsMS44OC0uODQsMS44OC0xLjg4LDEuODhaIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNMTUsMTkuMzhjLS4zNSwwLS42Mi4yOC0uNjIuNjJ2NWMwLC4zNS4yOC42Mi42Mi42MnMuNjItLjI4LjYyLS42MnYtNWMwLS4zNS0uMjgtLjYyLS42Mi0uNjJaIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNMjcsMTIuMzhjLS4zNCwwLS42Mi4yOC0uNjIuNjJ2NWMwLC4zNS4yOC42Mi42Mi42MnMuNjItLjI4LjYyLS42MnYtNWMwLS4zNS0uMjgtLjYyLS42Mi0uNjJaIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNMTEsMTkuMzhjLS4zNSwwLS42Mi4yOC0uNjIuNjJ2NWMwLC4zNS4yOC42Mi42Mi42MnMuNjItLjI4LjYyLS42MnYtNWMwLS4zNS0uMjgtLjYyLS42Mi0uNjJaIi8+PC9nPjwvc3ZnPg==",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "alpha",
+    "package": "amq-streams-console",
+    "entries": [
+        {
+            "name": "amq-streams-console.v2.8.0-13"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "amq-streams-2.8.x",
+    "package": "amq-streams-console",
+    "entries": [
+        {
+            "name": "amq-streams-console.v2.8.0-13"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "amq-streams-2.x",
+    "package": "amq-streams-console",
+    "entries": [
+        {
+            "name": "amq-streams-console.v2.8.0-13"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "amq-streams-console.v2.8.0-13",
+    "package": "amq-streams-console",
+    "image": "registry.redhat.io/amq-streams/console-operator-bundle@sha256:ba263cfa16e86a493791a41cc2339e8381444ebec4a1e59cefef8c5bc36fb222",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "console.streamshub.github.com",
+                "kind": "Console",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "amq-streams-console",
+                "version": "2.8.0-13"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\":\"console.streamshub.github.com/v1alpha1\",\n    \"kind\":\"Console\",\n    \"metadata\":{\n      \"name\":\"example-console\"\n    },\n    \"spec\":{\n      \"hostname\": \"<console-hostname-for-ingress>\",\n      \"kafkaClusters\": [\n        {\n          \"name\": \"<strimzi-kafka-resource-name>\",\n          \"namespace\": \"<strimzi-kafka-resource-namespace>\",\n          \"listener\": \"<strimzi-kafka-listener-name>\",\n          \"credentials\": {\n            \"kafkaUser\": {\n              \"name\": \"<strimzi-kafka-user-name-for-connection>\"\n            }\n          }\n        }\n      ]\n    }\n  }\n]",
+                    "alm-examples-metadata": "{\n  \"example-console\": {\n    \"description\": \"Example Console instance with reference to on-cluster Strimzi Kafka resource\"\n  }\n}",
+                    "capabilities": "Basic Install",
+                    "categories": "Streaming & Messaging",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/amq-streams/console-rhel9-operator@sha256:18f47df11bc3b4e2f5e319ef8cfe8f2c2a31df3f417485cee89f071977287d5e",
+                    "createdAt": "2024-11-12T15:34:06Z",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "true",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat AMQ\", \"Red Hat Application Foundations\"]",
+                    "repository": "https://github.com/streamshub/console",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "consoles.console.streamshub.github.com",
+                            "version": "v1alpha1",
+                            "kind": "Console",
+                            "displayName": "Console",
+                            "description": "Represents a Console deployment"
+                        }
+                    ]
+                },
+                "description": "The Red Hat streams for Apache Kafka Console provides a web-based user interface tool for monitoring Apache Kafka® instances within an OpenShift cluster.\n\nIt features a user-friendly way to view Kafka topics and consumer groups, facilitating the searching and filtering of streamed messages. The console also offers insights into Kafka broker disk usage, helping administrators monitor and optimize resource utilization. By simplifying complex Kafka operations, the streams for Apache Kafka Console enhances the efficiency and effectiveness of data streaming management within OpenShift environments.",
+                "displayName": "Streams for Apache Kafka Console",
+                "installModes": [
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    },
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "kafka",
+                    "messaging",
+                    "kafka-streams",
+                    "data-streaming",
+                    "data-streams",
+                    "streaming",
+                    "streams",
+                    "web",
+                    "console",
+                    "ui",
+                    "user interface"
+                ],
+                "links": [
+                    {
+                        "name": "Product Page",
+                        "url": "https://access.redhat.com/products/red-hat-amq"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://docs.redhat.com/en/documentation/red_hat_streams_for_apache_kafka/2.8"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Red Hat",
+                        "email": "customerservice@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.23.0",
+                "nativeAPIs": [
+                    {
+                        "group": "",
+                        "version": "v1",
+                        "kind": "ConfigMap"
+                    },
+                    {
+                        "group": "",
+                        "version": "v1",
+                        "kind": "Secret"
+                    },
+                    {
+                        "group": "",
+                        "version": "v1",
+                        "kind": "ServiceAccount"
+                    },
+                    {
+                        "group": "",
+                        "version": "v1",
+                        "kind": "ServiceAccount"
+                    },
+                    {
+                        "group": "",
+                        "version": "v1",
+                        "kind": "Service"
+                    },
+                    {
+                        "group": "",
+                        "version": "v1",
+                        "kind": "Service"
+                    },
+                    {
+                        "group": "apps",
+                        "version": "v1",
+                        "kind": "Deployment"
+                    },
+                    {
+                        "group": "apps",
+                        "version": "v1",
+                        "kind": "Deployment"
+                    },
+                    {
+                        "group": "networking.k8s.io",
+                        "version": "v1",
+                        "kind": "Ingress"
+                    },
+                    {
+                        "group": "rbac.authorization.k8s.io",
+                        "version": "v1",
+                        "kind": "ClusterRoleBinding"
+                    },
+                    {
+                        "group": "rbac.authorization.k8s.io",
+                        "version": "v1",
+                        "kind": "ClusterRoleBinding"
+                    },
+                    {
+                        "group": "rbac.authorization.k8s.io",
+                        "version": "v1",
+                        "kind": "ClusterRole"
+                    },
+                    {
+                        "group": "rbac.authorization.k8s.io",
+                        "version": "v1",
+                        "kind": "ClusterRole"
+                    }
+                ],
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://github.com/streamshub"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "console-api-rhel9-4638e31ad1657fb2f4a62e57456f71aeb2f11c899caec9f4cc01c43a3938ef9d-annotation",
+            "image": "registry.redhat.io/amq-streams/console-api-rhel9@sha256:4638e31ad1657fb2f4a62e57456f71aeb2f11c899caec9f4cc01c43a3938ef9d"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/amq-streams/console-operator-bundle@sha256:ba263cfa16e86a493791a41cc2339e8381444ebec4a1e59cefef8c5bc36fb222"
+        },
+        {
+            "name": "console-rhel9-operator-18f47df11bc3b4e2f5e319ef8cfe8f2c2a31df3f417485cee89f071977287d5e-annotation",
+            "image": "registry.redhat.io/amq-streams/console-rhel9-operator@sha256:18f47df11bc3b4e2f5e319ef8cfe8f2c2a31df3f417485cee89f071977287d5e"
+        },
+        {
+            "name": "console-operator",
+            "image": "registry.redhat.io/amq-streams/console-rhel9-operator@sha256:18f47df11bc3b4e2f5e319ef8cfe8f2c2a31df3f417485cee89f071977287d5e"
+        },
+        {
+            "name": "console-ui-rhel9-38b80d81e54d59667c1f7dfa4da4125d5c7430816da130ddc84678a4e3cff6cf-annotation",
+            "image": "registry.redhat.io/amq-streams/console-ui-rhel9@sha256:38b80d81e54d59667c1f7dfa4da4125d5c7430816da130ddc84678a4e3cff6cf"
+        }
+    ]
+}

@@ -1,0 +1,640 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTguNTEgMjU4LjUxIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2QxZDFkMTt9LmNscy0ye2ZpbGw6IzhkOGQ4Zjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPkFzc2V0IDQ8L3RpdGxlPjxnIGlkPSJMYXllcl8yIiBkYXRhLW5hbWU9IkxheWVyIDIiPjxnIGlkPSJMYXllcl8xLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTI5LjI1LDIwQTEwOS4xLDEwOS4xLDAsMCwxLDIwNi40LDIwNi40LDEwOS4xLDEwOS4xLDAsMSwxLDUyLjExLDUyLjExLDEwOC40NSwxMDguNDUsMCwwLDEsMTI5LjI1LDIwbTAtMjBoMEM1OC4xNiwwLDAsNTguMTYsMCwxMjkuMjVIMGMwLDcxLjA5LDU4LjE2LDEyOS4yNiwxMjkuMjUsMTI5LjI2aDBjNzEuMDksMCwxMjkuMjYtNTguMTcsMTI5LjI2LTEyOS4yNmgwQzI1OC41MSw1OC4xNiwyMDAuMzQsMCwxMjkuMjUsMFoiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNzcuNTQsMTAzLjQxSDE0MS42NkwxNTQuOSw2NS43NmMxLjI1LTQuNC0yLjMzLTguNzYtNy4yMS04Ljc2SDEwMi45M2E3LjMyLDcuMzIsMCwwLDAtNy40LDZsLTEwLDY5LjYxYy0uNTksNC4xNywyLjg5LDcuODksNy40LDcuODloMzYuOUwxMTUuNTUsMTk3Yy0xLjEyLDQuNDEsMi40OCw4LjU1LDcuMjQsOC41NWE3LjU4LDcuNTgsMCwwLDAsNi40Ny0zLjQ4TDE4NCwxMTMuODVDMTg2Ljg2LDEwOS4yNCwxODMuMjksMTAzLjQxLDE3Ny41NCwxMDMuNDFaIi8+PC9nPjwvZz48L3N2Zz4=
+  mediatype: image/svg+xml
+name: nri-plugins-operator
+schema: olm.package
+---
+entries:
+- name: nri-plugins-operator.v0.3.2
+- name: nri-plugins-operator.v0.4.1
+  replaces: nri-plugins-operator.v0.3.2
+- name: nri-plugins-operator.v0.5.1
+  replaces: nri-plugins-operator.v0.4.1
+- name: nri-plugins-operator.v0.7.0
+  replaces: nri-plugins-operator.v0.5.1
+- name: nri-plugins-operator.v0.7.1
+  replaces: nri-plugins-operator.v0.7.0
+name: alpha
+package: nri-plugins-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/nri-plugins-operator@sha256:a74df9e571bfac199491f35a4745e3090ec1f4f77f6ad344ddd9d89140204795
+name: nri-plugins-operator.v0.3.2
+package: nri-plugins-operator
+properties:
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: BalloonsPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: NriPluginDeployment
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TemplatePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TopologyAwarePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: nri-plugins-operator
+    version: 0.3.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/containers/nri-plugins/nri-plugins-operator:v0.3.2
+  name: ""
+- image: quay.io/operatorhubio/nri-plugins-operator@sha256:a74df9e571bfac199491f35a4745e3090ec1f4f77f6ad344ddd9d89140204795
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/nri-plugins-operator@sha256:ae24195bff6b5bf72a05656cfe97860b804b844aa6cf20560770375cec3c20e5
+name: nri-plugins-operator.v0.4.1
+package: nri-plugins-operator
+properties:
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: BalloonsPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: NriPluginDeployment
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TemplatePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TopologyAwarePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: nri-plugins-operator
+    version: 0.4.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/containers/nri-plugins/nri-plugins-operator:v0.4.1
+  name: ""
+- image: quay.io/operatorhubio/nri-plugins-operator@sha256:ae24195bff6b5bf72a05656cfe97860b804b844aa6cf20560770375cec3c20e5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/nri-plugins-operator@sha256:98567a4e8b79808e09809e5aaea1ad7f3d63c3615c44c6ddfb934df2e5042593
+name: nri-plugins-operator.v0.5.1
+package: nri-plugins-operator
+properties:
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: BalloonsPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: NriPluginDeployment
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TemplatePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TopologyAwarePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: nri-plugins-operator
+    version: 0.5.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/containers/nri-plugins/nri-plugins-operator:v0.5.1
+  name: ""
+- image: quay.io/operatorhubio/nri-plugins-operator@sha256:98567a4e8b79808e09809e5aaea1ad7f3d63c3615c44c6ddfb934df2e5042593
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/nri-plugins-operator@sha256:de3b647ad404c90cc9193eb1b37237b30ec41158ba8743070d3455abc43447e2
+name: nri-plugins-operator.v0.7.0
+package: nri-plugins-operator
+properties:
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: BalloonsPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: NriPluginDeployment
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TemplatePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TopologyAwarePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: nri-plugins-operator
+    version: 0.7.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/containers/nri-plugins/nri-plugins-operator:v0.7.0
+  name: ""
+- image: quay.io/operatorhubio/nri-plugins-operator@sha256:de3b647ad404c90cc9193eb1b37237b30ec41158ba8743070d3455abc43447e2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/nri-plugins-operator@sha256:7bba7841531c0e5cd27391076f075f102988584e0d2eba62d8655407cce2377e
+name: nri-plugins-operator.v0.7.1
+package: nri-plugins-operator
+properties:
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: BalloonsPolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: NriPluginDeployment
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TemplatePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: config.nri
+    kind: TopologyAwarePolicy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: topology.node.k8s.io
+    kind: NodeResourceTopology
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: nri-plugins-operator
+    version: 0.7.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "config.nri/v1alpha1",
+            "kind": "BalloonsPolicy",
+            "metadata": {
+              "name": "default"
+            },
+            "spec": {
+              "allocatorTopologyBalancing": true,
+              "balloonTypes": [
+                {
+                  "allocatorPriority": "normal",
+                  "minCPUs": 1,
+                  "name": "default",
+                  "namespaces": [
+                    "default"
+                  ],
+                  "shareIdleCPUsInSame": "system"
+                }
+              ],
+              "idleCPUClass": "normal",
+              "log": {
+                "debug": [
+                  "policy"
+                ]
+              },
+              "pinCPU": true,
+              "pinMemory": true,
+              "reservedPoolNamespaces": [
+                "kube-system"
+              ],
+              "reservedResources": {
+                "cpu": "750m"
+              }
+            }
+          },
+          {
+            "apiVersion": "config.nri/v1alpha1",
+            "kind": "NriPluginDeployment",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/created-by": "nri-plugins-operator",
+                "app.kubernetes.io/instance": "nriplugindeployment-sample",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "nriplugindeployment",
+                "app.kubernetes.io/part-of": "nri-plugins-operator"
+              },
+              "name": "nriplugindeployment-sample",
+              "namespace": "kube-system"
+            },
+            "spec": {
+              "pluginName": "topology-aware",
+              "pluginVersion": "v0.2.3",
+              "state": "present",
+              "values": {
+                "nri": {
+                  "runtime": {
+                    "patchConfig": true
+                  }
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "config.nri/v1alpha1",
+            "kind": "TemplatePolicy",
+            "metadata": {
+              "name": "default"
+            },
+            "spec": {
+              "instrumentation": {
+                "reportPeriod": "60s",
+                "samplingRatePerMillion": 1000000
+              },
+              "log": {
+                "klog": {
+                  "skip_headers": true
+                },
+                "source": true
+              },
+              "reservedResources": {
+                "cpu": "750m"
+              }
+            }
+          },
+          {
+            "apiVersion": "config.nri/v1alpha1",
+            "kind": "TopologyAwarePolicy",
+            "metadata": {
+              "name": "default"
+            },
+            "spec": {
+              "colocateNamespaces": false,
+              "colocatePods": true,
+              "instrumentation": {
+                "reportPeriod": "60s",
+                "samplingRatePerMillion": 1000000
+              },
+              "log": {
+                "klog": {
+                  "skip_headers": true
+                },
+                "source": true
+              },
+              "pinCPU": true,
+              "pinMemory": true,
+              "preferIsolatedCPUs": true,
+              "preferSharedCPUs": false,
+              "reservedPoolNamespaces": [
+                "special-namespace",
+                "extra-reserved-namespace"
+              ],
+              "reservedResources": {
+                "cpu": "750m"
+              }
+            }
+          },
+          {
+            "apiVersion": "topology.node.k8s.io/v1alpha1",
+            "kind": "NodeResourceTopology",
+            "metadata": {
+              "name": "node1"
+            },
+            "topologyPolicies": [
+              "SingleNUMANode"
+            ],
+            "zones": [
+              {
+                "name": "node-0",
+                "resources": [
+                  {
+                    "allocatable": 15,
+                    "available": 10,
+                    "capacity": 20,
+                    "name": "cpu"
+                  },
+                  {
+                    "allocatable": 3,
+                    "available": 3,
+                    "capacity": 3,
+                    "name": "vendor/nic1"
+                  }
+                ],
+                "type": "Node"
+              },
+              {
+                "name": "node-1",
+                "resources": [
+                  {
+                    "allocatable": 25,
+                    "available": 15,
+                    "capacity": 30,
+                    "name": "cpu"
+                  },
+                  {
+                    "allocatable": 6,
+                    "available": 6,
+                    "capacity": 6,
+                    "name": "vendor/nic2"
+                  }
+                ],
+                "type": "Node"
+              },
+              {
+                "name": "node-2",
+                "resources": [
+                  {
+                    "allocatable": 25,
+                    "available": 15,
+                    "capacity": 30,
+                    "name": "cpu"
+                  },
+                  {
+                    "allocatable": 3,
+                    "available": 3,
+                    "capacity": 3,
+                    "name": "vendor/nic1"
+                  }
+                ],
+                "type": "Node"
+              },
+              {
+                "name": "node-3",
+                "resources": [
+                  {
+                    "allocatable": 25,
+                    "available": 15,
+                    "capacity": 30,
+                    "name": "cpu"
+                  },
+                  {
+                    "allocatable": 3,
+                    "available": 3,
+                    "capacity": 3,
+                    "name": "vendor/nic1"
+                  }
+                ],
+                "type": "Node"
+              }
+            ]
+          },
+          {
+            "apiVersion": "topology.node.k8s.io/v1alpha2",
+            "kind": "NodeResourceTopology",
+            "metadata": {
+              "name": "node1"
+            },
+            "topologyPolicies": [
+              "SingleNUMANode"
+            ],
+            "zones": [
+              {
+                "name": "node-0",
+                "resources": [
+                  {
+                    "allocatable": 15,
+                    "available": 10,
+                    "capacity": 20,
+                    "name": "cpu"
+                  },
+                  {
+                    "allocatable": 3,
+                    "available": 3,
+                    "capacity": 3,
+                    "name": "vendor/nic1"
+                  }
+                ],
+                "type": "Node"
+              },
+              {
+                "name": "node-1",
+                "resources": [
+                  {
+                    "allocatable": 25,
+                    "available": 15,
+                    "capacity": 30,
+                    "name": "cpu"
+                  },
+                  {
+                    "allocatable": 6,
+                    "available": 6,
+                    "capacity": 6,
+                    "name": "vendor/nic2"
+                  }
+                ],
+                "type": "Node"
+              },
+              {
+                "name": "node-2",
+                "resources": [
+                  {
+                    "allocatable": 25,
+                    "available": 15,
+                    "capacity": 30,
+                    "name": "cpu"
+                  },
+                  {
+                    "allocatable": 3,
+                    "available": 3,
+                    "capacity": 3,
+                    "name": "vendor/nic1"
+                  }
+                ],
+                "type": "Node"
+              },
+              {
+                "name": "node-3",
+                "resources": [
+                  {
+                    "allocatable": 25,
+                    "available": 15,
+                    "capacity": 30,
+                    "name": "cpu"
+                  },
+                  {
+                    "allocatable": 3,
+                    "available": 3,
+                    "capacity": 3,
+                    "name": "vendor/nic1"
+                  }
+                ],
+                "type": "Node"
+              }
+            ]
+          }
+        ]
+      capabilities: Basic Install
+      categories: OpenShift Optional
+      certified: "false"
+      containerImage: ghcr.io/containers/nri-plugins/nri-plugins-operator:v0.7.1
+      createdAt: "2024-09-23T20:25:11Z"
+      description: An operator that installs Node Resource Interface reference plugins.
+      operators.operatorframework.io/builder: operator-sdk-v1.32.0
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      repository: https://github.com/containers/nri-plugins-operator
+      support: "false"
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: BalloonsPolicy represents the configuration for the balloons
+          policy
+        displayName: Balloons Policy
+        kind: BalloonsPolicy
+        name: balloonspolicies.config.nri
+        version: v1alpha1
+      - description: Describes node resources and their topology
+        displayName: Node Resource Topology (v1alpha1)
+        kind: NodeResourceTopology
+        name: noderesourcetopologies.topology.node.k8s.io
+        version: v1alpha1
+      - description: Describes node resources and their topology
+        displayName: Node Resource Topology (v1alpha2)
+        kind: NodeResourceTopology
+        name: noderesourcetopologies.topology.node.k8s.io
+        version: v1alpha2
+      - description: Represents the deployment of NRI plugin
+        displayName: NRI Plugin Deployment
+        kind: NriPluginDeployment
+        name: nriplugindeployments.config.nri
+        version: v1alpha1
+      - description: TemplatePolicy represents the configuration for the template
+          policy.
+        displayName: Template Policy
+        kind: TemplatePolicy
+        name: templatepolicies.config.nri
+        version: v1alpha1
+      - description: TopologyAwarePolicy represents the configuration for the topology-aware
+          policy.
+        displayName: Topology Aware Policy
+        kind: TopologyAwarePolicy
+        name: topologyawarepolicies.config.nri
+        version: v1alpha1
+    description: |-
+      The **nri-plugins-operator** deploys community maintained [nri-plugins](https://github.com/containers/nri-plugins) into a Kubernetes cluster.
+
+      # Node Resource Interface
+      NRI allows plugging domain- or vendor-specific custom logic into OCI- compatible runtimes. This logic can make controlled changes to containers or perform extra actions outside the scope of OCI at certain points in a containers lifecycle. This can be used, for instance, for improved allocation and management of devices and other container resources.
+
+      For more info, visit [https://github.com/containerd/nri](https://github.com/containerd/nri)
+
+      # Node Resource Interface reference plugins
+
+      The NRI plugins is a collection of Node Resource Interface based plugins to manage various aspects of pod and container life cycle. For example the resource policy plugins can be used to modify the container resource allocation depending on available system resources.
+
+      For more info, visit [https://github.com/containers/nri-plugins](https://github.com/containers/nri-plugins)
+
+      # License
+
+      nri-plugins-operator is distributed under the
+      [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt).
+    displayName: NRI-Plugins-Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - nri-plugins
+    - nri
+    - cri-o
+    - containerd
+    - kubernetes
+    - performance
+    links:
+    - name: NRI-Plugins
+      url: https://github.com/containers/nri-plugins
+    - name: NRI
+      url: https://github.com/containers/nri
+    maintainers:
+    - email: feruzjon.muyassarov@intel.com
+      name: nri-plugins project maintainers
+    maturity: alpha
+    minKubeVersion: 1.27.0
+    provider:
+      name: nri-plugins project owners
+      url: https://github.com/containers/nri-plugins
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: ghcr.io/containers/nri-plugins/nri-plugins-operator:v0.7.1
+  name: ""
+- image: quay.io/operatorhubio/nri-plugins-operator@sha256:7bba7841531c0e5cd27391076f075f102988584e0d2eba62d8655407cce2377e
+  name: ""
+schema: olm.bundle

@@ -1,0 +1,199 @@
+{
+  "schema": "olm.package",
+  "name": "volsync-product",
+  "defaultChannel": "stable",
+  "icon": {
+    "base64data": "PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=",
+    "mediatype": "image/svg+xml"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "stable",
+  "package": "volsync-product",
+  "entries": [
+    {
+      "name": "volsync-product.v0.11.0",
+      "skipRange": ">=0.4.0 <0.11.0"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-0.11",
+  "package": "volsync-product",
+  "entries": [
+    {
+      "name": "volsync-product.v0.11.0",
+      "skipRange": ">=0.4.0 <0.11.0"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "volsync-product.v0.11.0",
+  "package": "volsync-product",
+  "image": "registry.redhat.io/rhacm2/volsync-operator-bundle@sha256:aa3b6079a8a43e0146ccc138aab412e035ecf7e2a84ba24773de44812410b365",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "volsync.backube",
+        "kind": "ReplicationDestination",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "volsync.backube",
+        "kind": "ReplicationSource",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "volsync-product",
+        "version": "0.11.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"volsync.backube/v1alpha1\",\n    \"kind\": \"ReplicationDestination\",\n    \"metadata\": {\n      \"labels\": {\n        \"app.kubernetes.io/created-by\": \"volsync\",\n        \"app.kubernetes.io/instance\": \"replicationdestination-sample\",\n        \"app.kubernetes.io/managed-by\": \"kustomize\",\n        \"app.kubernetes.io/name\": \"replicationdestination\",\n        \"app.kubernetes.io/part-of\": \"volsync\"\n      },\n      \"name\": \"replicationdestination-sample\"\n    },\n    \"spec\": {\n      \"rsync\": {\n        \"accessModes\": [\n          \"ReadWriteOnce\"\n        ],\n        \"capacity\": \"10Gi\",\n        \"copyMethod\": \"Snapshot\",\n        \"serviceType\": \"ClusterIP\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"volsync.backube/v1alpha1\",\n    \"kind\": \"ReplicationSource\",\n    \"metadata\": {\n      \"labels\": {\n        \"app.kubernetes.io/created-by\": \"volsync\",\n        \"app.kubernetes.io/instance\": \"replicationsource-sample\",\n        \"app.kubernetes.io/managed-by\": \"kustomize\",\n        \"app.kubernetes.io/name\": \"replicationsource\",\n        \"app.kubernetes.io/part-of\": \"volsync\"\n      },\n      \"name\": \"replicationsource-sample\"\n    },\n    \"spec\": {\n      \"rsync\": {\n        \"address\": \"my.host.com\",\n        \"copyMethod\": \"Clone\",\n        \"sshKeys\": \"secretRef\"\n      },\n      \"sourcePVC\": \"pvcname\",\n      \"trigger\": {\n        \"schedule\": \"0 * * * *\"\n      }\n    }\n  }\n]",
+          "capabilities": "Basic Install",
+          "containerImage": "registry.redhat.io/rhacm2/volsync-rhel9@sha256:2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34",
+          "createdAt": "28 Oct 2024, 06:34",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.4.0 <0.11.0",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\", \"Red Hat Advanced Cluster Management for Kubernetes\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.31.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/backube/volsync",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "replicationdestinations.volsync.backube",
+              "version": "v1alpha1",
+              "kind": "ReplicationDestination",
+              "displayName": "Replication Destination",
+              "description": "A ReplicationDestination is a VolSync resource that you can use to define the destination of a VolSync replication or synchronization."
+            },
+            {
+              "name": "replicationsources.volsync.backube",
+              "version": "v1alpha1",
+              "kind": "ReplicationSource",
+              "displayName": "Replication Source",
+              "description": "A ReplicationSource is a VolSync resource that you can use to define the source PVC and replication mover type, enabling you to replicate or synchronize PVC data to a remote location."
+            }
+          ]
+        },
+        "description": "Asynchronous volume replication for Kubernetes CSI storage\n\nVolSync is a Kubernetes operator that performs asynchronous replication of\npersistent volumes within, or across, clusters. VolSync supports replication\nindependent of the storage system. This means that replication can be used\nwith storage systems that do not natively support replication. Data can also be\nreplicated across different types (and vendors) of storage.\n\nVolSync supports both 1:1 replication relationships as well as 1:many\nrelationships. This provides the flexibility to support use cases such as:\n\n- Disaster recovery\n- Mirroring data to a test environment\n- Data distribution to a set of remote clusters from a central site\n- Migrating between storage vendors (changing the StorageClass of a\n  persistent volume claim).\n- Creating periodic data backups\n\n### How it works\n\nYou specify the details of how, when, and where to replicate the data\nin a ReplicationSource object in the same namespace as the persistent\nvolume claim (PVC).\n\nYou create a ReplicationDestination object at the destination, which\nspecifies the target for the replicated data.\n\nVolSync uses multiple replication methods to replicate data:\n\n- Rclone-based replication for 1:many data distribution:\n\n  Data is replicated from the source to an intermediate cloud storage\n  service, which is [supported by Rclone](https://rclone.org/#providers).\n  The destinations retrieve the data from the intermediate location.\n\n- Restic-based backup of PVC contents:\n\n  Data in a PVC is backed up by using the [restic](https://restic.net/)\n  program. This method works well when the deployment configuration of\n  the application is already source-controlled, and only the\n  preservation of its persistent state is needed.\n\n- Rsync-based replication for one-to-one data replication:\n\n  Data is replicated directly to a remote location. The replication uses\n  the [Rsync](https://rsync.samba.org/) utility over an ssh connection\n  to securely and efficiently transfer data.\n\n### Documentation\n\nFor documentation about installing and using the VolSync Operator with Red Hat Advanced Cluster Management for\nKubernetes, see [VolSync persistent volume replication service](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.12/html/business_continuity/business-cont-overview#volsync) in the Red Hat Advanced Cluster Management\ndocumentation.\n\nFor additional information about the VolSync project, including features that might not be supported by Red Hat, see\nthe [VolSync community](https://volsync.readthedocs.ioe/) documentation.\n\n### Support & Troubleshooting\n\nProduct support, which includes Support Cases, Product Pages, and Knowledgebase articles, is available when you have\na [Red Hat Advanced Cluster Management](https://www.redhat.com/en/technologies/management/advanced-cluster-management)\nsubscription.\n",
+        "displayName": "VolSync",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": false
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "backup",
+          "csi",
+          "data",
+          "disaster recovery",
+          "replication",
+          "storage"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.arm64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported",
+          "operatorframework.io/os.linux": "supported"
+        },
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.12/html/business_continuity/business-cont-overview#volsync"
+          },
+          {
+            "name": "Source",
+            "url": "https://github.com/backube/volsync"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat ACM Team",
+            "email": "acm-contact@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:fcb3b8ab93dfb5ef2b290e39ea5899dbb5e0c6d430370b8d281e59e74d94d749"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/rhacm2/volsync-operator-bundle@sha256:aa3b6079a8a43e0146ccc138aab412e035ecf7e2a84ba24773de44812410b365"
+    },
+    {
+      "name": "volsync-rhel9-2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34-annotation",
+      "image": "registry.redhat.io/rhacm2/volsync-rhel9@sha256:2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/rhacm2/volsync-rhel9@sha256:2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34"
+    },
+    {
+      "name": "rsync_container",
+      "image": "registry.redhat.io/rhacm2/volsync-rhel9@sha256:2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34"
+    },
+    {
+      "name": "rsync_tls_container",
+      "image": "registry.redhat.io/rhacm2/volsync-rhel9@sha256:2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34"
+    },
+    {
+      "name": "rclone_container",
+      "image": "registry.redhat.io/rhacm2/volsync-rhel9@sha256:2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34"
+    },
+    {
+      "name": "restic_container",
+      "image": "registry.redhat.io/rhacm2/volsync-rhel9@sha256:2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34"
+    },
+    {
+      "name": "syncthing_container",
+      "image": "registry.redhat.io/rhacm2/volsync-rhel9@sha256:2c76cbf698b017fd419a2a494ef0cca8688a599a5fd2ce33b60585a8c3b92c34"
+    }
+  ]
+}

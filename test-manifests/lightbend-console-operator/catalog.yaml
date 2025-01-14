@@ -1,0 +1,169 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyBpZD0ibGlnaHRiZW5kLWljb24tZnVsbC1jb2xvciIgY2xhc3M9InN2Zy1pY29uIHN2Zy1pY29uLWxpZ2h0YmVuZC1mdWxsLWNvbG9yIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDIgMjYyIj48dGl0bGU+bGlnaHRiZW5kLWljb248L3RpdGxlPjxnIGlkPSJpY29uIj48cGF0aCBkPSJNMSwxOTV2NTZhMTAsMTAsMCwwLDAsMTAsMTBIMjkxYTEwLDEwLDAsMCwwLDEwLTEwVjE5NWE1NTcuODUsNTU3Ljg1LDAsMCwxLTE1MCwyMEE1NTcuODUsNTU3Ljg1LDAsMCwxLDEsMTk1WiIgc3R5bGU9ImZpbGw6I2ZmOTMxZSIvPjxwYXRoIGQ9Ik0yOTEsMUgxMUExMCwxMCwwLDAsMCwxLDExVjE3NmE1MzkuOTQsNTM5Ljk0LDAsMCwwLDE1MCwyMSw1MzkuOTQsNTM5Ljk0LDAsMCwwLDE1MC0yMVYxMUExMCwxMCwwLDAsMCwyOTEsMVoiIHN0eWxlPSJmaWxsOiNmZjkzMWUiLz48L2c+PC9zdmc+
+  mediatype: image/svg+xml
+name: lightbend-console-operator
+schema: olm.package
+---
+entries:
+- name: lightbend-console-operator.v0.0.1
+name: alpha
+package: lightbend-console-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/lightbend-console-operator@sha256:2cf5f1abf71be29b7d2667ae9ca4102198c93cdef450d09faf1b26900443e285
+name: lightbend-console-operator.v0.0.1
+package: lightbend-console-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.lightbend.com
+    kind: Console
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: lightbend-console-operator
+    version: 0.0.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [{
+          "apiVersion": "app.lightbend.com/v1alpha1",
+          "kind": "Console",
+          "metadata": {
+            "name": "example-console",
+            "namespace": "placeholder"
+          },
+          "spec": {
+            "alertManagers": null,
+            "alpineImage": "alpine",
+            "alpineVersion": "3.8",
+            "apiGroupVersion": "rbac.authorization.k8s.io",
+            "busyboxImage": "busybox",
+            "busyboxVersion": "1.30",
+            "configMapReloadImage": "jimmidyson/configmap-reload",
+            "configMapReloadVersion": "v0.2.2",
+            "consoleAPI": {
+              "defaultMonitorWarmup": "1m",
+              "defaultMonitorsConfigMap": "console-api-default-monitors",
+              "staticRulesConfigMap": "console-api-static-rules"
+            },
+            "consoleUIConfig": {
+              "isMonitorEditEnabled": false,
+              "logo": ""
+            },
+            "daemonSetApiVersion": "apps/v1beta2",
+            "defaultCPURequest": "100m",
+            "defaultMemoryRequest": "50Mi",
+            "deploymentApiVersion": "apps/v1beta2",
+            "elasticsearchImage": "elasticsearch",
+            "elasticsearchMemoryRequest": "510Mi",
+            "elasticsearchVersion": "7.2.0",
+            "enableElasticsearch": false,
+            "esConsoleExposePort": 30080,
+            "esConsoleImage": "{{.Values.imageCredentials.registry}}/enterprise-suite/es-console",
+            "esConsoleVersion": "v1.2.6",
+            "esGrafanaEnvVars": null,
+            "esGrafanaImage": "{{.Values.imageCredentials.registry}}/enterprise-suite/es-grafana",
+            "esGrafanaVersion": "v0.3.0",
+            "esGrafanaVolumeSize": "32Gi",
+            "esMonitorImage": "{{.Values.imageCredentials.registry}}/enterprise-suite/console-api",
+            "esMonitorVersion": "v1.2.3",
+            "exposeServices": false,
+            "goDnsmasqImage": "lightbend-docker-registry.bintray.io/lightbend/go-dnsmasq",
+            "goDnsmasqVersion": "v0.1.7-1",
+            "imageCredentials": {
+              "registry": "lightbend-docker-commercial-registry.bintray.io",
+              "username": "setme",
+              "password": "setme"
+            },
+            "imagePullPolicy": "IfNotPresent",
+            "kubeStateMetricsImage": "gcr.io/google_containers/kube-state-metrics",
+            "kubeStateMetricsVersion": "v1.2.0",
+            "minikube": false,
+            "podUID": null,
+            "prometheusDomain": "prometheus.io",
+            "prometheusImage": "prom/prometheus",
+            "prometheusMemoryRequest": "250Mi",
+            "prometheusVersion": "v2.9.2",
+            "prometheusVolumeSize": "256Gi",
+            "rbacApiVersion": "rbac.authorization.k8s.io/v1",
+            "usePersistentVolumes": true
+          }
+        }]
+      capabilities: Basic Install
+      categories: Monitoring
+      certified: "false"
+      containerImage: lightbend-docker-registry.bintray.io/lightbend/console-operator:1.2.3
+      createdAt: "2019-09-18T00:00:00Z"
+      description: Lightbend Console provides visualizations for Akka, Play, and Lagom
+        applications. See https://developer.lightbend.com/docs/console/current/ for
+        details.
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/lightbend/console-charts/tree/master/operator
+      support: Lightbend, Inc.
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Console
+        displayName: Console
+        kind: Console
+        name: consoles.app.lightbend.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        version: v1alpha1
+    description: |
+      ## About the managed application
+      Lightbend Console provides visualization and basic monitoring for Akka, Play, and Lagom applications. See https://developer.lightbend.com/docs/console/current/ for further details.
+      ## About this Operator
+      The operator provides a simple installation of Lightbend Console. See https://github.com/lightbend/console-charts/blob/master/operator/README.md for details.
+      ## Prerequisites for enabling this Operator
+      None are required to install the operator.
+      To install an instance of Console, you will need to add at minimum your credentials to the Console custom resource.
+    displayName: Lightbend Console Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - Monitoring
+    links:
+    - name: Documentation
+      url: https://developer.lightbend.com/docs/console/current/
+    maintainers:
+    - email: info@lightbend.com
+      name: Lightbend, Inc.
+    maturity: alpha
+    minKubeVersion: 1.10.0
+    provider:
+      name: Lightbend, Inc.
+relatedImages:
+- image: lightbend-docker-registry.bintray.io/lightbend/console-operator:1.2.3
+  name: ""
+- image: quay.io/operatorhubio/lightbend-console-operator@sha256:2cf5f1abf71be29b7d2667ae9ca4102198c93cdef450d09faf1b26900443e285
+  name: ""
+schema: olm.bundle

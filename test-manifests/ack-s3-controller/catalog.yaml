@@ -1,0 +1,928 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-s3-controller
+schema: olm.package
+---
+entries:
+- name: ack-s3-controller.v0.0.10
+  replaces: ack-s3-controller.v0.0.9
+- name: ack-s3-controller.v0.0.11
+  replaces: ack-s3-controller.v0.0.10
+- name: ack-s3-controller.v0.0.12
+  replaces: ack-s3-controller.v0.0.11
+- name: ack-s3-controller.v0.0.13
+  replaces: ack-s3-controller.v0.0.12
+- name: ack-s3-controller.v0.0.14
+  replaces: ack-s3-controller.v0.0.13
+- name: ack-s3-controller.v0.0.15
+  replaces: ack-s3-controller.v0.0.14
+- name: ack-s3-controller.v0.0.16
+  replaces: ack-s3-controller.v0.0.15
+- name: ack-s3-controller.v0.0.17
+  replaces: ack-s3-controller.v0.0.16
+- name: ack-s3-controller.v0.0.18
+  replaces: ack-s3-controller.v0.0.17
+- name: ack-s3-controller.v0.0.19
+  replaces: ack-s3-controller.v0.0.18
+- name: ack-s3-controller.v0.0.20
+  replaces: ack-s3-controller.v0.0.19
+- name: ack-s3-controller.v0.0.7
+- name: ack-s3-controller.v0.0.8
+  replaces: ack-s3-controller.v0.0.7
+- name: ack-s3-controller.v0.0.9
+  replaces: ack-s3-controller.v0.0.8
+- name: ack-s3-controller.v0.1.0
+  replaces: ack-s3-controller.v0.0.20
+- name: ack-s3-controller.v0.1.1
+  replaces: ack-s3-controller.v0.1.0
+- name: ack-s3-controller.v0.1.2
+  replaces: ack-s3-controller.v0.1.1
+- name: ack-s3-controller.v0.1.3
+  replaces: ack-s3-controller.v0.1.2
+- name: ack-s3-controller.v0.1.4
+  replaces: ack-s3-controller.v0.1.3
+- name: ack-s3-controller.v0.1.5
+  replaces: ack-s3-controller.v0.1.4
+- name: ack-s3-controller.v0.1.6
+  replaces: ack-s3-controller.v0.1.5
+- name: ack-s3-controller.v0.1.7
+  replaces: ack-s3-controller.v0.1.6
+- name: ack-s3-controller.v0.1.8
+  replaces: ack-s3-controller.v0.1.7
+- name: ack-s3-controller.v1.0.0
+  replaces: ack-s3-controller.v0.1.8
+- name: ack-s3-controller.v1.0.1
+  replaces: ack-s3-controller.v1.0.0
+- name: ack-s3-controller.v1.0.11
+  replaces: ack-s3-controller.v1.0.9
+- name: ack-s3-controller.v1.0.12
+  replaces: ack-s3-controller.v1.0.11
+- name: ack-s3-controller.v1.0.13
+  replaces: ack-s3-controller.v1.0.12
+- name: ack-s3-controller.v1.0.14
+  replaces: ack-s3-controller.v1.0.13
+- name: ack-s3-controller.v1.0.15
+  replaces: ack-s3-controller.v1.0.14
+- name: ack-s3-controller.v1.0.16
+  replaces: ack-s3-controller.v1.0.15
+- name: ack-s3-controller.v1.0.2
+  replaces: ack-s3-controller.v1.0.1
+- name: ack-s3-controller.v1.0.3
+  replaces: ack-s3-controller.v1.0.2
+- name: ack-s3-controller.v1.0.4
+  replaces: ack-s3-controller.v1.0.3
+- name: ack-s3-controller.v1.0.5
+  replaces: ack-s3-controller.v1.0.4
+- name: ack-s3-controller.v1.0.6
+  replaces: ack-s3-controller.v1.0.5
+- name: ack-s3-controller.v1.0.7
+  replaces: ack-s3-controller.v1.0.6
+- name: ack-s3-controller.v1.0.9
+  replaces: ack-s3-controller.v1.0.7
+name: alpha
+package: ack-s3-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:43f5ec7f7301972d420c566f8746c4a88ca1c6cfe5bcac15c76e47cbca46e727
+name: ack-s3-controller.v0.0.10
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:43f5ec7f7301972d420c566f8746c4a88ca1c6cfe5bcac15c76e47cbca46e727
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:74fb912ef2e440a9ca6f94724235cebc04a9bf855cb64c131eee0210c284c8b0
+name: ack-s3-controller.v0.0.11
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:74fb912ef2e440a9ca6f94724235cebc04a9bf855cb64c131eee0210c284c8b0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:41579ca317f5f77fba50eee30cb3e7df865e463a9b98bf177a48f560802f38b4
+name: ack-s3-controller.v0.0.12
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:41579ca317f5f77fba50eee30cb3e7df865e463a9b98bf177a48f560802f38b4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:f277de406c112a15121113e9d19ccf241793a5af12986096aa9b71c0bde1293f
+name: ack-s3-controller.v0.0.13
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:f277de406c112a15121113e9d19ccf241793a5af12986096aa9b71c0bde1293f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:62dfd2f29d740646808d4d30cf7e22c1c9db831b2fc05c8be705cb8b144bd635
+name: ack-s3-controller.v0.0.14
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:62dfd2f29d740646808d4d30cf7e22c1c9db831b2fc05c8be705cb8b144bd635
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:faa231b21d1d5413cc30e786a4b0b0dcb6d8e1d76335883661cfa0e39f92b48c
+name: ack-s3-controller.v0.0.15
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:faa231b21d1d5413cc30e786a4b0b0dcb6d8e1d76335883661cfa0e39f92b48c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:4b64e70113f89f5d8c19cc60114f68c60b87f5a11a0b3008bd58c95001d8144a
+name: ack-s3-controller.v0.0.16
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:4b64e70113f89f5d8c19cc60114f68c60b87f5a11a0b3008bd58c95001d8144a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:c71f886a980a681eb5bacd05b5718e4e4aa26fb36adb0496c09ba6f99a7cbe26
+name: ack-s3-controller.v0.0.17
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:c71f886a980a681eb5bacd05b5718e4e4aa26fb36adb0496c09ba6f99a7cbe26
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:12da6cf44ccebbf779311bef3ce525e08713ceb663d4432b53472caf44dfbc5a
+name: ack-s3-controller.v0.0.18
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.18
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.18
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:12da6cf44ccebbf779311bef3ce525e08713ceb663d4432b53472caf44dfbc5a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:8c6c03118388e885346871f2deceebb1ec45358e27264a6d3c3043f7cee60464
+name: ack-s3-controller.v0.0.19
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:8c6c03118388e885346871f2deceebb1ec45358e27264a6d3c3043f7cee60464
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:66c9a8ad052ee0eabf9c88c9b05a05effd4d4bd14e2b19a659e879081cd2ddf3
+name: ack-s3-controller.v0.0.20
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.20
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.20
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:66c9a8ad052ee0eabf9c88c9b05a05effd4d4bd14e2b19a659e879081cd2ddf3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:84dd4ffc9f7536f2e4b3e4dbb2a5bb19806f7ba33a370be92a2a22f518efab59
+name: ack-s3-controller.v0.0.7
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:84dd4ffc9f7536f2e4b3e4dbb2a5bb19806f7ba33a370be92a2a22f518efab59
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:aecde90591f2c9d3e3d8206ec800d15482274672b2700f1bfa3096257209e55e
+name: ack-s3-controller.v0.0.8
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:aecde90591f2c9d3e3d8206ec800d15482274672b2700f1bfa3096257209e55e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:b16e499ce9455139ec27076d193adcb1b1af26acba0e594d8ff447ca19cd4707
+name: ack-s3-controller.v0.0.9
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:b16e499ce9455139ec27076d193adcb1b1af26acba0e594d8ff447ca19cd4707
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:9c5d9d118c5f63e2479c01da19e4d34285772369d76fabbdf94635346faa1f54
+name: ack-s3-controller.v0.1.0
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:9c5d9d118c5f63e2479c01da19e4d34285772369d76fabbdf94635346faa1f54
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:d98ed9f9ae231b0d6be03c4aa521cbff764b32323ebd5e9e34dca956aa0a278f
+name: ack-s3-controller.v0.1.1
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:d98ed9f9ae231b0d6be03c4aa521cbff764b32323ebd5e9e34dca956aa0a278f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:1081becb8bbc2857d900247fc966f3ddcf06fcc6ebc8e99d84f4ff46b2473ea4
+name: ack-s3-controller.v0.1.2
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:1081becb8bbc2857d900247fc966f3ddcf06fcc6ebc8e99d84f4ff46b2473ea4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:910c0ba3e8e168c18a3b91223efc419aa8bb62d5dc89d2e023ea15eea53dac5a
+name: ack-s3-controller.v0.1.3
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:910c0ba3e8e168c18a3b91223efc419aa8bb62d5dc89d2e023ea15eea53dac5a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:1c168019ce1431b84a9836e9665bde35eac6b8f24166e62ac68e6c76aed323e1
+name: ack-s3-controller.v0.1.4
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.4
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:1c168019ce1431b84a9836e9665bde35eac6b8f24166e62ac68e6c76aed323e1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:dbcf0ec152d228421fa63dcdaaf3ad5e199933196ba059d4b889c47eae5ea173
+name: ack-s3-controller.v0.1.5
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.5
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:dbcf0ec152d228421fa63dcdaaf3ad5e199933196ba059d4b889c47eae5ea173
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:a77a1b8fbbc7ef3fedae18cdc65d75473930696127025b0a86a4ca2d0c4483c8
+name: ack-s3-controller.v0.1.6
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.6
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:a77a1b8fbbc7ef3fedae18cdc65d75473930696127025b0a86a4ca2d0c4483c8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:01c6308a0278dd8301829d2c0466e67cd92a4e28a52e9a8649ab6546bf1d92ec
+name: ack-s3-controller.v0.1.7
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.7
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:01c6308a0278dd8301829d2c0466e67cd92a4e28a52e9a8649ab6546bf1d92ec
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:a61da7af1596cb1eab63778286f631e46c7e06e4acebf68d358d31b34422f1ca
+name: ack-s3-controller.v0.1.8
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 0.1.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v0.1.8
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:a61da7af1596cb1eab63778286f631e46c7e06e4acebf68d358d31b34422f1ca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:f0593ff034b841eb0bdb575d14bc2782e36e033a2473948d23213a6cc9898662
+name: ack-s3-controller.v1.0.0
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:f0593ff034b841eb0bdb575d14bc2782e36e033a2473948d23213a6cc9898662
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:cf817e625c1becd8347a747b12a6d028a478538aba89198b8f7e85429167c80d
+name: ack-s3-controller.v1.0.1
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:cf817e625c1becd8347a747b12a6d028a478538aba89198b8f7e85429167c80d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:33d59c0c3ad12daf470c9f6fe6ba8540743dbac9abe4d456f40b9d24a74ba2a5
+name: ack-s3-controller.v1.0.11
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:33d59c0c3ad12daf470c9f6fe6ba8540743dbac9abe4d456f40b9d24a74ba2a5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:c008f1aaf4908662dd9ffb78637501880c0d9ab9661ef5129d5cd6c090354ba3
+name: ack-s3-controller.v1.0.12
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:c008f1aaf4908662dd9ffb78637501880c0d9ab9661ef5129d5cd6c090354ba3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:02fb064c978a4a6857abc5d9c5b0c12cfe52cf0e25f102f479fdaecab44c1aeb
+name: ack-s3-controller.v1.0.13
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:02fb064c978a4a6857abc5d9c5b0c12cfe52cf0e25f102f479fdaecab44c1aeb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:618369840d09b89220148107647b74ff6737787240231c4259341838713494bf
+name: ack-s3-controller.v1.0.14
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:618369840d09b89220148107647b74ff6737787240231c4259341838713494bf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:7fc9b6eee3fedc2bb13f89a1b5075d9390ead4352a509bb6235e770e21b2581f
+name: ack-s3-controller.v1.0.15
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:7fc9b6eee3fedc2bb13f89a1b5075d9390ead4352a509bb6235e770e21b2581f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:d61577033ed23f641045376d8783ded5313eb59372239a57a5aa1d6cd305910d
+name: ack-s3-controller.v1.0.16
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.16
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "s3.services.k8s.aws/v1alpha1",
+            "kind": "Bucket",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.16
+      createdAt: "2024-08-31T01:33:17Z"
+      description: AWS S3 controller is a service controller for managing S3 resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Bucket represents the state of an AWS s3 Bucket resource.
+        displayName: Bucket
+        kind: Bucket
+        name: buckets.s3.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon Simple Storage Service (S3) resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon S3**
+
+      Amazon Simple Storage Service (Amazon S3) is an object storage service that offers industry-leading scalability, data availability, security, and performance. This means customers of all sizes and industries can use it to store and protect any amount of data for a range of use cases, such as data lakes, websites, mobile applications, backup and restore, archive, enterprise applications, IoT devices, and big data analytics. Amazon S3 provides easy-to-use management features so you can organize your data and configure finely-tuned access controls to meet your specific business, organizational, and compliance requirements. Amazon S3 is designed for 99.999999999% (11 9s) of durability, and stores data for millions of applications for companies all around the world.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon S3
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - s3
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon S3 Developer Resources
+      url: https://aws.amazon.com/s3/developer-resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: s3 maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:d61577033ed23f641045376d8783ded5313eb59372239a57a5aa1d6cd305910d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:78328944c3dff121bb57072205e95412f5d15f0fb6df2bb0b82a95fbead53852
+name: ack-s3-controller.v1.0.2
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:78328944c3dff121bb57072205e95412f5d15f0fb6df2bb0b82a95fbead53852
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:c5788d4f15748a10a438acafc3d84864af173824efe1887c37dd468c06593922
+name: ack-s3-controller.v1.0.3
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:v1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:c5788d4f15748a10a438acafc3d84864af173824efe1887c37dd468c06593922
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:66ce9f18c2caff816dcf05bcbc8edee4fe7fc19356412f34ddc8c577835c945d
+name: ack-s3-controller.v1.0.4
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:66ce9f18c2caff816dcf05bcbc8edee4fe7fc19356412f34ddc8c577835c945d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:7120dba7aece00499befbdb6cde7c97e4d157a7e1434f1e65244dcd6ff23fea9
+name: ack-s3-controller.v1.0.5
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:7120dba7aece00499befbdb6cde7c97e4d157a7e1434f1e65244dcd6ff23fea9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:04e0cf28b015ac23e34706f7189132c29eddcf7e6e6ecbaf6734b6f1f4e508d7
+name: ack-s3-controller.v1.0.6
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:04e0cf28b015ac23e34706f7189132c29eddcf7e6e6ecbaf6734b6f1f4e508d7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:ecaf36b3b07555c019fcd574439f46ba8dbd4be8d840a982b42b6525156d0463
+name: ack-s3-controller.v1.0.7
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:ecaf36b3b07555c019fcd574439f46ba8dbd4be8d840a982b42b6525156d0463
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-s3-controller@sha256:73e613ab792db7752f9181d9fd6ecd85fad3b799a80436775397ba7ca471d758
+name: ack-s3-controller.v1.0.9
+package: ack-s3-controller
+properties:
+- type: olm.gvk
+  value:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-s3-controller
+    version: 1.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/s3-controller:1.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-s3-controller@sha256:73e613ab792db7752f9181d9fd6ecd85fad3b799a80436775397ba7ca471d758
+  name: ""
+schema: olm.bundle

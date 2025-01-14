@@ -1,0 +1,855 @@
+{
+    "schema": "olm.package",
+    "name": "cincinnati-operator",
+    "defaultChannel": "v1",
+    "icon": {
+        "base64data": "PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "v1",
+    "package": "cincinnati-operator",
+    "entries": [
+        {
+            "name": "update-service-operator.v4.9.0",
+            "skips": [
+                "update-service-operator.v4.6.0"
+            ]
+        },
+        {
+            "name": "update-service-operator.v4.9.1",
+            "replaces": "update-service-operator.v4.9.0",
+            "skips": [
+                "update-service-operator.v4.6.0"
+            ]
+        },
+        {
+            "name": "update-service-operator.v5.0.0"
+        },
+        {
+            "name": "update-service-operator.v5.0.1",
+            "replaces": "update-service-operator.v4.9.1",
+            "skips": [
+                "update-service-operator.v5.0.0"
+            ]
+        },
+        {
+            "name": "update-service-operator.v5.0.2",
+            "replaces": "update-service-operator.v5.0.1",
+            "skips": [
+                "update-service-operator.v5.0.0"
+            ]
+        },
+        {
+            "name": "update-service-operator.v5.0.3",
+            "replaces": "update-service-operator.v5.0.2",
+            "skips": [
+                "update-service-operator.v5.0.0"
+            ]
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "update-service-operator.v4.9.0",
+    "package": "cincinnati-operator",
+    "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:2743f74cc102c059d7c1dc6698eb947cca75a3cc4230905f09703666ae7a4dbf",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "updateservice.operator.openshift.io",
+                "kind": "UpdateService",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cincinnati-operator",
+                "version": "4.9.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"updateservice.operator.openshift.io/v1\",\n    \"kind\": \"UpdateService\",\n    \"metadata\": {\n      \"name\": \"sample\"\n    },\n    \"spec\": {\n      \"replicas\": 1\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "description": "Creates and maintains an OpenShift Update Service instance",
+                    "operatorframework.io/suggested-namespace": "openshift-update-service",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.9.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "updateservices.updateservice.operator.openshift.io",
+                            "version": "v1",
+                            "kind": "UpdateService",
+                            "displayName": "Update Service",
+                            "description": "UpdateService is the Schema for the updateservices API.",
+                            "resources": [
+                                {
+                                    "name": "",
+                                    "kind": "Service",
+                                    "version": ""
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "# Use Case\nRunning an Update Service instance in a cluster is appealing for offline OpenShift\nclusters or for admins that want to provide their own graph data instead of\nusing [https://github.com/openshift/cincinnati-graph-data](https://github.com/openshift/cincinnati-graph-data/).\n\n# About Update Service\nUpdate Service uses **Cincinnati** which is an update protocol designed to facilitate\nautomatic updates. It describes a particular method for representing transitions between\nreleases of a project and allowing a client to perform automatic updates between these\nreleases.\n\n## Components\nA **Graph Builder** iterates over the release payloads hosted by the\nstorage component and builds a DAG of the releases. It is responsible for\nverifying that the graph described by the releases is acyclic and connected.\n\nA **Policy Engine** is in charge of altering a client's view of the graph\nby applying a set of filters which are defined within the particular Policy\nEngine instance. Both the input to and the output from Policy Engines is a\ngraph, allowing multiple Policy Engines to be chained together. The first\nPolicy Engine in a chain will fetch its graph from the Graph Builder and the\nlast Policy Engine in a chain will serve the modified graph to the client.\n\nAn **Update Service client** is the end consumer of the release payloads. The\nclient periodically queries the Policy Engine for updates and applys them if\navailable.\n\n# Query OpenShift's Update Service Endpoint\n$ curl --silent --header 'Accept:application/json' 'https://api.openshift.com/api/upgrades_info/v1/graph?arch=amd64&channel=stable-4.2' | jq '. as $graph | $graph.nodes | map(.version == \"4.2.13\") | index(true) as $orig | $graph.edges | map(select(.[0] == $orig)[1]) | map($graph.nodes[.])'",
+                "displayName": "OpenShift Update Service",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "Update Service",
+                    "UpdateService",
+                    "update-service",
+                    "OSUS",
+                    "Cincinnati",
+                    "version",
+                    "upgrade"
+                ],
+                "links": [
+                    {
+                        "name": "Update Service Operator",
+                        "url": "https://github.com/openshift/cincinnati-operator"
+                    },
+                    {
+                        "name": "OpenShift Update Service",
+                        "url": "https://github.com/openshift/cincinnati"
+                    },
+                    {
+                        "name": "OpenShift Graph Data",
+                        "url": "https://github.com/openshift/cincinnati-graph-data"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "OpenShift Update Service maintainers",
+                        "email": "aos-team-ota@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:2743f74cc102c059d7c1dc6698eb947cca75a3cc4230905f09703666ae7a4dbf"
+        },
+        {
+            "name": "updateservice-operator",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8-operator@sha256:66db743f2d61dddab7363ab36252812ffb63653510124c3b32d26f0ddfeb5def"
+        },
+        {
+            "name": "operand",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8@sha256:6e65da919ed05274e4a0101f67a149188801b715cf073dd517d0dd311a4572a4"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "update-service-operator.v4.9.1",
+    "package": "cincinnati-operator",
+    "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:71b8f7816a01503a4af5d6f93b9b3a057f6c011aef3b560b408ee4d7abf02165",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "updateservice.operator.openshift.io",
+                "kind": "UpdateService",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cincinnati-operator",
+                "version": "4.9.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"updateservice.operator.openshift.io/v1\",\n    \"kind\": \"UpdateService\",\n    \"metadata\": {\n      \"name\": \"sample\"\n    },\n    \"spec\": {\n      \"replicas\": 1\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "description": "Creates and maintains an OpenShift Update Service instance",
+                    "operatorframework.io/suggested-namespace": "openshift-update-service",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.9.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "updateservices.updateservice.operator.openshift.io",
+                            "version": "v1",
+                            "kind": "UpdateService",
+                            "displayName": "Update Service",
+                            "description": "UpdateService is the Schema for the updateservices API.",
+                            "resources": [
+                                {
+                                    "name": "",
+                                    "kind": "Service",
+                                    "version": ""
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "# Use Case\nRunning an Update Service instance in a cluster is appealing for offline OpenShift\nclusters or for admins that want to provide their own graph data instead of\nusing [https://github.com/openshift/cincinnati-graph-data](https://github.com/openshift/cincinnati-graph-data/).\n\n# About Update Service\nUpdate Service uses **Cincinnati** which is an update protocol designed to facilitate\nautomatic updates. It describes a particular method for representing transitions between\nreleases of a project and allowing a client to perform automatic updates between these\nreleases.\n\n## Components\nA **Graph Builder** iterates over the release payloads hosted by the\nstorage component and builds a DAG of the releases. It is responsible for\nverifying that the graph described by the releases is acyclic and connected.\n\nA **Policy Engine** is in charge of altering a client's view of the graph\nby applying a set of filters which are defined within the particular Policy\nEngine instance. Both the input to and the output from Policy Engines is a\ngraph, allowing multiple Policy Engines to be chained together. The first\nPolicy Engine in a chain will fetch its graph from the Graph Builder and the\nlast Policy Engine in a chain will serve the modified graph to the client.\n\nAn **Update Service client** is the end consumer of the release payloads. The\nclient periodically queries the Policy Engine for updates and applys them if\navailable.\n\n# Query OpenShift's Update Service Endpoint\n$ curl --silent --header 'Accept:application/json' 'https://api.openshift.com/api/upgrades_info/v1/graph?arch=amd64&channel=stable-4.2' | jq '. as $graph | $graph.nodes | map(.version == \"4.2.13\") | index(true) as $orig | $graph.edges | map(select(.[0] == $orig)[1]) | map($graph.nodes[.])'",
+                "displayName": "OpenShift Update Service",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "Update Service",
+                    "UpdateService",
+                    "update-service",
+                    "OSUS",
+                    "Cincinnati",
+                    "version",
+                    "upgrade"
+                ],
+                "links": [
+                    {
+                        "name": "Update Service Operator",
+                        "url": "https://github.com/openshift/cincinnati-operator"
+                    },
+                    {
+                        "name": "OpenShift Update Service",
+                        "url": "https://github.com/openshift/cincinnati"
+                    },
+                    {
+                        "name": "OpenShift Graph Data",
+                        "url": "https://github.com/openshift/cincinnati-graph-data"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "OpenShift Update Service maintainers",
+                        "email": "aos-team-ota@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:71b8f7816a01503a4af5d6f93b9b3a057f6c011aef3b560b408ee4d7abf02165"
+        },
+        {
+            "name": "updateservice-operator",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8-operator@sha256:c8f156f73bb3e5fd92c024513c9446ed30d5231e33ef0d0952b365a1fbd69db4"
+        },
+        {
+            "name": "operand",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8@sha256:4bbed256e300088500ae3eb8475b3457d7a6765999e1102dc482e086e2cc0b43"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "update-service-operator.v5.0.0",
+    "package": "cincinnati-operator",
+    "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:3feccb95e912f2d710958e701a1b52acf16a676fde9a8219491ad9381e6284ea",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "updateservice.operator.openshift.io",
+                "kind": "UpdateService",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cincinnati-operator",
+                "version": "5.0.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"updateservice.operator.openshift.io/v1\",\n    \"kind\": \"UpdateService\",\n    \"metadata\": {\n      \"name\": \"sample\"\n    },\n    \"spec\": {\n      \"replicas\": 1\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "description": "Creates and maintains an OpenShift Update Service instance",
+                    "operatorframework.io/suggested-namespace": "openshift-update-service",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.9.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "updateservices.updateservice.operator.openshift.io",
+                            "version": "v1",
+                            "kind": "UpdateService",
+                            "displayName": "Update Service",
+                            "description": "UpdateService is the Schema for the updateservices API.",
+                            "resources": [
+                                {
+                                    "name": "",
+                                    "kind": "Service",
+                                    "version": ""
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "# Use Case\nRunning an Update Service instance in a cluster is appealing for offline OpenShift\nclusters or for admins that want to provide their own graph data instead of\nusing [https://github.com/openshift/cincinnati-graph-data](https://github.com/openshift/cincinnati-graph-data/).\n\n# About Update Service\nUpdate Service uses **Cincinnati** which is an update protocol designed to facilitate\nautomatic updates. It describes a particular method for representing transitions between\nreleases of a project and allowing a client to perform automatic updates between these\nreleases.\n\n## Components\nA **Graph Builder** iterates over the release payloads hosted by the\nstorage component and builds a DAG of the releases. It is responsible for\nverifying that the graph described by the releases is acyclic and connected.\n\nA **Policy Engine** is in charge of altering a client's view of the graph\nby applying a set of filters which are defined within the particular Policy\nEngine instance. Both the input to and the output from Policy Engines is a\ngraph, allowing multiple Policy Engines to be chained together. The first\nPolicy Engine in a chain will fetch its graph from the Graph Builder and the\nlast Policy Engine in a chain will serve the modified graph to the client.\n\nAn **Update Service client** is the end consumer of the release payloads. The\nclient periodically queries the Policy Engine for updates and applys them if\navailable.\n\n# Query OpenShift's Update Service Endpoint\n$ curl --silent --header 'Accept:application/json' 'https://api.openshift.com/api/upgrades_info/v1/graph?arch=amd64&channel=stable-4.2' | jq '. as $graph | $graph.nodes | map(.version == \"4.2.13\") | index(true) as $orig | $graph.edges | map(select(.[0] == $orig)[1]) | map($graph.nodes[.])'",
+                "displayName": "OpenShift Update Service",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Update Service",
+                    "UpdateService",
+                    "update-service",
+                    "OSUS",
+                    "Cincinnati",
+                    "version",
+                    "upgrade"
+                ],
+                "links": [
+                    {
+                        "name": "Update Service Operator",
+                        "url": "https://github.com/openshift/cincinnati-operator"
+                    },
+                    {
+                        "name": "OpenShift Update Service",
+                        "url": "https://github.com/openshift/cincinnati"
+                    },
+                    {
+                        "name": "OpenShift Graph Data",
+                        "url": "https://github.com/openshift/cincinnati-graph-data"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "OpenShift Update Service maintainers",
+                        "email": "aos-team-ota@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:3feccb95e912f2d710958e701a1b52acf16a676fde9a8219491ad9381e6284ea"
+        },
+        {
+            "name": "updateservice-operator",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8-operator@sha256:ce7b16803bb2bd058014a3783ed1f0a8a93819dd5769fcd8772228cf96814bf9"
+        },
+        {
+            "name": "operand",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8@sha256:389c339253271477440c5f470c08a3b149f1795647b1df7b104ae95fc63af22c"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "update-service-operator.v5.0.1",
+    "package": "cincinnati-operator",
+    "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:15f80efb399fc33a80e9979df4e8044501737eee335a2a5034c8de98957a87b9",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "updateservice.operator.openshift.io",
+                "kind": "UpdateService",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cincinnati-operator",
+                "version": "5.0.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"updateservice.operator.openshift.io/v1\",\n    \"kind\": \"UpdateService\",\n    \"metadata\": {\n      \"name\": \"sample\"\n    },\n    \"spec\": {\n      \"replicas\": 1\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "description": "Creates and maintains an OpenShift Update Service instance",
+                    "operatorframework.io/suggested-namespace": "openshift-update-service",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.9.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "updateservices.updateservice.operator.openshift.io",
+                            "version": "v1",
+                            "kind": "UpdateService",
+                            "displayName": "Update Service",
+                            "description": "UpdateService is the Schema for the updateservices API.",
+                            "resources": [
+                                {
+                                    "name": "",
+                                    "kind": "Service",
+                                    "version": ""
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "# Use Case\nRunning an Update Service instance in a cluster is appealing for offline OpenShift\nclusters or for admins that want to provide their own graph data instead of\nusing [https://github.com/openshift/cincinnati-graph-data](https://github.com/openshift/cincinnati-graph-data/).\n\n# About Update Service\nUpdate Service uses **Cincinnati** which is an update protocol designed to facilitate\nautomatic updates. It describes a particular method for representing transitions between\nreleases of a project and allowing a client to perform automatic updates between these\nreleases.\n\n## Components\nA **Graph Builder** iterates over the release payloads hosted by the\nstorage component and builds a DAG of the releases. It is responsible for\nverifying that the graph described by the releases is acyclic and connected.\n\nA **Policy Engine** is in charge of altering a client's view of the graph\nby applying a set of filters which are defined within the particular Policy\nEngine instance. Both the input to and the output from Policy Engines is a\ngraph, allowing multiple Policy Engines to be chained together. The first\nPolicy Engine in a chain will fetch its graph from the Graph Builder and the\nlast Policy Engine in a chain will serve the modified graph to the client.\n\nAn **Update Service client** is the end consumer of the release payloads. The\nclient periodically queries the Policy Engine for updates and applys them if\navailable.\n\n# Query OpenShift's Update Service Endpoint\n$ curl --silent --header 'Accept:application/json' 'https://api.openshift.com/api/upgrades_info/v1/graph?arch=amd64&channel=stable-4.2' | jq '. as $graph | $graph.nodes | map(.version == \"4.2.13\") | index(true) as $orig | $graph.edges | map(select(.[0] == $orig)[1]) | map($graph.nodes[.])'",
+                "displayName": "OpenShift Update Service",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Update Service",
+                    "UpdateService",
+                    "update-service",
+                    "OSUS",
+                    "Cincinnati",
+                    "version",
+                    "upgrade"
+                ],
+                "links": [
+                    {
+                        "name": "Update Service Operator",
+                        "url": "https://github.com/openshift/cincinnati-operator"
+                    },
+                    {
+                        "name": "OpenShift Update Service",
+                        "url": "https://github.com/openshift/cincinnati"
+                    },
+                    {
+                        "name": "OpenShift Graph Data",
+                        "url": "https://github.com/openshift/cincinnati-graph-data"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "OpenShift Update Service maintainers",
+                        "email": "aos-team-ota@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:15f80efb399fc33a80e9979df4e8044501737eee335a2a5034c8de98957a87b9"
+        },
+        {
+            "name": "updateservice-operator",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8-operator@sha256:8e9553e1041cd685239ef131e5b1b8797e3c033f008a122770a1ebfa01670d89"
+        },
+        {
+            "name": "operand",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8@sha256:fefab6832db6353886ed34aad76d1698532a1927160b8f8d34b3491c6025bae8"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "update-service-operator.v5.0.2",
+    "package": "cincinnati-operator",
+    "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:9c57110894fddd6cab86c06ee3d3c26fc8330146f8204b28edd544745879d170",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "updateservice.operator.openshift.io",
+                "kind": "UpdateService",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cincinnati-operator",
+                "version": "5.0.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"updateservice.operator.openshift.io/v1\",\n    \"kind\": \"UpdateService\",\n    \"metadata\": {\n      \"name\": \"sample\"\n    },\n    \"spec\": {\n      \"replicas\": 1\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "description": "Creates and maintains an OpenShift Update Service instance",
+                    "operatorframework.io/suggested-namespace": "openshift-update-service",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.9.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "updateservices.updateservice.operator.openshift.io",
+                            "version": "v1",
+                            "kind": "UpdateService",
+                            "displayName": "Update Service",
+                            "description": "UpdateService is the Schema for the updateservices API.",
+                            "resources": [
+                                {
+                                    "name": "",
+                                    "kind": "Service",
+                                    "version": ""
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "# Use Case\nRunning an Update Service instance in a cluster is appealing for offline OpenShift\nclusters or for admins that want to provide their own graph data instead of\nusing [https://github.com/openshift/cincinnati-graph-data](https://github.com/openshift/cincinnati-graph-data/).\n\n# About Update Service\nUpdate Service uses **Cincinnati** which is an update protocol designed to facilitate\nautomatic updates. It describes a particular method for representing transitions between\nreleases of a project and allowing a client to perform automatic updates between these\nreleases.\n\n## Components\nA **Graph Builder** iterates over the release payloads hosted by the\nstorage component and builds a DAG of the releases. It is responsible for\nverifying that the graph described by the releases is acyclic and connected.\n\nA **Policy Engine** is in charge of altering a client's view of the graph\nby applying a set of filters which are defined within the particular Policy\nEngine instance. Both the input to and the output from Policy Engines is a\ngraph, allowing multiple Policy Engines to be chained together. The first\nPolicy Engine in a chain will fetch its graph from the Graph Builder and the\nlast Policy Engine in a chain will serve the modified graph to the client.\n\nAn **Update Service client** is the end consumer of the release payloads. The\nclient periodically queries the Policy Engine for updates and applys them if\navailable.\n\n# Query OpenShift's Update Service Endpoint\n$ curl --silent --header 'Accept:application/json' 'https://api.openshift.com/api/upgrades_info/v1/graph?arch=amd64&channel=stable-4.2' | jq '. as $graph | $graph.nodes | map(.version == \"4.2.13\") | index(true) as $orig | $graph.edges | map(select(.[0] == $orig)[1]) | map($graph.nodes[.])'",
+                "displayName": "OpenShift Update Service",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Update Service",
+                    "UpdateService",
+                    "update-service",
+                    "OSUS",
+                    "Cincinnati",
+                    "version",
+                    "upgrade"
+                ],
+                "links": [
+                    {
+                        "name": "Update Service Operator",
+                        "url": "https://github.com/openshift/cincinnati-operator"
+                    },
+                    {
+                        "name": "OpenShift Update Service",
+                        "url": "https://github.com/openshift/cincinnati"
+                    },
+                    {
+                        "name": "OpenShift Graph Data",
+                        "url": "https://github.com/openshift/cincinnati-graph-data"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "OpenShift Update Service maintainers",
+                        "email": "aos-team-ota@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:9c57110894fddd6cab86c06ee3d3c26fc8330146f8204b28edd544745879d170"
+        },
+        {
+            "name": "updateservice-operator",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8-operator@sha256:d8fc9349b63465990695bb99373e00974ebbe5e9a2ad585f77cd1ff8dd552a7d"
+        },
+        {
+            "name": "operand",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8@sha256:31f7739ba0df2bddaa4cc7bebf74ac7f339250a7b8e00f6883100ccff75f8225"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "update-service-operator.v5.0.3",
+    "package": "cincinnati-operator",
+    "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:50e9c88ca31182c54f9c4bc6682642a5115fa280044e6c125f99626c69d999ad",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "updateservice.operator.openshift.io",
+                "kind": "UpdateService",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "cincinnati-operator",
+                "version": "5.0.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"updateservice.operator.openshift.io/v1\",\n    \"kind\": \"UpdateService\",\n    \"metadata\": {\n      \"name\": \"sample\"\n    },\n    \"spec\": {\n      \"replicas\": 1\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "description": "Creates and maintains an OpenShift Update Service instance",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operatorframework.io/suggested-namespace": "openshift-update-service",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.9.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "updateservices.updateservice.operator.openshift.io",
+                            "version": "v1",
+                            "kind": "UpdateService",
+                            "displayName": "Update Service",
+                            "description": "UpdateService is the Schema for the updateservices API.",
+                            "resources": [
+                                {
+                                    "name": "",
+                                    "kind": "Service",
+                                    "version": ""
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "# Use Case\nRunning an Update Service instance in a cluster is appealing for offline OpenShift\nclusters or for admins that want to provide their own graph data instead of\nusing [https://github.com/openshift/cincinnati-graph-data](https://github.com/openshift/cincinnati-graph-data/).\n\n# About Update Service\nUpdate Service uses **Cincinnati** which is an update protocol designed to facilitate\nautomatic updates. It describes a particular method for representing transitions between\nreleases of a project and allowing a client to perform automatic updates between these\nreleases.\n\n## Components\nA **Graph Builder** iterates over the release payloads hosted by the\nstorage component and builds a DAG of the releases. It is responsible for\nverifying that the graph described by the releases is acyclic and connected.\n\nA **Policy Engine** is in charge of altering a client's view of the graph\nby applying a set of filters which are defined within the particular Policy\nEngine instance. Both the input to and the output from Policy Engines is a\ngraph, allowing multiple Policy Engines to be chained together. The first\nPolicy Engine in a chain will fetch its graph from the Graph Builder and the\nlast Policy Engine in a chain will serve the modified graph to the client.\n\nAn **Update Service client** is the end consumer of the release payloads. The\nclient periodically queries the Policy Engine for updates and applys them if\navailable.\n\n# Query OpenShift's Update Service Endpoint\n$ curl --silent --header 'Accept:application/json' 'https://api.openshift.com/api/upgrades_info/v1/graph?arch=amd64&channel=stable-4.2' | jq '. as $graph | $graph.nodes | map(.version == \"4.2.13\") | index(true) as $orig | $graph.edges | map(select(.[0] == $orig)[1]) | map($graph.nodes[.])'",
+                "displayName": "OpenShift Update Service",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Update Service",
+                    "UpdateService",
+                    "update-service",
+                    "OSUS",
+                    "Cincinnati",
+                    "version",
+                    "upgrade"
+                ],
+                "links": [
+                    {
+                        "name": "Update Service Operator",
+                        "url": "https://github.com/openshift/cincinnati-operator"
+                    },
+                    {
+                        "name": "OpenShift Update Service",
+                        "url": "https://github.com/openshift/cincinnati"
+                    },
+                    {
+                        "name": "OpenShift Graph Data",
+                        "url": "https://github.com/openshift/cincinnati-graph-data"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "OpenShift Update Service maintainers",
+                        "email": "aos-team-ota@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-update-service/cincinnati-operator-bundle@sha256:50e9c88ca31182c54f9c4bc6682642a5115fa280044e6c125f99626c69d999ad"
+        },
+        {
+            "name": "updateservice-operator",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8-operator@sha256:759f4de107a5b429933c5e44046ffb4ed75c674aea75440513a6df8fa93a83a3"
+        },
+        {
+            "name": "operand",
+            "image": "registry.redhat.io/openshift-update-service/openshift-update-service-rhel8@sha256:a9468a662babb272917df92bc9c827535b4b37883edb440b6d2d7c32ffb2145e"
+        }
+    ]
+}

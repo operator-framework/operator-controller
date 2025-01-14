@@ -1,0 +1,51 @@
+---
+defaultChannel: stable
+name: metrics-server
+schema: olm.package
+---
+entries:
+- name: metrics-server.v3.12.0
+- name: metrics-server.v3.12.1
+  replaces: metrics-server.v3.12.0
+- name: metrics-server.v3.12.2
+  replaces: metrics-server.v3.12.1
+name: stable
+package: metrics-server
+schema: olm.channel
+---
+image: https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.12.2/metrics-server-3.12.2.tgz
+name: metrics-server.v3.12.2
+package: metrics-server
+properties:
+- type: olm.content-type
+  value: helm
+- type: olm.package
+  value:
+    packageName: metrics-server
+    version: 3.12.2
+schema: olm.bundle
+---
+image: https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.12.1/metrics-server-3.12.1.tgz
+name: metrics-server.v3.12.1
+package: metrics-server
+properties:
+- type: olm.content-type
+  value: helm
+- type: olm.package
+  value:
+    packageName: metrics-server
+    version: 3.12.1
+schema: olm.bundle
+---
+image: https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.12.0/metrics-server-3.12.0.tgz
+name: metrics-server.v3.12.0
+package: metrics-server
+properties:
+- type: olm.content-type
+  value: helm
+- type: olm.package
+  value:
+    packageName: metrics-server
+    version: 3.12.0
+schema: olm.bundle
+---

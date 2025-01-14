@@ -1,0 +1,867 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: iVBORw0KGgoAAAANSUhEUgAAARwAAAEACAMAAABWPjkyAAACHFBMVEUAAAAqt5Eevswcn80Rt6ojuaQMtpoMtpoTtaUevswMtpoMtpo8t2Qevsw8t2QMtpodt80MtpoMtpoMtpo8t2QMtpoMtpoMtpoMtpoMtpoevswMtpoMtpoMtpo8t2Qevswdt808t2QevswevswMtpo8t2Qds808t2QevswMtpo8t2QMtpoevswMtpo8t2QMtpoevswMtpoduM0Zt6kMtpo8t2QMtpoMtpoevsw8t2Q8t2QMtpo8t2Q8t2QMtpo8t2Qevswevsw8t2QMtpoMtpo8t2Qds808t2QMtpoMtpoevsw8t2QMtpoevswMtpoevswevsw8t2QMtpocn80cn808t2QMtpocn80evswevswevswevswMtpoMtpoMtpocn80evsw8t2Q8t2Q8t2Qevswevswevswevsw8t2Q8t2QMtpoevsw8t2Q8t2QMtpoevswcn80Mtpo8t2Qcn80Mtpo8t2Qcn808t2Qevsw8t2Qcn80cn808t2QMtpoMtpoevswcn80Mtpo8t2Q8t2Q8t2QevswMtpoevswcn80cn80evswevswMtpoevsw8t2QevswevswMtpoMtpoMtpo8t2Q8t2Qevswcn80cn808t2Q8t2Qcn80Mtpocn808t2Qevswcn80cn80evswcn80cn80cn80Mtpo8t2Q8t2Q8t2Qcn80cn80cn80evsw8t2QMtpoMtpoevsw8t2Qcn80FhJxUAAAAsHRSTlMAAsDQCQb0GARxMP37+uDXEvuAcArtzKyYX+8QuyTmKBf39diGFAzyxcAqIP3io5xAOxwH+Ovq4N7dzsfCuqaUgnt3dFhIIB0O2suLS0c9Oi4Q/vnx1bWvqqSUiol6amVWUTHw69G3sa19cmRfODU0MysZ6OPa18i+s52QV1NOTUQ/PSQh5uThz8egm5JraV9cT01HQDbo4L+bhXZxbVxbVSkjooV9dnBtY0o+JeNrUFgpkeoAAAq5SURBVHja7N1BSxtBFAfwF2g06JJCmkNPCzmEJSmkFE0lMWkgNaQlJwvpLYJ6SSAKCiEIeomhJxFK9aAHj61eyvA+YVts7Y7EvM3urDhv9vcRHpK3///OjhCJmGJ/2ItBZKJzG/FgHSIT9DP4WykPkftiLbyVOYSIbL2K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
+  mediatype: image/png
+name: kong-gateway-operator
+schema: olm.package
+---
+entries:
+- name: kong-gateway-operator.v0.6.0
+- name: kong-gateway-operator.v0.7.0
+  replaces: kong-gateway-operator.v0.6.0
+- name: kong-gateway-operator.v1.0.0
+  replaces: kong-gateway-operator.v1.0.0-rc.0
+- name: kong-gateway-operator.v1.0.0-rc.0
+  replaces: kong-gateway-operator.v0.7.0
+- name: kong-gateway-operator.v1.0.1
+  replaces: kong-gateway-operator.v1.0.0
+- name: kong-gateway-operator.v1.0.2
+  replaces: kong-gateway-operator.v1.0.1
+- name: kong-gateway-operator.v1.0.3
+  replaces: kong-gateway-operator.v1.0.2
+- name: kong-gateway-operator.v1.1.0
+  replaces: kong-gateway-operator.v1.0.3
+- name: kong-gateway-operator.v1.2.0-alpha.1
+  replaces: kong-gateway-operator.v1.1.0
+- name: kong-gateway-operator.v1.2.0-alpha.2
+  replaces: kong-gateway-operator.v1.2.0-alpha.1
+name: alpha
+package: kong-gateway-operator
+schema: olm.channel
+---
+entries:
+- name: kong-gateway-operator.v1.1.0
+- name: kong-gateway-operator.v1.2.0-alpha.1
+  replaces: kong-gateway-operator.v1.1.0
+- name: kong-gateway-operator.v1.2.0-alpha.2
+  replaces: kong-gateway-operator.v1.2.0-alpha.1
+name: beta
+package: kong-gateway-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:b6f1e89023584be089d56fc95d478ab48dc88e5584eaca3546f1171228bde92f
+name: kong-gateway-operator.v0.6.0
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 0.6.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/kong/gateway-operator:0.6.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:b6f1e89023584be089d56fc95d478ab48dc88e5584eaca3546f1171228bde92f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:7800625dd21dd3a560512d1d3c6d3d3837437fea16840c377e4630de13355c5c
+name: kong-gateway-operator.v0.7.0
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 0.7.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: ghcr.io/kong/gateway-operator:0.7.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:7800625dd21dd3a560512d1d3c6d3d3837437fea16840c377e4630de13355c5c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:0e2456df7a6c3d61e774e39146e7ba221e58721b931b351949347ceadc523bd7
+name: kong-gateway-operator.v1.0.0
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 1.0.0
+relatedImages:
+- image: docker.io/kong/gateway-operator:1.0.0
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:0e2456df7a6c3d61e774e39146e7ba221e58721b931b351949347ceadc523bd7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:061a1658ac36ec60d0d926bcd8ab91b6e8f162388c10285c6764eae4bfec7781
+name: kong-gateway-operator.v1.0.0-rc.0
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 1.0.0-rc.0
+relatedImages:
+- image: docker.io/kong/gateway-operator:1.0.0-rc.0
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:061a1658ac36ec60d0d926bcd8ab91b6e8f162388c10285c6764eae4bfec7781
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:d076215741d764f6b8cb72afa3629a61fa2b7fc10aff97b4d5abdb29eab8e2cd
+name: kong-gateway-operator.v1.0.1
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 1.0.1
+relatedImages:
+- image: docker.io/kong/gateway-operator:1.0.1
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:d076215741d764f6b8cb72afa3629a61fa2b7fc10aff97b4d5abdb29eab8e2cd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:a07b0e1c0da2f348390ac62c549737cbad38af4094298cbef47cec3bcf7fdbd7
+name: kong-gateway-operator.v1.0.2
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 1.0.2
+relatedImages:
+- image: docker.io/kong/gateway-operator:1.0.2
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:a07b0e1c0da2f348390ac62c549737cbad38af4094298cbef47cec3bcf7fdbd7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:c83a15c6b0ccde010d3053de84aeaf0cd64f4e9b7ee36dbd73dbb89e4a0a1755
+name: kong-gateway-operator.v1.0.3
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 1.0.3
+relatedImages:
+- image: docker.io/kong/gateway-operator:1.0.3
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:c83a15c6b0ccde010d3053de84aeaf0cd64f4e9b7ee36dbd73dbb89e4a0a1755
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:702eba33f3eb0973178970c0576745e99a886d874c4e4e84a8cb65c28035e002
+name: kong-gateway-operator.v1.1.0
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 1.1.0
+relatedImages:
+- image: docker.io/kong/gateway-operator:1.1.0
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:702eba33f3eb0973178970c0576745e99a886d874c4e4e84a8cb65c28035e002
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:b3c55bf9b94a51efadd4df15d5d65ad81d7d14862b8be71f8e2f7ba4aa5933a1
+name: kong-gateway-operator.v1.2.0-alpha.1
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 1.2.0-alpha.1
+relatedImages:
+- image: docker.io/kong/gateway-operator:1.2.0-alpha.1
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:b3c55bf9b94a51efadd4df15d5d65ad81d7d14862b8be71f8e2f7ba4aa5933a1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kong-gateway-operator@sha256:af1d89c09b326856dc5d435df50b76eb6cf9a56de8ce3aa0fe7fd494aa7d8308
+name: kong-gateway-operator.v1.2.0-alpha.2
+package: kong-gateway-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: AIGateway
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: ControlPlane
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlane
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: DataPlaneMetricsExtension
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gateway-operator.konghq.com
+    kind: GatewayConfiguration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kong-gateway-operator
+    version: 1.2.0-alpha.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "gateway-operator.konghq.com/v1alpha1",
+            "kind": "AIGateway",
+            "metadata": {
+              "name": "kong-aigateway-example"
+            },
+            "spec": {
+              "cloudProviderCredentials": {
+                "name": "acme-ai-cloud-providers"
+              },
+              "gatewayClassName": "kong-ai-gateways",
+              "largeLanguageModels": {
+                "cloudHosted": [
+                  {
+                    "identifier": "marketing-team-classic-chatgpt",
+                    "model": "gpt-3.5-turbo",
+                    "promptType": "completions"
+                  },
+                  {
+                    "defaultPromptParams": {
+                      "TopP": "0.9",
+                      "maxTokens": 50,
+                      "temperature": "0.5"
+                    },
+                    "defaultPrompts": [
+                      {
+                        "content": "You are a helpful assistant who responds in the style of Sherlock Holmes.",
+                        "role": "system"
+                      }
+                    ],
+                    "identifier": "devteam-chatgpt",
+                    "model": "gpt-4",
+                    "promptType": "chat"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "apiVersion": "gateway-operator.konghq.com/v1alpha1",
+            "kind": "ControlPlane",
+            "metadata": {
+              "name": "controlplane-example"
+            },
+            "spec": {
+              "dataplane": "dataplane-example",
+              "deployment": {
+                "podTemplateSpec": {
+                  "metadata": {
+                    "labels": {
+                      "controlplane-pod-label": "example"
+                    }
+                  },
+                  "spec": {
+                    "containers": [
+                      {
+                        "image": "kong/kubernetes-ingress-controller:3.0.1",
+                        "name": "controller",
+                        "readinessProbe": {
+                          "initialDelaySeconds": 1,
+                          "periodSeconds": 3
+                        },
+                        "resources": {
+                          "limits": {
+                            "cpu": "1000m",
+                            "memory": "1024Mi"
+                          },
+                          "requests": {
+                            "cpu": "250m",
+                            "memory": "64Mi"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "gatewayClass": "kong"
+            }
+          },
+          {
+            "apiVersion": "gateway-operator.konghq.com/v1alpha1",
+            "kind": "GatewayConfiguration",
+            "metadata": {
+              "name": "kong",
+              "namespace": "default"
+            },
+            "spec": {
+              "controlPlaneOptions": {
+                "deployment": {
+                  "podTemplateSpec": {
+                    "spec": {
+                      "containers": [
+                        {
+                          "env": [
+                            {
+                              "name": "CONTROLLER_LOG_LEVEL",
+                              "value": "debug"
+                            }
+                          ],
+                          "name": "controller"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "dataPlaneOptions": {
+                "deployment": {
+                  "podTemplateSpec": {
+                    "metadata": {
+                      "annotations": {
+                        "dataplane-pod-annotation": "example"
+                      },
+                      "labels": {
+                        "dataplane-pod-label": "example"
+                      }
+                    },
+                    "spec": {
+                      "containers": [
+                        {
+                          "image": "kong:3.4",
+                          "name": "proxy",
+                          "readinessProbe": {
+                            "initialDelaySeconds": 1,
+                            "periodSeconds": 1
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "replicas": 2
+                },
+                "network": {
+                  "services": {
+                    "ingress": {
+                      "annotations": {
+                        "foo": "bar"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "gateway-operator.konghq.com/v1beta1",
+            "kind": "DataPlane",
+            "metadata": {
+              "name": "dataplane-example"
+            },
+            "spec": {
+              "deployment": {
+                "podTemplateSpec": {
+                  "metadata": {
+                    "annotations": {
+                      "dataplane-pod-annotation": "example"
+                    },
+                    "labels": {
+                      "dataplane-pod-label": "example"
+                    }
+                  },
+                  "spec": {
+                    "containers": [
+                      {
+                        "env": [
+                          {
+                            "name": "KONG_LOG_LEVEL",
+                            "value": "debug"
+                          }
+                        ],
+                        "image": "kong:3.4",
+                        "name": "proxy",
+                        "readinessProbe": {
+                          "initialDelaySeconds": 1,
+                          "periodSeconds": 1
+                        },
+                        "resources": {
+                          "limits": {
+                            "cpu": "1000m",
+                            "memory": "1024Mi"
+                          },
+                          "requests": {
+                            "cpu": "250m",
+                            "memory": "64Mi"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "network": {
+                "services": {
+                  "ingress": {
+                    "annotations": {
+                      "foo": "bar"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "gateway-operator.konghq.com/v1beta1",
+            "kind": "DataPlane",
+            "metadata": {
+              "name": "konnect-example"
+            },
+            "spec": {
+              "deployment": {
+                "podTemplateSpec": {
+                  "metadata": {
+                    "annotations": {
+                      "dataplane-pod-annotation": "example"
+                    },
+                    "labels": {
+                      "dataplane-pod-label": "example"
+                    }
+                  },
+                  "spec": {
+                    "containers": [
+                      {
+                        "env": [
+                          {
+                            "name": "KONG_ROLE",
+                            "value": "data_plane"
+                          },
+                          {
+                            "name": "KONG_DATABASE",
+                            "value": "off"
+                          },
+                          {
+                            "name": "KONG_CLUSTER_MTLS",
+                            "value": "pki"
+                          },
+                          {
+                            "name": "KONG_CLUSTER_CONTROL_PLANE",
+                            "value": "\u003cYOUR_CP_ID\u003e.cp0.konghq.tech:443"
+                          },
+                          {
+                            "name": "KONG_CLUSTER_SERVER_NAME",
+                            "value": "\u003cYOUR_CP_ID\u003e.cp0.konghq.tech"
+                          },
+                          {
+                            "name": "KONG_CLUSTER_TELEMETRY_ENDPOINT",
+                            "value": "\u003cYOUR_CP_ID\u003e.tp0.konghq.tech:443"
+                          },
+                          {
+                            "name": "KONG_CLUSTER_TELEMETRY_SERVER_NAME",
+                            "value": "\u003cYOUR_CP_ID\u003e.tp0.konghq.tech"
+                          },
+                          {
+                            "name": "KONG_CLUSTER_CERT",
+                            "value": "/etc/secrets/kong-cluster-cert/tls.crt"
+                          },
+                          {
+                            "name": "KONG_CLUSTER_CERT_KEY",
+                            "value": "/etc/secrets/kong-cluster-cert/tls.key"
+                          },
+                          {
+                            "name": "KONG_LUA_SSL_TRUSTED_CERTIFICATE",
+                            "value": "system"
+                          },
+                          {
+                            "name": "KONG_KONNECT_MODE",
+                            "value": "on"
+                          },
+                          {
+                            "name": "KONG_VITALS",
+                            "value": "off"
+                          },
+                          {
+                            "name": "KONG_CLUSTER_DP_LABELS",
+                            "value": "type:k8s"
+                          }
+                        ],
+                        "image": "kong/kong-gateway:3.4",
+                        "name": "proxy",
+                        "readinessProbe": {
+                          "initialDelaySeconds": 1,
+                          "periodSeconds": 1
+                        },
+                        "volumeMounts": [
+                          {
+                            "mountPath": "/var/cluster-certificate",
+                            "name": "cluster-certificate"
+                          },
+                          {
+                            "mountPath": "/etc/secrets/kong-cluster-cert/",
+                            "name": "konnect-client-tls",
+                            "readOnly": true
+                          }
+                        ]
+                      }
+                    ],
+                    "volumes": [
+                      {
+                        "name": "cluster-certificate"
+                      },
+                      {
+                        "name": "konnect-client-tls",
+                        "secret": {
+                          "secretName": "konnect-client-tls"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "replicas": 3
+              }
+            }
+          },
+          {
+            "apiVersion": "gateway-operator.konghq.com/v1beta1",
+            "kind": "DataPlane",
+            "metadata": {
+              "name": "sidecar-example"
+            },
+            "spec": {
+              "deployment": {
+                "podTemplateSpec": {
+                  "metadata": {
+                    "annotations": {
+                      "dataplane-pod-annotation": "example"
+                    },
+                    "labels": {
+                      "dataplane-pod-label": "example"
+                    }
+                  },
+                  "spec": {
+                    "containers": [
+                      {
+                        "image": "timberio/vector:0.32.1-distroless-static",
+                        "name": "sidecar",
+                        "readinessProbe": {
+                          "initialDelaySeconds": 1,
+                          "periodSeconds": 1
+                        },
+                        "volumeMounts": [
+                          {
+                            "mountPath": "/etc/vector",
+                            "name": "sidecar-vector-config-volume"
+                          },
+                          {
+                            "mountPath": "/etc/kong/log/",
+                            "name": "proxy-logs"
+                          }
+                        ]
+                      },
+                      {
+                        "env": [
+                          {
+                            "name": "KONG_LOG_LEVEL",
+                            "value": "debug"
+                          },
+                          {
+                            "name": "KONG_PROXY_ACCESS_LOG",
+                            "value": "/etc/kong/log/proxy_access.log"
+                          }
+                        ],
+                        "image": "kong:3.4",
+                        "name": "proxy",
+                        "readinessProbe": {
+                          "initialDelaySeconds": 1,
+                          "periodSeconds": 1
+                        },
+                        "resources": {
+                          "limits": {
+                            "cpu": "1000m",
+                            "memory": "1024Mi"
+                          },
+                          "requests": {
+                            "cpu": "250m",
+                            "memory": "64Mi"
+                          }
+                        },
+                        "volumeMounts": [
+                          {
+                            "mountPath": "/etc/kong/log/",
+                            "name": "proxy-logs"
+                          }
+                        ]
+                      }
+                    ],
+                    "volumes": [
+                      {
+                        "name": "cluster-certificate"
+                      },
+                      {
+                        "configMap": {
+                          "name": "sidecar-vector-config"
+                        },
+                        "name": "sidecar-vector-config-volume"
+                      },
+                      {
+                        "emptyDir": {
+                          "sizeLimit": "128Mi"
+                        },
+                        "name": "proxy-logs"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Networking,Integration & Delivery
+      containerImage: docker.io/kong/gateway-operator:1.2.0-alpha.2
+      description: A Kubernetes Operator for the Kong Gateway
+      operatorframework.io/suggested-namespace: kong-system
+      operators.operatorframework.io/builder: operator-sdk-v1.23.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://kong.github.io/gateway-operator-docs
+      support: Kong Inc.
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: AIGateway is the Schema for the aigateways API
+        displayName: AIGateway
+        kind: AIGateway
+        name: aigateways.gateway-operator.konghq.com
+        version: v1alpha1
+      - description: ControlPlane is the Schema for the controlplanes API
+        displayName: Control Plane
+        kind: ControlPlane
+        name: controlplanes.gateway-operator.konghq.com
+        version: v1alpha1
+      - kind: DataPlaneMetricsExtension
+        name: dataplanemetricsextensions.gateway-operator.konghq.com
+        version: v1alpha1
+      - description: DataPlane is the Schema for the dataplanes API
+        displayName: Data Plane
+        kind: DataPlane
+        name: dataplanes.gateway-operator.konghq.com
+        version: v1beta1
+      - description: GatewayConfiguration is the Schema for the gatewayconfigurations
+          API
+        displayName: Gateway Configuration
+        kind: GatewayConfiguration
+        name: gatewayconfigurations.gateway-operator.konghq.com
+        version: v1alpha1
+    description: |
+      Kong Gateway Operator for Kubernetes.
+
+      A [Kubernetes Operator][k8soperator] for the [Kong Gateway][kong].
+
+      [k8soperator]:https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
+      [kong]:https://konghq.com
+
+      ### Quick Start
+
+      The [Quick Start guide](https://kong.github.io/gateway-operator-docs/#quick-start-guide) uses Kong Gateway Operator to deploy sample Kong setup for Kubernetes users, which includes an instance of Kong serving as a proxy to an example Kubernetes service.
+
+      ### Documentation
+
+      The primary documentation site for Kong Operator is located [in its GitHub repository](https://kong.github.io/gateway-operator-docs/).
+
+      The Gateway API documentation is located [in the Gateway API repository](https://gateway-api.sigs.k8s.io/).
+    displayName: Kong Gateway Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - networking
+    - gateway
+    - ingress
+    - kong
+    - kubernetes
+    - go
+    links:
+    - name: Github repository for the operator
+      url: https://github.com/kong/gateway-operator
+    - name: Documentation
+      url: https://docs.konghq.com/gateway-operator/latest/
+    maintainers:
+    - email: support@konghq.com
+      name: Kong Inc.
+    maturity: alpha
+    minKubeVersion: 1.25.0
+    provider:
+      name: Kong Inc.
+      url: https://konghq.com
+relatedImages:
+- image: docker.io/kong/gateway-operator:1.2.0-alpha.2
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/kong-gateway-operator@sha256:af1d89c09b326856dc5d435df50b76eb6cf9a56de8ce3aa0fe7fd494aa7d8308
+  name: ""
+schema: olm.bundle

@@ -1,0 +1,233 @@
+---
+defaultChannel: beta
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDMyMCAzMjAiPgogIDxnIGlkPSJsb2dvIiBmaWxsPSIjZmZmIj4KICAgIDxyZWN0IGlkPSJiYWNrZ3JvdW5kIiBmaWxsPSIjNDY2QkIwIiB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgLz4KICAgIDxwb2x5Z29uIGlkPSJodWxsIiBwb2ludHM9IjgwIDI1MCAyNDAgMjUwIDE0MCAyODAgODAgMjUwIi8+CiAgICA8cG9seWdvbiBpZD0ibWFpbnNhaWwiIHBvaW50cz0iODAgMjQwIDE0MCAyMzAgMTQwIDEyMCA4MCAyNDAiLz4KICAgIDxwb2x5Z29uIGlkPSJoZWFkc2FpbCIgcG9pbnRzPSIxNTAgMjMwIDI0MCAyNDAgMTUwIDQwIDE1MCAyMzAiLz4KICA8L2c+Cjwvc3ZnPgo=
+  mediatype: image/svg+xml
+name: istio
+schema: olm.package
+---
+entries:
+- name: istio-operator.0.1.6
+name: beta
+package: istio
+schema: olm.channel
+---
+image: quay.io/operatorhubio/istio@sha256:682eca5c28b9a7059f7f87fdfa053ac256cf81171a11a5a99838ce1c34c1deef
+name: istio-operator.0.1.6
+package: istio
+properties:
+- type: olm.gvk
+  value:
+    group: istio.banzaicloud.io
+    kind: Istio
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: istio.banzaicloud.io
+    kind: RemoteIstio
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: istio
+    version: 0.1.6
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |
+        [
+          {
+              "apiVersion": "istio.banzaicloud.io/v1beta1",
+              "kind": "Istio",
+              "metadata": {
+                  "name": "istio-sample"
+              },
+              "spec": {
+                  "autoInjectionNamespaces": [
+                      "default"
+                  ],
+                  "citadel": {
+                      "image": "docker.io/istio/citadel:1.1.2",
+                      "replicaCount": 1
+                  },
+                  "defaultPodDisruptionBudget": {
+                      "enabled": true
+                  },
+                  "galley": {
+                      "image": "docker.io/istio/galley:1.1.2",
+                      "replicaCount": 1
+                  },
+                  "gateways": {
+                      "egress": {
+                          "maxReplicas": 5,
+                          "minReplicas": 1,
+                          "replicaCount": 1,
+                          "sds": {
+                              "image": "node-agent-k8s"
+                          }
+                      },
+                      "ingress": {
+                          "maxReplicas": 5,
+                          "minReplicas": 1,
+                          "replicaCount": 1,
+                          "sds": {
+                              "image": "node-agent-k8s"
+                          }
+                      },
+                      "k8singress": {}
+                  },
+                  "imageHub": "docker.io/istio",
+                  "imageTag": "1.1.0",
+                  "includeIPRanges": "*",
+                  "mixer": {
+                      "image": "docker.io/istio/mixer:1.1.2",
+                      "maxReplicas": 5,
+                      "minReplicas": 1,
+                      "replicaCount": 1
+                  },
+                  "mtls": false,
+                  "nodeAgent": {
+                      "image": "docker.io/istio/node-agent-k8s:1.1.2"
+                  },
+                  "outboundTrafficPolicy": {
+                      "mode": "ALLOW_ANY"
+                  },
+                  "pilot": {
+                      "image": "docker.io/istio/pilot:1.1.2",
+                      "maxReplicas": 5,
+                      "minReplicas": 1,
+                      "replicaCount": 1,
+                      "traceSampling": 1
+                  },
+                  "proxy": {
+                      "image": "docker.io/istio/proxyv2:1.1.2"
+                  },
+                  "proxyInit": {
+                      "image": "docker.io/istio/proxy_init:1.1.2"
+                  },
+                  "sds": {},
+                  "sidecarInjector": {
+                      "image": "docker.io/istio/sidecar_injector:1.1.2",
+                      "replicaCount": 1,
+                      "rewriteAppHTTPProbe": true
+                  },
+                  "tracing": {
+                      "zipkin": {
+                          "address": "zipkin.istio-system:9411"
+                      }
+                  },
+                  "version": "1.1.2"
+              }
+          },
+          {
+              "apiVersion": "istio.banzaicloud.io/v1beta1",
+              "kind": "RemoteIstio",
+              "metadata": {
+                  "name": "remoteistio-sample"
+              },
+              "spec": {
+                  "autoInjectionNamespaces": [
+                      "default"
+                  ],
+                  "citadel": {
+                      "enabled": true,
+                      "replicaCount": 1
+                  },
+                  "enabledServices": [
+                      {
+                          "labelSelector": "istio=pilot",
+                          "name": "istio-pilot"
+                      },
+                      {
+                          "labelSelector": "istio-mixer-type=policy",
+                          "name": "istio-policy"
+                      },
+                      {
+                          "labelSelector": "statsd-prom-bridge",
+                          "name": "istio-statsd"
+                      },
+                      {
+                          "labelSelector": "istio-mixer-type=telemetry",
+                          "name": "istio-telemetry"
+                      },
+                      {
+                          "labelSelector": "app=jaeger",
+                          "name": "zipkin"
+                      }
+                  ],
+                  "includeIPRanges": "*",
+                  "proxy": {},
+                  "proxyInit": {},
+                  "sidecarInjector": {
+                      "enabled": true,
+                      "initCNIConfiguration": {},
+                      "replicaCount": 1
+                  }
+              }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Monitoring, Logging & Tracing, Security
+      certified: "false"
+      containerImage: banzaicloud/istio-operator:0.1.6
+      createdAt: "2019-04-01T08:00:00Z"
+      description: Installs and maintain Istio service mesh
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/banzaicloud/istio-operator/tree/release-1.1
+      support: Banzai Cloud
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents an Istio service mesh
+        displayName: Istio service mesh
+        kind: Istio
+        name: istios.istio.banzaicloud.io
+        version: v1beta1
+      - description: Represents a Remote Cluster of an Istio service mesh
+        displayName: Remote member cluster
+        kind: RemoteIstio
+        name: remoteistios.istio.banzaicloud.io
+        version: v1beta1
+    description: |
+      Istio-operator is a Kubernetes operator to deploy and manage [Istio](https://istio.io/) resources for a Kubernetes cluster.
+
+      ## Overview
+
+      [Istio](https://istio.io/) is an open platform to connect, manage, and secure microservices and it is emerging as the `standard` for building service meshes on Kubernetes. It is built out on multiple components and a rather complex deployment scheme (around 14 Helm subcharts and 50+ CRDs). Installing, upgrading and operating these components requires deep understanding of Istio and Helm (the standard/supported way of deploying [Istio](https://istio.io/)).
+
+      The goal of the **Istio-operator** is to automate and simplify these and enable popular service mesh use cases (multi cluster federation, canary releases, resource reconciliation, etc) by introducing easy higher level abstractions.
+    displayName: Istio
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - istio
+    - multi cluster
+    - federation
+    - service mesh
+    - banzaicloud
+    - open source
+    links:
+    - name: Blog
+      url: https://banzaicloud.com/tags/istio
+    - name: Documentation
+      url: https://github.com/banzaicloud/istio-operator/blob/release-1.1/README.md
+    - name: Istio Operator Source Code
+      url: https://github.com/banzaicloud/istio-operator/tree/release-1.1
+    maintainers:
+    - email: info@banzaicloud.com
+      name: Banzai Cloud
+    maturity: beta
+    provider:
+      name: Banzai Cloud
+relatedImages:
+- image: banzaicloud/istio-operator:0.1.6
+  name: ""
+- image: quay.io/operatorhubio/istio@sha256:682eca5c28b9a7059f7f87fdfa053ac256cf81171a11a5a99838ce1c34c1deef
+  name: ""
+schema: olm.bundle

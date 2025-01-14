@@ -1,0 +1,95 @@
+---
+defaultChannel: fast
+icon:
+  base64data: iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAgMAAADQNkYNAAAAAXNSR0IArs4c6QAAAAxQTFRF+/v7IWSdx3A4LDpGRm1eQgAAAnhJREFUaN7t2Ltt5TAQhWFzBcGAE0WKnbsJqgQFYj1WKQwJVqGSVICA2fu+ehwM52DD1eRf8p+I/Pg477zzzvu3q0aeTDT55Ekz0+SbJ36hyS9PRFjheFKJsJU/edKIsJW/eeJF2Mq/PBFhKzueVFcysbOwpLmSmZ2FJf5KFnYWloiwlR1PqjuZ2Fk40tzJzM7CEX8nCzsLR0TYyo4n1ZNM7CwMaZ5kZmdhiH+ShZ2FISJsZceT6k0mdhY7ad5kZmexE/8mCzuLnYiwlR1PqjWZ2FmspFmTmZ3FSvyaLOwsViLCVnY8qbZkYmexkWZLZnYWG/FbsrCz2IgIW9nxpNqTiZ3FQpo9mdlZLMTvycLOYiEibGXHk+pIJnaWMmmOZGZnKRN/JAs7C/+OKd8fNFWBgI8B16nkC5C6QCIgvUp+AGkLJAEyqCQDEgokAxLUxoC4IhkB0Sp/AVIXSQREq/wDSFskCZBBbXwkoUgyIEFtfCDOQEZAOq3xgdQGEgHptcYH0hpIAmRQG+9JMJAMSFAb74gzkRGQTmu8I7WJREB6rfGOtCaSABnUxlsSTCQDEtTGG+KMZASk0xpvSG0kEZBea7whrZEkQAa18ZoEI8mABLXxijgzGQHptMYrUptJBKTXGq9IayYJkEFt/CbBTDIgQW38Io4gIyCd1vhFaoJEQHqt8Yu0BEmADGrjJwkEyYAEtfGDOIqMgHRa4wepKRIB6bXGD9JSJAEyqI3vJFAkAxLUxjfiSDIC0mmNb6QmSQSk1xrfSEuSBMigNr6SQJIMSFAbX4ijyQhIpzW+kJomEZBea3whLU0SIIPaOKcQCsOcd955/9f9BYUNIA2v1ub2AAAAAElFTkSuQmCC
+  mediatype: image/png
+name: patterns-operator
+schema: olm.package
+---
+entries:
+- name: patterns-operator.v0.0.1
+name: fast
+package: patterns-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/patterns-operator@sha256:20b72c69cce1b510a0df943eb0b0c1f1c66efaa20dc0298d3f1240a519801e5c
+name: patterns-operator.v0.0.1
+package: patterns-operator
+properties:
+- type: olm.gvk
+  value:
+    group: gitops.hybrid-cloud-patterns.io
+    kind: Pattern
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: patterns-operator
+    version: 0.0.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "gitops.hybrid-cloud-patterns.io/v1alpha1",
+            "kind": "Pattern",
+            "metadata": {
+              "name": "pattern-sample"
+            },
+            "spec": {
+              "clusterGroupName": "hub",
+              "gitSpec": {
+                "targetRepo": "https://github.com/hybrid-cloud-patterns/multicloud-gitops"
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: OpenShift Optional
+      containerImage: quay.io/hybridcloudpatterns/patterns-operator:0.0.1
+      description: An operator to deploy and manage architecture patterns from https://hybrid-cloud-patterns.io
+      operators.operatorframework.io/builder: operator-sdk-v1.15.0+git
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/hybrid-cloud-patterns/patterns-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Pattern is the Schema for the patterns API
+        displayName: Pattern
+        kind: Pattern
+        name: patterns.gitops.hybrid-cloud-patterns.io
+        version: v1alpha1
+    description: Deploys and manages architecture patterns from https://hybrid-cloud-patterns.io
+    displayName: Validated Patterns Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - Validated
+    - Pattern
+    - Blueprint
+    - Architecture
+    links:
+    - name: Hybrid Cloud Patterns
+      url: https://hybrid-cloud-patterns.io
+    maintainers:
+    - email: hybrid-cloud-patterns@googlegroups.com
+      name: patterns-team
+    maturity: alpha
+    provider:
+      name: Red Hat
+      url: https://www.redhat.com/en/products/edge/validated-patterns
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/hybridcloudpatterns/patterns-operator:0.0.1
+  name: ""
+- image: quay.io/operatorhubio/patterns-operator@sha256:20b72c69cce1b510a0df943eb0b0c1f1c66efaa20dc0298d3f1240a519801e5c
+  name: ""
+schema: olm.bundle

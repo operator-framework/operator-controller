@@ -1,0 +1,851 @@
+---
+defaultChannel: beta
+icon:
+  base64data: PHN2ZyB3aWR0aD0iMjQ5MCIgaGVpZ2h0PSIyNTAwIiB2aWV3Qm94PSIwIDAgMjU2IDI1NyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCI+PHBhdGggZD0iTTEyOC4wMDEuNjY3QzU3LjMxMS42NjcgMCA1Ny45NzEgMCAxMjguNjY0YzAgNzAuNjkgNTcuMzExIDEyNy45OTggMTI4LjAwMSAxMjcuOTk4UzI1NiAxOTkuMzU0IDI1NiAxMjguNjY0QzI1NiA1Ny45NyAxOTguNjg5LjY2NyAxMjguMDAxLjY2N3ptMCAyMzkuNTZjLTIwLjExMiAwLTM2LjQxOS0xMy40MzUtMzYuNDE5LTMwLjAwNGg3Mi44MzhjMCAxNi41NjYtMTYuMzA2IDMwLjAwNC0zNi40MTkgMzAuMDA0em02MC4xNTMtMzkuOTRINjcuODQyVjE3OC40N2gxMjAuMzE0djIxLjgxNmgtLjAwMnptLS40MzItMzMuMDQ1SDY4LjE4NWMtLjM5OC0uNDU4LS44MDQtLjkxLTEuMTg4LTEuMzc1LTEyLjMxNS0xNC45NTQtMTUuMjE2LTIyLjc2LTE4LjAzMi0zMC43MTYtLjA0OC0uMjYyIDE0LjkzMyAzLjA2IDI1LjU1NiA1LjQ1IDAgMCA1LjQ2NiAxLjI2NSAxMy40NTggMi43MjItNy42NzMtOC45OTQtMTIuMjMtMjAuNDI4LTEyLjIzLTMyLjExNiAwLTI1LjY1OCAxOS42OC00OC4wNzkgMTIuNTgtNjYuMjAxIDYuOTEuNTYyIDE0LjMgMTQuNTgzIDE0LjggMzYuNTA1IDcuMzQ2LTEwLjE1MiAxMC40Mi0yOC42OSAxMC40Mi00MC4wNTYgMC0xMS43NjkgNy43NTUtMjUuNDQgMTUuNTEyLTI1LjkwNy02LjkxNSAxMS4zOTYgMS43OSAyMS4xNjUgOS41MyA0NS40IDIuOTAyIDkuMTAzIDIuNTMyIDI0LjQyMyA0Ljc3MiAzNC4xMzguNzQ0LTIwLjE3OCA0LjIxMy00OS42MiAxNy4wMTQtNTkuNzg0LTUuNjQ3IDEyLjguODM2IDI4LjgxOCA1LjI3IDM2LjUxOCA3LjE1NCAxMi40MjQgMTEuNDkgMjEuODM2IDExLjQ5IDM5LjYzOCAwIDExLjkzNi00LjQwNyAyMy4xNzMtMTEuODQgMzEuOTU4IDguNDUyLTEuNTg2IDE0LjI4OS0zLjAxNiAxNC4yODktMy4wMTZsMjcuNDUtNS4zNTVjLjAwMi0uMDAyLTMuOTg3IDE2LjQwMS0xOS4zMTQgMzIuMTk3eiIgZmlsbD0iI0RBNEUzMSIvPjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: prometheus
+schema: olm.package
+---
+entries:
+- name: prometheusoperator.0.14.0
+- name: prometheusoperator.0.15.0
+  replaces: prometheusoperator.0.14.0
+- name: prometheusoperator.0.22.2
+  replaces: prometheusoperator.0.15.0
+- name: prometheusoperator.0.27.0
+  replaces: prometheusoperator.0.22.2
+- name: prometheusoperator.0.32.0
+  replaces: prometheusoperator.0.27.0
+- name: prometheusoperator.0.37.0
+  replaces: prometheusoperator.0.32.0
+- name: prometheusoperator.0.47.0
+  replaces: prometheusoperator.0.37.0
+- name: prometheusoperator.v0.65.1
+  replaces: prometheusoperator.0.47.0
+- name: prometheusoperator.v0.70.0
+  replaces: prometheusoperator.v0.65.1
+name: beta
+package: prometheus
+schema: olm.channel
+---
+image: quay.io/operatorhubio/prometheus@sha256:577823a450468a1adabd057b68f3707af6fe9c7286c002fa1bceafc5389f8a1e
+name: prometheusoperator.0.14.0
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.14.0
+relatedImages:
+- image: quay.io/coreos/prometheus-operator@sha256:5037b4e90dbb03ebdefaa547ddf6a1f748c8eeebeedf6b9d9f0913ad662b5731
+  name: ""
+- image: quay.io/operatorhubio/prometheus@sha256:577823a450468a1adabd057b68f3707af6fe9c7286c002fa1bceafc5389f8a1e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/prometheus@sha256:3c535ba628bee94d468d18011a747abd29b8d5f0a70b16af43a32fb64e86e8e3
+name: prometheusoperator.0.15.0
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.15.0
+relatedImages:
+- image: quay.io/coreos/prometheus-operator@sha256:0e92dd9b5789c4b13d53e1319d0a6375bcca4caaf0d698af61198061222a576d
+  name: ""
+- image: quay.io/operatorhubio/prometheus@sha256:3c535ba628bee94d468d18011a747abd29b8d5f0a70b16af43a32fb64e86e8e3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/prometheus@sha256:a0ff6ad2c2f730e75486f4c9c0d8cde9a973dfe86ffee2e004ecacb2303c2c2e
+name: prometheusoperator.0.22.2
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusRule
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.22.2
+relatedImages:
+- image: quay.io/coreos/prometheus-operator@sha256:3daa69a8c6c2f1d35dcf1fe48a7cd8b230e55f5229a1ded438f687debade5bcf
+  name: ""
+- image: quay.io/operatorhubio/prometheus@sha256:a0ff6ad2c2f730e75486f4c9c0d8cde9a973dfe86ffee2e004ecacb2303c2c2e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/prometheus@sha256:05746f1f0192b65c31183e962b81a2ee8aad7a4fa4e822a7a96f92a8440523a6
+name: prometheusoperator.0.27.0
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusRule
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.27.0
+relatedImages:
+- image: quay.io/coreos/prometheus-operator@sha256:933cd5bf380cf7db330808ff54f75f26fda0b1501021d499a1766b7d16224188
+  name: ""
+- image: quay.io/operatorhubio/prometheus@sha256:05746f1f0192b65c31183e962b81a2ee8aad7a4fa4e822a7a96f92a8440523a6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/prometheus@sha256:ffa49a99bc211754bf05a28b3297ddbd5e24e49d3fab07a3f32f46416c009c36
+name: prometheusoperator.0.32.0
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PodMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusRule
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.32.0
+relatedImages:
+- image: quay.io/coreos/prometheus-operator@sha256:ed3ec0597c2d5b7102a7f62c661a23d8e4b34d910693fc23fd40bfb1d9404dcf
+  name: ""
+- image: quay.io/operatorhubio/prometheus@sha256:ffa49a99bc211754bf05a28b3297ddbd5e24e49d3fab07a3f32f46416c009c36
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/prometheus@sha256:f1824d00ebea7c5b10712a5ce127d750469a35622cc12b51147165e0df7761d9
+name: prometheusoperator.0.37.0
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PodMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusRule
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ThanosRuler
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.37.0
+relatedImages:
+- image: quay.io/coreos/prometheus-operator@sha256:ed3ec0597c2d5b7102a7f62c661a23d8e4b34d910693fc23fd40bfb1d9404dcf
+  name: ""
+- image: quay.io/operatorhubio/prometheus@sha256:f1824d00ebea7c5b10712a5ce127d750469a35622cc12b51147165e0df7761d9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/prometheus@sha256:47c659b352bbc4b75b64fbe0077d19afaea80cf691c62d803d44fdfc88dc9c6f
+name: prometheusoperator.0.47.0
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: AlertmanagerConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PodMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Probe
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusRule
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ThanosRuler
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.47.0
+relatedImages:
+- image: quay.io/operatorhubio/prometheus@sha256:47c659b352bbc4b75b64fbe0077d19afaea80cf691c62d803d44fdfc88dc9c6f
+  name: ""
+- image: quay.io/prometheus-operator/prometheus-operator:v0.47.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/prometheus@sha256:85decebfdfe993484834bd722d93fb44725b3a56cb4f9ebc4e2fd398bdcbad54
+name: prometheusoperator.v0.65.1
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: AlertmanagerConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PodMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Probe
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusRule
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ScrapeConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ThanosRuler
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.65.1
+relatedImages:
+- image: quay.io/operatorhubio/prometheus@sha256:85decebfdfe993484834bd722d93fb44725b3a56cb4f9ebc4e2fd398bdcbad54
+  name: ""
+- image: quay.io/prometheus-operator/prometheus-operator:v0.65.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/prometheus@sha256:edcb67e47492dd9455a46340ebecd848abf0549911a94722be0510e28c89bdf8
+name: prometheusoperator.v0.70.0
+package: prometheus
+properties:
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Alertmanager
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: AlertmanagerConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PodMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Probe
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: Prometheus
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusAgent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: PrometheusRule
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ScrapeConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ServiceMonitor
+    version: v1
+- type: olm.gvk
+  value:
+    group: monitoring.coreos.com
+    kind: ThanosRuler
+    version: v1
+- type: olm.package
+  value:
+    packageName: prometheus
+    version: 0.70.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "kind": "Prometheus",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {
+              "replicas": 2,
+              "serviceAccountName": "prometheus-k8s",
+              "serviceMonitorSelector": {},
+              "ruleSelector": {},
+              "podMonitorSelector": {},
+              "probeSelector": {},
+              "alerting": {
+                "alertmanagers": [
+                  {
+                    "namespace": "monitoring",
+                    "name": "alertmanager-main",
+                    "port": "web"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "kind": "ServiceMonitor",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {
+              "selector": {
+                "matchLabels": {
+                  "operated-prometheus": "true"
+                }
+              },
+              "endpoints": [
+                {
+                  "port": "web",
+                  "interval": "30s"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "kind": "PodMonitor",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {
+              "selector": {
+                "matchLabels": {
+                  "app": "prometheus"
+                }
+              },
+              "podMetricsEndpoints": [
+                {
+                  "port": "web",
+                  "interval": "30s"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "kind": "Alertmanager",
+            "metadata": {
+              "name": "alertmanager-main"
+            },
+            "spec": {
+              "replicas": 3,
+              "alertmanagerConfigSelector": {}
+            }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "kind": "PrometheusRule",
+            "metadata": {
+              "name": "prometheus-example-rules"
+            },
+            "spec": {
+              "groups": [
+                {
+                  "name": "./example.rules",
+                  "rules": [
+                    {
+                      "alert": "ExampleAlert",
+                      "expr": "vector(1)"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1alpha1",
+            "kind": "AlertmanagerConfig",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {
+              "receivers": [
+                {
+                  "name": "example"
+                }
+              ],
+              "route": {
+                "receiver": "example"
+              }
+            }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1alpha1",
+            "kind": "ScrapeConfig",
+            "metadata": { "name": "example" },
+            "spec":
+              {
+                "staticConfigs":
+                  [
+                    {
+                      "targets": ["example:9090"],
+                      "labels": { "exampleLabel": "example" }
+                    }
+                  ]
+              }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "kind": "Probe",
+            "metadata": { "name": "example" },
+            "spec":
+              {
+                "jobName": "example",
+                "prober": { "url": "blackbox-prometheus-blackbox-exporter:9115" },
+                "targets":
+                  {
+                    "ingress":
+                      {
+                        "selector": { "matchLabels": { "probe": "example" } },
+                        "namespaceSelector": { "matchNames": ["default"] }
+                      },
+                    "module": "http_2xx",
+                    "interval": "15s"
+                  }
+              }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1alpha1",
+            "kind": "PrometheusAgent",
+            "metadata": { "name": "example" },
+            "spec": {
+                "replicas": 2,
+                "serviceAccountName": "prometheus-k8s",
+                "serviceMonitorSelector": {},
+                "ruleSelector": {},
+                "podMonitorSelector": {},
+                "probeSelector": {}
+            }
+          },
+          {
+            "apiVersion": "monitoring.coreos.com/v1",
+            "kind": "ThanosRuler",
+            "metadata": { "name": "example" },
+            "spec": {
+              "image": "quay.io/thanos/thanos:v0.28.1",
+              "ruleSelector": {
+                "matchLabels": {
+                  "role": "example"
+                }
+              },
+              "queryEndpoints": [
+                "dnssrv+_http._tcp.example.monitoring.svc.cluster.local"
+              ]
+            }
+          }
+        ]
+      capabilities: Deep Insights
+      categories: Monitoring
+      certified: "false"
+      containerImage: quay.io/prometheus-operator/prometheus-operator:v0.70.0
+      createdAt: "2024-04-01T16:45:00Z"
+      description: Manage the full lifecycle of configuring and managing Prometheus
+        and Alertmanager servers.
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/prometheus-operator/prometheus-operator
+      support: Red Hat, Inc.
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Configures subsections of Alertmanager configuration specific
+          to each namespace
+        displayName: AlertmanagerConfig
+        kind: AlertmanagerConfig
+        name: alertmanagerconfigs.monitoring.coreos.com
+        version: v1alpha1
+      - description: Configures an Alertmanager for the namespace
+        displayName: Alertmanager
+        kind: Alertmanager
+        name: alertmanagers.monitoring.coreos.com
+        resources:
+        - kind: StatefulSet
+          name: ""
+          version: v1beta2
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: Desired number of Pods for the cluster
+          displayName: Size
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: Limits describes the minimum/maximum amount of compute resources
+            required/allowed
+          displayName: Resource Requirements
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1
+      - description: Configures prometheus to monitor a particular pod
+        displayName: Pod Monitor
+        kind: PodMonitor
+        name: podmonitors.monitoring.coreos.com
+        resources:
+        - kind: Pod
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The label to use to retrieve the job name from
+          displayName: Job Label
+          path: jobLabel
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:label
+        - description: A list of endpoints allowed as part of this PodMonitor
+          displayName: Pod Metrics Endpoints
+          path: podMetricsEndpoints
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:endpointList
+        version: v1
+      - description: Defines how groups of ingresses and static targets should be
+          monitored.
+        displayName: Probe
+        kind: Probe
+        name: probes.monitoring.coreos.com
+        specDescriptors:
+        - description: Service that monitors the target and provides metrics for Prometheus
+            to scrape
+          displayName: Prober URL
+          path: prober.url
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        version: v1
+      - description: Defines a Prometheus deployment running in Agent mode.
+        displayName: Prometheus Agent
+        kind: PrometheusAgent
+        name: prometheusagents.monitoring.coreos.com
+        version: v1alpha1
+      - description: A running Prometheus instance
+        displayName: Prometheus
+        kind: Prometheus
+        name: prometheuses.monitoring.coreos.com
+        resources:
+        - kind: StatefulSet
+          name: ""
+          version: v1beta2
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: Desired number of Pods for the cluster
+          displayName: Size
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: A selector for the ConfigMaps from which to load rule files
+          displayName: Rule Config Map Selector
+          path: ruleSelector
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap
+        - description: ServiceMonitors to be selected for target discovery
+          displayName: Service Monitor Selector
+          path: serviceMonitorSelector
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:ServiceMonitor
+        - description: PodMonitors to be selected for target discovery
+          displayName: Pod Monitor Selector
+          path: podMonitorSelector
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:PodMonitor
+        - description: Probes to be selected for target discovery
+          displayName: Pod Monitor Selector
+          path: probeSelector
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:Probes
+        - description: The ServiceAccount to use to run the Prometheus pods
+          displayName: Service Account
+          path: serviceAccountName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:ServiceAccount
+        - description: Limits describes the minimum/maximum amount of compute resources
+            required/allowed
+          displayName: Resource Requirements
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1
+      - description: A Prometheus Rule configures groups of sequentially evaluated
+          recording and alerting rules.
+        displayName: Prometheus Rule
+        kind: PrometheusRule
+        name: prometheusrules.monitoring.coreos.com
+        version: v1
+      - description: Declaratively specifies scrape configurations to be added to
+          Prometheus for resources outside of the cluster.
+        displayName: Scrape Config
+        kind: ScrapeConfig
+        name: scrapeconfigs.monitoring.coreos.com
+        version: v1alpha1
+      - description: Configures prometheus to monitor a particular k8s service
+        displayName: Service Monitor
+        kind: ServiceMonitor
+        name: servicemonitors.monitoring.coreos.com
+        resources:
+        - kind: Pod
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The label to use to retrieve the job name from
+          displayName: Job Label
+          path: jobLabel
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:label
+        - description: A list of endpoints allowed as part of this ServiceMonitor
+          displayName: Endpoints
+          path: endpoints
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:endpointList
+        version: v1
+      - description: Allows recording and alerting rules to be processed across multiple
+          Prometheus instances.
+        displayName: ThanosRuler
+        kind: ThanosRuler
+        name: thanosrulers.monitoring.coreos.com
+        resources:
+        - kind: Pod
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: Location of Thanos Queriers or Prometheus instances
+          displayName: Query Endpoints
+          path: queryEndpoints
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:endpointList
+        version: v1
+    description: |
+      The Prometheus Operator for Kubernetes provides easy monitoring definitions for Kubernetes services and deployment and management of Prometheus instances.
+
+      Once installed, the Prometheus Operator provides the following features:
+
+      * **Create/Destroy**: Easily launch a Prometheus instance for your Kubernetes namespace, a specific application or team easily using the Operator.
+      * **Simple Configuration**: Configure the fundamentals of Prometheus like versions, persistence, retention policies, and replicas from a native Kubernetes resource.
+      * **Target Services via Labels**: Automatically generate monitoring target configurations based on familiar Kubernetes label queries; no need to learn a Prometheus specific configuration language.
+
+      ### Other Supported Features
+
+      **High availability**
+
+      Multiple instances are run across failure zones and data is replicated. This keeps your monitoring available during an outage, when you need it most.
+
+      **Updates via automated operations**
+
+      New Prometheus versions are deployed using a rolling update with no downtime, making it easy to stay up to date.
+
+      **Handles the dynamic nature of containers**
+
+      Alerting rules are attached to groups of containers instead of individual instances, which is ideal for the highly dynamic nature of container deployment.
+    displayName: Prometheus Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - prometheus
+    - monitoring
+    - tsdb
+    - alerting
+    - observability
+    links:
+    - name: Prometheus
+      url: https://www.prometheus.io/
+    - name: Documentation
+      url: https://github.com/prometheus-operator/prometheus-operator/tree/master/Documentation
+    - name: Prometheus Operator
+      url: https://github.com/prometheus-operator/prometheus-operator
+    maintainers:
+    - email: openshift-operators@redhat.com
+      name: Red Hat
+    maturity: beta
+    minKubeVersion: 1.16.0
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/prometheus@sha256:edcb67e47492dd9455a46340ebecd848abf0549911a94722be0510e28c89bdf8
+  name: ""
+- image: quay.io/prometheus-operator/prometheus-operator:v0.70.0
+  name: ""
+schema: olm.bundle

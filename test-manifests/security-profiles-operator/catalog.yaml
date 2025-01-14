@@ -1,0 +1,958 @@
+---
+defaultChannel: stable
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTguNTEgMjU4LjUxIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2QxZDFkMTt9LmNscy0ye2ZpbGw6IzhkOGQ4Zjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPkFzc2V0IDQ8L3RpdGxlPjxnIGlkPSJMYXllcl8yIiBkYXRhLW5hbWU9IkxheWVyIDIiPjxnIGlkPSJMYXllcl8xLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTI5LjI1LDIwQTEwOS4xLDEwOS4xLDAsMCwxLDIwNi40LDIwNi40LDEwOS4xLDEwOS4xLDAsMSwxLDUyLjExLDUyLjExLDEwOC40NSwxMDguNDUsMCwwLDEsMTI5LjI1LDIwbTAtMjBoMEM1OC4xNiwwLDAsNTguMTYsMCwxMjkuMjVIMGMwLDcxLjA5LDU4LjE2LDEyOS4yNiwxMjkuMjUsMTI5LjI2aDBjNzEuMDksMCwxMjkuMjYtNTguMTcsMTI5LjI2LTEyOS4yNmgwQzI1OC41MSw1OC4xNiwyMDAuMzQsMCwxMjkuMjUsMFoiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNzcuNTQsMTAzLjQxSDE0MS42NkwxNTQuOSw2NS43NmMxLjI1LTQuNC0yLjMzLTguNzYtNy4yMS04Ljc2SDEwMi45M2E3LjMyLDcuMzIsMCwwLDAtNy40LDZsLTEwLDY5LjYxYy0uNTksNC4xNywyLjg5LDcuODksNy40LDcuODloMzYuOUwxMTUuNTUsMTk3Yy0xLjEyLDQuNDEsMi40OCw4LjU1LDcuMjQsOC41NWE3LjU4LDcuNTgsMCwwLDAsNi40Ny0zLjQ4TDE4NCwxMTMuODVDMTg2Ljg2LDEwOS4yNCwxODMuMjksMTAzLjQxLDE3Ny41NCwxMDMuNDFaIi8+PC9nPjwvZz48L3N2Zz4=
+  mediatype: image/svg+xml
+name: security-profiles-operator
+schema: olm.package
+---
+entries:
+- name: security-profiles-operator.v0.4.2
+  skipRange: '>=0.4.1 <0.4.2'
+- name: security-profiles-operator.v0.4.3
+  replaces: security-profiles-operator.v0.4.2
+  skipRange: '>=0.4.1 <0.4.3'
+- name: security-profiles-operator.v0.5.0
+  replaces: security-profiles-operator.v0.4.3
+  skipRange: '>=0.4.1 <0.5.0'
+- name: security-profiles-operator.v0.6.0
+  replaces: security-profiles-operator.v0.5.0
+  skipRange: '>=0.4.1 <0.6.0'
+- name: security-profiles-operator.v0.7.0
+  replaces: security-profiles-operator.v0.6.0
+  skipRange: '>=0.4.1 <0.7.0'
+- name: security-profiles-operator.v0.7.1
+  replaces: security-profiles-operator.v0.7.0
+  skipRange: '>=0.4.1 <0.7.1'
+- name: security-profiles-operator.v0.8.0
+  replaces: security-profiles-operator.v0.7.1
+  skipRange: '>=0.4.1 <0.8.0'
+- name: security-profiles-operator.v0.8.2
+  replaces: security-profiles-operator.v0.8.0
+  skipRange: '>=0.4.1 <0.8.2'
+- name: security-profiles-operator.v0.8.3
+  replaces: security-profiles-operator.v0.8.2
+  skipRange: '>=0.4.1 <0.8.3'
+- name: security-profiles-operator.v0.8.4
+  replaces: security-profiles-operator.v0.8.3
+  skipRange: '>=0.4.1 <0.8.4'
+name: stable
+package: security-profiles-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:a8d36d8ad8af67903f0a08942f1f35cce310c544b6a648159cce39dc464b3093
+name: security-profiles-operator.v0.4.2
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.4.2
+relatedImages:
+- image: k8s.gcr.io/security-profiles-operator/security-profiles-operator:v0.4.2
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:a8d36d8ad8af67903f0a08942f1f35cce310c544b6a648159cce39dc464b3093
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:d40a871cbacfcae8e9e98a819d80e0363e40cb9a50f2e148ce5a01f133f87ae2
+name: security-profiles-operator.v0.4.3
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.4.3
+relatedImages:
+- image: k8s.gcr.io/security-profiles-operator/security-profiles-operator:v0.4.3
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:d40a871cbacfcae8e9e98a819d80e0363e40cb9a50f2e148ce5a01f133f87ae2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:a9d13083f3d99552a58ab57f7dfb57e273e98d0fe9826be95f140913f9dfa7fa
+name: security-profiles-operator.v0.5.0
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.5.0
+relatedImages:
+- image: k8s.gcr.io/security-profiles-operator/security-profiles-operator:v0.5.0
+  name: ""
+- image: quay.io/brancz/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:a9d13083f3d99552a58ab57f7dfb57e273e98d0fe9826be95f140913f9dfa7fa
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:c4bb8a16db1ca69dd92b76c27fcd676edddee9561980fa9003e4ce91ba0de37a
+name: security-profiles-operator.v0.6.0
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.6.0
+relatedImages:
+- image: quay.io/brancz/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:c4bb8a16db1ca69dd92b76c27fcd676edddee9561980fa9003e4ce91ba0de37a
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd
+  name: ""
+- image: registry.k8s.io/security-profiles-operator/security-profiles-operator:v0.6.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:3adae3bc6adf891284adc431d3ab5fbf13f702878d9d989724fcb0c97fafe45f
+name: security-profiles-operator.v0.7.0
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.7.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:3adae3bc6adf891284adc431d3ab5fbf13f702878d9d989724fcb0c97fafe45f
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd
+  name: ""
+- image: registry.k8s.io/security-profiles-operator/security-profiles-operator:v0.7.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:90e6dbe0f4cb8d1d8c3384a502d974041d205eb40cbcd1954042de91eaf797cd
+name: security-profiles-operator.v0.7.1
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.7.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:90e6dbe0f4cb8d1d8c3384a502d974041d205eb40cbcd1954042de91eaf797cd
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd
+  name: ""
+- image: registry.k8s.io/security-profiles-operator/security-profiles-operator:v0.7.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:492d616b79090b0ac2d5b56e5dc2c279b93b445b54e54f4e02f4debaa90c996a
+name: security-profiles-operator.v0.8.0
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.8.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.0
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:492d616b79090b0ac2d5b56e5dc2c279b93b445b54e54f4e02f4debaa90c996a
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd
+  name: ""
+- image: registry.k8s.io/security-profiles-operator/security-profiles-operator:v0.8.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:87482cebaecbaf5b14861e81a305a9d57ee57e6543aa5f94dc42d19ae9a81d2c
+name: security-profiles-operator.v0.8.2
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.8.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:87482cebaecbaf5b14861e81a305a9d57ee57e6543aa5f94dc42d19ae9a81d2c
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd-el8:latest
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd-el9:latest
+  name: ""
+- image: registry.k8s.io/security-profiles-operator/security-profiles-operator:v0.8.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:3771230a41bd2a3837a491ca0868aea2102ca707002e590c81794e2e35052f1d
+name: security-profiles-operator.v0.8.3
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.8.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
+  name: ""
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:3771230a41bd2a3837a491ca0868aea2102ca707002e590c81794e2e35052f1d
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd-el8:latest
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd-el9:latest
+  name: ""
+- image: registry.k8s.io/security-profiles-operator/security-profiles-operator:v0.8.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/security-profiles-operator@sha256:83356af36ee7d3b9ac4ed329eb6091ade982a4b33e24fc585fa5f698430724c0
+name: security-profiles-operator.v0.8.4
+package: security-profiles-operator
+properties:
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: AppArmorProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: ProfileRecording
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: RawSelinuxProfile
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SeccompProfile
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfileNodeStatus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SecurityProfilesOperatorDaemon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: security-profiles-operator.x-k8s.io
+    kind: SelinuxProfile
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: security-profiles-operator
+    version: 0.8.4
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1alpha1",
+            "kind": "AppArmorProfile",
+            "metadata": {
+              "annotations": {
+                "description": "Block writing to any files in the disk."
+              },
+              "name": "test-profile"
+            },
+            "spec": {
+              "policy": "#include \u003ctunables/global\u003e\n\nprofile test-profile flags=(attach_disconnected) {\n  #include \u003cabstractions/base\u003e\n\n  file,\n\n  # Deny all file writes.\n  deny /** w,\n}\n"
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1alpha1",
+            "kind": "SecurityProfilesOperatorDaemon",
+            "metadata": {
+              "name": "spod",
+              "namespace": "security-profiles-operator"
+            },
+            "spec": {
+              "enableAppArmor": false,
+              "enableLogEnricher": false,
+              "enableSelinux": false
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1alpha1",
+            "kind": "ProfileRecording",
+            "metadata": {
+              "name": "test-recording"
+            },
+            "spec": {
+              "kind": "SeccompProfile",
+              "podSelector": {
+                "matchLabels": {
+                  "app": "alpine"
+                }
+              },
+              "recorder": "bpf"
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1alpha1",
+            "kind": "ProfileBinding",
+            "metadata": {
+              "name": "profile-binding"
+            },
+            "spec": {
+              "image": "nginx:1.19.1",
+              "profileRef": {
+                "kind": "SeccompProfile",
+                "name": "profile-allow-unsafe"
+              }
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1alpha2",
+            "kind": "RawSelinuxProfile",
+            "metadata": {
+              "name": "errorlogger"
+            },
+            "spec": {
+              "policy": "(blockinherit container)\n(allow process var_log_t ( dir ( open read getattr lock search ioctl add_name remove_name write ))) \n(allow process var_log_t ( file ( getattr read write append ioctl lock map open create  ))) \n(allow process var_log_t ( sock_file ( getattr read write append open  ))) \n"
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1beta1",
+            "kind": "SeccompProfile",
+            "metadata": {
+              "annotations": {
+                "description": "Blocks all syscalls."
+              },
+              "name": "profile-block-all"
+            },
+            "spec": {
+              "defaultAction": "SCMP_ACT_ERRNO"
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1beta1",
+            "kind": "SeccompProfile",
+            "metadata": {
+              "annotations": {
+                "description": "UNSAFE: Allows all syscalls whilst logging their use. Similar to running as unconfined in terms of enforcement."
+              },
+              "name": "profile-complain-unsafe"
+            },
+            "spec": {
+              "defaultAction": "SCMP_ACT_LOG"
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1beta1",
+            "kind": "SeccompProfile",
+            "metadata": {
+              "annotations": {
+                "description": "UNSAFE: Allows all syscalls. Similar to running as unconfined as it provides no enforcement."
+              },
+              "name": "profile-allow-unsafe"
+            },
+            "spec": {
+              "defaultAction": "SCMP_ACT_ALLOW"
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1beta1",
+            "kind": "SeccompProfile",
+            "metadata": {
+              "annotations": {
+                "description": "Enables complain mode whilst blocking high-risk syscalls. Some essential syscalls are allowed to decrease log noise."
+              },
+              "name": "profile-complain-block-high-risk"
+            },
+            "spec": {
+              "architectures": [
+                "SCMP_ARCH_X86_64"
+              ],
+              "defaultAction": "SCMP_ACT_LOG",
+              "syscalls": [
+                {
+                  "action": "SCMP_ACT_ALLOW",
+                  "names": [
+                    "exit",
+                    "exit_group",
+                    "futex",
+                    "nanosleep"
+                  ]
+                },
+                {
+                  "action": "SCMP_ACT_ERRNO",
+                  "names": [
+                    "acct",
+                    "add_key",
+                    "bpf",
+                    "clock_adjtime",
+                    "clock_settime",
+                    "create_module",
+                    "delete_module",
+                    "finit_module",
+                    "get_kernel_syms",
+                    "get_mempolicy",
+                    "init_module",
+                    "ioperm",
+                    "iopl",
+                    "kcmp",
+                    "kexec_file_load",
+                    "kexec_load",
+                    "keyctl",
+                    "lookup_dcookie",
+                    "mbind",
+                    "mount",
+                    "move_pages",
+                    "name_to_handle_at",
+                    "nfsservctl",
+                    "open_by_handle_at",
+                    "perf_event_open",
+                    "personality",
+                    "pivot_root",
+                    "process_vm_readv",
+                    "process_vm_writev",
+                    "ptrace",
+                    "query_module",
+                    "quotactl",
+                    "reboot",
+                    "request_key",
+                    "set_mempolicy",
+                    "setns",
+                    "settimeofday",
+                    "stime",
+                    "swapoff",
+                    "swapon",
+                    "_sysctl",
+                    "sysfs",
+                    "umount2",
+                    "umount",
+                    "unshare",
+                    "uselib",
+                    "userfaultfd",
+                    "ustat",
+                    "vm86old",
+                    "vm86"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "security-profiles-operator.x-k8s.io/v1alpha2",
+            "kind": "SelinuxProfile",
+            "metadata": {
+              "name": "errorlogger"
+            },
+            "spec": {
+              "allow": {
+                "var_log_t": {
+                  "dir": [
+                    "open",
+                    "read",
+                    "getattr",
+                    "lock",
+                    "search",
+                    "ioctl",
+                    "add_name",
+                    "remove_name",
+                    "write"
+                  ],
+                  "file": [
+                    "getattr",
+                    "read",
+                    "write",
+                    "append",
+                    "ioctl",
+                    "lock",
+                    "map",
+                    "open",
+                    "create"
+                  ],
+                  "sock_file": [
+                    "getattr",
+                    "read",
+                    "write",
+                    "append",
+                    "open"
+                  ]
+                }
+              },
+              "inherit": [
+                {
+                  "name": "container"
+                }
+              ]
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Security
+      containerImage: registry.k8s.io/security-profiles-operator/security-profiles-operator:v0.8.4
+      olm.skipRange: '>=0.4.1 <0.8.4'
+      operatorframework.io/cluster-monitoring: "true"
+      operatorframework.io/suggested-namespace: security-profiles-operator
+      operators.openshift.io/valid-subscription: '["OpenShift Kubernetes Engine",
+        "OpenShift Container Platform", "OpenShift Platform Plus"]'
+      operators.operatorframework.io/builder: operator-sdk-v1.25.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: ProfileBinding is the Schema for the profilebindings API.
+        displayName: Profile Binding
+        kind: ProfileBinding
+        name: profilebindings.security-profiles-operator.x-k8s.io
+        version: v1alpha1
+      - description: ProfileRecording is the Schema for the profilerecordings API.
+        displayName: Profile Recording
+        kind: ProfileRecording
+        name: profilerecordings.security-profiles-operator.x-k8s.io
+        version: v1alpha1
+      - description: SeccompProfile is a cluster level specification for a seccomp
+          profile. See https://github.com/opencontainers/runtime-spec/blob/master/config-linux.md#seccomp
+        displayName: Seccomp Profile
+        kind: SeccompProfile
+        name: seccompprofiles.security-profiles-operator.x-k8s.io
+        version: v1beta1
+      - description: SecurityProfileNodeStatus is a per-node status of a security
+          profile
+        displayName: Security Profile Node Status
+        kind: SecurityProfileNodeStatus
+        name: securityprofilenodestatuses.security-profiles-operator.x-k8s.io
+        version: v1alpha1
+      - description: SecurityProfilesOperatorDaemon is the Schema to configure the
+          spod deployment.
+        displayName: Security Profiles Operator Daemon
+        kind: SecurityProfilesOperatorDaemon
+        name: securityprofilesoperatordaemons.security-profiles-operator.x-k8s.io
+        version: v1alpha1
+      - kind: RawSelinuxProfile
+        name: rawselinuxprofiles.security-profiles-operator.x-k8s.io
+        version: v1alpha2
+      - description: SelinuxProfile is the Schema for the selinuxprofiles API.
+        displayName: Selinux Profile
+        kind: SelinuxProfile
+        name: selinuxprofiles.security-profiles-operator.x-k8s.io
+        version: v1alpha2
+      - description: AppArmorProfile is a cluster level specification for an AppArmor
+          profile.
+        displayName: App Armor Profile
+        kind: AppArmorProfile
+        name: apparmorprofiles.security-profiles-operator.x-k8s.io
+        version: v1alpha1
+    description: SPO is an operator which aims to make it easier for users to use
+      SELinux, seccomp and AppArmor in Kubernetes clusters
+    displayName: Security Profiles Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - security
+    - selinux
+    - seccomp
+    - apparmor
+    - ebpf
+    links:
+    - name: Security Profiles Operator
+      url: https://github.com/kubernetes-sigs/security-profiles-operator
+    maintainers:
+    - email: dev@kubernetes.io
+      name: Kubernetes upstream
+    maturity: alpha
+    provider:
+      name: Kubernetes SIGs
+      url: https://github.com/kubernetes-sigs
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
+  name: rbac-proxy
+- image: quay.io/operatorhubio/security-profiles-operator@sha256:83356af36ee7d3b9ac4ed329eb6091ade982a4b33e24fc585fa5f698430724c0
+  name: ""
+- image: quay.io/security-profiles-operator/selinuxd
+  name: selinuxd
+- image: quay.io/security-profiles-operator/selinuxd-el8:latest
+  name: selinuxd-el8
+- image: quay.io/security-profiles-operator/selinuxd-el9:latest
+  name: selinuxd-el9
+- image: registry.k8s.io/security-profiles-operator/security-profiles-operator:v0.8.4
+  name: ""
+schema: olm.bundle

@@ -1,0 +1,446 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTguNTEgMjU4LjUxIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2QxZDFkMTt9LmNscy0ye2ZpbGw6IzhkOGQ4Zjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPkFzc2V0IDQ8L3RpdGxlPjxnIGlkPSJMYXllcl8yIiBkYXRhLW5hbWU9IkxheWVyIDIiPjxnIGlkPSJMYXllcl8xLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTI5LjI1LDIwQTEwOS4xLDEwOS4xLDAsMCwxLDIwNi40LDIwNi40LDEwOS4xLDEwOS4xLDAsMSwxLDUyLjExLDUyLjExLDEwOC40NSwxMDguNDUsMCwwLDEsMTI5LjI1LDIwbTAtMjBoMEM1OC4xNiwwLDAsNTguMTYsMCwxMjkuMjVIMGMwLDcxLjA5LDU4LjE2LDEyOS4yNiwxMjkuMjUsMTI5LjI2aDBjNzEuMDksMCwxMjkuMjYtNTguMTcsMTI5LjI2LTEyOS4yNmgwQzI1OC41MSw1OC4xNiwyMDAuMzQsMCwxMjkuMjUsMFoiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNzcuNTQsMTAzLjQxSDE0MS42NkwxNTQuOSw2NS43NmMxLjI1LTQuNC0yLjMzLTguNzYtNy4yMS04Ljc2SDEwMi45M2E3LjMyLDcuMzIsMCwwLDAtNy40LDZsLTEwLDY5LjYxYy0uNTksNC4xNywyLjg5LDcuODksNy40LDcuODloMzYuOUwxMTUuNTUsMTk3Yy0xLjEyLDQuNDEsMi40OCw4LjU1LDcuMjQsOC41NWE3LjU4LDcuNTgsMCwwLDAsNi40Ny0zLjQ4TDE4NCwxMTMuODVDMTg2Ljg2LDEwOS4yNCwxODMuMjksMTAzLjQxLDE3Ny41NCwxMDMuNDFaIi8+PC9nPjwvZz48L3N2Zz4=
+  mediatype: image/svg+xml
+name: cluster-aas-operator
+schema: olm.package
+---
+entries:
+- name: cluster-aas-operator.v0.0.1
+- name: cluster-aas-operator.v0.0.2
+  replaces: cluster-aas-operator.v0.0.1
+- name: cluster-aas-operator.v0.0.3
+  replaces: cluster-aas-operator.v0.0.2
+- name: cluster-aas-operator.v0.0.4
+  replaces: cluster-aas-operator.v0.0.3
+- name: cluster-aas-operator.v0.1.4
+  replaces: cluster-aas-operator.v0.0.4
+- name: cluster-aas-operator.v0.1.5
+  replaces: cluster-aas-operator.v0.1.4
+name: alpha
+package: cluster-aas-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/cluster-aas-operator@sha256:269b577da4c6b3197269b7c61ae57587094c85fecee4c87f6669827dcf9c163e
+name: cluster-aas-operator.v0.0.1
+package: cluster-aas-operator
+properties:
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplate
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateQuota
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: argoproj.io
+    kind: Application
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: hive.openshift.io
+    kind: ClusterClaim
+    version: v1
+- type: olm.gvk.required
+  value:
+    group: hive.openshift.io
+    kind: ClusterDeployment
+    version: v1
+- type: olm.package
+  value:
+    packageName: cluster-aas-operator
+    version: 0.0.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: quay.io/operatorhubio/cluster-aas-operator@sha256:269b577da4c6b3197269b7c61ae57587094c85fecee4c87f6669827dcf9c163e
+  name: ""
+- image: quay.io/stolostron/cluster-templates-operator:2.7.0-d6ce1f162f00effe5c3963629dc5fc39243b22f1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/cluster-aas-operator@sha256:f9469da1500874b74421ff7bcdb2b1790cbce9084de2f4d1fb47ec108fc8a72d
+name: cluster-aas-operator.v0.0.2
+package: cluster-aas-operator
+properties:
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplate
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateQuota
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: argoproj.io
+    kind: Application
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: cluster-aas-operator
+    version: 0.0.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: quay.io/operatorhubio/cluster-aas-operator@sha256:f9469da1500874b74421ff7bcdb2b1790cbce9084de2f4d1fb47ec108fc8a72d
+  name: ""
+- image: quay.io/stolostron/cluster-templates-operator:2.7.0-1af47e04b387f0e037fc74cb35b2c2a78fbd6776
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/cluster-aas-operator@sha256:0cf0aadb9a29f34a677747c5456258df9fe44a9d6ac56d65e496df57e2618b25
+name: cluster-aas-operator.v0.0.3
+package: cluster-aas-operator
+properties:
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplate
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateQuota
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: argoproj.io
+    kind: Application
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: cluster-aas-operator
+    version: 0.0.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: quay.io/operatorhubio/cluster-aas-operator@sha256:0cf0aadb9a29f34a677747c5456258df9fe44a9d6ac56d65e496df57e2618b25
+  name: ""
+- image: quay.io/stolostron/cluster-templates-operator:2.7.0-01b066819809ae9446713ec7f403d4357f70954c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/cluster-aas-operator@sha256:a4ab4dad7a672fe2917a326cf7a1b55efb887b3c74ded5e0212eb75b245bb968
+name: cluster-aas-operator.v0.0.4
+package: cluster-aas-operator
+properties:
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplate
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateQuota
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: argoproj.io
+    kind: Application
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: cluster-aas-operator
+    version: 0.0.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: quay.io/operatorhubio/cluster-aas-operator@sha256:a4ab4dad7a672fe2917a326cf7a1b55efb887b3c74ded5e0212eb75b245bb968
+  name: ""
+- image: quay.io/stolostron/cluster-templates-operator:2.7.0-8a5d0ce2db589cdbee3c4b0fa86051b3daa2ee74
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/cluster-aas-operator@sha256:d3f87218ae7afc1cf5bbf91e25b2c5351a80e25e9c8137bbe365951345a2b007
+name: cluster-aas-operator.v0.1.4
+package: cluster-aas-operator
+properties:
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplate
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateQuota
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateSetup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: Config
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: argoproj.io
+    kind: Application
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: cluster-aas-operator
+    version: 0.1.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: quay.io/operatorhubio/cluster-aas-operator@sha256:d3f87218ae7afc1cf5bbf91e25b2c5351a80e25e9c8137bbe365951345a2b007
+  name: ""
+- image: quay.io/stolostron/cluster-templates-operator:2.11.0-ea9ff44cb3dc44d60a84ce74cd5214150b8b6af1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/cluster-aas-operator@sha256:d95d30daca55ec290ad5c4815372fad5099a2b55d7753eeb122d92d5f4a9184f
+name: cluster-aas-operator.v0.1.5
+package: cluster-aas-operator
+properties:
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplate
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateQuota
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: ClusterTemplateSetup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: clustertemplate.openshift.io
+    kind: Config
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: argoproj.io
+    kind: Application
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: cluster-aas-operator
+    version: 0.1.5
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "clustertemplate.openshift.io/v1alpha1",
+            "kind": "ClusterTemplate",
+            "metadata": {
+              "name": "clustertemplate-sample"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "clustertemplate.openshift.io/v1alpha1",
+            "kind": "ClusterTemplateInstance",
+            "metadata": {
+              "name": "clustertemplateinstance-sample"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "clustertemplate.openshift.io/v1alpha1",
+            "kind": "ClusterTemplateQuota",
+            "metadata": {
+              "name": "clustertemplatequota-sample"
+            },
+            "spec": {}
+          }
+        ]
+      categories: Integration & Delivery,OpenShift Optional
+      certified: "false"
+      containerImage: quay.io/stolostron/cluster-templates-operator:2.11.0-0c3131154065397d37e3b66ae635d7ea88650bf9
+      createdAt: "2024-06-06T19:34:44Z"
+      description: Easily install fully configured clusters with guard-rails.
+      operators.operatorframework.io/builder: operator-sdk-v1.34.1
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/stolostron/cluster-templates-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents instance of a cluster
+        displayName: Cluster template instance
+        kind: ClusterTemplateInstance
+        name: clustertemplateinstances.clustertemplate.openshift.io
+        resources:
+        - kind: Pod
+          name: ""
+          version: v1
+        statusDescriptors:
+        - description: A reference for secret which contains username and password
+            under keys "username" and "password"
+          displayName: Admin Password
+          path: adminPassword
+        - description: API server URL of the new cluster
+          displayName: APIserver URL
+          path: apiServerURL
+        - description: Status of each cluster setup
+          displayName: Cluster Setup
+          path: clusterSetup
+        - description: Secrets create by cluster setup which provide credentials for
+            applications created by cluster setup
+          displayName: Cluster Setup Secrets
+          path: clusterSetupSecrets
+        - description: Resource conditions
+          displayName: Conditions
+          path: conditions
+        - description: Console URL of the new cluster. The value is taken from ManagedCluster.
+          displayName: Console URL
+          path: consoleURL
+        - description: Time of first attempt of login to a new cluster
+          displayName: First Login Attempt
+          path: firstLoginAttempt
+        - description: A reference for secret which contains kubeconfig under key
+            "kubeconfig"
+          displayName: Kubeconfig
+          path: kubeconfig
+        - description: A reference to ManagedCluster resource
+          displayName: Managed Cluster
+          path: managedCluster
+        - description: Additional message for Phase
+          displayName: Message
+          path: message
+        - description: Represents instance installaton & setup phase
+          displayName: Phase
+          path: phase
+        version: v1alpha1
+      - description: Defines which ClusterTemplates can be used in a given namespace
+        displayName: Cluster template quota
+        kind: ClusterTemplateQuota
+        name: clustertemplatequotas.clustertemplate.openshift.io
+        resources:
+        - kind: Pod
+          name: ""
+          version: v1
+        statusDescriptors:
+        - description: How much budget is currenly spent
+          displayName: Budget Spent
+          path: budgetSpent
+        - description: Which instances are in use
+          displayName: Template Instances
+          path: templateInstances
+        version: v1alpha1
+      - description: Template of a cluster - both installation and post-install setup
+          are defined as ArgoCD application spec. Any application source is supported
+          - typically a Helm chart
+        displayName: Cluster template
+        kind: ClusterTemplate
+        name: clustertemplates.clustertemplate.openshift.io
+        resources:
+        - kind: Pod
+          name: ""
+          version: v1
+        statusDescriptors:
+        - description: Describes helm chart properties and their schema
+          displayName: Cluster Definition
+          path: clusterDefinition
+        - description: Describes helm chart properties and schema for every cluster
+            setup step
+          displayName: Cluster Setup
+          path: clusterSetup
+        version: v1alpha1
+      - kind: ClusterTemplateSetup
+        name: clustertemplatesetup.clustertemplate.openshift.io
+        version: v1alpha1
+      - kind: Config
+        name: config.clustertemplate.openshift.io
+        version: v1alpha1
+    description: |
+      **Self-service clusters with guardrails!**
+      Cluster as a service operator provides an easy way to define clusters as templates and allows creating instances of those templates even for non-privileged developer/devops engineers. Cluster templates operator also allows specifing quotas for the developer/devops engineers.
+
+      ### User Interface
+      The User interface is installed but is not enabled by default. To enable go to `Home` -> `Overview` -> in the status card click `Dynamic Plugins` -> click `View all` -> click the `pencil` icon -> pick `Enable` and hit `Save`. You can access the UI in the `All Clusters` perspective under `Infrastructure` -> `Cluster Templates`.
+
+      ### Documentation
+      Documentation can be found on our [website](https://github.com/stolostron/cluster-templates-operator).
+
+      ### Getting help
+      To report any issues or ask questions, create an issue on our [Github repo](https://github.com/stolostron/cluster-templates-operator/issues)
+    displayName: Cluster as a service operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - cluster
+    - templates
+    - hive
+    - hypershift
+    - selfservice
+    - openshift
+    - multicluster
+    - quota
+    - helm
+    - argocd
+    links:
+    - name: Cluster as a service operator
+      url: https://github.com/stolostron/cluster-templates-operator
+    maintainers:
+    - email: rawagner@redhat.com
+      name: Rastislav Wagner
+    maturity: alpha
+    minKubeVersion: 1.24.0
+    provider:
+      name: Stolostron
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+  name: ""
+- image: quay.io/operatorhubio/cluster-aas-operator@sha256:d95d30daca55ec290ad5c4815372fad5099a2b55d7753eeb122d92d5f4a9184f
+  name: ""
+- image: quay.io/stolostron/cluster-templates-operator:2.11.0-0c3131154065397d37e3b66ae635d7ea88650bf9
+  name: ""
+schema: olm.bundle

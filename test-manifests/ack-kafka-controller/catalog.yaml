@@ -1,0 +1,366 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-kafka-controller
+schema: olm.package
+---
+entries:
+- name: ack-kafka-controller.v0.0.1
+- name: ack-kafka-controller.v0.0.10
+  replaces: ack-kafka-controller.v0.0.9
+- name: ack-kafka-controller.v0.0.11
+  replaces: ack-kafka-controller.v0.0.10
+- name: ack-kafka-controller.v0.0.12
+  replaces: ack-kafka-controller.v0.0.11
+- name: ack-kafka-controller.v0.0.3
+  replaces: ack-kafka-controller.v0.0.1
+- name: ack-kafka-controller.v0.0.4
+  replaces: ack-kafka-controller.v0.0.3
+- name: ack-kafka-controller.v0.0.5
+  replaces: ack-kafka-controller.v0.0.4
+- name: ack-kafka-controller.v0.0.6
+  replaces: ack-kafka-controller.v0.0.5
+- name: ack-kafka-controller.v0.0.7
+  replaces: ack-kafka-controller.v0.0.6
+- name: ack-kafka-controller.v0.0.8
+  replaces: ack-kafka-controller.v0.0.7
+- name: ack-kafka-controller.v0.0.9
+  replaces: ack-kafka-controller.v0.0.8
+name: alpha
+package: ack-kafka-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:15bb1f597d4e42cd89a4cd6c1e86c2255347868df940f6969a5f20227f925a39
+name: ack-kafka-controller.v0.0.1
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:15bb1f597d4e42cd89a4cd6c1e86c2255347868df940f6969a5f20227f925a39
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:e53db38ec78e10b788a45457be411b7fa555bb681cf2a46ed452ed66a7fb5732
+name: ack-kafka-controller.v0.0.10
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Configuration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:e53db38ec78e10b788a45457be411b7fa555bb681cf2a46ed452ed66a7fb5732
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:8321214b7eca40b7e75bcb99c80d789bb05054a78f4ad675c83449cbdb49033d
+name: ack-kafka-controller.v0.0.11
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Configuration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:8321214b7eca40b7e75bcb99c80d789bb05054a78f4ad675c83449cbdb49033d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:77f66eb6900a63bd3a23c32fe6bf760e717210d45380831b29e81b5b0ef7aa72
+name: ack-kafka-controller.v0.0.12
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Configuration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.12
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "kafka.services.k8s.aws/v1alpha1",
+            "kind": "Cluster",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.12
+      createdAt: "2024-08-30T23:27:04Z"
+      description: AWS Kafka controller is a service controller for managing Kafka
+        resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Cluster represents the state of an AWS kafka Cluster resource.
+        displayName: Cluster
+        kind: Cluster
+        name: clusters.kafka.services.k8s.aws
+        version: v1alpha1
+      - description: Configuration represents the state of an AWS kafka Configuration
+          resource.
+        displayName: Configuration
+        kind: Configuration
+        name: configurations.kafka.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon Kafka resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon Kafka**
+
+      Amazon Managed Streaming for Apache Kafka (Amazon MSK) is a fully managed AWS streaming data service makes it easy for you to build and run applications that use Apache Kafka to process streaming data without needing to become an expert in operating Apache Kafka clusters. Amazon MSK manages the provisioning, configuration, and maintenance of Apache Kafka clusters and Apache ZooKeeper nodes for you. Amazon MSK also shows key Apache Kafka performance metrics in the AWS Console.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project. This project is currently in **developer preview**.
+    displayName: AWS Controllers for Kubernetes - Amazon Kafka
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - kafka
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon Kafka Developer Resources
+      url: https://aws.amazon.com/msk/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: kafka maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:77f66eb6900a63bd3a23c32fe6bf760e717210d45380831b29e81b5b0ef7aa72
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:d545198248ac6c1a7cf6cf338ce9f99ccd1bef68d092c02cb8d42fbae1483de0
+name: ack-kafka-controller.v0.0.3
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:d545198248ac6c1a7cf6cf338ce9f99ccd1bef68d092c02cb8d42fbae1483de0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:2d0ee7f8498bc102fb4afd9472cf7ccea1cb2476837ec9e72ac2e8f313f38832
+name: ack-kafka-controller.v0.0.4
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:2d0ee7f8498bc102fb4afd9472cf7ccea1cb2476837ec9e72ac2e8f313f38832
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:5fa76df31fa094077d0b94a5509f94e363ef8c33b22ee8bd75a2f8ab6a01e7b5
+name: ack-kafka-controller.v0.0.5
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:5fa76df31fa094077d0b94a5509f94e363ef8c33b22ee8bd75a2f8ab6a01e7b5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:d3ee3c29de4bae34bfc54ac546f18fe09ede389d3816caaf927cbadb9ef5d83c
+name: ack-kafka-controller.v0.0.6
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:d3ee3c29de4bae34bfc54ac546f18fe09ede389d3816caaf927cbadb9ef5d83c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:ff912722e523ff5b41159e32653397463e68c96acdaf4fdc041b71f5f8c6ea0f
+name: ack-kafka-controller.v0.0.7
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Configuration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:ff912722e523ff5b41159e32653397463e68c96acdaf4fdc041b71f5f8c6ea0f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:984389d514569c48db210d874d3bdde47c9a23fcd15d5b23109b79533ed73cc4
+name: ack-kafka-controller.v0.0.8
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Configuration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:984389d514569c48db210d874d3bdde47c9a23fcd15d5b23109b79533ed73cc4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kafka-controller@sha256:0185e2395bd24c4bbbb3af6688e87e78d0a27dfd42164647696e94caef3cf4d3
+name: ack-kafka-controller.v0.0.9
+package: ack-kafka-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kafka.services.k8s.aws
+    kind: Configuration
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kafka-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kafka-controller:0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-kafka-controller@sha256:0185e2395bd24c4bbbb3af6688e87e78d0a27dfd42164647696e94caef3cf4d3
+  name: ""
+schema: olm.bundle

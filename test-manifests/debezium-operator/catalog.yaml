@@ -1,0 +1,709 @@
+---
+defaultChannel: debezium-latest
+icon:
+  base64data: PHN2ZyBpZD0iY29sb3IiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOnVybCgjbGluZWFyLWdyYWRpZW50KTt9LmNscy0ye2ZpbGw6dXJsKCNsaW5lYXItZ3JhZGllbnQtMik7fS5jbHMtM3tmaWxsOnVybCgjbGluZWFyLWdyYWRpZW50LTMpO30uY2xzLTR7ZmlsbDp1cmwoI2xpbmVhci1ncmFkaWVudC00KTt9LmNscy01e2ZpbGw6dXJsKCNsaW5lYXItZ3JhZGllbnQtNSk7fTwvc3R5bGU+PGxpbmVhckdyYWRpZW50IGlkPSJsaW5lYXItZ3JhZGllbnQiIHgxPSI3LjI3IiB5MT0iNy4yNyIgeDI9IjQxLjc2IiB5Mj0iNDEuNzYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM5MWQ0NDMiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM0OGJmZTAiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0ibGluZWFyLWdyYWRpZW50LTIiIHgxPSIxNS44NSIgeTE9Ii0xLjMxIiB4Mj0iNTAuMzQiIHkyPSIzMy4xOCIgeGxpbms6aHJlZj0iI2xpbmVhci1ncmFkaWVudCIvPjxsaW5lYXJHcmFkaWVudCBpZD0ibGluZWFyLWdyYWRpZW50LTMiIHgxPSIyNC40IiB5MT0iLTkuODYiIHgyPSI1OC44OSIgeTI9IjI0LjYzIiB4bGluazpocmVmPSIjbGluZWFyLWdyYWRpZW50Ii8+PGxpbmVhckdyYWRpZW50IGlkPSJsaW5lYXItZ3JhZGllbnQtNCIgeDE9Ii0xLjMxIiB5MT0iMTUuODUiIHgyPSIzMy4xOCIgeTI9IjUwLjM0IiB4bGluazpocmVmPSIjbGluZWFyLWdyYWRpZW50Ii8+PGxpbmVhckdyYWRpZW50IGlkPSJsaW5lYXItZ3JhZGllbnQtNSIgeDE9Ii05Ljg2IiB5MT0iMjQuNCIgeDI9IjI0LjYzIiB5Mj0iNTguODkiIHhsaW5rOmhyZWY9IiNsaW5lYXItZ3JhZGllbnQiLz48L2RlZnM+PHRpdGxlPmNvbG9yPC90aXRsZT48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0zNC4zNiw0MS44NmE2LjA5LDYuMDksMCwwLDAsNi4wOCw2LjA4aDcuNTFWNDAuNDNhNi4wOSw2LjA5LDAsMCwwLTYuMDgtNi4wOEg0MC40NGE5LjY1LDkuNjUsMCwwLDEtOS42NC05LjY0VjIzLjI4YTYuMDksNi4wOSwwLDAsMC02LjA4LTYuMDhIMjMuMjlhOS42NSw5LjY1LDAsMCwxLTkuNjQtOS42NGgwVjYuMTNBNi4wOSw2LjA5LDAsMCwwLDcuNTYsMEguMDVWNy41NmE2LjA5LDYuMDksMCwwLDAsNi4wOCw2LjA4SDcuNTZhOS42NSw5LjY1LDAsMCwxLDkuNjQsOS42NHYxLjQyYTYuMDksNi4wOSwwLDAsMCw2LjA4LDYuMDhoMS40M2E5LjY1LDkuNjUsMCwwLDEsOS42NCw5LjY0aDBaIi8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNNDcuOTUsMjMuMjhhNi4wOSw2LjA5LDAsMCwwLTYuMDgtNi4wOEg0MC40NGE5LjY1LDkuNjUsMCwwLDEtOS42NC05LjY0VjYuMTNBNi4wOSw2LjA5LDAsMCwwLDI0LjcxLDBoLTcuNVY3LjY0YTYuMDksNi4wOSwwLDAsMCw2LjA4LDZoMS40M2E5LjY1LDkuNjUsMCwwLDEsOS42NCw5LjY0aDB2MS40MmE2LjA5LDYuMDksMCwwLDAsNi4wNiw2LjA4aDcuNTNaIi8+PHBhdGggY2xhc3M9ImNscy0zIiBkPSJNNDcuOTUsNi4wOGE2LjA4LDYuMDgsMCwwLDAtNS44NC02SDM0LjI0VjcuNjJhNi4wOSw2LjA5LDAsMCwwLDYuMDgsNmg3LjYzWiIvPjxwYXRoIGNsYXNzPSJjbHMtNCIgZD0iTS4wNSwyNC43MkE2LjA5LDYuMDksMCwwLDAsNi4xNCwzMC44SDcuNTdhOS42NSw5LjY1LDAsMCwxLDkuNjQsOS42NHYxLjQyQTYuMDksNi4wOSwwLDAsMCwyMy4yOSw0OGg3LjVWNDAuMzZhNi4wOSw2LjA5LDAsMCwwLTYuMDgtNkgyMy4yOWE5LjY1LDkuNjUsMCwwLDEtOS42NC05LjY0aDBWMjMuMjlhNi4wOSw2LjA5LDAsMCwwLTYuMDYtNi4wOEguMDVaIi8+PHBhdGggY2xhc3M9ImNscy01IiBkPSJNLjA1LDQxLjkyYTYuMDgsNi4wOCwwLDAsMCw1Ljg0LDZoNy44N1Y0MC4zOGE2LjA5LDYuMDksMCwwLDAtNi4wOC02SC4wNVoiLz48L3N2Zz4=
+  mediatype: image/svg+xml
+name: debezium-operator
+schema: olm.package
+---
+entries:
+- name: debezium-operator.v2.4.0
+- name: debezium-operator.v2.4.2
+  replaces: debezium-operator.v2.4.0
+name: debezium-2.4.x
+package: debezium-operator
+schema: olm.channel
+---
+entries:
+- name: debezium-operator.v2.4.0
+- name: debezium-operator.v2.4.2
+  replaces: debezium-operator.v2.4.0
+- name: debezium-operator.v2.5.0
+  replaces: debezium-operator.v2.4.2
+- name: debezium-operator.v2.5.1
+  replaces: debezium-operator.v2.5.0
+- name: debezium-operator.v2.5.2-final
+  replaces: debezium-operator.v2.5.1
+- name: debezium-operator.v2.5.3-final
+  replaces: debezium-operator.v2.5.2-final
+name: debezium-2.5.x
+package: debezium-operator
+schema: olm.channel
+---
+entries:
+- name: debezium-operator.v2.4.0
+- name: debezium-operator.v2.4.2
+  replaces: debezium-operator.v2.4.0
+- name: debezium-operator.v2.5.0
+  replaces: debezium-operator.v2.4.2
+- name: debezium-operator.v2.5.1
+  replaces: debezium-operator.v2.5.0
+- name: debezium-operator.v2.5.2-final
+  replaces: debezium-operator.v2.5.1
+- name: debezium-operator.v2.5.3-final
+  replaces: debezium-operator.v2.5.2-final
+- name: debezium-operator.v2.6.0-final
+  replaces: debezium-operator.v2.5.3-final
+  skipRange: '>2.5.3-final'
+- name: debezium-operator.v2.6.1-final
+  replaces: debezium-operator.v2.6.0-final
+  skipRange: '>2.5.3-final'
+name: debezium-2.6.x
+package: debezium-operator
+schema: olm.channel
+---
+entries:
+- name: debezium-operator.v2.4.0
+- name: debezium-operator.v2.4.2
+  replaces: debezium-operator.v2.4.0
+- name: debezium-operator.v2.5.0
+  replaces: debezium-operator.v2.4.2
+- name: debezium-operator.v2.5.1
+  replaces: debezium-operator.v2.5.0
+- name: debezium-operator.v2.5.2-final
+  replaces: debezium-operator.v2.5.1
+- name: debezium-operator.v2.5.3-final
+  replaces: debezium-operator.v2.5.2-final
+- name: debezium-operator.v2.6.0-final
+  replaces: debezium-operator.v2.5.3-final
+  skipRange: '>2.5.3-final'
+- name: debezium-operator.v2.6.1-final
+  replaces: debezium-operator.v2.6.0-final
+  skipRange: '>2.5.3-final'
+- name: debezium-operator.v2.7.0-final
+  replaces: debezium-operator.v2.6.1-final
+  skipRange: '>2.6.1-final'
+name: debezium-2.7.x
+package: debezium-operator
+schema: olm.channel
+---
+entries:
+- name: debezium-operator.v2.4.0
+- name: debezium-operator.v2.4.2
+  replaces: debezium-operator.v2.4.0
+- name: debezium-operator.v2.5.0
+  replaces: debezium-operator.v2.4.2
+- name: debezium-operator.v2.5.1
+  replaces: debezium-operator.v2.5.0
+- name: debezium-operator.v2.5.2-final
+  replaces: debezium-operator.v2.5.1
+- name: debezium-operator.v2.5.3-final
+  replaces: debezium-operator.v2.5.2-final
+- name: debezium-operator.v2.6.0-final
+  replaces: debezium-operator.v2.5.3-final
+  skipRange: '>2.5.3-final'
+- name: debezium-operator.v2.6.1-final
+  replaces: debezium-operator.v2.6.0-final
+  skipRange: '>2.5.3-final'
+- name: debezium-operator.v2.7.0-final
+  replaces: debezium-operator.v2.6.1-final
+  skipRange: '>2.6.1-final'
+name: debezium-latest
+package: debezium-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:a6a0013843bc11b1c8184e24ef10ecc7229975f8e8526552217e7acd513133c9
+name: debezium-operator.v2.4.0
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.4.0
+relatedImages:
+- image: quay.io/debezium/operator:2.4.0.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:a6a0013843bc11b1c8184e24ef10ecc7229975f8e8526552217e7acd513133c9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:463e1c8ec59719443ca44d4639129530b858c1a393d230204eab77d3fadeba5f
+name: debezium-operator.v2.4.2
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.4.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |
+        [
+            {
+              "apiVersion": "debezium.io/v1alpha1",
+              "kind": "DebeziumServer",
+              "metadata": {
+                "name": "debezium-test"
+              },
+              "spec": {
+                "quarkus": {
+                  "config": {
+                    "log.console.json": false
+                  }
+                },
+                "sink": {
+                  "type": "kafka",
+                  "config": {
+                    "producer.bootstrap.servers": "dbz-kafka-kafka-bootstrap.debezium:9092",
+                    "producer.key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
+                    "producer.value.serializer": "org.apache.kafka.common.serialization.StringSerializer"
+                  }
+                },
+                "source": {
+                  "class": "io.debezium.connector.mongodb.MongoDbConnector",
+                  "config": {
+                    "topic.prefix": "dbserver1",
+                    "offset.storage.file.filename": "/debezium/data/offsets.dat",
+                    "database.history": "io.debezium.relational.history.FileDatabaseHistory",
+                    "mongodb.connection.string": "mongodb://debezium:dbz@mongo.debezium:27017/?replicaSet=rs0"
+                  }
+                }
+              }
+            }
+        ]
+      capabilities: Basic Install
+      categories: Big Data, Database, Integration & Delivery, Streaming & Messaging
+      certified: "false"
+      containerImage: quay.io/debezium/operator:2.4.2.Final
+      createdAt: "2023-12-13T12:20:56Z"
+      description: An Operator for installing and managing Debezium
+      repository: https://github.com/debezium/debezium-operator
+      support: Debezium Authors
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Debezium Server
+        displayName: DebeziumServer
+        kind: DebeziumServer
+        name: debeziumservers.debezium.io
+        version: v1alpha1
+    description: Debezium is an open source distributed platform for change data capture.
+      Start it up, point it at your databases, and your apps can start responding
+      to all of the inserts, updates, and deletes that other apps commit to your databases
+    displayName: Debezium Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: AllNamespaces
+    - supported: true
+      type: MultiNamespace
+    keywords:
+    - Debezium
+    - CDC
+    - Data
+    - Streaming
+    links:
+    - name: Debezium
+      url: https://debezium.io/
+    - name: Documentation
+      url: https://debezium.io/documentation/reference/stable/
+    - name: Debezium Zulip Chat
+      url: https://debezium.zulipchat.com
+    maintainers:
+    - email: debezium@googlegroups.com
+      name: Debezium Authors
+    nativeAPIs:
+    - group: ""
+      kind: ConfigMap
+      version: v1
+    - group: ""
+      kind: ServiceAccount
+      version: v1
+    - group: ""
+      kind: Service
+      version: v1
+    - group: apps
+      kind: Deployment
+      version: v1
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      version: v1
+    - group: rbac.authorization.k8s.io
+      kind: Role
+      version: v1
+    provider:
+      name: Debezium Authors
+      url: https://debezium.io/
+relatedImages:
+- image: quay.io/debezium/operator:2.4.2.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:463e1c8ec59719443ca44d4639129530b858c1a393d230204eab77d3fadeba5f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:c6b4c6d3ef4908b3e7fccc1a6c49f6b8f1018955fb69d6c46284ff3945fdb034
+name: debezium-operator.v2.5.0
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.5.0
+relatedImages:
+- image: quay.io/debezium/operator:2.5.0.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:c6b4c6d3ef4908b3e7fccc1a6c49f6b8f1018955fb69d6c46284ff3945fdb034
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:531d76da63412e7ef111f66bcaff4501a716e2610d479698ee96f1f82449abba
+name: debezium-operator.v2.5.1
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.5.1
+relatedImages:
+- image: quay.io/debezium/operator:2.5.1.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:531d76da63412e7ef111f66bcaff4501a716e2610d479698ee96f1f82449abba
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:fe9d3c984a329be4e1e83c3c4ee3cd86bd5df16f6aaddccda3b44bc045dddf5d
+name: debezium-operator.v2.5.2-final
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.5.2-final
+relatedImages:
+- image: quay.io/debezium/operator:2.5.2.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:fe9d3c984a329be4e1e83c3c4ee3cd86bd5df16f6aaddccda3b44bc045dddf5d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:db75eebc2ff23a3d417a87b2709db9bef76be44d521b79a2abb1df5305dc9ffa
+name: debezium-operator.v2.5.3-final
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.5.3-final
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |
+        [
+            {
+              "apiVersion": "debezium.io/v1alpha1",
+              "kind": "DebeziumServer",
+              "metadata": {
+                "name": "debezium-test"
+              },
+              "spec": {
+                "quarkus": {
+                  "config": {
+                    "log.console.json": false
+                  }
+                },
+                "sink": {
+                  "type": "kafka",
+                  "config": {
+                    "producer.bootstrap.servers": "dbz-kafka-kafka-bootstrap.debezium:9092",
+                    "producer.key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
+                    "producer.value.serializer": "org.apache.kafka.common.serialization.StringSerializer"
+                  }
+                },
+                "source": {
+                  "class": "io.debezium.connector.mongodb.MongoDbConnector",
+                  "config": {
+                    "topic.prefix": "dbserver1",
+                    "offset.storage.file.filename": "/debezium/data/offsets.dat",
+                    "database.history": "io.debezium.relational.history.FileDatabaseHistory",
+                    "mongodb.connection.string": "mongodb://debezium:dbz@mongo.debezium:27017/?replicaSet=rs0"
+                  }
+                }
+              }
+            }
+        ]
+      capabilities: Basic Install
+      categories: Big Data, Database, Integration & Delivery, Streaming & Messaging
+      certified: "false"
+      containerImage: quay.io/debezium/operator:2.5.3.Final
+      createdAt: "2024-03-19T08:17:17Z"
+      description: An Operator for installing and managing Debezium
+      repository: https://github.com/debezium/debezium-operator/debezium-operator-dist
+      support: Debezium Authors
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Debezium Server
+        displayName: DebeziumServer
+        kind: DebeziumServer
+        name: debeziumservers.debezium.io
+        version: v1alpha1
+    description: Debezium is an open source distributed platform for change data capture.
+      Start it up, point it at your databases, and your apps can start responding
+      to all of the inserts, updates, and deletes that other apps commit to your databases
+    displayName: Debezium Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: AllNamespaces
+    - supported: true
+      type: MultiNamespace
+    keywords:
+    - Debezium
+    - CDC
+    - Data
+    - Streaming
+    links:
+    - name: Debezium
+      url: https://debezium.io/
+    - name: Documentation
+      url: https://debezium.io/documentation/reference/stable/
+    - name: Debezium Zulip Chat
+      url: https://debezium.zulipchat.com
+    maintainers:
+    - email: debezium@googlegroups.com
+      name: Debezium Authors
+    nativeAPIs:
+    - group: ""
+      kind: ConfigMap
+      version: v1
+    - group: ""
+      kind: PersistentVolumeClaim
+      version: v1
+    - group: ""
+      kind: ServiceAccount
+      version: v1
+    - group: ""
+      kind: Service
+      version: v1
+    - group: apps
+      kind: Deployment
+      version: v1
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      version: v1
+    - group: rbac.authorization.k8s.io
+      kind: Role
+      version: v1
+    provider:
+      name: Debezium Authors
+      url: https://debezium.io/
+relatedImages:
+- image: quay.io/debezium/operator:2.5.3.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:db75eebc2ff23a3d417a87b2709db9bef76be44d521b79a2abb1df5305dc9ffa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:47e0c4044cc25c06adffef5b8ce65a83cc70f6f395629e8efcd60ddac03fe0d5
+name: debezium-operator.v2.6.0-final
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.6.0-final
+relatedImages:
+- image: quay.io/debezium/operator:2.6.0.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:47e0c4044cc25c06adffef5b8ce65a83cc70f6f395629e8efcd60ddac03fe0d5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:1187214c99c31a72a76e1fbca5dd0db0cd336248a328859a609258ffd3733b23
+name: debezium-operator.v2.6.1-final
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.6.1-final
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |
+        [
+            {
+              "apiVersion": "debezium.io/v1alpha1",
+              "kind": "DebeziumServer",
+              "metadata": {
+                "name": "debezium-test"
+              },
+              "spec": {
+                "quarkus": {
+                  "config": {
+                    "log.console.json": false
+                  }
+                },
+                "sink": {
+                  "type": "kafka",
+                  "config": {
+                    "producer.bootstrap.servers": "dbz-kafka-kafka-bootstrap.debezium:9092",
+                    "producer.key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
+                    "producer.value.serializer": "org.apache.kafka.common.serialization.StringSerializer"
+                  }
+                },
+                "source": {
+                  "class": "io.debezium.connector.mongodb.MongoDbConnector",
+                  "config": {
+                    "topic.prefix": "dbserver1",
+                    "offset.storage.file.filename": "/debezium/data/offsets.dat",
+                    "database.history": "io.debezium.relational.history.FileDatabaseHistory",
+                    "mongodb.connection.string": "mongodb://debezium:dbz@mongo.debezium:27017/?replicaSet=rs0"
+                  }
+                }
+              }
+            }
+        ]
+      capabilities: Basic Install
+      categories: Big Data, Database, Integration & Delivery, Streaming & Messaging
+      certified: "false"
+      containerImage: quay.io/debezium/operator:2.6.1.Final
+      createdAt: "2024-04-12T17:18:16Z"
+      description: An Operator for installing and managing Debezium
+      olm.skipRange: '>2.5.3-final'
+      repository: https://github.com/debezium/debezium-operator/debezium-operator-dist
+      support: Debezium Authors
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Debezium Server
+        displayName: DebeziumServer
+        kind: DebeziumServer
+        name: debeziumservers.debezium.io
+        version: v1alpha1
+    description: Debezium is an open source distributed platform for change data capture.
+      Start it up, point it at your databases, and your apps can start responding
+      to all of the inserts, updates, and deletes that other apps commit to your databases
+    displayName: Debezium Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: AllNamespaces
+    - supported: true
+      type: MultiNamespace
+    keywords:
+    - Debezium
+    - CDC
+    - Data
+    - Streaming
+    links:
+    - name: Debezium
+      url: https://debezium.io/
+    - name: Documentation
+      url: https://debezium.io/documentation/reference/stable/
+    - name: Debezium Zulip Chat
+      url: https://debezium.zulipchat.com
+    maintainers:
+    - email: debezium@googlegroups.com
+      name: Debezium Authors
+    nativeAPIs:
+    - group: ""
+      kind: ConfigMap
+      version: v1
+    - group: ""
+      kind: PersistentVolumeClaim
+      version: v1
+    - group: ""
+      kind: ServiceAccount
+      version: v1
+    - group: ""
+      kind: Service
+      version: v1
+    - group: apps
+      kind: Deployment
+      version: v1
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      version: v1
+    - group: rbac.authorization.k8s.io
+      kind: Role
+      version: v1
+    provider:
+      name: Debezium Authors
+      url: https://debezium.io/
+relatedImages:
+- image: quay.io/debezium/operator:2.6.1.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:1187214c99c31a72a76e1fbca5dd0db0cd336248a328859a609258ffd3733b23
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/debezium-operator@sha256:a876eecc8e9e9598375abf505962655ca9020a32557381cedf8c5275e031dfc4
+name: debezium-operator.v2.7.0-final
+package: debezium-operator
+properties:
+- type: olm.gvk
+  value:
+    group: debezium.io
+    kind: DebeziumServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: debezium-operator
+    version: 2.7.0-final
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |
+        [
+            {
+              "apiVersion": "debezium.io/v1alpha1",
+              "kind": "DebeziumServer",
+              "metadata": {
+                "name": "debezium-test"
+              },
+              "spec": {
+                "quarkus": {
+                  "config": {
+                    "log.console.json": false
+                  }
+                },
+                "sink": {
+                  "type": "kafka",
+                  "config": {
+                    "producer.bootstrap.servers": "dbz-kafka-kafka-bootstrap.debezium:9092",
+                    "producer.key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
+                    "producer.value.serializer": "org.apache.kafka.common.serialization.StringSerializer"
+                  }
+                },
+                "source": {
+                  "class": "io.debezium.connector.mongodb.MongoDbConnector",
+                  "config": {
+                    "topic.prefix": "dbserver1",
+                    "offset.storage.file.filename": "/debezium/data/offsets.dat",
+                    "database.history": "io.debezium.relational.history.FileDatabaseHistory",
+                    "mongodb.connection.string": "mongodb://debezium:dbz@mongo.debezium:27017/?replicaSet=rs0"
+                  }
+                }
+              }
+            }
+        ]
+      capabilities: Basic Install
+      categories: Big Data, Database, Integration & Delivery, Streaming & Messaging
+      certified: "false"
+      containerImage: quay.io/debezium/operator:2.7.0.Final
+      createdAt: "2024-06-28T09:45:23Z"
+      description: An Operator for installing and managing Debezium
+      olm.skipRange: '>2.6.1-final'
+      repository: https://github.com/debezium/debezium-operator/debezium-operator-dist
+      support: Debezium Authors
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Debezium Server
+        displayName: DebeziumServer
+        kind: DebeziumServer
+        name: debeziumservers.debezium.io
+        version: v1alpha1
+    description: Debezium is an open source distributed platform for change data capture.
+      Start it up, point it at your databases, and your apps can start responding
+      to all of the inserts, updates, and deletes that other apps commit to your databases
+    displayName: Debezium Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: AllNamespaces
+    - supported: true
+      type: MultiNamespace
+    keywords:
+    - Debezium
+    - CDC
+    - Data
+    - Streaming
+    links:
+    - name: Debezium
+      url: https://debezium.io/
+    - name: Documentation
+      url: https://debezium.io/documentation/reference/stable/
+    - name: Debezium Zulip Chat
+      url: https://debezium.zulipchat.com
+    maintainers:
+    - email: debezium@googlegroups.com
+      name: Debezium Authors
+    nativeAPIs:
+    - group: ""
+      kind: ConfigMap
+      version: v1
+    - group: ""
+      kind: PersistentVolumeClaim
+      version: v1
+    - group: ""
+      kind: ServiceAccount
+      version: v1
+    - group: ""
+      kind: Service
+      version: v1
+    - group: ""
+      kind: Service
+      version: v1
+    - group: apps
+      kind: Deployment
+      version: v1
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      version: v1
+    - group: rbac.authorization.k8s.io
+      kind: Role
+      version: v1
+    provider:
+      name: Debezium Authors
+      url: https://debezium.io/
+relatedImages:
+- image: quay.io/debezium/operator:2.7.0.Final
+  name: ""
+- image: quay.io/operatorhubio/debezium-operator@sha256:a876eecc8e9e9598375abf505962655ca9020a32557381cedf8c5275e031dfc4
+  name: ""
+schema: olm.bundle

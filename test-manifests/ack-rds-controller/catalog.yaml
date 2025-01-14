@@ -1,0 +1,2616 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-rds-controller
+schema: olm.package
+---
+entries:
+- name: ack-rds-controller.v0.0.12
+- name: ack-rds-controller.v0.0.13
+  replaces: ack-rds-controller.v0.0.12
+- name: ack-rds-controller.v0.0.14
+  replaces: ack-rds-controller.v0.0.13
+- name: ack-rds-controller.v0.0.15
+  replaces: ack-rds-controller.v0.0.14
+- name: ack-rds-controller.v0.0.16
+  replaces: ack-rds-controller.v0.0.15
+- name: ack-rds-controller.v0.0.17
+  replaces: ack-rds-controller.v0.0.16
+- name: ack-rds-controller.v0.0.18
+  replaces: ack-rds-controller.v0.0.17
+- name: ack-rds-controller.v0.0.19
+  replaces: ack-rds-controller.v0.0.18
+- name: ack-rds-controller.v0.0.20
+  replaces: ack-rds-controller.v0.0.19
+- name: ack-rds-controller.v0.0.21
+  replaces: ack-rds-controller.v0.0.20
+- name: ack-rds-controller.v0.0.22
+  replaces: ack-rds-controller.v0.0.21
+- name: ack-rds-controller.v0.0.23
+  replaces: ack-rds-controller.v0.0.22
+- name: ack-rds-controller.v0.0.24
+  replaces: ack-rds-controller.v0.0.23
+- name: ack-rds-controller.v0.0.25
+  replaces: ack-rds-controller.v0.0.24
+- name: ack-rds-controller.v0.0.26
+  replaces: ack-rds-controller.v0.0.25
+- name: ack-rds-controller.v0.0.27
+  replaces: ack-rds-controller.v0.0.26
+- name: ack-rds-controller.v0.0.28
+  replaces: ack-rds-controller.v0.0.27
+- name: ack-rds-controller.v0.0.29
+  replaces: ack-rds-controller.v0.0.28
+- name: ack-rds-controller.v0.0.30
+  replaces: ack-rds-controller.v0.0.29
+- name: ack-rds-controller.v0.1.0
+  replaces: ack-rds-controller.v0.0.30
+- name: ack-rds-controller.v0.1.1
+  replaces: ack-rds-controller.v0.1.0
+- name: ack-rds-controller.v0.1.2
+  replaces: ack-rds-controller.v0.1.1
+- name: ack-rds-controller.v0.1.3
+  replaces: ack-rds-controller.v0.1.2
+- name: ack-rds-controller.v1.0.0
+  replaces: ack-rds-controller.v0.1.3
+- name: ack-rds-controller.v1.1.0
+  replaces: ack-rds-controller.v1.0.0
+- name: ack-rds-controller.v1.1.1
+  replaces: ack-rds-controller.v1.1.0
+- name: ack-rds-controller.v1.1.11
+  replaces: ack-rds-controller.v1.1.9
+- name: ack-rds-controller.v1.1.2
+  replaces: ack-rds-controller.v1.1.1
+- name: ack-rds-controller.v1.1.3
+  replaces: ack-rds-controller.v1.1.2
+- name: ack-rds-controller.v1.1.4
+  replaces: ack-rds-controller.v1.1.3
+- name: ack-rds-controller.v1.1.5
+  replaces: ack-rds-controller.v1.1.4
+- name: ack-rds-controller.v1.1.6
+  replaces: ack-rds-controller.v1.1.5
+- name: ack-rds-controller.v1.1.7
+  replaces: ack-rds-controller.v1.1.6
+- name: ack-rds-controller.v1.1.8
+  replaces: ack-rds-controller.v1.1.7
+- name: ack-rds-controller.v1.1.9
+  replaces: ack-rds-controller.v1.1.8
+- name: ack-rds-controller.v1.2.0
+  replaces: ack-rds-controller.v1.1.11
+- name: ack-rds-controller.v1.2.1
+  replaces: ack-rds-controller.v1.2.0
+- name: ack-rds-controller.v1.2.2
+  replaces: ack-rds-controller.v1.2.1
+- name: ack-rds-controller.v1.2.3
+  replaces: ack-rds-controller.v1.2.2
+- name: ack-rds-controller.v1.2.4
+  replaces: ack-rds-controller.v1.2.3
+- name: ack-rds-controller.v1.2.5
+  replaces: ack-rds-controller.v1.2.4
+- name: ack-rds-controller.v1.3.0
+  replaces: ack-rds-controller.v1.2.5
+- name: ack-rds-controller.v1.4.0
+  replaces: ack-rds-controller.v1.3.0
+- name: ack-rds-controller.v1.4.1
+  replaces: ack-rds-controller.v1.4.0
+- name: ack-rds-controller.v1.4.2
+  replaces: ack-rds-controller.v1.4.1
+- name: ack-rds-controller.v1.4.3
+  replaces: ack-rds-controller.v1.4.2
+- name: ack-rds-controller.v1.4.4
+  replaces: ack-rds-controller.v1.4.3
+name: alpha
+package: ack-rds-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:16a5b1c99ebe02b043387dfab20762d6f1ae82d83e0c73d12cfbcb5a80935580
+name: ack-rds-controller.v0.0.12
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:16a5b1c99ebe02b043387dfab20762d6f1ae82d83e0c73d12cfbcb5a80935580
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:a34b5ae51f7de2d1aad32edd356cc8a9c48285b7c14480716188f12eba73e4b7
+name: ack-rds-controller.v0.0.13
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:a34b5ae51f7de2d1aad32edd356cc8a9c48285b7c14480716188f12eba73e4b7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:05eca65e70d9e273ea9daf92cf7e0868310852c2a7a0ec44789333be51422bd1
+name: ack-rds-controller.v0.0.14
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:05eca65e70d9e273ea9daf92cf7e0868310852c2a7a0ec44789333be51422bd1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:131a6e394a75d90589e1905471eaac358c742455d5ccb38e52ccd2ed3ed40946
+name: ack-rds-controller.v0.0.15
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:vv0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:131a6e394a75d90589e1905471eaac358c742455d5ccb38e52ccd2ed3ed40946
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:67cef4790eba7a606da458e40e53a269df37da8956c8b9543df31a211422ee31
+name: ack-rds-controller.v0.0.16
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:67cef4790eba7a606da458e40e53a269df37da8956c8b9543df31a211422ee31
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:8bee75db4dce3f2d2140742590951224d52a2f4133dd1faccb72a9934b1ba8b8
+name: ack-rds-controller.v0.0.17
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:8bee75db4dce3f2d2140742590951224d52a2f4133dd1faccb72a9934b1ba8b8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:837c9977a3374b758c0be0e04a18939ae0015922393764f88922696e4ac81187
+name: ack-rds-controller.v0.0.18
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.18
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.18
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:837c9977a3374b758c0be0e04a18939ae0015922393764f88922696e4ac81187
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:d4c7c67317703254ccab951623964cb5d02c293da20f53664346cb524f8892e1
+name: ack-rds-controller.v0.0.19
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:d4c7c67317703254ccab951623964cb5d02c293da20f53664346cb524f8892e1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:7cc2e6b956369715732713bdce532a8d237e7ab860990e1a0ddb55a2ff7d08f5
+name: ack-rds-controller.v0.0.20
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.20
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.20
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:7cc2e6b956369715732713bdce532a8d237e7ab860990e1a0ddb55a2ff7d08f5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:fac236ee24dbd4e79e5249c081af036ee94961a13aedfa17b69cd0d38b3fb4fe
+name: ack-rds-controller.v0.0.21
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.21
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.21
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:fac236ee24dbd4e79e5249c081af036ee94961a13aedfa17b69cd0d38b3fb4fe
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:0b7f29da34633e0fbcae4133d3e8e5fafa443612a8230d3bf65e18638f8a34b4
+name: ack-rds-controller.v0.0.22
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.22
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.22
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:0b7f29da34633e0fbcae4133d3e8e5fafa443612a8230d3bf65e18638f8a34b4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:134e807802ff92afe8e8a08638b435b4fa867fa37bd69de724235a86548ee955
+name: ack-rds-controller.v0.0.23
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.23
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.23
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:134e807802ff92afe8e8a08638b435b4fa867fa37bd69de724235a86548ee955
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:6f6be1531e51b7a285068ec208404e55f24ae856f5bd5e595531f976f210dd1b
+name: ack-rds-controller.v0.0.24
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSecurityGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.24
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.24
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:6f6be1531e51b7a285068ec208404e55f24ae856f5bd5e595531f976f210dd1b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:16e2214ea887903e2e8a3e885d247b12c7cb68e3c1630bd839ee70c253cc4d7d
+name: ack-rds-controller.v0.0.25
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.25
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.25
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:16e2214ea887903e2e8a3e885d247b12c7cb68e3c1630bd839ee70c253cc4d7d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:8362869dd0cbb7cba97184bd1001611e3626c2b5b7b63beb41b79f4d659b9507
+name: ack-rds-controller.v0.0.26
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.26
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.26
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:8362869dd0cbb7cba97184bd1001611e3626c2b5b7b63beb41b79f4d659b9507
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:317864cb49814d7abeeabd9ec19362cd9a8febcbca2d7882d256a12ff2eb5225
+name: ack-rds-controller.v0.0.27
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.27
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.27
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:317864cb49814d7abeeabd9ec19362cd9a8febcbca2d7882d256a12ff2eb5225
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:398a2199196024a4e127e075ee1bfc998990c187206fe709937eca4853ec9c50
+name: ack-rds-controller.v0.0.28
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.28
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.28
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:398a2199196024a4e127e075ee1bfc998990c187206fe709937eca4853ec9c50
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:896121ebf337a6d691c7d4478fd00d222bcd6360155e7300cc3d6054d9400f37
+name: ack-rds-controller.v0.0.29
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.29
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.29
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:896121ebf337a6d691c7d4478fd00d222bcd6360155e7300cc3d6054d9400f37
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:0225693cd7e65633b40bb0d26ae33c9b0c0aee4177bf03359801236782d77a4d
+name: ack-rds-controller.v0.0.30
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.0.30
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.0.30
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:0225693cd7e65633b40bb0d26ae33c9b0c0aee4177bf03359801236782d77a4d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:3eb8e9819567213c2168baa7aaf7ef9428b798f5400852996a83570574f6ed3c
+name: ack-rds-controller.v0.1.0
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:3eb8e9819567213c2168baa7aaf7ef9428b798f5400852996a83570574f6ed3c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:3ca1f6e195c6558e8317030addb66b2909325c5b18e0c0729bbc136faeea517c
+name: ack-rds-controller.v0.1.1
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:3ca1f6e195c6558e8317030addb66b2909325c5b18e0c0729bbc136faeea517c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:a65593bc748c74f6290d9f55a0e20e9a66765bcf99ecc51de4c54bbf9b1463a9
+name: ack-rds-controller.v0.1.2
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:a65593bc748c74f6290d9f55a0e20e9a66765bcf99ecc51de4c54bbf9b1463a9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:99ed5239b1aeb98ea3596451c0fb5868b7c4c44b1a30b41cfcffbe4e2d5ab758
+name: ack-rds-controller.v0.1.3
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 0.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v0.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:99ed5239b1aeb98ea3596451c0fb5868b7c4c44b1a30b41cfcffbe4e2d5ab758
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:5740407260ba795a32cae939edf344048cdfea80de6bd6d0784d1aa7fc2efdee
+name: ack-rds-controller.v1.0.0
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:5740407260ba795a32cae939edf344048cdfea80de6bd6d0784d1aa7fc2efdee
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:9e423631cada51afbb73d6d7bf97d442b4b472a362d3c93f336e58598d26f92a
+name: ack-rds-controller.v1.1.0
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v1.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:9e423631cada51afbb73d6d7bf97d442b4b472a362d3c93f336e58598d26f92a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:8f2825213822fa8a15b0f76b7564e2c89a4e047064d363a3bab2e1d7e6eddcc0
+name: ack-rds-controller.v1.1.1
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v1.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:8f2825213822fa8a15b0f76b7564e2c89a4e047064d363a3bab2e1d7e6eddcc0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:7d930bbc6e4d3dba6a88e434c44ca2e5343180913cb3c196fc5d8c07d4d0e05d
+name: ack-rds-controller.v1.1.11
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.1.11
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:7d930bbc6e4d3dba6a88e434c44ca2e5343180913cb3c196fc5d8c07d4d0e05d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:b4002f54d2c91b88023443162abb00a9f8e0d63516c01e7fac3f61c661a429f2
+name: ack-rds-controller.v1.1.2
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v1.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:b4002f54d2c91b88023443162abb00a9f8e0d63516c01e7fac3f61c661a429f2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:0266012f34bf8fcdca38271918244319260b72766f9bb43e2ee33049a8347165
+name: ack-rds-controller.v1.1.3
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v1.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:0266012f34bf8fcdca38271918244319260b72766f9bb43e2ee33049a8347165
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:a430f96a6050e0afae54045508aa780fa687cb8703d4d6ae16feae69b4975ec3
+name: ack-rds-controller.v1.1.4
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:v1.1.4
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:a430f96a6050e0afae54045508aa780fa687cb8703d4d6ae16feae69b4975ec3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:fad9475fda7dfbebad4883f5520d3f8c51328f18420a42db6399b74b628090aa
+name: ack-rds-controller.v1.1.5
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.1.5
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:fad9475fda7dfbebad4883f5520d3f8c51328f18420a42db6399b74b628090aa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:6cc691b13c8c1d9f4ecca308e2bb76ffef90e90cec68c1316aca588cb0d7125f
+name: ack-rds-controller.v1.1.6
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.1.6
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:6cc691b13c8c1d9f4ecca308e2bb76ffef90e90cec68c1316aca588cb0d7125f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:e2ed055c89ce26235b056e2a46ed13094a7eb8bc2cfdad15850d53fb70c580ee
+name: ack-rds-controller.v1.1.7
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.1.7
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:e2ed055c89ce26235b056e2a46ed13094a7eb8bc2cfdad15850d53fb70c580ee
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:b510e3fa71fef5beb26884d3c38a819db26c2d0d286afad17ad1c253837036b8
+name: ack-rds-controller.v1.1.8
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.1.8
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:b510e3fa71fef5beb26884d3c38a819db26c2d0d286afad17ad1c253837036b8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:1603506b1812e26feb86a8c11288fa9600b7cf8be1a1f2f37fcd39e097c45ad3
+name: ack-rds-controller.v1.1.9
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.1.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.1.9
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:1603506b1812e26feb86a8c11288fa9600b7cf8be1a1f2f37fcd39e097c45ad3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:185f5a6b91037b1f2f26a0f6854bae905771ee1254a78d8e469e03cf2a86366f
+name: ack-rds-controller.v1.2.0
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.2.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.2.0
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:185f5a6b91037b1f2f26a0f6854bae905771ee1254a78d8e469e03cf2a86366f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:11c91ddd2d490735ce9782ce97ee6e16a7eab227717365e58a0936625c139ddc
+name: ack-rds-controller.v1.2.1
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.2.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.2.1
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:11c91ddd2d490735ce9782ce97ee6e16a7eab227717365e58a0936625c139ddc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:dd8e6bef7d8bf95f8f7c249285553d96983d6f5294ebcab5910c5fca6c79373a
+name: ack-rds-controller.v1.2.2
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.2.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.2.2
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:dd8e6bef7d8bf95f8f7c249285553d96983d6f5294ebcab5910c5fca6c79373a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:a0302c0e99e54706d280b2c5ed8d7f90a18848177f701c3073588fee7bc0ef35
+name: ack-rds-controller.v1.2.3
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.2.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.2.3
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:a0302c0e99e54706d280b2c5ed8d7f90a18848177f701c3073588fee7bc0ef35
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:64fc2ae894ee0a3d0dcc432afe201784baf8e049cba104c886ea3c9cb18e3561
+name: ack-rds-controller.v1.2.4
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.2.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.2.4
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:64fc2ae894ee0a3d0dcc432afe201784baf8e049cba104c886ea3c9cb18e3561
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:585d6c4dd4923cb514947e513e9b0709a47df35a1afbe35f664cf900eae98a93
+name: ack-rds-controller.v1.2.5
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.2.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.2.5
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:585d6c4dd4923cb514947e513e9b0709a47df35a1afbe35f664cf900eae98a93
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:310ae40a0285b92aca978f6f3ad413fbab951fbda8203a59126ddc3eeca29436
+name: ack-rds-controller.v1.3.0
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.3.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.3.0
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:310ae40a0285b92aca978f6f3ad413fbab951fbda8203a59126ddc3eeca29436
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:2cb4c8f7079a71403404011ce965c31bc86cf601d156c12881239bd35fe21bed
+name: ack-rds-controller.v1.4.0
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.4.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.4.0
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:2cb4c8f7079a71403404011ce965c31bc86cf601d156c12881239bd35fe21bed
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:78797a49b72a7d01f1ea7fd24170a099dc0e83465b76d82769c240aeb28321aa
+name: ack-rds-controller.v1.4.1
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.4.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.4.1
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:78797a49b72a7d01f1ea7fd24170a099dc0e83465b76d82769c240aeb28321aa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:e36c24c16962ba92c0813abd27d35d5ee00cdadf65b2cb1550d949f4836685cb
+name: ack-rds-controller.v1.4.2
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.4.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.4.2
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:e36c24c16962ba92c0813abd27d35d5ee00cdadf65b2cb1550d949f4836685cb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:fa10dc90bdd1cab78542e085c9d3861b07872c6fde0f90f7ea55b82ab719a9c0
+name: ack-rds-controller.v1.4.3
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.4.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.4.3
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:fa10dc90bdd1cab78542e085c9d3861b07872c6fde0f90f7ea55b82ab719a9c0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-rds-controller@sha256:fcc5e0b660a43ac4b0bd9b3aed795fd0f1ed00a6710f6c76c29f5831ddbaa0f8
+name: ack-rds-controller.v1.4.4
+package: ack-rds-controller
+properties:
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBCluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBClusterSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBInstance
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBParameterGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBProxy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSnapshot
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: DBSubnetGroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: rds.services.k8s.aws
+    kind: GlobalCluster
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-rds-controller
+    version: 1.4.4
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "rds.services.k8s.aws/v1alpha1",
+            "kind": "DBParameterGroup",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "rds.services.k8s.aws/v1alpha1",
+            "kind": "DBSubnetGroup",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/rds-controller:1.4.4
+      createdAt: "2024-08-31T22:40:28Z"
+      description: AWS RDS controller is a service controller for managing RDS resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: DBClusterParameterGroup represents the state of an AWS rds DBClusterParameterGroup
+          resource.
+        displayName: DBClusterParameterGroup
+        kind: DBClusterParameterGroup
+        name: dbclusterparametergroups.rds.services.k8s.aws
+        version: v1alpha1
+      - description: DBCluster represents the state of an AWS rds DBCluster resource.
+        displayName: DBCluster
+        kind: DBCluster
+        name: dbclusters.rds.services.k8s.aws
+        version: v1alpha1
+      - description: DBClusterSnapshot represents the state of an AWS rds DBClusterSnapshot
+          resource.
+        displayName: DBClusterSnapshot
+        kind: DBClusterSnapshot
+        name: dbclustersnapshots.rds.services.k8s.aws
+        version: v1alpha1
+      - description: DBInstance represents the state of an AWS rds DBInstance resource.
+        displayName: DBInstance
+        kind: DBInstance
+        name: dbinstances.rds.services.k8s.aws
+        version: v1alpha1
+      - description: DBParameterGroup represents the state of an AWS rds DBParameterGroup
+          resource.
+        displayName: DBParameterGroup
+        kind: DBParameterGroup
+        name: dbparametergroups.rds.services.k8s.aws
+        version: v1alpha1
+      - description: DBProxy represents the state of an AWS rds DBProxy resource.
+        displayName: DBProxy
+        kind: DBProxy
+        name: dbproxies.rds.services.k8s.aws
+        version: v1alpha1
+      - description: DBSnapshot represents the state of an AWS rds DBSnapshot resource.
+        displayName: DBSnapshot
+        kind: DBSnapshot
+        name: dbsnapshots.rds.services.k8s.aws
+        version: v1alpha1
+      - description: DBSubnetGroup represents the state of an AWS rds DBSubnetGroup
+          resource.
+        displayName: DBSubnetGroup
+        kind: DBSubnetGroup
+        name: dbsubnetgroups.rds.services.k8s.aws
+        version: v1alpha1
+      - description: GlobalCluster represents the state of an AWS rds GlobalCluster
+          resource.
+        displayName: GlobalCluster
+        kind: GlobalCluster
+        name: globalclusters.rds.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon Relational Database Service ("RDS") resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon RDS**
+
+      Amazon Relational Database Service (Amazon RDS) makes it easy to set up, operate, and scale a relational database in the cloud. It provides cost-efficient and resizable capacity while automating time-consuming administration tasks such as hardware provisioning, database setup, patching and backups. It frees you to focus on your applications so you can give them the fast performance, high availability, security and compatibility they need.
+
+      Amazon RDS is available on several database instance types - optimized for memory, performance or I/O -and provides you with six familiar database engines to choose from, including Amazon Aurora, PostgreSQL, MySQL, MariaDB, Oracle Database, and SQL Server. You can use the AWS Database Migration Service to easily migrate or replicate your existing databases to Amazon RDS.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon RDS
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - rds
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon RDS Developer Resources
+      url: https://aws.amazon.com/rds/developer-resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: rds maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/rds-controller:1.4.4
+  name: ""
+- image: quay.io/operatorhubio/ack-rds-controller@sha256:fcc5e0b660a43ac4b0bd9b3aed795fd0f1ed00a6710f6c76c29f5831ddbaa0f8
+  name: ""
+schema: olm.bundle

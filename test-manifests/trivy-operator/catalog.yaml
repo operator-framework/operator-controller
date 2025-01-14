@@ -1,0 +1,3669 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB3aWR0aD0iMjY1IiBoZWlnaHQ9IjEzNSIgdmlld0JveD0iMCAwIDI2NSAxMzUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xNDguNjI5IDEwMy4wNzdWMTA5LjAwNUMxNDQuNTkxIDEwOS4wMDUgMTQwLjk1MyAxMDcuNTUxIDEzOC4wODQgMTA1LjE0MkMxMzQuNDc5IDEwMi4xMTcgMTMyLjE5IDk3LjU3NzQgMTMyLjE5IDkyLjUwNDRWNjIuODE2NEgxMzguMDg0Vjc2LjI4NzRIMTQ4LjYyOVY4Mi4yNTM0SDEzOC4wODRWOTIuNjQ4NEMxMzguMTY0IDk4LjQyMDQgMTQyLjg0IDEwMy4wNzcgMTQ4LjYyOSAxMDMuMDc3WiIgZmlsbD0iIzA3MjQyRCIvPgo8cGF0aCBkPSJNMTY5LjY1IDc2LjI4NTJWODIuMTc0MkMxNjQuMDU5IDgyLjE4NTIgMTU5LjUwNyA4Ni42MjAxIDE1OS4zMDUgOTIuMTU4MVYxMDkuMDAzSDE1My4zOTdWNzYuMjg1MkgxNTkuMzA1VjgwLjAyMDFDMTYyLjExMyA3Ny42ODkxIDE2NS43MTggNzYuMjkxMiAxNjkuNjUgNzYuMjg1MloiIGZpbGw9IiMwNzI0MkQiLz4KPHBhdGggZD0iTTE3My40NDcgNjguNjk4OFY2Mi43OTg4SDE3OS4zNDRWNjguNjk4OEgxNzMuNDQ3Wk0xNzMuNDQ3IDEwOS4wMDRWNzYuMjg1OEgxNzkuMzQ0VjEwOS4wMDVIMTczLjQ0N1YxMDkuMDA0WiIgZmlsbD0iIzA3MjQyRCIvPgo8cGF0aCBkPSJNMjE1LjUwOCA3Ni4yODUyTDE5OS4xNiAxMDkuMDA0TDE4Mi43OTYgNzYuMjg1MkgxODkuNDk1TDE5OS4xNiA5NS42MDUyTDIwOC44MDYgNzYuMjg1MkgyMTUuNTA4WiIgZmlsbD0iIzA3MjQyRCIvPgo8cGF0aCBkPSJNMjUwLjg3NCA3Ni4yODUyQzI1MC44NzQgNzYuMjg1MiAyNTAuODc0IDExMi4wNTYgMjUwLjg3NCAxMTQuNDJDMjUwLjg3NCAxMjMuNTU2IDI0My4zODEgMTMwLjg0OCAyMzQuNTA0IDEzMC44NDNDMjMwLjM0NyAxMzAuODQzIDIyNi40OTUgMTI5LjI2NyAyMjMuNTcgMTI2LjY0N0wyMjcuODEgMTIyLjQwN0MyMjkuNjE5IDEyMy45MzkgMjMxLjk1MyAxMjQuODcxIDIzNC41MDMgMTI0Ljg2NkMyNDAuMjQ4IDEyNC44NjYgMjQ0Ljg5OSAxMjAuMTcgMjQ0Ljg5OSAxMTQuNDJWMTA1LjI3OUMyNDIuMDQ5IDEwNy42MzggMjM4LjQxMSAxMDkuMDAzIDIzNC41MDMgMTA5LjAwM0MyMjUuNjA5IDEwOS4wMDggMjE4LjExOSAxMDEuODMyIDIxOC4xMTkgOTIuNjMxMUMyMTguMTE5IDkyLjQzNzEgMjE4LjExOSA3Ni4yODYyIDIxOC4xMTkgNzYuMjg2MkgyMjQuMDkxQzIyNC4wOTEgNzYuMjg2MiAyMjQuMDk0IDkyLjE5MzEgMjI0LjA5NCA5Mi42MzExQzIyNC4wOTQgOTguMzUzMSAyMjguNzUzIDEwMy4wODIgMjM0LjUwMyAxMDMuMDc3QzI0MC4yNDggMTAzLjA3NyAyNDQuODk5IDk4LjM3NjEgMjQ0Ljg5OSA5Mi42MzExVjc2LjI4NTJIMjUwLjg3NFoiIGZpbGw9IiMwNzI0MkQiLz4KPHBhdGggZD0iTTE2Ni4xMTQgNTkuMzc4MkgxNjkuMjQzVjM5Ljk0MzJDMTY5LjI1MyAzOS43NzIyIDE2OS4yNDMgMzkuNTk5MiAxNjkuMjQzIDM5LjQyNjJDMTY5LjI0MyAzNC42NzUyIDE2NS40MDIgMzAuODI0MiAxNjAuNjUxIDMwLjgyNDJDMTU1LjkgMzAuODI0MiAxNTIuMDQ5IDM0LjY3NTIgMTUyLjA0OSAzOS40MjYyQzE1Mi4wNDkgNDQuMTc3MiAxNTUuOSA0OC4wMjgyIDE2MC42NTEgNDguMDI4MkgxNjEuMDg2TDE2NC4yNSA0NC44NzgySDE2MC44OUgxNjAuNjUxQzE1Ny42NCA0NC44NzgyIDE1NS4yIDQyLjQzNzIgMTU1LjIgMzkuNDI3MkMxNTUuMiAzNi40MTcyIDE1Ny42NDEgMzMuOTc2MiAxNjAuNjUxIDMzLjk3NjJDMTYzLjY2MiAzMy45NzYyIDE2Ni4xMTQgMzYuNDE3MiAxNjYuMTE0IDM5LjQyNzJWNTkuMzc4MloiIGZpbGw9IiMwNzI0MkQiLz4KPHBhdGggZD0iTTE4NS44OTkgMzAuODI0MlYzOS41MzMyQzE4NS44OTkgNDIuNTc0MiAxODMuNDM0IDQ1LjA1MTIgMTgwLjM5NCA0NS4wNTEyQzE3Ny4zNTMgNDUuMDUxMiAxNzQuODg2IDQyLjU3NDIgMTc0Ljg4NiAzOS41MzMyVjMwLjgyNDJIMTcxLjgzN1YzOS41MzMyQzE3MS44MzcgMzkuNTMzMiAxNzEuODM3IDM5LjUzMzIgMTcxLjgzNyAzOS41NDAyQzE3MS44MzcgNDQuMjY5MiAxNzUuNjY1IDQ4LjEwODIgMTgwLjM5NCA0OC4xMDgyQzE4NS4xMjMgNDguMTA4MiAxODguOTU1IDQ0LjI4MTIgMTg4Ljk1NSAzOS41NTIyQzE4OC45NTUgMzkuNTQ2MiAxODguOTU1IDM5LjUzMzIgMTg4Ljk1NSAzOS41MzMyVjMwLjgyNDJIMTg1Ljg5OVoiIGZpbGw9IiMwNzI0MkQiLz4KPHBhdGggZD0iTTE0OC45NDEgMzYuNTEzNUMxNDUuNTM2IDI3LjUxOTUgMTMyLjMzOSAyOS43MDM1IDEzMi4xMzkgMzkuNDUyNUMxMzIuMTQ0IDQxLjU0NjUgMTMyLjg2MyA0My40MjQ1IDEzNC4xMTggNDQuOTU0NUMxMzUuNTkgNDYuNzQxNSAxMzcuNzY0IDQ3LjkyNzUgMTQwLjIxOSA0OC4wODg1QzE0MC40MDggNDguMTAwNSAxNDAuNTk4IDQ4LjEwNzUgMTQwLjc4OSA0OC4xMDc1SDE0OS40NTRDMTQ5LjQ1NCA0OC4xMDc1IDE0OS40NTQgMzkuNDUxNSAxNDkuNDU0IDM5LjQ1MjVDMTQ5LjQ1NCAzOC40NTM1IDE0OS4yODEgMzcuNDUxNSAxNDguOTQxIDM2LjUxMzVaTTE0Ni4yNTIgNDQuOTQ3NUMxNDYuMjUyIDQ0Ljk0NzUgMTQyLjMxNSA0NC45NDc1IDE0MC43OTcgNDQuOTQ3NUMxMzcuNzY5IDQ0Ljk0NzUgMTM1LjMxNSA0Mi40Nzk1IDEzNS4zMTUgMzkuNDUxNUMxMzUuMzE1IDM3LjkzNDUgMTM1LjkzMiAzNi41NzQ1IDEzNi45MjggMzUuNTgxNUwxMzYuOTI5IDM1LjU4MjVDMTQwLjMxNSAzMi4xNTE1IDE0Ni4yNzQgMzQuNTU4NSAxNDYuMjUzIDM5LjQ1MTVDMTQ2LjI1MiA0MC45Njk1IDE0Ni4yNTIgNDQuOTQ3NSAxNDYuMjUyIDQ0Ljk0NzVaIiBmaWxsPSIjMDcyNDJEIi8+CjxwYXRoIGQ9Ik0yMDguMzUxIDM2LjUxMzVDMjA0Ljk0NiAyNy41MTk1IDE5MS43NDkgMjkuNzAzNSAxOTEuNTQ5IDM5LjQ1MjVDMTkxLjU1NCA0MS41NDY1IDE5Mi4yNzMgNDMuNDI0NSAxOTMuNTI4IDQ0Ljk1NDVDMTk1IDQ2Ljc0MTUgMTk3LjE3NCA0Ny45Mjc1IDE5OS42MjkgNDguMDg4NUMxOTkuODE4IDQ4LjEwMDUgMjAwLjAwOCA0OC4xMDc1IDIwMC4xOTkgNDguMTA3NUgyMDguODY0QzIwOC44NjQgNDguMTA3NSAyMDguODY0IDM5LjQ1MTUgMjA4Ljg2NCAzOS40NTI1QzIwOC44NjMgMzguNDUzNSAyMDguNjkgMzcuNDUxNSAyMDguMzUxIDM2LjUxMzVaTTIwNS42NjEgNDQuOTQ3NUMyMDUuNjYxIDQ0Ljk0NzUgMjAxLjcyNCA0NC45NDc1IDIwMC4yMDYgNDQuOTQ3NUMxOTcuMTc4IDQ0Ljk0NzUgMTk0LjcyNCA0Mi40Nzk1IDE5NC43MjQgMzkuNDUxNUMxOTQuNzI0IDM3LjkzNDUgMTk1LjM0MSAzNi41NzQ1IDE5Ni4zMzcgMzUuNTgxNUwxOTYuMzM4IDM1LjU4MjVDMTk5LjcyNCAzMi4xNTE1IDIwNS42ODMgMzQuNTU4NSAyMDUuNjYyIDM5LjQ1MTVDMjA1LjY2MSA0MC45Njk1IDIwNS42NjEgNDQuOTQ3NSAyMDUuNjYxIDQ0Ljk0NzVaIiBmaWxsPSIjMDcyNDJEIi8+CjxwYXRoIGQ9Ik02NS40NjkgNS40MzE2NEwxMC4xMjQgMzcuNDA5NkwxMC4xMjUgMTAxLjg3OEw2NS40NjIgMTM0LjExTDEyMC44MTMgMTAxLjg5NlYzNy40MDc2TDY1LjQ2OSA1LjQzMTY0WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTY0LjQ2NDEgNzkuMjUxMUM1OC4yMDUxIDc2LjQzNDEgNTQuNTA1MSA3MC40MTIxIDU0LjcwMjEgNjQuMDE2MUw0MS4zMjIxIDU2LjI4OTFDNDAuMzI0MSA2My42OTIxIDQxLjkxODEgNzEuNDM0MSA0NS45MzQxIDc4LjE0MzFDNTAuMjA4MSA4NS4yODQxIDU2LjM4MTEgOTAuNjAzMSA2NC40NjUxIDkzLjY4MzFWNzkuMjUxMUg2NC40NjQxWiIgZmlsbD0iIzE5MDREQSIvPgo8cGF0aCBkPSJNNjQuOTcwOSA5NC40MjA3TDY0LjI4MzkgOTQuMTU4N0M1Ni4yNDE5IDkxLjA5NDcgNDkuOTIxOSA4NS43OTQ3IDQ1LjQ5ODkgNzguNDA1N0M0MS40NjE5IDcxLjY2MDcgMzkuNzk5OSA2My43ODI3IDQwLjgxOTkgNTYuMjIyN0w0MC45MjA5IDU1LjQ3MjdMNTUuMjE2OSA2My43Mjg3TDU1LjIwNzkgNjQuMDMyN0M1NS4wMTM5IDcwLjMyMjcgNTguNzI4OSA3Ni4xMTU3IDY0LjY3MDkgNzguNzg4N0w2NC45Njk5IDc4LjkyMzdWOTQuNDIwN0g2NC45NzA5Wk00MS43MzI5IDU3LjExMjdDNDAuOTQ5OSA2NC4yMTM3IDQyLjU4NDkgNzEuNTU5NyA0Ni4zNjg5IDc3Ljg4MzdDNTAuNTQ0OSA4NC44NjA3IDU2LjQ1OTkgODkuOTIzNyA2My45NTY5IDkyLjk0MDdWNzkuNTc2N0M1Ny45MDg5IDc2LjcyMDcgNTQuMTEwOSA3MC43ODQ3IDU0LjE4ODkgNjQuMzA2N0w0MS43MzI5IDU3LjExMjdaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNjQuNDY0MSAxMTEuOTc4Vjk1LjM5MDJDNTUuODA2MSA5Mi4yMjgyIDQ5LjE3MzEgODYuNTM1MiA0NC42MjExIDc4LjkzMDJDNDAuMzE1MSA3MS43MzYyIDM4LjY3NzEgNjMuMzk3MiAzOS44OTcxIDU1LjQ2NzJMMjcuNDYxMSA0OC4yODUyQzIwLjMzNzEgNzQuMjg4MiAzNi4zMjIxIDEwMS45ODIgNjQuNDY0MSAxMTEuOTc4WiIgZmlsbD0iIzE5MDREQSIvPgo8cGF0aCBkPSJNNjQuOTcwOSAxMTIuNjk2TDY0LjI5NDkgMTEyLjQ1NkM1MC41ODQ5IDEwNy41ODYgMzkuMjIxOSA5OC4zMjg2IDMyLjI5ODkgODYuMzg3NkMyNS4zNzc5IDc0LjQ1MTYgMjMuNDg1OSA2MC44NzI2IDI2Ljk3MTkgNDguMTUwNkwyNy4xNDU5IDQ3LjUxNzZMNDAuNDUwOSA1NS4yMDA2TDQwLjM5ODkgNTUuNTQzNkMzOS4xODc5IDYzLjQxNDYgNDAuODQyOSA3MS42MjY2IDQ1LjA1NjkgNzguNjY4NkM0OS42Nzc5IDg2LjM4OTYgNTYuMjY1OSA5MS44NTU2IDY0LjYzODkgOTQuOTEyNkw2NC45NzE5IDk1LjAzNDZWMTEyLjY5Nkg2NC45NzA5Wk0yNy43ODA5IDQ5LjA1NTZDMjEuMTM4OSA3NC42NTI2IDM2LjU2OTkgMTAxLjE4OCA2My45NTY5IDExMS4yNTZWOTUuNzQyNkM1NS41MTg5IDkyLjU4MDYgNDguODY3OSA4Ny4wMTI2IDQ0LjE4NjkgNzkuMTg5NkMzOS45MTE5IDcyLjA0ODYgMzguMTk3OSA2My43MzE2IDM5LjM0NDkgNTUuNzMyNkwyNy43ODA5IDQ5LjA1NTZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNjYuMjk2OSA5NS4yNFYxMTEuOTc5QzkzLjkxODkgMTAxLjc1MSAxMTAuNSA3NC4xMDUgMTAzLjQ5NiA0OC4zNzNMOTEuMTI2OSA1NS41NzlDOTIuNjcwOSA2NC4xMzIgOTEuMzI0OSA3Mi40NyA4Ny4xODY5IDc5LjQ0NkM4Mi45MzY5IDg2LjYxMyA3NS41MTM5IDkxLjk5MiA2Ni4yOTY5IDk1LjI0WiIgZmlsbD0iIzA4QjFENSIvPgo8cGF0aCBkPSJNNjUuNzkgMTEyLjcwOFY5NC44ODA2TDY2LjEyOSA5NC43NjE2Qzc1LjU0NiA5MS40NDM2IDgyLjY3NiA4Ni4wNTc2IDg2Ljc1MyA3OS4xODc2QzkwLjgyNSA3Mi4zMTk2IDkyLjE2NiA2NC4xODc2IDkwLjYyOSA1NS42Njk2TDkwLjU2NiA1NS4zMTk2TDEwMy44MTIgNDcuNjAxNkwxMDMuOTg1IDQ4LjIzOTZDMTEwLjk2MiA3My44NzQ2IDk0LjQ4NSAxMDIuMDgyIDY2LjQ3MyAxMTIuNDU1TDY1Ljc5IDExMi43MDhaTTY2LjgwNCA5NS41OTc2VjExMS4yNDdDOTMuNjgxIDEwMC45NDEgMTA5LjUxOSA3My44OTg2IDEwMy4xNzYgNDkuMTQ2Nkw5MS42ODggNTUuODM5NkM5My4xNyA2NC40NzQ2IDkxLjc2NyA3Mi43MTg2IDg3LjYyMyA3OS43MDQ2QzgzLjQ3NiA4Ni42OTg2IDc2LjI4MSA5Mi4xODk2IDY2LjgwNCA5NS41OTc2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTc2LjM4MDkgNjQuMDg4NEM3Ni40MzY5IDcwLjI5ODQgNzIuNzg2OSA3NS43NjE0IDY2LjI5NjkgNzkuMjUxNFY5My42ODQ0Qzc0LjkyMDkgOTAuNTQwNCA4MS44ODY5IDg1LjM4NDQgODUuODcxOSA3OC42NjU0Qzg5LjczMDkgNzIuMTU5NCA5MS4wNDI5IDY0LjM5NjQgODkuNzE5OSA1Ni4zOTg0TDc2LjM4MDkgNjQuMDg4NFoiIGZpbGw9IiMwOEIxRDUiLz4KPHBhdGggZD0iTTY1Ljc5IDk0LjQwOTdWNzguOTQ4N0w2Ni4wNTcgNzguODA0OEM3Mi4zNDggNzUuNDIwOCA3NS45MjYgNzAuMDU4OCA3NS44NzMgNjQuMDkyOEw3NS44NyA2My43OTY3TDkwLjEwMSA1NS41OTM4TDkwLjIyIDU2LjMxNThDOTEuNTc1IDY0LjUwNjggOTAuMjIzIDcyLjMyNDcgODYuMzA4IDc4LjkyMzdDODIuMzQ1IDg1LjYwNTcgNzUuNDg2IDkwLjg3NDcgNjYuNDcgOTQuMTYwN0w2NS43OSA5NC40MDk3Wk02Ni44MDQgNzkuNTUyOFY5Mi45NTQ4Qzc1LjI2IDg5LjczNTggODEuNjk0IDg0LjcxNTcgODUuNDM2IDc4LjQwNjdDODkuMTExIDcyLjIwOTcgOTAuNDUyIDY0Ljg5NDggODkuMzMyIDU3LjIwNjhMNzYuODg4IDY0LjM4MTdDNzYuODI2IDcwLjUzMTcgNzMuMTcxIDc2LjAzMzggNjYuODA0IDc5LjU1MjhaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNzguMzA2OSA0MS44OTg3QzgzLjUyMzkgNDQuNDQyNyA4Ny43NzM5IDQ4LjUxODcgOTAuNTk1OSA1My42ODQ3QzkwLjYzMjkgNTMuNzUyNyA5MC42Njc5IDUzLjgyMzcgOTAuNzA0OSA1My44OTE3TDEwMi44MzcgNDYuODg1N0MxMDIuNjQ0IDQ2LjY0MjcgMTAyLjQ1OSA0Ni4zOTY3IDEwMi4zMDYgNDYuMTUwN0M5Ny44NTQ5IDM4Ljk1MTcgOTEuOTc1OSAzMy41MzQ3IDg0LjgyOTkgMzAuMDQ5N0M2NC42NTY5IDIwLjIxMTcgMzkuOTM3OSAyNy42Mjk3IDI4LjEyODkgNDYuOTExN0w0MC4yMzE5IDUzLjg5NzdDNDguNDQ4OSA0MC42ODQ3IDY0Ljk5MDkgMzUuNDA0NyA3OC4zMDY5IDQxLjg5ODdaIiBmaWxsPSIjRkZDOTAwIi8+CjxwYXRoIGQ9Ik05MC41MDM4IDU0LjU5MjRMOTAuMTUwOCA1My45MzA0Qzg3LjM3ODggNDguODUzNCA4My4yMDU4IDQ0Ljg1MjQgNzguMDg0OCA0Mi4zNTM0QzY1LjE0MjggMzYuMDQyNCA0OC43MDM4IDQxLjIzMDQgNDAuNjYwOCA1NC4xNjU0TDQwLjQwMTggNTQuNTgxNEwyNy40MjM4IDQ3LjA5MTRMMjcuNjk0OCA0Ni42NDc0QzM5LjYwMTggMjcuMjA2NCA2NC43OTc4IDE5LjcxODQgODUuMDUwOCAyOS41OTQ0QzkyLjI4NDggMzMuMTIyNCA5OC4yMzQ4IDM4LjYwMzQgMTAyLjczNiA0NS44ODQ0QzEwMi44NzkgNDYuMTEzNCAxMDMuMDUzIDQ2LjM0MzQgMTAzLjIzMyA0Ni41NzA0TDEwMy41OTggNDcuMDMxNEw5MC41MDM4IDU0LjU5MjRaTTI4LjgzNTggNDYuNzM1NEw0MC4wNjI4IDUzLjIxNjRDNDguNDY5OCA0MC4xNTI0IDY1LjI2NzggMzQuOTc2NCA3OC41Mjk4IDQxLjQ0MzRDODMuNzU3OCA0My45OTI0IDg4LjAzMDggNDguMDUxNCA5MC45MDI4IDUzLjE5MjRMMTAyLjA4NyA0Ni43MzQ0QzEwMi4wMTIgNDYuNjI5NCAxMDEuOTQxIDQ2LjUyMzQgMTAxLjg3NiA0Ni40MTg0Qzk3LjQ3NTggMzkuMzAyNCA5MS42NjY4IDMzLjk0ODQgODQuNjA4OCAzMC41MDU0QzY0Ljk2NjggMjAuOTI5NCA0MC41ODE4IDI4LjA2NDQgMjguODM1OCA0Ni43MzU0WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTcwLjczMTIgNTcuMjkzOUM3Mi44OTEyIDU4LjM0NjkgNzQuNjQyMiA2MC4wNDc5IDc1Ljc5NjIgNjIuMjExOUM3NS44MzUyIDYyLjI4NDkgNzUuODY5MiA2Mi4zNjE5IDc1LjkwNjIgNjIuNDM1OUw4OS4zNzkyIDU0LjY1NTlDODkuMzM3MiA1NC41NzY5IDg5LjI5NjIgNTQuNDk0OSA4OS4yNTMyIDU0LjQxNjlDODYuNTg0MiA0OS41MzA5IDgyLjU2NzIgNDUuNjc1OSA3Ny42MzYyIDQzLjI3MTlDNjUuMDM5MiAzNy4xMjc5IDQ5LjM3MTIgNDIuMTM5OSA0MS41NTYyIDU0LjY2MTlMNTQuOTU2MiA2Mi4zOTU5QzU4LjQ0ODIgNTYuNzk1OSA2NS4yMDUyIDU0LjU5OTkgNzAuNzMxMiA1Ny4yOTM5WiIgZmlsbD0iI0ZGQzkwMCIvPgo8cGF0aCBkPSJNNzUuNjg5MSA2My4xNDc0TDc1LjM0NjEgNjIuNDQ3NEM3NC4yNDYxIDYwLjM4MjQgNzIuNTcyMSA1OC43NTc0IDcwLjUwODEgNTcuNzUwNEg3MC41MDkxQzY1LjIzNTEgNTUuMTgwNCA1OC43MzUxIDU3LjI5MjQgNTUuMzg2MSA2Mi42NjU0TDU1LjEyODEgNjMuMDgxNEw0MC44NDkxIDU0LjgzOTRMNDEuMTI3MSA1NC4zOTQ0QzQ5LjE3MzEgNDEuNTA0NCA2NC45NjYxIDM2LjUyNjQgNzcuODYwMSA0Mi44MTc0QzgyLjg4NTEgNDUuMjY3NCA4Ni45ODAxIDQ5LjE5NTQgODkuNjk5MSA1NC4xNzQ0TDkwLjA2MDEgNTQuODQ5NEw3NS42ODkxIDYzLjE0NzRaTTY1Ljc3MTEgNTUuNjQ2NEM2Ny41MzMxIDU1LjY0NjQgNjkuMjk4MSA1Ni4wMzE0IDcwLjk1MzEgNTYuODM5NEg3MC45NTQxQzczLjEyOTEgNTcuOTAxNCA3NC45MDgxIDU5LjU4OTQgNzYuMTEyMSA2MS43MzM0TDg4LjcwMDEgNTQuNDYzNEM4Ni4wODIxIDQ5Ljc2MzQgODIuMTg0MSA0Ni4wNTQ0IDc3LjQxNTEgNDMuNzI4NEM2NS4zMzcxIDM3Ljg0MDQgNTAuMDA2MSA0Mi41Njg0IDQyLjI2ODEgNTQuNDg4NEw1NC43OTIxIDYxLjcxNzRDNTcuMzk3MSA1Ny44MzY0IDYxLjU3MjEgNTUuNjQ2NCA2NS43NzExIDU1LjY0NjRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTE5LjE0IDM5LjI1NzhMMTA0Ljg2MiA0Ny41NzU4QzExMi4zOTMgNzQuMzUwOCA5NS4xMjI5IDEwMy4yMSA2Ni4yOTc5IDExMy42MDRWMTMxLjczMkwxMTkuMTQgMTAwLjkzNVYzOS4yNTc4WiIgZmlsbD0iIzA4QjFENSIvPgo8cGF0aCBkPSJNNjUuNzkgMTMyLjYxNFYxMTMuMjQ4TDY2LjEyNSAxMTMuMTI3Qzk0Ljk2NSAxMDIuNzI3IDExMS43NjYgNzMuOTk0IDEwNC4zNzQgNDcuNzEzTDEwNC4yNjggNDcuMzM1TDExOS42NDcgMzguMzc1VjEwMS4yMjVMMTE5LjM5NSAxMDEuMzcyTDY1Ljc5IDEzMi42MTRaTTY2LjgwNCAxMTMuOTU5VjEzMC44NDlMMTE4LjYzMiAxMDAuNjQ0VjQwLjE0MUwxMDUuNDU1IDQ3LjgxOEMxMTIuNjk3IDc0LjQwNCA5NS44MDEgMTAzLjMzMSA2Ni44MDQgMTEzLjk1OVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMS43OTc5IDM5LjI0MDJWMTAwLjkxOEw2NC40NjQ4IDEzMS43MzFWMTEzLjYwM0MzNS4xMTQ4IDEwMy40NTUgMTguNDQ0OSA3NC41NDQyIDI2LjA5NDkgNDcuNDk1MkwxMi40Njc5IDM5LjYyNjJMMTEuNzk3OSAzOS4yNDAyWiIgZmlsbD0iIzE5MDREQSIvPgo8cGF0aCBkPSJNNjQuOTcxIDEzMi42MTRMMTEuMjkgMTAxLjIwOFYzOC4zNjEzTDI2LjY5IDQ3LjI1MzNMMjYuNTgzIDQ3LjYzMzNDMTkuMDIyIDc0LjM2NjMgMzUuNzM1IDEwMy4xMzMgNjQuNjMgMTEzLjEyNEw2NC45NzIgMTEzLjI0MlYxMzIuNjE0SDY0Ljk3MVpNMTIuMzA0IDEwMC42MjZMNjMuOTU3IDEzMC44NDZWMTEzLjk2M0MzNC45MDIgMTAzLjczNiAxOC4wODcgNzQuNzczMyAyNS41IDQ3LjczODNMMTIuMzA0IDQwLjExNzNWMTAwLjYyNloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMi41NTQyIDM3LjkyMzJMMTQuMTEwMiAzOC44MjIyTDI2LjgwMzIgNDYuMTQ4MkMzOS4wMTQyIDI2LjE3NTIgNjQuNjEwMiAxOC40ODkyIDg1LjUwMDIgMjguNjc2MkM5Mi45MTAyIDMyLjI5MDIgOTkuMDAyMiAzNy44OTkyIDEwMy42MDcgNDUuMzQ3MkMxMDMuNzUzIDQ1LjU4MzIgMTAzLjk1NiA0NS44NDEyIDEwNC4xNzcgNDYuMTEzMkwxMTguMzcyIDM3LjkxNjJMNjUuNDY5MiA3LjM2NTIzTDEyLjU1NDIgMzcuOTIzMloiIGZpbGw9IiNGRkM5MDAiLz4KPHBhdGggZD0iTTI2Ljk3NyA0Ni44MzMzTDExLjU0MSAzNy45MjIzTDY1LjQ2OSA2Ljc3OTNMNjUuNzIzIDYuOTI1M0wxMTkuMzg2IDM3LjkxNTNMMTA0LjA1NiA0Ni43NjczTDEwMy43ODQgNDYuNDMyM0MxMDMuNTQ3IDQ2LjE0MTMgMTAzLjMzMSA0NS44NjQzIDEwMy4xNzYgNDUuNjEyM0M5OC42MjIgMzguMjQ3MyA5Mi42MDEgMzIuNzAyMyA4NS4yNzkgMjkuMTMwM0M2NC43NjggMTkuMTMwMyAzOS4yNzQgMjYuNzIxMyAyNy4yMzYgNDYuNDExM0wyNi45NzcgNDYuODMzM1pNMTMuNTY5IDM3LjkyMjNMMjYuNjMgNDUuNDYyM0MzOS4wNDIgMjUuNjQ1MyA2NC44OTYgMTguMDYzMyA4NS43MjIgMjguMjE5M0M5My4yMiAzMS44NzYzIDk5LjM4MiAzNy41NDgzIDEwNC4wMzggNDUuMDc4M0MxMDQuMTEyIDQ1LjE5ODMgMTA0LjIwMiA0NS4zMjMzIDEwNC4zMDEgNDUuNDU0M0wxMTcuMzU3IDM3LjkxNTNMNjUuNDY5IDcuOTQ5M0wxMy41NjkgMzcuOTIyM1oiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik02Ni4yMzczIDc3LjU3MTdDNzEuNDQ0MyA3NC42NTk3IDc0LjU3MDMgNjkuOTk3NyA3NC43NzEzIDY0LjgyNjdDNzQuNzcxMyA2NC44MjY3IDc0Ljc5NDMgNjQuMzEzNyA3NC43NTUzIDYzLjQ4MTdDNzQuNzQ3MyA2My4zMTA3IDczLjYwMDMgNjAuNTgyNyA3MC4xMDYzIDU4LjY3NzdDNjUuNDE0MyA1Ni4xMTk3IDU4Ljc1NjMgNTguNTgwNyA1Ni4wOTAzIDYzLjQ4MTdDNTYuMDkwMyA2My40ODE3IDU2LjAyNjMgNjQuMDgyNyA1Ni4wNTYzIDY0LjgyNjdDNTYuMjQ3MyA2OS41MjY3IDU5LjE0MzMgNzUuMDQ1NyA2NC4yNzAzIDc3LjU3MTdMNjUuMzA5MyA3OC4wNjc3TDY2LjIzNzMgNzcuNTcxN1oiIGZpbGw9IiNGRjQ0NUYiLz4KPHBhdGggZD0iTTY1LjMyMzIgNzguNjM1NUw2NC4wNTMyIDc4LjAyOTRDNTguNDM2MiA3NS4yNjA0IDU1LjczNjIgNjkuNDE0NCA1NS41NTAyIDY0Ljg0NzVDNTUuNTE4MiA2NC4wNzQ1IDU1LjU4NDIgNjMuNDU0NCA1NS41ODcyIDYzLjQyNzRMNTUuNjQ1MiA2My4yMzk0QzU2Ljk4OTIgNjAuNzcwNCA1OS4zNjgyIDU4Ljc4OTUgNjIuMTcyMiA1Ny44MDM1QzY1LjAyNzIgNTYuNzk5NSA2OC4wMDgyIDU2Ljk1NTQgNzAuMzUwMiA1OC4yMzE0QzczLjg5NDIgNjAuMTYzNCA3NS4yNDIyIDYyLjk5NjUgNzUuMjYyMiA2My40NTc1Qzc1LjMwMzIgNjQuMzE3NSA3NS4yNzgyIDY0Ljg0ODQgNzUuMjc4MiA2NC44NDg0Qzc1LjA3MDIgNzAuMjA2NCA3MS44NjUyIDc1LjAwNTQgNjYuNDg1MiA3OC4wMTQ1TDY1LjMyMzIgNzguNjM1NVpNNTYuNTg2MiA2My42MzI1QzU2LjU3MTIgNjMuODI0NSA1Ni41NDIyIDY0LjI3OTUgNTYuNTY0MiA2NC44MDU1QzU2LjczMTIgNjguOTM0NSA1OS4yODYyIDc0LjU0ODQgNjQuNDk1MiA3Ny4xMTY0TDY1LjI5NzIgNzcuNDk5NUw2NS45OTMyIDc3LjEyNzRDNzEuMDU1MiA3NC4yOTQ0IDc0LjA3MDIgNjkuODA0NCA3NC4yNjQyIDY0LjgwNzRDNzQuMjY1MiA2NC43OTM0IDc0LjI4NjIgNjQuMjk5NSA3NC4yNDkyIDYzLjUwNjVDNzQuMTQ1MiA2My4xODI1IDcyLjkyMTIgNjAuNzkxNSA2OS44NjQyIDU5LjEyMzVDNjcuNzc1MiA1Ny45ODQ1IDY1LjA5NTIgNTcuODUzNSA2Mi41MDcyIDU4Ljc2MTVDNTkuOTcyMiA1OS42NTA1IDU3LjgyMDIgNjEuNDIzNCA1Ni41ODYyIDYzLjYzMjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K
+  mediatype: image/svg+xml
+name: trivy-operator
+schema: olm.package
+---
+entries:
+- name: trivy-operator.v0.1.0
+- name: trivy-operator.v0.1.3
+  replaces: trivy-operator.v0.1.0
+- name: trivy-operator.v0.1.4
+  replaces: trivy-operator.v0.1.3
+- name: trivy-operator.v0.1.5
+  replaces: trivy-operator.v0.1.4
+- name: trivy-operator.v0.1.6
+  replaces: trivy-operator.v0.1.5
+- name: trivy-operator.v0.1.7
+  replaces: trivy-operator.v0.1.6
+- name: trivy-operator.v0.1.8
+  replaces: trivy-operator.v0.1.7
+- name: trivy-operator.v0.1.9
+  replaces: trivy-operator.v0.1.8
+- name: trivy-operator.v0.10.0
+  replaces: trivy-operator.v0.9.0
+- name: trivy-operator.v0.10.1
+  replaces: trivy-operator.v0.10.0
+- name: trivy-operator.v0.11.0
+  replaces: trivy-operator.v0.10.1
+- name: trivy-operator.v0.11.1
+  replaces: trivy-operator.v0.11.0
+- name: trivy-operator.v0.12.0
+  replaces: trivy-operator.v0.11.1
+- name: trivy-operator.v0.12.1
+  replaces: trivy-operator.v0.12.0
+- name: trivy-operator.v0.13.0
+  replaces: trivy-operator.v0.12.1
+- name: trivy-operator.v0.13.1
+  replaces: trivy-operator.v0.13.0
+- name: trivy-operator.v0.13.2
+  replaces: trivy-operator.v0.13.1
+- name: trivy-operator.v0.14.0
+  replaces: trivy-operator.v0.13.2
+- name: trivy-operator.v0.14.1
+  replaces: trivy-operator.v0.14.0
+- name: trivy-operator.v0.15.0
+  replaces: trivy-operator.v0.14.1
+- name: trivy-operator.v0.15.1
+  replaces: trivy-operator.v0.15.0
+- name: trivy-operator.v0.16.0
+  replaces: trivy-operator.v0.15.1
+- name: trivy-operator.v0.16.1
+  replaces: trivy-operator.v0.16.0
+- name: trivy-operator.v0.16.2
+  replaces: trivy-operator.v0.16.1
+- name: trivy-operator.v0.16.3
+  replaces: trivy-operator.v0.16.2
+- name: trivy-operator.v0.16.4
+  replaces: trivy-operator.v0.16.3
+- name: trivy-operator.v0.17.0
+  replaces: trivy-operator.v0.16.4
+- name: trivy-operator.v0.17.1
+  replaces: trivy-operator.v0.17.0
+- name: trivy-operator.v0.18.0
+  replaces: trivy-operator.v0.17.1
+- name: trivy-operator.v0.18.1
+  replaces: trivy-operator.v0.18.0
+- name: trivy-operator.v0.18.2
+  replaces: trivy-operator.v0.18.1
+- name: trivy-operator.v0.18.3
+  replaces: trivy-operator.v0.18.2
+- name: trivy-operator.v0.18.4
+  replaces: trivy-operator.v0.18.3
+- name: trivy-operator.v0.18.5
+  replaces: trivy-operator.v0.18.4
+- name: trivy-operator.v0.19.0
+  replaces: trivy-operator.v0.18.5
+- name: trivy-operator.v0.19.1
+  replaces: trivy-operator.v0.19.0
+- name: trivy-operator.v0.19.2
+  replaces: trivy-operator.v0.19.1
+- name: trivy-operator.v0.19.3
+  replaces: trivy-operator.v0.19.2
+- name: trivy-operator.v0.19.4
+  replaces: trivy-operator.v0.19.3
+- name: trivy-operator.v0.2.0
+  replaces: trivy-operator.v0.1.9
+- name: trivy-operator.v0.2.1
+  replaces: trivy-operator.v0.2.0
+- name: trivy-operator.v0.20.0
+  replaces: trivy-operator.v0.19.4
+- name: trivy-operator.v0.20.1
+  replaces: trivy-operator.v0.20.0
+- name: trivy-operator.v0.21.0
+  replaces: trivy-operator.v0.20.1
+- name: trivy-operator.v0.21.1
+  replaces: trivy-operator.v0.21.0
+- name: trivy-operator.v0.21.2
+  replaces: trivy-operator.v0.21.1
+- name: trivy-operator.v0.21.3
+  replaces: trivy-operator.v0.21.2
+- name: trivy-operator.v0.22.0
+  replaces: trivy-operator.v0.21.3
+- name: trivy-operator.v0.3.0
+  replaces: trivy-operator.v0.2.1
+- name: trivy-operator.v0.4.0
+  replaces: trivy-operator.v0.3.0
+- name: trivy-operator.v0.5.0
+  replaces: trivy-operator.v0.4.0
+- name: trivy-operator.v0.6.0
+  replaces: trivy-operator.v0.5.0
+- name: trivy-operator.v0.7.0
+  replaces: trivy-operator.v0.6.0
+- name: trivy-operator.v0.7.1
+  replaces: trivy-operator.v0.7.0
+- name: trivy-operator.v0.8.0
+  replaces: trivy-operator.v0.7.1
+- name: trivy-operator.v0.9.0
+  replaces: trivy-operator.v0.8.0
+name: alpha
+package: trivy-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:02c171e59c45c56b86ff21f4517ecafda3b65600bb32012a02085ec17563a925
+name: trivy-operator.v0.1.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.1.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.1.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:02c171e59c45c56b86ff21f4517ecafda3b65600bb32012a02085ec17563a925
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:5c8e7537b34d77ca5136b26197317100ab133ba024bfb758ef6f0edf3141c0af
+name: trivy-operator.v0.1.3
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.1.3
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.1.3
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:5c8e7537b34d77ca5136b26197317100ab133ba024bfb758ef6f0edf3141c0af
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:e262e52adaccb29fe74f51e3e2036ea187317e3bca6cb73ef7faddc4bab9c792
+name: trivy-operator.v0.1.4
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.1.4
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.1.4
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:e262e52adaccb29fe74f51e3e2036ea187317e3bca6cb73ef7faddc4bab9c792
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:578f3cc22952c66337e99e09aaebe81da79d140184740194c994ff14bf1411ef
+name: trivy-operator.v0.1.5
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.1.5
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.1.5
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:578f3cc22952c66337e99e09aaebe81da79d140184740194c994ff14bf1411ef
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:18cd7308e448c98d7647ba24b147d291daa0a00adbff6e960d294d388a235ebf
+name: trivy-operator.v0.1.6
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.1.6
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.1.6
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:18cd7308e448c98d7647ba24b147d291daa0a00adbff6e960d294d388a235ebf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:d6a1d39c605f2d48ee0ae707470dd16443f18be8d016391d99b2940d4ff6afbb
+name: trivy-operator.v0.1.7
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.1.7
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.1.7
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:d6a1d39c605f2d48ee0ae707470dd16443f18be8d016391d99b2940d4ff6afbb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:3a46a7a50d47d3a57695b8a49968344e9ad1403e5800f989db962471bbcbee24
+name: trivy-operator.v0.1.8
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.1.8
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.1.8
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:3a46a7a50d47d3a57695b8a49968344e9ad1403e5800f989db962471bbcbee24
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:0548d50a1ad79242acbd10a78012d5d0cc74ee31eace4fe2e299171b6ad912ae
+name: trivy-operator.v0.1.9
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.1.9
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.1.9
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:0548d50a1ad79242acbd10a78012d5d0cc74ee31eace4fe2e299171b6ad912ae
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:f2e2dc13212566690b52979315cf3b30301aed1264f579ead309f97a8ba608ff
+name: trivy-operator.v0.10.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.10.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.10.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:f2e2dc13212566690b52979315cf3b30301aed1264f579ead309f97a8ba608ff
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:ead31119f9cc2f8af52d9ae7f3108998d88da56caf66fca7d369e847548e673e
+name: trivy-operator.v0.10.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.10.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.10.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:ead31119f9cc2f8af52d9ae7f3108998d88da56caf66fca7d369e847548e673e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:bb8a558322310ee160c1de96b545e55409cfa012fabfca0073379dcbe67f073e
+name: trivy-operator.v0.11.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.11.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.11.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:bb8a558322310ee160c1de96b545e55409cfa012fabfca0073379dcbe67f073e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:e3f5a09ff779720c7b550cdae3a62482cd89f598b587bebb10171c6ba661d4cd
+name: trivy-operator.v0.11.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.11.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.11.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:e3f5a09ff779720c7b550cdae3a62482cd89f598b587bebb10171c6ba661d4cd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:6a2e1fe7b5ad666799baf57541ba84ae6b646cf9361c9b21079d482433f7384d
+name: trivy-operator.v0.12.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.12.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.12.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:6a2e1fe7b5ad666799baf57541ba84ae6b646cf9361c9b21079d482433f7384d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:dc276ac234cd07dad948b9cc7904a864e34edfc6a8d4033ed14891307b94f3b7
+name: trivy-operator.v0.12.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.12.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.12.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:dc276ac234cd07dad948b9cc7904a864e34edfc6a8d4033ed14891307b94f3b7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:b41a67d05f4fd42349787edbb3c86544d9be2cda378f8e7d5eb6139eadfb17cf
+name: trivy-operator.v0.13.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.13.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.13.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:b41a67d05f4fd42349787edbb3c86544d9be2cda378f8e7d5eb6139eadfb17cf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:10f14bda61e4cf06c9ca4b003919112209362be29d9e43e6f122609996757c33
+name: trivy-operator.v0.13.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.13.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.13.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:10f14bda61e4cf06c9ca4b003919112209362be29d9e43e6f122609996757c33
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:54dae92c7c4e73c3641fabb179eaf2481c4d03ab72c8c76c67ea47bd5cc65d15
+name: trivy-operator.v0.13.2
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.13.2
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.13.2
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:54dae92c7c4e73c3641fabb179eaf2481c4d03ab72c8c76c67ea47bd5cc65d15
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:2a1b23dd8752b507c2467acab524ea78ae9a258c987916848bc69e0827298a5a
+name: trivy-operator.v0.14.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.14.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.14.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:2a1b23dd8752b507c2467acab524ea78ae9a258c987916848bc69e0827298a5a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:88561f66c12a91a6e8f96488c51b3cf7f4fa298ab545f3573f8ac47eb238b305
+name: trivy-operator.v0.14.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.14.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.14.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:88561f66c12a91a6e8f96488c51b3cf7f4fa298ab545f3573f8ac47eb238b305
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:a77c637f5ee7257379ddd20d176738bb285b997dbefe90fdcfbcabd078da12cc
+name: trivy-operator.v0.15.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.15.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.15.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:a77c637f5ee7257379ddd20d176738bb285b997dbefe90fdcfbcabd078da12cc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:a51c9fabd299c33dc08d31c9cb1a4b1d474af506fb2c7debc322cf747c3eb34a
+name: trivy-operator.v0.15.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.15.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.15.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:a51c9fabd299c33dc08d31c9cb1a4b1d474af506fb2c7debc322cf747c3eb34a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:afdb8ad69aad946576a71734ac439bd1a71699783b50d4e58ff66006fbc0404c
+name: trivy-operator.v0.16.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.16.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.16.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:afdb8ad69aad946576a71734ac439bd1a71699783b50d4e58ff66006fbc0404c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:405927f96daa11f62df25e63db258fa872f0347b11248b0ef836b6a05154077f
+name: trivy-operator.v0.16.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.16.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.16.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:405927f96daa11f62df25e63db258fa872f0347b11248b0ef836b6a05154077f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:80aa05d050f2fa218da11566da177df285d6ff9ec4305ce0f33daa4fb1823d44
+name: trivy-operator.v0.16.2
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.16.2
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.16.2
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:80aa05d050f2fa218da11566da177df285d6ff9ec4305ce0f33daa4fb1823d44
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:1413734775ea7201ae2648ad71036f12545bfc41037bf79e655c75308f0dd525
+name: trivy-operator.v0.16.3
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.16.3
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.16.3
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:1413734775ea7201ae2648ad71036f12545bfc41037bf79e655c75308f0dd525
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:ba75f2091f5023186c57e861ce79be5eab60d5f967f78e3455ed13ebfab0642b
+name: trivy-operator.v0.16.4
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.16.4
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.16.4
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:ba75f2091f5023186c57e861ce79be5eab60d5f967f78e3455ed13ebfab0642b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:91fcf9184ed58c8c79bb9cad3de6aeca4b56e472efc6d64d7b68aa57876b4b03
+name: trivy-operator.v0.17.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.17.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.17.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:91fcf9184ed58c8c79bb9cad3de6aeca4b56e472efc6d64d7b68aa57876b4b03
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:5280efc0b73867ca823c2cd278ef3cdbc81516c857cdcbfaad6f9c6840485fad
+name: trivy-operator.v0.17.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.17.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.17.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:5280efc0b73867ca823c2cd278ef3cdbc81516c857cdcbfaad6f9c6840485fad
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:f93e48a53dcc5a5f357aa508a34772f94686daf4ad1b8517fe193bdd5d0be6a7
+name: trivy-operator.v0.18.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.18.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.18.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:f93e48a53dcc5a5f357aa508a34772f94686daf4ad1b8517fe193bdd5d0be6a7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:7e0b903501c90702f1f3fe7cde9b27a692c9e1c0ebf2cace5af0d7b5c5cc4d1a
+name: trivy-operator.v0.18.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.18.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.18.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:7e0b903501c90702f1f3fe7cde9b27a692c9e1c0ebf2cace5af0d7b5c5cc4d1a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:0d3f5b969cc5954612cb422f128566087275b86747a99744f6815a2cca5ebdd8
+name: trivy-operator.v0.18.2
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.18.2
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.18.2
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:0d3f5b969cc5954612cb422f128566087275b86747a99744f6815a2cca5ebdd8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:6c113f7233ad7fbab8afc6511c6f23ae4ab36ac59c08b21a4d8b96d593913145
+name: trivy-operator.v0.18.3
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.18.3
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.18.3
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:6c113f7233ad7fbab8afc6511c6f23ae4ab36ac59c08b21a4d8b96d593913145
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:aceee9904fa2df2c82e739f9fa6b81b40a582aa436f08b53d499155526a1b0d9
+name: trivy-operator.v0.18.4
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.18.4
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.18.4
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:aceee9904fa2df2c82e739f9fa6b81b40a582aa436f08b53d499155526a1b0d9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:e5771c179fd47a2929a6c08fbe2778e3d31116739d1a9ec273603703a0bfbda9
+name: trivy-operator.v0.18.5
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.18.5
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.18.5
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:e5771c179fd47a2929a6c08fbe2778e3d31116739d1a9ec273603703a0bfbda9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:77466fc8e26e1841f308543d795ea84001f7fc5cf05fa2d15113cd00dd68a807
+name: trivy-operator.v0.19.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.19.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.19.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:77466fc8e26e1841f308543d795ea84001f7fc5cf05fa2d15113cd00dd68a807
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:c4bed08516e00a49e380ee2ecf3fb920d1564f94c9ce4a1413e7174dc07a740c
+name: trivy-operator.v0.19.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.19.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.19.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:c4bed08516e00a49e380ee2ecf3fb920d1564f94c9ce4a1413e7174dc07a740c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:7665a540ac84736387fca94ae4c79f3db0a6ff9d6460a1c75d3a3da18db261ca
+name: trivy-operator.v0.19.2
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.19.2
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.19.2
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:7665a540ac84736387fca94ae4c79f3db0a6ff9d6460a1c75d3a3da18db261ca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:843c911a9d35be9fcc67bc262d0577340ce551798f8bacd13dd65621191d9666
+name: trivy-operator.v0.19.3
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.19.3
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.19.3
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:843c911a9d35be9fcc67bc262d0577340ce551798f8bacd13dd65621191d9666
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:b6331fcd6b8ad09a30adb83c16ea40815047c7c036f5b6f1747be16577edd681
+name: trivy-operator.v0.19.4
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.19.4
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.19.4
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:b6331fcd6b8ad09a30adb83c16ea40815047c7c036f5b6f1747be16577edd681
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:d8d940b96f9db6663f5c53c1a789aed3f78e307d45f62a38432f24da1a65e4d0
+name: trivy-operator.v0.2.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.2.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.2.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:d8d940b96f9db6663f5c53c1a789aed3f78e307d45f62a38432f24da1a65e4d0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:6a51af51110146c34d53e5112f3478e5593bf9eca834a4736b44591a10535e98
+name: trivy-operator.v0.2.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.2.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.2.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:6a51af51110146c34d53e5112f3478e5593bf9eca834a4736b44591a10535e98
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:3c84e3d2742dfa9a7555f1a87897449dae1a197d7ca683eca179257a43d00afd
+name: trivy-operator.v0.20.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.20.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.20.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:3c84e3d2742dfa9a7555f1a87897449dae1a197d7ca683eca179257a43d00afd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:2eb87e173cd829f940077cf3a6845fa5c2f256d2eba2d7e656be4c0a1ae70123
+name: trivy-operator.v0.20.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.20.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.20.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:2eb87e173cd829f940077cf3a6845fa5c2f256d2eba2d7e656be4c0a1ae70123
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:a3f55853275c0d42a0228b25fe377bfdf597566dd234e707f000a9356969681d
+name: trivy-operator.v0.21.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.21.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.21.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:a3f55853275c0d42a0228b25fe377bfdf597566dd234e707f000a9356969681d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:eec37560bc003db954c0ad96117286e520d353532f51e81a06c08d1a835bc16e
+name: trivy-operator.v0.21.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.21.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.21.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:eec37560bc003db954c0ad96117286e520d353532f51e81a06c08d1a835bc16e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:dafc833acb3d6aafef3c7730976749503255ecf953b16915b97804502881be13
+name: trivy-operator.v0.21.2
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.21.2
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.21.2
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:dafc833acb3d6aafef3c7730976749503255ecf953b16915b97804502881be13
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:9022a2f40009de2e15107339d7938018e36f31973753c1990d6a3343897e8568
+name: trivy-operator.v0.21.3
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.21.3
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.21.3
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:9022a2f40009de2e15107339d7938018e36f31973753c1990d6a3343897e8568
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:065da071f1720cc3ec7656555f2a6a5388ff7e86b7c5f0a1b475a5701b8767f7
+name: trivy-operator.v0.22.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterInfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterSbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterVulnerabilityReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: SbomReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.22.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: '[]'
+      capabilities: Basic Install
+      categories: Security
+      certified: "false"
+      containerImage: docker.io/aquasec/trivy-operator:0.22.0
+      createdAt: "2023-07-04T12:30:20Z"
+      description: Keeps security report resources updated
+      repository: https://github.com/aquasecurity/trivy-operator
+      support: Aqua Security
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents the result of scanning a container image for known
+          security vulnerabilities.
+        displayName: VulnerabilityReport
+        kind: VulnerabilityReport
+        name: vulnerabilityreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning a namespaced resource for known
+          configuration issues.
+        displayName: ConfigAuditReport
+        kind: ConfigAuditReport
+        name: configauditreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning a cluster-scoped resource for
+          known configuration issues.
+        displayName: ClusterConfigAuditReport
+        kind: ClusterConfigAuditReport
+        name: clusterconfigauditreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning a cluster-scoped compliance
+          reports.
+        displayName: ClusterComplianceReport
+        kind: ClusterComplianceReport
+        name: clustercompliancereports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning a cluster level sbom reports
+          (used for caching).
+        displayName: ClusterSbomReport
+        kind: ClusterSbomReport
+        name: clustersbomreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning a cluster core components(api-server,
+          kubelet, kube-proxy and etc) level vulnerability report.
+        displayName: ClusterVulnerabilityReport
+        kind: ClusterVulnerabilityReport
+        name: clustervulnerabilityreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning a container image for exposed
+          secret.
+        displayName: ExposedSecretReport
+        kind: ExposedSecretReport
+        name: exposedsecretreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the container image software bill of materials.
+        displayName: SbomReport
+        kind: SbomReport
+        name: sbomreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning assessment of a namespace role
+        displayName: RbacAssessmentReport
+        kind: RbacAssessmentReport
+        name: rbacassessmentreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning infra assessment of k8s core
+          components
+        displayName: InfraAssessmentReport
+        kind: InfraAssessmentReport
+        name: infraassessmentreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning assessment of a cluster-scope
+          role
+        displayName: ClusterRbacAssessmentReport
+        kind: ClusterRbacAssessmentReport
+        name: clusterrbacassessmentreports.aquasecurity.github.io
+        version: v1alpha1
+      - description: Represents the result of scanning assessment of a cluster-scope
+          infra checks
+        displayName: ClusterInfraAssessmentReport
+        kind: ClusterInfraAssessmentReport
+        name: clusterinfraassessmentreports.aquasecurity.github.io
+        version: v1alpha1
+    description: "This operator for Trivy automatically updates security report resources
+      in response to workload and other\nchanges on a Kubernetes cluster - for example,
+      initiating a vulnerability scan when a new Pod is started \n\nTrivy Operator
+      provides:\n\n- Automated vulnerability scanning for Kubernetes applications.\n-
+      Automated configuration audits for Kubernetes resources with predefined rules
+      or custom Open Policy Agent (OPA) policies.\n- Automated exposed secrets scanning
+      for Kubernetes applications.\n- Automated Kubernetes applications bill of materials.\n-
+      Automated rbac assessment scanning for Kubernetes roles and clusterroles.\n-
+      Automated infra assessment scanning for Kubernetes core components.\n\n## Documentation\n\nPlease
+      see the [Documentation](https://aquasecurity.github.io/trivy-operator/latest)
+      for more info about the Trivy Operator project,\nwhich manages a variety of
+      security tools to make their reports accessible as Kubernetes custom resources.\n\n##
+      Installation\n\nCheck this [Operator Lifecycle Manager](https://aquasecurity.github.io/trivy-operator/v0.22.0/operator/installation/olm/)\nguide
+      to install the operator from [OperatorHub](https://operatorhub.io/) or [ArtifactHUB](https://artifacthub.io/)."
+    displayName: Trivy Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - aqua-security
+    - scanning
+    - security
+    links:
+    - name: Trivy Operator on GitHub
+      url: https://github.com/aquasecurity/trivy-operator
+    - name: Trivy Operator Documentation
+      url: https://aquasecurity.github.io/trivy-operator/latest
+    maintainers:
+    - email: chen.keinan@aquasec.com
+      name: Chen Keinan
+    - email: jose.donizetti@aquasec.com
+      name: Jose Donizetti
+    maturity: alpha
+    provider:
+      name: Aqua Security
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.22.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:065da071f1720cc3ec7656555f2a6a5388ff7e86b7c5f0a1b475a5701b8767f7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:2c2a6664d4bec65b7f0adacd6ad1bd436627a918d74453d11ee62009d0ca9b12
+name: trivy-operator.v0.3.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.3.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.3.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:2c2a6664d4bec65b7f0adacd6ad1bd436627a918d74453d11ee62009d0ca9b12
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:61a0ee45d6f362563eff5980e797f4632dfa0805ee9dd2a1125a84c0b7686a23
+name: trivy-operator.v0.4.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.4.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.4.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:61a0ee45d6f362563eff5980e797f4632dfa0805ee9dd2a1125a84c0b7686a23
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:4f7e8474b400117b3e652cc7b371c98541ebcb77b7eabc7287ecf69bcc66ba59
+name: trivy-operator.v0.5.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.5.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.5.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:4f7e8474b400117b3e652cc7b371c98541ebcb77b7eabc7287ecf69bcc66ba59
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:c427121642d0b83678e50b7b813dd6ca1afa12c10883b518ddb093a53e4fa8e6
+name: trivy-operator.v0.6.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.6.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.6.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:c427121642d0b83678e50b7b813dd6ca1afa12c10883b518ddb093a53e4fa8e6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:306250bacdfa0935c41f4296cfc035bba794bc42ef471f5d67dd4017495c2843
+name: trivy-operator.v0.7.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.7.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.7.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:306250bacdfa0935c41f4296cfc035bba794bc42ef471f5d67dd4017495c2843
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:0459dc9a4c12ce9bd3a1a69df95e7bcd5c0d2ecb3d3ffa51f6a125a4fb0d39ac
+name: trivy-operator.v0.7.1
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.7.1
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.7.1
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:0459dc9a4c12ce9bd3a1a69df95e7bcd5c0d2ecb3d3ffa51f6a125a4fb0d39ac
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:b3633c4b33194255bf5f805814d825f0c712f549031ec1fb7afffa6768f8168f
+name: trivy-operator.v0.8.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.8.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.8.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:b3633c4b33194255bf5f805814d825f0c712f549031ec1fb7afffa6768f8168f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/trivy-operator@sha256:12663d00eb57874f5281c579d43db7981d5736171ffd91f206afd514e63c0788
+name: trivy-operator.v0.9.0
+package: trivy-operator
+properties:
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterComplianceReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ClusterRbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ConfigAuditReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: ExposedSecretReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: InfraAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: RbacAssessmentReport
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: aquasecurity.github.io
+    kind: VulnerabilityReport
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: trivy-operator
+    version: 0.9.0
+relatedImages:
+- image: docker.io/aquasec/trivy-operator:0.9.0
+  name: ""
+- image: quay.io/operatorhubio/trivy-operator@sha256:12663d00eb57874f5281c579d43db7981d5736171ffd91f206afd514e63c0788
+  name: ""
+schema: olm.bundle

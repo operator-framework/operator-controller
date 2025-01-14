@@ -1,0 +1,377 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTguNTEgMjU4LjUxIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2QxZDFkMTt9LmNscy0ye2ZpbGw6IzhkOGQ4Zjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPkFzc2V0IDQ8L3RpdGxlPjxnIGlkPSJMYXllcl8yIiBkYXRhLW5hbWU9IkxheWVyIDIiPjxnIGlkPSJMYXllcl8xLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTI5LjI1LDIwQTEwOS4xLDEwOS4xLDAsMCwxLDIwNi40LDIwNi40LDEwOS4xLDEwOS4xLDAsMSwxLDUyLjExLDUyLjExLDEwOC40NSwxMDguNDUsMCwwLDEsMTI5LjI1LDIwbTAtMjBoMEM1OC4xNiwwLDAsNTguMTYsMCwxMjkuMjVIMGMwLDcxLjA5LDU4LjE2LDEyOS4yNiwxMjkuMjUsMTI5LjI2aDBjNzEuMDksMCwxMjkuMjYtNTguMTcsMTI5LjI2LTEyOS4yNmgwQzI1OC41MSw1OC4xNiwyMDAuMzQsMCwxMjkuMjUsMFoiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNzcuNTQsMTAzLjQxSDE0MS42NkwxNTQuOSw2NS43NmMxLjI1LTQuNC0yLjMzLTguNzYtNy4yMS04Ljc2SDEwMi45M2E3LjMyLDcuMzIsMCwwLDAtNy40LDZsLTEwLDY5LjYxYy0uNTksNC4xNywyLjg5LDcuODksNy40LDcuODloMzYuOUwxMTUuNTUsMTk3Yy0xLjEyLDQuNDEsMi40OCw4LjU1LDcuMjQsOC41NWE3LjU4LDcuNTgsMCwwLDAsNi40Ny0zLjQ4TDE4NCwxMTMuODVDMTg2Ljg2LDEwOS4yNCwxODMuMjksMTAzLjQxLDE3Ny41NCwxMDMuNDFaIi8+PC9nPjwvZz48L3N2Zz4=
+  mediatype: image/svg+xml
+name: deployment-validation-operator
+schema: olm.package
+---
+entries:
+- name: deployment-validation-operator.v0.0.10
+- name: deployment-validation-operator.v0.1.0
+- name: deployment-validation-operator.v0.1.1
+  replaces: deployment-validation-operator.v0.0.10
+  skips:
+  - deployment-validation-operator.v0.1.0
+- name: deployment-validation-operator.v0.2.0
+  replaces: deployment-validation-operator.v0.1.1
+- name: deployment-validation-operator.v0.2.1
+  replaces: deployment-validation-operator.v0.2.0
+- name: deployment-validation-operator.v0.2.2
+  replaces: deployment-validation-operator.v0.2.1
+- name: deployment-validation-operator.v0.3.0
+  replaces: deployment-validation-operator.v0.2.2
+- name: deployment-validation-operator.v0.4.0
+  replaces: deployment-validation-operator.v0.3.0
+- name: deployment-validation-operator.v0.5.0
+  replaces: deployment-validation-operator.v0.4.0
+- name: deployment-validation-operator.v0.6.0
+  replaces: deployment-validation-operator.v0.5.0
+- name: deployment-validation-operator.v0.7.0
+  replaces: deployment-validation-operator.v0.6.0
+- name: deployment-validation-operator.v0.7.1
+  replaces: deployment-validation-operator.v0.7.0
+- name: deployment-validation-operator.v0.7.2
+  replaces: deployment-validation-operator.v0.7.1
+- name: deployment-validation-operator.v0.7.3
+  replaces: deployment-validation-operator.v0.7.2
+- name: deployment-validation-operator.v0.7.4
+  replaces: deployment-validation-operator.v0.7.3
+- name: deployment-validation-operator.v0.7.5
+  replaces: deployment-validation-operator.v0.7.4
+- name: deployment-validation-operator.v0.7.6
+  replaces: deployment-validation-operator.v0.7.5
+- name: deployment-validation-operator.v0.7.7
+  replaces: deployment-validation-operator.v0.7.6
+- name: deployment-validation-operator.v0.7.8
+  replaces: deployment-validation-operator.v0.7.7
+name: alpha
+package: deployment-validation-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:000d9da4ede2a0602337ad30f723df34ea20a2ba89b62400e689735bd4d33e8f
+name: deployment-validation-operator.v0.0.10
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.0.10
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.0.10
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:000d9da4ede2a0602337ad30f723df34ea20a2ba89b62400e689735bd4d33e8f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:59dd5f526e024d05c8877d0a2532536cf44c6ca6948784cdcaea1bbf09b7bc90
+name: deployment-validation-operator.v0.1.0
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.1.0
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.1.0
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:59dd5f526e024d05c8877d0a2532536cf44c6ca6948784cdcaea1bbf09b7bc90
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:c665232835b5b420ef29e2a2e70b8fc90d0752b0386e6139bcf52ebeafd2a5f6
+name: deployment-validation-operator.v0.1.1
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.1.1
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.1.1
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:c665232835b5b420ef29e2a2e70b8fc90d0752b0386e6139bcf52ebeafd2a5f6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:ba4ba1f973328407436eb08bc2b9f5fae99263a38dcfc31e3205ab32d16fc601
+name: deployment-validation-operator.v0.2.0
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.2.0
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.2.0
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:ba4ba1f973328407436eb08bc2b9f5fae99263a38dcfc31e3205ab32d16fc601
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:398ee6fb7dbef7c60ffb0bbd3e18da4c08b0596fb76b9e3d8562a4a8ca070ba3
+name: deployment-validation-operator.v0.2.1
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.2.1
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.2.1
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:398ee6fb7dbef7c60ffb0bbd3e18da4c08b0596fb76b9e3d8562a4a8ca070ba3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:9640f9a584f745a7f6e72368942dc713ebba6bf5381748fd4f0fb9f34315f856
+name: deployment-validation-operator.v0.2.2
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.2.2
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.2.2
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:9640f9a584f745a7f6e72368942dc713ebba6bf5381748fd4f0fb9f34315f856
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:456fe1f488bdb34e2c4bd5417951ab822aa134a90083ba2f3eb98ce5f8fb0507
+name: deployment-validation-operator.v0.3.0
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.3.0
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.3.0
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:456fe1f488bdb34e2c4bd5417951ab822aa134a90083ba2f3eb98ce5f8fb0507
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:32b2bb647b233d1bf2b3e665fa9ae703ae81d4699231e91be82db122f96fa09a
+name: deployment-validation-operator.v0.4.0
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.4.0
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.4.0
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:32b2bb647b233d1bf2b3e665fa9ae703ae81d4699231e91be82db122f96fa09a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:279990d5f834af1a210cf7b7ad2c190ba9788a619dccbe67240b13bc82cb51ae
+name: deployment-validation-operator.v0.5.0
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.5.0
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.5.0
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:279990d5f834af1a210cf7b7ad2c190ba9788a619dccbe67240b13bc82cb51ae
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:ea927530f6c52270afe467decbc387c35827230210ef557c6648f7619b4591d3
+name: deployment-validation-operator.v0.6.0
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.6.0
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.6.0
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:ea927530f6c52270afe467decbc387c35827230210ef557c6648f7619b4591d3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:bfa87442b994468539a73906247d564e7aa856c5ce5cbffd9fa4cddab05fba24
+name: deployment-validation-operator.v0.7.0
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.0
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.0
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:bfa87442b994468539a73906247d564e7aa856c5ce5cbffd9fa4cddab05fba24
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:0fdf423e3d431feb57805ba4c3f9f4005207598dbb4f39b57f9721bcd51d2bc8
+name: deployment-validation-operator.v0.7.1
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.1
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.1
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:0fdf423e3d431feb57805ba4c3f9f4005207598dbb4f39b57f9721bcd51d2bc8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:dc8b2a716dcfc03cf4568c317ad15cefb956220a2be2f57ab4661749a5338048
+name: deployment-validation-operator.v0.7.2
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.2
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.2
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:dc8b2a716dcfc03cf4568c317ad15cefb956220a2be2f57ab4661749a5338048
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:9213f86542b02e26d193ef2cf7b77afe1c63e50bdc966e869ee54979ce8970c6
+name: deployment-validation-operator.v0.7.3
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.3
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.3
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:9213f86542b02e26d193ef2cf7b77afe1c63e50bdc966e869ee54979ce8970c6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:6b96ff08e13e5ce5832fadb53b46984416442f69abc590b41f89a128decd397e
+name: deployment-validation-operator.v0.7.4
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.4
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.4
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:6b96ff08e13e5ce5832fadb53b46984416442f69abc590b41f89a128decd397e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:9308a8f6e26f4e29077b9ae0c1e0a284980c93878281d3a85148d95a0746daa9
+name: deployment-validation-operator.v0.7.5
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.5
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.5
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:9308a8f6e26f4e29077b9ae0c1e0a284980c93878281d3a85148d95a0746daa9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:f768b403becc77183cb26d9400e24ee7c8e901d5baeb02ecc06af296b372bd6d
+name: deployment-validation-operator.v0.7.6
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.6
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.6
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:f768b403becc77183cb26d9400e24ee7c8e901d5baeb02ecc06af296b372bd6d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:82a3851d9e212e624764a0f9b26f3b218a781fcff21a68c13c731a6c39f3d659
+name: deployment-validation-operator.v0.7.7
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.7
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.7
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:82a3851d9e212e624764a0f9b26f3b218a781fcff21a68c13c731a6c39f3d659
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/deployment-validation-operator@sha256:55d7c8921a5101e23af3150c90de25f0fae92ac74c08cc4e7db7e3a1a1f7efb6
+name: deployment-validation-operator.v0.7.8
+package: deployment-validation-operator
+properties:
+- type: olm.package
+  value:
+    packageName: deployment-validation-operator
+    version: 0.7.8
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: '[]'
+      capabilities: Basic Install
+      categories: Application Runtime, Monitoring, Security
+      certified: "false"
+      containerImage: quay.io/deployment-validation-operator/dv-operator:0.7.8
+      createdAt: "2021-12-14T00:00:00Z"
+      description: The deployment validation operator
+      ignore-check.kube-linter.io/minimum-three-replicas: This deployment uses 1 pod
+        as currently replicating does not replicate metric data causing installation
+        issues
+      repository: https://github.com/app-sre/deployment-validation-operator
+      support: Best Effort
+    apiServiceDefinitions: {}
+    crdDescriptions: {}
+    description: |
+      The Deployment Validation Operator (DVO) checks deployments and other resources against a curated collection of best practices. These best practices focus mainly on ensuring that the applications are fault-tolerant. DVO reports failed validations via Prometheus metrics. If the best-practice check has failed, the metrics will report `1`.
+    displayName: Deployment Validation Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: AllNamespaces
+    - supported: false
+      type: MultiNamespace
+    keywords:
+    - dvo
+    links:
+    - name: repository
+      url: https://github.com/app-sre/deployment-validation-operator
+    - name: containerImage
+      url: https://quay.io/deployment-validation-operator/dv-operator:0.7.8
+    maintainers:
+    - email: dvo-owners@redhat.com
+      name: Red Hat
+    maturity: alpha
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/deployment-validation-operator/dv-operator:0.7.8
+  name: ""
+- image: quay.io/operatorhubio/deployment-validation-operator@sha256:55d7c8921a5101e23af3150c90de25f0fae92ac74c08cc4e7db7e3a1a1f7efb6
+  name: ""
+schema: olm.bundle

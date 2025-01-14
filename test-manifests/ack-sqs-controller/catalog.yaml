@@ -1,0 +1,488 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-sqs-controller
+schema: olm.package
+---
+entries:
+- name: ack-sqs-controller.v0.0.1
+- name: ack-sqs-controller.v0.0.2
+  replaces: ack-sqs-controller.v0.0.1
+- name: ack-sqs-controller.v0.0.4
+  replaces: ack-sqs-controller.v0.0.2
+- name: ack-sqs-controller.v0.0.5
+  replaces: ack-sqs-controller.v0.0.4
+- name: ack-sqs-controller.v0.0.6
+  replaces: ack-sqs-controller.v0.0.5
+- name: ack-sqs-controller.v0.0.7
+  replaces: ack-sqs-controller.v0.0.6
+- name: ack-sqs-controller.v1.0.0
+  replaces: ack-sqs-controller.v0.0.7
+- name: ack-sqs-controller.v1.0.1
+  replaces: ack-sqs-controller.v1.0.0
+- name: ack-sqs-controller.v1.0.10
+  replaces: ack-sqs-controller.v1.0.7
+- name: ack-sqs-controller.v1.0.12
+  replaces: ack-sqs-controller.v1.0.10
+- name: ack-sqs-controller.v1.0.13
+  replaces: ack-sqs-controller.v1.0.12
+- name: ack-sqs-controller.v1.0.14
+  replaces: ack-sqs-controller.v1.0.13
+- name: ack-sqs-controller.v1.0.15
+  replaces: ack-sqs-controller.v1.0.14
+- name: ack-sqs-controller.v1.0.16
+  replaces: ack-sqs-controller.v1.0.15
+- name: ack-sqs-controller.v1.0.2
+  replaces: ack-sqs-controller.v1.0.1
+- name: ack-sqs-controller.v1.0.3
+  replaces: ack-sqs-controller.v1.0.2
+- name: ack-sqs-controller.v1.0.5
+  replaces: ack-sqs-controller.v1.0.3
+- name: ack-sqs-controller.v1.0.7
+  replaces: ack-sqs-controller.v1.0.5
+name: alpha
+package: ack-sqs-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:0e98f2a84985e8900b4f8fc08d870c8f08a0821d1ba0b98e032bd636cbac3cc7
+name: ack-sqs-controller.v0.0.1
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 0.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v0.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:0e98f2a84985e8900b4f8fc08d870c8f08a0821d1ba0b98e032bd636cbac3cc7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:6caa01131e2c59d4057898af1d9dc8f3e73771a774fd0aff5144d2877ba2bebc
+name: ack-sqs-controller.v0.0.2
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 0.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v0.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:6caa01131e2c59d4057898af1d9dc8f3e73771a774fd0aff5144d2877ba2bebc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:77f1283ff26393bc7b98a20dd645099db0e5120d91732bec7430cdc64e7d57d2
+name: ack-sqs-controller.v0.0.4
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:77f1283ff26393bc7b98a20dd645099db0e5120d91732bec7430cdc64e7d57d2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:4ae366c57d66f08a54de4b1388a8d363f69a4d50c1cdd97c33f03a12778e81ae
+name: ack-sqs-controller.v0.0.5
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:4ae366c57d66f08a54de4b1388a8d363f69a4d50c1cdd97c33f03a12778e81ae
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:c1e765aed69eac3ad2c5efe01d7c8cd81e0dced464e8887a2ea28440972c6b15
+name: ack-sqs-controller.v0.0.6
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:c1e765aed69eac3ad2c5efe01d7c8cd81e0dced464e8887a2ea28440972c6b15
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:02f916d845d575d3b9dd7f89f882003c7eac11b1c8689491118689064c2397e5
+name: ack-sqs-controller.v0.0.7
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:02f916d845d575d3b9dd7f89f882003c7eac11b1c8689491118689064c2397e5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:1e4b4af585a3965b5867277a5db576fbae8aede61e52196aeca3840e8d378027
+name: ack-sqs-controller.v1.0.0
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:1e4b4af585a3965b5867277a5db576fbae8aede61e52196aeca3840e8d378027
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:6809382884978991996904c48a74f94feca7c8d9795b748b3006189b8ae0b1cc
+name: ack-sqs-controller.v1.0.1
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:6809382884978991996904c48a74f94feca7c8d9795b748b3006189b8ae0b1cc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:964f3d5187c0c23769818859e58ed6388877a8bc3169a4c3b444ef32d81c1dcf
+name: ack-sqs-controller.v1.0.10
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:964f3d5187c0c23769818859e58ed6388877a8bc3169a4c3b444ef32d81c1dcf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:37284f4f51187930c7cf452e79ac139fc06b58331b6a72a2714a80a0352b5ed1
+name: ack-sqs-controller.v1.0.12
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:37284f4f51187930c7cf452e79ac139fc06b58331b6a72a2714a80a0352b5ed1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:adf43ab989ed6cd9f6594183c4794767986137f61a547b11208105323ce7106e
+name: ack-sqs-controller.v1.0.13
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:adf43ab989ed6cd9f6594183c4794767986137f61a547b11208105323ce7106e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:26d5278c4c6ae60be810b0db042831e4e6d03db20d2d118cd2dc0a2d7fb1114a
+name: ack-sqs-controller.v1.0.14
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:26d5278c4c6ae60be810b0db042831e4e6d03db20d2d118cd2dc0a2d7fb1114a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:b1f7b7fb816fd7ae0f29a5da4506580d0f55609ea60f428d2dfda5e07d9be7a0
+name: ack-sqs-controller.v1.0.15
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:b1f7b7fb816fd7ae0f29a5da4506580d0f55609ea60f428d2dfda5e07d9be7a0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:d2ede9c1cb66868a9b5ae10a5355a2bfe44885e86fb0488302140fc77ab79c21
+name: ack-sqs-controller.v1.0.16
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.16
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "sqs.services.k8s.aws/v1alpha1",
+            "kind": "Queue",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.16
+      createdAt: "2024-09-06T17:36:38Z"
+      description: AWS SQS controller is a service controller for managing SQS resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Queue represents the state of an AWS sqs Queue resource.
+        displayName: Queue
+        kind: Queue
+        name: queues.sqs.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Simple Queue Service (SQS) resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon SQS**
+
+      Amazon Simple Queue Service (Amazon SQS) offers a secure, durable, and available hosted queue that lets you integrate and decouple distributed software systems and components. Amazon SQS offers common constructs such as [dead-letter queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html) and [cost allocation tags](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-tags.html). It provides a generic web services API that you can access using any programming language that the AWS SDK supports.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon SQS
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - sqs
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon SQS Developer Resources
+      url: https://aws.amazon.com/sqs/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: sqs maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:d2ede9c1cb66868a9b5ae10a5355a2bfe44885e86fb0488302140fc77ab79c21
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:974bc1d5e99f608c6d50c630d84fd923106c63048e215712ec89a2c6c65fe236
+name: ack-sqs-controller.v1.0.2
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:v1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:974bc1d5e99f608c6d50c630d84fd923106c63048e215712ec89a2c6c65fe236
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:52dd9f52580927532296f6f5f2c4a13be88a06d9c89495c4f01b40ae1b8e91c9
+name: ack-sqs-controller.v1.0.3
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:52dd9f52580927532296f6f5f2c4a13be88a06d9c89495c4f01b40ae1b8e91c9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:5c77b64eb724e74d2aca32247612355acc33a3ac70ff41363b4a1368f8dd6a75
+name: ack-sqs-controller.v1.0.5
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:5c77b64eb724e74d2aca32247612355acc33a3ac70ff41363b4a1368f8dd6a75
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sqs-controller@sha256:985b1ab42c71252dcbf624f9e9de937fee682cb158c037d04f9653c2e1a9179a
+name: ack-sqs-controller.v1.0.7
+package: ack-sqs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sqs.services.k8s.aws
+    kind: Queue
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sqs-controller
+    version: 1.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sqs-controller:1.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-sqs-controller@sha256:985b1ab42c71252dcbf624f9e9de937fee682cb158c037d04f9653c2e1a9179a
+  name: ""
+schema: olm.bundle

@@ -1,0 +1,1540 @@
+{
+    "schema": "olm.package",
+    "name": "servicemeshoperator3",
+    "defaultChannel": "candidates",
+    "icon": {
+        "base64data": "iVBORw0KGgoAAAANSUhEUgAAAXwAAAF8CAYAAADM5wDKAAAACXBIWXMAAG66AABuugHW3rEXAAAgAElEQVR4nO3dW2xj130u8I+b3FskRYmUFXs8qRtxkAJBARekgaIIkGlJvxQF+jA0+uDjAAekgD40Jw3MeSh6SYHRAO1Jgz6Ig9SnfQgg8hwgPnnoGfqhQNsXU6fOQRAUMAc1UARIICp1Mx57JJISxfvlPFBU5LEu3GuvfeX3AwwjE+2L7c1Pi///2mv5JpMJiIjI+xS7b4CIiKzBwCciWhAMfCKiBcHAJyJaEAx8IqIFwcAnIloQDHwiogXBwCciWhABu2+APiNt9w0QSVQ7/YscgIFvknq9fnsymfz6eDxOTSaTtdFo9KXJZBIEgH6/H7P7/ojspmlaAwB8Pl/X7/f/2Ofz1RVF2fX5fP+6trb2nt3350U+Lq1g3OHhYX48HqfG4/GvDYfDzw8Gg5Dd90TkdqqqdgKBwM8VRfk3RVF2n3vuuYLd9+R2DHydGo3Gxng8/oPhcPg7w+HwSwx3Iuuc/hL4cSAQ+EdFUf4uFovt231PbsLAn0O9Xn99OBx+bTAY/AYDnsg5VFXtqKr6o0Ag8Ldra2vft/t+nI6Bf4l6vf76YDD4k36///JoNGKvg8jh/H7/UNO0D1RV/SuG/8UY+OfU6/Xbw+HwL3q93lcY8kTu5ff7h0tLSz8IBAJ/zgbwLzDwARwcHHy33+//HmfPEHmPpmkNTdP+fn19/fftvhe7LWzgNxqNjcFgUOJonmgxzEb9qqpmF7XZu3CBX6/Xbw8Gg+/0er3EeDz22X0/RGQtRVEmS0tLj1RV/cailXsWJvBPg77Y6XS+aPe9EJEzhEKhn6qqmluU4Pd84M9KN+12O2X3vRCRM4XD4d1FKPV4OvCfPn36sNPp3GHphoiuoyjKJBQKvfO5z33uNbvvxSyeDPzDw8N8u93+a6c2YxVFgaZpF/5/S0tLFt8NkXl6vd6Ff97v9zEejy2+m/n4/f5hOBz+Iy8u5eCpwG80GhvdbveHvV7vRbvvRdM0BAIBqKoKTdPOQl5RuCI10cx4PD4L/36/j8FggOFwiH6/b/etYWlp6aNgMPhlL5V5PBP4dpZvAoEAgsHgWbgHg0Grb4HIc7rd7tkvgW63i+FwaPk9eK3M4/rAbzQaG51Op2r1S1PhcBhLS0sIh8MIBBxZOSLylOFwiHa7jV6vh3a7bem1NU1rhEKhpNtH+64O/MPDw2+dnJz8sRWjekVREA6HEQqFEA6Hzb4cEV2j3W6j0+mg3W5b0g9QFGWyvLz87eeee+5PTb+YSVwZ+I1GY6Pf75c7nU7S7GvNQj4SiZh9KSIS1Gq1zsLfbKFQqKppWsaNo33XBX69Xr/d6XT+2cxlihVFwcrKCiKRCMs1RC4yHA7RarVwfHxs6qhfVdVOKBT6bbe9sOWqwDe7hBMIBBCNRjmaJ/KAVquFZrNpWrPXjSUe1wT+06dPH56cnGTMOHcwGMTKygpr80Qe1G63cXx8jG63a8r5l5eXy26ZxeOKwP/4449/YsYaOIFAAOvr65xGSbQAut0uDg4OTBnxh0Khn77wwgu/Iv3Ekjk68M2acqkoCtbW1li6IVpArVYL9Xpdeo3fDVM3HRv4jUZjo91u/7vs5mw0GsXq6irfeCVaYOPxGEdHR2g2m1LPq6pqJxwO/6pTQ9+RgW/GTJxgMIi1tbVL17AhosXT7/dRr9el1vedHPqOC/x6vf56q9V6W9ZMHEVRzkb1REQXmY32ZZV5FEWZRCKRN5y2mbqjAl922Guahueff55z6YnoWsPhEJ988om0hducGPqOCfxGo7FxfHy8Jyvso9EoYjHuSU5E+jQaDWm1fUVRJisrK7ecUt5xRODLbNAqioLnn3+eUy2JSFi328Unn3wipcTjpJq+7YEvM+w1TcONGzc4A4eIDBuPx3jy5ImUEo9TQt/2ZOx0OlUZYR+JRHDz5k2GPRFJoSgKbt68KeV9ncFgEOp0OlUJt2WIren48ccf/0TGS1XRaBTr6+sybomI6FPW19cRjUYNn6ff78c+/vjjn0i4JWG2Bf7pDlWGl0tYX19nc5aITBWLxaQMKjudzhefPn36UMItCbEl8E9XvTS0EJqiKFhfX+fyCERkiUgkgvX1dcNl45OTk8zh4eG3JN2WLpY3bev1+u1Wq/V/jUy/VBQFN27c4FuzRGS5fr+PJ0+eGJrBczpH/7esXk/f0sCXMSOHYU9EdpMR+nbM3LG0pNPv98sMeyJyOxlTwAeDQajf75cl3ta1LAv8w8PDbxndg5aLnxGRU2iahrW1NUPn6HQ6SSvr+ZaUdGQsm8AGLRE5UavVwsHBgfDxVi6/YMkIv9PpVI2EPfeZJSKnikQihubpj8djn1UvZZke+E+fPn1o5OWqSCTCefZE5GixWMzQoLTf78esmJ9vaknHaClH0zTcvHlT9m0REZni8ePHwmvvWFHaMXWE3+12fyga9rMZOUREbmFk5s54PPZ1u90fSr6lTzEt8A8PD/O9Xu9F0eOff/55LoRGRK4yW55dVK/Xe/Hw8DAv8ZY+xbSSzocffjgYjUZCW01x8xIicjMjm6j4/f7hSy+9pEq+JQAmjfCfPn36UDTsNU1j2BORq8ViMeF3hkajUcCsBq70Eb6RRu1s/WnuQUtEbjccDvH48WOh5RfMauBKH+EPBoOSaKM2Go0y7InIEwKBgPD8/PF47BsMBiXJtyQ38Ov1+u12u50SOTYYDGJ1dVXm7RAR2Wp1dVV4f+12u52q1+u3Zd6P1MAfDAZF0WONrklBRORERrLNSKZeRFrg1+v126I7WEWjUS6KRkSepGmacGmn0+l8UeYoX1rgDwaD7wjdgKKwlENEnra6uir8XpFotl5ESuA3Go2NXq+XEDl2bW2NL1gRkacpiiJc2un1eolGo7Eh5T5knER0Zk4gEOAqmES0ECKRiNAsRJkzdqQEfq/X+4rIcTJ2gScicgvRzBPN2GcZDvyDg4PvirxVGwwGhacrERG5kWjujUajwMHBwXeNXt9w4Pf7/d8TOW5lZcXopYmIXEc0+0Sz9jxDgV+v12+LbG4SCAQQDoeNXJqIyJXC4bBQLb/f78eMTtE0FPjD4fAvRI4zsh0YEZHbiWagaObOGAp8kUaCoiicmUNECy0SiQhNRzfavBUO/Hq9/rpIs5a1eyIisSwcjUaBer3+uug1hQN/MBj8ichxHN0TEYlnoWj2AgYCv9/vv6z3GNFmBRGR14hOXhHJ3rNrihwkWs4JhUIilyOSolKpXPjn6XTa0vsgmgmFQmi327qOmZV11tbWvq/3ekKBPxwOv6b3GDZryWq1Wg3lchnFYhGPHj268mcTiQRyuRwymQzi8bg1N0gLLxKJoF6v694V6zSDdQe+0BaHP//5z9uDwUDXcD0SiXApBbJEo9FAPp9HqSS2/Eg2m0WhUODeymSJg4MDtFotXceoqtr5/Oc/r7sepLuG32g0NvSGPcByDlmjWCwiHo8Lhz0AlEolxONxFItFeTdGdAmRbBwMBiGRFTR1B/54PP4DvccA4Ju1ZLpcLofNzU00m03D52o2m9jc3EQulzN+Y0RXEM1GkSzWHfjD4fB39B7DsCez5XI5Q6P6y5RKJYY+mU4kI0WyWCTwv6T3mKWlJb2HEM3NrLCfYeiT2UQyUiSLdQe+SP2eI3wyS7FYNDXsZ0qlEmv6ZBqRjBTJYl2Bf3h4mNd7gUAgwJetyBSz2ThWyefzaDQall2PFodoTurNZF2BPxqNMvpuB9zkhEyTz+elNGjn1Ww2Lf0FQ4tFJCvH43FKz8/rCvzJZPKSvtsBVFXVewjRtWq1miWlnGeVSiXUajXLr0veJ5KV4/H41/T8vK7AHw6Hn9d3O4CmaXoPIbpWuVxeyGuTd4lkpd5M1hX4Ik0ClnTIDHY2UNm8JTOIZKXeTJ57aYV6vX776OjoX/ScXNM03Lx5U88hRHPx+XxCx6VSqbPF0iqVCnZ3d4XOI7IkCdF1Hj9+jH6/r+uY1dXV31xbW3tvnp+duy08mUx+XdddAJydQ6a4bNXL69y7dw9bW1uf+rOtrS3cv39f6B64yibJFggEdAf+aTbPFfhzl3T0doMBNmzJOVKp1GfCHpgGfiql+9EmMoVg43buB3juwJ9MJmt6b4QNW3KKq0bjHKmTU4hkpp5snjvwR6OR/td4BTbpJSJaVCKZqSeb9YzwdbeQOcInp7iq7i/aEyCSTXCEP3c2mzoE5wifnGJ3d/fSGr7oTB0i2czOzLmnZe7v7+uah6YoCn75l39Z6KaIrsNpmeRV//Ef/6F7y8ONjY25PhCmzZtkOYfMlEgkrt2n9iK7u7uGR/SJRMLQ8URX0TQN3W7XlHOz5kKuZOf69Fwbn9yKgU+ulMnoXrjVE9cmMoKBT64Uj8eRzWYtv242m0U8Hrf8ukQymNa0DQaDuHHjhtBNEc2j0WggHo9btiZ+NBpFrVZDLBaz5Hq0mJ48eaK7hj9v03auEf7+/n5c19XBKZlkvlgshkKhYNn1CoUCw55cba5U3tjYqOk9MdfRISvkcjlk33jD9Otks1k2a8kSZmYnh+Hkev/jhRdgZuT/1698hWvgk2XMrI4w8MnVxrUaeg8e4C3AlNB/A8B3PvwQE25eTh7AwCdX65xbLuEtAH8DYFXCeVdPz/UWgPH+ProW9gqIzMLAJ9caViroP7OR+VcBPIKx0f4bp+f46rk/6xUKHOWT6zHwybXa+fyFfx7FdGReBfCXAF6e41wvn/5s9fTY6DP//6TZvPR6RG7BPQjJlTpbWxhds5bOFwB87fQv4PI94G7Pec1+qYSlXA4BbphCLsXAJ9cZ12roCdTU5w32q5zkcojWahLORGQ9lnTIdVqZDCYWvV37rPH+/qcaxURuwsAnV5mnlGO27v37GFWrtt4DkQgGPrnGsFJB9/59u28DwOm3DM7aIZdh4JMrTBoNtBy0LPF4f5+zdsh1GPjkCsfptG11+8v0SyX0ueQCuQgDnxzvJJezvW5/mXY+z3o+uQYDnxytnc9/5m1aJ5k0mzjJ5VjPJ1dg4JNj9YtF9B48sPs2rjV69MhR/QWiyzDwyZH6xSJONjcNnUO9c0fS3VxvuLuLE66XTw7HwCfHkRH2gVQKQYFZNMrGhvA1+6USX8oiR2Pgk6P0CgXDYe+LRhEpl4WODRcK8EWfXTptft379zlzhxyLgU+OcZLLoX33ruHzRMpl+AT3nvXFYsK/LGZONjcZ+uRIDHyy3aTRwHE6LWU2Tnh72/BqloF0GsF79wydg6FPTsTAJ1uNqlUcJZMY7u4aPpeWzWJJ0tuvoa0tBFIpQ+dg6JPTMPDJNr1CAUevvILx/r7hcwVSKSxLDtdIuWyoiQtMQ59LMJBTcD18B6hUKhf+edqjG22MazWc5HJSRvUA4E8kDNfdLzKr5xtd1qH34AEmjca0ISzYW3CTRXue3YSBb4NarYZyuYxisYhH1ywZkEgkkMvlkMlkEI/HrblBE/UKBXS2tqSti+NPJLBSqZgWpP5kEsvFIlqvvWboPP1SCaNqdfqtwQP/Hc9b5OfZbXyTyWSuH9zf35/vB09Fo1HEFmA0o0ej0UA+n0dJsDmZzWZRKBRc+e91WKlM152RuCbOdWE/rFRw/Oqrus658u67FzZ9ZbwbAPxiyqgXtklc5OfZTI1GA02dA6KNjQ3fPD/HGr5FisUi4vG48IcDAEqlEuLxOIouagSOazUcp9M4fvVVS8NeNi2Xg5bNGj7PpNnE8auvur6uv6jPs9sx8C2Qy+Wwubmp+7f2RZrNJjY3N5Fz+Gv8w0oFJ7kcmrduSavVz1gd9jPLxaKU0Aemdf2jZNKVK20u4vPsFQx8k+VyOUOjoMuUSiVHfkj6xeLZiN6MVS7tCvsZmaE/evQIR6+8Mu1puGS1zUV7nr2GgW8isz4cM075kIxrNbTzeTTjcZxsbkof0c9o2SxWq1XbZ7rIDH1guhzDUTKJgQkzjWRalOfZyxj4JikWi6Z+OGZKpZItNdBRtYrO1haOkkk0b91C78EDKfPpLxPe3pY+z94I2aE/3t9H67XXcJxOY3jJtEY7ef15XhScpWOCRqOBeDwupcY5j2g0ilqtZuq/73GthmGlgkGlgmGlYmq4n2dkVovMWTqXOcnlTCldBVKp6du+DpjN48Xn2ck4S8dl8vm8ZR8OYNr4ykuc9TGqVjEol9HZ2sJxOo1GLIbmrVvTpQJKJcvCPpBKYbVadUToXWa5WER4e1v6eYe7uzh+9VUcJZPoF4u21vjd/jzTL3CEL1mtVsOtW7dsufa/v/kmNs79O1cvCcrBMyWDWQlhVK06ZqPw4L17CBlcW96KEf6MrHn6l/FFo1AzGQTzefiTSdOu8yw7n+e9vb2FfDnLzBE+37SVrGxj4+3/PHiAr53739379227F1H+RALLxaKloSaDlsvBn0waXobhMpNmE/1SCf1SCcrGBtRMBmo6DdXkrRXtfJ7L5TJH+pKxpCOZnQ2nt227snG+aBTBe/ewWq26Luxn/MkkorUa/ImEqdcZ7++j9+ABWq+9hrrPh+N0Gp2tLQwrFemlHzufZzZv5eMIX7Lr1hK5TCqVOltcqlKpYFdgauMHQle2n5bNIrS15Yk1ZnyxGFarVbTzecs2YB/u7mK4u3v2jU7Z2IASj8OfTMIXi32qtHdduWpUrZ790hhVq7Y+z6LXpssx8CW6bJXA69y7dw9bz9Srt7a2cF+gJPMegNtCd2E9J81EkS1cKEDLZNDKZCzvi4z39zHe3z97H0K0tPee4PVlPs+VSoWrbErEko7NUqnUZz4cwPQDkjK4AYdTBVIprLz7LlYqFU+G/UwgnUa0VoN6547dt2KZRXye3YSBb7OrRi9eG9mod+4sRNCfN1tTP/LwoeHNVNxgkZ5nN2Lgk6l80SiW3nwT0b09zywLLELNZLBarRreK5fICAa+za6q+4v2BJxAvXMHyzs7iJ3u9OSFhqxRvlgMoa0tRPf2pC7L4CRefZ69goFvs93d3UtrniIzG+x0FvL1OiLlMjQuhHUhJR7HcrE4fcnLY3VtLz3PXsQ3bSXz+eZ64e0zZExjA4BDoaPE+BMJBNJpS14AEmHlm7ZGDCsV9IpFU9bkMeo5weNkPc/z5pOXmPmmLQNfsmQyadv84ZcB/F+Tzu2LRuFPJhFIpxE4/bvdyxRfxy2BPzOu1dAtFKZr5zhkiYvfgn3vdyQSCVRduEGMUVxawUVyuRzu3r1ry7XfMHj87IUdYDqlUInF4E8mz17gIXMp8TjChQLCp6HfKxZN21tgXm8A+KZN1+ba+PJxhC+ZnYtNVQF84Zqf8UWjCG1tnS1f4OUwd9sI/yLjWg2Dchn9ctmW8P8ZALsWuuDiafPj8sg2icfjyNowA+MNXB/2wHQRrvbdu+gVi1Dicc+GvVco8TiW8nmsVCqI1etY3tmBls1aNqf/CzD+zVFENptdyLA3G0f4JrB6w4hVAI8ARHUe54tGsZTPI5jPezL4vTDCv8q4VsOoWsWwWsWwUjFteesmgASAI+lnvhg3QOEI31VisRgKhYJl1/vv0B/2wHS0371/H814HH2uTOg6SjwONZNBaGtr+g2g0cDaZIKVd99F5OFDBO/dQ/DePfiiIk/HL0QxfcasUigUFjbszcbAN0kul7OktPMGgK8aPMek2cTJ5iaa8bgj91MlfQKn02TVdFrajJ+vwprSTjabZbPWRAx8ExWLRVND/w0Ab0k833h/H8evvorjdBqjBZwO5xWjahXH6TSOX31V6naUb8Hc0M9ms1wD32QMfJOZFfqyw/684e4ujl55BSe5HMa1mklXIdnGtRpOcjkcvfKKaTN6zAp9hr01GPgWKBaL2NnZQdRgLRWYNmj/BuaF/Xn9UglHySQ6W1u2bqJNV5s0GuhsbU03PLfgbd23MH0GVyWcKxqNYmdnh2FvEQa+RXK5HGq1mqHR/huYzsYxWrPXg41dZ+sXi2jG4+jev2/p27lfxfRZNDLaz2azqNVqrNlbiIFvoVgshmKxiL29PWxvbyMxx96nLwP4S0xfqnoLYrNxZGBj11mGlQqa8ThONjdtW4YhiukzWcX0GX15jmMSiQS2t7ext7eHYrHI2TgW4zx8B7hs2djbgO555FYJpFIIFwqO3nDci/PwR6f75dq95MJllnd28P8ueWGKG6DMh2vpeNxVHwQtm3XkKoqzxq6XNiB3snGths7WliXPgi8aFfrWEEiloOVySMu/JZKEJR2HC21tCb84o965Y/p662zsmsvKhuxsr2FRYQtfNiQxDHyHm62lImJYqSBSLmPl3XdNXXuFjV1zWNWQVTY2zvYaHlQqQtfSsllHl/doioHvAsF8XmiUP2k20S8WEUinEa3VsLyzY/g1++uux8aucVY1ZH3RKJZ3dhCt1c76Fj2BUfpsBVZyPga+C/hiMeFRfvfcB1jL5RCt1aSsr3IVvrErxqw3ZJ/li0YRvHcP0VrtU9tQii7DsJTPs4fjEgx8lxAd5Y/39zEol8/+92wj7dVq1fSNtPnG7nyseEN2RstmsVqtTntDz8yi6wqO7oOCgxGyHgPfJYyM8nsX1NVnG2mvvv8+G7s2sbohu/r++1g+3QfhWaNqFSOBrTm1XM6TS2t7FQPfRURH+YN33rl0hO1PJrFSqbCxazE7GrJXNVUvGhTMg6N7d2Hgu4iRUf75ss5F2Ni1hp0N2auI/BLWslnW7l2Gge8yS4Lrjsw7gmNj1xx2N2SvMiiXxZq1XAPHdRj4LqPE40LN1tGjR3M3TtnYlccpDdmr9K/59ncRfyLh6CUo6GIMfBfSMhmh464r6zyLjV1xTmrIXkfvcwFwdO9WDHwXUjMZoQaraGOOjV19nNaQvcpQ9M1aBr4rMfBdShUY5esp61yEjd2rObUhexWRco565w6nYroUA9+lRL9SywhQNnY/zckN2euIPA+iJUWyHwPfpfzJpFB5ZSBpxMzGrjsasleZNBpCL1uJfLskZ2Dgu5jIB092iWQRG7tuasheReRZ8CcSLOe4GAPfxUS+Wo/3900ZJS9KY9dNDdnriHzb4+je3Rj4LhZIp4Vq6GY2Qr3a2HVjQ/Y6In0RlXPvXY2B73IioTC0oAHqlcaumxuy1xHpO/BlK3dj4LucyIjLqhkvbm7sur0hex2RZ8CfSJhwJ2QlBr7LidR3zQ6wZ7mpseuVhux1RH4pcnTvfgG7b4CMEf0Qjms1y0Nm1tgdVirTkbhJJZJZY1dE67XXJN/NZykbG1g+3XrSLiJlPT9XxnQ9jvA9QOSrtp3z2a1q7DqNlQ3Z6wiVdLhJuesx8D1A5IPohDdXrWrs2s2Ohux1RMpdDHz3Y+B7gEhpZuyQFSmtbOzawY6G7DxEfuE76f5JDAPfAwICIy8nLVEAWNvYtYKdDdl56H2XgDN0vIGB7wEiIy+nBf6MVW/smsWKN2TtwNG9NzDwPcCJI0ij3NbYdVJD9jpuWnKa5GLge4BI4LtlVymnN3ad2JA1g5e+rSwyBv6CElkW1y5Obew6tSFrBq//8y0KBj65hlMau05vyBJdhoHvEV6Y2TIvuxq7Xm3I0uJg4BMRLQgGPrmOVUsWP8ste+wSXYaBT65h5ZLFV3HqHrtmcsusLroaA98jvDzitHLJYj2csseuFbz8fC0SBr5H6H1V3i1vsVq1h6wou/fYJdKDgb+gnD6d0Ko9ZGWxeo9dI0RmGHn9G8yiYOB7gJc+jHY1ZGVxQ2NX5CUqN72oR5dj4HuAF5a6dUpDVhYvNna9NLBYVAz8BeWUF4ec2pCVxamNXZEX9Zz6jYXmx8D3gIHDa8aXcXpDVhavNHYZ+O7HwPcAkZKBaucG2i5ryMripMauyBLOI4+UphYZA98DRALfjlk6VjVkZ0sWRx4+1H1s5OFD05didkJj1y/w358jfPdj4HuASJPTysC3siFrdMliK5ditrOxK/Lf3wvN9EXHwHc5kVGXVStrWtmQlb1ksZVLMdvR2BXdlcvuUhQZw8B3OZEPoBWje6sasmYvWWzVUsx2NHZFNiZ36wQBmmLgu5zIBzBg4pRMqxqyVu8ha9Ueu1Y2dkV+QXKE724MfJcT+QCaEZBWN2Tt2kPWqj12rWjsiszUGu7uOup9AtKHge9io2pV9yjaF41KLX24qSEri1cau6K/+AflstT7IOsw8F2sL/DBkzW6d3NDVha3N3aVeFyoL8E6vnsx8F1MZKQl44UrrzRkZXFzY1dkADAol1nWcSkGvkuNazWhFQzVTEb4ml5tyMrixsauJvA8TJpNlnVcioHvUt1CQfcxysaGUElkURqysripsSv6C1WknEj2Y+C7lFA5R+dobhEbsrK4pbHri8Wg3rmj+5qDd97xzLLPi4SB70KDcllopL0056iZDVl53NDYFSnrAEDPxSt/LioGvguJfNCUjY25Gp9syJrDyY1d0b5OT6CsSPZi4LvMuFbD4J13dB933YeaDVlrOLGx64vFhMpOk2bT1ev7LyIGvst0traEjgvm8xf+ORuy9nBaY1e0rCP6PJI9GPguMmk0hJq1gVTqM/VxNmTt56TGrprJCJWaxvv7HOW7CAPfRbqFglC55Xyzlg1Z53FKY1f0mxdH+e7BwHeJSaMh1CTzRaNnH2Q2ZJ3N7sbuZWW/63CU7x4MfJdo5/Nio/t8ng1Zl7GrsSvavAU4yncLBr4LjGs14fLLoFxmQ9al7GjsijZvOcp3Bwa+C5wYCFGR9Xb0YEPWXFY3dluvvSZ8fDuf56JqDhew+wYIqFwyTzqdTmNQLjty8+hAKoVwocAavUVmjd1gPo92Pu/IZ2LSbKKztYUfXfItIc0yn+0Y+Dao1Wool8soFot4dM0I/GVNwxsAfhfAFyy5u6spGxtYLhZZo7fJrLE7rFSmUyxNLNXN62cA/gHA2wA+ePAAePDg0p9NJBLI5XLIZDKIc+aW5VjSsVCj0UAul8OtW7dw9+7da8MeAD7o91txrSIAABXwSURBVPFNAEkAXwdgXsv1amzIOotVjd2rNDF9JpMAvgnggzmOefToEe7evYtbt24hl8uhwRKQpRj4FikWi4jH4ygZmPv+NoAEgO9Ju6vrsSHrbFY1dp/1PUyfxbcNnKNUKiEej6PIZq9lGPgWyOVy2NzcRFPClMgjAH+I6cjKbGzIuoOVjV1g+uz9IabPolHNZhObm5vIcTBhCQa+yXK5nKFR/WXehnmhzzdk3cmKN3a/DmOj+suUSiWGvgUY+CYyK+xnZIc+35D1BrPe2DUr7GcY+uZj4JukWCyaGvYzb0NOTV/Z2ICWy2FwOgNEdMs8cg6Zjd3vwdywnymVSqzpm8g3mUzm+sH9/f35fvBUNBpFbEHrvo1GA/F4XErNfh6rAB4BMKNlN9s4xZ9MIpBMIpBOu6aeP6xUcPzqq7qOWXn3XdfPQpqtfz+qVjE+nQUzKJeFX8JrYtqglVGzn0c0GkWtVlvo/NCbHRsbG755fo7z8E2Qz+ctC3tg+kH8MwBvmXDu8f4+xvv7n9p0xZ9IIJBOQ02nXfULwGtG1SpG1SqGp38fVaumrJX0Z7Au7IFpIzefz3OkbwKO8CWr1Wq4deuWLdeuwp6Xs9Q7d6BlMlAzGUeFv9dG+KNqFf1y+azkZuZCeDM/w3SevR329vYW8uUsM0f4rOFLVhbYoESWf7DpuoN33sHJ5iYaa2toZTJcREuSSaOBfrGIk1wOjVgMR6+8gu79+xju7loS9oB9zxRg72fJqxj4ktn5NdSKptp1zsI/FkM7n79wdyW6Wr9YRCuTQWNtDSebm+iXSpYF/LPsfKZY0pGPNXzJ5lku4SKpVOpscalKpYJdgcWx5nm13SqTZhO9Bw/Qe/AAWjaL0NYW5/RfYVStolsoYFAu2xbuFxF9pmQ8z6KfJbocA1+iy1a9vM69e/ew9cwGEltbW7h//77uc70H4LbQXZinXyqhXyohkErxZa5n9ItF9IpFR65++Z7gcTKf50qlwlU2JWJJx2apVOozHw5g+gFJmby/qdWGu7to3rp16Ubai2S23eTJ5qYjw17UIj3PbsTAt9lVoxevjmyu2kjb684HvROWNpZtEZ9nN2Hgky1mG2kfJZNnLwp52fl9hb0Y9OQODHybXVX3F+0JuMlsP9WTXM6To/1xrYbjdNr0fYWdYtGfZ6dj4Ntsd3f30pqnyMwGt5qVebw02u9sbU3/mRbovyOfZ2fjm7aS+XxzvfD2GTKmsQFAb2fnbBaMP5m89s3XSaNxtlDabO2VUbWKca1m+gbolwneu4fQBaGhl11v2o6qVZzkcrb9+7uMLxrVvQrqquBzKOt5njefvMTMN20Z+JIlk0nb5g8nEglUJa9yOXuNf7aKplVzxAOpFCLlsqGlGuwI/F6hMG1G2zSXPpBKQYnHocTjCJz+wjfyz+O159kNuHiai+RyOdy9e9e2a8sWOF0gbSmfB/CL9VyMrL44j+HuLprxuGvW5p80GjjJ5T61yJzZfNHopxaxM+Pfk9ee50XHGr5kmUzG09f2J5Nn2+lF9/aw9OabUjfZOG/SbOI4nXb82jyjahVHyaQlYe9PJBDe3sbq++8j1mggUi5jKZ837Zei15/nRcPAlywejyNrwb6iz8pms5avLKjE4wgXCojWaog8fGjKtnqTZhMnm5voFQrSzy3DoFzGcTpt6gycWchH9/awWq2aGvDPWqTneRGwhm8CqzdAcdKGEbM1Yfom7PalZbNY1jHaN7uG3y8WcbK5qev88/JFo1AzGQQtDPfLLPLzbAcuj+wysVgMBQtHpIVCwTEfDn8yieViEdG9Pekj/n6phBOH1HXb+bwpYe+LRhG8d2+6NWGxaHvYA4v9PHsNA98kuVzOkq/C2WzWkc0t5bThuvLuu/AnEtLO64TQP8nl0HvwQOo5zwd9aGvLURvJAHyevYKBb6JisWjqhySbzTp+zfBAOo3VahXh7W3DG2nP2Bn6J7mc9HKVk4P+PD7P7sfAN5lZHxK3fTiW8nmsVqvSyjx2hL7ssA+kUoju7Tk+6M/j8+xuDHwLFItF7OzsICphhBuNRrGzs+PKD8eszBPe3pZyvn6phPbp+wFmkxn2vmgUkYcPsVKpuHJvAD7P7sXAt0gul0OtVjM0Ospms6jVaq6vcS7l81h9/30p8/d7Dx6YPk+/XyxKC3v1zh1EazWoLp9jzufZnRj4ForFYigWi9jb28P29jYSczQzE4kEtre3sbe3h2Kx6JnZC/5kUlqJ52RzEwOTNryWOfUyvL1teLkIJ+Hz7D6ch+8Aly0buygbRsgol/ii0c8sw2B0Hv6oWsVxOm14XZyL7s3LFv15Nopr6Xjcon8QlotFqOm0oZH0pNlEK5PBarUqZQQ9aTTQymQMh70/kcBKpeKZUf08Fv15djKWdMgRtFwOyzs7hs4x3t9HS1JtvJXJGF4uIZBKLVzYk7Mx8MkxZIT+cHcXHYNr6Xe2tgxvWqJlswx7chwGPjmKjNDv3r8vvHPWqFpF9/59Q9fXu+YPkVUY+OQ4MkJfdI/ctsG13xn25GQMfHIko6E/3t+37KWsmUAqxbAnR2Pgk2NpuRyW3nxT+Hgz16h/lj+RQMSkdwGIZGHgk6OFCwVoNmzAocdsnj0btOR0DHxyvHChIHWJZdkY9uQWDHxyPF8sNl2SQNLyyjKFt7cX5g1acj8GPrmCEo87riGq3rmDJYsbw0RGMPDJNdRMxlATVyZfNOq4X0BE12Hgk6s4pZ7vpVUvaXEw8Ml17B5Za9ns2YqaRG7CwCfX8SeTCN67Z8u1fdEowoWCLdcmMoqBT64U2tqypbQTLhRYyiHX4nr45FrhQkHXBifvXfLnt+c83p9IQON2fORiDHxyrUA6DS2bvXS3rJ8B+AcAbwP44JpzvQzgDQC/C+ALl/wMSznkdizpkKuFC4XPvJDVBPB1AEkA38T1YY/Tn/nm6TFfPz3HeYFUio1acj0GPrmaLxZD6NyGJ98DkMB0VC/q7dNzfO/cn3F0T17AwCfXW8rnoWxs4OsA/hDAkYRzHp2e6+uYTsPk8gnkBQx88oRvvPSSoVH9Zd4G8N8++siEMxNZj4FPrpfL5fC/fvAD087/P//pn5Dj7BzyANMCfzAYmHVqojPFYhGlS2bpyFQqlVDk2jlkgV6vp/uYer0+1+xi32QymeuE+/v78/3gqWAwiBs3bug5hEiXRqOBeDyOZvPZOTXmiEajqNVqiPHFKzLRkydP0O12dR2zsbHhm+fnWNIh18rn85aFPQA0m03kuRwyuRgDn1ypVqtZUsp5VqlUQq1Ws/y6RDIw8MmVyjZuGG7ntYmMYOCTK9nZQGXzltzKtLV0+v2+WacmwqNHj4SOS6VSSJ8ukVCpVLC7u2vZtYnmYWZ2zh34mqY1+v3+3NMTxuOx2B0RXaNSqQgdd+/ePWydW4YBALa2tnD//n2he0hzbR0ygd7s1DStMe/PmlrSYeiTU6RSqc+EPTAN/FQqZf0NEV3A7MycO/B9Pp++iaFgWYec46rROEfq5BQimaknm+cOfL/f/2O9N8IRPhHR/EQyU0826xnh1/XeCEf45BRX1f1FewJEsgmO8OfO5rkDX1EU3dMZuJ4OOcXu7u6lNXyRmTpEZhDJTD3ZPPdaOvV6/fbR0dG/6LkRTdNw8+ZNPYcQzcXnm2vpkM+QMS0TAOb93BDp8fjxY92j/NXV1d9cW1u7bMvmT5k78AH9C6gBwMbGht5DiK6VTCZtmw+fSCRQrVZtuTZ52/7+vu5j5l04DdA5LVNV1Y7em9G76hvRPOxcn55r45MZRLJSbybrCvxAIPBzfbfDxi2ZI5PJLOS1ybtEslJvJusKfEVR/k3f7bBxS+aIx+PIZrOWXzebzSIej1t+XfI+wYatrkzWG/i6O1ws6ZBZCoUCotGoZdeLRqMoFAqWXY8Wi0hW6s1kXYH/3HPP6X7ah8MhhsOh3sOIrhWLxSwN4EKhwN2uyBSiOak3k3WvpSPSuG2323oPIZpLLpezpLSTzWbZrCXTiGSkSBbrDvxAIKB7iQWRTXmJ5lUsFk0N/Ww2yzXwyVQiGSmSxSKB/496j+EIn8xmVugz7MkKIhkpksW6A19RlL/TewzA0CfzFYtF7OzsSGnkRqNR7OzsMOzJdKLZKJLFugM/Fovti9SOOh3dhxDplsvlUKvVDI32s9ksarUaa/ZkCZFsVFW1E4vFdL+WK7QBiqqqP9J7DEf4ZJVYLIZisYi9vT1sb28jkUhce0wikcD29jb29vZQLBY5G4csI9iw1Z3BgM61dGbq9frrR0dH/1vvcevr64hEIrqvRyTDZcsgcwMUskur1cLBwYHu41ZXV//L2tra9/UeJxT4APDhhx8ORqORrk3Qw+Ewnn/+eaHrERF5zSeffKJ7hO/3+4cvvfSSKnI94T1tNU37QO8x7XabL2EREWH6spVIOUcke2eEA19V1b8SOa7VaolekojIM0SzUDR7AQOBv7a29n2/3697uH58fCx6SSIizxDJQr/fPxSp3c8IBz4ALC0t/UDvMePxmKN8IlporVZLaMNykcw9z1DgBwKBPxc5rtlsGrksEZGriWagaObOGAr8tbW19zRNa+g9TrRZQUTkdqKTVzRNa8y7d+1lDAX+6U38vchxrOUT0SISzT7RrD1PeB7+eSJz8gHgxo0bCAaDhq9PROQG3W4XT5480X2ckbn35xke4QPijQSRN8yIiNxKNPOMNmtnpAS+qqpZRVF0f1UYDoecsUNEC6HVagnV7hVFmaiqKmXtbymBH4vF9peWlh6JHFuv14WmJxERucV4PEa9Xhc6dmlp6ZHIypgXkRL4AKCq6jdEjhuPxzg6OpJ1G0REjnN0dCQ8sBXN1otIC/y1tbX3QqHQT0WObTab6Pf7sm6FiMgx+v2+8Lz7UCj0U6NTMc+TFvgAoKpqTvRY0a87REROZiTbjGTqRaQG/tra2nvhcHhX5Nhut8vSDhF5ytHREbrdrtCx4XB4V+boHpAc+ID4jB1gWtrh8slE5AXD4VC4lCNzZs6nziv7hLFYbD8UCr0jcux4PMYnn3wi+5aIiCz3ySefCDdqQ6HQO7Jm5pwn5U3bi4i+fQsA0WiUe4oSkWs1Gg3h0b2st2ovIn2EPxMOh/9I9Nhmsylc9yIislO32zW0IrCR7LyOaSN8APjoo48e93q9F0WOVRQFv/RLvwRFMe13EhGRVOPxGP/5n/8pXMpZWlr66MUXX7wp+bbOmJqmwWDwy6IN3PF4LLTIEBGRXZ48eSIc9oqiTILB4Jcl39Knr2HmyY00cIHpCwtcYI2I3ODg4MDQC6RmNWrPM7WkM/P48eN6v98X7sKyiUtETmakSQtMNze5efPmmsRbupAlBfJQKJQULe0A0yYuV9UkIidqtVqGwl5RlEkoFEpKvKXLr2XFRWKx2P7y8vK3jZzj4OCAoU9EjtJqtQyXnZeXl79tdilnxpKSzszHH3/8fqfTEf5NpigKbty4AU3TZN4WEZFu/X7fUJMWAEKhUPWFF154ReJtXcnSOY+apmVUVe2IHj+bucOVNYnITjLCXlXVjqZpGYm3dS1LA/901s5vG6nnM/SJyE4ywv60bv/bVpVyzq5r5cWA6YqaRuv5s9BnTZ+IrNRqtQyHPTCt28teCXMeltbwz3v69OnDk5MTw19n1tfXEYlEZNwSEdGlZDRoAWB5ebn8uc997jUJt6SbbYEPAB9//PFPOp3OF42eh/P0ichMRufZz4RCoZ++8MILvyLhloTYGviA8ZeyZiKRCNbX12XcEhERgF9sPi6jfGzVy1VXsX1lslAolDQyc2em1Wrh8ePHhmtrRESA3F6hqqodq16uuortI3wAaDQaG+12+98Hg0HI6LkURcHzzz+PYDAo49aIaAF1u11DG5icp6pqJxwO/6rVM3Iu4ojAB6ahf3x8vDcej30yzse6PhGJkFWvB6bTL1dWVm45IewBB5R0ZmKx2H4kEnnDyBz985rNJh4/fsw9coloLsPhEI8fP5Ya9pFI5A2nhD3goBH+TL1ef73Var0ta6SvKAqi0ShWV1dlnI6IPOjo6AjNZlNaD3AW9mtra9+XckJJHBf4gNya/kwwGMTa2hrX4SGiM/1+H/V6XeqWqk6q2T/LkYEPmBP6AM5G+9w6kWhxjcfjs1G9TE4Oe8DBgQ9MQ7/T6VRlzNM/T1EUrK2t8Q1dogXUarVQr9elT+HWNK0RCoWSTg17wOGBPyPrjdxnBQIBrK+vcwon0QLodrs4ODgwZSKH3W/QzssVgQ/IW3vnIsFgECsrKwiHw2acnohs1G63cXx8LLVOf56da+Po5ZrAB4DDw8NvnZyc/LGsGTzPCgQCiEajLPUQecBs60GzpmYrijJZXl7+9nPPPfenplzABK4KfACo1+u3O53OP8tu5p6nKApWVlYQiUQQCATMugwRSTYcDtFqtXB8fGzqMiunSyX8th1LHBvhusAHps3cfr9fNrJd4rzC4TBCoRBH/UQO1mq10Ol00G63Tb9WKBSqapqWcXJz9jKuDPwZs0s85ymKchb+rPUT2a/dbp+FvBWLJrqxhPMsVwc+YN7UzeuEw2EsLS0hHA6z7ENkgeFwiHa7jV6vZ8lI/jw3TLmch+sDf+bp06cPO53OHStG+88KBAIIBoNQVRWapnGaJ5EE3W4X/X4fg8EA3W7XlnWxTveefccts3Cu45nAB6aj/W63+8Ner/ei3feiaRoCgcDZLwFFUc7+TkRT4/EY/X7/7O+DwQDD4RD9ft/uW8PS0tJHwWDwy24f1Z/nqcCfOTw8zLfb7b8ejUaOrbVc9i1gaWnJ4jshMk+v17vwz2ch70R+v38YDof/6LnnnivYfS+yeTLwZ+ws8xCRu3itfHMRTwc+MC3zDAaDUrvdTtl9L0TkTOFweFdV1ayXyjcX8Xzgz9Tr9duDwaBoxpo8ROROoVDop6qq5tz2ApWohQn8mdPg/06v10uw1EO0eBRFmSwtLT1SVfUbixL0MwsX+DOzUk+v1/uKk5u7RCSH3+8fLi0t/WARSjeXWdjAP+/g4OC7/X7/96x+eYuIzKdpWkPTtL9fX1//fbvvxW4M/HPq9frt4XD4Fxz1E7nbbDQfCAT+fNHKNldh4F+iXq+/PhgM/qTf77/M8CdyPr/fP9Q07QNVVf/KaZuHOwUDfw71ev314XD4tcFg8BtmLstMRPqoqtpRVfVHgUDgbxny12Pg69RoNDbG4/EfDIfD3xkOh1/iLwAi66iq2gkEAj8OBAL/qCjK3y1q81UUA1+Cw8PD/Hg8To3H418bDoef5y8BIuNOw/3niqL8m6Iou15c6sBqDHyT1Ov125PJ5NfH43FqMpmsjUajL00mkyAAcDYQ0XT2DAD4fL6u3+//sc/nqyuKsuvz+f6VjVZzMPCdJX76F5FXVAE07L4JmmLgExEtCC7OTkS0IBj4REQLgoFPRLQgGPhERAuCgU9EtCAY+EREC4KBT0S0IBj4REQL4v8DBHp/8P5DHNMAAAAASUVORK5CYII=",
+        "mediatype": "image/png"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "candidates",
+    "package": "servicemeshoperator3",
+    "entries": [
+        {
+            "name": "servicemeshoperator3.v3.0.0-tp.1"
+        },
+        {
+            "name": "servicemeshoperator3.v3.0.0-tp.2",
+            "replaces": "servicemeshoperator3.v3.0.0-tp.1"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "servicemeshoperator3.v3.0.0-tp.1",
+    "package": "servicemeshoperator3",
+    "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-operator-bundle@sha256:8f2f2d90e3c14c32d97af0cf845f05fc87350a8de1f6fa53d976c0ccff881f70",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "extensions.istio.io",
+                "kind": "WasmPlugin",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "DestinationRule",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "DestinationRule",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "DestinationRule",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "EnvoyFilter",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Gateway",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Gateway",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Gateway",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "ProxyConfig",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "ServiceEntry",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "ServiceEntry",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "ServiceEntry",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Sidecar",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Sidecar",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Sidecar",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "VirtualService",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "VirtualService",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "VirtualService",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadEntry",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadEntry",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadEntry",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadGroup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadGroup",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadGroup",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sailoperator.io",
+                "kind": "Istio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sailoperator.io",
+                "kind": "IstioCNI",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sailoperator.io",
+                "kind": "IstioRevision",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sailoperator.io",
+                "kind": "RemoteIstio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "AuthorizationPolicy",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "AuthorizationPolicy",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "PeerAuthentication",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "PeerAuthentication",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "RequestAuthentication",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "RequestAuthentication",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "telemetry.istio.io",
+                "kind": "Telemetry",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "telemetry.istio.io",
+                "kind": "Telemetry",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "servicemeshoperator3",
+                "version": "3.0.0-tp.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"sailoperator.io/v1alpha1\",\n    \"kind\": \"Istio\",\n    \"metadata\": {\n      \"name\": \"default\"\n    },\n    \"spec\": {\n      \"namespace\": \"istio-system\",\n      \"updateStrategy\": {\n        \"inactiveRevisionDeletionGracePeriodSeconds\": 30,\n        \"type\": \"InPlace\"\n      },\n      \"version\": \"v1.23.0\"\n    }\n  },\n  {\n    \"apiVersion\": \"sailoperator.io/v1alpha1\",\n    \"kind\": \"IstioCNI\",\n    \"metadata\": {\n      \"name\": \"default\"\n    },\n    \"spec\": {\n      \"namespace\": \"istio-cni\",\n      \"version\": \"v1.23.0\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "OpenShift Optional, Integration & Delivery, Networking, Security",
+                    "containerImage": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-rhel9-operator@sha256:ea78213a4c5e1ef3f419df6910740f040c71ad13514aaac0e22c95e7ff4cb96b",
+                    "createdAt": "2024-08-30T03:19:04Z",
+                    "description": "The OpenShift Service Mesh Operator enables you to install, configure, and manage an instance of Red Hat OpenShift Service Mesh. OpenShift Service Mesh is based on the open source Istio project.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "true",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.36.1",
+                    "operators.operatorframework.io/internal-objects": "[\"wasmplugins.extensions.istio.io\",\"destinationrules.networking.istio.io\",\"envoyfilters.networking.istio.io\",\"gateways.networking.istio.io\",\"proxyconfigs.networking.istio.io\",\"serviceentries.networking.istio.io\",\"sidecars.networking.istio.io\",\"virtualservices.networking.istio.io\",\"workloadentries.networking.istio.io\",\"workloadgroups.networking.istio.io\",\"authorizationpolicies.security.istio.io\",\"peerauthentications.security.istio.io\",\"requestauthentications.security.istio.io\",\"telemetries.telemetry.istio.io\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v4",
+                    "repository": "https://github.com/istio-ecosystem/sail-operator",
+                    "support": "Red Hat, Inc."
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "wasmplugins.extensions.istio.io",
+                            "version": "v1alpha1",
+                            "kind": "WasmPlugin"
+                        },
+                        {
+                            "name": "destinationrules.networking.istio.io",
+                            "version": "v1",
+                            "kind": "DestinationRule"
+                        },
+                        {
+                            "name": "destinationrules.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "DestinationRule"
+                        },
+                        {
+                            "name": "destinationrules.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "DestinationRule"
+                        },
+                        {
+                            "name": "envoyfilters.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "EnvoyFilter"
+                        },
+                        {
+                            "name": "gateways.networking.istio.io",
+                            "version": "v1",
+                            "kind": "Gateway"
+                        },
+                        {
+                            "name": "gateways.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "Gateway"
+                        },
+                        {
+                            "name": "gateways.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "Gateway"
+                        },
+                        {
+                            "name": "proxyconfigs.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "ProxyConfig"
+                        },
+                        {
+                            "name": "serviceentries.networking.istio.io",
+                            "version": "v1",
+                            "kind": "ServiceEntry"
+                        },
+                        {
+                            "name": "serviceentries.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceEntry"
+                        },
+                        {
+                            "name": "serviceentries.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "ServiceEntry"
+                        },
+                        {
+                            "name": "sidecars.networking.istio.io",
+                            "version": "v1",
+                            "kind": "Sidecar"
+                        },
+                        {
+                            "name": "sidecars.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "Sidecar"
+                        },
+                        {
+                            "name": "sidecars.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "Sidecar"
+                        },
+                        {
+                            "name": "virtualservices.networking.istio.io",
+                            "version": "v1",
+                            "kind": "VirtualService"
+                        },
+                        {
+                            "name": "virtualservices.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "VirtualService"
+                        },
+                        {
+                            "name": "virtualservices.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "VirtualService"
+                        },
+                        {
+                            "name": "workloadentries.networking.istio.io",
+                            "version": "v1",
+                            "kind": "WorkloadEntry"
+                        },
+                        {
+                            "name": "workloadentries.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "WorkloadEntry"
+                        },
+                        {
+                            "name": "workloadentries.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "WorkloadEntry"
+                        },
+                        {
+                            "name": "workloadgroups.networking.istio.io",
+                            "version": "v1",
+                            "kind": "WorkloadGroup"
+                        },
+                        {
+                            "name": "workloadgroups.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "WorkloadGroup"
+                        },
+                        {
+                            "name": "workloadgroups.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "WorkloadGroup"
+                        },
+                        {
+                            "name": "authorizationpolicies.security.istio.io",
+                            "version": "v1",
+                            "kind": "AuthorizationPolicy"
+                        },
+                        {
+                            "name": "authorizationpolicies.security.istio.io",
+                            "version": "v1beta1",
+                            "kind": "AuthorizationPolicy"
+                        },
+                        {
+                            "name": "peerauthentications.security.istio.io",
+                            "version": "v1",
+                            "kind": "PeerAuthentication"
+                        },
+                        {
+                            "name": "peerauthentications.security.istio.io",
+                            "version": "v1beta1",
+                            "kind": "PeerAuthentication"
+                        },
+                        {
+                            "name": "requestauthentications.security.istio.io",
+                            "version": "v1",
+                            "kind": "RequestAuthentication"
+                        },
+                        {
+                            "name": "requestauthentications.security.istio.io",
+                            "version": "v1beta1",
+                            "kind": "RequestAuthentication"
+                        },
+                        {
+                            "name": "telemetries.telemetry.istio.io",
+                            "version": "v1",
+                            "kind": "Telemetry"
+                        },
+                        {
+                            "name": "telemetries.telemetry.istio.io",
+                            "version": "v1alpha1",
+                            "kind": "Telemetry"
+                        },
+                        {
+                            "name": "istiocnis.sailoperator.io",
+                            "version": "v1alpha1",
+                            "kind": "IstioCNI",
+                            "displayName": "Istio CNI",
+                            "description": "IstioCNI represents a deployment of the Istio CNI component.",
+                            "specDescriptors": [
+                                {
+                                    "path": "version",
+                                    "displayName": "Istio Version",
+                                    "description": "Defines the version of Istio to install.\nMust be one of: v1.23.0.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:General",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.23.0"
+                                    ]
+                                },
+                                {
+                                    "path": "namespace",
+                                    "displayName": "Namespace",
+                                    "description": "Namespace to which the Istio CNI component should be installed.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Namespace"
+                                    ]
+                                },
+                                {
+                                    "path": "profile",
+                                    "displayName": "Profile",
+                                    "description": "The built-in installation configuration profile to use.\nThe 'default' profile is always applied. On OpenShift, the 'openshift' profile is also applied on top of 'default'.\nMust be one of: ambient, default, demo, empty, openshift-ambient, openshift, preview, stable.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "values",
+                                    "displayName": "Helm Values",
+                                    "description": "Defines the values to be passed to the Helm charts when installing Istio CNI."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "istiorevisions.sailoperator.io",
+                            "version": "v1alpha1",
+                            "kind": "IstioRevision",
+                            "displayName": "Istio Revision",
+                            "description": "IstioRevision represents a single revision of an Istio Service Mesh deployment.\nUsers shouldn't create IstioRevision objects directly. Instead, they should\ncreate an Istio object and allow the operator to create the underlying\nIstioRevision object(s).",
+                            "specDescriptors": [
+                                {
+                                    "path": "version",
+                                    "displayName": "Istio Version",
+                                    "description": "Defines the version of Istio to install.\nMust be one of: v1.23.0.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:General",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.23.0"
+                                    ]
+                                },
+                                {
+                                    "path": "namespace",
+                                    "displayName": "Namespace",
+                                    "description": "Namespace to which the Istio components should be installed.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Namespace"
+                                    ]
+                                },
+                                {
+                                    "path": "values",
+                                    "displayName": "Helm Values",
+                                    "description": "Defines the values to be passed to the Helm charts when installing Istio."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "istios.sailoperator.io",
+                            "version": "v1alpha1",
+                            "kind": "Istio",
+                            "displayName": "Istio",
+                            "description": "Istio represents an Istio Service Mesh deployment consisting of one or more\ncontrol plane instances (represented by one or more IstioRevision objects).\nTo deploy an Istio Service Mesh, a user creates an Istio object with the\ndesired Istio version and configuration. The operator then creates\nan IstioRevision object, which in turn creates the underlying Deployment\nobjects for istiod and other control plane components, similar to how a\nDeployment object in Kubernetes creates ReplicaSets that create the Pods.",
+                            "specDescriptors": [
+                                {
+                                    "path": "updateStrategy.type",
+                                    "displayName": "Type",
+                                    "description": "Type of strategy to use. Can be \"InPlace\" or \"RevisionBased\". When the \"InPlace\" strategy\nis used, the existing Istio control plane is updated in-place. The workloads therefore\ndon't need to be moved from one control plane instance to another. When the \"RevisionBased\"\nstrategy is used, a new Istio control plane instance is created for every change to the\nIstio.spec.version field. The old control plane remains in place until all workloads have\nbeen moved to the new control plane instance.\n\n\nThe \"InPlace\" strategy is the default.\tTODO: change default to \"RevisionBased\"",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:select:InPlace",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:RevisionBased"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Istio Version",
+                                    "description": "Defines the version of Istio to install.\nMust be one of: v1.23.0.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:General",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.23.0"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy.inactiveRevisionDeletionGracePeriodSeconds",
+                                    "displayName": "Inactive Revision Deletion Grace Period (seconds)",
+                                    "description": "Defines how many seconds the operator should wait before removing a non-active revision after all\nthe workloads have stopped using it. You may want to set this value on the order of minutes.\nThe minimum and the default value is 30.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:number"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy.updateWorkloads",
+                                    "displayName": "Update Workloads Automatically",
+                                    "description": "Defines whether the workloads should be moved from one control plane instance to another\nautomatically. If updateWorkloads is true, the operator moves the workloads from the old\ncontrol plane instance to the new one after the new control plane is ready.\nIf updateWorkloads is false, the user must move the workloads manually by updating the\nistio.io/rev labels on the namespace and/or the pods.\nDefaults to false.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "namespace",
+                                    "displayName": "Namespace",
+                                    "description": "Namespace to which the Istio components should be installed.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Namespace"
+                                    ]
+                                },
+                                {
+                                    "path": "profile",
+                                    "displayName": "Profile",
+                                    "description": "The built-in installation configuration profile to use.\nThe 'default' profile is always applied. On OpenShift, the 'openshift' profile is also applied on top of 'default'.\nMust be one of: ambient, default, demo, empty, openshift-ambient, openshift, preview, stable.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy",
+                                    "displayName": "Update Strategy",
+                                    "description": "Defines the update strategy to use when the version in the Istio CR is updated."
+                                },
+                                {
+                                    "path": "values",
+                                    "displayName": "Helm Values",
+                                    "description": "Defines the values to be passed to the Helm charts when installing Istio."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "remoteistios.sailoperator.io",
+                            "version": "v1alpha1",
+                            "kind": "RemoteIstio",
+                            "displayName": "Remote Istio",
+                            "description": "RemoteIstio represents a remote Istio Service Mesh deployment consisting of one or more\nremote control plane instances (represented by one or more IstioRevision objects).",
+                            "specDescriptors": [
+                                {
+                                    "path": "updateStrategy.type",
+                                    "displayName": "Type",
+                                    "description": "Type of strategy to use. Can be \"InPlace\" or \"RevisionBased\". When the \"InPlace\" strategy\nis used, the existing Istio control plane is updated in-place. The workloads therefore\ndon't need to be moved from one control plane instance to another. When the \"RevisionBased\"\nstrategy is used, a new Istio control plane instance is created for every change to the\nIstio.spec.version field. The old control plane remains in place until all workloads have\nbeen moved to the new control plane instance.\n\n\nThe \"InPlace\" strategy is the default.\tTODO: change default to \"RevisionBased\"",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:select:InPlace",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:RevisionBased"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Istio Version",
+                                    "description": "Defines the version of Istio to install.\nMust be one of: v1.23.0.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:General",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.23.0"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy.inactiveRevisionDeletionGracePeriodSeconds",
+                                    "displayName": "Inactive Revision Deletion Grace Period (seconds)",
+                                    "description": "Defines how many seconds the operator should wait before removing a non-active revision after all\nthe workloads have stopped using it. You may want to set this value on the order of minutes.\nThe minimum and the default value is 30.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:number"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy.updateWorkloads",
+                                    "displayName": "Update Workloads Automatically",
+                                    "description": "Defines whether the workloads should be moved from one control plane instance to another\nautomatically. If updateWorkloads is true, the operator moves the workloads from the old\ncontrol plane instance to the new one after the new control plane is ready.\nIf updateWorkloads is false, the user must move the workloads manually by updating the\nistio.io/rev labels on the namespace and/or the pods.\nDefaults to false.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "namespace",
+                                    "displayName": "Namespace",
+                                    "description": "Namespace to which the Istio components should be installed.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Namespace"
+                                    ]
+                                },
+                                {
+                                    "path": "profile",
+                                    "displayName": "Profile",
+                                    "description": "The built-in installation configuration profile to use.\nThe 'default' profile is always applied. On OpenShift, the 'openshift' profile is also applied on top of 'default'.\nMust be one of: ambient, default, demo, empty, openshift-ambient, openshift, preview, stable.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy",
+                                    "displayName": "Update Strategy",
+                                    "description": "Defines the update strategy to use when the version in the RemoteIstio CR is updated."
+                                },
+                                {
+                                    "path": "values",
+                                    "displayName": "Helm Values",
+                                    "description": "Defines the values to be passed to the Helm charts when installing Istio."
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "Red Hat OpenShift Service Mesh is a platform that provides behavioral insight and operational control over a service mesh, providing a uniform way to connect, secure, and monitor microservice applications.\n\n### Overview\n\nRed Hat OpenShift Service Mesh, based on the open source [Istio](https://istio.io/) project, adds a transparent layer on existing\ndistributed applications without requiring any changes to the service code. You add Red Hat OpenShift Service Mesh\nsupport to services by deploying a special sidecar proxy throughout your environment that intercepts all network\ncommunication between microservices. You configure and manage the service mesh using the control plane features.\n\nRed Hat OpenShift Service Mesh provides an easy way to create a network of deployed services that provides discovery,\nload balancing, service-to-service authentication, failure recovery, metrics, and monitoring. A service mesh also\nprovides more complex operational functionality, including A/B testing, canary releases, rate limiting, access\ncontrol, and end-to-end authentication.\n\n### Core Capabilities\n\nRed Hat OpenShift Service Mesh supports uniform application of a number of key capabilities across a network of services:\n\n+ **Traffic Management** - Control the flow of traffic and API calls between services, make calls more reliable,\n  and make the network more robust in the face of adverse conditions.\n\n+ **Service Identity and Security** - Provide services in the mesh with a verifiable identity and provide the\n  ability to protect service traffic as it flows over networks of varying degrees of trustworthiness.\n\n+ **Policy Enforcement** - Apply organizational policy to the interaction between services, ensure access policies\n  are enforced and resources are fairly distributed among consumers. Policy changes are made by configuring the\n  mesh, not by changing application code.\n\n+ **Telemetry** - Gain understanding of the dependencies between services and the nature and flow of traffic between\n  them, providing the ability to quickly identify issues.\n\n### More Information\n\n* [Documentation](https://docs.openshift.com/container-platform/latest/service_mesh/v2x/servicemesh-release-notes.html)\n* [Bugs](https://issues.redhat.com/projects/OSSM)",
+                "displayName": "Red Hat OpenShift Service Mesh 3",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "istio",
+                    "servicemesh",
+                    "envoy"
+                ],
+                "links": [
+                    {
+                        "name": "Istio Project",
+                        "url": "https://istio.io"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "OpenShift Service Mesh Team",
+                        "email": "istio-feedback@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat, Inc."
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "istio-cni-rhel9-f16cd8a29ddcbb3de77cbfcf7e1da78e42cc0c1c502132d477a01c52689cdf23-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-cni-rhel9@sha256:f16cd8a29ddcbb3de77cbfcf7e1da78e42cc0c1c502132d477a01c52689cdf23"
+        },
+        {
+            "name": "istio-must-gather-rhel9-e3978aecaafe2678355e21a7303f8620f53d8b774f6592f10527c15bae957224-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-must-gather-rhel9@sha256:e3978aecaafe2678355e21a7303f8620f53d8b774f6592f10527c15bae957224"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-operator-bundle@sha256:8f2f2d90e3c14c32d97af0cf845f05fc87350a8de1f6fa53d976c0ccff881f70"
+        },
+        {
+            "name": "istio-pilot-rhel9-376f64eab0ebeb06035983a60d1e7647c5d41354f31a49cb34f4deb7b6708e3e-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-pilot-rhel9@sha256:376f64eab0ebeb06035983a60d1e7647c5d41354f31a49cb34f4deb7b6708e3e"
+        },
+        {
+            "name": "istio-proxyv2-rhel9-cbd6bc47341ab8618609f89d063552e17232541c727429855c01deab73e4d06c-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-proxyv2-rhel9@sha256:cbd6bc47341ab8618609f89d063552e17232541c727429855c01deab73e4d06c"
+        },
+        {
+            "name": "istio-rhel9-operator-ea78213a4c5e1ef3f419df6910740f040c71ad13514aaac0e22c95e7ff4cb96b-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-rhel9-operator@sha256:ea78213a4c5e1ef3f419df6910740f040c71ad13514aaac0e22c95e7ff4cb96b"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-rhel9-operator@sha256:ea78213a4c5e1ef3f419df6910740f040c71ad13514aaac0e22c95e7ff4cb96b"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:0848d89e9f94be04f17beeee75807d7fd11102737e6483ee674f2cf3ae28f213"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "servicemeshoperator3.v3.0.0-tp.2",
+    "package": "servicemeshoperator3",
+    "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-operator-bundle@sha256:f596dc9323da89f5e45e71192f0fa698b7bb29b8205eaa0fc1659d68fa7401f4",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "extensions.istio.io",
+                "kind": "WasmPlugin",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "DestinationRule",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "DestinationRule",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "DestinationRule",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "EnvoyFilter",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Gateway",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Gateway",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Gateway",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "ProxyConfig",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "ServiceEntry",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "ServiceEntry",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "ServiceEntry",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Sidecar",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Sidecar",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "Sidecar",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "VirtualService",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "VirtualService",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "VirtualService",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadEntry",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadEntry",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadEntry",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadGroup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadGroup",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.istio.io",
+                "kind": "WorkloadGroup",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sailoperator.io",
+                "kind": "Istio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sailoperator.io",
+                "kind": "IstioCNI",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sailoperator.io",
+                "kind": "IstioRevision",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "sailoperator.io",
+                "kind": "IstioRevisionTag",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "AuthorizationPolicy",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "AuthorizationPolicy",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "PeerAuthentication",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "PeerAuthentication",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "RequestAuthentication",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "security.istio.io",
+                "kind": "RequestAuthentication",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "telemetry.istio.io",
+                "kind": "Telemetry",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "telemetry.istio.io",
+                "kind": "Telemetry",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "servicemeshoperator3",
+                "version": "3.0.0-tp.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"sailoperator.io/v1alpha1\",\n    \"kind\": \"Istio\",\n    \"metadata\": {\n      \"name\": \"default\"\n    },\n    \"spec\": {\n      \"namespace\": \"istio-system\",\n      \"updateStrategy\": {\n        \"inactiveRevisionDeletionGracePeriodSeconds\": 30,\n        \"type\": \"InPlace\"\n      },\n      \"version\": \"v1.24.1\"\n    }\n  },\n  {\n    \"apiVersion\": \"sailoperator.io/v1alpha1\",\n    \"kind\": \"IstioCNI\",\n    \"metadata\": {\n      \"name\": \"default\"\n    },\n    \"spec\": {\n      \"namespace\": \"istio-cni\",\n      \"version\": \"v1.24.1\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "OpenShift Optional, Integration & Delivery, Networking, Security",
+                    "containerImage": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-rhel9-operator@sha256:f5dfe495ba92ecb880485b66cfafbf6451f8142b8e0d5fd7f29db94171c51336",
+                    "createdAt": "2024-12-12T10:28:38Z",
+                    "description": "The OpenShift Service Mesh Operator enables you to install, configure, and manage an instance of Red Hat OpenShift Service Mesh. OpenShift Service Mesh is based on the open source Istio project.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "true",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.38.0",
+                    "operators.operatorframework.io/internal-objects": "[\"wasmplugins.extensions.istio.io\",\"destinationrules.networking.istio.io\",\"envoyfilters.networking.istio.io\",\"gateways.networking.istio.io\",\"proxyconfigs.networking.istio.io\",\"serviceentries.networking.istio.io\",\"sidecars.networking.istio.io\",\"virtualservices.networking.istio.io\",\"workloadentries.networking.istio.io\",\"workloadgroups.networking.istio.io\",\"authorizationpolicies.security.istio.io\",\"peerauthentications.security.istio.io\",\"requestauthentications.security.istio.io\",\"telemetries.telemetry.istio.io\"]",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v4",
+                    "repository": "https://github.com/istio-ecosystem/sail-operator",
+                    "support": "Red Hat, Inc."
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "wasmplugins.extensions.istio.io",
+                            "version": "v1alpha1",
+                            "kind": "WasmPlugin"
+                        },
+                        {
+                            "name": "destinationrules.networking.istio.io",
+                            "version": "v1",
+                            "kind": "DestinationRule"
+                        },
+                        {
+                            "name": "destinationrules.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "DestinationRule"
+                        },
+                        {
+                            "name": "destinationrules.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "DestinationRule"
+                        },
+                        {
+                            "name": "envoyfilters.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "EnvoyFilter"
+                        },
+                        {
+                            "name": "gateways.networking.istio.io",
+                            "version": "v1",
+                            "kind": "Gateway"
+                        },
+                        {
+                            "name": "gateways.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "Gateway"
+                        },
+                        {
+                            "name": "gateways.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "Gateway"
+                        },
+                        {
+                            "name": "proxyconfigs.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "ProxyConfig"
+                        },
+                        {
+                            "name": "serviceentries.networking.istio.io",
+                            "version": "v1",
+                            "kind": "ServiceEntry"
+                        },
+                        {
+                            "name": "serviceentries.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceEntry"
+                        },
+                        {
+                            "name": "serviceentries.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "ServiceEntry"
+                        },
+                        {
+                            "name": "sidecars.networking.istio.io",
+                            "version": "v1",
+                            "kind": "Sidecar"
+                        },
+                        {
+                            "name": "sidecars.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "Sidecar"
+                        },
+                        {
+                            "name": "sidecars.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "Sidecar"
+                        },
+                        {
+                            "name": "virtualservices.networking.istio.io",
+                            "version": "v1",
+                            "kind": "VirtualService"
+                        },
+                        {
+                            "name": "virtualservices.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "VirtualService"
+                        },
+                        {
+                            "name": "virtualservices.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "VirtualService"
+                        },
+                        {
+                            "name": "workloadentries.networking.istio.io",
+                            "version": "v1",
+                            "kind": "WorkloadEntry"
+                        },
+                        {
+                            "name": "workloadentries.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "WorkloadEntry"
+                        },
+                        {
+                            "name": "workloadentries.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "WorkloadEntry"
+                        },
+                        {
+                            "name": "workloadgroups.networking.istio.io",
+                            "version": "v1",
+                            "kind": "WorkloadGroup"
+                        },
+                        {
+                            "name": "workloadgroups.networking.istio.io",
+                            "version": "v1alpha3",
+                            "kind": "WorkloadGroup"
+                        },
+                        {
+                            "name": "workloadgroups.networking.istio.io",
+                            "version": "v1beta1",
+                            "kind": "WorkloadGroup"
+                        },
+                        {
+                            "name": "authorizationpolicies.security.istio.io",
+                            "version": "v1",
+                            "kind": "AuthorizationPolicy"
+                        },
+                        {
+                            "name": "authorizationpolicies.security.istio.io",
+                            "version": "v1beta1",
+                            "kind": "AuthorizationPolicy"
+                        },
+                        {
+                            "name": "peerauthentications.security.istio.io",
+                            "version": "v1",
+                            "kind": "PeerAuthentication"
+                        },
+                        {
+                            "name": "peerauthentications.security.istio.io",
+                            "version": "v1beta1",
+                            "kind": "PeerAuthentication"
+                        },
+                        {
+                            "name": "requestauthentications.security.istio.io",
+                            "version": "v1",
+                            "kind": "RequestAuthentication"
+                        },
+                        {
+                            "name": "requestauthentications.security.istio.io",
+                            "version": "v1beta1",
+                            "kind": "RequestAuthentication"
+                        },
+                        {
+                            "name": "telemetries.telemetry.istio.io",
+                            "version": "v1",
+                            "kind": "Telemetry"
+                        },
+                        {
+                            "name": "telemetries.telemetry.istio.io",
+                            "version": "v1alpha1",
+                            "kind": "Telemetry"
+                        },
+                        {
+                            "name": "istiocnis.sailoperator.io",
+                            "version": "v1alpha1",
+                            "kind": "IstioCNI",
+                            "displayName": "Istio CNI",
+                            "description": "IstioCNI represents a deployment of the Istio CNI component.",
+                            "specDescriptors": [
+                                {
+                                    "path": "version",
+                                    "displayName": "Istio Version",
+                                    "description": "Defines the version of Istio to install.\nMust be one of: v1.24.1, v1.23.0.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:General",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.24.1",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.23.0"
+                                    ]
+                                },
+                                {
+                                    "path": "namespace",
+                                    "displayName": "Namespace",
+                                    "description": "Namespace to which the Istio CNI component should be installed.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Namespace"
+                                    ]
+                                },
+                                {
+                                    "path": "profile",
+                                    "displayName": "Profile",
+                                    "description": "The built-in installation configuration profile to use.\nThe 'default' profile is always applied. On OpenShift, the 'openshift' profile is also applied on top of 'default'.\nMust be one of: ambient, default, demo, empty, openshift-ambient, openshift, preview, remote, stable.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "values",
+                                    "displayName": "Helm Values",
+                                    "description": "Defines the values to be passed to the Helm charts when installing Istio CNI."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "istiorevisions.sailoperator.io",
+                            "version": "v1alpha1",
+                            "kind": "IstioRevision",
+                            "displayName": "Istio Revision",
+                            "description": "IstioRevision represents a single revision of an Istio Service Mesh deployment.\nUsers shouldn't create IstioRevision objects directly. Instead, they should\ncreate an Istio object and allow the operator to create the underlying\nIstioRevision object(s).",
+                            "specDescriptors": [
+                                {
+                                    "path": "version",
+                                    "displayName": "Istio Version",
+                                    "description": "Defines the version of Istio to install.\nMust be one of: v1.24.1, v1.23.0.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:General",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.24.1",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.23.0"
+                                    ]
+                                },
+                                {
+                                    "path": "namespace",
+                                    "displayName": "Namespace",
+                                    "description": "Namespace to which the Istio components should be installed.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Namespace"
+                                    ]
+                                },
+                                {
+                                    "path": "values",
+                                    "displayName": "Helm Values",
+                                    "description": "Defines the values to be passed to the Helm charts when installing Istio."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "istiorevisiontags.sailoperator.io",
+                            "version": "v1alpha1",
+                            "kind": "IstioRevisionTag",
+                            "displayName": "Istio Revision Tag",
+                            "description": "IstioRevisionTag references a Istio or IstioRevision object and serves as an alias for sidecar injection."
+                        },
+                        {
+                            "name": "istios.sailoperator.io",
+                            "version": "v1alpha1",
+                            "kind": "Istio",
+                            "displayName": "Istio",
+                            "description": "Istio represents an Istio Service Mesh deployment consisting of one or more\ncontrol plane instances (represented by one or more IstioRevision objects).\nTo deploy an Istio Service Mesh, a user creates an Istio object with the\ndesired Istio version and configuration. The operator then creates\nan IstioRevision object, which in turn creates the underlying Deployment\nobjects for istiod and other control plane components, similar to how a\nDeployment object in Kubernetes creates ReplicaSets that create the Pods.",
+                            "specDescriptors": [
+                                {
+                                    "path": "updateStrategy.type",
+                                    "displayName": "Type",
+                                    "description": "Type of strategy to use. Can be \"InPlace\" or \"RevisionBased\". When the \"InPlace\" strategy\nis used, the existing Istio control plane is updated in-place. The workloads therefore\ndon't need to be moved from one control plane instance to another. When the \"RevisionBased\"\nstrategy is used, a new Istio control plane instance is created for every change to the\nIstio.spec.version field. The old control plane remains in place until all workloads have\nbeen moved to the new control plane instance.\n\n\nThe \"InPlace\" strategy is the default.\tTODO: change default to \"RevisionBased\"",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:select:InPlace",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:RevisionBased"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Istio Version",
+                                    "description": "Defines the version of Istio to install.\nMust be one of: v1.24.1, v1.23.0.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:General",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.24.1",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:v1.23.0"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy.inactiveRevisionDeletionGracePeriodSeconds",
+                                    "displayName": "Inactive Revision Deletion Grace Period (seconds)",
+                                    "description": "Defines how many seconds the operator should wait before removing a non-active revision after all\nthe workloads have stopped using it. You may want to set this value on the order of minutes.\nThe minimum is 0 and the default value is 30.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:number"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy.updateWorkloads",
+                                    "displayName": "Update Workloads Automatically",
+                                    "description": "Defines whether the workloads should be moved from one control plane instance to another\nautomatically. If updateWorkloads is true, the operator moves the workloads from the old\ncontrol plane instance to the new one after the new control plane is ready.\nIf updateWorkloads is false, the user must move the workloads manually by updating the\nistio.io/rev labels on the namespace and/or the pods.\nDefaults to false.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "namespace",
+                                    "displayName": "Namespace",
+                                    "description": "Namespace to which the Istio components should be installed. Note that this field is immutable.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Namespace"
+                                    ]
+                                },
+                                {
+                                    "path": "profile",
+                                    "displayName": "Profile",
+                                    "description": "The built-in installation configuration profile to use.\nThe 'default' profile is always applied. On OpenShift, the 'openshift' profile is also applied on top of 'default'.\nMust be one of: ambient, default, demo, empty, openshift-ambient, openshift, preview, remote, stable.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "updateStrategy",
+                                    "displayName": "Update Strategy",
+                                    "description": "Defines the update strategy to use when the version in the Istio CR is updated."
+                                },
+                                {
+                                    "path": "values",
+                                    "displayName": "Helm Values",
+                                    "description": "Defines the values to be passed to the Helm charts when installing Istio."
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "Red Hat OpenShift Service Mesh is a platform that provides behavioral insight and operational control over a service mesh, providing a uniform way to connect, secure, and monitor microservice applications.\n\n### Overview\n\nRed Hat OpenShift Service Mesh, based on the open source [Istio](https://istio.io/) project, adds a transparent layer on existing\ndistributed applications without requiring any changes to the service code. You add Red Hat OpenShift Service Mesh\nsupport to services by deploying a special sidecar proxy throughout your environment that intercepts all network\ncommunication between microservices. You configure and manage the service mesh using the control plane features.\n\nRed Hat OpenShift Service Mesh provides an easy way to create a network of deployed services that provides discovery,\nload balancing, service-to-service authentication, failure recovery, metrics, and monitoring. A service mesh also\nprovides more complex operational functionality, including A/B testing, canary releases, rate limiting, access\ncontrol, and end-to-end authentication.\n\n### Core Capabilities\n\nRed Hat OpenShift Service Mesh supports uniform application of a number of key capabilities across a network of services:\n\n+ **Traffic Management** - Control the flow of traffic and API calls between services, make calls more reliable,\n  and make the network more robust in the face of adverse conditions.\n\n+ **Service Identity and Security** - Provide services in the mesh with a verifiable identity and provide the\n  ability to protect service traffic as it flows over networks of varying degrees of trustworthiness.\n\n+ **Policy Enforcement** - Apply organizational policy to the interaction between services, ensure access policies\n  are enforced and resources are fairly distributed among consumers. Policy changes are made by configuring the\n  mesh, not by changing application code.\n\n+ **Telemetry** - Gain understanding of the dependencies between services and the nature and flow of traffic between\n  them, providing the ability to quickly identify issues.\n\n### More Information\n\n* [Documentation](https://docs.openshift.com/container-platform/latest/service_mesh/v2x/servicemesh-release-notes.html)\n* [Bugs](https://issues.redhat.com/projects/OSSM)",
+                "displayName": "Red Hat OpenShift Service Mesh 3",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "istio",
+                    "servicemesh",
+                    "envoy"
+                ],
+                "links": [
+                    {
+                        "name": "Istio Project",
+                        "url": "https://istio.io"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "OpenShift Service Mesh Team",
+                        "email": "istio-feedback@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat, Inc."
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "istio-cni-rhel9-d0ab36246c556249b6d67346eb0c72ebd22483a6502caa0fc75112a8d327b053-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-cni-rhel9@sha256:d0ab36246c556249b6d67346eb0c72ebd22483a6502caa0fc75112a8d327b053"
+        },
+        {
+            "name": "istio-cni-rhel9-f16cd8a29ddcbb3de77cbfcf7e1da78e42cc0c1c502132d477a01c52689cdf23-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-cni-rhel9@sha256:f16cd8a29ddcbb3de77cbfcf7e1da78e42cc0c1c502132d477a01c52689cdf23"
+        },
+        {
+            "name": "istio-must-gather-rhel9-2bf3704ba8d5945973ccf6bd13418457e929836352acf0ea6a47976ffa246616-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-must-gather-rhel9@sha256:2bf3704ba8d5945973ccf6bd13418457e929836352acf0ea6a47976ffa246616"
+        },
+        {
+            "name": "istio-must-gather-rhel9-e3978aecaafe2678355e21a7303f8620f53d8b774f6592f10527c15bae957224-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-must-gather-rhel9@sha256:e3978aecaafe2678355e21a7303f8620f53d8b774f6592f10527c15bae957224"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-operator-bundle@sha256:f596dc9323da89f5e45e71192f0fa698b7bb29b8205eaa0fc1659d68fa7401f4"
+        },
+        {
+            "name": "istio-pilot-rhel9-376f64eab0ebeb06035983a60d1e7647c5d41354f31a49cb34f4deb7b6708e3e-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-pilot-rhel9@sha256:376f64eab0ebeb06035983a60d1e7647c5d41354f31a49cb34f4deb7b6708e3e"
+        },
+        {
+            "name": "istio-pilot-rhel9-ea9372fabe06cd8e65ea7b4567ce3c8fbddd9d673dc34a12743fd95c548059d1-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-pilot-rhel9@sha256:ea9372fabe06cd8e65ea7b4567ce3c8fbddd9d673dc34a12743fd95c548059d1"
+        },
+        {
+            "name": "istio-proxyv2-rhel9-c21481d6dae58b82dac93b1b47b9d9f53a30617fa9d930a0b5d075620cffa74b-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-proxyv2-rhel9@sha256:c21481d6dae58b82dac93b1b47b9d9f53a30617fa9d930a0b5d075620cffa74b"
+        },
+        {
+            "name": "istio-proxyv2-rhel9-cbd6bc47341ab8618609f89d063552e17232541c727429855c01deab73e4d06c-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-proxyv2-rhel9@sha256:cbd6bc47341ab8618609f89d063552e17232541c727429855c01deab73e4d06c"
+        },
+        {
+            "name": "istio-rhel9-operator-f5dfe495ba92ecb880485b66cfafbf6451f8142b8e0d5fd7f29db94171c51336-annotation",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-rhel9-operator@sha256:f5dfe495ba92ecb880485b66cfafbf6451f8142b8e0d5fd7f29db94171c51336"
+        },
+        {
+            "name": "sail-operator",
+            "image": "registry.redhat.io/openshift-service-mesh-tech-preview/istio-rhel9-operator@sha256:f5dfe495ba92ecb880485b66cfafbf6451f8142b8e0d5fd7f29db94171c51336"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:0848d89e9f94be04f17beeee75807d7fd11102737e6483ee674f2cf3ae28f213"
+        }
+    ]
+}

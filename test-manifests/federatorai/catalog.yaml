@@ -1,0 +1,399 @@
+---
+defaultChannel: stable
+icon:
+  base64data: iVBORw0KGgoAAAANSUhEUgAAAMgAAACWCAMAAACsAjcrAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAC91BMVEUAAAD9/v3r78n09PTx8fHu7u719fX29vba2tpiZWLc3Nzf39/b4p/DxMPHx8fLy8zO13zExcTIyMjMzM3G0WjH0mrr78rIx8js8M3a29r19PXd3N329+X5+fn4+Pj6+/L5+vDs8M7s78v4+u3H0Wj///65x0T///25x0X+/f66x0b9/vy3xT7I0mvI0mrI02vU3Ir9/v3K1HHr78nCzlzM1nXM1nbX3pPL1XP09+L19fXz8/Px8fHx8fHx8fHx8fHv8O/t7e3s7Ozs7Ozy8vL9/f3+/v/r6+zm5ubm5ubm5ubw8PD+/v3f39/W1tbQ0NDf4N/x8fHKysrT09P9/f+8vL3MzM34+Pje5ajQ2YHE0GPF0GXF0GTd5KTMzcy9vr3b3Nv////x8fG5ubnu7+6UlJaurrD09PTS24i/y1S+v766urrv7++WlpiwsLH09PXL1XW1wzrM1ne2xT22xD3v8O+6ubqVlZevr7HL1XT19+TMzszc3Nzv7u/X35T19+Tg4ODW19bh4eHy8fLMzMzU09T19PW9vb7Ozs75+fj3+On19+T19+X29+X6+vr4+Pj29vb29vb29vb29vb29vb19fXz9PPz8/P09PT39/f8/Pz9/f3z8/Pw8PDw8PDw8PD29vb+/v76+/Hu8tPq7sXq7sbP2H62xD35+u/s8Mzm67zn673n7L7g5q61wzns8Mzq7sfr78n4+ezDzl22xDy3xD23xT+1wzeltg6mtxCmtxK0wzmltw+mtxGnuBOmuBOnuBXPz8/P0M++vr6/vr+/v7+qqqupqaqys7K1trWzs7OXlpeYl5iZmJl3d3l2dnivvyuwwC2wwCzR2oSztLO2t7a1tLWamZqbmpt5eXt4eHqktQultg2ktg3K1HHL1XO0wziltg+0tLS1wzjR2oPH0mnH0mrR0dHAv8DAwMCrq62rq6zBzVmtvSSuvieuviWouRa7yEi9yk+ouRepuhqpuhnN13jn7MDg5qvh5q3h5qzt8M////9HTZ/9AAAAs3RSTlMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC7ArsCuwK7Av7r5+upAfIxCQsLCPEnBWZ9e3cWA2F9e2EDAVp+e31mBQvT/nxD6cgCu9MLFoaOjo6OC9O7AnXIBbvTCyfx08gFu9MLJ/En8fEFyLvT8ScLuwXDFgvThkvtyAW70wuOjpBBBnWPjogaA2+QjpBvAwFokI6PdQYCBQUFK/JY3tvb2+H9ZmZmZjqy/PcAAAABYktHRGGysEyGAAAACXBIWXMAAAGQAAABkABW8NvoAAACuklEQVR42u3cVVQUURzH8RUUA1tssVHADgxs7EbEVhQLC2ywu7s7UbC7WGRRUbAQOxCMtVuxxRefFnc8d/+Mc9T5z/H3fb73nv/nzOudqztw8JDSDhd10PHpSIheaaHFiqs9vVlHwwxKC3d0Unt6QAABBBBA1A4QQAABBBBAAAEEEEAA+Z8gx1hDQsNld9y5hNrTW4boS5YqLbcyZcupPT0BKV+hoovMKlVOofb0BKRKVSu1RwIEEFYBwi1AuAUItwDhFiDcAoRbgHCLgFi7Vqteg6hmrZSiE1PVruNWl8itXn0b0b4GDRs1JmrStFlqhZA0zVuciCBq6Z5WdKJ1K4+Tp4giW7umE+3zbBN1miiqbTtb09L07Tt07GRe5y4UJINX1zNUZ7t5CyHdz52PJrrQo2dGIaRXzEWimN4+mUxLM/fpe+myeVeuUpAsXv2uUV23BLkRfZPoVv8BWYUQ39jbRLF+A7OZltoNGhwXb96du9qEZB8yNEQytuGeViHDpBA9IIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAaBsy/G9A7hslj38Z/wTkAQ3xt/BFAmjICBryUPriWdjIUTmSIKOTgYxR9kX8x+YU7XNIBuLnQ0IePX4iadz4XKbluSdMpK40RjydJJpHl2fylMhnRM+nTssrhEx/8ZJqxkxbCjJrtqQ5c/MlnWw/b/6ChUSLFguvfdosWbpsOdGKlavyi/atXrN2HdH6DRvtKYgmA4RbgHALEG4Bwi1AuAUItwDhFiDcAuRfVCBw0+YgmXkHb+ELKbh12/YdMtu5a7eRLaTQnlev38jt7TsDW4jV3oRf/i38jQABBBBAAAEEEEAAAQQQQAABBBBAAAFEixADI0jhfe8/fFTap89qj/+zIvu/fP2msMTE7z8AofGIUB1IPooAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTktMDMtMTRUMTc6MDA6NTIrMDE6MDCjbINkAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE5LTAzLTE0VDE3OjAwOjUyKzAxOjAw0jE72AAAACB0RVh0cGRmOkhpUmVzQm91bmRpbmdCb3gANDA4eDI2NiswKzDr8x6EAAAAHXRFWHRwZGY6U3BvdENvbG9yLTAAUEFOVE9ORSA0MjEgQx6zNCoAAAAldEVYdHBkZjpTcG90Q29sb3ItMQBQQU5UT05FIENvb2wgR3JheSA3IEOzNDMdAAAAJXRFWHRwZGY6U3BvdENvbG9yLTIAUEFOVE9ORSBDb29sIEdyYXkgOSBDz08nKgAAABR0RVh0cGRmOlZlcnNpb24AUERGLTEuNQ1Ag1dMAAAAAElFTkSuQmCC
+  mediatype: image/png
+name: federatorai
+schema: olm.package
+---
+entries:
+- name: federatorai.v0.0.1
+- name: federatorai.v0.1.0
+  replaces: federatorai.v0.0.1
+- name: federatorai.v4.1.20
+  replaces: federatorai.v0.1.0
+- name: federatorai.v4.2.301
+  replaces: federatorai.v4.1.20
+- name: federatorai.v4.2.551
+  replaces: federatorai.v4.2.301
+- name: federatorai.v4.2.552
+  replaces: federatorai.v4.2.551
+- name: federatorai.v4.2.553
+  replaces: federatorai.v4.2.552
+- name: federatorai.v4.2.556
+  replaces: federatorai.v4.2.553
+- name: federatorai.v4.2.557
+  replaces: federatorai.v4.2.556
+- name: federatorai.v4.2.755
+  replaces: federatorai.v4.2.557
+- name: federatorai.v4.3.958
+  replaces: federatorai.v4.2.755
+name: stable
+package: federatorai
+schema: olm.channel
+---
+image: quay.io/operatorhubio/federatorai@sha256:3c12661cb8bd3a196acc6e85f34164d4b769239d3a437268c030b40049ea1bca
+name: federatorai.v0.0.1
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 0.0.1
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:3c12661cb8bd3a196acc6e85f34164d4b769239d3a437268c030b40049ea1bca
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator:v0.0.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:a8f5c722cae6fed5feb96d63a07772eead914433aa87e689ce17f8921bf2ecbf
+name: federatorai.v0.1.0
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 0.1.0
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:a8f5c722cae6fed5feb96d63a07772eead914433aa87e689ce17f8921bf2ecbf
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator:v0.1.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:9455635eacf6a51163904ce6807bf97c12d0cf3bf3cb5623c004b3dd2611747b
+name: federatorai.v4.1.20
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.1.20
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:9455635eacf6a51163904ce6807bf97c12d0cf3bf3cb5623c004b3dd2611747b
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.1.20
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:14e2df2b141d0b6450b7c8ff670427ee3205852b5102d684ab29f1491bf2be04
+name: federatorai.v4.2.301
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.2.301
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:14e2df2b141d0b6450b7c8ff670427ee3205852b5102d684ab29f1491bf2be04
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.2.301
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:029618ee9146539d21c114b20fe78c25d31587f4301bf72a51fea791371b77bf
+name: federatorai.v4.2.551
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.2.551
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:029618ee9146539d21c114b20fe78c25d31587f4301bf72a51fea791371b77bf
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.2.551
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:1c23ee6ebb9a701e7a3f4526c5d4836fe101bc2ccca867e88e3b8005fae419cf
+name: federatorai.v4.2.552
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.2.552
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:1c23ee6ebb9a701e7a3f4526c5d4836fe101bc2ccca867e88e3b8005fae419cf
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.2.552
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:f8417e23c2bb3e757b05745100a352f344b1e6d33aee6ce3957552808f3b235e
+name: federatorai.v4.2.553
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.2.553
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:f8417e23c2bb3e757b05745100a352f344b1e6d33aee6ce3957552808f3b235e
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.2.553
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:3f5ea6c3ef0285842f5a7a091e04904b3882299d5b13777bf109ca71b70dfe8f
+name: federatorai.v4.2.556
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.2.556
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:3f5ea6c3ef0285842f5a7a091e04904b3882299d5b13777bf109ca71b70dfe8f
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.2.556
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:6fdb1a52827101fe28dbc7efa0b908a8eefb75d1de6cbede1bf84ac2d643547b
+name: federatorai.v4.2.557
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.2.557
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:6fdb1a52827101fe28dbc7efa0b908a8eefb75d1de6cbede1bf84ac2d643547b
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.2.557
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:4b9d3d9b254cb3fe051c29b48f45e8450468d5083a00f70e73410cc1c3e44578
+name: federatorai.v4.2.755
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.2.755
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:4b9d3d9b254cb3fe051c29b48f45e8450468d5083a00f70e73410cc1c3e44578
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.2.755
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/federatorai@sha256:7762293e4bc573c074afc7c5c82bbbd80e6a7e746dff42556fd68602e1749ba0
+name: federatorai.v4.3.958
+package: federatorai
+properties:
+- type: olm.gvk
+  value:
+    group: federatorai.containers.ai
+    kind: AlamedaService
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: federatorai
+    version: 4.3.958
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "federatorai.containers.ai/v1alpha1",
+            "kind": "AlamedaService",
+            "metadata": {
+              "name": "my-alamedaservice"
+            },
+            "spec": {
+              "keycode": {
+                "codeNumber": "GRV7J-LA4TX-KPPIT-S6GRS-NK4EB-ILFRQ"
+              },
+              "selfDriving": false,
+              "enableExecution": false,
+              "version": "v4.3.958",
+              "storages": [
+                {
+                  "usage": "log",
+                  "type": "ephemeral"
+                },
+                {
+                  "usage": "data",
+                  "type":"ephemeral"
+                }
+              ]
+            }
+          }
+        ]
+      capabilities: Auto Pilot
+      categories: AI/Machine Learning, OpenShift Optional
+      certified: "false"
+      containerImage: quay.io/prophetstor/federatorai-operator-ubi:v4.3.958
+      createdAt: "2020-09-18T13:00:00Z"
+      description: Federator.ai Operator provides easy configuration and management
+        of AI-based Kubernetes resource orchestrator
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://quay.io/repository/prophetstor/federatorai-operator-ubi
+      support: ProphetStor Data Services, Inc.
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: An instance of Alameda.
+        displayName: AlamedaService
+        kind: AlamedaService
+        name: alamedaservices.federatorai.containers.ai
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: Deploy components to automatically execute Alameda recommendation
+          displayName: Enable Execution
+          path: enableExecution
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Alameda core component image version tag
+          displayName: Alameda Version
+          path: version
+          x-descriptors:
+          - urn:alm:descriptor:text
+        statusDescriptors:
+        - description: Alameda service conditions
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        version: v1alpha1
+    description: "**Federator.ai**, ProphetStor's Artificial Intelligence for IT Operations
+      (AIOps) platform, provides intelligence to orchestrate container resources on
+      top of VMs (virtual machines) or bare metal, allowing users to operate applications
+      without the need to manage the underlying computing resources. It aims to provide
+      optimal resource planning recommendations that will help enterprises make better
+      decisions. The benefits of **Federator.ai** include:\n- Up to 70% resource savings\n-
+      Increased operational efficiency\n- Reduced manual configuration time with digital
+      intelligence\n\nAfter **Federator.ai** is deployed in any Kubernetes environment,
+      it learns application resource usage patterns and predicts the needed resources
+      on a per namespace level down to the container level. **Federator.ai** also
+      provides a dashboard that displays the per-application workload and resource
+      recommendations. **Federator.ai** for Kubernetes delivers the following key
+      features:\n- **AI-based workload prediction:** **Federator.ai** applies multiple
+      analytics tools, such as machine learning and signal processing, to predict
+      containerized application and node resource usage as the basis for pod resource
+      recommendations. **Federator.ai** supports both physical and virtual CPUs and
+      memories.\n- **Application-aware recommendation execution:** The application
+      resource demand determines the number and size of pods. **Federator.ai** utilizes
+      resource usage prediction based on workload patterns to recommend the right
+      pod sizes.\n- **Policy-driven planning of CPU and memory:** **Federator.ai**
+      provides cluster-wide CPU and memory allocation for different types of applications
+      according to the policy specified by users.\n- **Enterprise-ready:** **Federator.ai**
+      is designed to work with any Kubernetes environment. **Federator.ai** provides
+      application lifecycle management based on the Operator Framework and works seamlessly
+      with standard Kubernetes.\n- **Easy installation:** Installing **Federator.ai**
+      is easy as it works as an Operator on Kubernetes. \n- **Continuous recommendations
+      for optimal resource planning:** **Federator.ai** continuously generates recommendations
+      and learns with more accurate prediction when more metrics data is collected.\n\nFor
+      more information, visit our [website](https://www.prophetstor.com/federator-ai/federator-ai-for-openshift/)
+      and [github](https://github.com/containers-ai/federatorai-operator).\n\n###
+      Prerequisite\n**Federator.ai** requires a Prometheus datasource to get historical
+      metrics of Kubernetes and application resources. When launching **Federator.ai**
+      components, Prometheus connection settings need to be provided.\n\n### Common
+      Configurations\n    apiVersion: federatorai.containers.ai/v1alpha1\n    kind:
+      AlamedaService\n    metadata:\n      name: my-alamedaservice\n    spec:\n      keycode:\n
+      \       codeNumber: D3JXN-LIFTQ-KQEZ3-WZBNI-DA3WZ-A7HKQ\n      selfDriving:
+      false\n      enableExecution: false\n      version: v4.3.958               ##
+      for Alameda components\n      # storages is optional. Omit this field if not
+      needed.\n      storages:                     ## see following details for where
+      it is used in each component\n        - usage: log                ## storage
+      setting for log\n          type: ephemeral           ## ephemeral means emptyDir{}\n
+      \       - usage: data\n          type: ephemeral\n    #    - usage: data               ##
+      storage setting for data\n    #      type: pvc                 ## pvc means
+      PersistentVolumeClaim\n    #      size: 10Gi                ## mandatory when
+      type=pvc\n    #      class: \"normal\"           ## mandatory when type=pvc"
+    displayName: Federator.ai
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - AI
+    - Resource Orchestration
+    - NoOps
+    links:
+    - name: Website
+      url: https://www.prophetstor.com/federator-ai/federator-ai-for-openshift/
+    - name: Quickstart guide
+      url: https://github.com/containers-ai/federatorai-operator/blob/master/docs/quickstart.md
+    maintainers:
+    - email: support@prophetstor.com
+      name: ProphetStor Data Services, Inc.
+    maturity: stable
+    provider:
+      name: ProphetStor Data Services, Inc.
+relatedImages:
+- image: quay.io/operatorhubio/federatorai@sha256:7762293e4bc573c074afc7c5c82bbbd80e6a7e746dff42556fd68602e1749ba0
+  name: ""
+- image: quay.io/prophetstor/federatorai-operator-ubi:v4.3.958
+  name: ""
+schema: olm.bundle

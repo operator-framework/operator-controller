@@ -1,0 +1,138 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48ZGVmcz48c3R5bGU+LmF7ZmlsbDojZWIyMzI4O30uYntmaWxsOiNlMTI4MjY7fS5je2ZpbGw6IzAxMDEwMTt9LmR7ZmlsbDpub25lO308L3N0eWxlPjwvZGVmcz48cGF0aCBjbGFzcz0iYSIgZD0iTTIyMCwxMzkuN3Y0LjFhNy42LDcuNiwwLDAsMC0uMywxLjYsMzUuNywzNS43LDAsMCwxLTQuNSwxNS4zYy02LjQsMTEuMy0xNS43LDE3LjctMjksMTcuN0g1OS43YTM2LjIsMzYuMiwwLDAsMS0yMi40LTcuNWMtMTAuNC03LjktMTYtMTguNy0xNy4xLTMxLjYtMS4yLTE0LjUsMy4xLTI3LjEsMTMuNy0zNy4xLDguMy03LjksMTguMi0xMS41LDI5LjctMTAsMS4yLjEsMS40LS40LDEuOC0xLjMsNS41LTE0LjgsMTYtMjQuMiwzMS4zLTI4LDIuMS0uNiw0LjMtLjgsNi40LTEuMmg2LjdsLjkuM2MxNS40LDEuOCwyNi44LDkuNywzNC4yLDIzLjJhMS44LDEuOCwwLDAsMCwyLDEuMWMxNS42LTEuMSwyNy42LDUsMzUuOCwxOC4zYTEuOSwxLjksMCwwLDAsMS45LDEsMzIuNSwzMi41LDAsMCwxLDUuNC4xYzE1LjEsMi4xLDI2LDEyLjUsMjksMjcuNUMyMTkuNCwxMzUuMywyMTkuNywxMzcuNSwyMjAsMTM5LjdaTTYzLjEsMTAwLjJoLS41YTM1LjksMzUuOSwwLDAsMCwyLjYsNzEuN0gxODEuOWEzMy4xLDMzLjEsMCwwLDAsNy43LS45LDI5LjksMjkuOSwwLDAsMCwyMi40LTI4Yy4zLTguOS0yLjYtMTYuNi05LjUtMjIuNXMtMTMuMi02LjktMjEtNi40YTIuMywyLjMsMCwwLDEtMi43LTEuNiwzMCwzMCwwLDAsMC0xNS40LTE0LjhjLTEwLjctNC43LTIxLTMuOC0zMC45LDIuMy0uNS4zLTEuMi43LTEuNi41YTY3LjksNjcuOSwwLDAsMS02LjctMy4yLDM4LjksMzguOSwwLDAsMSwxMi43LTguN2MtNS44LTExLTIwLjQtMTkuOC0zNi41LTE2LjZBMzMuNSwzMy41LDAsMCwwLDgwLDg0LjJjLTYuOSw4LjgtOS4xLDE4LjctNi44LDI5LjlsLTkuOS0zLjVTNjMuMSwxMDMsNjMuMSwxMDAuMloiLz48cGF0aCBjbGFzcz0iYiIgZD0iTTExMS44LDEzMmg2LjNsLTMuMy01LjMtNi4xLDkuNUgxMDZsNy4zLTExLjVhMiwyLDAsMCwxLDEuNS0uNywxLjksMS45LDAsMCwxLDEuNC43bDcuMywxMS41aC0yLjdsLTEuMy0yLjFoLTYuM2wtMS40LTIuMSIvPjxwYXRoIGNsYXNzPSJiIiBkPSJNMTQwLjMsMTM0LjF2LTEwSDEzOHYxMWExLjEsMS4xLDAsMCwwLC4zLjhsLjkuM2gxMC42bDEuNC0yLjFIMTQwLjMiLz48cGF0aCBjbGFzcz0iYiIgZD0iTTEwMS44LDEzMi4zYTQuMSw0LjEsMCwxLDAsMC04LjJIOTEuNnYxMi4xSDk0di05LjloNy43YTEuOCwxLjgsMCwwLDEsMS45LDEuOSwxLjksMS45LDAsMCwxLTEuOSwySDk1LjFsNyw2aDMuM2wtNC42LTMuOWgxIi8+PHBhdGggY2xhc3M9ImIiIGQ9Ik03Ny4zLDEzNi4yYTYuMSw2LjEsMCwwLDEsMC0xMi4xaDcuMWE2LjEsNi4xLDAsMCwxLDAsMTIuMUg3Ny4zbTYuOS0yLjFhMy45LDMuOSwwLDAsMCwzLjktMy45LDMuOCwzLjgsMCwwLDAtMy45LTMuOUg3Ny41YTMuOCwzLjgsMCwwLDAtMy45LDMuOSwzLjksMy45LDAsMCwwLDMuOSwzLjloNi43Ii8+PHBhdGggY2xhc3M9ImIiIGQ9Ik0xMjguNCwxMzYuMmE2LjEsNi4xLDAsMSwxLDAtMTIuMWg4LjRsLTEuNCwyLjJoLTYuOGEzLjksMy45LDAsMCwwLTQsMy45LDQsNCwwLDAsMCw0LDMuOWg4LjNsLTEuMywyLjFoLTcuMiIvPjxwYXRoIGNsYXNzPSJiIiBkPSJNMTU2LjksMTM0LjFhNCw0LDAsMCwxLTMuOC0yLjlIMTYzbDEuNC0yLjFIMTUzLjFhNCw0LDAsMCwxLDMuOC0yLjhoNi44bDEuNC0yLjJoLTguNGE2LjEsNi4xLDAsMCwwLDAsMTIuMWg3LjJsMS40LTIuMWgtOC40Ii8+PHBhdGggY2xhc3M9ImIiIGQ9Ik0xNjYuMywxMjUuNGExLjEsMS4xLDAsMSwxLDEuMSwxLjEsMS4xLDEuMSwwLDAsMS0xLjEtMS4xbTEuMSwxLjRhMS4zLDEuMywwLDAsMCwxLjMtMS40LDEuNCwxLjQsMCwwLDAtMS4zLTEuNCwxLjQsMS40LDAsMCwwLTEuNCwxLjQsMS40LDEuNCwwLDAsMCwxLjQsMS40bS0uMS0yLjJoLjRjLjIuMS4yLjQuMi41aDBjMCwuMSwwLC4yLS4yLjNoMGwuMy42aC0uM2wtLjMtLjZoLS4ydi42aC0uM3YtMS41aC40bS4xLjdoLjNsLS4yLS4yaC0uM3YuNGguMiIvPjxyZWN0IGNsYXNzPSJjIiB4PSI3MS4zIiB5PSIxNDIuNCIgd2lkdGg9Ijk0IiBoZWlnaHQ9IjAuNjciLz48cGF0aCBjbGFzcz0iYyIgZD0iTTEwNCwxNTEuOGExLjMsMS4zLDAsMCwwLTEuMy0xLjRjLTEuMiwwLTEuOCwxLjMtMS44LDIuOXMwLDIuNywxLjcsMi43YTEuMywxLjMsMCwwLDAsMS40LTEuNWgxLjhhMy40LDMuNCwwLDAsMS0uNywxLjksMy4yLDMuMiwwLDAsMS0yLjMuOWMtMi44LDAtMy42LTIuMS0zLjYtNHMxLjQtNC4yLDMuNi00LjJhMi43LDIuNywwLDAsMSwyLjksMi43WiIvPjxwYXRoIGNsYXNzPSJjIiBkPSJNMTA3LjQsMTQ5LjJoMS43djYuNWgzLjR2MS40aC01LjFaIi8+PHBhdGggY2xhc3M9ImMiIGQ9Ik0xMTYuOSwxNDlhMy40LDMuNCwwLDAsMSwyLjcsMS4xLDQuMyw0LjMsMCwwLDEsMS4xLDMsNC45LDQuOSwwLDAsMS0xLDMsNCw0LDAsMCwxLTUuNi4xLDQuMiw0LjIsMCwwLDEtMS0zQzExMy4xLDE1MS4xLDExNCwxNDksMTE2LjksMTQ5Wm0tMS41LDYuNGExLjksMS45LDAsMCwwLDEuNS42LDEuNywxLjcsMCwwLDAsMS41LS43LDQuNSw0LjUsMCwwLDAsLjUtMi4zLDMuNiwzLjYsMCwwLDAtLjItMS40LDEuOSwxLjksMCwwLDAtMS44LTEuNCwyLjEsMi4xLDAsMCwwLTEuNS43LDMuOSwzLjksMCwwLDAtLjUsMi4zQTQuMiw0LjIsMCwwLDAsMTE1LjQsMTU1LjRaIi8+PHBhdGggY2xhc3M9ImMiIGQ9Ik0xMjMuNywxNDkuMlYxNTRjMCwuOS4xLDEuOSwxLjcsMS45YTEuNywxLjcsMCwwLDAsMS41LS42LDIuMiwyLjIsMCwwLDAsLjMtMS40di00LjdoMS42djQuOWMwLDIuNC0xLjgsMy4xLTMuNCwzLjFhMy43LDMuNywwLDAsMS0zLTEuMywzLjQsMy40LDAsMCwxLS40LTJ2LTQuN1oiLz48cGF0aCBjbGFzcz0iYyIgZD0iTTEzMC45LDE0OS4yaDIuNmE0LjgsNC44LDAsMCwxLDIuNy43LDMuOCwzLjgsMCwwLDEsMS4zLDMuMWMwLDIuNC0xLjMsMy43LTIuOCw0aC0zLjh2LTcuOVptMS43LDYuNmguNmEyLjQsMi40LDAsMCwwLDEuOS0uNiwzLjUsMy41LDAsMCwwLC43LTIuMiwyLjIsMi4yLDAsMCwwLTEuNS0yLjQsMy43LDMuNywwLDAsMC0xLjctLjF2NS4zWiIvPjxyZWN0IGNsYXNzPSJkIiB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIvPjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: oci-ccm-operator
+schema: olm.package
+---
+entries:
+- name: oci-ccm-operator.v0.0.9
+name: alpha
+package: oci-ccm-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/oci-ccm-operator@sha256:4849f6ee724ff1bf6300f30701edcfb906acfa2d8a93a47d8473333f58bedbc6
+name: oci-ccm-operator.v0.0.9
+package: oci-ccm-operator
+properties:
+- type: olm.gvk
+  value:
+    group: ccm.oraclecloud.com
+    kind: OCICloudManager
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ccm.oraclecloud.com
+    kind: OCICsiDriver
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: oci-ccm-operator
+    version: 0.0.9
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "ccm.oraclecloud.com/v1alpha1",
+            "kind": "OCICloudManager",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/created-by": "oci-ccm-operator",
+                "app.kubernetes.io/instance": "ocicloudmanager",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "ocicloudmanager",
+                "app.kubernetes.io/part-of": "oci-ccm-operator"
+              },
+              "name": "ocicloudmanager"
+            },
+            "spec": {
+              "compartment": "CompartmentId",
+              "driverNamespace": "kube-system",
+              "loadBalancer": {
+                "securityList": "SecurityListId",
+                "securityListManagementMode": "Frontend",
+                "subnet": "SubnetId"
+              },
+              "vcn": "VcnId"
+            }
+          },
+          {
+            "apiVersion": "ccm.oraclecloud.com/v1alpha1",
+            "kind": "OCICsiDriver",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/created-by": "oci-ccm-operator",
+                "app.kubernetes.io/instance": "ocicsidriver",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "ocicsidriver",
+                "app.kubernetes.io/part-of": "oci-ccm-operator"
+              },
+              "name": "ocicsidriver"
+            },
+            "spec": {
+              "compartment": "CompartmentId",
+              "driverNamespace": "kube-system",
+              "vcn": "VcnId"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider, Storage
+      containerImage: phx.ocir.io/ax1eoqvpvbtg/oci-ccm-operator:0.0.9
+      createdAt: "2023-07-28T23:42:18Z"
+      operators.openshift.io/infrastructure-features: '["csi"]'
+      operators.openshift.io/valid-subscription: '[]'
+      operators.operatorframework.io/builder: operator-sdk-v1.30.0
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      support: Oracle
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - kind: OCICloudManager
+        name: ocicloudmanagers.ccm.oraclecloud.com
+        version: v1alpha1
+      - kind: OCICsiDriver
+        name: ocicsidrivers.ccm.oraclecloud.com
+        version: v1alpha1
+    description: OCI Kubernetes Cloud Controller Manager implementation (or out-of-tree
+      cloud-provider) for Oracle Cloud Infrastructure (OCI).
+    displayName: oci-ccm-operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - OCI
+    - CCM
+    - OpenShift
+    - Kubernetes
+    links:
+    - name: Oracle
+      url: https://www.oracle.com/cloud/
+    - name: OCI Cloud Controller Manager (CCM)
+      url: https://github.com/oracle/oci-cloud-controller-manager
+    maintainers:
+    - email: david.d.campbell@oracle.com
+      name: David Campbell
+    - email: alex.blinov@oracle.com
+      name: Alex Blinov
+    maturity: alpha
+    provider:
+      name: Oracle
+      url: https://www.oracle.com/cloud/
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+  name: ""
+- image: phx.ocir.io/ax1eoqvpvbtg/oci-ccm-operator:0.0.9
+  name: ""
+- image: quay.io/operatorhubio/oci-ccm-operator@sha256:4849f6ee724ff1bf6300f30701edcfb906acfa2d8a93a47d8473333f58bedbc6
+  name: ""
+schema: olm.bundle

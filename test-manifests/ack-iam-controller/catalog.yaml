@@ -1,0 +1,1811 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-iam-controller
+schema: olm.package
+---
+entries:
+- name: ack-iam-controller.v0.0.10
+  replaces: ack-iam-controller.v0.0.9
+- name: ack-iam-controller.v0.0.11
+  replaces: ack-iam-controller.v0.0.10
+- name: ack-iam-controller.v0.0.12
+  replaces: ack-iam-controller.v0.0.11
+- name: ack-iam-controller.v0.0.13
+  replaces: ack-iam-controller.v0.0.12
+- name: ack-iam-controller.v0.0.14
+  replaces: ack-iam-controller.v0.0.13
+- name: ack-iam-controller.v0.0.15
+  replaces: ack-iam-controller.v0.0.14
+- name: ack-iam-controller.v0.0.16
+  replaces: ack-iam-controller.v0.0.15
+- name: ack-iam-controller.v0.0.17
+  replaces: ack-iam-controller.v0.0.16
+- name: ack-iam-controller.v0.0.18
+  replaces: ack-iam-controller.v0.0.17
+- name: ack-iam-controller.v0.0.19
+  replaces: ack-iam-controller.v0.0.18
+- name: ack-iam-controller.v0.0.20
+  replaces: ack-iam-controller.v0.0.19
+- name: ack-iam-controller.v0.0.21
+  replaces: ack-iam-controller.v0.0.20
+- name: ack-iam-controller.v0.0.22
+  replaces: ack-iam-controller.v0.0.21
+- name: ack-iam-controller.v0.0.3
+- name: ack-iam-controller.v0.0.4
+  replaces: ack-iam-controller.v0.0.3
+- name: ack-iam-controller.v0.0.5
+  replaces: ack-iam-controller.v0.0.4
+- name: ack-iam-controller.v0.0.6
+  replaces: ack-iam-controller.v0.0.5
+- name: ack-iam-controller.v0.0.7
+  replaces: ack-iam-controller.v0.0.6
+- name: ack-iam-controller.v0.0.8
+  replaces: ack-iam-controller.v0.0.7
+- name: ack-iam-controller.v0.0.9
+  replaces: ack-iam-controller.v0.0.8
+- name: ack-iam-controller.v0.1.0
+  replaces: ack-iam-controller.v0.0.22
+- name: ack-iam-controller.v0.1.1
+  replaces: ack-iam-controller.v0.1.0
+- name: ack-iam-controller.v0.1.2
+  replaces: ack-iam-controller.v0.1.1
+- name: ack-iam-controller.v1.0.0
+  replaces: ack-iam-controller.v0.1.2
+- name: ack-iam-controller.v1.1.0
+  replaces: ack-iam-controller.v1.0.0
+- name: ack-iam-controller.v1.1.1
+  replaces: ack-iam-controller.v1.1.0
+- name: ack-iam-controller.v1.1.2
+  replaces: ack-iam-controller.v1.1.1
+- name: ack-iam-controller.v1.1.3
+  replaces: ack-iam-controller.v1.1.2
+- name: ack-iam-controller.v1.2.0
+  replaces: ack-iam-controller.v1.1.3
+- name: ack-iam-controller.v1.2.1
+  replaces: ack-iam-controller.v1.2.0
+- name: ack-iam-controller.v1.2.2
+  replaces: ack-iam-controller.v1.2.1
+- name: ack-iam-controller.v1.2.3
+  replaces: ack-iam-controller.v1.2.2
+- name: ack-iam-controller.v1.2.5
+  replaces: ack-iam-controller.v1.2.3
+- name: ack-iam-controller.v1.2.6
+  replaces: ack-iam-controller.v1.2.5
+- name: ack-iam-controller.v1.3.0
+  replaces: ack-iam-controller.v1.2.6
+- name: ack-iam-controller.v1.3.1
+  replaces: ack-iam-controller.v1.3.0
+- name: ack-iam-controller.v1.3.10
+  replaces: ack-iam-controller.v1.3.9
+- name: ack-iam-controller.v1.3.11
+  replaces: ack-iam-controller.v1.3.10
+- name: ack-iam-controller.v1.3.12
+  replaces: ack-iam-controller.v1.3.11
+- name: ack-iam-controller.v1.3.2
+  replaces: ack-iam-controller.v1.3.1
+- name: ack-iam-controller.v1.3.5
+  replaces: ack-iam-controller.v1.3.2
+- name: ack-iam-controller.v1.3.6
+  replaces: ack-iam-controller.v1.3.5
+- name: ack-iam-controller.v1.3.7
+  replaces: ack-iam-controller.v1.3.6
+- name: ack-iam-controller.v1.3.8
+  replaces: ack-iam-controller.v1.3.7
+- name: ack-iam-controller.v1.3.9
+  replaces: ack-iam-controller.v1.3.8
+name: alpha
+package: ack-iam-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:4c6565828bb4ccb2d608aa11242b87c3e2f893c9662edb5e0ce2d64555d84f82
+name: ack-iam-controller.v0.0.10
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:4c6565828bb4ccb2d608aa11242b87c3e2f893c9662edb5e0ce2d64555d84f82
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:d55004785726b003adf85e96a23438aa94cd5d8003313af6901c60377690e387
+name: ack-iam-controller.v0.0.11
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:d55004785726b003adf85e96a23438aa94cd5d8003313af6901c60377690e387
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:121877bc74a5a842030001a385d30ef4945609d99f600687a302f34c50432deb
+name: ack-iam-controller.v0.0.12
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:121877bc74a5a842030001a385d30ef4945609d99f600687a302f34c50432deb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:fd0b2bd33ec3ff3de2c1b6c7c3cea61f20e513ab24cb85f265366879134a9749
+name: ack-iam-controller.v0.0.13
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:fd0b2bd33ec3ff3de2c1b6c7c3cea61f20e513ab24cb85f265366879134a9749
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:89c0ef82d1ee9db6206cad263e6b49615c6a3dd80cf27b9c8e476662f69ea5f9
+name: ack-iam-controller.v0.0.14
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:89c0ef82d1ee9db6206cad263e6b49615c6a3dd80cf27b9c8e476662f69ea5f9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:7c5343af97ec8a8c47f3cd8c002522be54cedb1a9f028d4a55c8eaf9bf0a432b
+name: ack-iam-controller.v0.0.15
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:7c5343af97ec8a8c47f3cd8c002522be54cedb1a9f028d4a55c8eaf9bf0a432b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:7790d2f991c19095625efc43bb28cf675ad0c1732165df784867b015fd914de7
+name: ack-iam-controller.v0.0.16
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:7790d2f991c19095625efc43bb28cf675ad0c1732165df784867b015fd914de7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:1349f1cc45733d776b9002b4ca2b751dae66c96453d91d2b48f85e21b0533e01
+name: ack-iam-controller.v0.0.17
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:1349f1cc45733d776b9002b4ca2b751dae66c96453d91d2b48f85e21b0533e01
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:96c9696672a6b80828ca3a22d1d006951d5e1fd2f5bc4c8a7087d670533e8c8d
+name: ack-iam-controller.v0.0.18
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.18
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.18
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:96c9696672a6b80828ca3a22d1d006951d5e1fd2f5bc4c8a7087d670533e8c8d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:6ca5222b34b1b6acc066e63c329aa53def232d5f57e674faec41b7cb3725d486
+name: ack-iam-controller.v0.0.19
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:6ca5222b34b1b6acc066e63c329aa53def232d5f57e674faec41b7cb3725d486
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:a822c1c38fff1dbe698d2cf2caef765a6f0d4e460392fa19f64129433bc991b6
+name: ack-iam-controller.v0.0.20
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.20
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.20
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:a822c1c38fff1dbe698d2cf2caef765a6f0d4e460392fa19f64129433bc991b6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:6b2aa06eae63c147135fb02659aea6b21a7e2f530024451f617aede4559b1f71
+name: ack-iam-controller.v0.0.21
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.21
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.21
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:6b2aa06eae63c147135fb02659aea6b21a7e2f530024451f617aede4559b1f71
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:3c4060ea19d9f0e5bf6afd703cbbcce91d4f25e2ab48b20216c4c03b9c1a240d
+name: ack-iam-controller.v0.0.22
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.22
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.22
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:3c4060ea19d9f0e5bf6afd703cbbcce91d4f25e2ab48b20216c4c03b9c1a240d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:fccd6261038513b47393fb1874931679720fe00928a455893dea5a1f760af6c7
+name: ack-iam-controller.v0.0.3
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:fccd6261038513b47393fb1874931679720fe00928a455893dea5a1f760af6c7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:a8159bfba0269a386b7b5acb2f1506ea2715991d9ed4fa46054db15484ac4da1
+name: ack-iam-controller.v0.0.4
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:a8159bfba0269a386b7b5acb2f1506ea2715991d9ed4fa46054db15484ac4da1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:7f8eec912b61efde86f403e4373380521ab06f9b83671f0ff4d03b7150937698
+name: ack-iam-controller.v0.0.5
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:7f8eec912b61efde86f403e4373380521ab06f9b83671f0ff4d03b7150937698
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:b7f9374bcfe3e5647fca695fc7313171ac4f55960f754edc0c52e187a7447975
+name: ack-iam-controller.v0.0.6
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:b7f9374bcfe3e5647fca695fc7313171ac4f55960f754edc0c52e187a7447975
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:c01fa4b5546fc17b3169a20861691313b8c093e56c3f70fc777afe5b30243056
+name: ack-iam-controller.v0.0.7
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:c01fa4b5546fc17b3169a20861691313b8c093e56c3f70fc777afe5b30243056
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:0efb51c1bc37877eba379c2bfffea14f3f1b695e8490e93c8911d080cc1be72c
+name: ack-iam-controller.v0.0.8
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:0efb51c1bc37877eba379c2bfffea14f3f1b695e8490e93c8911d080cc1be72c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:ff0569f6a18d3fdc368d988601b489fa8b7253126ded6695da71f7f034720a55
+name: ack-iam-controller.v0.0.9
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:ff0569f6a18d3fdc368d988601b489fa8b7253126ded6695da71f7f034720a55
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:7817611b46c054ee0cb0965eaf901607d695ee0c9e392c6e44db6996c3c24beb
+name: ack-iam-controller.v0.1.0
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:7817611b46c054ee0cb0965eaf901607d695ee0c9e392c6e44db6996c3c24beb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:8ee2f6a14f048420f32469ccbc28e92c405715685294dc7fe522d4712908aa80
+name: ack-iam-controller.v0.1.1
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:8ee2f6a14f048420f32469ccbc28e92c405715685294dc7fe522d4712908aa80
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:f571e07a6b62ca0b295f887afc1110ce3d152faedca70f8545a97d9599f2f697
+name: ack-iam-controller.v0.1.2
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:f571e07a6b62ca0b295f887afc1110ce3d152faedca70f8545a97d9599f2f697
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:990bddaa000bf53a2b05d12bba095df29b90ab7be4bd80813c1b6ddf2a57c2f8
+name: ack-iam-controller.v1.0.0
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:990bddaa000bf53a2b05d12bba095df29b90ab7be4bd80813c1b6ddf2a57c2f8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:b4ebd3d10fee6b2a14de3dc9f0202b294a6ab43ba57d144ea78cfd657c94708e
+name: ack-iam-controller.v1.1.0
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v1.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:b4ebd3d10fee6b2a14de3dc9f0202b294a6ab43ba57d144ea78cfd657c94708e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:49058548628a0b0b71e4483ce3ca80925018f4d3c1049a9898348ca3f28a3373
+name: ack-iam-controller.v1.1.1
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v1.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:49058548628a0b0b71e4483ce3ca80925018f4d3c1049a9898348ca3f28a3373
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:85fe3956fce8f7ddf659f7856337d4c7b4bc54cd938942e55cf07b822db60cd9
+name: ack-iam-controller.v1.1.2
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v1.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:85fe3956fce8f7ddf659f7856337d4c7b4bc54cd938942e55cf07b822db60cd9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:3554bd4f99ef2089603d2ef7ede033ea5ced78d72eb36b3caf70a4888d62dd2e
+name: ack-iam-controller.v1.1.3
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v1.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:3554bd4f99ef2089603d2ef7ede033ea5ced78d72eb36b3caf70a4888d62dd2e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:572bf2e0d75f36a385671e0cb93e00c06572bd5aeacd823d05631daf668f44fa
+name: ack-iam-controller.v1.2.0
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.2.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v1.2.0
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:572bf2e0d75f36a385671e0cb93e00c06572bd5aeacd823d05631daf668f44fa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:ec8aca7f066fd80f602f550d23ae2b8ab4d416c0f6f6fe8a6f1152d0ac10bc25
+name: ack-iam-controller.v1.2.1
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.2.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:v1.2.1
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:ec8aca7f066fd80f602f550d23ae2b8ab4d416c0f6f6fe8a6f1152d0ac10bc25
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:fee163bbf29f8c770f086417d7476a8bd2c3d7e1c831e30bacda8b32d8dd6f9d
+name: ack-iam-controller.v1.2.2
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.2.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.2.2
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:fee163bbf29f8c770f086417d7476a8bd2c3d7e1c831e30bacda8b32d8dd6f9d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:d422254101c41bec0e480c6bcb18cbb86598afa5704914eea8f55bd3d38d5d20
+name: ack-iam-controller.v1.2.3
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.2.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.2.3
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:d422254101c41bec0e480c6bcb18cbb86598afa5704914eea8f55bd3d38d5d20
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:bc7a1200ca82da5876e7f5701c847921f5f1fd06e9e28577d8941869f83f478b
+name: ack-iam-controller.v1.2.5
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.2.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.2.5
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:bc7a1200ca82da5876e7f5701c847921f5f1fd06e9e28577d8941869f83f478b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:9dc180acf19761046430af88b8e9aadc999715eeff92bb4b591711fd1cfa3fc3
+name: ack-iam-controller.v1.2.6
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.2.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.2.6
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:9dc180acf19761046430af88b8e9aadc999715eeff92bb4b591711fd1cfa3fc3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:61dac039525a9b441d476f96e65bda7050c71a9715c528873bbd28c34e118a01
+name: ack-iam-controller.v1.3.0
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.0
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:61dac039525a9b441d476f96e65bda7050c71a9715c528873bbd28c34e118a01
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:261f8ed1473b2143c931c0745004efb59908a8f9f9c1080997fc5db46a526a99
+name: ack-iam-controller.v1.3.1
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.1
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:261f8ed1473b2143c931c0745004efb59908a8f9f9c1080997fc5db46a526a99
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:e49c76ddcd478338ac40421c53d2e39d15b5f047edda40488295c67cb977dc00
+name: ack-iam-controller.v1.3.10
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.10
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:e49c76ddcd478338ac40421c53d2e39d15b5f047edda40488295c67cb977dc00
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:6f7954f669719df0dce5a7fc5d1ee523f4081420040c2f208e507597b6c8ac37
+name: ack-iam-controller.v1.3.11
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.11
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:6f7954f669719df0dce5a7fc5d1ee523f4081420040c2f208e507597b6c8ac37
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:b41fa0deabc5219e6594fa92859a66e1f8559cc2996b20ab386eca20604ce592
+name: ack-iam-controller.v1.3.12
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.12
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "iam.services.k8s.aws/v1alpha1",
+            "kind": "Role",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "iam.services.k8s.aws/v1alpha1",
+            "kind": "Group",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "iam.services.k8s.aws/v1alpha1",
+            "kind": "OpenIDConnectProvider",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "iam.services.k8s.aws/v1alpha1",
+            "kind": "Policy",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "iam.services.k8s.aws/v1alpha1",
+            "kind": "User",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.12
+      createdAt: "2024-08-30T17:54:44Z"
+      description: AWS IAM controller is a service controller for managing IAM resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Group represents the state of an AWS iam Group resource.
+        displayName: Group
+        kind: Group
+        name: groups.iam.services.k8s.aws
+        version: v1alpha1
+      - description: InstanceProfile represents the state of an AWS iam InstanceProfile
+          resource.
+        displayName: InstanceProfile
+        kind: InstanceProfile
+        name: instanceprofiles.iam.services.k8s.aws
+        version: v1alpha1
+      - description: OpenIDConnectProvider represents the state of an AWS iam OpenIDConnectProvider
+          resource.
+        displayName: OpenIDConnectProvider
+        kind: OpenIDConnectProvider
+        name: openidconnectproviders.iam.services.k8s.aws
+        version: v1alpha1
+      - description: Policy represents the state of an AWS iam Policy resource.
+        displayName: Policy
+        kind: Policy
+        name: policies.iam.services.k8s.aws
+        version: v1alpha1
+      - description: Role represents the state of an AWS iam Role resource.
+        displayName: Role
+        kind: Role
+        name: roles.iam.services.k8s.aws
+        version: v1alpha1
+      - description: User represents the state of an AWS iam User resource.
+        displayName: User
+        kind: User
+        name: users.iam.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Identity and Access Management (IAM) resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon IAM**
+
+      AWS Identity and Access Management (IAM) is a web service that helps you securely control access to AWS resources. You use IAM to control who is authenticated (signed in) and authorized (has permissions) to use resources.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon IAM
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - iam
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon IAM Developer Resources
+      url: https://aws.amazon.com/iam/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: iam maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.12
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:b41fa0deabc5219e6594fa92859a66e1f8559cc2996b20ab386eca20604ce592
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:1978dc155a394709f1f5742810f162fd4b7f6658b5cb2f31b96e97a73d4245cd
+name: ack-iam-controller.v1.3.2
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.2
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:1978dc155a394709f1f5742810f162fd4b7f6658b5cb2f31b96e97a73d4245cd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:4dd9631055a55c8dbad38dab0d959a63df40552f5cd7eb9c830dedef4b13104f
+name: ack-iam-controller.v1.3.5
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.5
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:4dd9631055a55c8dbad38dab0d959a63df40552f5cd7eb9c830dedef4b13104f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:d59495f2a0c8954c6201c018af825aea52161d8ea0b92477bce2059ed751a86e
+name: ack-iam-controller.v1.3.6
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.6
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:d59495f2a0c8954c6201c018af825aea52161d8ea0b92477bce2059ed751a86e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:af9684654ff0fc692f104737648112b11c7073682910eaabbabca6436e9078bb
+name: ack-iam-controller.v1.3.7
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.7
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:af9684654ff0fc692f104737648112b11c7073682910eaabbabca6436e9078bb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:2b0f02a921b7ca681b5492a956e64862454944fbe03cbd1e5658c7c08370a6c9
+name: ack-iam-controller.v1.3.8
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.8
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:2b0f02a921b7ca681b5492a956e64862454944fbe03cbd1e5658c7c08370a6c9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-iam-controller@sha256:64477ae34e4c56f70c5cf5017ae17129334775aa9f2f30d28c7114a77bf2e8c1
+name: ack-iam-controller.v1.3.9
+package: ack-iam-controller
+properties:
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Group
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: InstanceProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: OpenIDConnectProvider
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Policy
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: Role
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: iam.services.k8s.aws
+    kind: User
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-iam-controller
+    version: 1.3.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/iam-controller:1.3.9
+  name: ""
+- image: quay.io/operatorhubio/ack-iam-controller@sha256:64477ae34e4c56f70c5cf5017ae17129334775aa9f2f30d28c7114a77bf2e8c1
+  name: ""
+schema: olm.bundle

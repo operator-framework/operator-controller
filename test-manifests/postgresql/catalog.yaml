@@ -1,0 +1,3869 @@
+---
+defaultChannel: v5
+icon:
+  base64data: PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMzk4Ljk2IDM1OS42MiI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiMwNjA2MDY7fS5jbHMtMntmaWxsOiNmNWY1ZjU7fS5jbHMtM3tmaWxsOnVybCgjbGluZWFyLWdyYWRpZW50KTt9PC9zdHlsZT48bGluZWFyR3JhZGllbnQgaWQ9ImxpbmVhci1ncmFkaWVudCIgeDE9IjQ0LjEzIiB5MT0iMTU2LjI4IiB4Mj0iMzQ3LjMyIiB5Mj0iMTU2LjI4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMjA5NmRhIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDA2N2FhIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjA0LjE5LDM0MC4wN2MtNzUuNTItLjUxLTE0MS44MS00OS4yOC0xNjIuNTEtMTE5LjQ3QzE2LjE4LDEzNC4xMSw2Ni4xNiw0Ni43NywxNTQuMTcsMjUuMjVjNjYuNDItMTYuMjQsMTIzLjUyLDIsMTY4LjY5LDUyLjMzLDUyLjI3LDU4LjI1LDU0LjcyLDE0MCwxMC4yMiwxOTguOTItMjcsMzUuNzMtNjMuMjIsNTYuMjItMTA3LjY2LDYyLjA2LTUuNDUuNzItMTAuOTUsMS4wNS0xNi40MywxLjQ5QzIwNy40LDM0MC4xOCwyMDUuNzksMzQwLjA3LDIwNC4xOSwzNDAuMDdaTTE5MiwyNy41NGMtNC41NSwwLTkuMTItLjItMTMuNjYsMC0xLjUzLjA2LTQuNC40OC0zLjE5LDIuODYsMiwzLjg2LDQuMjQsOCw3LjQ2LDEwLjY1LDIuNDEsMiw2LjI4LDAsOS40Mi0xbDIyLjMtMi40NUgyNDZjLTEwLjQzLTUuNC0yMS40My03LjI0LTMyLjY1LTguMDlDMjA2LjExLDMwLjEsMTk5LjI4LDI2LjU3LDE5MiwyNy41NFptLTc0LjY0LDIxYy0xOCw5LjEzLTMyLjI0LDIyLjk0LTQ0LjE2LDM4LjctMjAuMTgsMjYuNjUtMjkuNzQsNTcuMzItMjkuMDYsOTAuNzIuNjUsMzIuMywxMC41NCw2MS43NSwzMC4wOSw4Ny43MSw1LjI3LDcsMTAuNjcsMTMuOTIsMTcuNzIsMTkuNTUsMS4yMy0xLjgzLjgzLTMuNDkuNy01LS43OC05LDIuMjYtMTYuNjcsNy42Mi0yMy42MywxLjk0LTIuNTIsMy45My01LDYtNy40MSwyLjUyLTIuOTEsMi43NS00LjMtMS43Mi01Ljc0LTE4LTUuNzgtMzIuNDEtMTYuMzItNDEuMzgtMzMuNGEzLjI2LDMuMjYsMCwwLDAtMS42OC0xLjc3Yy04LjE4LTMuNjMtMTAuMjEtMTAuMzgtOS40LTE4LjYxLDEuNTUtMTUuODgsNi40MS0zMSwxMC40Ni00Ni4zMmExNC4xOCwxNC4xOCwwLDAsMSw1LjQyLTcuN2M0LjQ4LTMuMjgsNy4xNC03LjYyLDguOTMtMTIuNzksMi40NC03LjA4LDcuMzktMTAuMzYsMTQuOTQtMTAuNDIsMy43MywwLDcuNDYtLjA4LDExLjE5LDAsNS44Ny4xOCwxMS4yLTEsMTUuMzYtNS41MSwzLjY1LS40NCw1LjIxLTMuOTMsOC4xMS01LjU0QzEzNC40OSw5NywxMzcuNjEsOTAuMDksMTM3LjgzLDgxYy4yMS04LjQ0LDMuNTUtMTUuNjcsMTItMTkuNjdhNTcsNTcsMCwwLDAsMTIuNTgtOC43MmMyLjg2LTIuNDYsNC40My01LjMyLDQtOS4yOEExOS41NCwxOS41NCwwLDAsMSwxNjksMzBDMTQ5Ljg4LDMyLjkxLDEzMi44OCwzOC41MywxMTcuMzksNDguNVptNjgsOTguNzZjOC44NC4xMywxNS4yOSw0LDIxLjE4LDkuMDYsMTAuOCw5LjI1LDEzLjY0LDM0Ljk0LTIuMzcsNDMuNkMxOTAsMjA3LjU5LDE3NS4yOCwyMTIuNTEsMTU4LjkxLDIxMXEtMTEuNC0xLTIyLjgtMi4xNWMtMTguNjktMS43OC0zNy4yOS01LjI4LTU2LjIzLTIuNDItNC4zMi42NS01LjUxLDEuNjctMi41OCw1LjI2Qzg5LDIyNiwxMDMuODEsMjM0LjEsMTIyLjU2LDIzMy4wOWMxOC42LTEsMzcuMTgtMy43NSw1NS43NS0uMzQsMjEsMy44NiwzNy4zNi0yLjYxLDQ4Ljc3LTIwLjkyLDEuNDMtMi4yOSwzLjMtNC43LDYuNC0yLjc5czIsNC4zMS4zOSw2LjgzYy05Ljc3LDE1LjM2LTIxLjY4LDI3LjI1LTQxLjY0LDI2LjgzLTMuMTgtLjA2LTYuMzYuNi05LjU1LjkxLTMsLjI4LTUuNiwxLjI5LTcuMjksMy44My0zLjczLDUuNi03LjksMTEtMTAuMzgsMTcuMy02LjUzLDE2LjY3LTEyLjkyLDMzLjM4LTE5LjQ0LDUwLjA1LTEuNDIsMy42My0uOCw1LjY3LDMuMjQsNy4wOGExNjQuNzQsMTY0Ljc0LDAsMCwwLDUzLjc2LDkuNDNxNTIuNDQuMzYsOTQuMjktMzEuMTFjMS42Ni0xLjI0LDIuNi0yLjQ1LDEuODUtNC40LTQuNjMtMTIuMS0xLjM4LTIzLjcsMS44OS0zNS40MSwyLjY4LTkuNiw0LjQxLTE5LjMzLDIuNzItMjkuNDNzLTEuNjMtMTAuMTQtOS43NS00LjczYy03LDQuNjUtMTQuODYsNy40OC0yMi42NiwxMC4zOS0yLjg5LDEuMDgtNy4xNSwxLjYyLTguMjYtMS4xMS0xLjUyLTMuNzMsMy4yMi0zLjczLDUuNDgtNC44Myw2LjM2LTMuMTEsMTMuNjUtNC42MiwxOS4xOC05LjA3LDE0LjU2LTExLjczLDIxLjQ1LTI3LjgxLDI0LTQ1Ljg3LDEuMTgtOC4yNSwxLjUtMTYuNjEsMi4yNS0yNC45Mi4xNC0xLjU5LjMtMy4yNiwyLjU5LTMuMjdzMi4yMiwxLjg2LDIuMzcsMy4zNmMuMTMsMS4yMy0uMDcsMi40OSwwLDMuNzMuNTgsMTkuNS0zLjYyLDM4LjQ3LTYuNjMsNTcuNTUtMy4xNSwyMC0xLDM5LjYxLDMuMzMsNTkuMTUuNTUsMi40NSwxLjYxLDUuMzUsMy42NCw2LDIuNzkuODgsMy44MS0yLjUzLDUuMjUtNC4zOSwxMy45My0xOCwyMi43My0zOC4yNywyNy4zMy02MC41MywzLjU3LTE3LjIyLDMuMTEtMzMuNTYtNS44My00OS40OS02LjMxLTExLjI1LTExLjkzLTIyLjkxLTE4LjA3LTM0LjI5QzMxNC43OSwxMDUsMjk2Ljc1LDg1LjM0LDI3OS44Nyw2NC44NWMtNS4xNS02LjI2LTEwLjgtMTIuMjktMTguMjItMTYuMTMtMS0uNTQtMi4xNC0xLjc1LTMuMzktMS4wOS0xLjcyLjkyLS42OSwyLjYzLS40LDMuODEsMi4zLDkuMzItNiwxOS44Ni0xNS4wNiwyMy0yLC43LTQuNTQsMS43Mi01Ljc1LS42MXMxLjU0LTMuMDgsMi45NC00LjI4YzYuMDctNS4yMSw5LjQ0LTEzLjg2LDcuOTEtMjAuNTYtNC40NiwyLjEtOC4yMiw0LjcyLTEwLjQzLDkuMzQtMSwyLTIuMzgsNS42NS00LjgyLDQuMzEtMy0xLjY2LTEuMzItNS4wNy4yNS03LjU0YTE4LjkyLDE4LjkyLDAsMCwxLDUuNS01LjdjMi4zLTEuNTQsNS4zLTEuNzgsNy41OS00LjEzYTE1LjA5LDE1LjA5LDAsMCwwLTguMjktMS44OGMtMTYuNjkuMjEtMzMuNDItLjEyLTQ5LjksMy4yLTUuMjIsMS4wNi0xMC41MywyLjE1LTE0LjYzLDUuODlhOTMuMTksOTMuMTksMCwwLDEtMTkuNTYsMTMuNjljLTIuODksMS41MS01LjksMy4yNi00LjgxLDcuMjQsMSwzLjc2LDMuOTUsNS41NSw3LjczLDYuMDYsMS40OS4yLDMuNTMtLjMsNCwxLjc5LjQsMS45Mi0xLjUxLDIuNjYtMi43MSwzLjZxLTE1LjkxLDEyLjQ3LTMxLjI5LDI1LjYxYTM0LjMxLDM0LjMxLDAsMCwxLTI0LDguNDRjLTMuNTQtLjEzLTcuMSwwLTEwLjY2LDAtOC4zNC4wNS0xMC4xNywyLjU1LTcuOTMsMTAuNTguODQsMywxLjEsNi4wNy0xLjU3LDguMzlzLTUuNDUsMi4xMS04LjE4LS4wOWMtMS40MS0xLjE0LTIuNDYtLjYyLTMuNTYuNzEtMi40OCwzLTIsNS4xOSwxLjg3LDYuMjEsNi44NywxLjgsMTEuOTMtMS43NiwxNi42NS02LjEsMS0uOTQsMi4xLTIuNDYsMy41OS0xLjM5cy41NSwyLjY1LS4wOSwzLjg3Yy0zLDUuNzYtMTQuNTQsMTEuOS0yMSwxMS4wNy0xLjc0LS4yMi0yLjY0LDAtMy4wOCwxLjc3LTIuNzQsMTEuMTgtNi40MSwyMi4xNy03LjI3LDMzLjczQzYwLjMyLDE5OS40Myw2MywyMDEuNzIsNzQuNjcsMTk5YzE5LjE0LTQuNDQsMzguMDYtNS42OSw1Ny4yNy4zLDEwLjM3LDMuMjMsMjEuNDIsMy41LDMyLjI2LDIuMzUsMTIuNzMtMS4zNCwyNS4zMi0zLjU2LDM2LTExLjY0YTE2Ljg5LDE2Ljg5LDAsMCwwLDcuMDctMTIuNWMuNzEtNy41Mi0yLjc0LTEzLTcuODMtMTcuNzhDMTk1LDE1NS42MywxOTAuNDQsMTUxLjc1LDE4NS4zOSwxNDcuMjZabS0zOC43OCw5MS44MywwLC4xN2MtMS43Ny0uMTItMy41NC0uMzMtNS4zMS0uMzQtOC4xNi0uMDctMTYuNTgtLjctMjIuODEsNi4wNy03LjY2LDguMzItMTMuNzIsMTcuNy0xNS44NiwyOS0zLjM2LDE3Ljc3LS45LDIyLjcxLDE0LjcxLDMxLjkzbDUsM2MxMi41OCw3LjQ1LDEyLjU4LDcuNDUsMTcuMjEtNi4yMiwyLjE0LTYuMzIuNi0xMC44OS01LTE0LjU4LTEuMzItLjg2LTIuODUtMS40LTQuMjQtMi4xNnMtMi41NC0xLjctMi4yNS0zLjI5YTMuNDksMy40OSwwLDAsMSwyLjc5LTIuOTFjNC44OC0uNjUsOS44NC0yLjI1LDE0LjY5LS41LDIuNS44OSwzLjUzLjE1LDQuNDgtMS45MXE3Ljc1LTE2Ljg3LDE1LjYtMzMuNzFjMS4wOC0yLjMyLjQ5LTMuMTgtMi0zLjMyQzE1Ny45MywyMzkuOTQsMTUyLjI3LDIzOS40OCwxNDYuNjEsMjM5LjA5Wk0yODAuNTEsNTVhMzgyLjc2LDM4Mi43NiwwLDAsMSw2Ni43Niw5Mi41QzM0OS4xLDEyMi42OCwzMDUsNjEuNjQsMjgwLjUxLDU1WiIvPjxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTE4NS4zOSwxNDcuMjZjNS4wNSw0LjQ5LDkuNjMsOC4zNywxNCwxMi40Nyw1LjA5LDQuNzgsOC41NCwxMC4yNiw3LjgzLDE3Ljc4YTE2Ljg5LDE2Ljg5LDAsMCwxLTcuMDcsMTIuNWMtMTAuNjMsOC4wOC0yMy4yMiwxMC4zLTM2LDExLjY0LTEwLjg0LDEuMTUtMjEuODkuODgtMzIuMjYtMi4zNS0xOS4yMS02LTM4LjEzLTQuNzQtNTcuMjctLjMtMTEuNjksMi43Mi0xNC4zNS40My0xMy40OC0xMS4zNy44Ni0xMS41Niw0LjUzLTIyLjU1LDcuMjctMzMuNzMuNDQtMS44MiwxLjM0LTIsMy4wOC0xLjc3LDYuNDkuODMsMTgtNS4zMSwyMS0xMS4wNy42NC0xLjIyLDEuNTItMi44NS4wOS0zLjg3cy0yLjU3LjQ1LTMuNTksMS4zOWMtNC43Miw0LjM0LTkuNzgsNy45LTE2LjY1LDYuMS0zLjg3LTEtNC4zNS0zLjItMS44Ny02LjIxLDEuMS0xLjMzLDIuMTUtMS44NSwzLjU2LS43MSwyLjczLDIuMiw1LjUsMi40Myw4LjE4LjA5czIuNDEtNS4zOSwxLjU3LTguMzljLTIuMjQtOC0uNDEtMTAuNTMsNy45My0xMC41OCwzLjU2LDAsNy4xMi0uMTEsMTAuNjYsMGEzNC4zMSwzNC4zMSwwLDAsMCwyNC04LjQ0cTE1LjQxLTEzLjExLDMxLjI5LTI1LjYxYzEuMi0uOTQsMy4xMS0xLjY4LDIuNzEtMy42LS40NC0yLjA5LTIuNDgtMS41OS00LTEuNzktMy43OC0uNTEtNi43MS0yLjMtNy43My02LjA2LTEuMDktNCwxLjkyLTUuNzMsNC44MS03LjI0YTkzLjE5LDkzLjE5LDAsMCwwLDE5LjU2LTEzLjY5YzQuMS0zLjc0LDkuNDEtNC44MywxNC42My01Ljg5LDE2LjQ4LTMuMzIsMzMuMjEtMyw0OS45LTMuMkExNS4wOSwxNS4wOSwwLDAsMSwyNDYsNDUuMjZjLTIuMjksMi4zNS01LjI5LDIuNTktNy41OSw0LjEzYTE4LjkyLDE4LjkyLDAsMCwwLTUuNSw1LjdjLTEuNTcsMi40Ny0zLjIzLDUuODgtLjI1LDcuNTQsMi40NCwxLjM0LDMuODQtMi4yNyw0LjgyLTQuMzEsMi4yMS00LjYyLDYtNy4yNCwxMC40My05LjM0LDEuNTMsNi43LTEuODQsMTUuMzUtNy45MSwyMC41Ni0xLjQsMS4yLTQuMTEsMi0yLjk0LDQuMjhzMy43MSwxLjMxLDUuNzUuNjFjOS0zLjEzLDE3LjM2LTEzLjY3LDE1LjA2LTIzLS4yOS0xLjE4LTEuMzItMi44OS40LTMuODEsMS4yNS0uNjYsMi4zNC41NSwzLjM5LDEuMDksNy40MiwzLjg0LDEzLjA3LDkuODcsMTguMjIsMTYuMTMsMTYuODgsMjAuNDksMzQuOTIsNDAuMTUsNDcuNjYsNjMuNzcsNi4xNCwxMS4zOCwxMS43NiwyMywxOC4wNywzNC4yOSw4Ljk0LDE1LjkzLDkuNCwzMi4yNyw1LjgzLDQ5LjQ5LTQuNiwyMi4yNi0xMy40LDQyLjU0LTI3LjMzLDYwLjUzLTEuNDQsMS44Ni0yLjQ2LDUuMjctNS4yNSw0LjM5LTItLjY0LTMuMDktMy41NC0zLjY0LTYtNC4zNi0xOS41NC02LjQ4LTM5LjE0LTMuMzMtNTkuMTUsMy0xOS4wOCw3LjIxLTM4LjA1LDYuNjMtNTcuNTUsMC0xLjI0LjE3LTIuNSwwLTMuNzMtLjE1LTEuNS4wNy0zLjM2LTIuMzctMy4zNnMtMi40NSwxLjY4LTIuNTksMy4yN2MtLjc1LDguMzEtMS4wNywxNi42Ny0yLjI1LDI0LjkyLTIuNTgsMTguMDYtOS40NywzNC4xNC0yNCw0NS44Ny01LjUzLDQuNDUtMTIuODIsNi0xOS4xOCw5LjA3LTIuMjYsMS4xLTcsMS4xLTUuNDgsNC44MywxLjExLDIuNzMsNS4zNywyLjE5LDguMjYsMS4xMSw3LjgtMi45MSwxNS42Ni01Ljc0LDIyLjY2LTEwLjM5LDguMTItNS40MSw4LjA3LTUuMzQsOS43NSw0LjczczAsMTkuODMtMi43MiwyOS40M2MtMy4yNywxMS43MS02LjUyLDIzLjMxLTEuODksMzUuNDEuNzUsMS45NS0uMTksMy4xNi0xLjg1LDQuNHEtNDEuOTQsMzEuMzgtOTQuMjksMzEuMTFhMTY0Ljc0LDE2NC43NCwwLDAsMS01My43Ni05LjQzYy00LTEuNDEtNC42Ni0zLjQ1LTMuMjQtNy4wOCw2LjUyLTE2LjY3LDEyLjkxLTMzLjM4LDE5LjQ0LTUwLjA1LDIuNDgtNi4zMyw2LjY1LTExLjcsMTAuMzgtMTcuMywxLjY5LTIuNTQsNC4zNC0zLjU1LDcuMjktMy44MywzLjE5LS4zMSw2LjM3LTEsOS41NS0uOTEsMjAsLjQyLDMxLjg3LTExLjQ3LDQxLjY0LTI2LjgzLDEuNi0yLjUyLDIuNjQtNS0uMzktNi44M3MtNSwuNS02LjQsMi43OWMtMTEuNDEsMTguMzEtMjcuNzcsMjQuNzgtNDguNzcsMjAuOTItMTguNTctMy40MS0zNy4xNS0uNjctNTUuNzUuMzQtMTguNzUsMS0zMy41OC03LjA3LTQ1LjI2LTIxLjQtMi45My0zLjU5LTEuNzQtNC42MSwyLjU4LTUuMjYsMTguOTQtMi44NiwzNy41NC42NCw1Ni4yMywyLjQycTExLjQsMS4xLDIyLjgsMi4xNWMxNi4zNywxLjUxLDMxLjExLTMuNDEsNDUuMjktMTEuMDgsMTYtOC42NiwxMy4xNy0zNC4zNSwyLjM3LTQzLjZDMjAwLjY4LDE1MS4yOCwxOTQuMjMsMTQ3LjM5LDE4NS4zOSwxNDcuMjZaTTIwOCw4MS45MmMtNy4zOC0uMDktMTcsNC42Mi0yMS40MywxMC4zMS0xLjEyLDEuNDMtMS41MSwyLjg3LS42NSw0LjMsMS4wNSwxLjczLDIuNTYuNzcsMy42NS0uMDYsMS45Mi0xLjQ2LDIuMzcuNCwzLjMsMS4yNCw2LjEzLDUuNTQsMTQuMTcsNCwxNy41Ny0zLjI4LDEuMjEtMi42Mi41LTYuMjcsNC41OS03LjQxLDEuMDUtLjI5LjY3LTIuNDMtMS0zLjMxQTE1LjQ1LDE1LjQ1LDAsMCwwLDIwOCw4MS45MlptLTgxLjIsNzkuNzRjNC43LS44NSw4LjgtMi4yMywxMS40NC02LjI2LDEuMTgtMS44MiwxLjI5LTMuNTgtLjIyLTUuMzJzLTIuODItMS40OC00LjY4LS42Yy0yLjUyLDEuMjItNS4xOSwyLjU0LTcuOTEsMi44Ny02Ljc4LjgzLTEzLjc5LDEuOTMtMTguOTItNC41OC0xLjA3LTEuMzYtMi4wNS00LjA2LTQuMjctMi42OHMuMDgsMy41LjQyLDUuMjJjLjIyLDEuMDgsMS4zOSwyLDIuMTcsMi45M0MxMTAuNjIsMTYwLjMzLDExOS4zNiwxNTkuNTIsMTI2LjgsMTYxLjY2Wm0tOC4zOS0zMC41NGMtMy4zNC40Ni03LC42NS03LjQ4LDUuMDctLjM4LDMuMzgsNS40MSwxMS4yMyw4LjE2LDExLjQ0LDIuOTIuMjMsNi4yNy00LDYuMjItOEMxMjUuMjYsMTM0LjgyLDEyMi4zMiwxMzEuMTgsMTE4LjQxLDEzMS4xMloiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNDYuNjEsMjM5LjA5YzUuNjYuMzksMTEuMzIuODUsMTcsMS4xNiwyLjQ5LjE0LDMuMDgsMSwyLDMuMzJxLTcuODcsMTYuODEtMTUuNiwzMy43MWMtMSwyLjA2LTIsMi44LTQuNDgsMS45MS00Ljg1LTEuNzUtOS44MS0uMTUtMTQuNjkuNUEzLjQ5LDMuNDksMCwwLDAsMTI4LDI4Mi42Yy0uMjksMS41OSwxLDIuNTgsMi4yNSwzLjI5czIuOTIsMS4zLDQuMjQsMi4xNmM1LjY1LDMuNjksNy4xOSw4LjI2LDUsMTQuNTgtNC42MywxMy42Ny00LjYzLDEzLjY3LTE3LjIxLDYuMjJsLTUtM2MtMTUuNjEtOS4yMi0xOC4wNy0xNC4xNi0xNC43MS0zMS45MywyLjE0LTExLjI3LDguMi0yMC42NSwxNS44Ni0yOSw2LjIzLTYuNzcsMTQuNjUtNi4xNCwyMi44MS02LjA3LDEuNzcsMCwzLjU0LjIyLDUuMzEuMzRaIi8+PHBhdGggY2xhc3M9ImNscy0zIiBkPSJNMTY5LDMwQTE5LjU0LDE5LjU0LDAsMCwwLDE2Ni40LDQzLjNjLjQ4LDQtMS4wOSw2LjgyLTQsOS4yOGE1Nyw1NywwLDAsMS0xMi41OCw4LjcyYy04LjQ5LDQtMTEuODMsMTEuMjMtMTIsMTkuNjctLjIyLDkuMTItMy4zNCwxNi0xMS4yOCwyMC40NC0yLjksMS42MS00LjQ2LDUuMS04LjExLDUuNTQtNC4xNiw0LjUyLTkuNDksNS42OS0xNS4zNiw1LjUxLTMuNzMtLjExLTcuNDYtLjA2LTExLjE5LDAtNy41NS4wNi0xMi41LDMuMzQtMTQuOTQsMTAuNDJDNzUuMTYsMTI4LDcyLjUsMTMyLjM2LDY4LDEzNS42NGExNC4xNCwxNC4xNCwwLDAsMC01LjQyLDcuN2MtNC4wNSwxNS4zLTguOTEsMzAuNDQtMTAuNDYsNDYuMzItLjgxLDguMjMsMS4yMiwxNSw5LjQsMTguNjFBMy4yNiwzLjI2LDAsMCwxLDYzLjIyLDIxMGM5LDE3LjA4LDIzLjM3LDI3LjYyLDQxLjM4LDMzLjQsNC40NywxLjQ0LDQuMjQsMi44MywxLjcyLDUuNzQtMi4wOSwyLjQtNC4wOCw0Ljg5LTYsNy40MS01LjM2LDctOC40LDE0LjY2LTcuNjIsMjMuNjMuMTMsMS40Ny41MywzLjEyLS43LDUtNy01LjYzLTEyLjQ1LTEyLjU1LTE3LjcyLTE5LjU1LTE5LjU1LTI2LTI5LjQ0LTU1LjQxLTMwLjA5LTg3LjcxLS42OC0zMy40LDguODgtNjQuMDcsMjkuMDYtOTAuNzIsMTEuOTItMTUuNzYsMjYuMTQtMjkuNTcsNDQuMTYtMzguN0MxMzIuODgsMzguNTMsMTQ5Ljg4LDMyLjkxLDE2OSwzMFpNMjgwLjUxLDU1YTM4Mi43NiwzODIuNzYsMCwwLDEsNjYuNzYsOTIuNUMzNDkuMSwxMjIuNjgsMzA1LDYxLjY0LDI4MC41MSw1NVpNMTkyLDI3LjU0Yy00LjU2LDAtOS4xMy0uMi0xMy42NywwLTEuNTMuMDYtNC40LjQ4LTMuMTksMi44NiwyLDMuODYsNC4yNCw4LDcuNDYsMTAuNjUsMi40MSwyLDYuMjgsMCw5LjQyLTFsMjIuMy0yLjQ1SDI0NmMtMTAuNDMtNS40LTIxLjQzLTcuMjQtMzIuNjUtOC4wOUMyMDYuMTEsMzAuMSwxOTkuMjgsMjYuNTcsMTkyLDI3LjU0WiIvPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTIwOCw4MS45MmExNS40NSwxNS40NSwwLDAsMSw2LjA1LDEuNzljMS42NS44OCwyLDMsMSwzLjMxLTQuMDksMS4xNC0zLjM4LDQuNzktNC41OSw3LjQxLTMuNCw3LjMxLTExLjQ0LDguODItMTcuNTcsMy4yOC0uOTMtLjg0LTEuMzgtMi43LTMuMy0xLjI0LTEuMDkuODMtMi42LDEuNzktMy42NS4wNi0uODYtMS40My0uNDctMi44Ny42NS00LjNDMTkxLDg2LjU0LDIwMC42Miw4MS44MywyMDgsODEuOTJaIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTI2LjgsMTYxLjY2Yy03LjQ0LTIuMTQtMTYuMTgtMS4zMy0yMi04LjQyLS43OC0xLTItMS44NS0yLjE3LTIuOTMtLjM0LTEuNzItMi42Ny0zLjgzLS40Mi01LjIyczMuMiwxLjMyLDQuMjcsMi42OGM1LjEzLDYuNTEsMTIuMTQsNS40MSwxOC45Miw0LjU4LDIuNzItLjMzLDUuMzktMS42NSw3LjkxLTIuODcsMS44Ni0uODgsMy4yNy0xLDQuNjguNnMxLjQsMy41LjIyLDUuMzJDMTM1LjYsMTU5LjQzLDEzMS41LDE2MC44MSwxMjYuOCwxNjEuNjZaIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTE4LjQxLDEzMS4xMmMzLjkxLjA2LDYuODUsMy43LDYuOSw4LjU1LDAsMy45MS0zLjMsOC4xOS02LjIyLDgtMi43NS0uMjEtOC41NC04LjA2LTguMTYtMTEuNDRDMTExLjQzLDEzMS43NywxMTUuMDcsMTMxLjU4LDExOC40MSwxMzEuMTJaIi8+PC9zdmc+
+  mediatype: image/svg+xml
+name: postgresql
+schema: olm.package
+---
+entries:
+- name: postgresoperator.v4.0.1
+name: original_40
+package: postgresql
+schema: olm.channel
+---
+entries:
+- name: postgresoperator.v4.1.0
+name: original_41
+package: postgresql
+schema: olm.channel
+---
+entries:
+- name: postgresoperator.v4.2.0
+- name: postgresoperator.v4.2.1
+  replaces: postgresoperator.v4.2.0
+- name: postgresoperator.v4.2.2
+  replaces: postgresoperator.v4.2.1
+name: original_42
+package: postgresql
+schema: olm.channel
+---
+entries:
+- name: postgresoperator.v4.2.0
+- name: postgresoperator.v4.2.1
+  replaces: postgresoperator.v4.2.0
+- name: postgresoperator.v4.2.2
+  replaces: postgresoperator.v4.2.1
+- name: postgresoperator.v4.3.2
+  replaces: postgresoperator.v4.2.2
+name: original_43
+package: postgresql
+schema: olm.channel
+---
+entries:
+- name: postgresoperator.v4.2.0
+- name: postgresoperator.v4.2.1
+  replaces: postgresoperator.v4.2.0
+- name: postgresoperator.v4.2.2
+  replaces: postgresoperator.v4.2.1
+- name: postgresoperator.v4.3.2
+  replaces: postgresoperator.v4.2.2
+- name: postgresoperator.v4.4.0
+  replaces: postgresoperator.v4.3.2
+- name: postgresoperator.v4.4.1
+  replaces: postgresoperator.v4.4.0
+- name: postgresoperator.v4.5.0
+  replaces: postgresoperator.v4.4.1
+- name: postgresoperator.v4.5.1
+  replaces: postgresoperator.v4.5.0
+- name: postgresoperator.v4.6.1
+  replaces: postgresoperator.v4.5.1
+- name: postgresoperator.v4.6.2
+  replaces: postgresoperator.v4.6.1
+- name: postgresoperator.v4.7.0
+  replaces: postgresoperator.v4.6.2
+- name: postgresoperator.v4.7.3
+  replaces: postgresoperator.v4.7.0
+- name: postgresoperator.v4.7.5
+  replaces: postgresoperator.v4.7.3
+name: stable
+package: postgresql
+schema: olm.channel
+---
+entries:
+- name: postgresoperator.v5.0.2
+- name: postgresoperator.v5.0.3
+  replaces: postgresoperator.v5.0.2
+- name: postgresoperator.v5.0.4
+  replaces: postgresoperator.v5.0.3
+- name: postgresoperator.v5.0.5
+  replaces: postgresoperator.v5.0.4
+- name: postgresoperator.v5.1.0
+  replaces: postgresoperator.v5.0.5
+- name: postgresoperator.v5.1.1
+  replaces: postgresoperator.v5.1.0
+- name: postgresoperator.v5.1.2
+  replaces: postgresoperator.v5.1.1
+- name: postgresoperator.v5.1.3
+  replaces: postgresoperator.v5.1.2
+- name: postgresoperator.v5.2.0
+  replaces: postgresoperator.v5.1.3
+- name: postgresoperator.v5.3.0
+  replaces: postgresoperator.v5.2.0
+- name: postgresoperator.v5.4.1
+  replaces: postgresoperator.v5.3.0
+- name: postgresoperator.v5.4.2
+  replaces: postgresoperator.v5.4.1
+- name: postgresoperator.v5.4.3
+  replaces: postgresoperator.v5.4.2
+- name: postgresoperator.v5.5.0
+  replaces: postgresoperator.v5.4.3
+- name: postgresoperator.v5.5.1
+  replaces: postgresoperator.v5.5.0
+- name: postgresoperator.v5.5.2
+  replaces: postgresoperator.v5.5.1
+- name: postgresoperator.v5.6.0
+  replaces: postgresoperator.v5.5.2
+- name: postgresoperator.v5.6.1
+  replaces: postgresoperator.v5.6.0
+name: v5
+package: postgresql
+schema: olm.channel
+---
+image: quay.io/operatorhubio/postgresql@sha256:cd7ff2b835ce12bad92f307e0302982da9fc642eb97672ba0bd3e74b06a6e9cc
+name: postgresoperator.v4.0.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgbackup
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.0.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: "[{\n    \"apiVersion\": \"crunchydata.com/v1\",\n    \"kind\":
+        \"Pgcluster\",\n    \"metadata\": {\n        \"labels\": {\n            \"archive\":
+        \"false\",\n            \"archive-timeout\": \"60\",\n            \"crunchy-pgbadger\":
+        \"false\",\n            \"crunchy_collect\": \"false\",\n            \"current-primary\":
+        \"fromcrd\",\n            \"deployment-name\": \"fromcrd\",\n            \"name\":
+        \"fromcrd\",\n            \"pg-cluster\": \"fromcrd\",\n            \"pgo-backrest\":
+        \"false\",\n            \"pgo-version\": \"4.0.1\",\n            \"primary\":
+        \"true\"\n        },\n        \"name\": \"fromcrd\",\n      \"namespace\":
+        \"pgo\"\n    },\n    \"spec\": {\n        \"ArchiveStorage\": {\n            \"accessmode\":
+        \"\",\n            \"fsgroup\": \"26\",\n            \"matchLabels\": \"\",\n
+        \           \"name\": \"\",\n            \"size\": \"\",\n            \"storageclass\":
+        \"fast\",\n            \"storagetype\": \"dynamic\",\n            \"supplementalgroups\":
+        \"\"\n        },\n        \"BackrestStorage\": {\n            \"accessmode\":
+        \"ReadWriteOnce\",\n            \"fsgroup\": \"26\",\n            \"matchLabels\":
+        \"\",\n            \"name\": \"\",\n            \"size\": \"1G\",\n            \"storageclass\":
+        \"fast\",\n            \"storagetype\": \"dynamic\",\n            \"supplementalgroups\":
+        \"\"\n        },\n        \"ContainerResources\": {\n            \"limitscpu\":
+        \"\",\n            \"limitsmemory\": \"\",\n            \"requestscpu\": \"\",\n
+        \           \"requestsmemory\": \"\"\n        },\n        \"PrimaryStorage\":
+        {\n            \"accessmode\": \"ReadWriteOnce\",\n            \"fsgroup\":
+        \"26\",\n            \"matchLabels\": \"\",\n            \"name\": \"fromcrd\",\n
+        \           \"size\": \"1G\",\n            \"storageclass\": \"fast\",\n            \"storagetype\":
+        \"dynamic\",\n            \"supplementalgroups\": \"\"\n        },\n        \"ReplicaStorage\":
+        {\n            \"accessmode\": \"ReadWriteOnce\",\n            \"fsgroup\":
+        \"26\",\n            \"matchLabels\": \"\",\n            \"name\": \"\",\n
+        \           \"size\": \"1G\",\n            \"storageclass\": \"fast\",\n            \"storagetype\":
+        \"dynamic\",\n            \"supplementalgroups\": \"\"\n        },\n        \"backuppath\":
+        \"\",\n        \"backuppvcname\": \"\",\n        \"ccpimage\":\"crunchy-postgres\",\n
+        \       \"ccpimagetag\": \"centos7-11.4-2.4.1\",\n        \"clustername\":
+        \"fromcrd\",\n        \"customconfig\": \"\",\n        \"database\": \"userdb\",\n
+        \       \"name\": \"fromcrd\",\n      \"namespace\":\"pgo\",\n        \"nodename\":
+        \"\",\n        \"policies\": \"\",\n        \"port\": \"5432\",\n        \"primaryhost\":
+        \"fromcrd\",\n        \"primarysecretname\": \"fromcrd-primaryuser-secret\",\n
+        \       \"replicas\": \"0\",\n        \"rootsecretname\": \"fromcrd-postgres-secret\",\n
+        \       \"secretfrom\": \"\",\n        \"status\": \"\",\n        \"strategy\":
+        \"1\",\n        \"user\": \"testuser\",\n        \"userlabels\": {\n            \"archive\":
+        \"false\",\n            \"archive-timeout\": \"60\",\n            \"crunchy-pgbadger\":
+        \"false\",\n            \"crunchy_collect\": \"false\",\n            \"pgo-backrest\":
+        \"false\",\n            \"pgo-version\": \"4.0.1\"\n        },\n        \"usersecretname\":
+        \"fromcrd-testuser-secret\"\n    }\n},{\n    \"apiVersion\": \"crunchydata.com/v1\",\n
+        \   \"kind\": \"Pgreplica\",\n    \"metadata\": {\n        \"name\": \"fromcrd\",\n
+        \       \"namespace\": \"pgo\"\n    },\n    \"spec\": {}\n},{\n    \"apiVersion\":
+        \"crunchydata.com/v1\",\n    \"kind\": \"Pgpolicy\",\n    \"metadata\": {\n
+        \       \"name\": \"fromcrd\",\n        \"namespace\": \"pgo\"\n    },\n    \"spec\":
+        {}\n},{\n    \"apiVersion\": \"crunchydata.com/v1\",\n    \"kind\": \"Pgtask\",\n
+        \   \"metadata\": {\n        \"name\": \"fromcrd\",\n        \"namespace\":
+        \"pgo\"\n    },\n    \"spec\": {}\n},{\n    \"apiVersion\": \"crunchydata.com/v1\",\n
+        \   \"kind\": \"Pgbackup\",\n    \"metadata\": {\n        \"name\": \"fromcrd\",\n
+        \       \"namespace\": \"pgo\"\n    },\n    \"spec\": {}\n}] \n"
+      capabilities: Full Lifecycle
+      categories: Database
+      certified: "false"
+      containerImage: crunchydata/postgres-operator:centos7-4.0.1
+      createdAt: 07/04/2019
+      description: A Postgres Operator from Crunchydata.com
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/CrunchyData/postgres-operator
+      support: crunchydata.com
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Postgres primary cluster member
+        displayName: Postgres Primary Cluster Member
+        kind: Pgcluster
+        name: pgclusters.crunchydata.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The desired number of member Pods for the deployment.
+          displayName: Size
+          path: size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+      - description: Represents a Postgres replica cluster member
+        displayName: Postgres Replica Cluster Member
+        kind: Pgreplica
+        name: pgreplicas.crunchydata.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The desired number of member Pods for the deployment.
+          displayName: Size
+          path: size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+      - description: Represents a Postgres sql policy
+        displayName: Postgres SQL Policy
+        kind: Pgpolicy
+        name: pgpolicies.crunchydata.com
+        resources:
+        - kind: Pgpolicy
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgpolicy name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:name
+        - description: The pgpolicy sql.
+          displayName: SQL
+          path: sql
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:sql
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+      - description: Represents a Postgres workflow task
+        displayName: Postgres workflow task
+        kind: Pgtask
+        name: pgtasks.crunchydata.com
+        resources:
+        - kind: Pgtask
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgtask name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:name
+        - description: The pgtask type.
+          displayName: TaskType
+          path: tasktype
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:tasktype
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+      - description: Represents a Postgres backup task
+        displayName: Postgres backup task
+        kind: Pgbackup
+        name: pgbackups.crunchydata.com
+        resources:
+        - kind: Pgbackup
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgbackup name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:name
+        - description: The pgbackup status.
+          displayName: BackupStatus
+          path: backupstatus
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:backupstatus
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+    description: "The PostgreSQL Operator runs within a Kubernetes cluster and provides
+      a means to deploy and manage PostgreSQL clusters.\n\n## Before You Begin\n\nThere
+      are several manual steps that the cluster administrator must perform prior to
+      installing the operator. The\noperator must be provided with an initial configuration
+      to run in the cluster, as well as certificates and\ncredentials that need to
+      be generated.\n\nStart by cloning the operator repository locally.\n\n```\ngit
+      clone -b 4.0.1 https://github.com/CrunchyData/postgres-operator.git\ncd postgres-operator\n```\n\n###
+      Operator Configuration\n\nEdit `conf/postgres-operator/pgo.yaml` to configure
+      the operator deployment. Look over all of the options and make any\nchanges
+      necessary for your environment.\n\n#### Image\n\nUpdate the `CCPImageTag` tag
+      to configure the postgres image being used, updating for the version of postgres
+      as needed.\n\n```\nCCPImageTag:  centos7-11.3-2.4.1\n```\n\n#### Storage\n\nConfigure
+      the backend storage for the Persistent Volumes used by each cluster. Depending
+      on the type of persistent\nstorage you wish to make available, adjust the `StorageClass`
+      as necessary. In this case, we are deployed on AWS using `gp2`\nis the default
+      for the cluster.\n\n```\nstorageos:\n  AccessMode:  ReadWriteOnce\n  Size:  1G\n
+      \ StorageType:  dynamic\n  StorageClass:  gp2\n  Fsgroup:  26\n```\n\nOnce the
+      storage backend is defined, enable the new storage option as needed.\n\n```\nPrimaryStorage:
+      storageos\nXlogStorage: storageos\nBackupStorage: storageos\nReplicaStorage:
+      storageos\nBackrestStorage: storageos\n```\n\n### Certificates\n\nYou will need
+      to either generate new TLS certificates or use existing certificates for the
+      operator API.\n\nYou can generate new self-signed certificates using scripts
+      in the operator repository.\n\n```\nexport PGOROOT=$(pwd)\ncd $PGOROOT/deploy\n$PGOROOT/deploy/gen-api-keys.sh\n$PGOROOT/deploy/gen-sshd-keys.sh\ncd
+      $PGOROOT\n```\n\n### Configuration and Secrets\n\nOnce the configuration changes
+      have been updated and certificates are in place, we can save the information
+      to the cluster.\n\nCreate the pgo namespace if it does not exist already. This
+      single namespace is where the operator should be deployed to. Postgres clusters
+      will also be deployed here.\n\n```\noc create namespace pgo \n```\n\nCreate
+      the `pgo-backrest-repo-config` Secret that is used by the operator.\n\n```\nkubectl
+      create secret generic -n pgo pgo-backrest-repo-config \\\n  --from-file=config=$PGOROOT/conf/pgo-backrest-repo/config
+      \\\n\t--from-file=sshd_config=$PGOROOT/conf/pgo-backrest-repo/sshd_config \\\n
+      \ --from-file=aws-s3-credentials.yaml=$PGOROOT/conf/pgo-backrest-repo/aws-s3-credentials.yaml
+      \\\n  --from-file=aws-s3-ca.crt=$PGOROOT/conf/pgo-backrest-repo/aws-s3-ca.crt\n\n\n```\n\nCreate
+      the `pgo-auth-secret` Secret that is used by the operator.\n\n```\nkubectl create
+      secret generic -n pgo pgo-auth-secret \\\n  --from-file=server.crt=$PGOROOT/conf/postgres-operator/server.crt
+      \\\n  --from-file=server.key=$PGOROOT/conf/postgres-operator/server.key \\\n
+      \ --from-file=pgouser=$PGOROOT/conf/postgres-operator/pgouser \\\n  --from-file=pgorole=$PGOROOT/conf/postgres-operator/pgorole\n```\n\nRemove
+      existing credentials for pgo-apiserver TLS REST API, if they exist.\n\n```\nkubectl
+      delete secret -n pgo tls pgo.tls\n```\n\nCreate credentials for pgo-apiserver
+      TLS REST API\n```\nkubectl create secret -n pgo tls pgo.tls \\\n  --key=$PGOROOT/conf/postgres-operator/server.key
+      \\\n  --cert=$PGOROOT/conf/postgres-operator/server.crt\n```\n\nCreate the `pgo-config`
+      ConfigMap that is used by the operator.\n\n```\nkubectl create configmap -n
+      pgo pgo-config \\\n--from-file=$PGOROOT/conf/postgres-operator\n\n```\n\nOnce
+      these resources are in place, the operator can be installed into the cluster.\n\n##
+      After You Install\n\nOnce the operator is installed in the cluster, you will
+      need to perform several steps to enable usage.\n\n### Service\n\n```\noc expose
+      deployment -n pgo postgres-operator --type=LoadBalancer\n```\n\nFor the pgo
+      client to communicate with the operator, it needs to know where to connect.
+      Export the service url as the PGO_APISERVER_URL for the pgo client in the shell\n\n```\nexport
+      PGO_APISERVER_URL=https://<url of exposed service>:8443\n```\n\n### Security\n\nWhen
+      postgres operator deploys, it creates a set of certificates the pgo client will
+      need to communicate. \n\n### Client Certificates\n\nCopy the client certificates
+      from the apiserver to the local environment - we use /tmp for this example.
+      \n\n```\noc cp <pgo-namespace>/<postgres-operator-pod>:/tmp/server.key /tmp/server.key
+      -c apiserver\noc cp <pgo-namespace>/<postgres-operator-pod>:/tmp/server.crt
+      /tmp/server.crt -c apiserver\n```\n\nConfigure the shell for the pgo command
+      line to use the certificates\n\n```\nexport PGO_CA_CERT=/tmp/server.crt\nexport
+      PGO_CLIENT_CERT=/tmp/server.crt\nexport PGO_CLIENT_KEY=/tmp/server.key\n```\n"
+    displayName: Crunchy PostgreSQL Enterprise
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - postgres
+    - app
+    links:
+    - name: Crunchy Data
+      url: https://crunchydata.com
+    - name: Crunchy Postgres Operator v4.0 Quick Deploy
+      url: https://github.com/CrunchyData/postgres-operator/tree/develop/examples/olm
+    maintainers:
+    - email: support@crunchydata.com
+      name: Crunchy Data
+    maturity: stable
+    minKubeVersion: 1.11.0
+    provider:
+      name: CrunchyData.com
+relatedImages:
+- image: crunchydata/pgo-apiserver:centos7-4.0.1
+  name: ""
+- image: crunchydata/pgo-scheduler:centos7-4.0.1
+  name: ""
+- image: crunchydata/postgres-operator:centos7-4.0.1
+  name: ""
+- image: quay.io/operatorhubio/postgresql@sha256:cd7ff2b835ce12bad92f307e0302982da9fc642eb97672ba0bd3e74b06a6e9cc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:fd2d518fb5788bc9209652273b78c8d33f0e02913e14b5b839de4311f0bd807a
+name: postgresoperator.v4.1.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgbackup
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.1.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: "[{\n    \"apiVersion\": \"crunchydata.com/v1\",\n    \"kind\":
+        \"Pgcluster\",\n    \"metadata\": {\n        \"labels\": {\n            \"archive\":
+        \"false\",\n            \"archive-timeout\": \"60\",\n            \"crunchy-pgbadger\":
+        \"false\",\n            \"crunchy_collect\": \"false\",\n            \"current-primary\":
+        \"fromcrd\",\n            \"deployment-name\": \"fromcrd\",\n            \"name\":
+        \"fromcrd\",\n            \"pg-cluster\": \"fromcrd\",\n            \"pgo-backrest\":
+        \"false\",\n            \"pgo-version\": \"4.1.0\",\n            \"primary\":
+        \"true\"\n        },\n        \"name\": \"fromcrd\",\n      \"namespace\":
+        \"pgo\"\n    },\n    \"spec\": {\n        \"ArchiveStorage\": {\n            \"accessmode\":
+        \"\",\n            \"fsgroup\": \"26\",\n            \"matchLabels\": \"\",\n
+        \           \"name\": \"\",\n            \"size\": \"\",\n            \"storageclass\":
+        \"fast\",\n            \"storagetype\": \"dynamic\",\n            \"supplementalgroups\":
+        \"\"\n        },\n        \"BackrestStorage\": {\n            \"accessmode\":
+        \"ReadWriteOnce\",\n            \"fsgroup\": \"26\",\n            \"matchLabels\":
+        \"\",\n            \"name\": \"\",\n            \"size\": \"1G\",\n            \"storageclass\":
+        \"fast\",\n            \"storagetype\": \"dynamic\",\n            \"supplementalgroups\":
+        \"\"\n        },\n        \"ContainerResources\": {\n            \"limitscpu\":
+        \"\",\n            \"limitsmemory\": \"\",\n            \"requestscpu\": \"\",\n
+        \           \"requestsmemory\": \"\"\n        },\n        \"PrimaryStorage\":
+        {\n            \"accessmode\": \"ReadWriteOnce\",\n            \"fsgroup\":
+        \"26\",\n            \"matchLabels\": \"\",\n            \"name\": \"fromcrd\",\n
+        \           \"size\": \"1G\",\n            \"storageclass\": \"fast\",\n            \"storagetype\":
+        \"dynamic\",\n            \"supplementalgroups\": \"\"\n        },\n        \"ReplicaStorage\":
+        {\n            \"accessmode\": \"ReadWriteOnce\",\n            \"fsgroup\":
+        \"26\",\n            \"matchLabels\": \"\",\n            \"name\": \"\",\n
+        \           \"size\": \"1G\",\n            \"storageclass\": \"fast\",\n            \"storagetype\":
+        \"dynamic\",\n            \"supplementalgroups\": \"\"\n        },\n        \"backuppath\":
+        \"\",\n        \"backuppvcname\": \"\",\n        \"ccpimage\":\"crunchy-postgres\",\n
+        \       \"ccpimagetag\": \"centos7-11.5-2.4.2\",\n        \"clustername\":
+        \"fromcrd\",\n        \"customconfig\": \"\",\n        \"database\": \"userdb\",\n
+        \       \"name\": \"fromcrd\",\n      \"namespace\":\"pgo\",\n        \"nodename\":
+        \"\",\n        \"policies\": \"\",\n        \"port\": \"5432\",\n        \"primaryhost\":
+        \"fromcrd\",\n        \"primarysecretname\": \"fromcrd-primaryuser-secret\",\n
+        \       \"replicas\": \"0\",\n        \"rootsecretname\": \"fromcrd-postgres-secret\",\n
+        \       \"secretfrom\": \"\",\n        \"status\": \"\",\n        \"strategy\":
+        \"1\",\n        \"user\": \"testuser\",\n        \"userlabels\": {\n            \"archive\":
+        \"false\",\n            \"archive-timeout\": \"60\",\n            \"crunchy-pgbadger\":
+        \"false\",\n            \"crunchy_collect\": \"false\",\n            \"pgo-backrest\":
+        \"false\",\n            \"pgo-version\": \"4.1.0\"\n        },\n        \"usersecretname\":
+        \"fromcrd-testuser-secret\"\n    }\n},{\n    \"apiVersion\": \"crunchydata.com/v1\",\n
+        \   \"kind\": \"Pgreplica\",\n    \"metadata\": {\n        \"name\": \"fromcrd\",\n
+        \       \"namespace\": \"pgo\"\n    },\n    \"spec\": {}\n},{\n    \"apiVersion\":
+        \"crunchydata.com/v1\",\n    \"kind\": \"Pgpolicy\",\n    \"metadata\": {\n
+        \       \"name\": \"fromcrd\",\n        \"namespace\": \"pgo\"\n    },\n    \"spec\":
+        {}\n},{\n    \"apiVersion\": \"crunchydata.com/v1\",\n    \"kind\": \"Pgtask\",\n
+        \   \"metadata\": {\n        \"name\": \"fromcrd\",\n        \"namespace\":
+        \"pgo\"\n    },\n    \"spec\": {}\n},{\n    \"apiVersion\": \"crunchydata.com/v1\",\n
+        \   \"kind\": \"Pgbackup\",\n    \"metadata\": {\n        \"name\": \"fromcrd\",\n
+        \       \"namespace\": \"pgo\"\n    },\n    \"spec\": {}\n}] \n"
+      capabilities: Full Lifecycle
+      categories: Database
+      certified: "false"
+      containerImage: crunchydata/postgres-operator:centos7-4.1.0
+      createdAt: 10/29/2019
+      description: A Postgres Operator from Crunchydata.com
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/CrunchyData/postgres-operator
+      support: crunchydata.com
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Postgres primary cluster member
+        displayName: Postgres Primary Cluster Member
+        kind: Pgcluster
+        name: pgclusters.crunchydata.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The desired number of member Pods for the deployment.
+          displayName: Size
+          path: size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+      - description: Represents a Postgres replica cluster member
+        displayName: Postgres Replica Cluster Member
+        kind: Pgreplica
+        name: pgreplicas.crunchydata.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The desired number of member Pods for the deployment.
+          displayName: Size
+          path: size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+      - description: Represents a Postgres sql policy
+        displayName: Postgres SQL Policy
+        kind: Pgpolicy
+        name: pgpolicies.crunchydata.com
+        resources:
+        - kind: Pgpolicy
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgpolicy name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:name
+        - description: The pgpolicy sql.
+          displayName: SQL
+          path: sql
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:sql
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+      - description: Represents a Postgres workflow task
+        displayName: Postgres workflow task
+        kind: Pgtask
+        name: pgtasks.crunchydata.com
+        resources:
+        - kind: Pgtask
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgtask name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:name
+        - description: The pgtask type.
+          displayName: TaskType
+          path: tasktype
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:tasktype
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+      - description: Represents a Postgres backup task
+        displayName: Postgres backup task
+        kind: Pgbackup
+        name: pgbackups.crunchydata.com
+        resources:
+        - kind: Pgbackup
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgbackup name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:name
+        - description: The pgbackup status.
+          displayName: BackupStatus
+          path: backupstatus
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:backupstatus
+        statusDescriptors:
+        - description: The current status of the application.
+          displayName: Status
+          path: phase
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase
+        - description: Explanation for the current status of the application.
+          displayName: Status Details
+          path: reason
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.phase:reason
+        version: v1
+    description: "The PostgreSQL Operator runs within a Kubernetes cluster and provides
+      a means to deploy and manage PostgreSQL clusters.\n\n## Before You Begin\n\nThere
+      are several manual steps that the cluster administrator must perform prior to
+      installing the operator. The\noperator must be provided with an initial configuration
+      to run in the cluster, as well as certificates and\ncredentials that need to
+      be generated.\n\nStart by cloning the operator repository locally.\n\n```\ngit
+      clone -b 4.1.0 https://github.com/CrunchyData/postgres-operator.git\ncd postgres-operator\n```\n\n###
+      Operator Configuration\n\nEdit `conf/postgres-operator/pgo.yaml` to configure
+      the operator deployment. Look over all of the options and make any\nchanges
+      necessary for your environment.\n\n#### Image\n\nUpdate the `CCPImageTag` tag
+      to configure the postgres image being used, updating for the version of postgres
+      as needed.\n\n```\nCCPImageTag:  centos7-11.5-2.4.2\n```\n\n#### Storage\n\nConfigure
+      the backend storage for the Persistent Volumes used by each cluster. Depending
+      on the type of persistent\nstorage you wish to make available, adjust the `StorageClass`
+      as necessary. In this case, we are deployed on AWS using `gp2`\nis the default
+      for the cluster.\n\n```\nstorageos:\n  AccessMode:  ReadWriteOnce\n  Size:  1G\n
+      \ StorageType:  dynamic\n  StorageClass:  gp2\n  Fsgroup:  26\n```\n\nOnce the
+      storage backend is defined, enable the new storage option as needed.\n\n```\nPrimaryStorage:
+      storageos\nXlogStorage: storageos\nBackupStorage: storageos\nReplicaStorage:
+      storageos\nBackrestStorage: storageos\n```\n\n### Certificates\n\nYou will need
+      to either generate new TLS certificates or use existing certificates for the
+      operator API.\n\nYou can generate new self-signed certificates using scripts
+      in the operator repository.\n\n```\nexport PGOROOT=$(pwd)\ncd $PGOROOT/deploy\n$PGOROOT/deploy/gen-api-keys.sh\n$PGOROOT/deploy/gen-sshd-keys.sh\ncd
+      $PGOROOT\n```\n\n### Configuration and Secrets\n\nOnce the configuration changes
+      have been updated and certificates are in place, we can save the information
+      to the cluster.\n\nCreate the pgo namespace if it does not exist already. This
+      single namespace is where the operator should be deployed to. Postgres clusters
+      will also be deployed here.\n\n```\nkubectl create namespace pgo \n```\n\nCreate
+      the `pgo-backrest-repo-config` Secret that is used by the operator.\n\n```\nkubectl
+      create secret generic -n pgo pgo-backrest-repo-config \\\n  --from-file=config=$PGOROOT/conf/pgo-backrest-repo/config
+      \\\n\t--from-file=sshd_config=$PGOROOT/conf/pgo-backrest-repo/sshd_config \\\n
+      \ --from-file=aws-s3-credentials.yaml=$PGOROOT/conf/pgo-backrest-repo/aws-s3-credentials.yaml
+      \\\n  --from-file=aws-s3-ca.crt=$PGOROOT/conf/pgo-backrest-repo/aws-s3-ca.crt\n\n\n```\n\nCreate
+      the `pgo-auth-secret` Secret that is used by the operator.\n\n```\nkubectl create
+      secret generic -n pgo pgo-auth-secret \\\n  --from-file=server.crt=$PGOROOT/conf/postgres-operator/server.crt
+      \\\n  --from-file=server.key=$PGOROOT/conf/postgres-operator/server.key \\\n```\n\nInstall
+      the bootstrap credentials: \n\n```\n $PGOROOT/deploy/install-bootstrap-creds.sh\n```
+      \n\nRemove existing credentials for pgo-apiserver TLS REST API, if they exist.\n\n```\nkubectl
+      delete secret -n pgo tls pgo.tls\n``` \n\nCreate credentials for pgo-apiserver
+      TLS REST API\n```\nkubectl create secret -n pgo tls pgo.tls \\\n  --key=$PGOROOT/conf/postgres-operator/server.key
+      \\\n  --cert=$PGOROOT/conf/postgres-operator/server.crt\n```\n\nCreate the `pgo-config`
+      ConfigMap that is used by the operator.\n\n```\nkubectl create configmap -n
+      pgo pgo-config \\\n--from-file=$PGOROOT/conf/postgres-operator\n\n```\n\nOnce
+      these resources are in place, the operator can be installed into the cluster.\n\n##
+      After You Install\n\nOnce the operator is installed in the cluster, you will
+      need to perform several steps to enable usage.\n\n### Service\n\n```\nkubectl
+      expose deployment -n pgo postgres-operator --type=LoadBalancer\n```\n\nFor the
+      pgo client to communicate with the operator, it needs to know where to connect.
+      Export the service url as the PGO_APISERVER_URL for the pgo client in the shell\n\n```\nexport
+      PGO_APISERVER_URL=https://<url of exposed service>:8443\n```\n\n### Security\n\nWhen
+      postgres operator deploys, it creates a set of certificates the pgo client will
+      need to communicate. \n\n### Client Certificates\n\nCopy the client certificates
+      from the apiserver to the local environment - we use /tmp for this example.
+      \n\n```\nkubectl cp <pgo-namespace>/<postgres-operator-pod>:/tmp/server.key
+      /tmp/server.key -c apiserver\nkubectl cp <pgo-namespace>/<postgres-operator-pod>:/tmp/server.crt
+      /tmp/server.crt -c apiserver\n```\n\nConfigure the shell for the pgo command
+      line to use the certificates\n\n```\nexport PGO_CA_CERT=/tmp/server.crt\nexport
+      PGO_CLIENT_CERT=/tmp/server.crt\nexport PGO_CLIENT_KEY=/tmp/server.key\n```\n"
+    displayName: Crunchy PostgreSQL Enterprise
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - postgres
+    - app
+    links:
+    - name: Crunchy Data
+      url: https://crunchydata.com
+    - name: Crunchy Postgres Operator v4.1 Quick Deploy
+      url: https://github.com/CrunchyData/postgres-operator/tree/develop/examples/olm
+    maintainers:
+    - email: support@crunchydata.com
+      name: Crunchy Data
+    maturity: stable
+    minKubeVersion: 1.11.0
+    provider:
+      name: CrunchyData.com
+relatedImages:
+- image: crunchydata/pgo-apiserver:centos7-4.1.0
+  name: ""
+- image: crunchydata/pgo-event:centos7-4.1.0
+  name: ""
+- image: crunchydata/pgo-scheduler:centos7-4.1.0
+  name: ""
+- image: crunchydata/postgres-operator:centos7-4.1.0
+  name: ""
+- image: quay.io/operatorhubio/postgresql@sha256:fd2d518fb5788bc9209652273b78c8d33f0e02913e14b5b839de4311f0bd807a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:80055347b25990dfa2b7f8038ffd9450eb8ea2739b7a3c7e1fc2052c8aae5187
+name: postgresoperator.v4.2.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgbackup
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.2.0
+relatedImages:
+- image: crunchydata/pgo-apiserver:centos7-4.2.0
+  name: ""
+- image: crunchydata/pgo-event:centos7-4.2.0
+  name: ""
+- image: crunchydata/pgo-scheduler:centos7-4.2.0
+  name: ""
+- image: crunchydata/postgres-operator:centos7-4.2.0
+  name: ""
+- image: quay.io/operatorhubio/postgresql@sha256:80055347b25990dfa2b7f8038ffd9450eb8ea2739b7a3c7e1fc2052c8aae5187
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:51e179d1e1b0009337f6b4cde8a977549377ed0054b7f8b96e55195e21e87fc6
+name: postgresoperator.v4.2.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgbackup
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.2.1
+relatedImages:
+- image: crunchydata/pgo-apiserver:centos7-4.2.1
+  name: ""
+- image: crunchydata/pgo-event:centos7-4.2.1
+  name: ""
+- image: crunchydata/pgo-scheduler:centos7-4.2.1
+  name: ""
+- image: crunchydata/postgres-operator:centos7-4.2.1
+  name: ""
+- image: quay.io/operatorhubio/postgresql@sha256:51e179d1e1b0009337f6b4cde8a977549377ed0054b7f8b96e55195e21e87fc6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:50a5990c29de5d4727d2fb26d807c2f1c1bfed26cd48fc16247e6b6e5bc85a26
+name: postgresoperator.v4.2.2
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgbackup
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.2.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgcluster",
+            "metadata": {
+              "labels": {
+                "archive": "false"
+              },
+              "name": "example"
+            },
+            "spec": {
+              "PrimaryStorage": {
+                "accessmode": "ReadWriteOnce",
+                "size": "1G",
+                "storageclass": "standard",
+                "storagetype": "dynamic"
+              },
+              "ccpimage": "crunchy-postgres-ha",
+              "ccpimagetag": "centos7-12.2-4.2.2",
+              "clustername": "example",
+              "database": "example",
+              "exporterport": "9187",
+              "name": "example",
+              "pgbadgerport": "10000",
+              "port": "5432",
+              "primarysecretname": "example-primaryuser",
+              "rootsecretname": "example-postgresuser",
+              "userlabels": {
+                "archive": "false"
+              },
+              "usersecretname": "example-primaryuser"
+            }
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgreplica",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {},
+            "status": {}
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgpolicy",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {},
+            "status": {}
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgtask",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgbackup",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {},
+            "status": {}
+          }
+        ]
+      capabilities: Auto Pilot
+      categories: Database
+      certified: "false"
+      containerImage: crunchydata/postgres-operator:centos7-4.2.2
+      createdAt: 2019-12-31 19:40Z
+      description: Enterprise open source PostgreSQL-as-a-Service
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/CrunchyData/postgres-operator
+      support: crunchydata.com
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Postgres primary cluster member
+        displayName: Postgres Primary Cluster Member
+        kind: Pgcluster
+        name: pgclusters.crunchydata.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The Crunchy PostgreSQL image to use. Possible values are "crunchy-postgres-ha"
+            and "crunchy-postgres-gis-ha"
+          displayName: PostgreSQL Image
+          path: ccpimage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The tag of the PostgreSQL image to use. Example is "centos7-12.2-4.2.2"
+          displayName: PostgreSQL Image Tag
+          path: ccpimagetag
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The name that is assigned to this specific PostgreSQL cluster
+          displayName: PostgreSQL Cluster name
+          path: clustername
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The name of the initial database to be created inside of the
+            PostgreSQL cluster, e.g. "hippo"
+          displayName: Initial PostgreSQL database name
+          path: database
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The port to use for the PostgreSQL metrics exporter used for
+            cluster monitoring, e.g. "9187"
+          displayName: PostgreSQL Monitor Port
+          path: exporterport
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: The name of the CRD entry. Should match the PostgreSQL Cluster
+            name
+          displayName: PostgreSQL CRD name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The port to use for the pgBadger PostgreSQL query analysis
+            service, e.g. "10000"
+          displayName: pgBadger Port
+          path: pgbadgerport
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: The port to use for the PostgreSQL cluster, e.g. "5432"
+          displayName: PostgreSQL Port
+          path: port
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: The name of the Secret that contains the PostgreSQL superuser
+            credentials
+          displayName: PostgreSQL superuser credentials
+          path: rootsecretname
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: The name of the Secret that contains the credentials used for
+            managing cluster instance authentication, e.g. connections for replicas
+          displayName: PostgreSQL support service credentials
+          path: primarysecretname
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: The name of the Secret that contains the PostgreSQL user credentials
+            for logging into the PostgreSQL cluster
+          displayName: PostgreSQL user credentials
+          path: usersecretname
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Attributes that help set the primary storage of a PostgreSQL
+            cluster
+          displayName: PostgreSQL Primary Storage
+          path: PrimaryStorage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+        - description: Contains the name of the PostgreSQL cluster to associate with
+            this storage. Should match the Cluster name
+          displayName: PostgreSQL Primary Storage Name
+          path: PrimaryStorage.name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: Contains the storage class used for the primary PostgreSQL
+            instance of the cluster
+          displayName: PostgreSQL Primary StorageClass
+          path: PrimaryStorage.storageclass
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+        - description: The access mode for the storage class, e.g. "ReadWriteOnce"
+          displayName: PostgreSQL Primary StorageClass Access Mode
+          path: PrimaryStorage.accessmode
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteOnce
+          - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
+        - description: The size of the PVC that will store the data for the primary
+            PostgreSQL instance, e.g. "1G"
+          displayName: PostgreSQL Primary Data PVC Size
+          path: PrimaryStorage.size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: Deprecated
+          displayName: Deprecated
+          path: status
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: A set of labels that help the PostgreSQL Operator manage a
+            PostgreSQL cluster
+          displayName: User defined labels
+          path: userlabels
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        statusDescriptors:
+        - description: Outputs a human readable message of the status of if the PostgreSQL
+            cluster initialization
+          displayName: Initialization Message
+          path: message
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: Outputs the state of if the PostgreSQL cluster was initialized
+          displayName: Initialization State
+          path: state
+          x-descriptors:
+          - urn:alm:descriptor:text
+        version: v1
+      - description: Represents a Postgres replica cluster member
+        displayName: Postgres Replica Cluster Member
+        kind: Pgreplica
+        name: pgreplicas.crunchydata.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The desired number of member Pods for the deployment.
+          displayName: Size
+          path: size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        version: v1
+      - description: Represents a Postgres sql policy
+        displayName: Postgres SQL Policy
+        kind: Pgpolicy
+        name: pgpolicies.crunchydata.com
+        resources:
+        - kind: Pgpolicy
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgpolicy name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The pgpolicy sql.
+          displayName: SQL
+          path: sql
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        version: v1
+      - description: Represents a Postgres workflow task
+        displayName: Postgres workflow task
+        kind: Pgtask
+        name: pgtasks.crunchydata.com
+        resources:
+        - kind: Pgtask
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgtask name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The pgtask type.
+          displayName: TaskType
+          path: tasktype
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        statusDescriptors:
+        - description: Message
+          displayName: Message
+          path: message
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: State
+          displayName: State
+          path: state
+          x-descriptors:
+          - urn:alm:descriptor:text
+        version: v1
+      - description: Represents a Postgres backup task
+        displayName: Postgres backup task
+        kind: Pgbackup
+        name: pgbackups.crunchydata.com
+        resources:
+        - kind: Pgbackup
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgbackup name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The pgbackup status.
+          displayName: BackupStatus
+          path: backupstatus
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        version: v1
+    description: |-
+      Crunchy PostgreSQL for Kubernetes lets you run your own production-grade PostgreSQL-as-a-Service on Kubernetes!
+
+      Powered by the Crunchy [PostgreSQL Operator](https://github.com/CrunchyData/postgres-operator), Crunchy PostgreSQL
+      for Kubernetes automates and simplifies deploying and managing open source PostgreSQL clusters on Kubernetes by providing the
+      essential features you need to keep your PostgreSQL clusters up and running, including:
+
+      - **PostgreSQL Cluster Provisioning**: [Create, Scale, & Delete PostgreSQL clusters with ease][provisioning],
+      while fully customizing your Pods and PostgreSQL configuration!
+      - **High-Availability**: Safe, automated failover backed by a [distributed consensus based high-availability solution][high-availability].
+      Uses [Pod Anti-Affinity][anti-affinity] to help resiliency; you can configure how aggressive this can be!
+      Failed primaries automatically heal, allowing for faster recovery time. You can even create regularly scheduled
+      backups as well and set your backup retention policy
+      - **Disaster Recovery**: Backups and restores leverage the open source [pgBackRest][] utility
+      and [includes support for full, incremental, and differential backups as well as efficient delta restores][disaster-recovery].
+      Set how long you want your backups retained for. Works great with very large databases!
+      - **Monitoring**: Track the health of your PostgreSQL clusters using the open source [pgMonitor][] library.
+      - **Clone**: Create new clusters from your existing clusters with a simple [`pgo clone`][pgo-clone] command.
+      - **Full Customizability**: Crunchy PostgreSQL for Kubernetes makes it easy to get your own PostgreSQL-as-a-Service up and running on
+      and lets make further enhancements to customize your deployments, including:
+        - Selecting different storage classes for your primary, replica, and backup storage
+        - Select your own container resources class for each PostgreSQL cluster deployment; differentiate between resources applied for primary and replica clusters!
+        - Use your own container image repository, including support `imagePullSecrets` and private repositories
+        - Bring your own trusted certificate authority (CA) for use with the Operator API server
+        - Override your PostgreSQL configuration for each cluster
+
+      and much more!
+
+      [anti-affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+      [disaster-recovery]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/disaster-recovery/
+      [high-availability]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/high-availability/
+      [pgo-clone]: https://access.crunchydata.com/documentation/postgres-operator/latest/pgo-client/reference/pgo_clone/
+      [provisioning]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/provisioning/
+
+      [pgBackRest]: https://www.pgbackrest.org
+      [pgMonitor]: https://github.com/CrunchyData/pgmonitor
+
+      ## Before You Begin
+
+      There are several manual steps that the cluster administrator must perform prior to installing the operator. The
+      operator must be provided with an initial configuration to run in the cluster, as well as certificates and
+      credentials that need to be generated.
+
+      Start by cloning the operator repository locally.
+
+      ```
+      git clone -b v4.2.2 https://github.com/CrunchyData/postgres-operator.git
+      cd postgres-operator
+      ```
+
+      ### PostgreSQL Operator Configuration
+
+      Edit `conf/postgres-operator/pgo.yaml` to configure the operator deployment. Look over all of the options and make any
+      changes necessary for your environment.
+
+      #### Image
+
+      Update the `CCPImageTag` tag to configure the PostgreSQL image being used, updating for the version of PostgreSQL as needed.
+
+      ```
+      CCPImageTag:  centos7-12.2-4.2.2
+      ```
+
+      #### Storage
+
+      Configure the backend storage for the Persistent Volumes used by each PostgreSQL cluster. Depending on the type of persistent
+      storage you wish to make available, adjust the `StorageClass` as necessary. For example, to deploy on AWS using `gp2`, you
+      would set the following:
+
+      ```
+      storageos:
+        AccessMode:  ReadWriteOnce
+        Size:  1G
+        StorageType:  dynamic
+        StorageClass:  gp2
+        Fsgroup:  26
+      ```
+
+      Once the storage backend is defined, enable the new storage option as needed.
+
+      ```
+      PrimaryStorage: storageos
+      ReplicaStorage: storageos
+      BackrestStorage: storageos
+      ```
+
+      ### Certificates
+
+      You will need to either generate new TLS certificates or use existing certificates for the operator API.
+
+      You can generate new self-signed certificates using scripts in the operator repository.
+
+      ```
+      export PGOROOT=$(pwd)
+      cd $PGOROOT/deploy
+      $PGOROOT/deploy/gen-api-keys.sh
+      $PGOROOT/deploy/gen-sshd-keys.sh
+      cd $PGOROOT
+      ```
+
+      ### Configuration and Secrets
+
+      Once the configuration changes have been updated and certificates are in place, we can save the information to the cluster.
+
+      Create the pgo namespace if it does not exist already. This single namespace is where the operator should be deployed to. PostgreSQL clusters will also be deployed here.
+
+      ```
+      kubectl create namespace pgo
+      ```
+
+      Create the `pgo-backrest-repo-config` Secret that is used by the operator.
+
+      ```
+      kubectl create secret generic -n pgo pgo-backrest-repo-config \
+        --from-file=config=$PGOROOT/conf/pgo-backrest-repo/config \
+        --from-file=sshd_config=$PGOROOT/conf/pgo-backrest-repo/sshd_config \
+        --from-file=aws-s3-credentials.yaml=$PGOROOT/conf/pgo-backrest-repo/aws-s3-credentials.yaml \
+        --from-file=aws-s3-ca.crt=$PGOROOT/conf/pgo-backrest-repo/aws-s3-ca.crt
+      ```
+
+      Create the `pgo-auth-secret` Secret that is used by the operator.
+
+      ```
+      kubectl create secret generic -n pgo pgo-auth-secret \
+        --from-file=server.crt=$PGOROOT/conf/postgres-operator/server.crt \
+        --from-file=server.key=$PGOROOT/conf/postgres-operator/server.key
+      ```
+
+      Install the bootstrap credentials:
+
+      ```
+      $PGOROOT/deploy/install-bootstrap-creds.sh
+      ```
+
+      Remove existing credentials for pgo-apiserver TLS REST API, if they exist.
+
+      ```
+      kubectl delete secret -n pgo tls pgo.tls
+      ```
+
+      Create credentials for pgo-apiserver TLS REST API
+      ```
+      kubectl create secret -n pgo tls pgo.tls \
+        --key=$PGOROOT/conf/postgres-operator/server.key \
+        --cert=$PGOROOT/conf/postgres-operator/server.crt
+      ```
+
+      Create the `pgo-config` ConfigMap that is used by the operator.
+
+      ```
+      kubectl create configmap -n pgo pgo-config \
+        --from-file=$PGOROOT/conf/postgres-operator
+      ```
+
+      Once these resources are in place, the operator can be installed into the cluster.
+
+      ## After You Install
+
+      Once the operator is installed in the cluster, you will need to perform several steps to enable usage.
+
+      ### Service
+
+      ```
+      kubectl expose deployment -n pgo postgres-operator --type=LoadBalancer
+      ```
+
+      For the pgo client to communicate with the operator, it needs to know where to connect.
+      Export the service URL as `PGO_APISERVER_URL` in the shell.
+
+      ```
+      export PGO_APISERVER_URL=https://<url of exposed service>:8443
+      ```
+
+      ### Security
+
+      When postgres operator deploys, it creates a set of certificates the pgo client will need to communicate.
+
+      ### Client Certificates
+
+      Copy the client certificates from the apiserver to the local environment - we use /tmp for this example.
+
+      ```
+      kubectl cp <pgo-namespace>/<postgres-operator-pod>:/tmp/server.key /tmp/server.key -c apiserver
+      kubectl cp <pgo-namespace>/<postgres-operator-pod>:/tmp/server.crt /tmp/server.crt -c apiserver
+      ```
+
+      Configure the shell for the pgo command line to use the certificates
+
+      ```
+      export PGO_CA_CERT=/tmp/server.crt
+      export PGO_CLIENT_CERT=/tmp/server.crt
+      export PGO_CLIENT_KEY=/tmp/server.key
+      ```
+    displayName: Crunchy PostgreSQL for Kubernetes
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - postgres
+    - postgresql
+    - database
+    - sql
+    - operator
+    - crunchy data
+    links:
+    - name: Crunchy Data
+      url: https://www.crunchydata.com/
+    - name: Documentation
+      url: https://access.crunchydata.com/documentation/postgres-operator/
+    maintainers:
+    - email: info@crunchydata.com
+      name: Crunchy Data
+    maturity: stable
+    minKubeVersion: 1.11.0
+    provider:
+      name: Crunchy Data
+relatedImages:
+- image: crunchydata/pgo-apiserver:centos7-4.2.2
+  name: ""
+- image: crunchydata/pgo-event:centos7-4.2.2
+  name: ""
+- image: crunchydata/pgo-scheduler:centos7-4.2.2
+  name: ""
+- image: crunchydata/postgres-operator:centos7-4.2.2
+  name: ""
+- image: quay.io/operatorhubio/postgresql@sha256:50a5990c29de5d4727d2fb26d807c2f1c1bfed26cd48fc16247e6b6e5bc85a26
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:aa96667f14b6af59bb180da5b1ddf6da5fdcce81b01778e89e0ad95fdb33908f
+name: postgresoperator.v4.3.2
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.3.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgcluster",
+            "metadata": {
+              "labels": {
+                "archive": "false"
+              },
+              "name": "example"
+            },
+            "spec": {
+              "PrimaryStorage": {
+                "accessmode": "ReadWriteOnce",
+                "size": "1G",
+                "storageclass": "standard",
+                "storagetype": "dynamic"
+              },
+              "ccpimage": "crunchy-postgres-ha",
+              "ccpimagetag": "centos7-12.3-4.3.2",
+              "clustername": "example",
+              "database": "example",
+              "exporterport": "9187",
+              "name": "example",
+              "pgbadgerport": "10000",
+              "port": "5432",
+              "primarysecretname": "example-primaryuser",
+              "rootsecretname": "example-postgresuser",
+              "userlabels": {
+                "archive": "false"
+              },
+              "usersecretname": "example-primaryuser"
+            }
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgreplica",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {},
+            "status": {}
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgpolicy",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {},
+            "status": {}
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgtask",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Auto Pilot
+      categories: Database
+      certified: "false"
+      containerImage: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos7-4.3.2
+      createdAt: 2019-12-31 19:40Z
+      description: Enterprise open source PostgreSQL-as-a-Service
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/CrunchyData/postgres-operator
+      support: crunchydata.com
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Postgres primary cluster member
+        displayName: Postgres Primary Cluster Member
+        kind: Pgcluster
+        name: pgclusters.crunchydata.com
+        resources:
+        - kind: Pgcluster
+          name: ""
+          version: v1
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: Job
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The Crunchy PostgreSQL image to use. Possible values are "crunchy-postgres-ha"
+            and "crunchy-postgres-gis-ha"
+          displayName: PostgreSQL Image
+          path: ccpimage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The tag of the PostgreSQL image to use. Example is "centos7-12.3-4.3.2"
+          displayName: PostgreSQL Image Tag
+          path: ccpimagetag
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The name that is assigned to this specific PostgreSQL cluster
+          displayName: PostgreSQL Cluster name
+          path: clustername
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The name of the initial database to be created inside of the
+            PostgreSQL cluster, e.g. "hippo"
+          displayName: Initial PostgreSQL database name
+          path: database
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The port to use for the PostgreSQL metrics exporter used for
+            cluster monitoring, e.g. "9187"
+          displayName: PostgreSQL Monitor Port
+          path: exporterport
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: The name of the CRD entry. Should match the PostgreSQL Cluster
+            name
+          displayName: PostgreSQL CRD name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The port to use for the pgBadger PostgreSQL query analysis
+            service, e.g. "10000"
+          displayName: pgBadger Port
+          path: pgbadgerport
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: The port to use for the PostgreSQL cluster, e.g. "5432"
+          displayName: PostgreSQL Port
+          path: port
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: The name of the Secret that contains the PostgreSQL superuser
+            credentials
+          displayName: PostgreSQL superuser credentials
+          path: rootsecretname
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: The name of the Secret that contains the credentials used for
+            managing cluster instance authentication, e.g. connections for replicas
+          displayName: PostgreSQL support service credentials
+          path: primarysecretname
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: The name of the Secret that contains the PostgreSQL user credentials
+            for logging into the PostgreSQL cluster
+          displayName: PostgreSQL user credentials
+          path: usersecretname
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Attributes that help set the primary storage of a PostgreSQL
+            cluster
+          displayName: PostgreSQL Primary Storage
+          path: PrimaryStorage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+        - description: Contains the name of the PostgreSQL cluster to associate with
+            this storage. Should match the Cluster name
+          displayName: PostgreSQL Primary Storage Name
+          path: PrimaryStorage.name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: Contains the storage class used for the primary PostgreSQL
+            instance of the cluster
+          displayName: PostgreSQL Primary StorageClass
+          path: PrimaryStorage.storageclass
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+        - description: The access mode for the storage class, e.g. "ReadWriteOnce"
+          displayName: PostgreSQL Primary StorageClass Access Mode
+          path: PrimaryStorage.accessmode
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteOnce
+          - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
+        - description: The size of the PVC that will store the data for the primary
+            PostgreSQL instance, e.g. "1G"
+          displayName: PostgreSQL Primary Data PVC Size
+          path: PrimaryStorage.size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: Deprecated
+          displayName: Deprecated
+          path: status
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: A set of labels that help the PostgreSQL Operator manage a
+            PostgreSQL cluster
+          displayName: User defined labels
+          path: userlabels
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        statusDescriptors:
+        - description: Outputs a human readable message of the status of if the PostgreSQL
+            cluster initialization
+          displayName: Initialization Message
+          path: message
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: Outputs the state of if the PostgreSQL cluster was initialized
+          displayName: Initialization State
+          path: state
+          x-descriptors:
+          - urn:alm:descriptor:text
+        version: v1
+      - description: Represents a Postgres replica cluster member
+        displayName: Postgres Replica Cluster Member
+        kind: Pgreplica
+        name: pgreplicas.crunchydata.com
+        resources:
+        - kind: Pgreplica
+          name: ""
+          version: v1
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: Job
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The desired number of member Pods for the deployment.
+          displayName: Size
+          path: size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        version: v1
+      - description: Represents a Postgres sql policy
+        displayName: Postgres SQL Policy
+        kind: Pgpolicy
+        name: pgpolicies.crunchydata.com
+        resources:
+        - kind: Pgpolicy
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgpolicy name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The pgpolicy sql.
+          displayName: SQL
+          path: sql
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        version: v1
+      - description: Represents a Postgres workflow task
+        displayName: Postgres workflow task
+        kind: Pgtask
+        name: pgtasks.crunchydata.com
+        resources:
+        - kind: Pgtask
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgtask name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The pgtask type.
+          displayName: TaskType
+          path: tasktype
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        statusDescriptors:
+        - description: Message
+          displayName: Message
+          path: message
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: State
+          displayName: State
+          path: state
+          x-descriptors:
+          - urn:alm:descriptor:text
+        version: v1
+    description: |-
+      Crunchy PostgreSQL for Kubernetes lets you run your own production-grade PostgreSQL-as-a-Service on Kubernetes!
+
+      Powered by the Crunchy [PostgreSQL Operator](https://github.com/CrunchyData/postgres-operator), Crunchy PostgreSQL
+      for Kubernetes automates and simplifies deploying and managing open source PostgreSQL clusters on Kubernetes by providing the
+      essential features you need to keep your PostgreSQL clusters up and running, including:
+
+      - **PostgreSQL Cluster Provisioning**: [Create, Scale, & Delete PostgreSQL clusters with ease][provisioning],
+      while fully customizing your Pods and PostgreSQL configuration!
+      - **High-Availability**: Safe, automated failover backed by a [distributed consensus based high-availability solution][high-availability].
+      Uses [Pod Anti-Affinity][anti-affinity] to help resiliency; you can configure how aggressive this can be!
+      Failed primaries automatically heal, allowing for faster recovery time. You can even create regularly scheduled
+      backups as well and set your backup retention policy
+      - **Disaster Recovery**: Backups and restores leverage the open source [pgBackRest][] utility
+      and [includes support for full, incremental, and differential backups as well as efficient delta restores][disaster-recovery].
+      Set how long you want your backups retained for. Works great with very large databases!
+      - **Monitoring**: Track the health of your PostgreSQL clusters using the open source [pgMonitor][] library.
+      - **Clone**: Create new clusters from your existing clusters with a simple [`pgo clone`][pgo-clone] command.
+      - **Full Customizability**: Crunchy PostgreSQL for Kubernetes makes it easy to get your own PostgreSQL-as-a-Service up and running on
+      and lets make further enhancements to customize your deployments, including:
+        - Selecting different storage classes for your primary, replica, and backup storage
+        - Select your own container resources class for each PostgreSQL cluster deployment; differentiate between resources applied for primary and replica clusters!
+        - Use your own container image repository, including support `imagePullSecrets` and private repositories
+        - Bring your own trusted certificate authority (CA) for use with the Operator API server
+        - Override your PostgreSQL configuration for each cluster
+
+      and much more!
+
+      [anti-affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+      [disaster-recovery]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/disaster-recovery/
+      [high-availability]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/high-availability/
+      [pgo-clone]: https://access.crunchydata.com/documentation/postgres-operator/latest/pgo-client/reference/pgo_clone/
+      [provisioning]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/provisioning/
+
+      [pgBackRest]: https://www.pgbackrest.org
+      [pgMonitor]: https://github.com/CrunchyData/pgmonitor
+
+
+      ## Before You Begin
+
+      There are a few manual steps that the cluster administrator must perform prior to installing the PostgreSQL Operator.
+      At the very least, it must be provided with an initial configuration.
+
+      First, select a namespace in which to install the PostgreSQL Operator. PostgreSQL clusters will also be deployed here.
+      If it does not exist, create it now.
+
+      ```
+      export PGO_OPERATOR_NAMESPACE=pgo
+      kubectl create namespace "$PGO_OPERATOR_NAMESPACE"
+      ```
+
+      Next, clone the PostgreSQL Operator repository locally.
+
+      ```
+      git clone -b v4.3.2 https://github.com/CrunchyData/postgres-operator.git
+      cd postgres-operator
+      ```
+
+      ### PostgreSQL Operator Configuration
+
+      Edit `conf/postgres-operator/pgo.yaml` to configure the deployment. Look over all of the options and make any
+      changes necessary for your environment. A [full description of each option][pgo-yaml-reference] is available in the documentation.
+
+      [pgo-yaml-reference]: https://access.crunchydata.com/documentation/postgres-operator/4.3.2/configuration/pgo-yaml-configuration/
+
+      When the file is ready, upload the entire directory to the `pgo-config` ConfigMap.
+
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" create configmap pgo-config \
+        --from-file=./conf/postgres-operator
+      ```
+
+      ### Secrets
+
+      Configure pgBackRest for your environment. If you do not plan to use AWS S3 to store backups, you can omit
+      the `aws-s3` keys below.
+
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" create secret generic pgo-backrest-repo-config \
+        --from-file=config=./conf/pgo-backrest-repo/config \
+        --from-file=sshd_config=./conf/pgo-backrest-repo/sshd_config \
+        --from-file=aws-s3-ca.crt=./conf/pgo-backrest-repo/aws-s3-ca.crt \
+        --from-literal=aws-s3-key="<your-aws-s3-key>" \
+        --from-literal=aws-s3-key-secret="<your-aws-s3-key-secret>"
+      ```
+
+      ### Certificates (optional)
+
+      The PostgreSQL Operator has an API that uses TLS to communicate securely with clients. If you have
+      a certificate bundle validated by your organization, you can install it now.  If not, the API will
+      automatically generate and use a self-signed certificate.
+
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" create secret tls pgo.tls \
+        --cert=/path/to/server.crt \
+        --key=/path/to/server.key
+      ```
+
+      Once these resources are in place, the PostgreSQL Operator can be installed into the cluster.
+
+
+      ## After You Install
+
+      Once the PostgreSQL Operator is installed in your Kubernetes cluster, you will need to do a few things
+      to use the [PostgreSQL Operator Client][pgo-client].
+
+      [pgo-client]: https://access.crunchydata.com/documentation/postgres-operator/latest/pgo-client/
+
+      Install the first set of client credentials and download the `pgo` binary and client certificates.
+
+      ```
+      PGO_CMD=kubectl ./deploy/install-bootstrap-creds.sh
+      PGO_CMD=kubectl ./installers/kubectl/client-setup.sh
+      ```
+
+      The client needs to be able to reach the PostgreSQL Operator API from outside the Kubernetes cluster.
+      Create an external service or forward a port locally.
+
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" expose deployment postgres-operator --type=LoadBalancer
+
+      export PGO_APISERVER_URL="https://$(
+        kubectl -n "$PGO_OPERATOR_NAMESPACE" get service postgres-operator \
+          -o jsonpath="{.status.loadBalancer.ingress[*]['ip','hostname']}"
+      ):8443"
+      ```
+      _or_
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" port-forward deployment/postgres-operator 8443
+
+      export PGO_APISERVER_URL="https://127.0.0.1:8443"
+      ```
+
+      Verify connectivity using the `pgo` command.
+
+      ```
+      pgo version
+      # pgo client version 4.3.2
+      # pgo-apiserver version 4.3.2
+      ```
+    displayName: Crunchy PostgreSQL for Kubernetes
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - postgres
+    - postgresql
+    - database
+    - sql
+    - operator
+    - crunchy data
+    links:
+    - name: Crunchy Data
+      url: https://www.crunchydata.com/
+    - name: Documentation
+      url: https://access.crunchydata.com/documentation/postgres-operator/
+    maintainers:
+    - email: info@crunchydata.com
+      name: Crunchy Data
+    maturity: stable
+    minKubeVersion: 1.11.0
+    provider:
+      name: Crunchy Data
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:aa96667f14b6af59bb180da5b1ddf6da5fdcce81b01778e89e0ad95fdb33908f
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos7-4.3.2
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos7-4.3.2
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos7-4.3.2
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos7-4.3.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:1211de2122fecb7eb89675635bebcecdb06d83de400746cc8db4b2fc8032a897
+name: postgresoperator.v4.4.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.4.0
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:1211de2122fecb7eb89675635bebcecdb06d83de400746cc8db4b2fc8032a897
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos7-4.4.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos7-4.4.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos7-4.4.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos7-4.4.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:29cc107c442774d49df46ef595048eb97c98d77c9b2e79a9703dd8f6a0771371
+name: postgresoperator.v4.4.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.4.1
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:29cc107c442774d49df46ef595048eb97c98d77c9b2e79a9703dd8f6a0771371
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos7-4.4.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos7-4.4.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos7-4.4.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos7-4.4.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:2ed94e480ce97c31f53415ab0a688b249a2fee4ec6ad11b4688bcee8332b5ab5
+name: postgresoperator.v4.5.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.5.0
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:2ed94e480ce97c31f53415ab0a688b249a2fee4ec6ad11b4688bcee8332b5ab5
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos7-4.5.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos7-4.5.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos7-4.5.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos7-4.5.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:7192ad9c4f641a2c177cfb9fe814cc4000a8c4bfb9f9fa535c92aaefc84a4e73
+name: postgresoperator.v4.5.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.5.1
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:7192ad9c4f641a2c177cfb9fe814cc4000a8c4bfb9f9fa535c92aaefc84a4e73
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos7-4.5.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos7-4.5.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos7-4.5.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos7-4.5.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:57a1601a211ce0220c8e9ba124d1793508920e92e08f0676d4fd941f4dc42f56
+name: postgresoperator.v4.6.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.6.1
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:57a1601a211ce0220c8e9ba124d1793508920e92e08f0676d4fd941f4dc42f56
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos8-4.6.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos8-4.6.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos8-4.6.1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos8-4.6.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:ad57661a06712397d78afde2cabeffa9ce25415e4cb4f77a95bd196a2f83e23a
+name: postgresoperator.v4.6.2
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.6.2
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:ad57661a06712397d78afde2cabeffa9ce25415e4cb4f77a95bd196a2f83e23a
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos8-4.6.2
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos8-4.6.2
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos8-4.6.2
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos8-4.6.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:cf9fefee93359ab745bddf20e09a24d07a6817fbdf2aafb44ce7a6f8e1279ffc
+name: postgresoperator.v4.7.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.7.0
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:cf9fefee93359ab745bddf20e09a24d07a6817fbdf2aafb44ce7a6f8e1279ffc
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos8-4.7.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos8-4.7.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos8-4.7.0
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos8-4.7.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:393b4ef83caa20794b4ccd01c37153270c7ae1a2a029b98fe2185241cc0d972e
+name: postgresoperator.v4.7.3
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.7.3
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:393b4ef83caa20794b4ccd01c37153270c7ae1a2a029b98fe2185241cc0d972e
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos8-4.7.3
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos8-4.7.3
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos8-4.7.3
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos8-4.7.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:67985ae21ba5d5d0030c866c4b262f2afa67235d70e7d6481c350094c7d1cc99
+name: postgresoperator.v4.7.5
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgcluster
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgpolicy
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgreplica
+    version: v1
+- type: olm.gvk
+  value:
+    group: crunchydata.com
+    kind: Pgtask
+    version: v1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 4.7.5
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgcluster",
+            "metadata": {
+              "annotations": {
+                "current-primary": "hippo"
+              },
+              "name": "hippo",
+              "labels": {
+                "crunchy-pgha-scope": "hippo",
+                "deployment-name": "hippo",
+                "name": "hippo",
+                "namespace": "pgo",
+                "pg-cluster": "hippo",
+                "pgo-version": "4.7.5"
+              }
+            },
+            "spec": {
+              "name": "hippo",
+              "namespace": "pgo",
+              "clustername": "hippo",
+              "ccpimage": "crunchy-postgres-ha",
+              "ccpimagetag": "centos8-13.6-4.7.5",
+              "BackrestStorage": {
+                "accessmode": "ReadWriteMany",
+                "matchLabels": "",
+                "name": "",
+                "size": "5Gi",
+                "storageclass": "",
+                "storagetype": "dynamic",
+                "supplementalgroups": ""
+              },
+              "PrimaryStorage": {
+                "accessmode": "ReadWriteMany",
+                "matchLabels": "",
+                "name": "hippo",
+                "size": "5Gi",
+                "storageclass": "",
+                "storagetype": "dynamic",
+                "supplementalgroups": ""
+              },
+              "ReplicaStorage": {
+                "accessmode": "ReadWriteMany",
+                "matchLabels": "",
+                "name": "",
+                "size": "5Gi",
+                "storageclass": "",
+                "storagetype": "dynamic",
+                "supplementalgroups": ""
+              },
+              "database": "hippo",
+              "exporterport": "9187",
+              "pgbadgerport": "10000",
+              "podAntiAffinity": {
+                "default": "preferred"
+              },
+              "port": "5432",
+              "user": "hippo",
+              "userlabels": {
+                "pgo-version": "4.7.5"
+              }
+            }
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgreplica",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {},
+            "status": {}
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgpolicy",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {},
+            "status": {}
+          },
+          {
+            "apiVersion": "crunchydata.com/v1",
+            "kind": "Pgtask",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Auto Pilot
+      categories: Database
+      certified: "false"
+      containerImage: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos8-4.7.5
+      createdAt: 2019-12-31 19:40Z
+      description: Enterprise open source PostgreSQL-as-a-Service
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/CrunchyData/postgres-operator
+      support: crunchydata.com
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Postgres primary cluster member
+        displayName: Postgres Primary Cluster Member
+        kind: Pgcluster
+        name: pgclusters.crunchydata.com
+        resources:
+        - kind: Pgcluster
+          name: ""
+          version: v1
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: Job
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The Crunchy PostgreSQL image to use. Possible values are "crunchy-postgres-ha"
+            and "crunchy-postgres-gis-ha"
+          displayName: PostgreSQL Image
+          path: ccpimage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The tag of the PostgreSQL image to use. Example is "centos8-13.6-4.7.5"
+          displayName: PostgreSQL Image Tag
+          path: ccpimagetag
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The name that is assigned to this specific PostgreSQL cluster
+          displayName: PostgreSQL Cluster name
+          path: clustername
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The name of the initial database to be created inside of the
+            PostgreSQL cluster, e.g. "hippo"
+          displayName: Initial PostgreSQL database name
+          path: database
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The port to use for the PostgreSQL metrics exporter used for
+            cluster monitoring, e.g. "9187"
+          displayName: PostgreSQL Monitor Port
+          path: exporterport
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: The name of the CRD entry. Should match the PostgreSQL Cluster
+            name
+          displayName: PostgreSQL CRD name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The port to use for the pgBadger PostgreSQL query analysis
+            service, e.g. "10000"
+          displayName: pgBadger Port
+          path: pgbadgerport
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: The port to use for the PostgreSQL cluster, e.g. "5432"
+          displayName: PostgreSQL Port
+          path: port
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: Attributes that help set the primary storage of a PostgreSQL
+            cluster
+          displayName: PostgreSQL Primary Storage
+          path: PrimaryStorage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+        - description: Contains the name of the PostgreSQL cluster to associate with
+            this storage. Should match the Cluster name
+          displayName: PostgreSQL Primary Storage Name
+          path: PrimaryStorage.name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: Contains the storage class used for the primary PostgreSQL
+            instance of the cluster
+          displayName: PostgreSQL Primary StorageClass
+          path: PrimaryStorage.storageclass
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+        - description: The access mode for the storage class, e.g. "ReadWriteOnce"
+          displayName: PostgreSQL Primary StorageClass Access Mode
+          path: PrimaryStorage.accessmode
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteOnce
+          - urn:alm:descriptor:com.tectonic.ui:select:ReadWriteMany
+        - description: The size of the PVC that will store the data for the primary
+            PostgreSQL instance, e.g. "1G"
+          displayName: PostgreSQL Primary Data PVC Size
+          path: PrimaryStorage.size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:PrimaryStorage
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: Deprecated
+          displayName: Deprecated
+          path: status
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:advanced
+        - description: A set of labels that help the PostgreSQL Operator manage a
+            PostgreSQL cluster
+          displayName: User defined labels
+          path: userlabels
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        statusDescriptors:
+        - description: Outputs a human readable message of the status of if the PostgreSQL
+            cluster initialization
+          displayName: Initialization Message
+          path: message
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: Outputs the state of if the PostgreSQL cluster was initialized
+          displayName: Initialization State
+          path: state
+          x-descriptors:
+          - urn:alm:descriptor:text
+        version: v1
+      - description: Represents a Postgres replica cluster member
+        displayName: Postgres Replica Cluster Member
+        kind: Pgreplica
+        name: pgreplicas.crunchydata.com
+        resources:
+        - kind: Pgreplica
+          name: ""
+          version: v1
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: Job
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The desired number of member Pods for the deployment.
+          displayName: Size
+          path: size
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        statusDescriptors:
+        - description: Message
+          displayName: Message
+          path: message
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: State
+          displayName: State
+          path: state
+          x-descriptors:
+          - urn:alm:descriptor:text
+        version: v1
+      - description: Represents a Postgres sql policy
+        displayName: Postgres SQL Policy
+        kind: Pgpolicy
+        name: pgpolicies.crunchydata.com
+        resources:
+        - kind: Pgpolicy
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgpolicy name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The pgpolicy sql.
+          displayName: SQL
+          path: sql
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        statusDescriptors:
+        - description: Message
+          displayName: Message
+          path: message
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: State
+          displayName: State
+          path: state
+          x-descriptors:
+          - urn:alm:descriptor:text
+        version: v1
+      - description: Represents a Postgres workflow task
+        displayName: Postgres workflow task
+        kind: Pgtask
+        name: pgtasks.crunchydata.com
+        resources:
+        - kind: Pgtask
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The pgtask name.
+          displayName: Name
+          path: name
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: The pgtask type.
+          displayName: TaskType
+          path: tasktype
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        statusDescriptors:
+        - description: Message
+          displayName: Message
+          path: message
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: State
+          displayName: State
+          path: state
+          x-descriptors:
+          - urn:alm:descriptor:text
+        version: v1
+    description: |-
+      Crunchy PostgreSQL for Kubernetes lets you run your own production-grade PostgreSQL-as-a-Service on Kubernetes!
+
+      Powered by the Crunchy [PostgreSQL Operator](https://github.com/CrunchyData/postgres-operator), Crunchy PostgreSQL
+      for Kubernetes automates and simplifies deploying and managing open source PostgreSQL clusters on Kubernetes by
+      providing the essential features you need to keep your PostgreSQL clusters up and running, including:
+
+      - **PostgreSQL Cluster Provisioning**: [Create, Scale, & Delete PostgreSQL clusters with ease][provisioning],
+        while fully customizing your Pods and PostgreSQL configuration!
+      - **High-Availability**: Safe, automated failover backed by a [distributed consensus based high-availability solution][high-availability].
+        Uses [Pod Anti-Affinity][k8s-anti-affinity] to help resiliency; you can configure how aggressive this can be!
+        Failed primaries automatically heal, allowing for faster recovery time. You can even create regularly scheduled
+        backups as well and set your backup retention policy
+      - **Disaster Recovery**: Backups and restores leverage the open source [pgBackRest][] utility
+        and [includes support for full, incremental, and differential backups as well as efficient delta restores][disaster-recovery].
+        Set how long you want your backups retained for. Works great with very large databases!
+      - **Monitoring**: Track the health of your PostgreSQL clusters using the open source [pgMonitor][] library.
+      - **Clone**: Create new clusters from your existing clusters or backups with a single [`pgo create cluster --restore-from`][pgo-create-cluster] command.
+      - **TLS**: Secure communication between your applications and data servers by [enabling TLS for your PostgreSQL servers][pgo-task-tls], including the ability to enforce that all of your connections to use TLS.
+      - **Connection Pooling**: Use [pgBouncer][] for connection pooling
+      - **Affinity and Tolerations**: Have your PostgreSQL clusters deployed to [Kubernetes Nodes][k8s-nodes] of your preference with [node affinity][high-availability-node-affinity], or designate which nodes Kubernetes can schedule PostgreSQL instances to with Kubernetes [tolerations][high-availability-tolerations].
+      - **Full Customizability**: Crunchy PostgreSQL for Kubernetes makes it easy to get your own PostgreSQL-as-a-Service up and running on
+        and lets make further enhancements to customize your deployments, including:
+          - Selecting different storage classes for your primary, replica, and backup storage
+          - Select your own container resources class for each PostgreSQL cluster deployment; differentiate between resources applied for primary and replica clusters!
+          - Use your own container image repository, including support `imagePullSecrets` and private repositories
+          - Bring your own trusted certificate authority (CA) for use with the Operator API server
+          - Override your PostgreSQL configuration for each cluster
+
+      and much more!
+
+      [disaster-recovery]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/disaster-recovery/
+      [high-availability]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/high-availability/
+      [high-availability-node-affinity]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/high-availability/#node-affinity
+      [high-availability-tolerations]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/high-availability/#tolerations
+      [pgo-create-cluster]: https://access.crunchydata.com/documentation/postgres-operator/latest/pgo-client/reference/pgo_create_cluster/
+      [pgo-task-tls]: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorial/tls/
+      [provisioning]: https://access.crunchydata.com/documentation/postgres-operator/latest/architecture/provisioning/
+
+      [k8s-anti-affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+      [k8s-nodes]: https://kubernetes.io/docs/concepts/architecture/nodes/
+
+      [pgBackRest]: https://www.pgbackrest.org
+      [pgBouncer]: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorial/pgbouncer/
+      [pgMonitor]: https://github.com/CrunchyData/pgmonitor
+
+
+      ## Pre-Installation
+
+      There are a few manual steps that the cluster administrator must perform prior to installing the PostgreSQL Operator.
+      At the very least, it must be provided with an initial configuration.
+
+      First, select a namespace in which to install the PostgreSQL Operator. PostgreSQL clusters will also be deployed here.
+      If it does not exist, create it now.
+
+      ```
+      export PGO_OPERATOR_NAMESPACE=pgo
+      kubectl create namespace "$PGO_OPERATOR_NAMESPACE"
+      ```
+
+      ### Secrets (optional)
+
+      If you plan to use AWS S3 to store backups, you can configure your environment to automatically provide your AWS S3 credentials to all newly created PostgreSQL clusters:
+
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" create secret generic pgo-backrest-repo-config \
+        --from-literal=aws-s3-key="<your-aws-s3-key>" \
+        --from-literal=aws-s3-key-secret="<your-aws-s3-key-secret>"
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" label secret pgo-backrest-repo-config vendor=crunchydata
+      ```
+
+      ### Certificates (optional)
+
+      The PostgreSQL Operator has an API that uses TLS to communicate securely with clients. If one is not provided, the API will automatically generated one for you.
+
+      If you have a certificate bundle validated by your organization, you can install it now.
+
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" create secret tls pgo.tls \
+        --cert=/path/to/server.crt \
+        --key=/path/to/server.key
+      ```
+
+      Once these resources are in place, the PostgreSQL Operator can be installed into the cluster.
+
+      ## Installation
+
+      You can now go ahead and install the PostgreSQL Operator from OperatorHub.
+
+      ## Post-Installation
+
+      ### Tutorial
+
+      For a guide on how to perform many of the daily functions of the PostgreSQL Operator, we recommend that you read the [Postgres Operator tutorial][pgo-tutorial]
+
+      [pgo-tutorial]: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorial/create-cluster/
+
+      However, the below guide will show you how to create a Postgres cluster from a custom resource or from using the `pgo-client`.
+
+      ### Create a PostgreSQL Cluster from a Custom Resource
+
+      The fundamental workflow for interfacing with a PostgreSQL Operator Custom
+      Resource Definition is for creating a PostgreSQL cluster. There are several
+      that a PostgreSQL cluster requires to be deployed, including:
+
+      - Secrets
+        - Information for setting up a pgBackRest repository
+        - PostgreSQL superuser bootstrap credentials
+        - PostgreSQL replication user bootstrap credentials
+        - PostgresQL standard user bootstrap credentials
+
+      Additionally, if you want to add some of the other sidecars, you may need to
+      create additional secrets.
+
+      The good news is that if you do not provide these objects, the PostgreSQL
+      Operator will create them for you to get your Postgres cluster up and running!
+
+      The following goes through how to create a PostgreSQL cluster called
+      `hippo` by creating a new custom resource.
+
+      ```
+      # this variable is the name of the cluster being created
+      export pgo_cluster_name=hippo
+      # this variable is the namespace the cluster is being deployed into
+      export cluster_namespace=pgo
+      # this variable is set to the location of your image repository
+      export cluster_image_prefix=registry.developers.crunchydata.com/crunchydata
+
+      cat <<-EOF > "${pgo_cluster_name}-pgcluster.yaml"
+      apiVersion: crunchydata.com/v1
+      kind: Pgcluster
+      metadata:
+        annotations:
+          current-primary: ${pgo_cluster_name}
+        labels:
+          crunchy-pgha-scope: ${pgo_cluster_name}
+          deployment-name: ${pgo_cluster_name}
+          name: ${pgo_cluster_name}
+          pg-cluster: ${pgo_cluster_name}
+          pgo-version: 4.7.5
+          pgouser: admin
+        name: ${pgo_cluster_name}
+        namespace: ${cluster_namespace}
+      spec:
+        BackrestStorage:
+          accessmode: ReadWriteMany
+          matchLabels: ""
+          name: ""
+          size: 1G
+          storageclass: ""
+          storagetype: create
+          supplementalgroups: ""
+        PrimaryStorage:
+          accessmode: ReadWriteMany
+          matchLabels: ""
+          name: ${pgo_cluster_name}
+          size: 1G
+          storageclass: ""
+          storagetype: create
+          supplementalgroups: ""
+        ReplicaStorage:
+          accessmode: ReadWriteMany
+          matchLabels: ""
+          name: ""
+          size: 1G
+          storageclass: ""
+          storagetype: create
+          supplementalgroups: ""
+        annotations: {}
+        ccpimage: crunchy-postgres-ha
+        ccpimageprefix: ${cluster_image_prefix}
+        ccpimagetag: centos8-13.6-4.7.5
+        clustername: ${pgo_cluster_name}
+        database: ${pgo_cluster_name}
+        exporterport: "9187"
+        limits: {}
+        name: ${pgo_cluster_name}
+        pgDataSource:
+          restoreFrom: ""
+          restoreOpts: ""
+        pgbadgerport: "10000"
+        pgoimageprefix: ${cluster_image_prefix}
+        podAntiAffinity:
+          default: preferred
+          pgBackRest: preferred
+          pgBouncer: preferred
+        port: "5432"
+        tolerations: []
+        user: hippo
+        userlabels:
+          pgo-version: 4.7.5
+      EOF
+
+      kubectl apply -f "${pgo_cluster_name}-pgcluster.yaml"
+      ```
+
+      And that's all! The PostgreSQL Operator will go ahead and create the cluster.
+
+      If you have the PostgreSQL client `psql` installed on your host machine, you can
+      test connection to the PostgreSQL cluster using the following command:
+
+      ```
+      # namespace that the cluster is running in
+      export PGO_OPERATOR_NAMESPACE=pgo
+      # name of the cluster
+      export pgo_cluster_name=hippo
+      # name of the user whose password we want to get
+      export pgo_cluster_username=hippo
+
+      # get the password of the user and set it to a recognized psql environmental variable
+      export PGPASSWORD=$(kubectl -n "${PGO_OPERATOR_NAMESPACE}" get secrets \
+        "${pgo_cluster_name}-${pgo_cluster_username}-secret" -o "jsonpath={.data['password']}" | base64 -d)
+
+      # set up a port-forward either in a new terminal, or in the same terminal in the background:
+      kubectl -n pgo port-forward svc/hippo 5432:5432 &
+
+      psql -h localhost -U "${pgo_cluster_username}" "${pgo_cluster_name}"
+      ```
+
+      ### Create a PostgreSQL Cluster the `pgo` Client
+
+      Once the PostgreSQL Operator is installed in your Kubernetes cluster, you will need to do a few things
+      to use the [PostgreSQL Operator Client][pgo-client].
+
+      [pgo-client]: https://access.crunchydata.com/documentation/postgres-operator/latest/pgo-client/
+
+      Install the first set of client credentials and download the `pgo` binary and client certificates.
+
+      ```
+      curl https://raw.githubusercontent.com/CrunchyData/postgres-operator/v4.7.5/deploy/install-bootstrap-creds.sh > install-bootstrap-creds.sh
+      curl https://raw.githubusercontent.com/CrunchyData/postgres-operator/v4.7.5/installers/kubectl/client-setup.sh > client-setup.sh
+
+      chmod +x install-bootstrap-creds.sh client-setup.sh
+
+      PGO_CMD=kubectl ./install-bootstrap-creds.sh
+      PGO_CMD=kubectl ./client-setup.sh
+      ```
+
+      The client needs to be able to reach the PostgreSQL Operator API from outside the Kubernetes cluster.
+      Create an external service or forward a port locally.
+
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" expose deployment postgres-operator --type=LoadBalancer
+
+      export PGO_APISERVER_URL="https://$(
+        kubectl -n "$PGO_OPERATOR_NAMESPACE" get service postgres-operator \
+          -o jsonpath="{.status.loadBalancer.ingress[*]['ip','hostname']}"
+      ):8443"
+      ```
+      _or_
+      ```
+      kubectl -n "$PGO_OPERATOR_NAMESPACE" port-forward deployment/postgres-operator 8443
+
+      export PGO_APISERVER_URL="https://127.0.0.1:8443"
+      ```
+
+      Verify connectivity using the `pgo` command.
+
+      ```
+      pgo version
+      # pgo client version 4.7.5
+      # pgo-apiserver version 4.7.5
+      ```
+
+      You can then create a cluster with the `pgo` client as simply as this:
+
+      ```
+      pgo create cluster -n pgo hippo
+      ```
+
+      The cluster may take a few moments to provision. You can verify that the cluster is up and running by using the `pgo test` command:
+
+      ```
+      pgo test cluster -n pgo hippo
+      ```
+
+      If you have the PostgreSQL client `psql` installed on your host machine, you can
+      test connection to the PostgreSQL cluster using the following command:
+
+      ```
+      # namespace that the cluster is running in
+      export PGO_OPERATOR_NAMESPACE=pgo
+      # name of the cluster
+      export pgo_cluster_name=hippo
+      # name of the user whose password we want to get
+      export pgo_cluster_username=hippo
+
+      # get the password of the user and set it to a recognized psql environmental variable
+      export PGPASSWORD=$(kubectl -n "${PGO_OPERATOR_NAMESPACE}" get secrets \
+        "${pgo_cluster_name}-${pgo_cluster_username}-secret" -o "jsonpath={.data['password']}" | base64 -d)
+
+      # set up a port-forward either in a new terminal, or in the same terminal in the background:
+      kubectl -n pgo port-forward svc/hippo 5432:5432 &
+
+      psql -h localhost -U "${pgo_cluster_username}" "${pgo_cluster_name}"
+      ```
+    displayName: Crunchy PostgreSQL for Kubernetes
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - postgres
+    - postgresql
+    - database
+    - sql
+    - operator
+    - crunchy data
+    links:
+    - name: Crunchy Data
+      url: https://www.crunchydata.com/
+    - name: Documentation
+      url: https://access.crunchydata.com/documentation/postgres-operator/
+    maintainers:
+    - email: info@crunchydata.com
+      name: Crunchy Data
+    maturity: stable
+    minKubeVersion: 1.11.0
+    provider:
+      name: Crunchy Data
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:67985ae21ba5d5d0030c866c4b262f2afa67235d70e7d6481c350094c7d1cc99
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-apiserver:centos8-4.7.5
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-event:centos8-4.7.5
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/pgo-scheduler:centos8-4.7.5
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:centos8-4.7.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:91ed79f0fb6aebeb80aaf72f5b0b0850e9b13c4e6d0b8986f01a4b333f37db66
+name: postgresoperator.v5.0.2
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.0.2
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:91ed79f0fb6aebeb80aaf72f5b0b0850e9b13c4e6d0b8986f01a4b333f37db66
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.0.2-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:ee64db41dbbabc64edab5c7a6e09a8d199430a5377c213d59d4b346a6f95fd01
+name: postgresoperator.v5.0.3
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.0.3
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:ee64db41dbbabc64edab5c7a6e09a8d199430a5377c213d59d4b346a6f95fd01
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.0.3-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:ab157de71bbeb5178531b606394e709b4a2d7ed8fa627ecc7bcd9d5e4e4ed249
+name: postgresoperator.v5.0.4
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.0.4
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:ab157de71bbeb5178531b606394e709b4a2d7ed8fa627ecc7bcd9d5e4e4ed249
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.0.4-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:bb28e9f5e076357f22f062eeac7c8fc48d9c7004fcd3e93a8f3c827261ee78d1
+name: postgresoperator.v5.0.5
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.0.5
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:bb28e9f5e076357f22f062eeac7c8fc48d9c7004fcd3e93a8f3c827261ee78d1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.0.5-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:07998bff44deea4e80c3d021a6ba3e80ace4cfe91a91d129130058151d6bf430
+name: postgresoperator.v5.1.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.1.0
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:07998bff44deea4e80c3d021a6ba3e80ace4cfe91a91d129130058151d6bf430
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.1.0-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:d962331dc6588d69ddfed470d84a10bca8faef8e33adbae427b23933ab255e90
+name: postgresoperator.v5.1.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.1.1
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:d962331dc6588d69ddfed470d84a10bca8faef8e33adbae427b23933ab255e90
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.1.1-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:9a2b04e5f9904b151fc8268bc096df51d216a1b3ad903717feb47ddb5334b0e1
+name: postgresoperator.v5.1.2
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.1.2
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:9a2b04e5f9904b151fc8268bc096df51d216a1b3ad903717feb47ddb5334b0e1
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.1.2-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:41fb8b347acf368e3b997e321a56afeb3d6d18ee6c394c9beec750659fd9754f
+name: postgresoperator.v5.1.3
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.1.3
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:41fb8b347acf368e3b997e321a56afeb3d6d18ee6c394c9beec750659fd9754f
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.1.3-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:683154b97c55257cff8523d9cbb5d3f291a1edaeab7224f2409b3dd4cdbed062
+name: postgresoperator.v5.2.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.2.0
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:683154b97c55257cff8523d9cbb5d3f291a1edaeab7224f2409b3dd4cdbed062
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.2.0-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:05ae2ba0f018567548cba89b7f018b310e1df65cbc8fb36483af04790c5dbb58
+name: postgresoperator.v5.3.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.3.0
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:05ae2ba0f018567548cba89b7f018b310e1df65cbc8fb36483af04790c5dbb58
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.3.0-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:02ff4ebe2a31af48d8ffd67e15155f080d6ce907bb302690923db066de5fcbf6
+name: postgresoperator.v5.4.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGUpgrade
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.4.1
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:02ff4ebe2a31af48d8ffd67e15155f080d6ce907bb302690923db066de5fcbf6
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.4.1-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:6a81742e05624345eb288e2d885ad05f64adbcd5feda9d76b65bf074e428a81f
+name: postgresoperator.v5.4.2
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGUpgrade
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.4.2
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:6a81742e05624345eb288e2d885ad05f64adbcd5feda9d76b65bf074e428a81f
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.4.2-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:aa47314f2568d80edfc69e6e4f7477fdab6ccbea1a0e8b8dacfb7370ca02dc96
+name: postgresoperator.v5.4.3
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGUpgrade
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.4.3
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:aa47314f2568d80edfc69e6e4f7477fdab6ccbea1a0e8b8dacfb7370ca02dc96
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.4.3-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:931c8747416e740731d53e7dfe1df04ad23bd3ee32f983ebca55ff14b2662dfd
+name: postgresoperator.v5.5.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGAdmin
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGUpgrade
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.5.0
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:931c8747416e740731d53e7dfe1df04ad23bd3ee32f983ebca55ff14b2662dfd
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.5.0-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:80d876b2e768f8f1060238a062539ad930bac1548edf8f4b513aa0fc444e5a46
+name: postgresoperator.v5.5.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGAdmin
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGUpgrade
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.5.1
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:80d876b2e768f8f1060238a062539ad930bac1548edf8f4b513aa0fc444e5a46
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.5.1-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:336e97b74024207cf566c442ff1c947fee160e4759208a5cd38ddfe9483ae317
+name: postgresoperator.v5.5.2
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGAdmin
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGUpgrade
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.5.2
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:336e97b74024207cf566c442ff1c947fee160e4759208a5cd38ddfe9483ae317
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.5.2-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:01cbf255a9e0f76769c0fe2354045f688ab3b69d69f0332b6ae8e92940cde6a2
+name: postgresoperator.v5.6.0
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: CrunchyBridgeCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGAdmin
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGUpgrade
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.6.0
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:01cbf255a9e0f76769c0fe2354045f688ab3b69d69f0332b6ae8e92940cde6a2
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.6.0-0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/postgresql@sha256:18de66e9685303b3e828380c50d7c0fdd232d54b8f08b2a7d4a9a0ea40ab9f06
+name: postgresoperator.v5.6.1
+package: postgresql
+properties:
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: CrunchyBridgeCluster
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGAdmin
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PGUpgrade
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: postgres-operator.crunchydata.com
+    kind: PostgresCluster
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: postgresql
+    version: 5.6.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "postgres-operator.crunchydata.com/v1beta1",
+            "kind": "CrunchyBridgeCluster",
+            "metadata": {
+              "name": "example-crunchybridgecluster"
+            },
+            "spec": {
+              "clusterName": "example-bridge-cluster",
+              "isHa": false,
+              "majorVersion": 16,
+              "plan": "standard-4",
+              "provider": "aws",
+              "region": "us-west-2",
+              "secret": "crunchy-bridge-api-key",
+              "storage": "10Gi"
+            }
+          },
+          {
+            "apiVersion": "postgres-operator.crunchydata.com/v1beta1",
+            "kind": "PGAdmin",
+            "metadata": {
+              "name": "example-pgadmin",
+              "namespace": "openshift-operators"
+            },
+            "spec": {
+              "dataVolumeClaimSpec": {
+                "accessModes": [
+                  "ReadWriteOnce"
+                ],
+                "resources": {
+                  "requests": {
+                    "storage": "1Gi"
+                  }
+                }
+              },
+              "serverGroups": [
+                {
+                  "name": "Crunchy Postgres for Kubernetes",
+                  "postgresClusterSelector": {}
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "postgres-operator.crunchydata.com/v1beta1",
+            "kind": "PGUpgrade",
+            "metadata": {
+              "name": "example-upgrade"
+            },
+            "spec": {
+              "fromPostgresVersion": 15,
+              "postgresClusterName": "example",
+              "toPostgresVersion": 16
+            }
+          },
+          {
+            "apiVersion": "postgres-operator.crunchydata.com/v1beta1",
+            "kind": "PostgresCluster",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {
+              "backups": {
+                "pgbackrest": {
+                  "repos": [
+                    {
+                      "name": "repo1",
+                      "volume": {
+                        "volumeClaimSpec": {
+                          "accessModes": [
+                            "ReadWriteOnce"
+                          ],
+                          "resources": {
+                            "requests": {
+                              "storage": "1Gi"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "instances": [
+                {
+                  "dataVolumeClaimSpec": {
+                    "accessModes": [
+                      "ReadWriteOnce"
+                    ],
+                    "resources": {
+                      "requests": {
+                        "storage": "1Gi"
+                      }
+                    }
+                  },
+                  "replicas": 1
+                }
+              ],
+              "postgresVersion": 15
+            }
+          }
+        ]
+      capabilities: Auto Pilot
+      categories: Database
+      containerImage: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.6.1-0
+      createdAt: 2019-12-31 19:40Z
+      description: Production Postgres Made Easy
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "false"
+      features.operators.openshift.io/fips-compliant: "false"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      olm.properties: '[]'
+      repository: https://github.com/CrunchyData/postgres-operator
+      support: crunchydata.com
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: CrunchyBridgeCluster is the Schema for the crunchybridgeclusters
+          API
+        displayName: Crunchy Bridge Cluster
+        kind: CrunchyBridgeCluster
+        name: crunchybridgeclusters.postgres-operator.crunchydata.com
+        resources:
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: CronJob
+          name: ""
+          version: v1beta1
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: Job
+          name: ""
+          version: v1
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: StatefulSet
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The ID of the cluster's major Postgres version. Currently Bridge
+            offers 13-16
+          displayName: Postgres Version
+          path: majorVersion
+        statusDescriptors:
+        - description: conditions represent the observations of postgres cluster's
+            current state.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        version: v1beta1
+      - description: PGAdmin is the Schema for the PGAdmin API
+        displayName: PGAdmin
+        kind: PGAdmin
+        name: pgadmins.postgres-operator.crunchydata.com
+        statusDescriptors:
+        - description: 'conditions represent the observations of pgAdmin''s current
+            state. Known .status.conditions.type is: "PersistentVolumeResizing"'
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        version: v1beta1
+      - description: PGUpgrade is the Schema for the pgupgrades API
+        displayName: PGUpgrade
+        kind: PGUpgrade
+        name: pgupgrades.postgres-operator.crunchydata.com
+        version: v1beta1
+      - description: PostgresCluster is the Schema for the postgresclusters API
+        displayName: Postgres Cluster
+        kind: PostgresCluster
+        name: postgresclusters.postgres-operator.crunchydata.com
+        resources:
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: CronJob
+          name: ""
+          version: v1beta1
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: Job
+          name: ""
+          version: v1
+        - kind: PersistentVolumeClaim
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: StatefulSet
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: The image name to use for PostgreSQL containers. When omitted,
+            the value comes from an operator environment variable. For standard PostgreSQL
+            images, the format is RELATED_IMAGE_POSTGRES_{postgresVersion}, e.g. RELATED_IMAGE_POSTGRES_13.
+            For PostGIS enabled PostgreSQL images, the format is RELATED_IMAGE_POSTGRES_{postgresVersion}_GIS_{postGISVersion},
+            e.g. RELATED_IMAGE_POSTGRES_13_GIS_3.1.
+          displayName: Image
+          path: image
+        - description: The major version of PostgreSQL installed in the PostgreSQL
+            image
+          displayName: Postgres Version
+          path: postgresVersion
+        - description: Specifies one or more sets of PostgreSQL pods that replicate
+            data for this cluster.
+          displayName: Instance Sets
+          path: instances
+        statusDescriptors:
+        - description: 'conditions represent the observations of postgrescluster''s
+            current state. Known .status.conditions.type are: "PersistentVolumeResizing",
+            "Progressing", "ProxyAvailable"'
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        version: v1beta1
+    description: |-
+      [Crunchy Postgres for Kubernetes](https://www.crunchydata.com/products/crunchy-postgresql-for-kubernetes), is the leading Kubernetes native
+      Postgres solution. Built on PGO, the Postgres Operator from Crunchy Data, Crunchy Postgres for Kubernetes gives you a declarative Postgres
+      solution that automatically manages your PostgreSQL clusters.
+
+      Designed for your GitOps workflows, it is [easy to get started](https://access.crunchydata.com/documentation/postgres-operator/latest/quickstart)
+      with Crunchy Postgres for Kubernetes. Within a few moments, you can have a production grade Postgres cluster complete with high availability, disaster
+      recovery, and monitoring, all over secure TLS communications. Even better, Crunchy Postgres for Kubernetes lets you easily customize your Postgres
+      cluster to tailor it to your workload!
+
+      With conveniences like cloning Postgres clusters to using rolling updates to roll out disruptive changes with minimal downtime, Crunchy Postgres
+      for Kubernetes is ready to support your Postgres data at every stage of your release pipeline. Built for resiliency and uptime, Crunchy Postgres
+      for Kubernetes will keep your Postgres cluster in a desired state so you do not need to worry about it.
+
+      Crunchy Postgres for Kubernetes is developed with many years of production experience in automating Postgres management on Kubernetes, providing
+      a seamless cloud native Postgres solution to keep your data always available.
+
+      Crunchy Postgres for Kubernetes is made available to users without an active Crunchy Data subscription in connection with Crunchy Data's
+      [Developer Program](https://www.crunchydata.com/developers/terms-of-use).
+      For more information, please contact us at [info@crunchydata.com](mailto:info@crunchydata.com).
+
+      - **PostgreSQL Cluster Provisioning**: [Create, Scale, & Delete PostgreSQL clusters with ease][provisioning],
+        while fully customizing your Pods and PostgreSQL configuration!
+      - **High-Availability**: Safe, automated failover backed by a [distributed consensus based high-availability solution][high-availability].
+        Uses [Pod Anti-Affinity][k8s-anti-affinity] to help resiliency; you can configure how aggressive this can be!
+        Failed primaries automatically heal, allowing for faster recovery time. You can even create regularly scheduled
+        backups as well and set your backup retention policy
+      - **Disaster Recovery**: [Backups][backups] and [restores][disaster-recovery] leverage the open source [pgBackRest][] utility and
+        [includes support for full, incremental, and differential backups as well as efficient delta restores][backups].
+        Set how long you want your backups retained for. Works great with very large databases!
+      - **Monitoring**: [Track the health of your PostgreSQL clusters][monitoring] using the open source [pgMonitor][] library.
+      - **Clone**: [Create new clusters from your existing clusters or backups][clone] with efficient data cloning.
+      - **TLS**: All connections are over [TLS][tls]. You can also [bring your own TLS infrastructure][tls] if you do not want to use the provided defaults.
+      - **Connection Pooling**: Advanced [connection pooling][pool] support using [pgBouncer][].
+      - **Affinity and Tolerations**: Have your PostgreSQL clusters deployed to [Kubernetes Nodes][k8s-nodes] of your preference.
+        Set your [pod anti-affinity][k8s-anti-affinity], node affinity, Pod tolerations and more rules to customize your deployment topology!
+      - **PostgreSQL Major Version Upgrades**: Perform a [PostgreSQL major version upgrade][major-version-upgrade] declaratively.
+      - **Database Administration**: Easily deploy [pgAdmin4][pgadmin] to administer your PostgresClusters' databases.
+        The automatic discovery of PostgresClusters ensures that you are able to seamlessly access any databases within your environment from the pgAdmin4 GUI.
+      - **Full Customizability**: Crunchy PostgreSQL for Kubernetes makes it easy to get your own PostgreSQL-as-a-Service up and running
+        and fully customize your deployments, including:
+          - Choose the resources for your Postgres cluster: [container resources and storage size][resize-cluster]. [Resize at any time][resize-cluster] with minimal disruption.
+          - Use your own container image repository, including support `imagePullSecrets` and private repositories
+          - [Customize your PostgreSQL configuration][customize-cluster]
+
+      and much more!
+
+      [backups]: https://access.crunchydata.com/documentation/postgres-operator/v5/tutorials/backups-disaster-recovery
+      [clone]: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorials/backups-disaster-recovery/disaster-recovery
+      [customize-cluster]: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorials/day-two/customize-cluster
+      [disaster-recovery]: https://access.crunchydata.com/documentation/postgres-operator/v5/tutorials/backups-disaster-recovery/disaster-recovery
+      [high-availability]: https://access.crunchydata.com/documentation/postgres-operator/v5/tutorials/day-two/high-availability
+      [major-version-upgrade]: https://access.crunchydata.com/documentation/postgres-operator/v5/guides/major-postgres-version-upgrade/
+      [monitoring]: https://access.crunchydata.com/documentation/postgres-operator/v5/tutorials/day-two/monitoring
+      [pool]: https://access.crunchydata.com/documentation/postgres-operator/v5/tutorials/basic-setup/connection-pooling
+      [provisioning]: https://access.crunchydata.com/documentation/postgres-operator/v5/tutorials/basic-setup/create-cluster
+      [resize-cluster]: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorials/cluster-management/resize-cluster
+      [tls]: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorials/day-two/customize-cluster#customize-tls
+
+      [k8s-anti-affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+      [k8s-nodes]: https://kubernetes.io/docs/concepts/architecture/nodes/
+
+      [pgAdmin]: https://www.pgadmin.org/
+      [pgBackRest]: https://www.pgbackrest.org
+      [pgBouncer]: https://access.crunchydata.com/documentation/postgres-operator/v5/tutorials/basic-setup/connection-pooling
+      [pgMonitor]: https://github.com/CrunchyData/pgmonitor
+
+      ## Post-Installation
+
+      ### Tutorial
+
+      Want to [learn more about the PostgreSQL Operator][tutorial]? Browse through the [tutorial][] to learn more about what you can do,
+      [join the Discord server][discord] for community support, or check out the [PGO GitHub repo][ghrepo] to learn more
+      about the open source Postgres Operator project that powers Crunchy Postgres for Kubernetes.
+
+      [tutorial]: https://access.crunchydata.com/documentation/postgres-operator/v5/tutorials
+      [discord]: https://discord.gg/a7vWKG8Ec9
+      [ghrepo]: https://github.com/CrunchyData/postgres-operator
+    displayName: Crunchy Postgres for Kubernetes
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - postgres
+    - postgresql
+    - database
+    - sql
+    - operator
+    - crunchy data
+    labels:
+      app.kubernetes.io/version: 5.6.1
+    links:
+    - name: Crunchy Data
+      url: https://www.crunchydata.com/
+    - name: Documentation
+      url: https://access.crunchydata.com/documentation/postgres-operator/v5/
+    maintainers:
+    - email: info@crunchydata.com
+      name: Crunchy Data
+    maturity: stable
+    minKubeVersion: 1.25.0
+    provider:
+      name: Crunchy Data
+      url: https://www.crunchydata.com/
+relatedImages:
+- image: quay.io/operatorhubio/postgresql@sha256:18de66e9685303b3e828380c50d7c0fdd232d54b8f08b2a7d4a9a0ea40ab9f06
+  name: ""
+- image: registry.developers.crunchydata.com/crunchydata/postgres-operator:ubi8-5.6.1-0
+  name: ""
+schema: olm.bundle

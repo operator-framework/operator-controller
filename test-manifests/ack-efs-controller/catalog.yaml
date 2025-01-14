@@ -1,0 +1,343 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-efs-controller
+schema: olm.package
+---
+entries:
+- name: ack-efs-controller.v0.0.4
+- name: ack-efs-controller.v0.0.5
+  replaces: ack-efs-controller.v0.0.4
+- name: ack-efs-controller.v0.0.6
+  replaces: ack-efs-controller.v0.0.5
+- name: ack-efs-controller.v0.0.7
+  replaces: ack-efs-controller.v0.0.6
+- name: ack-efs-controller.v0.0.8
+  replaces: ack-efs-controller.v0.0.7
+- name: ack-efs-controller.v0.0.9
+  replaces: ack-efs-controller.v0.0.8
+- name: ack-efs-controller.v1.0.0
+  replaces: ack-efs-controller.v0.0.9
+name: alpha
+package: ack-efs-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-efs-controller@sha256:e86efb151cdb433dcbd84846efe06e02015b60a505dc8075df1ea0fc5b67d124
+name: ack-efs-controller.v0.0.4
+package: ack-efs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: AccessPoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: FileSystem
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: MountTarget
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-efs-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/efs-controller:0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-efs-controller@sha256:e86efb151cdb433dcbd84846efe06e02015b60a505dc8075df1ea0fc5b67d124
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-efs-controller@sha256:4e7ce4bbc6d004ee8c88c9fd3ef9fb11ede317cbc50b94fc6b60dee3adce8413
+name: ack-efs-controller.v0.0.5
+package: ack-efs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: AccessPoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: FileSystem
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: MountTarget
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-efs-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/efs-controller:0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-efs-controller@sha256:4e7ce4bbc6d004ee8c88c9fd3ef9fb11ede317cbc50b94fc6b60dee3adce8413
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-efs-controller@sha256:d82db9e997e216535025cb636247d4d235d3a004bb6ba1a75c5b78f42ba75333
+name: ack-efs-controller.v0.0.6
+package: ack-efs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: AccessPoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: FileSystem
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: MountTarget
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-efs-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/efs-controller:0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-efs-controller@sha256:d82db9e997e216535025cb636247d4d235d3a004bb6ba1a75c5b78f42ba75333
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-efs-controller@sha256:316999d39c5a38ba22f480398e6324f2c2a1c8adcab8684fe9cb0bd6cc2a05b3
+name: ack-efs-controller.v0.0.7
+package: ack-efs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: AccessPoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: FileSystem
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: MountTarget
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-efs-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/efs-controller:0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-efs-controller@sha256:316999d39c5a38ba22f480398e6324f2c2a1c8adcab8684fe9cb0bd6cc2a05b3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-efs-controller@sha256:09d8d6d11ac0581a79e542376a06122afd4fd208300f213baf6e6a2fe5780e35
+name: ack-efs-controller.v0.0.8
+package: ack-efs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: AccessPoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: FileSystem
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: MountTarget
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-efs-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/efs-controller:0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-efs-controller@sha256:09d8d6d11ac0581a79e542376a06122afd4fd208300f213baf6e6a2fe5780e35
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-efs-controller@sha256:ee3d13776cbc749146e62cdb2a4bcf941788b6167874224b55a946551c3e1a98
+name: ack-efs-controller.v0.0.9
+package: ack-efs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: AccessPoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: FileSystem
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: MountTarget
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-efs-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/efs-controller:0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-efs-controller@sha256:ee3d13776cbc749146e62cdb2a4bcf941788b6167874224b55a946551c3e1a98
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-efs-controller@sha256:32748f1e6aedf7160b0bbaeb3e0eac9e1d32881cecb4545f3b0c85f8458d2e08
+name: ack-efs-controller.v1.0.0
+package: ack-efs-controller
+properties:
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: AccessPoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: FileSystem
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: efs.services.k8s.aws
+    kind: MountTarget
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-efs-controller
+    version: 1.0.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "efs.services.k8s.aws/v1alpha1",
+            "kind": "AccessPoint",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "efs.services.k8s.aws/v1alpha1",
+            "kind": "FileSystem",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "efs.services.k8s.aws/v1alpha1",
+            "kind": "MountTarget",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/efs-controller:1.0.0
+      createdAt: "2024-09-03T21:04:36Z"
+      description: AWS EFS controller is a service controller for managing EFS resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: AccessPoint represents the state of an AWS efs AccessPoint resource.
+        displayName: AccessPoint
+        kind: AccessPoint
+        name: accesspoints.efs.services.k8s.aws
+        version: v1alpha1
+      - description: FileSystem represents the state of an AWS efs FileSystem resource.
+        displayName: FileSystem
+        kind: FileSystem
+        name: filesystems.efs.services.k8s.aws
+        version: v1alpha1
+      - description: MountTarget represents the state of an AWS efs MountTarget resource.
+        displayName: MountTarget
+        kind: MountTarget
+        name: mounttargets.efs.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon EFS resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon Elastic File System (Amazon EFS)**
+
+      Amazon Elastic File System (Amazon EFS) provides serverless, fully elastic file storage so that you can share file data without provisioning or managing storage capacity and performance. Amazon EFS is built to scale on demand to petabytes without disrupting applications, growing and shrinking automatically as you add and remove files. Because Amazon EFS has a simple web services interface, you can create and configure file systems quickly and easily. The service manages all the file storage infrastructure for you, meaning that you can avoid the complexity of deploying, patching, and maintaining complex file system configurations.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project. This project is currently in **developer preview**.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon Elastic File System (Amazon
+      EFS)
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - efs
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon EFS Developer Resources
+      url: https://aws.amazon.com/efs/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: efs maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/efs-controller:1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-efs-controller@sha256:32748f1e6aedf7160b0bbaeb3e0eac9e1d32881cecb4545f3b0c85f8458d2e08
+  name: ""
+schema: olm.bundle

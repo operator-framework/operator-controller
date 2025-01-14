@@ -1,0 +1,3571 @@
+{
+  "schema": "olm.package",
+  "name": "mta-operator",
+  "defaultChannel": "stable-v7.1",
+  "icon": {
+    "base64data": "PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=",
+    "mediatype": "image/svg+xml"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-v6.0",
+  "package": "mta-operator",
+  "entries": [
+    {
+      "name": "mta-operator.v6.0.0",
+      "skipRange": ">=0.0.0 <6.0.0"
+    },
+    {
+      "name": "mta-operator.v6.0.1",
+      "replaces": "mta-operator.v6.0.0",
+      "skipRange": ">=0.0.0 <6.0.1"
+    },
+    {
+      "name": "mta-operator.v6.0.2",
+      "replaces": "mta-operator.v6.0.1",
+      "skipRange": ">=0.0.0 <6.0.2"
+    },
+    {
+      "name": "mta-operator.v6.0.3",
+      "replaces": "mta-operator.v6.0.2",
+      "skipRange": ">=0.0.0 <6.0.3"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-v6.1",
+  "package": "mta-operator",
+  "entries": [
+    {
+      "name": "mta-operator.v6.1.0",
+      "skipRange": ">=6.0.0 <6.1.0"
+    },
+    {
+      "name": "mta-operator.v6.1.1",
+      "replaces": "mta-operator.v6.1.0",
+      "skipRange": ">=6.0.0 <6.1.1"
+    },
+    {
+      "name": "mta-operator.v6.1.2",
+      "replaces": "mta-operator.v6.1.1",
+      "skipRange": ">=6.0.0 <6.1.2"
+    },
+    {
+      "name": "mta-operator.v6.1.3",
+      "replaces": "mta-operator.v6.1.2",
+      "skipRange": ">=6.0.0 <6.1.3"
+    },
+    {
+      "name": "mta-operator.v6.1.4",
+      "replaces": "mta-operator.v6.1.3",
+      "skipRange": ">=6.0.0 <6.1.4"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-v6.2",
+  "package": "mta-operator",
+  "entries": [
+    {
+      "name": "mta-operator.v6.2.0",
+      "skipRange": ">=6.0.0 <6.2.0"
+    },
+    {
+      "name": "mta-operator.v6.2.1",
+      "replaces": "mta-operator.v6.2.0",
+      "skipRange": ">=6.0.0 <6.2.1"
+    },
+    {
+      "name": "mta-operator.v6.2.2",
+      "replaces": "mta-operator.v6.2.1",
+      "skipRange": ">=6.0.0 <6.2.2"
+    },
+    {
+      "name": "mta-operator.v6.2.3",
+      "replaces": "mta-operator.v6.2.2",
+      "skipRange": ">=6.0.0 <6.2.3"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-v7.0",
+  "package": "mta-operator",
+  "entries": [
+    {
+      "name": "mta-operator.v7.0.0",
+      "skipRange": ">=6.2.0 <7.0.0"
+    },
+    {
+      "name": "mta-operator.v7.0.1",
+      "replaces": "mta-operator.v7.0.0",
+      "skipRange": ">=6.2.0 <7.0.1"
+    },
+    {
+      "name": "mta-operator.v7.0.2",
+      "replaces": "mta-operator.v7.0.1",
+      "skipRange": ">=6.2.0 <7.0.2"
+    },
+    {
+      "name": "mta-operator.v7.0.3",
+      "replaces": "mta-operator.v7.0.2",
+      "skipRange": ">=6.2.0 <7.0.3"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-v7.1",
+  "package": "mta-operator",
+  "entries": [
+    {
+      "name": "mta-operator.v7.1.0",
+      "skipRange": ">=6.2.0 <7.1.0"
+    },
+    {
+      "name": "mta-operator.v7.1.1",
+      "replaces": "mta-operator.v7.1.0",
+      "skipRange": ">=6.2.0 <7.1.1"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.0.0",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:2ae78fa11de0e6c6a52f46d30f9cb8ba4edf2e497375f0e4f758251f99b20118",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.0.0"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <8.0.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6c1e4d7e6889727e527aa55154e4a656898d7eae10cec03f1c8b6108e0f25058",
+          "createdAt": "2022-11-07T02:18:54Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "olm.skipRange": ">=0.0.0 <6.0.0",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nMigration Toolkit for Applications requires a storage class that supports RWX volumes, please refer to the [documentation](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications) for system requirements details.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_admin",
+      "image": "registry.redhat.io/mta/mta-admin-addon-rhel8@sha256:b1b865ef7d48cfbf1a1cd34ec42a0bdac41e195862282b3a9ad4977c10558b6a"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:4a3e2793469155487209451e36e17ed7887aa0087abf2df3561c2562e9fec399"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:2ae78fa11de0e6c6a52f46d30f9cb8ba4edf2e497375f0e4f758251f99b20118"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:2341e0ac15757f4c290f02b229fe45602c38577b3080359967ac14bdc7ead015"
+    },
+    {
+      "name": "mta-rhel8-operator-6c1e4d7e6889727e527aa55154e4a656898d7eae10cec03f1c8b6108e0f25058-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6c1e4d7e6889727e527aa55154e4a656898d7eae10cec03f1c8b6108e0f25058"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6c1e4d7e6889727e527aa55154e4a656898d7eae10cec03f1c8b6108e0f25058"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:aa82f8d8eaa3c136628a800a6b18aeb29cfdb15bebfcad2369d2632731872057"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:deeb4040ca953044257476201cecbae82d24b913f6714d0705120a23bf30b994"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:aa65868b9684f7715214f5f3fac3139245c212019cc17742f237965a7508222d"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.0.1",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:987f17a7c2d8752df806ff1ac5be0af397b4628bc0adca2ee00ab5bf996b081a",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.0.1"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:302e1d38168fda98a603b7b0a0e44c7d0e790c5cedee936578f72bbcbf44c809",
+          "createdAt": "2023-02-28T14:54:37Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "olm.skipRange": ">=0.0.0 <6.0.1",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nBy default, MTA requires a RWX capable storage class for caching purposes, this can be disabled via the rwx_supported parameter in Tackle CR.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_admin",
+      "image": "registry.redhat.io/mta/mta-admin-addon-rhel8@sha256:f43774e141dc66b389ca0c2f537d1c8ad433f9379f1356f5e3e6aa0bf9583d0f"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:1adea012494887fe0a93bdafb7d6d253a0edcee567f7393656644ae603db1d36"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:987f17a7c2d8752df806ff1ac5be0af397b4628bc0adca2ee00ab5bf996b081a"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:82bf6f8ee2a6b2419ce4f33f03e1a3450e5385464f3e802127c656625b9046ce"
+    },
+    {
+      "name": "mta-rhel8-operator-302e1d38168fda98a603b7b0a0e44c7d0e790c5cedee936578f72bbcbf44c809-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:302e1d38168fda98a603b7b0a0e44c7d0e790c5cedee936578f72bbcbf44c809"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:302e1d38168fda98a603b7b0a0e44c7d0e790c5cedee936578f72bbcbf44c809"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:d09c97f39ffd5527c2a886980612a4ecf0de027793cd7225db2666c10bc54a8a"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:6553b1cf22c760d41f624f9316a4c2ab0c9b406a4d5c0a599944ec89c0024bd7"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:9248c4eaa8aeedacc1c06d7e3141ca1457147eef59e329273eb78e32fcd27e79"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.0.2",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:6b37489b24d69106387f20019cbe888057da99fcce9f438293e8f2833d7bd770",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.0.2"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:569593908ef51edd856dc191cb3e260b35d17dea1451e7b62b0e7dff24e9c453",
+          "createdAt": "2023-03-06T20:56:12Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "olm.skipRange": ">=0.0.0 <6.0.2",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nBy default, MTA requires a RWX capable storage class for caching purposes, this can be disabled via the rwx_supported parameter in Tackle CR.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_admin",
+      "image": "registry.redhat.io/mta/mta-admin-addon-rhel8@sha256:c7f445b046eaa30c98f5392c78a957b7666924262ea61dd0dcb63f111d08abd9"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:058aaba1a04f3c65d38ce187133e6d0a869f773c151906d02dee8b8f7b8c3620"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:6b37489b24d69106387f20019cbe888057da99fcce9f438293e8f2833d7bd770"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:f9573af1047641a8a3436f7c413ee5285a60f3008b08e10b3981a73248551055"
+    },
+    {
+      "name": "mta-rhel8-operator-569593908ef51edd856dc191cb3e260b35d17dea1451e7b62b0e7dff24e9c453-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:569593908ef51edd856dc191cb3e260b35d17dea1451e7b62b0e7dff24e9c453"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:569593908ef51edd856dc191cb3e260b35d17dea1451e7b62b0e7dff24e9c453"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:3d68e2b7316010b4b603299cd2d8694e27e2faf1bd846543188059c87cf8869d"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:d8c10da2ccba09daa747ce05dfaff9db7c17fb69db2986c19b29e0aebdf05ffc"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:9248c4eaa8aeedacc1c06d7e3141ca1457147eef59e329273eb78e32fcd27e79"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.0.3",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:65c0932bfda32b1e62be9edd0f96bb4d6e41e302a2e8080fc6cc794ee5c52276",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.0.3"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:f5d10cd2528bebf5094c7744e47d9de6fe827fd09024c5ffc0e1b74f1a6cc3b4",
+          "createdAt": "2023-04-26T14:04:20Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "olm.skipRange": ">=0.0.0 <6.0.3",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nBy default, MTA requires a RWX capable storage class for caching purposes, this can be disabled via the rwx_supported parameter in Tackle CR.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_admin",
+      "image": "registry.redhat.io/mta/mta-admin-addon-rhel8@sha256:812b8dc621a06bb99cf2c59abb8257da3ceeb165c563e14d258e69803a557cc8"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:c75e1d9d3307d95be392a53440d9123601a6ada3693e3f2573e03022565e4339"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:65c0932bfda32b1e62be9edd0f96bb4d6e41e302a2e8080fc6cc794ee5c52276"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:a66dd030eb99207b6aaacc6b7c7cb5182901da836ebf50373c14f8e5ecb7b642"
+    },
+    {
+      "name": "mta-rhel8-operator-f5d10cd2528bebf5094c7744e47d9de6fe827fd09024c5ffc0e1b74f1a6cc3b4-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:f5d10cd2528bebf5094c7744e47d9de6fe827fd09024c5ffc0e1b74f1a6cc3b4"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:f5d10cd2528bebf5094c7744e47d9de6fe827fd09024c5ffc0e1b74f1a6cc3b4"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:de6cb95ce3663922ecc725b186876b043a9c7794e95510459ffbcba7d668fc26"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:a4200fc0a39df67eae31c53ee9ae0c05769fb410d0312ebd0bbf8bf1567b2a48"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:3a69efa85af6a6f95665eca69085b007fa1fcb645a37f356895aeb4c9527a621"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.1.0",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:eb99432ed3e453011e00bff4f6bc71b4347842e652335cc14d03ea4c96214c35",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.1.0"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9f2cc774affd46a3afb72cbe5e043d22eada426faf490fbbd9a7973c1ad10f64",
+          "createdAt": "2023-04-11T15:46:55Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "olm.skipRange": ">=6.0.0 <6.1.0",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nBy default, MTA requires a RWX capable storage class for caching purposes, this can be disabled via the rwx_supported parameter in Tackle CR.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:d3ae6af0fa215ca6ab1f8f76b59c6abab108850ec0d277d589a7c43a341defc0"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:eb99432ed3e453011e00bff4f6bc71b4347842e652335cc14d03ea4c96214c35"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:4dcc7254eb5054639cc34e8aa2bd16e868129d4920b606846d2e3ef23a555cf6"
+    },
+    {
+      "name": "mta-rhel8-operator-9f2cc774affd46a3afb72cbe5e043d22eada426faf490fbbd9a7973c1ad10f64-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9f2cc774affd46a3afb72cbe5e043d22eada426faf490fbbd9a7973c1ad10f64"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9f2cc774affd46a3afb72cbe5e043d22eada426faf490fbbd9a7973c1ad10f64"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:afd98f8908f40c750755f9b948a3aede43ae11a5ba05a7b2eb1757e8a1e7a7f0"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:432393b644617ee7212d4dba88de9b7725fb5978cc2b3a9c787207fd3b590eb6"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:a09ed632d59c411a812bc545e2a89e9092befb8f7f98727611df538bdd2c45de"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:a09ed632d59c411a812bc545e2a89e9092befb8f7f98727611df538bdd2c45de"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.1.1",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:8de5a762a41396da06b2307acfab266730af1c767203cd2c99d78e18cd140639",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.1.1"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:80f9fcd07a6231f32966e64dfd8b70183eabd076d2f08994908f7d46ec621407",
+          "createdAt": "2023-05-11T20:35:05Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "olm.skipRange": ">=6.0.0 <6.1.1",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nBy default, MTA requires a RWX capable storage class for caching purposes, this can be disabled via the rwx_supported parameter in Tackle CR.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:8e22ae26ecd0abaf66ed82ee68a3e70f1c73476af27785987cfeb61f1b8c238f"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:8de5a762a41396da06b2307acfab266730af1c767203cd2c99d78e18cd140639"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:e35d53b24c9b06b0a5c3109922511584f2f554d749e9c78170d5448e4aa52781"
+    },
+    {
+      "name": "mta-rhel8-operator-80f9fcd07a6231f32966e64dfd8b70183eabd076d2f08994908f7d46ec621407-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:80f9fcd07a6231f32966e64dfd8b70183eabd076d2f08994908f7d46ec621407"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:80f9fcd07a6231f32966e64dfd8b70183eabd076d2f08994908f7d46ec621407"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:d95d445a1fc9875bd10dac0c1e6aef6425291472f238ae9461fa6d3e70c3ebb6"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:c4f03387718af1da5296b41e9f6430ff99c81491e2fada1762c51d5182154a14"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:3a69efa85af6a6f95665eca69085b007fa1fcb645a37f356895aeb4c9527a621"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:3a69efa85af6a6f95665eca69085b007fa1fcb645a37f356895aeb4c9527a621"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.1.2",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:e51229725495f53456eb33218eace14fefaaa8de35d812c1be15fd289ca82391",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.1.2"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:5947d96a57de42373a9467887037ed033ff64c154bdee09ff12722a1d2b0edbc",
+          "createdAt": "2023-06-06T19:02:38Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "olm.skipRange": ">=6.0.0 <6.1.2",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nBy default, MTA requires a RWX capable storage class for caching purposes, this can be disabled via the rwx_supported parameter in Tackle CR.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:487179df4caf9ac70c50518087320253a11544812f220e0d8b32de15ceed23c5"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:e51229725495f53456eb33218eace14fefaaa8de35d812c1be15fd289ca82391"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:87591bd341422a601b61fbeeb979f2ef610a17c85b5c9733e6643bb037a71735"
+    },
+    {
+      "name": "mta-rhel8-operator-5947d96a57de42373a9467887037ed033ff64c154bdee09ff12722a1d2b0edbc-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:5947d96a57de42373a9467887037ed033ff64c154bdee09ff12722a1d2b0edbc"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:5947d96a57de42373a9467887037ed033ff64c154bdee09ff12722a1d2b0edbc"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:f5fbdb6ea652619ab71fdec6edd7b13fc4e81b933b16ac3d6d6e06afbb219172"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:708458847e3e82743ac5cad6178654227ff0d8d73df279cc837b2429a349b174"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:f7f678d44d5934ed3d95c83b4428fee4b616f37e8eadc5049778f133b4ce3713"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:f7f678d44d5934ed3d95c83b4428fee4b616f37e8eadc5049778f133b4ce3713"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.1.3",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:2b1278c6216cc5b32d218d7ab532cfe3640a20eca96d6c93a92245792e0de85d",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.1.3"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:5529ed1c61146a17872269ad2b4f4013a82405fa74b2ed2a84f68bfe7cf047ec",
+          "createdAt": "2023-08-10T16:33:21Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "olm.skipRange": ">=6.0.0 <6.1.3",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nBy default, MTA requires a RWX capable storage class for caching purposes, this can be disabled via the rwx_supported parameter in Tackle CR.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:73e6fc618e627c5973a5a604311d6631540ad708e9880295fa8b547f1d9f43b6"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:2b1278c6216cc5b32d218d7ab532cfe3640a20eca96d6c93a92245792e0de85d"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:4ae94c711a7dec88c84dd02ca52d89d96a548142c4e065ff8eff0e0348c12df9"
+    },
+    {
+      "name": "mta-rhel8-operator-5529ed1c61146a17872269ad2b4f4013a82405fa74b2ed2a84f68bfe7cf047ec-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:5529ed1c61146a17872269ad2b4f4013a82405fa74b2ed2a84f68bfe7cf047ec"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:5529ed1c61146a17872269ad2b4f4013a82405fa74b2ed2a84f68bfe7cf047ec"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:e489ffd901c59410b697be65e07e748b926579606f18e986bb9c0bd6befeffb7"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:cab20bf80f7b919094e420f87ff73ea67af13dd0f489577b8e373e0de179aacc"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:9fe05ee448e08f14a76dd8f1b97a1bc877f69ad87d8c7cc31f32497220958e9b"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:9fe05ee448e08f14a76dd8f1b97a1bc877f69ad87d8c7cc31f32497220958e9b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.1.4",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:f3d585e24d65905b2e9f594dcdb67721aa95057ab7587ae531c3487aa2f94e53",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.1.4"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6da71d4caecfbe049e63576d4325d4919002196da2e875f79703d8ff0d5a1705",
+          "createdAt": "2023-10-26T15:29:26Z",
+          "description": "MTA contains tools that support the modernization and migration of applications to Kubernetes and OpenShift",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "false",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.0.0 <6.1.4",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/tackle2-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is a collection of tools that supports large-scale application modernization and migration projects to Kubernetes and OpenShift.\n\n\nMigration Toolkit for Applications allows users to maintain their portfolio of applications with a full set of metadata and to assess their suitability for modernization leveraging a questionnaire based approach.\n\n\n### Install\n\nBy default, MTA requires a RWX capable storage class for caching purposes, this can be disabled via the rwx_supported parameter in Tackle CR.\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel8@sha256:32624f2bddfe8b6b9c6c1c3f2be541c8c61be29680d13b6d446e8874bdf8e219"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:f3d585e24d65905b2e9f594dcdb67721aa95057ab7587ae531c3487aa2f94e53"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel8@sha256:1df881da1e20c2501caf53e1cf59b6b366281d842f0948ca5f91694ec1db829d"
+    },
+    {
+      "name": "mta-rhel8-operator-6da71d4caecfbe049e63576d4325d4919002196da2e875f79703d8ff0d5a1705-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6da71d4caecfbe049e63576d4325d4919002196da2e875f79703d8ff0d5a1705"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6da71d4caecfbe049e63576d4325d4919002196da2e875f79703d8ff0d5a1705"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel8@sha256:3845d6d246003ebeb49bcf1d95d6be2eb9cd05a280a5bf8320b201e878a41427"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel8@sha256:6bcaf8e8b63e169652d6568d77e91a289084e621a586105a2d429b5726569058"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:d8c5112a34ad9a5b93223389fbb64e6429f299c1703876b6652c8810fcacd59d"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:d8c5112a34ad9a5b93223389fbb64e6429f299c1703876b6652c8810fcacd59d"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.2.0",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:3165133f54da89d0e2b897a8069db7d17a4d956b712f84eb320c083506c24469",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.2.0"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:ce0eb8ea3bdd8eea71b23930d17fa2a1d9b17ef619f1e8d88e35e363fc7b28fb",
+          "createdAt": "2023-07-28T15:31:57Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "olm.skipRange": ">=6.0.0 <6.2.0",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:1b39e0e1382dc59ecf23525f4bab9c693bbeddf72205f7b6d26c3b4eb15ecb99"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:3165133f54da89d0e2b897a8069db7d17a4d956b712f84eb320c083506c24469"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel9@sha256:67c7bae8d31bc62f9035581a55d4b124ffbbcdf8ea4b40808b65cf11aaa76388"
+    },
+    {
+      "name": "mta-rhel8-operator-ce0eb8ea3bdd8eea71b23930d17fa2a1d9b17ef619f1e8d88e35e363fc7b28fb-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:ce0eb8ea3bdd8eea71b23930d17fa2a1d9b17ef619f1e8d88e35e363fc7b28fb"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:ce0eb8ea3bdd8eea71b23930d17fa2a1d9b17ef619f1e8d88e35e363fc7b28fb"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:13dc520d3a688610de1abe1d94fb57a17e653ed6a3eaba259c4072752cc256bd"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel9@sha256:e6715fc3d1b9a29621542b0d2eabb00c6a1b875731b85e84482b06e79e1fa05d"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:1ea6a01bf3e63cdcf125c6064cbd4a4a270deaf0f157b3eabb78f60556840366"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:3f011b90299dd24127645d2f237f6a2981d80daa48bf34cbf37d0fdeac41a836"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:3f011b90299dd24127645d2f237f6a2981d80daa48bf34cbf37d0fdeac41a836"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.2.1",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:2660d6e04d2f6475565999b41947e1b5e615beb6a4f82e596e21f947f0963866",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.2.1"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9a07f2c576a727b4e384fca08c3662d19004800d791d9d719241f0c9e66a0a5d",
+          "createdAt": "2023-10-26T14:55:31Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.0.0 <6.2.1",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:6a449545167a4062d85ff109b5a5cce58c576ed4ec8b9988f76e2f015b1ee98c"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:2660d6e04d2f6475565999b41947e1b5e615beb6a4f82e596e21f947f0963866"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel9@sha256:883b83bb99374c199d9dd7fb714d7b7098e152fe4aca6a32592c98d71ac2ab93"
+    },
+    {
+      "name": "mta-rhel8-operator-9a07f2c576a727b4e384fca08c3662d19004800d791d9d719241f0c9e66a0a5d-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9a07f2c576a727b4e384fca08c3662d19004800d791d9d719241f0c9e66a0a5d"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9a07f2c576a727b4e384fca08c3662d19004800d791d9d719241f0c9e66a0a5d"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:e9492dfd236d3b9cce82ab923fbde3fec9cc359ea36370eecd6e05ee819ed067"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel9@sha256:97acb1feb8af8596b57e097a47e55a2c0442f91910b44f51413ac1e28ffe89cf"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:62fdde504a8e55669286c525b2d3f224740800843c0a0732d18d5b1024716551"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:d8c5112a34ad9a5b93223389fbb64e6429f299c1703876b6652c8810fcacd59d"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:d8c5112a34ad9a5b93223389fbb64e6429f299c1703876b6652c8810fcacd59d"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.2.2",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:d142049160f51b71f1c9d970e23824952ca35e7c2e23d6c8753a33e727b87b81",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.2.2"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9aaf990f4fd7c4a1c5c26e34579a467c16039a8bde085681fd28c9e8dd5bc611",
+          "createdAt": "2024-02-15T19:08:05Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.0.0 <6.2.2",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:572b729dd8ee9e075bb6fc9e04292b32a808caf2d40636cea9d27cd5d851aa64"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:d142049160f51b71f1c9d970e23824952ca35e7c2e23d6c8753a33e727b87b81"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel9@sha256:d2722ba719e2f7e4376418d7b97a1053b300cf6030f666c7a570c7f05f2f9bd4"
+    },
+    {
+      "name": "mta-rhel8-operator-9aaf990f4fd7c4a1c5c26e34579a467c16039a8bde085681fd28c9e8dd5bc611-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9aaf990f4fd7c4a1c5c26e34579a467c16039a8bde085681fd28c9e8dd5bc611"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:9aaf990f4fd7c4a1c5c26e34579a467c16039a8bde085681fd28c9e8dd5bc611"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:9bc025d0e4e8a998bc4349ac7ef651726c5cd1d6afb4480aa1f078183c08f02e"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel9@sha256:6f906c1b1d6c7872ce0efe9318c66ca78ae8ca8044ca0cc8e03b80f1892e924c"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:65515661a7d719f1a8984c8fe3869a8c479c735b601d820c077797fe78b8e6b3"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:493358aa1f1f9aa0862fca14e27f972f73a6356b5032fe3b372432f0b6db880a"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:493358aa1f1f9aa0862fca14e27f972f73a6356b5032fe3b372432f0b6db880a"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v6.2.3",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:a13643117c2867351718a872f7f1b2350c67855ca73a727a1dc140754ffe6589",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "6.2.3"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6938c3fc6dd8fb032e1765fc11d9586dbfd1aaba4b423b0d87da4120ee0bb60d",
+          "createdAt": "2024-06-10T22:12:58Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.0.0 <6.2.3",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Pathfinder, a service to manage the assessment questionnaires.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:e59725832547e80cab58077a1b6e42c313a4057621defa841f35c0a7627f149d"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:a13643117c2867351718a872f7f1b2350c67855ca73a727a1dc140754ffe6589"
+    },
+    {
+      "name": "pathfinder",
+      "image": "registry.redhat.io/mta/mta-pathfinder-rhel9@sha256:a2a8b6d204d99494a6a005e8cb1fbd92afdc84dc01e4c1de4ad7d8798bd83741"
+    },
+    {
+      "name": "mta-rhel8-operator-6938c3fc6dd8fb032e1765fc11d9586dbfd1aaba4b423b0d87da4120ee0bb60d-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6938c3fc6dd8fb032e1765fc11d9586dbfd1aaba4b423b0d87da4120ee0bb60d"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:6938c3fc6dd8fb032e1765fc11d9586dbfd1aaba4b423b0d87da4120ee0bb60d"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:c35f3ed429a7d351cb8c2d07600b4ad35615a5ba08e5cc9f8b9bd504aea3f7ee"
+    },
+    {
+      "name": "addon_windup",
+      "image": "registry.redhat.io/mta/mta-windup-addon-rhel9@sha256:d1f4939b92dd13c15cb7344ec47a571669f6d108dc2e7d795ce29350f2cb3838"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:e52f88555004b575104691fe96f758ee5e6ec832b99107a5a18fc8379d29afda"
+    },
+    {
+      "name": "pathfinder_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:c4716bee5e2cf2e43698bc99e5aa42f16a0f2d68c1fbdcd3602696bf88e408dc"
+    },
+    {
+      "name": "keycloak_database",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:c4716bee5e2cf2e43698bc99e5aa42f16a0f2d68c1fbdcd3602696bf88e408dc"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v7.0.0",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:323c8ff5f805ffbfdeef1e54208c9bf080564a8baf4b94acf9f4c98e85ebcb22",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "7.0.0"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:bef2fa7cec27f3ffa847a10438380dd61dde9b2ebbd51b75345ef22b47bc9a15",
+          "createdAt": "2024-01-23T03:29:22Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.2.0 <7.0.0",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_analyzer",
+      "image": "registry.redhat.io/mta/mta-analyzer-addon-rhel9@sha256:4cbd364ad301d14de45374432f3be850d22b276ec8b39375d59af54ac149ea3e"
+    },
+    {
+      "name": "analyzer_lsp",
+      "image": "registry.redhat.io/mta/mta-analyzer-lsp-rhel9@sha256:830e92057d83b90e9109d25cc9e0f7c18dcbbfd615e9437f0867c9a670ae4dea"
+    },
+    {
+      "name": "cli",
+      "image": "registry.redhat.io/mta/mta-cli-rhel9@sha256:c97a7a50fe573a65a08fa38965df6ac64c9849d1792928a6431e6ad41bc1c127"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:246fd7f8e36dc6c7ff585de65cc04940d3996a714f4f2d96b54f47b7059c9159"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:323c8ff5f805ffbfdeef1e54208c9bf080564a8baf4b94acf9f4c98e85ebcb22"
+    },
+    {
+      "name": "mta-rhel8-operator-bef2fa7cec27f3ffa847a10438380dd61dde9b2ebbd51b75345ef22b47bc9a15-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:bef2fa7cec27f3ffa847a10438380dd61dde9b2ebbd51b75345ef22b47bc9a15"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:bef2fa7cec27f3ffa847a10438380dd61dde9b2ebbd51b75345ef22b47bc9a15"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:8ef7a49a9bd3c87e404aa25df39c312a6f75b8a21ef841fef4e9cacf05da8b17"
+    },
+    {
+      "name": "windup_shim",
+      "image": "registry.redhat.io/mta/mta-windup-shim-rhel9@sha256:b203fc0acb3689fc70fbc96b0ca83e1ff049a9c4e30d96a1245e4802e212e36f"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:76cf66011466657bfd7a47368b88538c29936fdb5ffde42665fad0067fd0361d"
+    },
+    {
+      "name": "tackle_postgres",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:493358aa1f1f9aa0862fca14e27f972f73a6356b5032fe3b372432f0b6db880a"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v7.0.1",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:3d6e8e876dc6ecbedab73df893300933c2215bfdc15e1b93cb4da6dc4cf059a8",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "7.0.1"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:7e45c80f3eca42efbb47b904597301ad9f4713e3fc2d991c50d2b3fe4a9cd724",
+          "createdAt": "2024-01-31T15:54:40Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.2.0 <7.0.1",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_analyzer",
+      "image": "registry.redhat.io/mta/mta-analyzer-addon-rhel9@sha256:1621c0734cd558f174272f9023d9b1b60f8cea4c43ee1cf1084339b7bf95fad0"
+    },
+    {
+      "name": "analyzer_lsp",
+      "image": "registry.redhat.io/mta/mta-analyzer-lsp-rhel9@sha256:c46202d15f63c8f552aba569ff93bcf1558606e870476b5140c64b342f008e0c"
+    },
+    {
+      "name": "cli",
+      "image": "registry.redhat.io/mta/mta-cli-rhel9@sha256:f47985d1ca4e71d019dcbc2f7b2faeb3fa7c4943cdc8f0ddb8a94fa5f5918881"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:8713ef3aad164ac8ff2ca765fc310ccc452ec2bb5ca4ffddcfb927d1551dbbad"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:3d6e8e876dc6ecbedab73df893300933c2215bfdc15e1b93cb4da6dc4cf059a8"
+    },
+    {
+      "name": "mta-rhel8-operator-7e45c80f3eca42efbb47b904597301ad9f4713e3fc2d991c50d2b3fe4a9cd724-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:7e45c80f3eca42efbb47b904597301ad9f4713e3fc2d991c50d2b3fe4a9cd724"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:7e45c80f3eca42efbb47b904597301ad9f4713e3fc2d991c50d2b3fe4a9cd724"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:190d82cfc30d49f2f7cc920fd30e0e22d1863f1b663b416948665a2183f36c4a"
+    },
+    {
+      "name": "windup_shim",
+      "image": "registry.redhat.io/mta/mta-windup-shim-rhel9@sha256:2d1955dd181789dde731c593fe296a7085f8cff175edfd09eb55852f2d1a498a"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:be61cbbe498b849a658c1fa62e4285c88821e745ad477463c0b57dc366929133"
+    },
+    {
+      "name": "tackle_postgres",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:493358aa1f1f9aa0862fca14e27f972f73a6356b5032fe3b372432f0b6db880a"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v7.0.2",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:b8c09648ffba53778128e145ab66b347f68e7960eaa345830363313f9d564d88",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "7.0.2"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:35c77bebe8097195de844a71dff331a88e67dad1d1fb1de7fc832fbe30fda507",
+          "createdAt": "2024-03-12T18:48:22Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.2.0 <7.0.2",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_analyzer",
+      "image": "registry.redhat.io/mta/mta-analyzer-addon-rhel9@sha256:c95f722289dd3d754e723abe6f9554e754e90e5f424f075afd56c9b13423b744"
+    },
+    {
+      "name": "analyzer_lsp",
+      "image": "registry.redhat.io/mta/mta-analyzer-lsp-rhel9@sha256:d3184de7b254570627360de1133910d525bcb4e684ffee73bd7014424657a8cc"
+    },
+    {
+      "name": "cli",
+      "image": "registry.redhat.io/mta/mta-cli-rhel9@sha256:5d0eaf6cd5f9b92fcb2d6c3ed7bab710249f66ab3711cd600562a3ddd10063b9"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:a384ced35ff458dd597c222ce1494e1bdac958fcd8450ba0c6fab8918cb22f74"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:b8c09648ffba53778128e145ab66b347f68e7960eaa345830363313f9d564d88"
+    },
+    {
+      "name": "mta-rhel8-operator-35c77bebe8097195de844a71dff331a88e67dad1d1fb1de7fc832fbe30fda507-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:35c77bebe8097195de844a71dff331a88e67dad1d1fb1de7fc832fbe30fda507"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:35c77bebe8097195de844a71dff331a88e67dad1d1fb1de7fc832fbe30fda507"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:bac6c899624af8798e52240c20f7743764214fe6c5a22122605e3b0f68731657"
+    },
+    {
+      "name": "windup_shim",
+      "image": "registry.redhat.io/mta/mta-windup-shim-rhel9@sha256:8f67fafe972bd18263bd9bc01b273a2baeb60fefb62737354d88ae240c9e31cc"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:65515661a7d719f1a8984c8fe3869a8c479c735b601d820c077797fe78b8e6b3"
+    },
+    {
+      "name": "tackle_postgres",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:b96be9d3e8512046bae7d5a3e04fa151043eca051416305629b3ffd547370453"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v7.0.3",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:9eeb43af2bcab84f5261d1575f7c897903a7696dba011d256abffa1fe850eba2",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "7.0.3"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"addon-example\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"image\": \"addon-fqin\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:268ecf5efc51af71f9b2bc2d01b410f8cfcf81a948b82d2d476fef6c0cd3e033",
+          "createdAt": "2024-05-10T19:37:30Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.2.0 <7.0.3",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Represents a Tackle Instance"
+            },
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Represents a Tackle Addon Instance"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_analyzer",
+      "image": "registry.redhat.io/mta/mta-analyzer-addon-rhel9@sha256:1b5e016046d93b6a2674d63f08e0a46f8050e785bd58fd94ba7a70487efe7e2a"
+    },
+    {
+      "name": "analyzer_lsp",
+      "image": "registry.redhat.io/mta/mta-analyzer-lsp-rhel9@sha256:0c8f59f35a950ea8b45f16cf71362128ccc335b58a996a099384fd737dd6ff90"
+    },
+    {
+      "name": "cli",
+      "image": "registry.redhat.io/mta/mta-cli-rhel9@sha256:d554cc36748fc05e30eb10e6fe816ff6aab2fe07b61cc60e9d93de5c3cf17748"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:18c611415589a093e16e9c2f2fba9f3c83d9514f79c8e4fde9704ef0679ea4d5"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:9eeb43af2bcab84f5261d1575f7c897903a7696dba011d256abffa1fe850eba2"
+    },
+    {
+      "name": "mta-rhel8-operator-268ecf5efc51af71f9b2bc2d01b410f8cfcf81a948b82d2d476fef6c0cd3e033-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:268ecf5efc51af71f9b2bc2d01b410f8cfcf81a948b82d2d476fef6c0cd3e033"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:268ecf5efc51af71f9b2bc2d01b410f8cfcf81a948b82d2d476fef6c0cd3e033"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:0e1ec99af5666a060176adc52612f20209e3398a9a5a2aa1dcff11ef260b2006"
+    },
+    {
+      "name": "windup_shim",
+      "image": "registry.redhat.io/mta/mta-windup-shim-rhel9@sha256:e2ea89055936d7ad229b5e890c6ba234c6cb22d8b688515ed4d6a34848efea83"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:af879d8b9b5e396a5308fb675a1d6dba6d70151b9bdbe7829362e081a6adab1c"
+    },
+    {
+      "name": "tackle_postgres",
+      "image": "registry.redhat.io/rhel8/postgresql-12@sha256:da619f6617d99790b4fe00fdb23ab4aea0cdb0592590162d51b3ef94aca01a7b"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v7.1.0",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:06c1901ffdb7adac5944da77ac7989664831516920019855292654bc9dca7e3c",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Extension",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Task",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "7.1.0"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"myaddon\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"container\": {\n        \"image\": \"addon-img\",\n        \"imagePullPolicy\": \"Always\",\n        \"name\": \"myaddon\",\n        \"resources\": {\n          \"limits\": {\n            \"cpu\": 1,\n            \"memory\": \"1Gi\"\n          },\n          \"requests\": {\n            \"cpu\": 1,\n            \"memory\": \"512Mi\"\n          }\n        }\n      },\n      \"task\": \"mytask\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Extension\",\n    \"metadata\": {\n      \"name\": \"myextension\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"addon\": \"myaddon\",\n      \"container\": {\n        \"args\": [\n          \"--port\",\n          \"$(PORT)\"\n        ],\n        \"env\": [\n          {\n            \"name\": \"PORT\",\n            \"value\": \"${seq:8000}\"\n          }\n        ],\n        \"image\": \"external-provider-img\",\n        \"imagePullPolicy\": \"Always\",\n        \"name\": \"myextension\",\n        \"resources\": {\n          \"limits\": {\n            \"cpu\": 1,\n            \"memory\": \"1Gi\"\n          },\n          \"requests\": {\n            \"cpu\": 1,\n            \"memory\": \"1Gi\"\n          }\n        }\n      },\n      \"metadata\": {\n        \"provider\": {\n          \"address\": \"localhost:$(PORT)\",\n          \"name\": \"myextension\"\n        }\n      },\n      \"selector\": \"tag:Language=MyLang\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Task\",\n    \"metadata\": {\n      \"name\": \"mytask\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"dependencies\": [\n        \"myaddon\"\n      ],\n      \"priority\": 10\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:392b05fa7e65e4503c486c79f7662b4769ed167d394b9e3adec53940000fe470",
+          "createdAt": "2024-08-12T13:07:06Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.2.0 <7.1.0",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Tackle Addon"
+            },
+            {
+              "name": "extensions.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Extension",
+              "displayName": "Extension",
+              "description": "Tackle Extension"
+            },
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Tackle"
+            },
+            {
+              "name": "tasks.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Task",
+              "displayName": "Task",
+              "description": "Tackle Task"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.arm64": "unsupported",
+          "operatorframework.io/arch.ppc64le": "unsupported",
+          "operatorframework.io/arch.s390x": "unsupported"
+        },
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_analyzer",
+      "image": "registry.redhat.io/mta/mta-analyzer-addon-rhel9@sha256:8fbfdcb20af1f70486108710b55c517f5710345f8e6a829371bde1c3f31c870d"
+    },
+    {
+      "name": "cli",
+      "image": "registry.redhat.io/mta/mta-cli-rhel9@sha256:edbcb2dbccbb807893fcfc9615ffc39abdaf3e28b6e7dc69a0b3878576b376b6"
+    },
+    {
+      "name": "addon_discovery",
+      "image": "registry.redhat.io/mta/mta-discovery-addon-rhel9@sha256:0ee137c6ca1775455e3886ead056b44bfe84a1d9ecf521baae1e5573f6207354"
+    },
+    {
+      "name": "provider_dotnet",
+      "image": "registry.redhat.io/mta/mta-dotnet-external-provider-rhel8@sha256:b4458b45740f9835de6ab382455f4f93dbc15e907974f6d05fd98fa1758d022d"
+    },
+    {
+      "name": "provider_generic",
+      "image": "registry.redhat.io/mta/mta-generic-external-provider-rhel9@sha256:13258160fc7755cd42eb749a17ee33453408de66a5e036075e0e998a7056bbf2"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:bf2f833117ebcb9da573fbe0001450605af8aa6ec083485421a7e9bb671d7566"
+    },
+    {
+      "name": "provider_java",
+      "image": "registry.redhat.io/mta/mta-java-external-provider-rhel9@sha256:5c51a8fe2eb67e887356315722e5b38c812fb1bf470ff7b14aab652960914c5d"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:06c1901ffdb7adac5944da77ac7989664831516920019855292654bc9dca7e3c"
+    },
+    {
+      "name": "mta-rhel8-operator-392b05fa7e65e4503c486c79f7662b4769ed167d394b9e3adec53940000fe470-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:392b05fa7e65e4503c486c79f7662b4769ed167d394b9e3adec53940000fe470"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:392b05fa7e65e4503c486c79f7662b4769ed167d394b9e3adec53940000fe470"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:d0c994f9db048fdcf850dc95aa67430cc9bdb48fb0b66e81bdb90e4dbc9e95fe"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:2f9603d72bad86ae8cc51d0f9677acfcde77ada268dc28675420793223ba56e2"
+    },
+    {
+      "name": "tackle_postgres",
+      "image": "registry.redhat.io/rhel8/postgresql-15@sha256:3ce043eacb295c3632c5093e75c3f86755e2d88f25fb532bf71c240163ba38c6"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "mta-operator.v7.1.1",
+  "package": "mta-operator",
+  "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:6aef520983fe01351886e108d32b998b20e74116fc0280c754a914bfad03d0bf",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Addon",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Extension",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Tackle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "tackle.konveyor.io",
+        "kind": "Task",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "mta-operator",
+        "version": "7.1.1"
+      }
+    },
+    {
+      "type": "olm.package.required",
+      "value": {
+        "packageName": "rhsso-operator",
+        "versionRange": ">=7.5.9 <7.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Addon\",\n    \"metadata\": {\n      \"name\": \"myaddon\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"container\": {\n        \"image\": \"addon-img\",\n        \"imagePullPolicy\": \"Always\",\n        \"name\": \"myaddon\",\n        \"resources\": {\n          \"limits\": {\n            \"cpu\": 1,\n            \"memory\": \"1Gi\"\n          },\n          \"requests\": {\n            \"cpu\": 1,\n            \"memory\": \"512Mi\"\n          }\n        }\n      },\n      \"task\": \"mytask\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Extension\",\n    \"metadata\": {\n      \"name\": \"myextension\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"addon\": \"myaddon\",\n      \"container\": {\n        \"args\": [\n          \"--port\",\n          \"$(PORT)\"\n        ],\n        \"env\": [\n          {\n            \"name\": \"PORT\",\n            \"value\": \"${seq:8000}\"\n          }\n        ],\n        \"image\": \"external-provider-img\",\n        \"imagePullPolicy\": \"Always\",\n        \"name\": \"myextension\",\n        \"resources\": {\n          \"limits\": {\n            \"cpu\": 1,\n            \"memory\": \"1Gi\"\n          },\n          \"requests\": {\n            \"cpu\": 1,\n            \"memory\": \"1Gi\"\n          }\n        }\n      },\n      \"metadata\": {\n        \"provider\": {\n          \"address\": \"localhost:$(PORT)\",\n          \"name\": \"myextension\"\n        }\n      },\n      \"selector\": \"tag:Language=MyLang\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Tackle\",\n    \"metadata\": {\n      \"name\": \"tackle\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"feature_auth_required\": \"true\"\n    }\n  },\n  {\n    \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n    \"kind\": \"Task\",\n    \"metadata\": {\n      \"name\": \"mytask\",\n      \"namespace\": \"openshift-mta\"\n    },\n    \"spec\": {\n      \"dependencies\": [\n        \"myaddon\"\n      ],\n      \"priority\": 10\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "OpenShift Optional, Modernization & Migration",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/mta/mta-rhel8-operator@sha256:08b33b44140397785f8aa1b736796e09cf6e49ac30cf7c386a2fbd8b678d47b1",
+          "createdAt": "2024-09-16T23:45:42Z",
+          "description": "MTA is an application modernization platform that helps organizations safely and predictably modernize applications to OpenShift at scale.",
+          "features.operators.openshift.io/cnf": "false",
+          "features.operators.openshift.io/cni": "false",
+          "features.operators.openshift.io/csi": "false",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=6.2.0 <7.1.1",
+          "operatorframework.io/initialization-resource": "{\n  \"apiVersion\": \"tackle.konveyor.io/v1alpha1\",\n  \"kind\": \"Tackle\",\n  \"metadata\": {\n    \"name\": \"tackle\",\n    \"namespace\": \"openshift-mta\"\n  },\n  \"spec\": {\n      \"feature_auth_required\": \"true\"\n  }\n}",
+          "operatorframework.io/suggested-namespace": "openshift-mta",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "repository": "https://github.com/konveyor/operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "addons.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Addon",
+              "displayName": "Addon",
+              "description": "Tackle Addon"
+            },
+            {
+              "name": "extensions.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Extension",
+              "displayName": "Extension",
+              "description": "Tackle Extension"
+            },
+            {
+              "name": "tackles.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Tackle",
+              "displayName": "Tackle",
+              "description": "Tackle"
+            },
+            {
+              "name": "tasks.tackle.konveyor.io",
+              "version": "v1alpha1",
+              "kind": "Task",
+              "displayName": "Task",
+              "description": "Tackle Task"
+            }
+          ]
+        },
+        "description": "Migration Toolkit for Applications is an application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to OpenShift.\n\n### Install\n\nOnce you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.\n\nBy default, the Operator installs the following components on a target cluster:\n\n* Hub, to manage the application inventory and coordinate the migration process.\n* UI, the web console to manage the application inventory and drive the migration waves.\n* Keycloak, to manage authentication, including with 3rd-party providers.\n\n### Documentation\nDocumentation can be found on our [website](https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications).\n\n### Getting help\nIf you encounter any issues while using Migration Toolkit for Applications Operator, create a [support case](https://access.redhat.com/support/cases/) for bugs, enhancements, or other requests.\n\n",
+        "displayName": "Migration Toolkit for Applications Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "modernization",
+          "migration",
+          "konveyor",
+          "tackle",
+          "mta"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.arm64": "unsupported",
+          "operatorframework.io/arch.ppc64le": "unsupported",
+          "operatorframework.io/arch.s390x": "unsupported"
+        },
+        "links": [
+          {
+            "name": "Documentation",
+            "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_applications"
+          },
+          {
+            "name": "Developers",
+            "url": "https://developers.redhat.com/products/mta"
+          },
+          {
+            "name": "Konveyor",
+            "url": "https://www.konveyor.io"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat",
+            "email": "openshift-operators@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.22.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "addon_analyzer",
+      "image": "registry.redhat.io/mta/mta-analyzer-addon-rhel9@sha256:30a3b1d5a70dec74a9253ca34f18bd8f2cdfaa68b85b0b25dc395158c2596330"
+    },
+    {
+      "name": "cli",
+      "image": "registry.redhat.io/mta/mta-cli-rhel9@sha256:ee2c8ce2af0be097353758d9ee7eaa7e6b3fcd5f2bf5e04280e450e2b619d2d8"
+    },
+    {
+      "name": "addon_discovery",
+      "image": "registry.redhat.io/mta/mta-discovery-addon-rhel9@sha256:e4e70201df23c9e1168646d3c6013a8ffa22481a85b07df491f240310c13ebe1"
+    },
+    {
+      "name": "provider_dotnet",
+      "image": "registry.redhat.io/mta/mta-dotnet-external-provider-rhel8@sha256:582f28e609c1a0466d30c5586d6b6023f1b1de3c28f76cabb498322914ab24d4"
+    },
+    {
+      "name": "provider_generic",
+      "image": "registry.redhat.io/mta/mta-generic-external-provider-rhel9@sha256:4ad19b50cdd6be21e010155f2026abf0dc865e72aac1353e35bbb5eeb8320a4e"
+    },
+    {
+      "name": "tackle_hub",
+      "image": "registry.redhat.io/mta/mta-hub-rhel9@sha256:16cb28d683159ba71a5d7c233404ac1d6b7a07a374b46d24effe551a13a596c3"
+    },
+    {
+      "name": "provider_java",
+      "image": "registry.redhat.io/mta/mta-java-external-provider-rhel9@sha256:ac38f1c3d34bc718928eb20743835c99783d846f63a3197d13839ea22f1634c8"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/mta/mta-operator-bundle@sha256:6aef520983fe01351886e108d32b998b20e74116fc0280c754a914bfad03d0bf"
+    },
+    {
+      "name": "mta-rhel8-operator-08b33b44140397785f8aa1b736796e09cf6e49ac30cf7c386a2fbd8b678d47b1-annotation",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:08b33b44140397785f8aa1b736796e09cf6e49ac30cf7c386a2fbd8b678d47b1"
+    },
+    {
+      "name": "mta-operator",
+      "image": "registry.redhat.io/mta/mta-rhel8-operator@sha256:08b33b44140397785f8aa1b736796e09cf6e49ac30cf7c386a2fbd8b678d47b1"
+    },
+    {
+      "name": "tackle_ui",
+      "image": "registry.redhat.io/mta/mta-ui-rhel9@sha256:23c97ac122eb7cd1e953df8da968da420f6db8708baf772759517aca4929748b"
+    },
+    {
+      "name": "oauth_proxy",
+      "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:4f8d66597feeb32bb18699326029f9a71a5aca4a57679d636b876377c2e95695"
+    },
+    {
+      "name": "tackle_postgres",
+      "image": "registry.redhat.io/rhel8/postgresql-15@sha256:16faf1ee82382263408f713ee4002f47ff13c82d4545e8a69d5b0ebd1d289330"
+    }
+  ]
+}

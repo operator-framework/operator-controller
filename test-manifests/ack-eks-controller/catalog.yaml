@@ -1,0 +1,2271 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-eks-controller
+schema: olm.package
+---
+entries:
+- name: ack-eks-controller.v0.0.10
+  replaces: ack-eks-controller.v0.0.9
+- name: ack-eks-controller.v0.0.11
+  replaces: ack-eks-controller.v0.0.10
+- name: ack-eks-controller.v0.0.12
+  replaces: ack-eks-controller.v0.0.11
+- name: ack-eks-controller.v0.0.13
+  replaces: ack-eks-controller.v0.0.12
+- name: ack-eks-controller.v0.0.14
+  replaces: ack-eks-controller.v0.0.13
+- name: ack-eks-controller.v0.0.15
+  replaces: ack-eks-controller.v0.0.14
+- name: ack-eks-controller.v0.0.2
+- name: ack-eks-controller.v0.0.3
+  replaces: ack-eks-controller.v0.0.2
+- name: ack-eks-controller.v0.0.4
+  replaces: ack-eks-controller.v0.0.3
+- name: ack-eks-controller.v0.0.5
+  replaces: ack-eks-controller.v0.0.4
+- name: ack-eks-controller.v0.0.6
+  replaces: ack-eks-controller.v0.0.5
+- name: ack-eks-controller.v0.0.7
+  replaces: ack-eks-controller.v0.0.6
+- name: ack-eks-controller.v0.0.8
+  replaces: ack-eks-controller.v0.0.7
+- name: ack-eks-controller.v0.0.9
+  replaces: ack-eks-controller.v0.0.8
+- name: ack-eks-controller.v0.1.0
+  replaces: ack-eks-controller.v0.0.15
+- name: ack-eks-controller.v0.1.1
+  replaces: ack-eks-controller.v0.1.0
+- name: ack-eks-controller.v0.1.2
+  replaces: ack-eks-controller.v0.1.1
+- name: ack-eks-controller.v0.1.3
+  replaces: ack-eks-controller.v0.1.2
+- name: ack-eks-controller.v0.1.4
+  replaces: ack-eks-controller.v0.1.3
+- name: ack-eks-controller.v0.1.5
+  replaces: ack-eks-controller.v0.1.4
+- name: ack-eks-controller.v0.1.6
+  replaces: ack-eks-controller.v0.1.5
+- name: ack-eks-controller.v0.1.7
+  replaces: ack-eks-controller.v0.1.6
+- name: ack-eks-controller.v0.1.8
+  replaces: ack-eks-controller.v0.1.7
+- name: ack-eks-controller.v0.1.9
+  replaces: ack-eks-controller.v0.1.8
+- name: ack-eks-controller.v1.0.0
+  replaces: ack-eks-controller.v0.1.9
+- name: ack-eks-controller.v1.0.1
+  replaces: ack-eks-controller.v1.0.0
+- name: ack-eks-controller.v1.0.2
+  replaces: ack-eks-controller.v1.0.1
+- name: ack-eks-controller.v1.0.3
+  replaces: ack-eks-controller.v1.0.2
+- name: ack-eks-controller.v1.0.4
+  replaces: ack-eks-controller.v1.0.3
+- name: ack-eks-controller.v1.0.5
+  replaces: ack-eks-controller.v1.0.4
+- name: ack-eks-controller.v1.1.0
+  replaces: ack-eks-controller.v1.0.5
+- name: ack-eks-controller.v1.1.1
+  replaces: ack-eks-controller.v1.1.0
+- name: ack-eks-controller.v1.1.2
+  replaces: ack-eks-controller.v1.1.1
+- name: ack-eks-controller.v1.1.3
+  replaces: ack-eks-controller.v1.1.2
+- name: ack-eks-controller.v1.2.0
+  replaces: ack-eks-controller.v1.1.3
+- name: ack-eks-controller.v1.2.1
+  replaces: ack-eks-controller.v1.2.0
+- name: ack-eks-controller.v1.2.2
+  replaces: ack-eks-controller.v1.2.1
+- name: ack-eks-controller.v1.2.3
+  replaces: ack-eks-controller.v1.2.2
+- name: ack-eks-controller.v1.3.0
+  replaces: ack-eks-controller.v1.2.3
+- name: ack-eks-controller.v1.3.1
+  replaces: ack-eks-controller.v1.3.0
+- name: ack-eks-controller.v1.3.3
+  replaces: ack-eks-controller.v1.3.1
+- name: ack-eks-controller.v1.3.5
+  replaces: ack-eks-controller.v1.3.3
+- name: ack-eks-controller.v1.4.0
+  replaces: ack-eks-controller.v1.3.5
+- name: ack-eks-controller.v1.4.1
+  replaces: ack-eks-controller.v1.4.0
+- name: ack-eks-controller.v1.4.2
+  replaces: ack-eks-controller.v1.4.1
+- name: ack-eks-controller.v1.4.3
+  replaces: ack-eks-controller.v1.4.2
+- name: ack-eks-controller.v1.4.4
+  replaces: ack-eks-controller.v1.4.3
+- name: ack-eks-controller.v1.4.5
+  replaces: ack-eks-controller.v1.4.4
+- name: ack-eks-controller.v1.4.6
+  replaces: ack-eks-controller.v1.4.5
+- name: ack-eks-controller.v1.4.7
+  replaces: ack-eks-controller.v1.4.6
+- name: ack-eks-controller.v1.5.0
+  replaces: ack-eks-controller.v1.4.7
+name: alpha
+package: ack-eks-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:5cf214faa493f1fced109bdb86c538400b4eb589e195eb70fb18763eda5bb24f
+name: ack-eks-controller.v0.0.10
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:5cf214faa493f1fced109bdb86c538400b4eb589e195eb70fb18763eda5bb24f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:a1b8ea79c8b655a62fac5b3d5b607ed33235886dcd55cb0879cfad6f803b54ca
+name: ack-eks-controller.v0.0.11
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:a1b8ea79c8b655a62fac5b3d5b607ed33235886dcd55cb0879cfad6f803b54ca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:6fe9c960de1f20d4c926c3c43e1b2d5f6d9e85e333193f51af2507b1f258511d
+name: ack-eks-controller.v0.0.12
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:6fe9c960de1f20d4c926c3c43e1b2d5f6d9e85e333193f51af2507b1f258511d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:4f13a7bea9b7faf4bd5193241b675921379300376a446f7e52ee1d272e190146
+name: ack-eks-controller.v0.0.13
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:4f13a7bea9b7faf4bd5193241b675921379300376a446f7e52ee1d272e190146
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:505fb6ecad5ee6ced176de895dc4818dfde21e8d50ab39b8e216e60e1eaae297
+name: ack-eks-controller.v0.0.14
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:505fb6ecad5ee6ced176de895dc4818dfde21e8d50ab39b8e216e60e1eaae297
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:7c964c158c31ef4f576c294b9b1f579b733e1eb9420ac4dbb6a011134a1024ca
+name: ack-eks-controller.v0.0.15
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:7c964c158c31ef4f576c294b9b1f579b733e1eb9420ac4dbb6a011134a1024ca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:ae41b14fac59381026812285bbddd0062365319e5e82bfe427dc15bd7ec334b7
+name: ack-eks-controller.v0.0.2
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:ae41b14fac59381026812285bbddd0062365319e5e82bfe427dc15bd7ec334b7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:0171e91f03b297aae7caeed5ec9f500aef0b6d878010ea8d65c6f5bd5b81754c
+name: ack-eks-controller.v0.0.3
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:0171e91f03b297aae7caeed5ec9f500aef0b6d878010ea8d65c6f5bd5b81754c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:f0bf9eec399ac5477ff206557d2a411c44bff6477e39210becad62d27c577700
+name: ack-eks-controller.v0.0.4
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:f0bf9eec399ac5477ff206557d2a411c44bff6477e39210becad62d27c577700
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:a6909e9c7efbf9e43af30206796e2434d1738e97e4289c315cb441f3fdd3c44d
+name: ack-eks-controller.v0.0.5
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:a6909e9c7efbf9e43af30206796e2434d1738e97e4289c315cb441f3fdd3c44d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:fd0a75b2c2be46ff455be8a1107d961089489a35b1fb2c38dc668427ce723327
+name: ack-eks-controller.v0.0.6
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:fd0a75b2c2be46ff455be8a1107d961089489a35b1fb2c38dc668427ce723327
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:96f2c06aa7fa1e46501ff55981ea39f4edecd84317a7b8fd3b946cc07d4b5308
+name: ack-eks-controller.v0.0.7
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:96f2c06aa7fa1e46501ff55981ea39f4edecd84317a7b8fd3b946cc07d4b5308
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:bd3aed2cf1076a93254ba6647d5c25b0e0ee11b7474c576b55595684308336ed
+name: ack-eks-controller.v0.0.8
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:bd3aed2cf1076a93254ba6647d5c25b0e0ee11b7474c576b55595684308336ed
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:4b3be00dfa4d1a28bcbaa31aace0e550a644484ad380bcd7b6702fc7ed54c5b4
+name: ack-eks-controller.v0.0.9
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:4b3be00dfa4d1a28bcbaa31aace0e550a644484ad380bcd7b6702fc7ed54c5b4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:f5981846d0502db0e23dce8e76502204c08018ecca51675570a46869a55d2004
+name: ack-eks-controller.v0.1.0
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:f5981846d0502db0e23dce8e76502204c08018ecca51675570a46869a55d2004
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:a32a4f119d925ef33a37ff8fe073558d6ee9ec070c6ad92e80eee702905ba858
+name: ack-eks-controller.v0.1.1
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:a32a4f119d925ef33a37ff8fe073558d6ee9ec070c6ad92e80eee702905ba858
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:43ce6f3a75a83bda370f4433a2db7ba2f3743b88ad2eafb4f31e82e18a5e074b
+name: ack-eks-controller.v0.1.2
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:43ce6f3a75a83bda370f4433a2db7ba2f3743b88ad2eafb4f31e82e18a5e074b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:d76a4d301589e4f9358b023a54b6b19e7b1ef6e9eebb4d5d6ccaee12bb7300dc
+name: ack-eks-controller.v0.1.3
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:d76a4d301589e4f9358b023a54b6b19e7b1ef6e9eebb4d5d6ccaee12bb7300dc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:2e153b96acc7707f295538936bdcce72a21849e50ad0a1a187e7242669dff760
+name: ack-eks-controller.v0.1.4
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.4
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:2e153b96acc7707f295538936bdcce72a21849e50ad0a1a187e7242669dff760
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:fe41d9c2239528e3a17a162e196bc1633b91e3adb0d0d9c058a8a19e3e4bd7cd
+name: ack-eks-controller.v0.1.5
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.5
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:fe41d9c2239528e3a17a162e196bc1633b91e3adb0d0d9c058a8a19e3e4bd7cd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:bf15a1a54fd156cb34261a7a3122dcb260989cb8c3c7186806356c566351fe15
+name: ack-eks-controller.v0.1.6
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.6
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:bf15a1a54fd156cb34261a7a3122dcb260989cb8c3c7186806356c566351fe15
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:1cfd42d63addedd64ee5ca8ec6e772b6afee75b51ce7eafe093240af8b570216
+name: ack-eks-controller.v0.1.7
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.7
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:1cfd42d63addedd64ee5ca8ec6e772b6afee75b51ce7eafe093240af8b570216
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:c977fbda73713e48013159ddf9240011ef06b0f9665515d11e23ce4d696a34f8
+name: ack-eks-controller.v0.1.8
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.8
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:c977fbda73713e48013159ddf9240011ef06b0f9665515d11e23ce4d696a34f8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:c0d92bba187f6f437241b1b9829ab95aa55aafd5c3e9824bd605cf566a2ca09a
+name: ack-eks-controller.v0.1.9
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 0.1.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v0.1.9
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:c0d92bba187f6f437241b1b9829ab95aa55aafd5c3e9824bd605cf566a2ca09a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:977f50f9b7270755c23c78110dfd17ce782bc26fe463dc1555cd8b5d89a82cf7
+name: ack-eks-controller.v1.0.0
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:977f50f9b7270755c23c78110dfd17ce782bc26fe463dc1555cd8b5d89a82cf7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:eb8c93467b8fc3f8c8e161c2d6bcb747fd0e05096f0608d33392eb6e7d267c9e
+name: ack-eks-controller.v1.0.1
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:eb8c93467b8fc3f8c8e161c2d6bcb747fd0e05096f0608d33392eb6e7d267c9e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:3a2f7f872722e92224ef9f3c234854956722f1ff96481e50d9220ac5ecec6932
+name: ack-eks-controller.v1.0.2
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:v1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:3a2f7f872722e92224ef9f3c234854956722f1ff96481e50d9220ac5ecec6932
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:c91303136597e2a494aef3fae8dee8180df7de713d1daab7565fe6ff22f6ad3f
+name: ack-eks-controller.v1.0.3
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:c91303136597e2a494aef3fae8dee8180df7de713d1daab7565fe6ff22f6ad3f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:fe59fb049253ad9b7175a490a394353e46eb3f8fab9cdc93fa210fa4aa4ccee2
+name: ack-eks-controller.v1.0.4
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:fe59fb049253ad9b7175a490a394353e46eb3f8fab9cdc93fa210fa4aa4ccee2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:373ef4a622b524654bd25adebd9678e486c8e8a5bcabbcf0a2fcca55acda5116
+name: ack-eks-controller.v1.0.5
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:373ef4a622b524654bd25adebd9678e486c8e8a5bcabbcf0a2fcca55acda5116
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:a3fc3da1eaf12a01f8fa3fc8a5e18808e9abd15dae22af0fc0ba22f3a020e9fa
+name: ack-eks-controller.v1.1.0
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:a3fc3da1eaf12a01f8fa3fc8a5e18808e9abd15dae22af0fc0ba22f3a020e9fa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:e488f75ed906051690ef7b160fa0f86bf221790997e80d72875d8d85acd19383
+name: ack-eks-controller.v1.1.1
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:e488f75ed906051690ef7b160fa0f86bf221790997e80d72875d8d85acd19383
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:85c1bbd234baac02dbe21b535f427dce8272012642fbc78b281b33a5f226b56c
+name: ack-eks-controller.v1.1.2
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:85c1bbd234baac02dbe21b535f427dce8272012642fbc78b281b33a5f226b56c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:616cb7374a7bd5bf006da7b8781a0bd79b2fb21b7105df00113991e4a20a2857
+name: ack-eks-controller.v1.1.3
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:616cb7374a7bd5bf006da7b8781a0bd79b2fb21b7105df00113991e4a20a2857
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:df960f445db850419c4345831c934810caf0af37bf6513a92654be09ae113311
+name: ack-eks-controller.v1.2.0
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.2.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.2.0
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:df960f445db850419c4345831c934810caf0af37bf6513a92654be09ae113311
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:31ad4f7bc07534084028e27dbaa63830a7c1667ed60852791d078adaac34b84f
+name: ack-eks-controller.v1.2.1
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.2.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.2.1
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:31ad4f7bc07534084028e27dbaa63830a7c1667ed60852791d078adaac34b84f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:3c2e61df710111e955958c549b55dc360470b4c33394f6605da496ed04f46c26
+name: ack-eks-controller.v1.2.2
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.2.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.2.2
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:3c2e61df710111e955958c549b55dc360470b4c33394f6605da496ed04f46c26
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:c84812196d766c551195d3be7eb5c97788bea8866084730be9f208f01ab6148e
+name: ack-eks-controller.v1.2.3
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.2.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.2.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:c84812196d766c551195d3be7eb5c97788bea8866084730be9f208f01ab6148e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:bb22174b70e152bb5687f6c76122fd1b1fbdce5c60603da2b08fa12d7d15d3ed
+name: ack-eks-controller.v1.3.0
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.3.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.3.0
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:bb22174b70e152bb5687f6c76122fd1b1fbdce5c60603da2b08fa12d7d15d3ed
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:1a6af3f0fb1ec68c88fcbe92a094fdddf3dea742b5a827f7005c8385c0423032
+name: ack-eks-controller.v1.3.1
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.3.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.3.1
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:1a6af3f0fb1ec68c88fcbe92a094fdddf3dea742b5a827f7005c8385c0423032
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:506e0133fa2994f56cf43405c1be5582a0fcf53ecc23d7233166fbea45ee11e6
+name: ack-eks-controller.v1.3.3
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.3.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.3.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:506e0133fa2994f56cf43405c1be5582a0fcf53ecc23d7233166fbea45ee11e6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:6899edd7977a2fc89f413487412f9e07f529554cd1ace79a3aa14249c4d7e591
+name: ack-eks-controller.v1.3.5
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.3.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.3.5
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:6899edd7977a2fc89f413487412f9e07f529554cd1ace79a3aa14249c4d7e591
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:7e55037895cf6b7ac86994addf1ac8a29cddef32b7d6a956cdb696d2cf1382f8
+name: ack-eks-controller.v1.4.0
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.4.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.4.0
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:7e55037895cf6b7ac86994addf1ac8a29cddef32b7d6a956cdb696d2cf1382f8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:616bb5e7b8614cbfd4473874c3986b0bbf7064af4436c940631795c856e66c15
+name: ack-eks-controller.v1.4.1
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.4.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.4.1
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:616bb5e7b8614cbfd4473874c3986b0bbf7064af4436c940631795c856e66c15
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:7ab9f7a25a843dfdc70cd6ebdb991e3b81e79cbbc7ebfa2ec54df32b451fca40
+name: ack-eks-controller.v1.4.2
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.4.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.4.2
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:7ab9f7a25a843dfdc70cd6ebdb991e3b81e79cbbc7ebfa2ec54df32b451fca40
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:244aa32aeee9346ba539ff4d63d965169e67d813d3daaa0f4c5b3ad24582a154
+name: ack-eks-controller.v1.4.3
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.4.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.4.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:244aa32aeee9346ba539ff4d63d965169e67d813d3daaa0f4c5b3ad24582a154
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:0d4d79d0234efc6022eb291e5f71f7b13c93e13d3923c659048e34685bef90c0
+name: ack-eks-controller.v1.4.4
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.4.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.4.4
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:0d4d79d0234efc6022eb291e5f71f7b13c93e13d3923c659048e34685bef90c0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:99eed8e0671bbf337a8118ed0aa42b63774f1dcb56c987334eeb01292400ce04
+name: ack-eks-controller.v1.4.5
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.4.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.4.5
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:99eed8e0671bbf337a8118ed0aa42b63774f1dcb56c987334eeb01292400ce04
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:c5fd49afd8f419f28b1ef8a54c96d95c0e101425f9703e3ffd65baa4ac341d03
+name: ack-eks-controller.v1.4.6
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.4.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.4.6
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:c5fd49afd8f419f28b1ef8a54c96d95c0e101425f9703e3ffd65baa4ac341d03
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:5d8819b0ba74d41d85f6c15fee6acd94447878e276600c65fee28a5d244ecc81
+name: ack-eks-controller.v1.4.7
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.4.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.4.7
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:5d8819b0ba74d41d85f6c15fee6acd94447878e276600c65fee28a5d244ecc81
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eks-controller@sha256:13a72307a59e4cb6402a149a4c5f4ee789978768cefad86bd6bbb786091d08eb
+name: ack-eks-controller.v1.5.0
+package: ack-eks-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: AccessEntry
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Cluster
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: FargateProfile
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: IdentityProviderConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: Nodegroup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eks.services.k8s.aws
+    kind: PodIdentityAssociation
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eks-controller
+    version: 1.5.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "eks.services.k8s.aws/v1alpha1",
+            "kind": "Addon",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "eks.services.k8s.aws/v1alpha1",
+            "kind": "Cluster",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "eks.services.k8s.aws/v1alpha1",
+            "kind": "FargateProfile",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "eks.services.k8s.aws/v1alpha1",
+            "kind": "Nodegroup",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/eks-controller:1.5.0
+      createdAt: "2024-10-09T02:32:47Z"
+      description: AWS EKS controller is a service controller for managing EKS resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: AccessEntry represents the state of an AWS eks AccessEntry resource.
+        displayName: AccessEntry
+        kind: AccessEntry
+        name: accessentries.eks.services.k8s.aws
+        version: v1alpha1
+      - description: Addon represents the state of an AWS eks Addon resource.
+        displayName: Addon
+        kind: Addon
+        name: addons.eks.services.k8s.aws
+        version: v1alpha1
+      - description: Cluster represents the state of an AWS eks Cluster resource.
+        displayName: Cluster
+        kind: Cluster
+        name: clusters.eks.services.k8s.aws
+        version: v1alpha1
+      - description: FargateProfile represents the state of an AWS eks FargateProfile
+          resource.
+        displayName: FargateProfile
+        kind: FargateProfile
+        name: fargateprofiles.eks.services.k8s.aws
+        version: v1alpha1
+      - description: IdentityProviderConfig represents the state of an AWS eks IdentityProviderConfig
+          resource.
+        displayName: IdentityProviderConfig
+        kind: IdentityProviderConfig
+        name: identityproviderconfigs.eks.services.k8s.aws
+        version: v1alpha1
+      - description: Nodegroup represents the state of an AWS eks Nodegroup resource.
+        displayName: Nodegroup
+        kind: Nodegroup
+        name: nodegroups.eks.services.k8s.aws
+        version: v1alpha1
+      - description: PodIdentityAssociation represents the state of an AWS eks PodIdentityAssociation
+          resource.
+        displayName: PodIdentityAssociation
+        kind: PodIdentityAssociation
+        name: podidentityassociations.eks.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Elastic Kubernetes Service (EKS) resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon EKS**
+
+      Amazon Elastic Kubernetes Service (Amazon EKS) is a managed service that you can use to run Kubernetes on AWS without needing to install, operate, and maintain your own Kubernetes control plane or nodes. Kubernetes is an open-source system for automating the deployment, scaling, and management of containerized applications.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon EKS
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - eks
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon EKS Developer Resources
+      url: https://aws.amazon.com/eks/getting-started/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: eks maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eks-controller:1.5.0
+  name: ""
+- image: quay.io/operatorhubio/ack-eks-controller@sha256:13a72307a59e4cb6402a149a4c5f4ee789978768cefad86bd6bbb786091d08eb
+  name: ""
+schema: olm.bundle

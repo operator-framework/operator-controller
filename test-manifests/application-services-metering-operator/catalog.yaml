@@ -1,0 +1,156 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTguNTEgMjU4LjUxIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2QxZDFkMTt9LmNscy0ye2ZpbGw6IzhkOGQ4Zjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPkFzc2V0IDQ8L3RpdGxlPjxnIGlkPSJMYXllcl8yIiBkYXRhLW5hbWU9IkxheWVyIDIiPjxnIGlkPSJMYXllcl8xLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTI5LjI1LDIwQTEwOS4xLDEwOS4xLDAsMCwxLDIwNi40LDIwNi40LDEwOS4xLDEwOS4xLDAsMSwxLDUyLjExLDUyLjExLDEwOC40NSwxMDguNDUsMCwwLDEsMTI5LjI1LDIwbTAtMjBoMEM1OC4xNiwwLDAsNTguMTYsMCwxMjkuMjVIMGMwLDcxLjA5LDU4LjE2LDEyOS4yNiwxMjkuMjUsMTI5LjI2aDBjNzEuMDksMCwxMjkuMjYtNTguMTcsMTI5LjI2LTEyOS4yNmgwQzI1OC41MSw1OC4xNiwyMDAuMzQsMCwxMjkuMjUsMFoiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNzcuNTQsMTAzLjQxSDE0MS42NkwxNTQuOSw2NS43NmMxLjI1LTQuNC0yLjMzLTguNzYtNy4yMS04Ljc2SDEwMi45M2E3LjMyLDcuMzIsMCwwLDAtNy40LDZsLTEwLDY5LjYxYy0uNTksNC4xNywyLjg5LDcuODksNy40LDcuODloMzYuOUwxMTUuNTUsMTk3Yy0xLjEyLDQuNDEsMi40OCw4LjU1LDcuMjQsOC41NWE3LjU4LDcuNTgsMCwwLDAsNi40Ny0zLjQ4TDE4NCwxMTMuODVDMTg2Ljg2LDEwOS4yNCwxODMuMjksMTAzLjQxLDE3Ny41NCwxMDMuNDFaIi8+PC9nPjwvZz48L3N2Zz4=
+  mediatype: image/svg+xml
+name: application-services-metering-operator
+schema: olm.package
+---
+entries:
+- name: application-services-metering-operator.v0.6.0
+- name: application-services-metering-operator.v0.6.1
+  replaces: application-services-metering-operator.v0.6.0
+name: alpha
+package: application-services-metering-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/application-services-metering-operator@sha256:5c6f7b3324cbd2217404fbbbff9ac0e1c30fc207e2fc5e69e7b9088be0e998f9
+name: application-services-metering-operator.v0.6.0
+package: application-services-metering-operator
+properties:
+- type: olm.gvk
+  value:
+    group: applicationservices.redhat.com
+    kind: Meter
+    version: v1
+- type: olm.package
+  value:
+    packageName: application-services-metering-operator
+    version: 0.6.0
+relatedImages:
+- image: quay.io/operatorhubio/application-services-metering-operator@sha256:5c6f7b3324cbd2217404fbbbff9ac0e1c30fc207e2fc5e69e7b9088be0e998f9
+  name: ""
+- image: quay.io/redhat-developer/application-services-metering-operator:0.6.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/application-services-metering-operator@sha256:126d95ba20442dda939f4202c619cb74d6be2c7e2b5695bd53f5eb73f35844e0
+name: application-services-metering-operator.v0.6.1
+package: application-services-metering-operator
+properties:
+- type: olm.gvk
+  value:
+    group: applicationservices.redhat.com
+    kind: Meter
+    version: v1
+- type: olm.package
+  value:
+    packageName: application-services-metering-operator
+    version: 0.6.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "applicationservices.redhat.com/v1",
+            "kind": "Meter",
+            "metadata": {
+              "name": "app-services-metrics-example"
+            },
+            "spec": {
+              "includeInfrastructure": false,
+              "meterCollectionEnabled": true
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Monitoring, Application Runtime
+      certified: "false"
+      containerImage: quay.io/redhat-developer/application-services-metering-operator:0.6.1
+      createdAt: "2021-09-28T13:00:00Z"
+      description: Collect the core usage of products from the Application Services
+        portfolio into a single metric labeled by Runtimes, Integration, and Automation.
+      repository: https://github.com/redhat-developer/application-services-metering-operator
+      support: Red Hat
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Meter
+        displayName: Meter
+        kind: Meter
+        name: meters.applicationservices.redhat.com
+        resources:
+        - kind: Deployment
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: ReplicaSet
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        version: v1
+    description: |-
+      ## About the managed application
+
+      There is no managed application created with this operator.
+
+      ## About this Operator
+
+      The metering operator watches pods for predetermined labels, across a cluster or namespace(s).
+      The label schema for Red Hat Application Services is in the format:
+
+      * `com.company=Red_Hat`
+      * `rht.comp=PAM`
+      * `rht.comp_ver=7.10`
+      * `rht.prod_name=Red_Hat_Process_Automation`
+      * `rht.prod_ver=7.11`
+      * `rht.subcomp=rhpam-kogito-runtime`
+      * `rht.subcomp_t=application`
+
+      It's important not to remove labels as the operator will cease monitoring those pods.
+
+      The operator exposes a metric named: `appsvcs_cpu_usage_cores`
+      The metric has a label for product category, these are Runtimes, Integration and Automation.
+      There is a prometheus rule using the metric to group by product name, `appsvcs_cores_by_product:sum`.
+
+      The operator utilises the OpenShift Monitoring Stack to provide usage observability via cloud.redhat.com
+
+      ## Prerequisites for enabling this Operator
+
+      None.
+    displayName: Application Services Metering Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - metering
+    - operator
+    links:
+    - name: Red Hat Application Services portfolio
+      url: https://www.redhat.com/en/products/middleware
+    maturity: alpha
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/operatorhubio/application-services-metering-operator@sha256:126d95ba20442dda939f4202c619cb74d6be2c7e2b5695bd53f5eb73f35844e0
+  name: ""
+- image: quay.io/redhat-developer/application-services-metering-operator:0.6.1
+  name: ""
+schema: olm.bundle

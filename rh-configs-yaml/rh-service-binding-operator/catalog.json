@@ -1,0 +1,2554 @@
+{
+    "schema": "olm.package",
+    "name": "rh-service-binding-operator",
+    "defaultChannel": "stable",
+    "icon": {
+        "base64data": "PHN2ZyB3aWR0aD0iMzIuODgybW0iIGhlaWdodD0iMjIuNjI3bW0iIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDMyLjg4MiAyMi42MjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgdHJhbnNmb3JtPSJtYXRyaXgoLS4xNzE4OSAwIDAgLS4xNzE4OSAzNC40OSAyNS43NzMpIj48ZyBmaWxsPSIjODhkNjVkIj48cGF0aCB0cmFuc2Zvcm09Im1hdHJpeCgtMS41MzkyIDAgMCAtMS41MzkyIDM3Ny4zOSAzMTEuMykiIGQ9Im0yMDEuNzcgMTA0LjczYy0xMC4wNjQgMC0xOC4xNjYgOC4xMDIyLTE4LjE2NiAxOC4xNjZ2NDguOTUzYzAgMTAuMDY0IDguMTAyMiAxOC4xNjYgMTguMTY2IDE4LjE2NmgxOS4xN2MxMC4wNjQgMCAxOC4xNjYtOC4xMDIyIDE4LjE2Ni0xOC4xNjZ2LTQ4Ljk1M2MwLTEwLjA2NC04LjEwMjItMTguMTY2LTE4LjE2Ni0xOC4xNjZ6bS01LjQzMTYgMTIuOTNjMy44MjAyIDAuMTY0NjcgNi43ODY0IDMuMzkwMyA2LjYzMDkgNy4yMTA5LTAuMTU1MzUgMy44MjA4LTMuMzc0MSA2Ljc5NS03LjE5NTMgNi42NDg0LTMuODIxNS0wLjE0NzAzLTYuODAyOC0zLjM1OTgtNi42NjQxLTcuMTgxNmwyZS0zIC0wLjA2MDVjMC4xNzE4OS0zLjgyMTIgMy40MDUxLTYuNzgxNyA3LjIyNjYtNi42MTcyem0wIDI0LjU1N2MzLjgyMDIgMC4xNjQ2NyA2Ljc4NjQgMy4zOTAzIDYuNjMwOSA3LjIxMDktMC4xNTUzNSAzLjgyMDgtMy4zNzQxIDYuNzk1LTcuMTk1MyA2LjY0ODQtMy44MjE1LTAuMTQ3MDMtNi44MDI4LTMuMzU5OC02LjY2NDEtNy4xODE2bDJlLTMgLTAuMDYwNWMwLjE3MTg5LTMuODIxMiAzLjQwNTEtNi43ODE3IDcuMjI2Ni02LjYxNzJ6bTAgMjQuNTU3YzMuODIwMiAwLjE2NDY3IDYuNzg2NCAzLjM5MDMgNi42MzA5IDcuMjEwOS0wLjE1NTM0IDMuODIwOC0zLjM3NDEgNi43OTUtNy4xOTUzIDYuNjQ4NC0zLjgyMTUtMC4xNDcwMy02LjgwMjgtMy4zNTk4LTYuNjY0MS03LjE4MTZsMmUtMyAtMC4wNjA1YzAuMTcxODktMy44MjEyIDMuNDA1MS02Ljc4MTcgNy4yMjY2LTYuNjE3MnoiLz48cGF0aCB0cmFuc2Zvcm09Im1hdHJpeCgtMS41MzkyIDAgMCAtMS41MzkyIDM3Ny4zOSAzMTEuMykiIGQ9Im0xMTQuODMgMTA1LjIxdjg1LjAzOWg1NS4yNTR2LTg1LjAzOXptNDMuMTE1IDEyLjQ1MWMzLjgyMSAwLjE2MzYzIDYuNzg4MyAzLjM4OTYgNi42MzI4IDcuMjEwOS0wLjE1NTM0IDMuODIxNi0zLjM3NTMgNi43OTYxLTcuMTk3MyA2LjY0ODQtMy44MjE1LTAuMTQ3MDMtNi44MDI4LTMuMzU5OC02LjY2NDEtNy4xODE2bDRlLTMgLTAuMDYwNWMwLjE3MTktMy44MjA0IDMuNDAzOS02Ljc4MDYgNy4yMjQ2LTYuNjE3MnptMCAyNC41NTdjMy44MjEgMC4xNjM2MyA2Ljc4ODMgMy4zODk2IDYuNjMyOCA3LjIxMDktMC4xNTUzNCAzLjgyMTYtMy4zNzUzIDYuNzk2MS03LjE5NzMgNi42NDg0LTMuODIxNS0wLjE0NzAzLTYuODAyOC0zLjM1OTgtNi42NjQxLTcuMTgxNmw0ZS0zIC0wLjA2MDVjMC4xNzE5LTMuODIwNCAzLjQwMzktNi43ODA2IDcuMjI0Ni02LjYxNzJ6bTAgMjQuNTU3YzMuODIxIDAuMTYzNjMgNi43ODgzIDMuMzg5NiA2LjYzMjggNy4yMTA5LTAuMTU1MzMgMy44MjE2LTMuMzc1MyA2Ljc5NjEtNy4xOTczIDYuNjQ4NC0zLjgyMTUtMC4xNDcwMy02LjgwMjgtMy4zNTk4LTYuNjY0MS03LjE4MTZsNGUtMyAtMC4wNjA1YzAuMTcxOS0zLjgyMDQgMy40MDM5LTYuNzgwNiA3LjIyNDYtNi42MTcyeiIvPjwvZz48ZyBmaWxsPSIjNjJiYjJmIj48cmVjdCB4PSI3NS4wMzIiIHk9IjExNS4yMyIgd2lkdGg9IjU5LjkzNSIgaGVpZ2h0PSI4LjU3NDQiLz48cmVjdCB4PSI3NS4wMzIiIHk9Ijc3LjQzNiIgd2lkdGg9IjU5LjkzNSIgaGVpZ2h0PSI4LjU3NDQiLz48cmVjdCB4PSI3NS4wMzIiIHk9IjM5LjYzOCIgd2lkdGg9IjU5LjkzNSIgaGVpZ2h0PSI4LjU3NDQiLz48L2c+PC9nPjwvc3ZnPgo=",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "beta",
+    "package": "rh-service-binding-operator",
+    "entries": [
+        {
+            "name": "service-binding-operator.v0.5.0"
+        },
+        {
+            "name": "service-binding-operator.v0.6.0",
+            "replaces": "service-binding-operator.v0.5.0"
+        },
+        {
+            "name": "service-binding-operator.v0.7.0",
+            "replaces": "service-binding-operator.v0.6.0"
+        },
+        {
+            "name": "service-binding-operator.v0.7.1",
+            "replaces": "service-binding-operator.v0.7.0"
+        },
+        {
+            "name": "service-binding-operator.v0.8.0",
+            "replaces": "service-binding-operator.v0.7.1"
+        },
+        {
+            "name": "service-binding-operator.v0.9.0",
+            "replaces": "service-binding-operator.v0.8.0"
+        },
+        {
+            "name": "service-binding-operator.v0.9.1",
+            "replaces": "service-binding-operator.v0.9.0"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "candidate",
+    "package": "rh-service-binding-operator",
+    "entries": [
+        {
+            "name": "service-binding-operator.v0.10.0",
+            "replaces": "service-binding-operator.v0.9.1"
+        },
+        {
+            "name": "service-binding-operator.v0.11.0",
+            "replaces": "service-binding-operator.v0.10.0"
+        },
+        {
+            "name": "service-binding-operator.v0.5.0"
+        },
+        {
+            "name": "service-binding-operator.v0.6.0",
+            "replaces": "service-binding-operator.v0.5.0"
+        },
+        {
+            "name": "service-binding-operator.v0.7.0",
+            "replaces": "service-binding-operator.v0.6.0"
+        },
+        {
+            "name": "service-binding-operator.v0.7.1",
+            "replaces": "service-binding-operator.v0.7.0"
+        },
+        {
+            "name": "service-binding-operator.v0.8.0",
+            "replaces": "service-binding-operator.v0.7.1"
+        },
+        {
+            "name": "service-binding-operator.v0.9.0",
+            "replaces": "service-binding-operator.v0.8.0"
+        },
+        {
+            "name": "service-binding-operator.v0.9.1",
+            "replaces": "service-binding-operator.v0.9.0"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "preview",
+    "package": "rh-service-binding-operator",
+    "entries": [
+        {
+            "name": "service-binding-operator.v0.10.0",
+            "replaces": "service-binding-operator.v0.9.1"
+        },
+        {
+            "name": "service-binding-operator.v0.5.0"
+        },
+        {
+            "name": "service-binding-operator.v0.6.0",
+            "replaces": "service-binding-operator.v0.5.0"
+        },
+        {
+            "name": "service-binding-operator.v0.7.0",
+            "replaces": "service-binding-operator.v0.6.0"
+        },
+        {
+            "name": "service-binding-operator.v0.7.1",
+            "replaces": "service-binding-operator.v0.7.0"
+        },
+        {
+            "name": "service-binding-operator.v0.8.0",
+            "replaces": "service-binding-operator.v0.7.1"
+        },
+        {
+            "name": "service-binding-operator.v0.9.0",
+            "replaces": "service-binding-operator.v0.8.0"
+        },
+        {
+            "name": "service-binding-operator.v0.9.1",
+            "replaces": "service-binding-operator.v0.9.0"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable",
+    "package": "rh-service-binding-operator",
+    "entries": [
+        {
+            "name": "service-binding-operator.v0.10.0",
+            "replaces": "service-binding-operator.v0.9.1"
+        },
+        {
+            "name": "service-binding-operator.v0.11.0",
+            "replaces": "service-binding-operator.v0.10.0"
+        },
+        {
+            "name": "service-binding-operator.v0.5.0"
+        },
+        {
+            "name": "service-binding-operator.v0.6.0",
+            "replaces": "service-binding-operator.v0.5.0"
+        },
+        {
+            "name": "service-binding-operator.v0.7.0",
+            "replaces": "service-binding-operator.v0.6.0"
+        },
+        {
+            "name": "service-binding-operator.v0.7.1",
+            "replaces": "service-binding-operator.v0.7.0"
+        },
+        {
+            "name": "service-binding-operator.v0.8.0",
+            "replaces": "service-binding-operator.v0.7.1"
+        },
+        {
+            "name": "service-binding-operator.v0.9.0",
+            "replaces": "service-binding-operator.v0.8.0"
+        },
+        {
+            "name": "service-binding-operator.v0.9.1",
+            "replaces": "service-binding-operator.v0.9.0"
+        },
+        {
+            "name": "service-binding-operator.v1.0.0",
+            "replaces": "service-binding-operator.v0.11.0"
+        },
+        {
+            "name": "service-binding-operator.v1.0.1",
+            "replaces": "service-binding-operator.v1.0.0"
+        },
+        {
+            "name": "service-binding-operator.v1.1.0",
+            "replaces": "service-binding-operator.v1.0.1"
+        },
+        {
+            "name": "service-binding-operator.v1.1.1",
+            "replaces": "service-binding-operator.v1.1.0"
+        },
+        {
+            "name": "service-binding-operator.v1.2.0",
+            "replaces": "service-binding-operator.v1.1.1"
+        },
+        {
+            "name": "service-binding-operator.v1.3.0",
+            "replaces": "service-binding-operator.v1.2.0"
+        },
+        {
+            "name": "service-binding-operator.v1.3.1",
+            "replaces": "service-binding-operator.v1.3.0"
+        },
+        {
+            "name": "service-binding-operator.v1.3.3",
+            "replaces": "service-binding-operator.v1.3.1"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.10.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:a7c6f1c9260c79ebbdfb25ea996516ba1e2bcbedf25401e9e6848b955a2d3d78",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "service.binding",
+                "kind": "ServiceBinding",
+                "version": "v1alpha2"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.10.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"service.binding/v1alpha2\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.service.binding",
+                            "version": "v1alpha2",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "candidate",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:a7c6f1c9260c79ebbdfb25ea996516ba1e2bcbedf25401e9e6848b955a2d3d78"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:3d7a3648e86848402577dd19c1f8fd130a5556ebdfbc0f663a72f9e141024812"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.11.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:87448055a162e215a4d4982a8494fec6e7cc59fe6704494ddfdcfea076a2100c",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.11.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"BindableKinds\",\n    \"metadata\": {\n      \"name\": \"bindablekinds-sample\"\n    }\n  },\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:e799bd06043028d214baeeffc683710ad2eed7b83272fc653e3b89f69711319b",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'"
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "candidate",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:87448055a162e215a4d4982a8494fec6e7cc59fe6704494ddfdcfea076a2100c"
+        },
+        {
+            "name": "service-binding-rhel8-operator-e799bd06043028d214baeeffc683710ad2eed7b83272fc653e3b89f69711319b-annotation",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:e799bd06043028d214baeeffc683710ad2eed7b83272fc653e3b89f69711319b"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:e799bd06043028d214baeeffc683710ad2eed7b83272fc653e3b89f69711319b"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.5.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:9ebccf0417b7b11834015d8598483c216bcafe33390473c966404d7ae7987b3d",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.5.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "ServiceBinding expresses intent to bind an operator-backed service with an application workload."
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:9ebccf0417b7b11834015d8598483c216bcafe33390473c966404d7ae7987b3d"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:d5b1c35df15154c033900df3bd0c9ddae5de4c13821cab5a3969b4ea20da31f6"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.6.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:2a03607103b99ac117723f1516d0dfff31f6a4042fdce2c938698f9e26c249d8",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.6.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "ServiceBinding expresses intent to bind an operator-backed service with an application workload."
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:2a03607103b99ac117723f1516d0dfff31f6a4042fdce2c938698f9e26c249d8"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:6a4ed72b3f57b5aca92f53945f048074f5369ef5bdab3e9b0a18e37f0aee022b"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.7.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:61ba7d0362e83b0ff9106bbd93a72104222cae3393af49c46c90631386a88b56",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.7.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "ServiceBinding expresses intent to bind an operator-backed service with an application workload."
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:61ba7d0362e83b0ff9106bbd93a72104222cae3393af49c46c90631386a88b56"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:a43d0c3f6a993b6d7635a71f1c79c7387e5d0f1eac2e66c15b3dd270083baac4"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.7.1",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:9e0e3be2ec4d1e0356d2e3b3f348db0ab86b8a7050bdb0cb9b74e72650352929",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.7.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "ServiceBinding expresses intent to bind an operator-backed service with an application workload."
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:9e0e3be2ec4d1e0356d2e3b3f348db0ab86b8a7050bdb0cb9b74e72650352929"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:f23a1998139dfd4d19b736937645212349c5fe92338d44f2da0b6f252642632b"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.8.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:607ca18186e472dec1080c9601257d3fe92ae7ed8e5d0d38fc2abd082f6d11d1",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.8.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "ServiceBinding expresses intent to bind an operator-backed service with an application workload."
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:607ca18186e472dec1080c9601257d3fe92ae7ed8e5d0d38fc2abd082f6d11d1"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:5e8e0f1f7f85a44cd3ba59cd038e5a5941c04dd77bd124a735f57a15a0200397"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.9.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:5cac20e29897f0da04c91e8232d0bb74b08704f4d0684a2e76155274a5e4f81a",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "service.binding",
+                "kind": "ServiceBinding",
+                "version": "v1alpha2"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.9.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"service.binding/v1alpha2\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "ServiceBinding expresses intent to bind an operator-backed service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.service.binding",
+                            "version": "v1alpha2",
+                            "kind": "ServiceBinding"
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:5cac20e29897f0da04c91e8232d0bb74b08704f4d0684a2e76155274a5e4f81a"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:6f3a8f8a9c0280fdc591641ef0cd3bb0dbb4328021d8510191b78bd3ef803a59"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v0.9.1",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:d9930900b0d2f92ae813246fc322290234ad8bbd165b10e36671b53852228718",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "service.binding",
+                "kind": "ServiceBinding",
+                "version": "v1alpha2"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "0.9.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"service.binding/v1alpha2\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "ServiceBinding expresses intent to bind an operator-backed service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.service.binding",
+                            "version": "v1alpha2",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding for Kubernetes. Describes the connection between a Provisioned Service and an Application Projection. Implements Service Binding Specifcation for Kubernetes (https://github.com/k8s-service-bindings/spec)."
+                        }
+                    ]
+                },
+                "description": " The Service Binding Operator enables application developers to more easily bind applications together with operator managed backing services such as databases, without having to perform manual configuration of secrets, configmaps, etc. The Service Binding Operator accomplishes this through automatically collecting binding information and sharing with an application to bind it with operator managed backing services. The binding is performed through a new custom resource called a ServiceBindingRequest.\n### Example\nA set of examples, each of which illustrates a usage scenario for the Service Binding Operator, is being developed in parallel with the Operator. Each example includes documentation and can be run either through the OpenShift web console or command line client. The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n### Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###  Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n### Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) ",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Blog post",
+                        "url": "https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:d9930900b0d2f92ae813246fc322290234ad8bbd165b10e36671b53852228718"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator@sha256:fe6629401bc8447da95ec55949b5a27e620364bb6e02f86230262699ac8a5d55"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v1.0.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:3ab58b76e5f7002b5c0719d543576dce5df7572f2b32b1453e1ad7623c2bdad9",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "1.0.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:9dbc06df9289297c9b9d178fe47587231db9415ece964b513f802e2984ee9437",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.3.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'."
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        }
+                    ]
+                },
+                "description": "The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their\napplications to backing services (REST API, databases, event buses and others) with a consistent and predictable\nexperience. The operator reads data made available by the control plane of backing services and projects the bindings\ndata to applications either as accessible files mounted into the application’s container or environment variables.\n\nIn Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their\napplication in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and\ncomplexity dealing with each specific services, which leads large development teams to lose overall velocity.\n\nService Binding Operator removes the error-prone manual configuration of binding information, provides service operators\na low-touch administrative experience to provision and manage access to services and enriches development lifecycle.\n\nFor additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).\n\nGet Started with Service Binding Operator\n* Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).\n* Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.\n\nNeed Help\n* Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n\nLicence\n* Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)\n\nService Binding Operator is providing and supporting two different APIs.\n* `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.\n* `servicebinding.io/v1alpha3`: This API is the one defined in the Service Binding specification. The specification is still evolving and maturing, as a result the API might change in the future. We recommend you to carefully use that API for testing purposes and preparing your integration to become fully compliant with the specification. It is available in Service Binding Operator 1.x, as Tech Preview.\n\nWe’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.\n",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://redhat-developer.github.io/service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "candidate",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:3ab58b76e5f7002b5c0719d543576dce5df7572f2b32b1453e1ad7623c2bdad9"
+        },
+        {
+            "name": "service-binding-rhel8-operator-9dbc06df9289297c9b9d178fe47587231db9415ece964b513f802e2984ee9437-annotation",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:9dbc06df9289297c9b9d178fe47587231db9415ece964b513f802e2984ee9437"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:9dbc06df9289297c9b9d178fe47587231db9415ece964b513f802e2984ee9437"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v1.0.1",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:8b8a7c93a42dac04444220a7e88bdfb6696362491ab83d9a008917d3e751c22b",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "1.0.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:2986a14884b4ed6435a7463b9cae4114b65a2bb4ea6cd18ad84a73a142fb7680",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'."
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        }
+                    ]
+                },
+                "description": "The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their\napplications to backing services (REST API, databases, event buses and others) with a consistent and predictable\nexperience. The operator reads data made available by the control plane of backing services and projects the bindings\ndata to applications either as accessible files mounted into the application’s container or environment variables.\n\nIn Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their\napplication in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and\ncomplexity dealing with each specific services, which leads large development teams to lose overall velocity.\n\nService Binding Operator removes the error-prone manual configuration of binding information, provides service operators\na low-touch administrative experience to provision and manage access to services and enriches development lifecycle.\n\nFor additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).\n\nGet Started with Service Binding Operator\n* Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).\n* Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.\n\nNeed Help\n* Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n\nLicence\n* Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)\n\nService Binding Operator is providing and supporting two different APIs.\n* `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.\n* `servicebinding.io/v1alpha3`: This API is the one defined in the Service Binding specification. The specification is still evolving and maturing, as a result the API might change in the future. We recommend you to carefully use that API for testing purposes and preparing your integration to become fully compliant with the specification. It is available in Service Binding Operator 1.x, as Tech Preview.\n\nWe’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.\n",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://redhat-developer.github.io/service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "candidate",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:8b8a7c93a42dac04444220a7e88bdfb6696362491ab83d9a008917d3e751c22b"
+        },
+        {
+            "name": "service-binding-rhel8-operator-2986a14884b4ed6435a7463b9cae4114b65a2bb4ea6cd18ad84a73a142fb7680-annotation",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:2986a14884b4ed6435a7463b9cae4114b65a2bb4ea6cd18ad84a73a142fb7680"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:2986a14884b4ed6435a7463b9cae4114b65a2bb4ea6cd18ad84a73a142fb7680"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v1.1.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:3d381ebc5509a553a3b62953cf61e558f5ef0cbbcca4062ab4ab3aa97558b871",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "1.1.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:ec9a0e9c32223af80365c261b7caf65bfad2be1c77455ad052b52eb9eb45ec2c",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        }
+                    ]
+                },
+                "description": "The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their\napplications to backing services (REST API, databases, event buses and others) with a consistent and predictable\nexperience. The operator reads data made available by the control plane of backing services and projects the bindings\ndata to applications either as accessible files mounted into the application’s container or environment variables.\n\nIn Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their\napplication in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and\ncomplexity dealing with each specific services, which leads large development teams to lose overall velocity.\n\nService Binding Operator removes the error-prone manual configuration of binding information, provides service operators\na low-touch administrative experience to provision and manage access to services and enriches development lifecycle.\n\nFor additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).\n\nGet Started with Service Binding Operator\n* Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).\n* Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.\n\nNeed Help\n* Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n\nLicence\n* Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)\n\nService Binding Operator is providing and supporting two different APIs.\n* `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.\n* `servicebinding.io/v1alpha3`: This API is the one defined in the Service Binding specification. The specification is still evolving and maturing, as a result the API might change in the future. We recommend you to carefully use that API for testing purposes and preparing your integration to become fully compliant with the specification. It is available in Service Binding Operator 1.x, as Tech Preview.\n\nWe’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.\n",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://redhat-developer.github.io/service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "stable",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:3d381ebc5509a553a3b62953cf61e558f5ef0cbbcca4062ab4ab3aa97558b871"
+        },
+        {
+            "name": "service-binding-rhel8-operator-ec9a0e9c32223af80365c261b7caf65bfad2be1c77455ad052b52eb9eb45ec2c-annotation",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:ec9a0e9c32223af80365c261b7caf65bfad2be1c77455ad052b52eb9eb45ec2c"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:ec9a0e9c32223af80365c261b7caf65bfad2be1c77455ad052b52eb9eb45ec2c"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v1.1.1",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:44d2aa8f1f54834eae6500b04fc7d29c6082657fcb90467635483c934b23b8d8",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "1.1.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:be0d6ee482f551f5a31cc68286864240e96e59ef9ce346e0a5cbd21e2b134ff1",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        }
+                    ]
+                },
+                "description": "The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their\napplications to backing services (REST API, databases, event buses and others) with a consistent and predictable\nexperience. The operator reads data made available by the control plane of backing services and projects the bindings\ndata to applications either as accessible files mounted into the application’s container or environment variables.\n\nIn Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their\napplication in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and\ncomplexity dealing with each specific services, which leads large development teams to lose overall velocity.\n\nService Binding Operator removes the error-prone manual configuration of binding information, provides service operators\na low-touch administrative experience to provision and manage access to services and enriches development lifecycle.\n\nFor additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).\n\nGet Started with Service Binding Operator\n* Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).\n* Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.\n\nNeed Help\n* Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n\nLicence\n* Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)\n\nService Binding Operator is providing and supporting two different APIs.\n* `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.\n* `servicebinding.io/v1alpha3`: This API is the one defined in the Service Binding specification. The specification is still evolving and maturing, as a result the API might change in the future. We recommend you to carefully use that API for testing purposes and preparing your integration to become fully compliant with the specification. It is available in Service Binding Operator 1.x, as Tech Preview.\n\nWe’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.\n",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://redhat-developer.github.io/service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "stable",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:44d2aa8f1f54834eae6500b04fc7d29c6082657fcb90467635483c934b23b8d8"
+        },
+        {
+            "name": "service-binding-rhel8-operator-be0d6ee482f551f5a31cc68286864240e96e59ef9ce346e0a5cbd21e2b134ff1-annotation",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:be0d6ee482f551f5a31cc68286864240e96e59ef9ce346e0a5cbd21e2b134ff1"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:be0d6ee482f551f5a31cc68286864240e96e59ef9ce346e0a5cbd21e2b134ff1"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v1.2.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:34e87022fd4ae6d9ec23ed10dbea7a7e4d83412124428f0a2e190736a967674d",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "1.2.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1beta1\",\n    \"kind\": \"ClusterWorkloadResourceMapping\",\n    \"metadata\": {\n      \"name\": \"clusterworkloadresourcemapping-sample\"\n    },\n    \"spec\": null\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1beta1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": null\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:ba62802a25eb0ad456bcaf97dbc91fde9ae6b3eee0e642b98201172eff62977a",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1beta1",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1beta1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API)",
+                            "description": "Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload."
+                        }
+                    ]
+                },
+                "description": "The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their\napplications to backing services (REST API, databases, event buses and others) with a consistent and predictable\nexperience. The operator reads data made available by the control plane of backing services and projects the bindings\ndata to applications either as accessible files mounted into the application’s container or environment variables.\n\nIn Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their\napplication in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and\ncomplexity dealing with each specific services, which leads large development teams to lose overall velocity.\n\nService Binding Operator removes the error-prone manual configuration of binding information, provides service operators\na low-touch administrative experience to provision and manage access to services and enriches development lifecycle.\n\nFor additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).\n\nGet Started with Service Binding Operator\n* Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).\n* Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.\n\nNeed Help\n* Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n\nLicence\n* Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)\n\nService Binding Operator is providing and supporting two different APIs.\n* `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.\n* `servicebinding.io/v1beta1`: This API is the one defined in the Service Binding specification. It is available in Service Binding Operator 1.x.\n\nWe’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.\n",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://redhat-developer.github.io/service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "stable",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:34e87022fd4ae6d9ec23ed10dbea7a7e4d83412124428f0a2e190736a967674d"
+        },
+        {
+            "name": "service-binding-rhel8-operator-ba62802a25eb0ad456bcaf97dbc91fde9ae6b3eee0e642b98201172eff62977a-annotation",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:ba62802a25eb0ad456bcaf97dbc91fde9ae6b3eee0e642b98201172eff62977a"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:ba62802a25eb0ad456bcaf97dbc91fde9ae6b3eee0e642b98201172eff62977a"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v1.3.0",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:a54546855d62f7e7fbc1ce391ee3c4b08a8052ecf2c3a2ca1efdd6af4b0462ee",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "1.3.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"Kind\": \"Ddeployment\",\n        \"apiVersion\": \"apps/v1\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1beta1\",\n    \"kind\": \"ClusterWorkloadResourceMapping\",\n    \"metadata\": {\n      \"name\": \"clusterworkloadresourcemapping-sample\"\n    },\n    \"spec\": null\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1beta1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": null\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:1b2addf334436ae4e983a495a746f3808daa1ab007a935635aa55981e87647fa",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.17.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1beta1",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1beta1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API)",
+                            "description": "Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload."
+                        }
+                    ]
+                },
+                "description": "The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their\napplications to backing services (REST API, databases, event buses and others) with a consistent and predictable\nexperience. The operator reads data made available by the control plane of backing services and projects the bindings\ndata to applications either as accessible files mounted into the application’s container or environment variables.\n\nIn Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their\napplication in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and\ncomplexity dealing with each specific services, which leads large development teams to lose overall velocity.\n\nService Binding Operator removes the error-prone manual configuration of binding information, provides service operators\na low-touch administrative experience to provision and manage access to services and enriches development lifecycle.\n\nFor additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).\n\nGet Started with Service Binding Operator\n* Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).\n* Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.\n\nNeed Help\n* Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n\nLicence\n* Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)\n\nService Binding Operator is providing and supporting two different APIs.\n* `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.\n* `servicebinding.io/v1beta1`: This API is the one defined in the Service Binding specification. It is available in Service Binding Operator 1.x.\n\nWe’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.\n",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://redhat-developer.github.io/service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "stable",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4-tech-preview/service-binding-rhel8-operator-metadata@sha256:a54546855d62f7e7fbc1ce391ee3c4b08a8052ecf2c3a2ca1efdd6af4b0462ee"
+        },
+        {
+            "name": "service-binding-rhel8-operator-1b2addf334436ae4e983a495a746f3808daa1ab007a935635aa55981e87647fa-annotation",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:1b2addf334436ae4e983a495a746f3808daa1ab007a935635aa55981e87647fa"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:1b2addf334436ae4e983a495a746f3808daa1ab007a935635aa55981e87647fa"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v1.3.1",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:ed577a367afc96253a125e8868dc992f832bbca209d7abe57fc939ed686715b6",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "1.3.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"BindableKinds\",\n    \"metadata\": {\n      \"name\": \"bindable-kinds\"\n    },\n    \"spec\": {}\n  },\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ClusterWorkloadResourceMapping\",\n    \"metadata\": {\n      \"name\": \"cronjobs.batch\"\n    },\n    \"spec\": {\n      \"versions\": [\n        {\n          \"containers\": [\n            {\n              \"path\": \".spec.jobTemplate.spec.template.spec.containers[*]\"\n            },\n            {\n              \"path\": \".spec.jobTemplate.spec.template.spec.initContainers[*]\"\n            }\n          ],\n          \"version\": \"*\",\n          \"volumes\": \".spec.jobTemplate.spec.template.spec.volumes\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"apiVersion\": \"apps/v1\",\n        \"kind\": \"Deployment\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1beta1\",\n    \"kind\": \"ClusterWorkloadResourceMapping\",\n    \"metadata\": {\n      \"name\": \"cronjobs.batch\"\n    },\n    \"spec\": {\n      \"versions\": [\n        {\n          \"containers\": [\n            {\n              \"path\": \".spec.jobTemplate.spec.template.spec.containers[*]\"\n            },\n            {\n              \"path\": \".spec.jobTemplate.spec.template.spec.initContainers[*]\"\n            }\n          ],\n          \"version\": \"*\",\n          \"volumes\": \".spec.jobTemplate.spec.template.spec.volumes\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1beta1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      },\n      \"type\": \"postgres\",\n      \"workload\": {\n        \"apiVersion\": \"apps/v1\",\n        \"kind\": \"Deployment\",\n        \"name\": \"nodejs-rest-http-crud\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:138149dd1f8effd733f9c5827fdf237f042ab8428dbbce713ef4e776e18ab725",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.17.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1beta1",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1beta1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API)",
+                            "description": "Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload."
+                        }
+                    ]
+                },
+                "description": "The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their\napplications to backing services (REST API, databases, event buses and others) with a consistent and predictable\nexperience. The operator reads data made available by the control plane of backing services and projects the bindings\ndata to applications either as accessible files mounted into the application’s container or environment variables.\n\nIn Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their\napplication in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and\ncomplexity dealing with each specific services, which leads large development teams to lose overall velocity.\n\nService Binding Operator removes the error-prone manual configuration of binding information, provides service operators\na low-touch administrative experience to provision and manage access to services and enriches development lifecycle.\n\nFor additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).\n\nGet Started with Service Binding Operator\n* Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).\n* Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.\n\nNeed Help\n* Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n\nLicence\n* Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)\n\nService Binding Operator is providing and supporting two different APIs.\n* `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.\n* `servicebinding.io/v1beta1`: This API is the one defined in the Service Binding specification. It is available in Service Binding Operator 1.x.\n\nWe’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.\n",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://redhat-developer.github.io/service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "stable",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:ed577a367afc96253a125e8868dc992f832bbca209d7abe57fc939ed686715b6"
+        },
+        {
+            "name": "service-binding-rhel8-operator-138149dd1f8effd733f9c5827fdf237f042ab8428dbbce713ef4e776e18ab725-annotation",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:138149dd1f8effd733f9c5827fdf237f042ab8428dbbce713ef4e776e18ab725"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:138149dd1f8effd733f9c5827fdf237f042ab8428dbbce713ef4e776e18ab725"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "service-binding-operator.v1.3.3",
+    "package": "rh-service-binding-operator",
+    "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:9ab3d5eb70c654270fef9e8e9d4e5b68e1ac3c86bd0e0dcd36cc6f8741be1603",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "BindableKinds",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "binding.operators.coreos.com",
+                "kind": "ServiceBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ClusterWorkloadResourceMapping",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1alpha3"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "servicebinding.io",
+                "kind": "ServiceBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "rh-service-binding-operator",
+                "version": "1.3.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"BindableKinds\",\n    \"metadata\": {\n      \"name\": \"bindable-kinds\"\n    },\n    \"spec\": {}\n  },\n  {\n    \"apiVersion\": \"binding.operators.coreos.com/v1alpha1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"example-servicebinding\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"group\": \"apps\",\n        \"name\": \"nodejs-rest-http-crud\",\n        \"resource\": \"deployments\",\n        \"version\": \"v1\"\n      },\n      \"services\": [\n        {\n          \"group\": \"postgresql.example.dev\",\n          \"kind\": \"Database\",\n          \"name\": \"pg-instance\",\n          \"version\": \"v1alpha1\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ClusterWorkloadResourceMapping\",\n    \"metadata\": {\n      \"name\": \"cronjobs.batch\"\n    },\n    \"spec\": {\n      \"versions\": [\n        {\n          \"containers\": [\n            {\n              \"path\": \".spec.jobTemplate.spec.template.spec.containers[*]\"\n            },\n            {\n              \"path\": \".spec.jobTemplate.spec.template.spec.initContainers[*]\"\n            }\n          ],\n          \"version\": \"*\",\n          \"volumes\": \".spec.jobTemplate.spec.template.spec.volumes\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1alpha3\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"application\": {\n        \"apiVersion\": \"apps/v1\",\n        \"kind\": \"Deployment\",\n        \"name\": \"nodejs-rest-http-crud\"\n      },\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1beta1\",\n    \"kind\": \"ClusterWorkloadResourceMapping\",\n    \"metadata\": {\n      \"name\": \"cronjobs.batch\"\n    },\n    \"spec\": {\n      \"versions\": [\n        {\n          \"containers\": [\n            {\n              \"path\": \".spec.jobTemplate.spec.template.spec.containers[*]\"\n            },\n            {\n              \"path\": \".spec.jobTemplate.spec.template.spec.initContainers[*]\"\n            }\n          ],\n          \"version\": \"*\",\n          \"volumes\": \".spec.jobTemplate.spec.template.spec.volumes\"\n        }\n      ]\n    }\n  },\n  {\n    \"apiVersion\": \"servicebinding.io/v1beta1\",\n    \"kind\": \"ServiceBinding\",\n    \"metadata\": {\n      \"name\": \"servicebinding-sample\"\n    },\n    \"spec\": {\n      \"service\": {\n        \"apiVersion\": \"postgresql.example.dev/v1alpha1\",\n        \"kind\": \"Database\",\n        \"name\": \"pg-instance\"\n      },\n      \"type\": \"postgres\",\n      \"workload\": {\n        \"apiVersion\": \"apps/v1\",\n        \"kind\": \"Deployment\",\n        \"name\": \"nodejs-rest-http-crud\"\n      }\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Developer Tools, OpenShift Optional, Integration & Delivery",
+                    "containerImage": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:9c8fb0c8f9d2f54685561af21e595aa88bf309eaebebdf23fb6997b75d026b18",
+                    "description": "An operator to support binding capabilities between imported apps and operator backed services",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.17.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/redhat-developer/service-binding-operator",
+                    "support": "Service Binding Operator Community"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "bindablekinds.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "BindableKinds",
+                            "displayName": "Bindable Kinds",
+                            "description": "BindableKinds contains a list of bindable type (group, version, kind) found in the cluster. It is cluster-scoped and there is only single instance named 'bindable-kinds'."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "clusterworkloadresourcemappings.servicebinding.io",
+                            "version": "v1beta1",
+                            "kind": "ClusterWorkloadResourceMapping",
+                            "displayName": "Cluster Workload Resource Mapping",
+                            "description": "Cluster Workload Resource Mapping defines the mapping for a specific version of an workload resource to a logical PodTemplateSpec-like structure. It provides a way to define exactly where binding data needs to be projected. Use this method when you are not able to configure custom path locations correctly by any other methods."
+                        },
+                        {
+                            "name": "servicebindings.binding.operators.coreos.com",
+                            "version": "v1alpha1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding",
+                            "description": "Service Binding expresses intent to bind a backing service with an application workload."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1alpha3",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API Tech Preview)",
+                            "description": "(Tech Preview) Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload. Available as tech preview but subjected to change in near future."
+                        },
+                        {
+                            "name": "servicebindings.servicebinding.io",
+                            "version": "v1beta1",
+                            "kind": "ServiceBinding",
+                            "displayName": "Service Binding (Spec API)",
+                            "description": "Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec) describing the connection between a backing service and an application workload."
+                        }
+                    ]
+                },
+                "description": "The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their\napplications to backing services (REST API, databases, event buses and others) with a consistent and predictable\nexperience. The operator reads data made available by the control plane of backing services and projects the bindings\ndata to applications either as accessible files mounted into the application’s container or environment variables.\n\nIn Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their\napplication in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and\ncomplexity dealing with each specific services, which leads large development teams to lose overall velocity.\n\nService Binding Operator removes the error-prone manual configuration of binding information, provides service operators\na low-touch administrative experience to provision and manage access to services and enriches development lifecycle.\n\nFor additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).\n\nGet Started with Service Binding Operator\n* Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).\n* Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.\n\nNeed Help\n* Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n\nLicence\n* Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)\n\nService Binding Operator is providing and supporting two different APIs.\n* `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.\n* `servicebinding.io/v1beta1`: This API is the one defined in the Service Binding specification. It is available in Service Binding Operator 1.x.\n\nWe’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.\n",
+                "displayName": "Service Binding Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    ""
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://redhat-developer.github.io/service-binding-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Openshift Application Services",
+                        "email": "service-binding-support@redhat.com"
+                    }
+                ],
+                "maturity": "stable",
+                "minKubeVersion": "1.16.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-operator-bundle@sha256:9ab3d5eb70c654270fef9e8e9d4e5b68e1ac3c86bd0e0dcd36cc6f8741be1603"
+        },
+        {
+            "name": "service-binding-rhel8-operator-9c8fb0c8f9d2f54685561af21e595aa88bf309eaebebdf23fb6997b75d026b18-annotation",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:9c8fb0c8f9d2f54685561af21e595aa88bf309eaebebdf23fb6997b75d026b18"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/ocp-tools-4/service-binding-rhel8-operator@sha256:9c8fb0c8f9d2f54685561af21e595aa88bf309eaebebdf23fb6997b75d026b18"
+        }
+    ]
+}

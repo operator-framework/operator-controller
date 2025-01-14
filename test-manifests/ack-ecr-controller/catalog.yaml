@@ -1,0 +1,1083 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-ecr-controller
+schema: olm.package
+---
+entries:
+- name: ack-ecr-controller.v0.0.11
+- name: ack-ecr-controller.v0.0.12
+  replaces: ack-ecr-controller.v0.0.11
+- name: ack-ecr-controller.v0.0.13
+  replaces: ack-ecr-controller.v0.0.12
+- name: ack-ecr-controller.v0.0.14
+  replaces: ack-ecr-controller.v0.0.13
+- name: ack-ecr-controller.v0.0.15
+  replaces: ack-ecr-controller.v0.0.14
+- name: ack-ecr-controller.v0.0.16
+  replaces: ack-ecr-controller.v0.0.15
+- name: ack-ecr-controller.v0.0.17
+  replaces: ack-ecr-controller.v0.0.16
+- name: ack-ecr-controller.v0.0.18
+  replaces: ack-ecr-controller.v0.0.17
+- name: ack-ecr-controller.v0.0.19
+  replaces: ack-ecr-controller.v0.0.18
+- name: ack-ecr-controller.v0.0.20
+  replaces: ack-ecr-controller.v0.0.19
+- name: ack-ecr-controller.v0.0.21
+  replaces: ack-ecr-controller.v0.0.20
+- name: ack-ecr-controller.v0.0.22
+  replaces: ack-ecr-controller.v0.0.21
+- name: ack-ecr-controller.v0.0.23
+  replaces: ack-ecr-controller.v0.0.22
+- name: ack-ecr-controller.v0.0.24
+  replaces: ack-ecr-controller.v0.0.23
+- name: ack-ecr-controller.v0.0.25
+  replaces: ack-ecr-controller.v0.0.24
+- name: ack-ecr-controller.v0.0.26
+  replaces: ack-ecr-controller.v0.0.25
+- name: ack-ecr-controller.v0.0.27
+  replaces: ack-ecr-controller.v0.0.26
+- name: ack-ecr-controller.v0.1.0
+  replaces: ack-ecr-controller.v0.0.27
+- name: ack-ecr-controller.v0.1.1
+  replaces: ack-ecr-controller.v0.1.0
+- name: ack-ecr-controller.v0.1.2
+  replaces: ack-ecr-controller.v0.1.1
+- name: ack-ecr-controller.v0.1.3
+  replaces: ack-ecr-controller.v0.1.2
+- name: ack-ecr-controller.v0.1.4
+  replaces: ack-ecr-controller.v0.1.3
+- name: ack-ecr-controller.v0.1.5
+  replaces: ack-ecr-controller.v0.1.4
+- name: ack-ecr-controller.v0.1.6
+  replaces: ack-ecr-controller.v0.1.5
+- name: ack-ecr-controller.v0.1.7
+  replaces: ack-ecr-controller.v0.1.6
+- name: ack-ecr-controller.v0.1.9
+  replaces: ack-ecr-controller.v0.1.7
+- name: ack-ecr-controller.v1.0.0
+  replaces: ack-ecr-controller.v0.1.9
+- name: ack-ecr-controller.v1.0.10
+  replaces: ack-ecr-controller.v1.0.9
+- name: ack-ecr-controller.v1.0.12
+  replaces: ack-ecr-controller.v1.0.10
+- name: ack-ecr-controller.v1.0.14
+  replaces: ack-ecr-controller.v1.0.12
+- name: ack-ecr-controller.v1.0.15
+  replaces: ack-ecr-controller.v1.0.14
+- name: ack-ecr-controller.v1.0.16
+  replaces: ack-ecr-controller.v1.0.15
+- name: ack-ecr-controller.v1.0.17
+  replaces: ack-ecr-controller.v1.0.16
+- name: ack-ecr-controller.v1.0.2
+  replaces: ack-ecr-controller.v1.0.0
+- name: ack-ecr-controller.v1.0.3
+  replaces: ack-ecr-controller.v1.0.2
+- name: ack-ecr-controller.v1.0.4
+  replaces: ack-ecr-controller.v1.0.3
+- name: ack-ecr-controller.v1.0.6
+  replaces: ack-ecr-controller.v1.0.4
+- name: ack-ecr-controller.v1.0.7
+  replaces: ack-ecr-controller.v1.0.6
+- name: ack-ecr-controller.v1.0.8
+  replaces: ack-ecr-controller.v1.0.7
+- name: ack-ecr-controller.v1.0.9
+  replaces: ack-ecr-controller.v1.0.8
+name: alpha
+package: ack-ecr-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:77417a689f0d653b4d6645bede7ca78c2363290cad9a41ce2ff3c1fa40dea11a
+name: ack-ecr-controller.v0.0.11
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:77417a689f0d653b4d6645bede7ca78c2363290cad9a41ce2ff3c1fa40dea11a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:a3eb8869b167bb1abf772538d84db092411d96bb2ee97d088dff95929037492b
+name: ack-ecr-controller.v0.0.12
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:a3eb8869b167bb1abf772538d84db092411d96bb2ee97d088dff95929037492b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:f9da6a4d86316acb59859d534b5e7c19b1290fcc73bcbb9aded80ef040734dfe
+name: ack-ecr-controller.v0.0.13
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:f9da6a4d86316acb59859d534b5e7c19b1290fcc73bcbb9aded80ef040734dfe
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:660e46b4ba9fbfe230ce2f69d1c2be7f432093d2785422b16447166b277a0018
+name: ack-ecr-controller.v0.0.14
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:660e46b4ba9fbfe230ce2f69d1c2be7f432093d2785422b16447166b277a0018
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:a0ddc8f74d3b95fc325a60407717ab358f9328a53ad594c7c715d0b2054cb233
+name: ack-ecr-controller.v0.0.15
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:a0ddc8f74d3b95fc325a60407717ab358f9328a53ad594c7c715d0b2054cb233
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:17a9be087fefe9a50f639182ab85b0bfbb5919d362d2dcd1f0abd2e37a326dae
+name: ack-ecr-controller.v0.0.16
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:vv0.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:17a9be087fefe9a50f639182ab85b0bfbb5919d362d2dcd1f0abd2e37a326dae
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:eaa47dca3fb4f2b535430111fd11233b89f5c6a34a2a2f4241e1b1e67e78ac3a
+name: ack-ecr-controller.v0.0.17
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:eaa47dca3fb4f2b535430111fd11233b89f5c6a34a2a2f4241e1b1e67e78ac3a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:f4ec2f9c16a55536191d33146b8ced5fd1a83a02bc067eccd9b77436c87d1da8
+name: ack-ecr-controller.v0.0.18
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.18
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.18
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:f4ec2f9c16a55536191d33146b8ced5fd1a83a02bc067eccd9b77436c87d1da8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:0990c59f4e968275e6400df58cc2b154790f0513e3837e6aa37488cac1a908a7
+name: ack-ecr-controller.v0.0.19
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:0990c59f4e968275e6400df58cc2b154790f0513e3837e6aa37488cac1a908a7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:bb40840be5024a916e2b09f9396e7967d345166f6be9c0c71f78e5d51984efd3
+name: ack-ecr-controller.v0.0.20
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.20
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.20
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:bb40840be5024a916e2b09f9396e7967d345166f6be9c0c71f78e5d51984efd3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:084ab99ff9306253ff81ddd64f245f0a6d38ccdc6e5d404a518ba52c84ef8b7a
+name: ack-ecr-controller.v0.0.21
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.21
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.21
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:084ab99ff9306253ff81ddd64f245f0a6d38ccdc6e5d404a518ba52c84ef8b7a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:716217af4f2b8f856037ee4c5e575fc70ec897b19365f4e1b6247f88a4fe6a79
+name: ack-ecr-controller.v0.0.22
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.22
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.22
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:716217af4f2b8f856037ee4c5e575fc70ec897b19365f4e1b6247f88a4fe6a79
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:7fc52fc1dc47a58c0dd5e5b94586cac93293e4266d486f305de57c908ed3fe82
+name: ack-ecr-controller.v0.0.23
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.23
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.23
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:7fc52fc1dc47a58c0dd5e5b94586cac93293e4266d486f305de57c908ed3fe82
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:460744987a9769c3c4b5aebf1060eb9f5e13c0319313c5d2f597ac2fcde844cd
+name: ack-ecr-controller.v0.0.24
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.24
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.24
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:460744987a9769c3c4b5aebf1060eb9f5e13c0319313c5d2f597ac2fcde844cd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:19d70b52a366d94a9b54c388319b5116721a3aa1cbe15fc321c14eea0d9e5fed
+name: ack-ecr-controller.v0.0.25
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.25
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.25
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:19d70b52a366d94a9b54c388319b5116721a3aa1cbe15fc321c14eea0d9e5fed
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:708a585f6f1ed4705b1afc8024af89e69c73160ca0b3c9a40722127bca2e7bce
+name: ack-ecr-controller.v0.0.26
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.26
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.26
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:708a585f6f1ed4705b1afc8024af89e69c73160ca0b3c9a40722127bca2e7bce
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:c5e39f8ca7288c14776327abf41fa740f9befd6b1ce0833a90cf9df2119b5ae0
+name: ack-ecr-controller.v0.0.27
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.0.27
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.0.27
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:c5e39f8ca7288c14776327abf41fa740f9befd6b1ce0833a90cf9df2119b5ae0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:6b4793dbd98abc0271cc7998c364fa0186b67c1c67f5c587506781e59e8f4363
+name: ack-ecr-controller.v0.1.0
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:6b4793dbd98abc0271cc7998c364fa0186b67c1c67f5c587506781e59e8f4363
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:aa722d99b4191756a4e46b614b25b54b49dab7b99545a04148c2dffb8a8c9bb2
+name: ack-ecr-controller.v0.1.1
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:aa722d99b4191756a4e46b614b25b54b49dab7b99545a04148c2dffb8a8c9bb2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:32cdb68e2e51fc89212d5bbcab528975b5c651127f37f11689b0e3b2ec80ff85
+name: ack-ecr-controller.v0.1.2
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:32cdb68e2e51fc89212d5bbcab528975b5c651127f37f11689b0e3b2ec80ff85
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:3d2d3e0c29a22696804b1b35f70388f246075fdefc9236e03a18d047ed483392
+name: ack-ecr-controller.v0.1.3
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:3d2d3e0c29a22696804b1b35f70388f246075fdefc9236e03a18d047ed483392
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:a9ceb966dd59f136c9787bcc9805f53a3ce3bf5024ef896994793edf00063fae
+name: ack-ecr-controller.v0.1.4
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.4
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:a9ceb966dd59f136c9787bcc9805f53a3ce3bf5024ef896994793edf00063fae
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:48864661a4870e8bb3736be964a91a86503f76a57546ba438a1975eb8a473911
+name: ack-ecr-controller.v0.1.5
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.5
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:48864661a4870e8bb3736be964a91a86503f76a57546ba438a1975eb8a473911
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:babd3a75c63c41deb94a54b3860a7d3c4c6a0b1d3b66a50b3b24afe77e1508b1
+name: ack-ecr-controller.v0.1.6
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.6
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:babd3a75c63c41deb94a54b3860a7d3c4c6a0b1d3b66a50b3b24afe77e1508b1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:4b33ad761c757156aa9248efe3fc9421c2184a6d33281d721fc2b7d9ef1f6f63
+name: ack-ecr-controller.v0.1.7
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.7
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:4b33ad761c757156aa9248efe3fc9421c2184a6d33281d721fc2b7d9ef1f6f63
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:7b8c9c0f7b4ecc8a08094260de664f8e8d5076e046ecaf387ba673a815852de2
+name: ack-ecr-controller.v0.1.9
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 0.1.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v0.1.9
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:7b8c9c0f7b4ecc8a08094260de664f8e8d5076e046ecaf387ba673a815852de2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:d4a6fc40e339127ca28cf65e3ab5effa0bf6897a559b4cfd1d5d3a10da4defe6
+name: ack-ecr-controller.v1.0.0
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:d4a6fc40e339127ca28cf65e3ab5effa0bf6897a559b4cfd1d5d3a10da4defe6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:63648ab83e7a1dd366555c252a2a33b40d779b4e9a17087e64887341e11c86b9
+name: ack-ecr-controller.v1.0.10
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:63648ab83e7a1dd366555c252a2a33b40d779b4e9a17087e64887341e11c86b9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:98bc6782acaaa7d26e8c7b2965c3fa05e60eca23cd77d5f3f298b61a44379a6b
+name: ack-ecr-controller.v1.0.12
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:98bc6782acaaa7d26e8c7b2965c3fa05e60eca23cd77d5f3f298b61a44379a6b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:b1b1bdd55bc3906514dea6b83c7ddc8d4b45c164cacd2389bd7fd34a08d345b6
+name: ack-ecr-controller.v1.0.14
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:b1b1bdd55bc3906514dea6b83c7ddc8d4b45c164cacd2389bd7fd34a08d345b6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:511fca48fa7f32c839dfb9018a3a99d25582b596e5ab7c89ca7ae5103b601131
+name: ack-ecr-controller.v1.0.15
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:511fca48fa7f32c839dfb9018a3a99d25582b596e5ab7c89ca7ae5103b601131
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:9b4cba8e48013588acdfa4440e2aa6fdd524a137bb267ef8adec007ee9650245
+name: ack-ecr-controller.v1.0.16
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:9b4cba8e48013588acdfa4440e2aa6fdd524a137bb267ef8adec007ee9650245
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:02019cea628ba3c2cc589b43242167fd773fd4c70f42ea15b5e1a70683af0cca
+name: ack-ecr-controller.v1.0.17
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.17
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "ecr.services.k8s.aws/v1alpha1",
+            "kind": "Repository",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.17
+      createdAt: "2024-08-07T04:38:54Z"
+      description: AWS ECR controller is a service controller for managing ECR resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: PullThroughCacheRule represents the state of an AWS ecr PullThroughCacheRule
+          resource.
+        displayName: PullThroughCacheRule
+        kind: PullThroughCacheRule
+        name: pullthroughcacherules.ecr.services.k8s.aws
+        version: v1alpha1
+      - description: Repository represents the state of an AWS ecr Repository resource.
+        displayName: Repository
+        kind: Repository
+        name: repositories.ecr.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon Elastic Container Registry (ECR) resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon ECR**
+
+      Amazon Elastic Container Registry (Amazon ECR) is an AWS managed container image registry service that is secure, scalable, and reliable. Amazon ECR supports private repositories with resource-based permissions using AWS IAM. This is so that specified users or Amazon EC2 instances can access your container repositories and images. You can use your preferred CLI to push, pull, and manage Docker images, Open Container Initiative (OCI) images, and OCI compatible artifacts.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon ECR
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - ecr
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon ECR Developer Resources
+      url: https://aws.amazon.com/ecr/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: ecr maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:02019cea628ba3c2cc589b43242167fd773fd4c70f42ea15b5e1a70683af0cca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:2c6864521a5c83bb0408b6f04981da5f83d5d9f06c7bf3571cde5bed195167b1
+name: ack-ecr-controller.v1.0.2
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:2c6864521a5c83bb0408b6f04981da5f83d5d9f06c7bf3571cde5bed195167b1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:cfacaeb524c4055a311ff535780b801ec2d8806adfa835aeae14d63e35fde37b
+name: ack-ecr-controller.v1.0.3
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:cfacaeb524c4055a311ff535780b801ec2d8806adfa835aeae14d63e35fde37b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:db857e5e7b0a9620d7a44915c8c64b55cb68f19602880b185a11bf8756dcadd6
+name: ack-ecr-controller.v1.0.4
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:v1.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:db857e5e7b0a9620d7a44915c8c64b55cb68f19602880b185a11bf8756dcadd6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:3ae322582b68c7cd8c68c76ea059532fc0fc26eee9102f68322d03a64cddf5df
+name: ack-ecr-controller.v1.0.6
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:3ae322582b68c7cd8c68c76ea059532fc0fc26eee9102f68322d03a64cddf5df
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:b297a76ae951e40d45c9c5451d79ffd437b70f5f155cb3b374bce15034820c32
+name: ack-ecr-controller.v1.0.7
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:b297a76ae951e40d45c9c5451d79ffd437b70f5f155cb3b374bce15034820c32
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:0ea4e31e331d6189578443e4075d92238612584fde286c521539a38bfb6646c7
+name: ack-ecr-controller.v1.0.8
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:0ea4e31e331d6189578443e4075d92238612584fde286c521539a38bfb6646c7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-ecr-controller@sha256:fd5f5add1d11b8ee9e384182d34a36aac234714da6dcadf9ebe673463b5ffcfe
+name: ack-ecr-controller.v1.0.9
+package: ack-ecr-controller
+properties:
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: PullThroughCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: ecr.services.k8s.aws
+    kind: Repository
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-ecr-controller
+    version: 1.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/ecr-controller:1.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-ecr-controller@sha256:fd5f5add1d11b8ee9e384182d34a36aac234714da6dcadf9ebe673463b5ffcfe
+  name: ""
+schema: olm.bundle

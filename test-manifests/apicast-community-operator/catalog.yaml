@@ -1,0 +1,360 @@
+---
+defaultChannel: stable
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTAwcHgiIGhlaWdodD0iNTBweCIgdmlld0JveD0iMCAwIDEwMCA1MCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KICAgIDwhLS0gR2VuZXJhdG9yOiBTa2V0Y2ggNTQuMSAoNzY0OTApIC0gaHR0cHM6Ly9za2V0Y2hhcHAuY29tIC0tPgogICAgPHRpdGxlPkdyb3VwIDI8L3RpdGxlPgogICAgPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+CiAgICA8ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0iR3JvdXAtMiI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIGZpbGw9IiNGRkZGRkYiIHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNTAiPjwvcmVjdD4KICAgICAgICAgICAgPGcgaWQ9Ikdyb3VwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxOS45NDY4MDksIDAuMDAwMDAwKSIgZmlsbD0iI0ZGNzMxNCIgZmlsbC1ydWxlPSJub256ZXJvIj4KICAgICAgICAgICAgICAgIDxnIGlkPSJsb2dvLW1hcmsiPgogICAgICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDkuMDUyNjMxNjEgQzAsNCA0LjIyMzY5MTg1LDAgOS4zMTM3ODE4MywwIEMxNC41MTIxNzE1LDAgMTguNjI3NTYzOCw0LjEwNTI2MzA2IDE4LjYyNzU2MzgsOS4wNTI2MzE2MSBDMTguNjI3NTYzOCwxNC4xMDUyNjMxIDE0LjQwMzg3MiwxOC4xMDUyNjMxIDkuMzEzNzgxODMsMTguMTA1MjYzMSBDNC4yMjM2OTE4NSwxOC4xMDUyNjMxIDAsMTQuMTA1MjYzMSAwLDkuMDUyNjMxNjEgTTQ4LjYyNjYwNTQsMTEuODk0NzM2OSBDNDguNjI2NjA1NCw4Ljg0MjEwNTMyIDUxLjIyNTgwMDEsNi4zMTU3ODkzNSA1NC4zNjY0OTQyLDYuMzE1Nzg5MzUgQzU3LjUwNzE4OCw2LjMxNTc4OTM1IDYwLjEwNjM4Myw4Ljg0MjEwNTMyIDYwLjEwNjM4MywxMS44OTQ3MzY5IEM2MC4xMDYzODMsMTQuOTQ3MzY4NCA1Ny41MDcxODgsMTcuNDczNjg0NCA1NC4zNjY0OTQyLDE3LjQ3MzY4NDQgQzUxLjExNzUwMDQsMTcuNDczNjg0NCA0OC42MjY2MDU0LDE1LjA1MjYzMTYgNDguNjI2NjA1NCwxMS44OTQ3MzY5IE0zMi45MjMxMzYsMzguMTA1MjYzMSBDMzIuOTIzMTM2LDMxLjU3ODk0NzMgMzguNDQ2NDI1MiwyNi4yMTA1MjYzIDQ1LjE2MTAxMiwyNi4yMTA1MjYzIEM1MS44NzU1OTg5LDI2LjIxMDUyNjMgNTcuMzk4ODg4MiwzMS41Nzg5NDczIDU3LjM5ODg4ODIsMzguMTA1MjYzMSBDNTcuMzk4ODg4Miw0NC42MzE1NzkgNTEuODc1NTk4OSw1MCA0NS4xNjEwMTIsNTAgQzM4LjQ0NjQyNTIsNTAgMzIuOTIzMTM2LDQ0LjczNjg0MTkgMzIuOTIzMTM2LDM4LjEwNTI2MzEiIGlkPSJTaGFwZSI+PC9wYXRoPgogICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8L2c+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=
+  mediatype: image/svg+xml
+name: apicast-community-operator
+schema: olm.package
+---
+entries:
+- name: apicast-community-operator.v0.1.0
+- name: apicast-community-operator.v0.1.1
+  replaces: apicast-community-operator.v0.1.0
+- name: apicast-community-operator.v0.2.1
+  replaces: apicast-community-operator.v0.1.1
+- name: apicast-community-operator.v0.2.2
+  replaces: apicast-community-operator.v0.2.1
+- name: apicast-community-operator.v0.3.0
+  replaces: apicast-community-operator.v0.2.2
+- name: apicast-community-operator.v0.3.1
+  replaces: apicast-community-operator.v0.3.0
+- name: apicast-community-operator.v0.4.0
+  replaces: apicast-community-operator.v0.3.1
+- name: apicast-community-operator.v0.5.1
+  replaces: apicast-community-operator.v0.4.0
+- name: apicast-community-operator.v0.6.0
+  replaces: apicast-community-operator.v0.5.1
+- name: apicast-community-operator.v0.7.1
+  replaces: apicast-community-operator.v0.6.0
+name: alpha
+package: apicast-community-operator
+schema: olm.channel
+---
+entries:
+- name: apicast-community-operator.v0.1.0
+- name: apicast-community-operator.v0.1.1
+  replaces: apicast-community-operator.v0.1.0
+- name: apicast-community-operator.v0.2.1
+  replaces: apicast-community-operator.v0.1.1
+- name: apicast-community-operator.v0.2.2
+  replaces: apicast-community-operator.v0.2.1
+- name: apicast-community-operator.v0.3.0
+  replaces: apicast-community-operator.v0.2.2
+- name: apicast-community-operator.v0.3.1
+  replaces: apicast-community-operator.v0.3.0
+- name: apicast-community-operator.v0.4.0
+  replaces: apicast-community-operator.v0.3.1
+- name: apicast-community-operator.v0.5.1
+  replaces: apicast-community-operator.v0.4.0
+- name: apicast-community-operator.v0.6.0
+  replaces: apicast-community-operator.v0.5.1
+- name: apicast-community-operator.v0.7.1
+  replaces: apicast-community-operator.v0.6.0
+name: stable
+package: apicast-community-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:0fc3785566fd1834a408478281f57790d99af48ca75d9fcd451443f8e6fd85ea
+name: apicast-community-operator.v0.1.0
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.1.0
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:0fc3785566fd1834a408478281f57790d99af48ca75d9fcd451443f8e6fd85ea
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:f996b3cac5e70fa0f8485cc073ea0ab83d0713cba80e9b23664d900227991d97
+name: apicast-community-operator.v0.1.1
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.1.1
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:f996b3cac5e70fa0f8485cc073ea0ab83d0713cba80e9b23664d900227991d97
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:d7cd6c9b32d705c2e4e1dbc2a9bc0aae39946d2873465acb968bc1d04254ef4f
+name: apicast-community-operator.v0.2.1
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.2.1
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.2.0
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:d7cd6c9b32d705c2e4e1dbc2a9bc0aae39946d2873465acb968bc1d04254ef4f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:3cb3435d368ec44d397af972594a7ef99e5129ed57f261b9d22817c771af2211
+name: apicast-community-operator.v0.2.2
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.2.2
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.2.0
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:3cb3435d368ec44d397af972594a7ef99e5129ed57f261b9d22817c771af2211
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:a9f4e65849b313908af42931a02dc178545edb3a2da953e73689149255e11826
+name: apicast-community-operator.v0.3.0
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.3.0
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.3.0
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:a9f4e65849b313908af42931a02dc178545edb3a2da953e73689149255e11826
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:e8db0e8b4dff729f77100c1885b52b7e6e373207282452f38e0cce35dd72d617
+name: apicast-community-operator.v0.3.1
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.3.1
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.3.0
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:e8db0e8b4dff729f77100c1885b52b7e6e373207282452f38e0cce35dd72d617
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:43dce0bb6e668e7c60c420913b399bd119dfaca693c513f914820f7720ca356f
+name: apicast-community-operator.v0.4.0
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.4.0
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.4.0
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:43dce0bb6e668e7c60c420913b399bd119dfaca693c513f914820f7720ca356f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:a1dad44a8063d58bacb2e09eff1d8aa6e954313a8bac81770806e09cc332ca96
+name: apicast-community-operator.v0.5.1
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.5.1
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.5.1
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:a1dad44a8063d58bacb2e09eff1d8aa6e954313a8bac81770806e09cc332ca96
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:f8018d15bfe33d1c3cf6832cdc29d2598a92ba0a1d9f5e3426d4673cc3ef8c07
+name: apicast-community-operator.v0.6.0
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.6.0
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.6.0
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:f8018d15bfe33d1c3cf6832cdc29d2598a92ba0a1d9f5e3426d4673cc3ef8c07
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apicast-community-operator@sha256:3105e34da09922e1c8f077f45cf52d9741beff61565c6408d160a7718b919686
+name: apicast-community-operator.v0.7.1
+package: apicast-community-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apps.3scale.net
+    kind: APIcast
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apicast-community-operator
+    version: 0.7.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "apps.3scale.net/v1alpha1",
+            "kind": "APIcast",
+            "metadata": {
+              "name": "example-apicast"
+            },
+            "spec": {
+              "adminPortalCredentialsRef": {
+                "name": "mysecretname"
+              }
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Integration & Delivery
+      certified: "false"
+      containerImage: quay.io/3scale/apicast-operator:v0.7.1
+      createdAt: "2019-10-27T22:40:00Z"
+      description: APIcast is an API gateway built on top of NGINX. It is part of
+        the Red Hat 3scale API Management Platform
+      operators.openshift.io/infrastructure-features: '["Disconnected"]'
+      operators.operatorframework.io/builder: operator-sdk-v1.2.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+      repository: https://github.com/3scale/apicast-operator
+      support: Red Hat
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: APIcast is the Schema for the apicasts API.
+        displayName: APIcast
+        kind: APIcast
+        name: apicasts.apps.3scale.net
+        version: v1alpha1
+    description: |
+      The APIcast Operator creates and maintains the Red Hat 3scale API Gateway in several deployment configurations.
+
+      APIcast is an API gateway built on top of [NGINX](https://www.nginx.com/). It is part of the [Red Hat 3scale API Management Platform](https://www.redhat.com/en/technologies/jboss-middleware/3scale).
+
+      ### Supported Features
+      * **Installer** A way to install an APIcast gateway instance on Kubernetes
+      * **Upgrade** Upgrade from previously installed APIcast gateway instance
+      * **Reconcilliation** Tunable CRD parameters after the APIcast gateway is installed
+
+      ### Upgrading your installation
+      The APIcast Operator understands how to run and upgrade between a set of APIcast versions.
+      See [the upgrade guide](https://github.com/3scale/apicast-operator/blob/v0.7.1/doc/operator-user-guide.md#upgrading-APIcast) for more information.
+
+      ### Documentation
+      Documentation can be found on our [website](https://github.com/3scale/apicast-operator/tree/v0.7.1).
+
+      ### Getting help
+      If you encounter any issues while using operator, you can create an issue on our [website](https://github.com/3scale/apicast-operator) for bugs, enhancements, or other requests.
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using APIcast Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/3scale/apicast-operator/pulls)
+      * Improving [documentation](https://github.com/3scale/apicast-operator)
+      * Talking about APIcast Operator
+
+      All bugs, tasks or enhancements are tracked as [GitHub issues](https://github.com/3scale/apicast-operator/issues).
+
+      ### License
+      APIcast Operator is licensed under the [Apache 2.0 license](https://github.com/3scale/apicast-operator/blob/master/LICENSE)
+    displayName: APIcast
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - 3scale
+    - API
+    - api
+    - APIcast
+    - apicast
+    - gateway
+    - api-gateway
+    - openresty
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+    links:
+    - name: GitHub
+      url: https://github.com/3scale/apicast-operator
+    - name: Documentation
+      url: https://github.com/3scale/apicast-operator/tree/v0.7.1
+    maintainers:
+    - email: eastizle+apicastoperator@redhat.com
+      name: Eguzki Astiz
+    maturity: stable
+    minKubeVersion: 1.19.0
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/3scale/apicast-operator:v0.7.1
+  name: ""
+- image: quay.io/operatorhubio/apicast-community-operator@sha256:3105e34da09922e1c8f077f45cf52d9741beff61565c6408d160a7718b919686
+  name: ""
+schema: olm.bundle

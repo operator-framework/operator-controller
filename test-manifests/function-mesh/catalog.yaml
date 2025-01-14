@@ -1,0 +1,1245 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyBpZD0i5Zu+5bGCXzEiIGRhdGEtbmFtZT0i5Zu+5bGCIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHZpZXdCb3g9IjAgMCA3NC4xIDc1LjU2Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6dXJsKCPmnKrlkb3lkI3nmoTmuJDlj5gpO30uY2xzLTJ7ZmlsbDp1cmwoI+acquWRveWQjeeahOa4kOWPmF8yKTt9LmNscy0ze2ZpbGw6dXJsKCPmnKrlkb3lkI3nmoTmuJDlj5hfMyk7fTwvc3R5bGU+PGxpbmVhckdyYWRpZW50IGlkPSLmnKrlkb3lkI3nmoTmuJDlj5giIHgxPSIwLjg5IiB5MT0iLTEzMS41OCIgeDI9IjczLjI3IiB5Mj0iLTEzMS41OCIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxLCAwLCAwLCAtMSwgMCwgLTkzLjg1KSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAyZDBmNyIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzBkNjVmYiIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSLmnKrlkb3lkI3nmoTmuJDlj5hfMiIgeDE9IjQ1LjYzIiB5MT0iLTEzNi4yOCIgeDI9IjU4LjA1IiB5Mj0iLTEzNi4yOCIgeGxpbms6aHJlZj0iI+acquWRveWQjeeahOa4kOWPmCIvPjxsaW5lYXJHcmFkaWVudCBpZD0i5pyq5ZG95ZCN55qE5riQ5Y+YXzMiIHgxPSIxNS45NSIgeTE9Ii0xMjcuMDgiIHgyPSIyOC4zNyIgeTI9Ii0xMjcuMDgiIHhsaW5rOmhyZWY9IiPmnKrlkb3lkI3nmoTmuJDlj5giLz48L2RlZnM+PHRpdGxlPnB1bHNhciBmdW5jdGlvbnM8L3RpdGxlPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTcwLjQzLDI5LjYzbC0xNC45LTZzLTMuNC0xLjctOC4yLjVsLTE0LjksNi4yYTEwLjQ2LDEwLjQ2LDAsMSwxLTIuNy01di0uMWwxMy01LjYtMi42LTEuNUE0LjMxLDQuMzEsMCwwLDAsMzYsMThsLTcuMywzLTEuNC0zLjMsOC4xLTMuNWE1LjIsNS4yLDAsMCwxLDUsLjJjMS42LjksNC4xLDIuNCw2LDMuNWwuMy0uMXM1LjgtMi45LDEwLjItLjZjLjguMywxLjUuOCwzLjEsMS41TDQ2LjYzLDUuMzNhMTMuNDYsMTMuNDYsMCwwLDAtMTkuMSwwTDQuODMsMjhhMTMuNjUsMTMuNjUsMCwwLDAtMS41LDE3LjRsMTQuOSw2czMuNCwxLjcsOC4yLS41bDE0LjktNi4yYTEwLjQ2LDEwLjQ2LDAsMSwxLDIuNyw1di4xbC0xMy4yLDUuNywzLjksMi4yYTQuMzEsNC4zMSwwLDAsMCw0LjEuMWw3LjMtMywxLjQsMy4zLTguMSwzLjVhNS4yLDUuMiwwLDAsMS01LS4yYy0yLTEuMS01LjQtMy4xLTcuMy00LjJIMjdzLTUuOCwyLjktMTAuMi42Yy0xLjMtLjYtMi40LTEuMi0zLjYtMS45bDE0LjIsMTQuMmExMy40NiwxMy40NiwwLDAsMCwxOS4xLDBsMjIuNy0yMi43QTEzLjM2LDEzLjM2LDAsMCwwLDcwLjQzLDI5LjYzWiIvPjxjaXJjbGUgY2xhc3M9ImNscy0yIiBjeD0iNTEuODMiIGN5PSI0Mi40MyIgcj0iNi4yIi8+PGNpcmNsZSBjbGFzcz0iY2xzLTMiIGN4PSIyMi4xMyIgY3k9IjMzLjIzIiByPSI2LjIiLz48L3N2Zz4=
+  mediatype: image/svg+xml
+name: function-mesh
+schema: olm.package
+---
+entries:
+- name: function-mesh.v0.10.0
+  replaces: function-mesh.v0.9.0
+  skipRange: <0.10.0
+- name: function-mesh.v0.11.0
+  replaces: function-mesh.v0.10.0
+  skipRange: <0.11.0
+- name: function-mesh.v0.12.0
+  replaces: function-mesh.v0.11.0
+  skipRange: <0.12.0
+- name: function-mesh.v0.13.0
+  replaces: function-mesh.v0.12.0
+  skipRange: <0.13.0
+- name: function-mesh.v0.15.0
+  replaces: function-mesh.v0.13.0
+  skipRange: <0.15.0
+- name: function-mesh.v0.16.0
+  replaces: function-mesh.v0.15.0
+  skipRange: <0.16.0
+- name: function-mesh.v0.17.0
+  replaces: function-mesh.v0.16.0
+  skipRange: <0.17.0
+- name: function-mesh.v0.18.0
+  replaces: function-mesh.v0.17.0
+  skipRange: <0.18.0
+- name: function-mesh.v0.19.0
+  replaces: function-mesh.v0.18.0
+  skipRange: <0.19.0
+- name: function-mesh.v0.20.0
+  replaces: function-mesh.v0.19.0
+  skipRange: <0.20.0
+- name: function-mesh.v0.20.1
+  replaces: function-mesh.v0.20.0
+  skipRange: <0.20.1
+- name: function-mesh.v0.21.0
+  replaces: function-mesh.v0.20.1
+  skipRange: <0.21.0
+- name: function-mesh.v0.22.0
+  replaces: function-mesh.v0.21.0
+  skipRange: <0.22.0
+- name: function-mesh.v0.3.0
+  skipRange: <0.3.0
+- name: function-mesh.v0.4.0
+  replaces: function-mesh.v0.3.0
+  skipRange: <0.4.0
+- name: function-mesh.v0.5.0
+  replaces: function-mesh.v0.4.0
+  skipRange: <0.5.0
+- name: function-mesh.v0.6.0
+  replaces: function-mesh.v0.5.0
+  skipRange: <0.6.0
+- name: function-mesh.v0.7.0
+  replaces: function-mesh.v0.6.0
+  skipRange: <0.7.0
+- name: function-mesh.v0.8.0
+  replaces: function-mesh.v0.7.0
+  skipRange: <0.8.0
+- name: function-mesh.v0.9.0
+  replaces: function-mesh.v0.8.0
+  skipRange: <0.9.0
+name: alpha
+package: function-mesh
+schema: olm.channel
+---
+image: quay.io/operatorhubio/function-mesh@sha256:0e990fdc5b25d0139c6f876e9579f30556cfd17a4fd1dc61dab2d2c2e79b6f21
+name: function-mesh.v0.10.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.10.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:0e990fdc5b25d0139c6f876e9579f30556cfd17a4fd1dc61dab2d2c2e79b6f21
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:7408839c7b6aa820aaae3a7dc1f7bc3466e271a1666d43033c226fba8c67103f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:6d91ede5228a2d1112db8f4463938f2209d887b7d7475d3bdcaa043e23bc6932
+name: function-mesh.v0.11.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.11.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:6d91ede5228a2d1112db8f4463938f2209d887b7d7475d3bdcaa043e23bc6932
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:0eda7067fd74e35f0be03445a54ee7707fb309703cbaeb43af13618241a7377e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:fc9796de0ed23c32620cd2f513ed6007a60613e7db2dfa246d40a0d7e88732a6
+name: function-mesh.v0.12.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: ConnectorCatalog
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.12.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:fc9796de0ed23c32620cd2f513ed6007a60613e7db2dfa246d40a0d7e88732a6
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:89a2bd74a68a5c0741a95b8f9e37d879b0f0ce16fdd89d0708d11b40b887f185
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:7185a330dd6b0fcefe17c025ae669db6acd277d078fcf82eb890f9c72279a973
+name: function-mesh.v0.13.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: ConnectorCatalog
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.13.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:7185a330dd6b0fcefe17c025ae669db6acd277d078fcf82eb890f9c72279a973
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:11aeb09af58160fd5ecd7652e777cdf32dbb56ef4af565c6f1a1b9fb8730bbd6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:586362c6b720363e1a7da0ea106154cc9d15a463acaa2d42159e5fa9c90ddd40
+name: function-mesh.v0.15.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: ConnectorCatalog
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.15.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:586362c6b720363e1a7da0ea106154cc9d15a463acaa2d42159e5fa9c90ddd40
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:cc6d6021bfad096e6302c4f97cb1d0bcccf285b47c9df47f8a153c6cedeb68bc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:90a674f2f4807aefd52a2c2a3df6e2c4a5a4340c8f49535c44f092469de7670a
+name: function-mesh.v0.16.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.16.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:90a674f2f4807aefd52a2c2a3df6e2c4a5a4340c8f49535c44f092469de7670a
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:8ceffb8cc594f87c31f326e751326758487c956ef59f3ba4e41309fc0c33e7da
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:dd1f78bcff25c53036e41c316cc19e7e89d7bb50ec6a9e18cbbe563e51356497
+name: function-mesh.v0.17.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.17.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:dd1f78bcff25c53036e41c316cc19e7e89d7bb50ec6a9e18cbbe563e51356497
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:6fd805b5f53b34e5249fe2722c8e1f468cc19a60c71abd8b12dcfff24becc633
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:abc2bc6f40474c7c4df12ba5f16c7e553a111a301449500ebfbfe70146df8c2f
+name: function-mesh.v0.18.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.13"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.18.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:abc2bc6f40474c7c4df12ba5f16c7e553a111a301449500ebfbfe70146df8c2f
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:822ca3b85521628af37a711da804916c3b004ba1c1454f79308bf7d0e95098e5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:99b2cdb6ef1c4927e0b734a10250a4744286e1363f4637c1b5d9f674e0c567c3
+name: function-mesh.v0.19.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.13"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.19.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:99b2cdb6ef1c4927e0b734a10250a4744286e1363f4637c1b5d9f674e0c567c3
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:5b03e42959ef9538860ba317ee5e77fe848982d2d2e329b7a3f1bee0aeab5bf8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:eeea06a353b566e1519d0884d9b612c0dbc43f4eb98b081c715f0d239eecbb0f
+name: function-mesh.v0.20.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.13"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.20.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:eeea06a353b566e1519d0884d9b612c0dbc43f4eb98b081c715f0d239eecbb0f
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:00d0fba140784187b6d20dc8d49ac8772003a8bb09a69e199c4c251cf0f05b6f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:e2130dd8ebd05c1a763654d64e9ec9226c28fd0129866e63eb1946471c78c022
+name: function-mesh.v0.20.1
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.13"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.20.1
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:e2130dd8ebd05c1a763654d64e9ec9226c28fd0129866e63eb1946471c78c022
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:bec26e01856f0df8a2b05ec9b1bf488312c7447654c88ec24f5dc06d8faa1176
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:3dafb3f45452e65b749752af5fa04ef9d648c6c9afe1676a9d9b470f25aedb14
+name: function-mesh.v0.21.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: BackendConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.13"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.21.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:3dafb3f45452e65b749752af5fa04ef9d648c6c9afe1676a9d9b470f25aedb14
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:0cd25d963aa997b91b4d3659eb913d3a908ca1a183131d141a9f8ffceecc6f01
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:cbd8a1c7ff840fddde86b1e4dce936a59bd6e6515f586ae7a64e83fff73258f5
+name: function-mesh.v0.22.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: BackendConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.13"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.22.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "compute.functionmesh.io/v1alpha1",
+            "kind": "Function",
+            "metadata": {
+              "name": "java-function-sample"
+            },
+            "spec": {
+              "autoAck": true,
+              "className": "org.apache.pulsar.functions.api.examples.ExclamationFunction",
+              "clusterName": "test-pulsar",
+              "forwardSourceMessageProperty": true,
+              "image": "streamnative/pulsar-functions-java-sample:3.2.2.1",
+              "input": {
+                "topics": [
+                  "persistent://public/default/java-function-input-topic"
+                ],
+                "typeClassName": "java.lang.String"
+              },
+              "java": {
+                "extraDependenciesDir": "random-dir/",
+                "jar": "/pulsar/examples/api-examples.jar",
+                "jarLocation": ""
+              },
+              "logTopic": "persistent://public/default/logging-function-logs",
+              "maxPendingAsyncRequests": 1000,
+              "maxReplicas": 5,
+              "output": {
+                "topic": "persistent://public/default/java-function-output-topic",
+                "typeClassName": "java.lang.String"
+              },
+              "pod": {
+                "annotations": {
+                  "managed-function": "true"
+                },
+                "env": [
+                  {
+                    "name": "EXAMPLE_VARIABLE",
+                    "value": "exampleValue"
+                  }
+                ],
+                "imagePullSecrets": [
+                  {
+                    "name": "regcred"
+                  }
+                ],
+                "initContainers": [
+                  {
+                    "command": [
+                      "sh",
+                      "-c",
+                      "echo The app is running! \u0026\u0026 sleep 30"
+                    ],
+                    "image": "busybox:1.28",
+                    "name": "init-function"
+                  }
+                ],
+                "labels": {
+                  "locaction": "mtv"
+                },
+                "sidecars": [
+                  {
+                    "command": [
+                      "sh",
+                      "-c",
+                      "echo The app is running! \u0026\u0026 sleep 30000"
+                    ],
+                    "image": "busybox:1.28",
+                    "name": "sidecar-function"
+                  }
+                ],
+                "volumes": [
+                  {
+                    "emptyDir": {},
+                    "name": "cache-volume"
+                  }
+                ]
+              },
+              "pulsar": {
+                "pulsarConfig": "test-pulsar"
+              },
+              "replicas": 1,
+              "resources": {
+                "limits": {
+                  "cpu": "0.2",
+                  "memory": "1.1G"
+                },
+                "requests": {
+                  "cpu": "0.1",
+                  "memory": "1G"
+                }
+              },
+              "secretsMap": {
+                "name": {
+                  "key": "username",
+                  "path": "test-secret"
+                },
+                "pwd": {
+                  "key": "password",
+                  "path": "test-secret"
+                }
+              },
+              "volumeMounts": [
+                {
+                  "mountPath": "/cache",
+                  "name": "cache-volume"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "compute.functionmesh.io/v1alpha1",
+            "kind": "FunctionMesh",
+            "metadata": {
+              "name": "functionmesh-sample"
+            },
+            "spec": {
+              "functions": [
+                {
+                  "autoAck": true,
+                  "className": "org.apache.pulsar.functions.api.examples.ExclamationFunction",
+                  "clusterName": "test-pulsar",
+                  "forwardSourceMessageProperty": true,
+                  "image": "streamnative/pulsar-functions-java-sample:3.2.2.1",
+                  "input": {
+                    "topics": [
+                      "persistent://public/default/functionmesh-input-topic"
+                    ],
+                    "typeClassName": "java.lang.String"
+                  },
+                  "java": {
+                    "extraDependenciesDir": "random-dir/",
+                    "jar": "/pulsar/examples/api-examples.jar",
+                    "jarLocation": ""
+                  },
+                  "logTopic": "persistent://public/default/logging-function-log",
+                  "maxReplicas": 1,
+                  "name": "ex1",
+                  "output": {
+                    "topic": "persistent://public/default/mid-topic",
+                    "typeClassName": "java.lang.String"
+                  },
+                  "pulsar": {
+                    "pulsarConfig": "mesh-test-pulsar"
+                  },
+                  "replicas": 1,
+                  "resources": {
+                    "limits": {
+                      "cpu": "0.2",
+                      "memory": "1.1G"
+                    },
+                    "requests": {
+                      "cpu": "0.1",
+                      "memory": "1G"
+                    }
+                  }
+                },
+                {
+                  "autoAck": true,
+                  "className": "org.apache.pulsar.functions.api.examples.ExclamationFunction",
+                  "clusterName": "test-pulsar",
+                  "forwardSourceMessageProperty": true,
+                  "image": "streamnative/pulsar-functions-java-sample:3.2.2.1",
+                  "input": {
+                    "topics": [
+                      "persistent://public/default/mid-topic"
+                    ],
+                    "typeClassName": "java.lang.String"
+                  },
+                  "java": {
+                    "extraDependenciesDir": "random-dir/",
+                    "jar": "/pulsar/examples/api-examples.jar",
+                    "jarLocation": ""
+                  },
+                  "logTopic": "persistent://public/default/logging-function-logs",
+                  "maxReplicas": 1,
+                  "name": "ex2",
+                  "output": {
+                    "topic": "persistent://public/default/functionmesh-output-topic",
+                    "typeClassName": "java.lang.String"
+                  },
+                  "pulsar": {
+                    "pulsarConfig": "mesh-test-pulsar"
+                  },
+                  "replicas": 1,
+                  "resources": {
+                    "limits": {
+                      "cpu": "0.2",
+                      "memory": "1.1G"
+                    },
+                    "requests": {
+                      "cpu": "0.1",
+                      "memory": "1G"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "compute.functionmesh.io/v1alpha1",
+            "kind": "Sink",
+            "metadata": {
+              "name": "sink-sample"
+            },
+            "spec": {
+              "autoAck": true,
+              "className": "org.apache.pulsar.io.elasticsearch.ElasticSearchSink",
+              "clusterName": "test-pulsar",
+              "image": "streamnative/pulsar-io-elastic-search:2.10.0.0-rc10",
+              "input": {
+                "topics": [
+                  "persistent://public/default/input"
+                ],
+                "typeClassName": "[B"
+              },
+              "java": {
+                "jar": "connectors/pulsar-io-elastic-search-2.10.0.0-rc10.nar",
+                "jarLocation": ""
+              },
+              "maxReplicas": 1,
+              "pulsar": {
+                "pulsarConfig": "test-sink"
+              },
+              "replicas": 1,
+              "resources": {
+                "limits": {
+                  "cpu": "0.2",
+                  "memory": "1.1G"
+                },
+                "requests": {
+                  "cpu": "0.1",
+                  "memory": "1G"
+                }
+              },
+              "sinkConfig": {
+                "elasticSearchUrl": "http://quickstart-es-http.default.svc.cluster.local:9200",
+                "indexName": "my_index",
+                "password": "wJ757TmoXEd941kXm07Z2GW3",
+                "typeName": "doc",
+                "username": "elastic"
+              }
+            }
+          },
+          {
+            "apiVersion": "compute.functionmesh.io/v1alpha1",
+            "kind": "Source",
+            "metadata": {
+              "name": "source-sample"
+            },
+            "spec": {
+              "className": "org.apache.pulsar.io.debezium.mongodb.DebeziumMongoDbSource",
+              "clusterName": "test-pulsar",
+              "forwardSourceMessageProperty": true,
+              "image": "streamnative/pulsar-io-debezium-mongodb:2.10.0.0-rc10",
+              "java": {
+                "jar": "connectors/pulsar-io-debezium-mongodb-2.10.0.0-rc10.nar",
+                "jarLocation": ""
+              },
+              "maxReplicas": 1,
+              "output": {
+                "producerConf": {
+                  "maxPendingMessages": 1000,
+                  "maxPendingMessagesAcrossPartitions": 50000,
+                  "useThreadLocalProducers": true
+                },
+                "topic": "persistent://public/default/destination",
+                "typeClassName": "org.apache.pulsar.common.schema.KeyValue"
+              },
+              "pulsar": {
+                "pulsarConfig": "test-source"
+              },
+              "replicas": 1,
+              "resources": {
+                "limits": {
+                  "cpu": "0.2",
+                  "memory": "1.1G"
+                },
+                "requests": {
+                  "cpu": "0.1",
+                  "memory": "1G"
+                }
+              },
+              "sourceConfig": {
+                "database.whitelist": "inventory",
+                "mongodb.hosts": "rs0/mongo-dbz-0.mongo.default.svc.cluster.local:27017,rs0/mongo-dbz-1.mongo.default.svc.cluster.local:27017,rs0/mongo-dbz-2.mongo.default.svc.cluster.local:27017",
+                "mongodb.name": "dbserver1",
+                "mongodb.password": "dbz",
+                "mongodb.task.id": "1",
+                "mongodb.user": "debezium",
+                "pulsar.service.url": "pulsar://test-pulsar-broker.default.svc.cluster.local:6650"
+              }
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Streaming & Messaging
+      containerImage: quay.io/streamnativeio/function-mesh@sha256:9cd26218b69fe86ec74c2f19649fd32698f7641057e393d294a11304cbe74c76
+      createdAt: "2024-10-09T06:52:52Z"
+      description: The Function Mesh Operator manages the Pulsar Functions and Connectors
+        deployed on a Kubernetes cluster.
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "false"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      olm.skipRange: <0.22.0
+      operatorhub.io/ui-metadata-max-k8s-version: "1.26"
+      operators.operatorframework.io/builder: operator-sdk-v1.29.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/streamnative/function-mesh
+      support: StreamNative
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - kind: BackendConfig
+        name: backendconfigs.compute.functionmesh.io
+        version: v1alpha1
+      - description: FunctionMesh is the Schema for the functionmeshes API
+        displayName: Function Mesh
+        kind: FunctionMesh
+        name: functionmeshes.compute.functionmesh.io
+        version: v1alpha1
+      - description: Function is the Schema for the functions API
+        displayName: Function
+        kind: Function
+        name: functions.compute.functionmesh.io
+        version: v1alpha1
+      - description: Sink is the Schema for the sinks API
+        displayName: Sink
+        kind: Sink
+        name: sinks.compute.functionmesh.io
+        version: v1alpha1
+      - description: Source is the Schema for the sources API
+        displayName: Source
+        kind: Source
+        name: sources.compute.functionmesh.io
+        version: v1alpha1
+    description: |
+      [Function Mesh](https://functionmesh.io/) is a serverless framework purpose-built for stream processing applications. It brings powerful event-streaming capabilities to your applications by orchestrating multiple [Pulsar Functions](http://pulsar.apache.org/docs/en/next/functions-overview/) and [Pulsar IO connectors](http://pulsar.apache.org/docs/en/next/io-overview/) for complex stream processing jobs on Kubernetes.
+      Prerequisites:
+      - Install cert-manager operator first.
+    displayName: Function Mesh Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - pulsar
+    - function-mesh
+    - serverless
+    - pulsar-functions
+    - pulsar-io-connectors
+    - StreamNative
+    links:
+    - name: Function Mesh
+      url: https://function-mesh.io
+    maintainers:
+    - email: function-mesh@streamnative.io
+      name: Function Mesh
+    maturity: alpha
+    minKubeVersion: 1.23.0
+    provider:
+      name: StreamNative
+      url: https://streamnative.io
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: kube-rbac-proxy
+- image: quay.io/operatorhubio/function-mesh@sha256:cbd8a1c7ff840fddde86b1e4dce936a59bd6e6515f586ae7a64e83fff73258f5
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:9cd26218b69fe86ec74c2f19649fd32698f7641057e393d294a11304cbe74c76
+  name: function-mesh
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:74b5f72e20fc8e8d71c92fbd918913e4f1fce87d273c1b252864236a9f5f5b6d
+name: function-mesh.v0.3.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.3.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:74b5f72e20fc8e8d71c92fbd918913e4f1fce87d273c1b252864236a9f5f5b6d
+  name: ""
+- image: quay.io/streamnativeio/function-mesh:v0.3.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:d90c41eb6085ac1c9a9810a7f77a0d1624bb4144dd10872e441df0204dbc2938
+name: function-mesh.v0.4.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.4.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:d90c41eb6085ac1c9a9810a7f77a0d1624bb4144dd10872e441df0204dbc2938
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:5e533bbe022b7b6d05f95c9b7b3a87cf7dec3153b8183eff362d3216d78653f4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:54ee613c1061f24178aada6e0bcd9f94979a0f05bd63d96d6da07c25797cd337
+name: function-mesh.v0.5.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.5.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:54ee613c1061f24178aada6e0bcd9f94979a0f05bd63d96d6da07c25797cd337
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:330421e60071811ec4d2ca2b309f50356f3c19c7c855b716cde61110dada9092
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:07688e76a8db16602d31a35cb090d7212f699563ce46e4fb2467a07491d0183b
+name: function-mesh.v0.6.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.6.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:07688e76a8db16602d31a35cb090d7212f699563ce46e4fb2467a07491d0183b
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:15ab33a8e2726416a05e034184a2253d33871aba40e6f41347511caf47e08d36
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:437ea8964064e4766b8db090299f3fefb86a4abbd602298041b8a6431723bdfd
+name: function-mesh.v0.7.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.7.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:437ea8964064e4766b8db090299f3fefb86a4abbd602298041b8a6431723bdfd
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:3e13e5cc3ac4d7387ee0adc02cb5183aad6cf2301f76ab230482609c4da1c0b7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:044e3ef0e0d9854c7f5234b4729fe3a3b19f6b61144a0c3f9b2f77014a8a58f7
+name: function-mesh.v0.8.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.8.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:044e3ef0e0d9854c7f5234b4729fe3a3b19f6b61144a0c3f9b2f77014a8a58f7
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:279535d1118604037058e1d31dc79c94bfa6a5bce57c24862edad0fa0fd1c579
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/function-mesh@sha256:ada221dc6a572013324d8ef07428cda34cefa01d095fd4fe31fe06a7a0caf6b7
+name: function-mesh.v0.9.0
+package: function-mesh
+properties:
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Function
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: FunctionMesh
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Sink
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: compute.functionmesh.io
+    kind: Source
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.11"
+- type: olm.package
+  value:
+    packageName: function-mesh
+    version: 0.9.0
+relatedImages:
+- image: docker.cloudsmith.io/streamnative/mirrors/gcr.io/kubebuilder/kube-rbac-proxy@sha256:67ecb332573384515406ebd71816781366b70adb0eb66345e5980e92603373e1
+  name: ""
+- image: quay.io/operatorhubio/function-mesh@sha256:ada221dc6a572013324d8ef07428cda34cefa01d095fd4fe31fe06a7a0caf6b7
+  name: ""
+- image: quay.io/streamnativeio/function-mesh@sha256:2b38338b988977cb42841f3bcbef4244d82efb16ab1199540e3f7167c1a048dc
+  name: ""
+schema: olm.bundle

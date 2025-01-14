@@ -1,0 +1,2105 @@
+{
+  "schema": "olm.package",
+  "name": "loki-operator",
+  "defaultChannel": "stable-6.1",
+  "icon": {
+    "base64data": "PHN2ZyBpZD0iYWZiNDE1NDktYzU3MC00OWI3LTg1Y2QtNjU3NjAwZWRmMmUxIiBkYXRhLW5hbWU9IkxheWVyIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDcyMS4xNSA3MjEuMTUiPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAuYTQ0OGZkZWEtNGE0Yy00Njc4LTk3NmEtYzM3ODUzMDhhZTA2IHsKICAgICAgICBmaWxsOiAjZGIzOTI3OwogICAgICB9CgogICAgICAuZTEzMzA4YjgtNzQ4NS00Y2IwLTk3NjUtOGE1N2I5M2Y5MWE2IHsKICAgICAgICBmaWxsOiAjY2IzNzI4OwogICAgICB9CgogICAgICAuZTc3Mjg2ZjEtMjJkYS00NGQxLThlZmItMWQxNGIwY2NhZTYyIHsKICAgICAgICBmaWxsOiAjZmZmOwogICAgICB9CgogICAgICAuYTA0MjBjYWMtZWJlNi00YzE4LWI5ODEtYWJiYTBiYTliMzY1IHsKICAgICAgICBmaWxsOiAjZTVlNWU0OwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8Y2lyY2xlIGNsYXNzPSJhNDQ4ZmRlYS00YTRjLTQ2NzgtOTc2YS1jMzc4NTMwOGFlMDYiIGN4PSIzNjAuNTgiIGN5PSIzNjAuNTgiIHI9IjM1OC4yOCIvPgogIDxwYXRoIGNsYXNzPSJlMTMzMDhiOC03NDg1LTRjYjAtOTc2NS04YTU3YjkzZjkxYTYiIGQ9Ik02MTMuNTQsMTA3LjMsMTA2Ljg4LDYxNGMxNDAsMTM4LjUxLDM2NS44MiwxMzguMDYsNTA1LjI2LTEuMzlTNzUyLDI0Ny4zMyw2MTMuNTQsMTA3LjNaIi8+CiAgPGc+CiAgICA8Y2lyY2xlIGNsYXNzPSJlNzcyODZmMS0yMmRhLTQ0ZDEtOGVmYi0xZDE0YjBjY2FlNjIiIGN4PSIyMzQuNyIgY3k9IjM1Ny4zIiByPSI0Ny43MiIvPgogICAgPGNpcmNsZSBjbGFzcz0iZTc3Mjg2ZjEtMjJkYS00NGQxLThlZmItMWQxNGIwY2NhZTYyIiBjeD0iMjM0LjciIGN5PSIxODIuOTQiIHI9IjQ3LjcyIi8+CiAgICA8Y2lyY2xlIGNsYXNzPSJlNzcyODZmMS0yMmRhLTQ0ZDEtOGVmYi0xZDE0YjBjY2FlNjIiIGN4PSIyMzQuNyIgY3k9IjUzOC4yMSIgcj0iNDcuNzIiLz4KICA8L2c+CiAgPHBvbHlnb24gY2xhc3M9ImU3NzI4NmYxLTIyZGEtNDRkMS04ZWZiLTFkMTRiMGNjYWU2MiIgcG9pbnRzPSI0MzUuMTkgMzQ3LjMgMzkwLjU0IDM0Ny4zIDM5MC41NCAxNzIuOTQgMzE2LjE2IDE3Mi45NCAzMTYuMTYgMTkyLjk0IDM3MC41NCAxOTIuOTQgMzcwLjU0IDM0Ny4zIDMxNi4xNiAzNDcuMyAzMTYuMTYgMzY3LjMgMzcwLjU0IDM2Ny4zIDM3MC41NCA1MjEuNjcgMzE2LjE2IDUyMS42NyAzMTYuMTYgNTQxLjY3IDM5MC41NCA1NDEuNjcgMzkwLjU0IDM2Ny4zIDQzNS4xOSAzNjcuMyA0MzUuMTkgMzQ3LjMiLz4KICA8cG9seWdvbiBjbGFzcz0iZTc3Mjg2ZjEtMjJkYS00NGQxLThlZmItMWQxNGIwY2NhZTYyIiBwb2ludHM9IjU5OS43NCAzMTcuMDMgNTU3Ljk3IDMxNy4wMyA1NTAuOTcgMzE3LjAzIDU1MC45NyAzMTAuMDMgNTUwLjk3IDI2OC4yNiA1NTAuOTcgMjY4LjI2IDQ2NC4zNiAyNjguMjYgNDY0LjM2IDQ0Ni4zNCA1OTkuNzQgNDQ2LjM0IDU5OS43NCAzMTcuMDMgNTk5Ljc0IDMxNy4wMyIvPgogIDxwb2x5Z29uIGNsYXNzPSJhMDQyMGNhYy1lYmU2LTRjMTgtYjk4MS1hYmJhMGJhOWIzNjUiIHBvaW50cz0iNTk5Ljc0IDMxMC4wMyA1NTcuOTcgMjY4LjI2IDU1Ny45NyAzMTAuMDMgNTk5Ljc0IDMxMC4wMyIvPgo8L3N2Zz4K",
+    "mediatype": "image/svg+xml"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-6.1",
+  "package": "loki-operator",
+  "entries": [
+    {
+      "name": "loki-operator.v6.1.0",
+      "skipRange": ">=5.9.0-0 <6.1.0"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "loki-operator.v6.1.0",
+  "package": "loki-operator",
+  "image": "registry.redhat.io/openshift-logging/loki-operator-bundle@sha256:96ac6f85d51635d8073ef6770da2e083a2b9de63548af053abacdf2a916b2c14",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "loki.grafana.com",
+        "kind": "AlertingRule",
+        "version": "v1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "loki.grafana.com",
+        "kind": "AlertingRule",
+        "version": "v1beta1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "loki.grafana.com",
+        "kind": "LokiStack",
+        "version": "v1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "loki.grafana.com",
+        "kind": "LokiStack",
+        "version": "v1beta1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "loki.grafana.com",
+        "kind": "RecordingRule",
+        "version": "v1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "loki.grafana.com",
+        "kind": "RecordingRule",
+        "version": "v1beta1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "loki.grafana.com",
+        "kind": "RulerConfig",
+        "version": "v1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "loki.grafana.com",
+        "kind": "RulerConfig",
+        "version": "v1beta1"
+      }
+    },
+    {
+      "type": "olm.maxOpenShiftVersion",
+      "value": 4.18
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "loki-operator",
+        "version": "6.1.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"loki.grafana.com/v1\",\n    \"kind\": \"AlertingRule\",\n    \"metadata\": {\n      \"name\": \"alertingrule-sample\"\n    },\n    \"spec\": {\n      \"groups\": [\n        {\n          \"interval\": \"10m\",\n          \"name\": \"alerting-rules-group\",\n          \"rules\": [\n            {\n              \"alert\": \"HighPercentageError\",\n              \"annotations\": {\n                \"summary\": \"High request latency\"\n              },\n              \"expr\": \"sum(rate({app=\\\"foo\\\", env=\\\"production\\\"} |= \\\"error\\\" [5m])) by (job)\\n  /\\nsum(rate({app=\\\"foo\\\", env=\\\"production\\\"}[5m])) by (job)\\n  \\u003e 0.05\\n\",\n              \"for\": \"10m\",\n              \"labels\": {\n                \"severity\": \"page\"\n              }\n            },\n            {\n              \"alert\": \"HttpCredentialsLeaked\",\n              \"annotations\": {\n                \"message\": \"{{ $labels.job }} is leaking http basic auth credentials.\"\n              },\n              \"expr\": \"sum by (cluster, job, pod) (count_over_time({namespace=\\\"prod\\\"} |~ \\\"http(s?)://(\\\\\\\\w+):(\\\\\\\\w+)@\\\" [5m]) \\u003e 0)\",\n              \"for\": \"10m\",\n              \"labels\": {\n                \"severity\": \"critical\"\n              }\n            }\n          ]\n        }\n      ],\n      \"tenantID\": \"test-tenant\"\n    }\n  },\n  {\n    \"apiVersion\": \"loki.grafana.com/v1\",\n    \"kind\": \"LokiStack\",\n    \"metadata\": {\n      \"name\": \"lokistack-sample\"\n    },\n    \"spec\": {\n      \"size\": \"1x.small\",\n      \"storage\": {\n        \"secret\": {\n          \"name\": \"test\"\n        }\n      },\n      \"storageClassName\": \"standard\"\n    }\n  },\n  {\n    \"apiVersion\": \"loki.grafana.com/v1\",\n    \"kind\": \"RecordingRule\",\n    \"metadata\": {\n      \"name\": \"recordingrule-sample\"\n    },\n    \"spec\": {\n      \"groups\": [\n        {\n          \"interval\": \"10m\",\n          \"name\": \"recording-rules-group\",\n          \"rules\": [\n            {\n              \"expr\": \"sum(rate({container=\\\"myservice\\\"}[10m]))\\n\",\n              \"record\": \"myservice:requests:rate10m\"\n            },\n            {\n              \"expr\": \"sum(rate({container=\\\"otherservice\\\"}[1m]))\\n\",\n              \"record\": \"otherservice:requests:rate1m\"\n            }\n          ]\n        }\n      ],\n      \"tenantID\": \"test-tenant\"\n    }\n  },\n  {\n    \"apiVersion\": \"loki.grafana.com/v1\",\n    \"kind\": \"RulerConfig\",\n    \"metadata\": {\n      \"name\": \"rulerconfig-sample\"\n    },\n    \"spec\": {\n      \"alertmanager\": {\n        \"discovery\": {\n          \"enableSRV\": true,\n          \"refreshInterval\": \"1m\"\n        },\n        \"enableV2\": true,\n        \"endpoints\": [\n          \"http://alertmanager-host1.mycompany.org\",\n          \"http://alertmanager-host2.mycompany.org\"\n        ],\n        \"externalLabels\": {\n          \"environment\": \"production\",\n          \"region\": \"us-east-2\"\n        },\n        \"externalUrl\": \"http://www.mycompany.org/alerts\",\n        \"notificationQueue\": {\n          \"capacity\": 1000,\n          \"forGracePeriod\": \"10m\",\n          \"forOutageTolerance\": \"1h\",\n          \"resendDelay\": \"1m\",\n          \"timeout\": \"30s\"\n        }\n      },\n      \"evaluationInterval\": \"1m\",\n      \"pollInterval\": \"1m\",\n      \"remoteWrite\": {\n        \"client\": {\n          \"authorization\": \"basic\",\n          \"authorizationSecretName\": \"my-secret-resource\",\n          \"name\": \"remote-write-log-metrics\",\n          \"proxyUrl\": \"http://proxy-host.mycompany.org\",\n          \"relabelConfigs\": [\n            {\n              \"action\": \"replace\",\n              \"regex\": \"ALERTS.*\",\n              \"replacement\": \"$1\",\n              \"separator\": \"\",\n              \"sourceLabels\": [\n                \"labelc\",\n                \"labeld\"\n              ],\n              \"targetLabel\": \"labelnew\"\n            }\n          ],\n          \"timeout\": \"30s\",\n          \"url\": \"http://remote-write-host.mycompany.org\"\n        },\n        \"enabled\": true,\n        \"refreshPeriod\": \"10s\"\n      }\n    }\n  }\n]",
+          "capabilities": "Full Lifecycle",
+          "categories": "OpenShift Optional, Logging & Tracing",
+          "certified": "false",
+          "containerImage": "registry.redhat.io/openshift-logging/loki-rhel9-operator@sha256:1211e000bdcf1e07ecc8da715d075153e0e8fc38706f8fbbb105bf1c5c5e33b9",
+          "createdAt": "2024-10-30T09:43:19Z",
+          "description": "The Loki Operator for OCP provides a means for configuring and managing a Loki stack for cluster logging.\n## Prerequisites and Requirements\n### Loki Operator Namespace\nThe Loki Operator must be deployed to the global operator group namespace `openshift-operators-redhat`.\n### Memory Considerations\nLoki is a memory intensive application.  The initial\nset of OCP nodes may not be large enough to support the Loki stack.  Additional OCP nodes must be added\nto the OCP cluster if you desire to run with the recommended (or better) memory.\n",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "true",
+          "features.operators.openshift.io/token-auth-aws": "true",
+          "features.operators.openshift.io/token-auth-azure": "true",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=5.9.0-0 <6.1.0",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-operators-redhat",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-unknown",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v4",
+          "support": "AOS Cluster Logging"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "alertingrules.loki.grafana.com",
+              "version": "v1",
+              "kind": "AlertingRule",
+              "displayName": "AlertingRule",
+              "description": "AlertingRule is the Schema for the alertingrules API",
+              "resources": [
+                {
+                  "name": "",
+                  "kind": "LokiStack",
+                  "version": "v1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Conditions",
+                  "description": "Conditions of the AlertingRule generation health.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "groups",
+                  "displayName": "Groups",
+                  "description": "List of groups for alerting rules."
+                },
+                {
+                  "path": "groups[0].interval",
+                  "displayName": "Evaluation Interval",
+                  "description": "Interval defines the time interval between evaluation of the given\nalerting rule."
+                },
+                {
+                  "path": "groups[0].limit",
+                  "displayName": "Limit of firing alerts",
+                  "description": "Limit defines the number of alerts an alerting rule can produce. 0 is no limit.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "groups[0].name",
+                  "displayName": "Name",
+                  "description": "Name of the alerting rule group. Must be unique within all alerting rules."
+                },
+                {
+                  "path": "groups[0].rules",
+                  "displayName": "Rules",
+                  "description": "Rules defines a list of alerting rules"
+                },
+                {
+                  "path": "groups[0].rules[0].alert",
+                  "displayName": "Name",
+                  "description": "The name of the alert. Must be a valid label value."
+                },
+                {
+                  "path": "groups[0].rules[0].annotations",
+                  "displayName": "Annotations",
+                  "description": "Annotations to add to each alert."
+                },
+                {
+                  "path": "groups[0].rules[0].expr",
+                  "displayName": "LogQL Expression",
+                  "description": "The LogQL expression to evaluate. Every evaluation cycle this is\nevaluated at the current time, and all resultant time series become\npending/firing alerts."
+                },
+                {
+                  "path": "groups[0].rules[0].for",
+                  "displayName": "Firing Threshold",
+                  "description": "Alerts are considered firing once they have been returned for this long.\nAlerts which have not yet fired for long enough are considered pending."
+                },
+                {
+                  "path": "groups[0].rules[0].labels",
+                  "displayName": "Labels",
+                  "description": "Labels to add to each alert."
+                },
+                {
+                  "path": "tenantID",
+                  "displayName": "Tenant ID",
+                  "description": "TenantID of tenant where the alerting rules are evaluated in."
+                }
+              ]
+            },
+            {
+              "name": "lokistacks.loki.grafana.com",
+              "version": "v1",
+              "kind": "LokiStack",
+              "displayName": "LokiStack",
+              "description": "LokiStack is the Schema for the lokistacks API",
+              "resources": [
+                {
+                  "name": "",
+                  "kind": "ConfigMap",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "Deployment",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "Ingress",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "PersistentVolumeClaims",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "Route",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "Service",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "ServiceAccount",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "ServiceMonitor",
+                  "version": "v1"
+                },
+                {
+                  "name": "",
+                  "kind": "StatefulSet",
+                  "version": "v1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "components.distributor",
+                  "displayName": "Distributor",
+                  "description": "Distributor is a map to the per pod status of the distributor deployment",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podStatuses"
+                  ]
+                },
+                {
+                  "path": "components.ingester",
+                  "displayName": "Ingester",
+                  "description": "Ingester is a map to the per pod status of the ingester statefulset",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podStatuses"
+                  ]
+                },
+                {
+                  "path": "components.querier",
+                  "displayName": "Querier",
+                  "description": "Querier is a map to the per pod status of the querier deployment",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podStatuses"
+                  ]
+                },
+                {
+                  "path": "components.queryFrontend",
+                  "displayName": "Query Frontend",
+                  "description": "QueryFrontend is a map to the per pod status of the query frontend deployment",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podStatuses"
+                  ]
+                },
+                {
+                  "path": "components.compactor",
+                  "displayName": "Compactor",
+                  "description": "Compactor is a map to the pod status of the compactor pod.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podStatuses"
+                  ]
+                },
+                {
+                  "path": "components.gateway",
+                  "displayName": "Gateway",
+                  "description": "Gateway is a map to the per pod status of the lokistack gateway deployment.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podStatuses"
+                  ]
+                },
+                {
+                  "path": "components.indexGateway",
+                  "displayName": "IndexGateway",
+                  "description": "IndexGateway is a map to the per pod status of the index gateway statefulset",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podStatuses"
+                  ]
+                },
+                {
+                  "path": "components.ruler",
+                  "displayName": "Ruler",
+                  "description": "Ruler is a map to the per pod status of the lokistack ruler statefulset.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podStatuses"
+                  ]
+                },
+                {
+                  "path": "conditions",
+                  "displayName": "Conditions",
+                  "description": "Conditions of the Loki deployment health.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "hashRing",
+                  "displayName": "Hash Ring",
+                  "description": "HashRing defines the spec for the distributed hash ring configuration.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "hashRing.memberlist",
+                  "displayName": "Memberlist Config",
+                  "description": "MemberList configuration spec"
+                },
+                {
+                  "path": "hashRing.memberlist.enableIPv6",
+                  "displayName": "Enable IPv6",
+                  "description": "EnableIPv6 enables IPv6 support for the memberlist based hash ring.\n\n\nCurrently this also forces the instanceAddrType to podIP to avoid local address lookup\nfor the memberlist.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "hashRing.memberlist.instanceAddrType",
+                  "displayName": "Instance Address",
+                  "description": "InstanceAddrType defines the type of address to use to advertise to the ring.\nDefaults to the first address from any private network interfaces of the current pod.\nAlternatively the public pod IP can be used in case private networks (RFC 1918 and RFC 6598)\nare not available.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:default",
+                    "urn:alm:descriptor:com.tectonic.ui:select:podIP"
+                  ]
+                },
+                {
+                  "path": "hashRing.type",
+                  "displayName": "Type",
+                  "description": "Type of hash ring implementation that should be used",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:memberlist"
+                  ]
+                },
+                {
+                  "path": "limits",
+                  "displayName": "Rate Limiting",
+                  "description": "Limits defines the limits to be applied to log stream processing.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "limits.global",
+                  "displayName": "Global Limits",
+                  "description": "Global defines the limits applied globally across the cluster."
+                },
+                {
+                  "path": "limits.global.ingestion.ingestionBurstSize",
+                  "displayName": "Ingestion Burst Size (in MB)",
+                  "description": "IngestionBurstSize defines the local rate-limited sample size per\ndistributor replica. It should be set to the set at least to the\nmaximum logs size expected in a single push request.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.ingestionRate",
+                  "displayName": "Ingestion Rate (in MB)",
+                  "description": "IngestionRate defines the sample size per second. Units MB.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.maxGlobalStreamsPerTenant",
+                  "displayName": "Max Global Streams per  Tenant",
+                  "description": "MaxGlobalStreamsPerTenant defines the maximum number of active streams\nper tenant, across the cluster.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.maxLabelNameLength",
+                  "displayName": "Max Label Name Length",
+                  "description": "MaxLabelNameLength defines the maximum number of characters allowed\nfor label keys in log streams.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.maxLabelNamesPerSeries",
+                  "displayName": "Max Labels Names per Series",
+                  "description": "MaxLabelNamesPerSeries defines the maximum number of label names per series\nin each log stream.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.maxLabelValueLength",
+                  "displayName": "Max Label Value Length",
+                  "description": "MaxLabelValueLength defines the maximum number of characters allowed\nfor label values in log streams.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.maxLineSize",
+                  "displayName": "Max Line Size",
+                  "description": "MaxLineSize defines the maximum line size on ingestion path. Units in Bytes.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.perStreamDesiredRate",
+                  "displayName": "Per Stream Desired Rate (in MB)",
+                  "description": "PerStreamDesiredRate defines the desired ingestion rate per second that LokiStack should\ntarget applying automatic stream sharding. Units MB.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.perStreamRateLimit",
+                  "displayName": "Maximum byte rate per second per stream (in MB)",
+                  "description": "PerStreamRateLimit defines the maximum byte rate per second per stream. Units MB.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.ingestion.perStreamRateLimitBurst",
+                  "displayName": "Maximum burst bytes per stream (in MB)",
+                  "description": "PerStreamRateLimitBurst defines the maximum burst bytes per stream. Units MB.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.otlp.streamLabels",
+                  "displayName": "Stream Labels",
+                  "description": "StreamLabels configures which resource attributes are converted to Loki stream labels."
+                },
+                {
+                  "path": "limits.global.otlp.streamLabels.resourceAttributes",
+                  "displayName": "Resource Attributes",
+                  "description": "ResourceAttributes lists the names of the resource attributes that should be converted into Loki stream labels."
+                },
+                {
+                  "path": "limits.global.otlp.streamLabels.resourceAttributes[0].name",
+                  "displayName": "Name",
+                  "description": "Name contains either a verbatim name of an attribute or a regular expression matching many attributes."
+                },
+                {
+                  "path": "limits.global.otlp.streamLabels.resourceAttributes[0].regex",
+                  "displayName": "Treat name as regular expression",
+                  "description": "If Regex is true, then Name is treated as a regular expression instead of as a verbatim attribute name."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata",
+                  "displayName": "Structured Metadata",
+                  "description": "StructuredMetadata configures which attributes are saved in structured metadata."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.logAttributes",
+                  "displayName": "Log Attributes",
+                  "description": "LogAttributes lists the names of log attributes that should be included in structured metadata."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.logAttributes[0].name",
+                  "displayName": "Name",
+                  "description": "Name contains either a verbatim name of an attribute or a regular expression matching many attributes."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.logAttributes[0].regex",
+                  "displayName": "Treat name as regular expression",
+                  "description": "If Regex is true, then Name is treated as a regular expression instead of as a verbatim attribute name."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.resourceAttributes",
+                  "displayName": "Resource Attributes",
+                  "description": "ResourceAttributes lists the names of resource attributes that should be included in structured metadata."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.resourceAttributes[0].name",
+                  "displayName": "Name",
+                  "description": "Name contains either a verbatim name of an attribute or a regular expression matching many attributes."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.resourceAttributes[0].regex",
+                  "displayName": "Treat name as regular expression",
+                  "description": "If Regex is true, then Name is treated as a regular expression instead of as a verbatim attribute name."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.scopeAttributes",
+                  "displayName": "Scope Attributes",
+                  "description": "ScopeAttributes lists the names of scope attributes that should be included in structured metadata."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.scopeAttributes[0].name",
+                  "displayName": "Name",
+                  "description": "Name contains either a verbatim name of an attribute or a regular expression matching many attributes."
+                },
+                {
+                  "path": "limits.global.otlp.structuredMetadata.scopeAttributes[0].regex",
+                  "displayName": "Treat name as regular expression",
+                  "description": "If Regex is true, then Name is treated as a regular expression instead of as a verbatim attribute name."
+                },
+                {
+                  "path": "limits.global.queries.cardinalityLimit",
+                  "displayName": "Cardinality Limit",
+                  "description": "CardinalityLimit defines the cardinality limit for index queries.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.queries.maxChunksPerQuery",
+                  "displayName": "Max Chunk per Query",
+                  "description": "MaxChunksPerQuery defines the maximum number of chunks\nthat can be fetched by a single query.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.queries.maxEntriesLimitPerQuery",
+                  "displayName": "Max Entries Limit per Query",
+                  "description": "MaxEntriesLimitsPerQuery defines the maximum number of log entries\nthat will be returned for a query.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.queries.maxQuerySeries",
+                  "displayName": "Max Query Series",
+                  "description": "MaxQuerySeries defines the maximum of unique series\nthat is returned by a metric query.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.queries.maxVolumeSeries",
+                  "displayName": "Max Volume Series",
+                  "description": "MaxVolumeSeries defines the maximum number of aggregated series in a log-volume response",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.global.queries.queryTimeout",
+                  "displayName": "Query Timeout",
+                  "description": "Timeout when querying ingesters or storage during the execution of a query request."
+                },
+                {
+                  "path": "limits.tenants",
+                  "displayName": "Limits per Tenant",
+                  "description": "Tenants defines the limits applied per tenant."
+                },
+                {
+                  "path": "limits.tenants.ingestion.ingestionBurstSize",
+                  "displayName": "Ingestion Burst Size (in MB)",
+                  "description": "IngestionBurstSize defines the local rate-limited sample size per\ndistributor replica. It should be set to the set at least to the\nmaximum logs size expected in a single push request.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.ingestionRate",
+                  "displayName": "Ingestion Rate (in MB)",
+                  "description": "IngestionRate defines the sample size per second. Units MB.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.maxGlobalStreamsPerTenant",
+                  "displayName": "Max Global Streams per  Tenant",
+                  "description": "MaxGlobalStreamsPerTenant defines the maximum number of active streams\nper tenant, across the cluster.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.maxLabelNameLength",
+                  "displayName": "Max Label Name Length",
+                  "description": "MaxLabelNameLength defines the maximum number of characters allowed\nfor label keys in log streams.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.maxLabelNamesPerSeries",
+                  "displayName": "Max Labels Names per Series",
+                  "description": "MaxLabelNamesPerSeries defines the maximum number of label names per series\nin each log stream.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.maxLabelValueLength",
+                  "displayName": "Max Label Value Length",
+                  "description": "MaxLabelValueLength defines the maximum number of characters allowed\nfor label values in log streams.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.maxLineSize",
+                  "displayName": "Max Line Size",
+                  "description": "MaxLineSize defines the maximum line size on ingestion path. Units in Bytes.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.perStreamDesiredRate",
+                  "displayName": "Per Stream Desired Rate (in MB)",
+                  "description": "PerStreamDesiredRate defines the desired ingestion rate per second that LokiStack should\ntarget applying automatic stream sharding. Units MB.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.perStreamRateLimit",
+                  "displayName": "Maximum byte rate per second per stream (in MB)",
+                  "description": "PerStreamRateLimit defines the maximum byte rate per second per stream. Units MB.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.ingestion.perStreamRateLimitBurst",
+                  "displayName": "Maximum burst bytes per stream (in MB)",
+                  "description": "PerStreamRateLimitBurst defines the maximum burst bytes per stream. Units MB.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.otlp.streamLabels",
+                  "displayName": "Stream Labels",
+                  "description": "StreamLabels configures which resource attributes are converted to Loki stream labels."
+                },
+                {
+                  "path": "limits.tenants.otlp.streamLabels.resourceAttributes",
+                  "displayName": "Resource Attributes",
+                  "description": "ResourceAttributes lists the names of the resource attributes that should be converted into Loki stream labels."
+                },
+                {
+                  "path": "limits.tenants.otlp.streamLabels.resourceAttributes[0].name",
+                  "displayName": "Name",
+                  "description": "Name contains either a verbatim name of an attribute or a regular expression matching many attributes."
+                },
+                {
+                  "path": "limits.tenants.otlp.streamLabels.resourceAttributes[0].regex",
+                  "displayName": "Treat name as regular expression",
+                  "description": "If Regex is true, then Name is treated as a regular expression instead of as a verbatim attribute name."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata",
+                  "displayName": "Structured Metadata",
+                  "description": "StructuredMetadata configures which attributes are saved in structured metadata."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.logAttributes",
+                  "displayName": "Log Attributes",
+                  "description": "LogAttributes lists the names of log attributes that should be included in structured metadata."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.logAttributes[0].name",
+                  "displayName": "Name",
+                  "description": "Name contains either a verbatim name of an attribute or a regular expression matching many attributes."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.logAttributes[0].regex",
+                  "displayName": "Treat name as regular expression",
+                  "description": "If Regex is true, then Name is treated as a regular expression instead of as a verbatim attribute name."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.resourceAttributes",
+                  "displayName": "Resource Attributes",
+                  "description": "ResourceAttributes lists the names of resource attributes that should be included in structured metadata."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.resourceAttributes[0].name",
+                  "displayName": "Name",
+                  "description": "Name contains either a verbatim name of an attribute or a regular expression matching many attributes."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.resourceAttributes[0].regex",
+                  "displayName": "Treat name as regular expression",
+                  "description": "If Regex is true, then Name is treated as a regular expression instead of as a verbatim attribute name."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.scopeAttributes",
+                  "displayName": "Scope Attributes",
+                  "description": "ScopeAttributes lists the names of scope attributes that should be included in structured metadata."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.scopeAttributes[0].name",
+                  "displayName": "Name",
+                  "description": "Name contains either a verbatim name of an attribute or a regular expression matching many attributes."
+                },
+                {
+                  "path": "limits.tenants.otlp.structuredMetadata.scopeAttributes[0].regex",
+                  "displayName": "Treat name as regular expression",
+                  "description": "If Regex is true, then Name is treated as a regular expression instead of as a verbatim attribute name."
+                },
+                {
+                  "path": "limits.tenants.queries.blocked",
+                  "displayName": "Blocked",
+                  "description": "Blocked defines the list of rules to block matching queries."
+                },
+                {
+                  "path": "limits.tenants.queries.blocked[0].hash",
+                  "displayName": "Query Hash",
+                  "description": "Hash is a 32-bit FNV-1 hash of the query string.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.queries.blocked[0].pattern",
+                  "displayName": "Query Pattern",
+                  "description": "Pattern defines the pattern matching the queries to be blocked."
+                },
+                {
+                  "path": "limits.tenants.queries.blocked[0].regex",
+                  "displayName": "Regex",
+                  "description": "Regex defines if the pattern is a regular expression. If false the pattern will be used only for exact matches.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.queries.blocked[0].types",
+                  "displayName": "Query Types",
+                  "description": "Types defines the list of query types that should be considered for blocking."
+                },
+                {
+                  "path": "limits.tenants.queries.cardinalityLimit",
+                  "displayName": "Cardinality Limit",
+                  "description": "CardinalityLimit defines the cardinality limit for index queries.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.queries.maxChunksPerQuery",
+                  "displayName": "Max Chunk per Query",
+                  "description": "MaxChunksPerQuery defines the maximum number of chunks\nthat can be fetched by a single query.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.queries.maxEntriesLimitPerQuery",
+                  "displayName": "Max Entries Limit per Query",
+                  "description": "MaxEntriesLimitsPerQuery defines the maximum number of log entries\nthat will be returned for a query.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.queries.maxQuerySeries",
+                  "displayName": "Max Query Series",
+                  "description": "MaxQuerySeries defines the maximum of unique series\nthat is returned by a metric query.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.queries.maxVolumeSeries",
+                  "displayName": "Max Volume Series",
+                  "description": "MaxVolumeSeries defines the maximum number of aggregated series in a log-volume response",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "limits.tenants.queries.queryTimeout",
+                  "displayName": "Query Timeout",
+                  "description": "Timeout when querying ingesters or storage during the execution of a query request."
+                },
+                {
+                  "path": "managementState",
+                  "displayName": "Management State",
+                  "description": "ManagementState defines if the CR should be managed by the operator or not.\nDefault is managed.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:Managed",
+                    "urn:alm:descriptor:com.tectonic.ui:select:Unmanaged"
+                  ]
+                },
+                {
+                  "path": "proxy",
+                  "displayName": "Cluster Proxy",
+                  "description": "Proxy defines the spec for the object proxy to configure cluster proxy information."
+                },
+                {
+                  "path": "proxy.httpProxy",
+                  "displayName": "HTTPProxy",
+                  "description": "HTTPProxy configures the HTTP_PROXY/http_proxy env variable."
+                },
+                {
+                  "path": "proxy.httpsProxy",
+                  "displayName": "HTTPSProxy",
+                  "description": "HTTPSProxy configures the HTTPS_PROXY/https_proxy env variable."
+                },
+                {
+                  "path": "proxy.noProxy",
+                  "displayName": "NoProxy",
+                  "description": "NoProxy configures the NO_PROXY/no_proxy env variable."
+                },
+                {
+                  "path": "replication",
+                  "displayName": "Replication Spec",
+                  "description": "Replication defines the configuration for Loki data replication."
+                },
+                {
+                  "path": "replication.factor",
+                  "displayName": "Replication Factor",
+                  "description": "Factor defines the policy for log stream replication.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "replication.zones",
+                  "displayName": "Zones Spec",
+                  "description": "Zones defines an array of ZoneSpec that the scheduler will try to satisfy.\nIMPORTANT: Make sure that the replication factor defined is less than or equal to the number of available zones."
+                },
+                {
+                  "path": "replication.zones[0].maxSkew",
+                  "displayName": "Max Skew",
+                  "description": "MaxSkew describes the maximum degree to which Pods can be unevenly distributed.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "replication.zones[0].topologyKey",
+                  "displayName": "Topology Key",
+                  "description": "TopologyKey is the key that defines a topology in the Nodes' labels."
+                },
+                {
+                  "path": "replicationFactor",
+                  "displayName": "Replication Factor",
+                  "description": "Deprecated: Please use replication.factor instead. This field will be removed in future versions of this CRD.\nReplicationFactor defines the policy for log stream replication.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "rules",
+                  "displayName": "Rules",
+                  "description": "Rules defines the spec for the ruler component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "rules.enabled",
+                  "displayName": "Enable",
+                  "description": "Enabled defines a flag to enable/disable the ruler component",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "rules.namespaceSelector",
+                  "displayName": "Namespace Selector",
+                  "description": "Namespaces to be selected for PrometheusRules discovery. If unspecified, only\nthe same namespace as the LokiStack object is in is used."
+                },
+                {
+                  "path": "rules.selector",
+                  "displayName": "Selector",
+                  "description": "A selector to select which LokiRules to mount for loading alerting/recording\nrules from."
+                },
+                {
+                  "path": "size",
+                  "displayName": "LokiStack Size",
+                  "description": "Size defines one of the support Loki deployment scale out sizes.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:1x.pico",
+                    "urn:alm:descriptor:com.tectonic.ui:select:1x.extra-small",
+                    "urn:alm:descriptor:com.tectonic.ui:select:1x.small",
+                    "urn:alm:descriptor:com.tectonic.ui:select:1x.medium"
+                  ]
+                },
+                {
+                  "path": "storage",
+                  "displayName": "Object Storage",
+                  "description": "Storage defines the spec for the object storage endpoint to store logs."
+                },
+                {
+                  "path": "storage.schemas[0].version",
+                  "displayName": "Version",
+                  "description": "Version for writing and reading logs.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:v11",
+                    "urn:alm:descriptor:com.tectonic.ui:select:v12",
+                    "urn:alm:descriptor:com.tectonic.ui:select:v13"
+                  ]
+                },
+                {
+                  "path": "storage.secret.name",
+                  "displayName": "Object Storage Secret Name",
+                  "description": "Name of a secret in the namespace configured for object storage secrets.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes:Secret"
+                  ]
+                },
+                {
+                  "path": "storage.secret.type",
+                  "displayName": "Object Storage Secret Type",
+                  "description": "Type of object storage that should be used",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:azure",
+                    "urn:alm:descriptor:com.tectonic.ui:select:gcs",
+                    "urn:alm:descriptor:com.tectonic.ui:select:s3",
+                    "urn:alm:descriptor:com.tectonic.ui:select:swift",
+                    "urn:alm:descriptor:com.tectonic.ui:select:alibabacloud"
+                  ]
+                },
+                {
+                  "path": "storage.tls",
+                  "displayName": "TLS Config",
+                  "description": "TLS configuration for reaching the object storage endpoint."
+                },
+                {
+                  "path": "storage.tls.caKey",
+                  "displayName": "CA ConfigMap Key",
+                  "description": "Key is the data key of a ConfigMap containing a CA certificate.\nIt needs to be in the same namespace as the LokiStack custom resource.\nIf empty, it defaults to \"service-ca.crt\"."
+                },
+                {
+                  "path": "storage.tls.caName",
+                  "displayName": "CA ConfigMap Name",
+                  "description": "CA is the name of a ConfigMap containing a CA certificate.\nIt needs to be in the same namespace as the LokiStack custom resource.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes:ConfigMap"
+                  ]
+                },
+                {
+                  "path": "storageClassName",
+                  "displayName": "Storage Class Name",
+                  "description": "Storage class name defines the storage class for ingester/querier PVCs.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes:StorageClass"
+                  ]
+                },
+                {
+                  "path": "template",
+                  "displayName": "Node Placement",
+                  "description": "Template defines the resource/limits/tolerations/nodeselectors per component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "template.compactor",
+                  "displayName": "Compactor pods",
+                  "description": "Compactor defines the compaction component spec."
+                },
+                {
+                  "path": "template.compactor.podAntiAffinity",
+                  "displayName": "PodAntiAffinity",
+                  "description": "PodAntiAffinity defines the pod anti affinity scheduling rules to schedule pods\nof a component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity"
+                  ]
+                },
+                {
+                  "path": "template.compactor.replicas",
+                  "displayName": "Replicas",
+                  "description": "Replicas defines the number of replica pods of the component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:hidden"
+                  ]
+                },
+                {
+                  "path": "template.distributor",
+                  "displayName": "Distributor pods",
+                  "description": "Distributor defines the distributor component spec."
+                },
+                {
+                  "path": "template.distributor.podAntiAffinity",
+                  "displayName": "PodAntiAffinity",
+                  "description": "PodAntiAffinity defines the pod anti affinity scheduling rules to schedule pods\nof a component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity"
+                  ]
+                },
+                {
+                  "path": "template.distributor.replicas",
+                  "displayName": "Replicas",
+                  "description": "Replicas defines the number of replica pods of the component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:hidden"
+                  ]
+                },
+                {
+                  "path": "template.gateway",
+                  "displayName": "Gateway pods",
+                  "description": "Gateway defines the lokistack gateway component spec."
+                },
+                {
+                  "path": "template.gateway.podAntiAffinity",
+                  "displayName": "PodAntiAffinity",
+                  "description": "PodAntiAffinity defines the pod anti affinity scheduling rules to schedule pods\nof a component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity"
+                  ]
+                },
+                {
+                  "path": "template.gateway.replicas",
+                  "displayName": "Replicas",
+                  "description": "Replicas defines the number of replica pods of the component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:hidden"
+                  ]
+                },
+                {
+                  "path": "template.indexGateway",
+                  "displayName": "Index Gateway pods",
+                  "description": "IndexGateway defines the index gateway component spec."
+                },
+                {
+                  "path": "template.indexGateway.podAntiAffinity",
+                  "displayName": "PodAntiAffinity",
+                  "description": "PodAntiAffinity defines the pod anti affinity scheduling rules to schedule pods\nof a component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity"
+                  ]
+                },
+                {
+                  "path": "template.indexGateway.replicas",
+                  "displayName": "Replicas",
+                  "description": "Replicas defines the number of replica pods of the component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:hidden"
+                  ]
+                },
+                {
+                  "path": "template.ingester",
+                  "displayName": "Ingester pods",
+                  "description": "Ingester defines the ingester component spec."
+                },
+                {
+                  "path": "template.ingester.podAntiAffinity",
+                  "displayName": "PodAntiAffinity",
+                  "description": "PodAntiAffinity defines the pod anti affinity scheduling rules to schedule pods\nof a component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity"
+                  ]
+                },
+                {
+                  "path": "template.ingester.replicas",
+                  "displayName": "Replicas",
+                  "description": "Replicas defines the number of replica pods of the component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:hidden"
+                  ]
+                },
+                {
+                  "path": "template.querier",
+                  "displayName": "Querier pods",
+                  "description": "Querier defines the querier component spec."
+                },
+                {
+                  "path": "template.querier.podAntiAffinity",
+                  "displayName": "PodAntiAffinity",
+                  "description": "PodAntiAffinity defines the pod anti affinity scheduling rules to schedule pods\nof a component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity"
+                  ]
+                },
+                {
+                  "path": "template.querier.replicas",
+                  "displayName": "Replicas",
+                  "description": "Replicas defines the number of replica pods of the component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:hidden"
+                  ]
+                },
+                {
+                  "path": "template.queryFrontend",
+                  "displayName": "Query Frontend pods",
+                  "description": "QueryFrontend defines the query frontend component spec."
+                },
+                {
+                  "path": "template.queryFrontend.podAntiAffinity",
+                  "displayName": "PodAntiAffinity",
+                  "description": "PodAntiAffinity defines the pod anti affinity scheduling rules to schedule pods\nof a component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity"
+                  ]
+                },
+                {
+                  "path": "template.queryFrontend.replicas",
+                  "displayName": "Replicas",
+                  "description": "Replicas defines the number of replica pods of the component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:hidden"
+                  ]
+                },
+                {
+                  "path": "template.ruler",
+                  "displayName": "Ruler pods",
+                  "description": "Ruler defines the ruler component spec."
+                },
+                {
+                  "path": "template.ruler.podAntiAffinity",
+                  "displayName": "PodAntiAffinity",
+                  "description": "PodAntiAffinity defines the pod anti affinity scheduling rules to schedule pods\nof a component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity"
+                  ]
+                },
+                {
+                  "path": "template.ruler.replicas",
+                  "displayName": "Replicas",
+                  "description": "Replicas defines the number of replica pods of the component.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:hidden"
+                  ]
+                },
+                {
+                  "path": "tenants",
+                  "displayName": "Tenants Configuration",
+                  "description": "Tenants defines the per-tenant authentication and authorization spec for the lokistack-gateway component."
+                },
+                {
+                  "path": "tenants.authentication",
+                  "displayName": "Authentication",
+                  "description": "Authentication defines the lokistack-gateway component authentication configuration spec per tenant."
+                },
+                {
+                  "path": "tenants.authentication[0].mTLS",
+                  "displayName": "mTLS Configuration",
+                  "description": "TLSConfig defines the spec for the mTLS tenant's authentication."
+                },
+                {
+                  "path": "tenants.authentication[0].mTLS.ca",
+                  "displayName": "CA ConfigMap",
+                  "description": "CA defines the spec for the custom CA for tenant's authentication."
+                },
+                {
+                  "path": "tenants.authentication[0].mTLS.ca.caKey",
+                  "displayName": "CA ConfigMap Key",
+                  "description": "Key is the data key of a ConfigMap containing a CA certificate.\nIt needs to be in the same namespace as the LokiStack custom resource.\nIf empty, it defaults to \"service-ca.crt\"."
+                },
+                {
+                  "path": "tenants.authentication[0].mTLS.ca.caName",
+                  "displayName": "CA ConfigMap Name",
+                  "description": "CA is the name of a ConfigMap containing a CA certificate.\nIt needs to be in the same namespace as the LokiStack custom resource.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes:ConfigMap"
+                  ]
+                },
+                {
+                  "path": "tenants.authentication[0].oidc",
+                  "displayName": "OIDC Configuration",
+                  "description": "OIDC defines the spec for the OIDC tenant's authentication."
+                },
+                {
+                  "path": "tenants.authentication[0].oidc.issuerCA",
+                  "displayName": "IssuerCA ConfigMap",
+                  "description": "IssuerCA defines the spec for the issuer CA for tenant's authentication."
+                },
+                {
+                  "path": "tenants.authentication[0].oidc.issuerCA.caKey",
+                  "displayName": "CA ConfigMap Key",
+                  "description": "Key is the data key of a ConfigMap containing a CA certificate.\nIt needs to be in the same namespace as the LokiStack custom resource.\nIf empty, it defaults to \"service-ca.crt\"."
+                },
+                {
+                  "path": "tenants.authentication[0].oidc.issuerCA.caName",
+                  "displayName": "CA ConfigMap Name",
+                  "description": "CA is the name of a ConfigMap containing a CA certificate.\nIt needs to be in the same namespace as the LokiStack custom resource.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes:ConfigMap"
+                  ]
+                },
+                {
+                  "path": "tenants.authentication[0].oidc.issuerURL",
+                  "displayName": "Issuer URL",
+                  "description": "IssuerURL defines the URL for issuer."
+                },
+                {
+                  "path": "tenants.authentication[0].oidc.redirectURL",
+                  "displayName": "Redirect URL",
+                  "description": "RedirectURL defines the URL for redirect."
+                },
+                {
+                  "path": "tenants.authentication[0].oidc.secret",
+                  "displayName": "Tenant Secret",
+                  "description": "Secret defines the spec for the clientID and clientSecret for tenant's authentication."
+                },
+                {
+                  "path": "tenants.authentication[0].oidc.secret.name",
+                  "displayName": "Tenant Secret Name",
+                  "description": "Name of a secret in the namespace configured for tenant secrets.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes:Secret"
+                  ]
+                },
+                {
+                  "path": "tenants.authentication[0].tenantId",
+                  "displayName": "Tenant ID",
+                  "description": "TenantID defines the id of the tenant."
+                },
+                {
+                  "path": "tenants.authentication[0].tenantName",
+                  "displayName": "Tenant Name",
+                  "description": "TenantName defines the name of the tenant."
+                },
+                {
+                  "path": "tenants.authorization",
+                  "displayName": "Authorization",
+                  "description": "Authorization defines the lokistack-gateway component authorization configuration spec per tenant."
+                },
+                {
+                  "path": "tenants.authorization.opa",
+                  "displayName": "OPA Configuration",
+                  "description": "OPA defines the spec for the third-party endpoint for tenant's authorization."
+                },
+                {
+                  "path": "tenants.authorization.opa.url",
+                  "displayName": "OpenPolicyAgent URL",
+                  "description": "URL defines the third-party endpoint for authorization."
+                },
+                {
+                  "path": "tenants.authorization.roleBindings",
+                  "displayName": "Static Role Bindings",
+                  "description": "RoleBindings defines configuration to bind a set of roles to a set of subjects."
+                },
+                {
+                  "path": "tenants.authorization.roles",
+                  "displayName": "Static Roles",
+                  "description": "Roles defines a set of permissions to interact with a tenant."
+                },
+                {
+                  "path": "tenants.mode",
+                  "displayName": "Mode",
+                  "description": "Mode defines the mode in which lokistack-gateway component will be configured.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:static",
+                    "urn:alm:descriptor:com.tectonic.ui:select:dynamic",
+                    "urn:alm:descriptor:com.tectonic.ui:select:openshift-logging",
+                    "urn:alm:descriptor:com.tectonic.ui:select:openshift-network"
+                  ]
+                },
+                {
+                  "path": "tenants.openshift",
+                  "displayName": "Openshift",
+                  "description": "Openshift defines the configuration specific to Openshift modes."
+                },
+                {
+                  "path": "tenants.openshift.adminGroups",
+                  "displayName": "Admin Groups",
+                  "description": "AdminGroups defines a list of groups, whose members are considered to have admin-privileges by the Loki Operator.\nSetting this to an empty array disables admin groups.\n\n\nBy default the following groups are considered admin-groups:\n - system:cluster-admins\n - cluster-admin\n - dedicated-admin"
+                },
+                {
+                  "path": "tenants.openshift.otlp",
+                  "displayName": "OpenTelemetry Protocol",
+                  "description": "OTLP contains settings for ingesting data using OTLP in the OpenShift tenancy mode."
+                },
+                {
+                  "path": "tenants.openshift.otlp.disableRecommendedAttributes",
+                  "displayName": "Disable recommended OTLP attributes",
+                  "description": "DisableRecommendedAttributes can be used to reduce the number of attributes used for stream labels and structured\nmetadata.\n\n\nEnabling this setting removes the \"recommended attributes\" from the generated Loki configuration. This will cause\nmeta information to not be available as stream labels or structured metadata, potentially making queries more\nexpensive and less performant.\n\n\nNote that there is a set of \"required attributes\", needed for OpenShift Logging to work properly. Those will be\nadded to the configuration, even if this field is set to true.\n\n\nThis option is supposed to be combined with a custom label configuration customizing the labels for the specific\nusecase."
+                }
+              ]
+            },
+            {
+              "name": "recordingrules.loki.grafana.com",
+              "version": "v1",
+              "kind": "RecordingRule",
+              "displayName": "RecordingRule",
+              "description": "RecordingRule is the Schema for the recordingrules API",
+              "resources": [
+                {
+                  "name": "",
+                  "kind": "LokiStack",
+                  "version": "v1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Conditions",
+                  "description": "Conditions of the RecordingRule generation health.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "groups",
+                  "displayName": "Groups",
+                  "description": "List of groups for recording rules."
+                },
+                {
+                  "path": "groups[0].interval",
+                  "displayName": "Evaluation Interval",
+                  "description": "Interval defines the time interval between evaluation of the given\nrecoding rule."
+                },
+                {
+                  "path": "groups[0].limit",
+                  "displayName": "Limit of produced series",
+                  "description": "Limit defines the number of series a recording rule can produce. 0 is no limit.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "groups[0].name",
+                  "displayName": "Name",
+                  "description": "Name of the recording rule group. Must be unique within all recording rules."
+                },
+                {
+                  "path": "groups[0].rules",
+                  "displayName": "Rules",
+                  "description": "Rules defines a list of recording rules"
+                },
+                {
+                  "path": "groups[0].rules[0].expr",
+                  "displayName": "LogQL Expression",
+                  "description": "The LogQL expression to evaluate. Every evaluation cycle this is\nevaluated at the current time, and all resultant time series become\npending/firing alerts."
+                },
+                {
+                  "path": "groups[0].rules[0].labels",
+                  "displayName": "Labels",
+                  "description": "Labels to add to each recording rule."
+                },
+                {
+                  "path": "groups[0].rules[0].record",
+                  "displayName": "Metric Name",
+                  "description": "The name of the time series to output to. Must be a valid metric name."
+                },
+                {
+                  "path": "tenantID",
+                  "displayName": "Tenant ID",
+                  "description": "TenantID of tenant where the recording rules are evaluated in."
+                }
+              ]
+            },
+            {
+              "name": "rulerconfigs.loki.grafana.com",
+              "version": "v1",
+              "kind": "RulerConfig",
+              "displayName": "RulerConfig",
+              "description": "RulerConfig is the Schema for the rulerconfigs API",
+              "resources": [
+                {
+                  "name": "",
+                  "kind": "LokiStack",
+                  "version": "v1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Conditions",
+                  "description": "Conditions of the RulerConfig health.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "alertmanager",
+                  "displayName": "Alert Manager Configuration",
+                  "description": "Defines alert manager configuration to notify on firing alerts.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "alertmanager.client",
+                  "displayName": "TLS Config",
+                  "description": "Client configuration for reaching the alertmanager endpoint."
+                },
+                {
+                  "path": "alertmanager.client.basicAuth",
+                  "displayName": "Basic Authentication",
+                  "description": "Basic authentication configuration for reaching the alertmanager endpoints.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "alertmanager.client.basicAuth.password",
+                  "displayName": "Password",
+                  "description": "The subject's password for the basic authentication configuration."
+                },
+                {
+                  "path": "alertmanager.client.basicAuth.username",
+                  "displayName": "Username",
+                  "description": "The subject's username for the basic authentication configuration."
+                },
+                {
+                  "path": "alertmanager.client.headerAuth",
+                  "displayName": "Header Authentication",
+                  "description": "Header authentication configuration for reaching the alertmanager endpoints.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "alertmanager.client.headerAuth.credentials",
+                  "displayName": "Credentials",
+                  "description": "The credentials for the header authentication configuration."
+                },
+                {
+                  "path": "alertmanager.client.headerAuth.credentialsFile",
+                  "displayName": "Credentials File",
+                  "description": "The credentials file for the Header authentication configuration. It is mutually exclusive with `credentials`."
+                },
+                {
+                  "path": "alertmanager.client.headerAuth.type",
+                  "displayName": "Type",
+                  "description": "The authentication type for the header authentication configuration."
+                },
+                {
+                  "path": "alertmanager.client.tls",
+                  "displayName": "TLS",
+                  "description": "TLS configuration for reaching the alertmanager endpoints.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "alertmanager.client.tls.caPath",
+                  "displayName": "CA Path",
+                  "description": "The CA certificate file path for the TLS configuration."
+                },
+                {
+                  "path": "alertmanager.client.tls.certPath",
+                  "displayName": "Cert Path",
+                  "description": "The client-side certificate file path for the TLS configuration."
+                },
+                {
+                  "path": "alertmanager.client.tls.insecureSkipVerify",
+                  "displayName": "Skip validating server certificate",
+                  "description": "Skip validating server certificate."
+                },
+                {
+                  "path": "alertmanager.client.tls.keyPath",
+                  "displayName": "Key Path",
+                  "description": "The client-side key file path for the TLS configuration."
+                },
+                {
+                  "path": "alertmanager.client.tls.serverName",
+                  "displayName": "Server Name",
+                  "description": "The server name to validate in the alertmanager server certificates."
+                },
+                {
+                  "path": "alertmanager.discovery",
+                  "displayName": "DNS Discovery",
+                  "description": "Defines the configuration for DNS-based discovery of AlertManager hosts.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "alertmanager.discovery.enableSRV",
+                  "displayName": "Enable SRV",
+                  "description": "Use DNS SRV records to discover Alertmanager hosts."
+                },
+                {
+                  "path": "alertmanager.discovery.refreshInterval",
+                  "displayName": "Refresh Interval",
+                  "description": "How long to wait between refreshing DNS resolutions of Alertmanager hosts."
+                },
+                {
+                  "path": "alertmanager.enableV2",
+                  "displayName": "Enable AlertManager V2 API",
+                  "description": "If enabled, then requests to Alertmanager use the v2 API.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "alertmanager.endpoints",
+                  "displayName": "AlertManager Endpoints",
+                  "description": "List of AlertManager URLs to send notifications to. Each Alertmanager URL is treated as\na separate group in the configuration. Multiple Alertmanagers in HA per group can be\nsupported by using DNS resolution (See EnableDNSDiscovery)."
+                },
+                {
+                  "path": "alertmanager.externalLabels",
+                  "displayName": "Extra Alert Labels",
+                  "description": "Additional labels to add to all alerts."
+                },
+                {
+                  "path": "alertmanager.externalUrl",
+                  "displayName": "Alert External URL",
+                  "description": "URL for alerts return path."
+                },
+                {
+                  "path": "alertmanager.notificationQueue",
+                  "displayName": "Notification Queue",
+                  "description": "Defines the configuration for the notification queue to AlertManager hosts.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "alertmanager.notificationQueue.capacity",
+                  "displayName": "Notification Queue Capacity",
+                  "description": "Capacity of the queue for notifications to be sent to the Alertmanager.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "alertmanager.notificationQueue.forGracePeriod",
+                  "displayName": "Firing Grace Period",
+                  "description": "Minimum duration between alert and restored \"for\" state. This is maintained\nonly for alerts with configured \"for\" time greater than the grace period."
+                },
+                {
+                  "path": "alertmanager.notificationQueue.forOutageTolerance",
+                  "displayName": "Outage Tolerance",
+                  "description": "Max time to tolerate outage for restoring \"for\" state of alert."
+                },
+                {
+                  "path": "alertmanager.notificationQueue.resendDelay",
+                  "displayName": "Resend Delay",
+                  "description": "Minimum amount of time to wait before resending an alert to Alertmanager."
+                },
+                {
+                  "path": "alertmanager.notificationQueue.timeout",
+                  "displayName": "Timeout",
+                  "description": "HTTP timeout duration when sending notifications to the Alertmanager."
+                },
+                {
+                  "path": "alertmanager.relabelConfigs",
+                  "displayName": "Alert Relabel Configuration",
+                  "description": "List of alert relabel configurations."
+                },
+                {
+                  "path": "alertmanager.relabelConfigs[0].action",
+                  "displayName": "Action",
+                  "description": "Action to perform based on regex matching. Default is 'replace'",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:drop",
+                    "urn:alm:descriptor:com.tectonic.ui:select:hashmod",
+                    "urn:alm:descriptor:com.tectonic.ui:select:keep",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labeldrop",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labelkeep",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labelmap",
+                    "urn:alm:descriptor:com.tectonic.ui:select:replace"
+                  ]
+                },
+                {
+                  "path": "alertmanager.relabelConfigs[0].modulus",
+                  "displayName": "Modulus",
+                  "description": "Modulus to take of the hash of the source label values."
+                },
+                {
+                  "path": "alertmanager.relabelConfigs[0].regex",
+                  "displayName": "Regex",
+                  "description": "Regular expression against which the extracted value is matched. Default is '(.*)'"
+                },
+                {
+                  "path": "alertmanager.relabelConfigs[0].replacement",
+                  "displayName": "Replacement",
+                  "description": "Replacement value against which a regex replace is performed if the\nregular expression matches. Regex capture groups are available. Default is '$1'"
+                },
+                {
+                  "path": "alertmanager.relabelConfigs[0].separator",
+                  "displayName": "Separator",
+                  "description": "Separator placed between concatenated source label values. default is ';'."
+                },
+                {
+                  "path": "alertmanager.relabelConfigs[0].sourceLabels",
+                  "displayName": "Source Labels",
+                  "description": "The source labels select values from existing labels. Their content is concatenated\nusing the configured separator and matched against the configured regular expression\nfor the replace, keep, and drop actions."
+                },
+                {
+                  "path": "alertmanager.relabelConfigs[0].targetLabel",
+                  "displayName": "Target Label",
+                  "description": "Label to which the resulting value is written in a replace action.\nIt is mandatory for replace actions. Regex capture groups are available."
+                },
+                {
+                  "path": "evaluationInterval",
+                  "displayName": "Evaluation Interval",
+                  "description": "Interval on how frequently to evaluate rules."
+                },
+                {
+                  "path": "overrides",
+                  "displayName": "Rate Limiting",
+                  "description": "Overrides defines the config overrides to be applied per-tenant.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.client",
+                  "displayName": "TLS Config",
+                  "description": "Client configuration for reaching the alertmanager endpoint."
+                },
+                {
+                  "path": "overrides.alertmanager.client.basicAuth",
+                  "displayName": "Basic Authentication",
+                  "description": "Basic authentication configuration for reaching the alertmanager endpoints.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.client.basicAuth.password",
+                  "displayName": "Password",
+                  "description": "The subject's password for the basic authentication configuration."
+                },
+                {
+                  "path": "overrides.alertmanager.client.basicAuth.username",
+                  "displayName": "Username",
+                  "description": "The subject's username for the basic authentication configuration."
+                },
+                {
+                  "path": "overrides.alertmanager.client.headerAuth",
+                  "displayName": "Header Authentication",
+                  "description": "Header authentication configuration for reaching the alertmanager endpoints.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.client.headerAuth.credentials",
+                  "displayName": "Credentials",
+                  "description": "The credentials for the header authentication configuration."
+                },
+                {
+                  "path": "overrides.alertmanager.client.headerAuth.credentialsFile",
+                  "displayName": "Credentials File",
+                  "description": "The credentials file for the Header authentication configuration. It is mutually exclusive with `credentials`."
+                },
+                {
+                  "path": "overrides.alertmanager.client.headerAuth.type",
+                  "displayName": "Type",
+                  "description": "The authentication type for the header authentication configuration."
+                },
+                {
+                  "path": "overrides.alertmanager.client.tls",
+                  "displayName": "TLS",
+                  "description": "TLS configuration for reaching the alertmanager endpoints.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.client.tls.caPath",
+                  "displayName": "CA Path",
+                  "description": "The CA certificate file path for the TLS configuration."
+                },
+                {
+                  "path": "overrides.alertmanager.client.tls.certPath",
+                  "displayName": "Cert Path",
+                  "description": "The client-side certificate file path for the TLS configuration."
+                },
+                {
+                  "path": "overrides.alertmanager.client.tls.insecureSkipVerify",
+                  "displayName": "Skip validating server certificate",
+                  "description": "Skip validating server certificate."
+                },
+                {
+                  "path": "overrides.alertmanager.client.tls.keyPath",
+                  "displayName": "Key Path",
+                  "description": "The client-side key file path for the TLS configuration."
+                },
+                {
+                  "path": "overrides.alertmanager.client.tls.serverName",
+                  "displayName": "Server Name",
+                  "description": "The server name to validate in the alertmanager server certificates."
+                },
+                {
+                  "path": "overrides.alertmanager.discovery",
+                  "displayName": "DNS Discovery",
+                  "description": "Defines the configuration for DNS-based discovery of AlertManager hosts.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.discovery.enableSRV",
+                  "displayName": "Enable SRV",
+                  "description": "Use DNS SRV records to discover Alertmanager hosts."
+                },
+                {
+                  "path": "overrides.alertmanager.discovery.refreshInterval",
+                  "displayName": "Refresh Interval",
+                  "description": "How long to wait between refreshing DNS resolutions of Alertmanager hosts."
+                },
+                {
+                  "path": "overrides.alertmanager.enableV2",
+                  "displayName": "Enable AlertManager V2 API",
+                  "description": "If enabled, then requests to Alertmanager use the v2 API.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.endpoints",
+                  "displayName": "AlertManager Endpoints",
+                  "description": "List of AlertManager URLs to send notifications to. Each Alertmanager URL is treated as\na separate group in the configuration. Multiple Alertmanagers in HA per group can be\nsupported by using DNS resolution (See EnableDNSDiscovery)."
+                },
+                {
+                  "path": "overrides.alertmanager.externalLabels",
+                  "displayName": "Extra Alert Labels",
+                  "description": "Additional labels to add to all alerts."
+                },
+                {
+                  "path": "overrides.alertmanager.externalUrl",
+                  "displayName": "Alert External URL",
+                  "description": "URL for alerts return path."
+                },
+                {
+                  "path": "overrides.alertmanager.notificationQueue",
+                  "displayName": "Notification Queue",
+                  "description": "Defines the configuration for the notification queue to AlertManager hosts.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.notificationQueue.capacity",
+                  "displayName": "Notification Queue Capacity",
+                  "description": "Capacity of the queue for notifications to be sent to the Alertmanager.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.notificationQueue.forGracePeriod",
+                  "displayName": "Firing Grace Period",
+                  "description": "Minimum duration between alert and restored \"for\" state. This is maintained\nonly for alerts with configured \"for\" time greater than the grace period."
+                },
+                {
+                  "path": "overrides.alertmanager.notificationQueue.forOutageTolerance",
+                  "displayName": "Outage Tolerance",
+                  "description": "Max time to tolerate outage for restoring \"for\" state of alert."
+                },
+                {
+                  "path": "overrides.alertmanager.notificationQueue.resendDelay",
+                  "displayName": "Resend Delay",
+                  "description": "Minimum amount of time to wait before resending an alert to Alertmanager."
+                },
+                {
+                  "path": "overrides.alertmanager.notificationQueue.timeout",
+                  "displayName": "Timeout",
+                  "description": "HTTP timeout duration when sending notifications to the Alertmanager."
+                },
+                {
+                  "path": "overrides.alertmanager.relabelConfigs",
+                  "displayName": "Alert Relabel Configuration",
+                  "description": "List of alert relabel configurations."
+                },
+                {
+                  "path": "overrides.alertmanager.relabelConfigs[0].action",
+                  "displayName": "Action",
+                  "description": "Action to perform based on regex matching. Default is 'replace'",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:drop",
+                    "urn:alm:descriptor:com.tectonic.ui:select:hashmod",
+                    "urn:alm:descriptor:com.tectonic.ui:select:keep",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labeldrop",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labelkeep",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labelmap",
+                    "urn:alm:descriptor:com.tectonic.ui:select:replace"
+                  ]
+                },
+                {
+                  "path": "overrides.alertmanager.relabelConfigs[0].modulus",
+                  "displayName": "Modulus",
+                  "description": "Modulus to take of the hash of the source label values."
+                },
+                {
+                  "path": "overrides.alertmanager.relabelConfigs[0].regex",
+                  "displayName": "Regex",
+                  "description": "Regular expression against which the extracted value is matched. Default is '(.*)'"
+                },
+                {
+                  "path": "overrides.alertmanager.relabelConfigs[0].replacement",
+                  "displayName": "Replacement",
+                  "description": "Replacement value against which a regex replace is performed if the\nregular expression matches. Regex capture groups are available. Default is '$1'"
+                },
+                {
+                  "path": "overrides.alertmanager.relabelConfigs[0].separator",
+                  "displayName": "Separator",
+                  "description": "Separator placed between concatenated source label values. default is ';'."
+                },
+                {
+                  "path": "overrides.alertmanager.relabelConfigs[0].sourceLabels",
+                  "displayName": "Source Labels",
+                  "description": "The source labels select values from existing labels. Their content is concatenated\nusing the configured separator and matched against the configured regular expression\nfor the replace, keep, and drop actions."
+                },
+                {
+                  "path": "overrides.alertmanager.relabelConfigs[0].targetLabel",
+                  "displayName": "Target Label",
+                  "description": "Label to which the resulting value is written in a replace action.\nIt is mandatory for replace actions. Regex capture groups are available."
+                },
+                {
+                  "path": "pollInterval",
+                  "displayName": "Poll Interval",
+                  "description": "Interval on how frequently to poll for new rule definitions."
+                },
+                {
+                  "path": "remoteWrite",
+                  "displayName": "Remote Write Configuration",
+                  "description": "Defines a remote write endpoint to write recording rule metrics.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.client",
+                  "displayName": "Client",
+                  "description": "Defines the configuration for remote write client.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.client.authorization",
+                  "displayName": "Authorization Type",
+                  "description": "Type of authorzation to use to access the remote write endpoint",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:basic",
+                    "urn:alm:descriptor:com.tectonic.ui:select:header"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.client.authorizationSecretName",
+                  "displayName": "Authorization Secret Name",
+                  "description": "Name of a secret in the namespace configured for authorization secrets.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes:Secret"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.client.followRedirects",
+                  "displayName": "Follow HTTP Redirects",
+                  "description": "Configure whether HTTP requests follow HTTP 3xx redirects.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.client.name",
+                  "displayName": "Name",
+                  "description": "Name of the remote write config, which if specified must be unique among remote write configs."
+                },
+                {
+                  "path": "remoteWrite.client.proxyUrl",
+                  "displayName": "HTTP Proxy URL",
+                  "description": "Optional proxy URL."
+                },
+                {
+                  "path": "remoteWrite.client.relabelConfigs",
+                  "displayName": "Metric Relabel Configuration",
+                  "description": "List of remote write relabel configurations."
+                },
+                {
+                  "path": "remoteWrite.client.relabelConfigs[0].action",
+                  "displayName": "Action",
+                  "description": "Action to perform based on regex matching. Default is 'replace'",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:select:drop",
+                    "urn:alm:descriptor:com.tectonic.ui:select:hashmod",
+                    "urn:alm:descriptor:com.tectonic.ui:select:keep",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labeldrop",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labelkeep",
+                    "urn:alm:descriptor:com.tectonic.ui:select:labelmap",
+                    "urn:alm:descriptor:com.tectonic.ui:select:replace"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.client.relabelConfigs[0].modulus",
+                  "displayName": "Modulus",
+                  "description": "Modulus to take of the hash of the source label values."
+                },
+                {
+                  "path": "remoteWrite.client.relabelConfigs[0].regex",
+                  "displayName": "Regex",
+                  "description": "Regular expression against which the extracted value is matched. Default is '(.*)'"
+                },
+                {
+                  "path": "remoteWrite.client.relabelConfigs[0].replacement",
+                  "displayName": "Replacement",
+                  "description": "Replacement value against which a regex replace is performed if the\nregular expression matches. Regex capture groups are available. Default is '$1'"
+                },
+                {
+                  "path": "remoteWrite.client.relabelConfigs[0].separator",
+                  "displayName": "Separator",
+                  "description": "Separator placed between concatenated source label values. default is ';'."
+                },
+                {
+                  "path": "remoteWrite.client.relabelConfigs[0].sourceLabels",
+                  "displayName": "Source Labels",
+                  "description": "The source labels select values from existing labels. Their content is concatenated\nusing the configured separator and matched against the configured regular expression\nfor the replace, keep, and drop actions."
+                },
+                {
+                  "path": "remoteWrite.client.relabelConfigs[0].targetLabel",
+                  "displayName": "Target Label",
+                  "description": "Label to which the resulting value is written in a replace action.\nIt is mandatory for replace actions. Regex capture groups are available."
+                },
+                {
+                  "path": "remoteWrite.client.timeout",
+                  "displayName": "Remote Write Timeout",
+                  "description": "Timeout for requests to the remote write endpoint."
+                },
+                {
+                  "path": "remoteWrite.client.url",
+                  "displayName": "Endpoint",
+                  "description": "The URL of the endpoint to send samples to."
+                },
+                {
+                  "path": "remoteWrite.enabled",
+                  "displayName": "Enabled",
+                  "description": "Enable remote-write functionality.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.queue",
+                  "displayName": "Client Queue",
+                  "description": "Defines the configuration for remote write client queue.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:advanced"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.queue.batchSendDeadline",
+                  "displayName": "Batch Send Deadline",
+                  "description": "Maximum time a sample will wait in buffer."
+                },
+                {
+                  "path": "remoteWrite.queue.capacity",
+                  "displayName": "Queue Capacity",
+                  "description": "Number of samples to buffer per shard before we block reading of more",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.queue.maxBackOffPeriod",
+                  "displayName": "Max BackOff Period",
+                  "description": "Maximum retry delay."
+                },
+                {
+                  "path": "remoteWrite.queue.maxSamplesPerSend",
+                  "displayName": "Maximum Shards per Send",
+                  "description": "Maximum number of samples per send.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.queue.maxShards",
+                  "displayName": "Maximum Shards",
+                  "description": "Maximum number of shards, i.e. amount of concurrency.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.queue.minBackOffPeriod",
+                  "displayName": "Min BackOff Period",
+                  "description": "Initial retry delay. Gets doubled for every retry."
+                },
+                {
+                  "path": "remoteWrite.queue.minShards",
+                  "displayName": "Minimum Shards",
+                  "description": "Minimum number of shards, i.e. amount of concurrency.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:number"
+                  ]
+                },
+                {
+                  "path": "remoteWrite.refreshPeriod",
+                  "displayName": "Min Refresh Period",
+                  "description": "Minimum period to wait between refreshing remote-write reconfigurations."
+                }
+              ]
+            }
+          ]
+        },
+        "description": "The Loki Operator for OCP provides a means for configuring and managing a Loki stack for cluster logging.\n## Prerequisites and Requirements\n### Loki Operator Namespace\nThe Loki Operator must be deployed to the global operator group namespace `openshift-operators-redhat`.\n### Memory Considerations\nLoki is a memory intensive application.  The initial\nset of OCP nodes may not be large enough to support the Loki cluster.  Additional OCP nodes must be added\nto the OCP cluster if you desire to run with the recommended (or better) memory.\n",
+        "displayName": "Loki Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": false
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "logging",
+          "loki"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.arm64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Loki Operator",
+            "url": "https://github.com/grafana/loki"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat, AOS Logging",
+            "email": "team-logging@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.21.1",
+        "provider": {
+          "name": "Red Hat"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "loki",
+      "image": "registry.redhat.io/openshift-logging/logging-loki-rhel9@sha256:a8b62ebb281a6246ff24c5b0d34c1889fbc2b552c0b8c3510a2620e0f297b848"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/openshift-logging/loki-operator-bundle@sha256:96ac6f85d51635d8073ef6770da2e083a2b9de63548af053abacdf2a916b2c14"
+    },
+    {
+      "name": "loki-rhel9-operator-1211e000bdcf1e07ecc8da715d075153e0e8fc38706f8fbbb105bf1c5c5e33b9-annotation",
+      "image": "registry.redhat.io/openshift-logging/loki-rhel9-operator@sha256:1211e000bdcf1e07ecc8da715d075153e0e8fc38706f8fbbb105bf1c5c5e33b9"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/openshift-logging/loki-rhel9-operator@sha256:1211e000bdcf1e07ecc8da715d075153e0e8fc38706f8fbbb105bf1c5c5e33b9"
+    },
+    {
+      "name": "gateway",
+      "image": "registry.redhat.io/openshift-logging/lokistack-gateway-rhel9@sha256:75b5dd53a6c562238572bb1cde55836f4409ba08d0a082e323e4573c7f5ad50e"
+    },
+    {
+      "name": "opa",
+      "image": "registry.redhat.io/openshift-logging/opa-openshift-rhel9@sha256:f0f63c518dc02c59986066c55e6aeca6e06fc9d83cccba94eedeedcf6b93db74"
+    },
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9@sha256:42be2d5bb4d09f4fa31602f8521af07b0c1f27f47379d1529b769bc7bd61abc9"
+    }
+  ]
+}

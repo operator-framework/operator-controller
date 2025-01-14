@@ -1,0 +1,151 @@
+---
+defaultChannel: alpha
+name: gingersnap
+schema: olm.package
+---
+entries:
+- name: gingersnap.v0.0.1
+name: alpha
+package: gingersnap
+schema: olm.channel
+---
+image: quay.io/operatorhubio/gingersnap@sha256:5f6b0ec29c9d4cc47c5025fefda148ba92d65ab18b4cc6bc1088755c72f77156
+name: gingersnap.v0.0.1
+package: gingersnap
+properties:
+- type: olm.gvk
+  value:
+    group: gingersnap-project.io
+    kind: Cache
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gingersnap-project.io
+    kind: EagerCacheRule
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: gingersnap-project.io
+    kind: LazyCacheRule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: gingersnap
+    version: 0.0.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "gingersnap-project.io/v1alpha1",
+            "kind": "Cache",
+            "metadata": {
+              "name": "cache-sample"
+            },
+            "spec": {
+              "dataSource": {
+                "dbType": "MYSQL_8",
+                "secretRef": {
+                  "name": "db-credential-secret"
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "gingersnap-project.io/v1alpha1",
+            "kind": "EagerCacheRule",
+            "metadata": {
+              "name": "eagercacherule-sample"
+            },
+            "spec": {
+              "cacheRef": {
+                "name": "cache-sample",
+                "namespace": "default"
+              },
+              "key": {
+                "keyColumns": [
+                  "col1"
+                ]
+              },
+              "tableName": "table"
+            }
+          },
+          {
+            "apiVersion": "gingersnap-project.io/v1alpha1",
+            "kind": "LazyCacheRule",
+            "metadata": {
+              "name": "lazycacherule-sample"
+            },
+            "spec": {
+              "cacheRef": {
+                "name": "cache-sample",
+                "namespace": "default"
+              },
+              "query": "Select * FROM table"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/gingersnap/operator:0.0.1
+      operators.operatorframework.io/builder: operator-sdk-v1.22.2
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/gingersnap-project/operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Cache is the Schema for the caches API
+        displayName: Cache
+        kind: Cache
+        name: caches.gingersnap-project.io
+        version: v1alpha1
+      - description: EagerCacheRule is the Schema for the eagercacherules API
+        displayName: Eager Cache Rule
+        kind: EagerCacheRule
+        name: eagercacherules.gingersnap-project.io
+        version: v1alpha1
+      - description: LazyCacheRule is the Schema for the lazycacherules API
+        displayName: Lazy Cache Rule
+        kind: LazyCacheRule
+        name: lazycacherules.gingersnap-project.io
+        version: v1alpha1
+    description: Memory Service
+    displayName: gingersnap Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - cache
+    - caching
+    links:
+    - name: Gingersnap Operator
+      url: https://gingersnap-project.io
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    minKubeVersion: 1.23.5
+    provider:
+      name: Gingersnap
+relatedImages:
+- image: quay.io/gingersnap/cache-manager-mssql
+  name: cache-manager-mssql
+- image: quay.io/gingersnap/cache-manager-mysql
+  name: cache-manager-mysql
+- image: quay.io/gingersnap/cache-manager-postgres
+  name: cache-manager-postgres
+- image: quay.io/gingersnap/db-syncer
+  name: db-syncer
+- image: quay.io/gingersnap/operator:0.0.1
+  name: ""
+- image: quay.io/operatorhubio/gingersnap@sha256:5f6b0ec29c9d4cc47c5025fefda148ba92d65ab18b4cc6bc1088755c72f77156
+  name: ""
+schema: olm.bundle

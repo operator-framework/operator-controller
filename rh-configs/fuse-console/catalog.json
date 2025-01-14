@@ -1,0 +1,2501 @@
+{
+    "schema": "olm.package",
+    "name": "fuse-console",
+    "defaultChannel": "7.13.x",
+    "icon": {
+        "base64data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2Q3MWUwMDt9LmNscy0ye2ZpbGw6I2MyMWEwMDt9LmNscy0ze2ZpbGw6I2ZmZjt9LmNscy00e2ZpbGw6I2VhZWFlYTt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPnByb2R1Y3RpY29uc18xMDE3X1JHQl9JbnRlZ3JhdGlvbiBmaW5hbCBjb2xvcjwvdGl0bGU+PGcgaWQ9IkxheWVyXzEiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+PGNpcmNsZSBjbGFzcz0iY2xzLTEiIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTIwLjcxIDUwKSByb3RhdGUoLTQ1KSIvPjxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTg1LjM2LDE0LjY0QTUwLDUwLDAsMCwxLDE0LjY0LDg1LjM2WiIvPjxwYXRoIGQ9Ik0zMSwzMS4zNmExLjk0LDEuOTQsMCwwLDEtMy42Mi0uODkuNDMuNDMsMCwwLDEsLjUzLS40NCwzLjMyLDMuMzIsMCwwLDAsMi44MS43QS40My40MywwLDAsMSwzMSwzMS4zNloiLz48cGF0aCBjbGFzcz0iY2xzLTMiIGQ9Ik03Ny42Myw0NC43NkM3Ny4xMiw0MS4zNCw3MywyMSw2Ni4zMiwyMWMtMi40NCwwLTQuNTksMy4zNS02LDYuODgtLjQ0LDEuMDYtMS4yMywxLjA4LTEuNjMsMEM1Ny4yNCwyNC4xNiw1NS44OCwyMSw1My4yOCwyMSw0My4zNCwyMSw0Ny44NCw0NS4xOCwzOSw0NS4xOGMtNC41NywwLTUuMzctMTAuNTktNS41LTE0LjcyLDIuMTkuNjUsMy4zLTEsMy41NS0yLjYxYS42My42MywwLDAsMC0uNDgtLjcyLDMuMzYsMy4zNiwwLDAsMC0zLC44OUgyNy4zMWExLDEsMCwwLDAtLjY4LjI4bC0uNTMuNTNIMjIuMjFhLjU0LjU0LDAsMCwwLS4zOC4xNmwtMy45NSwzLjk1YS41NC41NCwwLDAsMCwuMzguOTFoLjM2bDAsMEgyOS43MWMuNiw2LjI2LDEuNzUsMjIsMTYuNDIsMTcuMTlsLS4zMiw1TDQ0LjM3LDc4LjQ2YTEsMSwwLDAsMCwxLDFoNC45YTEsMSwwLDAsMCwxLTFsLS42MS0yMy4zMy0uMTUtNS44MWM2LTIuNzgsOS01LjY2LDE2LjE5LTYuNzUtMS41OSwyLjYyLTIuMDUsNi44Ny0yLjA2LDgtLjA2LDYsMi41NSw4Ljc0LDUsMTMuMjJMNjMuNzMsNzhhMSwxLDAsMCwwLC44OSwxLjMyaDQuNjRhMSwxLDAsMCwwLC45My0uNzRMNzQsNjIuNmMtNC44My03LjQzLDEuODMtMTUuMzEsMy40MS0xN0ExLDEsMCwwLDAsNzcuNjMsNDQuNzZaTTMxLDMxLjM2YTEuOTQsMS45NCwwLDAsMS0zLjYyLS44OS40My40MywwLDAsMSwuNTMtLjQ0LDMuMzIsMy4zMiwwLDAsMCwyLjgxLjdBLjQzLjQzLDAsMCwxLDMxLDMxLjM2WiIvPjxwYXRoIGNsYXNzPSJjbHMtNCIgZD0iTTQ2LjEzLDUxLjA3QzMxLjQ2LDU1LjkyLDMwLjMxLDQwLjE0LDI5LjcxLDMzLjg4SDE4LjY1TDIwLjc1LDM2YTEsMSwwLDAsMCwuNjguMjhoNmMwLDUuOCwxLjEzLDIwLjIsMTQsMjAuMmEzMS4zNCwzMS4zNCwwLDAsMCw0LjQyLS4zNVoiLz48cGF0aCBjbGFzcz0iY2xzLTQiIGQ9Ik01MC40MSw0OS4zNmwuMTUsNS44MWExMDguMiwxMDguMiwwLDAsMCwxNC00LjU0LDE5Ljc5LDE5Ljc5LDAsMCwxLDIuMDYtOEM1OS40Niw0My43LDU2LjQ0LDQ2LjU4LDUwLjQxLDQ5LjM2WiIvPjwvZz48L3N2Zz4=",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "7.10.x",
+    "package": "fuse-console",
+    "entries": [
+        {
+            "name": "fuse-console.v7.10.3",
+            "skipRange": ">=7.7.0 <7.10.3"
+        },
+        {
+            "name": "fuse-console.v7.10.3-0.1652362834.p",
+            "skipRange": ">=7.7.0 <7.10.3"
+        },
+        {
+            "name": "fuse-console.v7.10.3-0.1655306919.p",
+            "skips": [
+                "fuse-console.v7.10.3-0.1652362834.p",
+                "fuse-console.v7.10.3"
+            ],
+            "skipRange": ">=7.7.0 <7.10.3"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "7.11.x",
+    "package": "fuse-console",
+    "entries": [
+        {
+            "name": "fuse-console.v7.11.1",
+            "skipRange": ">=7.7.0 <7.11.1"
+        },
+        {
+            "name": "fuse-console.v7.11.1-0.1669922044.p",
+            "skipRange": ">=7.7.0 <7.11.1"
+        },
+        {
+            "name": "fuse-console.v7.11.1-0.1675972857.p",
+            "skipRange": ">=7.7.0 <7.11.1"
+        },
+        {
+            "name": "fuse-console.v7.11.1-0.1681224695.p",
+            "skips": [
+                "fuse-console.v7.11.1-0.1675972857.p",
+                "fuse-console.v7.11.1-0.1669922044.p",
+                "fuse-console.v7.11.1"
+            ],
+            "skipRange": ">=7.7.0 <7.11.1"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "7.12.x",
+    "package": "fuse-console",
+    "entries": [
+        {
+            "name": "fuse-console.v7.12.1",
+            "skipRange": ">=7.7.0 <7.12.1"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "7.13.x",
+    "package": "fuse-console",
+    "entries": [
+        {
+            "name": "fuse-console.v7.12.1",
+            "skipRange": ">=7.7.0 <7.12.1"
+        },
+        {
+            "name": "fuse-console.v7.13.0",
+            "skipRange": ">=7.7.0 <7.13.0"
+        },
+        {
+            "name": "fuse-console.v7.13.0-0.1719822976.p",
+            "skipRange": ">=7.7.0 <7.13.0"
+        },
+        {
+            "name": "fuse-console.v7.13.0-0.1721224332.p",
+            "skipRange": ">=7.7.0 <7.13.0"
+        },
+        {
+            "name": "fuse-console.v7.13.0-0.1723709432.p",
+            "skipRange": ">=7.7.0 <7.13.0"
+        },
+        {
+            "name": "fuse-console.v7.13.0-0.1724659726.p",
+            "skipRange": ">=7.7.0 <7.13.0"
+        },
+        {
+            "name": "fuse-console.v7.13.0-0.1725026290.p",
+            "skipRange": ">=7.7.0 <7.13.0"
+        },
+        {
+            "name": "fuse-console.v7.13.0-0.1731460809.p",
+            "replaces": "fuse-console.v7.12.1",
+            "skips": [
+                "fuse-console.v7.13.0-0.1725026290.p",
+                "fuse-console.v7.13.0-0.1724659726.p",
+                "fuse-console.v7.13.0-0.1723709432.p",
+                "fuse-console.v7.13.0-0.1721224332.p",
+                "fuse-console.v7.13.0-0.1719822976.p",
+                "fuse-console.v7.13.0"
+            ],
+            "skipRange": ">=7.7.0 <7.13.0"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "7.9.x",
+    "package": "fuse-console",
+    "entries": [
+        {
+            "name": "fuse-console.v7.9.0",
+            "skipRange": ">=7.7.0 <7.9.0"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.10.3",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:aaf0951c3d99ad273c67af39d9fa00ee213596c7ba5fa3783f2b7c971ac17b5e",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.10.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"replicas\": 1,\n      \"version\": \"1.10\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"100Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:f721823833a3bc2016c8eee2c1aebb11e3ea3f5262ed8322c9d6425ba71a8c00",
+                    "createdAt": "2020-09-14T10:59:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.10.3",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.10/html/managing_fuse"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:aaf0951c3d99ad273c67af39d9fa00ee213596c7ba5fa3783f2b7c971ac17b5e"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-f721823833a3bc2016c8eee2c1aebb11e3ea3f5262ed8322c9d6425ba71a8c00-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:f721823833a3bc2016c8eee2c1aebb11e3ea3f5262ed8322c9d6425ba71a8c00"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:f721823833a3bc2016c8eee2c1aebb11e3ea3f5262ed8322c9d6425ba71a8c00"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.10.3-0.1652362834.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:4dd4c64b1bac4348f8687ece2eacab986cd18c5aab4a67079d9ba98f26eaf384",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.10.3+0.1652362834.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"replicas\": 1,\n      \"version\": \"1.10\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"100Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:46f0fd19d65c959aaa460450043a5658ad22f326f80d12f631e25da551bc10f4",
+                    "createdAt": "2020-09-14T10:59:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.10.3",
+                    "olm.substitutesFor": "fuse-console.v7.10.3",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.10/html/managing_fuse"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:4dd4c64b1bac4348f8687ece2eacab986cd18c5aab4a67079d9ba98f26eaf384"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-46f0fd19d65c959aaa460450043a5658ad22f326f80d12f631e25da551bc10f4-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:46f0fd19d65c959aaa460450043a5658ad22f326f80d12f631e25da551bc10f4"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:46f0fd19d65c959aaa460450043a5658ad22f326f80d12f631e25da551bc10f4"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.10.3-0.1655306919.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:bbfddd7cb4a6cb7a131a0cef174054890fd39956d63e737c92fe8233ad8f98e4",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.10.3+0.1655306919.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"replicas\": 1,\n      \"version\": \"1.10\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"100Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:37dc38375f5d553ac1d9f20f66ce005ed9495354b81d7915ae3bd7dd6af132f3",
+                    "createdAt": "2020-09-14T10:59:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.10.3",
+                    "olm.substitutesFor": "fuse-console.v7.10.3-0.1652362834.p",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.10/html/managing_fuse"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:bbfddd7cb4a6cb7a131a0cef174054890fd39956d63e737c92fe8233ad8f98e4"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-37dc38375f5d553ac1d9f20f66ce005ed9495354b81d7915ae3bd7dd6af132f3-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:37dc38375f5d553ac1d9f20f66ce005ed9495354b81d7915ae3bd7dd6af132f3"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:37dc38375f5d553ac1d9f20f66ce005ed9495354b81d7915ae3bd7dd6af132f3"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.11.1",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:b4ead19dbf364aff166ebdf95190eb8a0804b334df3bddd63d1589ba94ba9598",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.11.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.11\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:03c9a43e3defe9ac99822477e46852440dfa8dadf5c688788f420b6b65d939bb",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.11.1",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.11/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:b4ead19dbf364aff166ebdf95190eb8a0804b334df3bddd63d1589ba94ba9598"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-03c9a43e3defe9ac99822477e46852440dfa8dadf5c688788f420b6b65d939bb-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:03c9a43e3defe9ac99822477e46852440dfa8dadf5c688788f420b6b65d939bb"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:03c9a43e3defe9ac99822477e46852440dfa8dadf5c688788f420b6b65d939bb"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.11.1-0.1669922044.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:64141da56d3ace25070e1cbeda8ac80975fcedff6773312c03e47903945ef1a6",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.11.1+0.1669922044.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.11\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:f3a13a503bc8ce20c1d45c8a8d2f141d0ba7bd93064295b406a6577829abc8e3",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.11.1",
+                    "olm.substitutesFor": "fuse-console.v7.11.1",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.11/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:64141da56d3ace25070e1cbeda8ac80975fcedff6773312c03e47903945ef1a6"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-f3a13a503bc8ce20c1d45c8a8d2f141d0ba7bd93064295b406a6577829abc8e3-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:f3a13a503bc8ce20c1d45c8a8d2f141d0ba7bd93064295b406a6577829abc8e3"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:f3a13a503bc8ce20c1d45c8a8d2f141d0ba7bd93064295b406a6577829abc8e3"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.11.1-0.1675972857.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:a636b283b20af58a0a9edc5ac7895b7e6feb61e42c4d52707667584ecc50b541",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.11.1+0.1675972857.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.11\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:78390359632270b6635f65e98299194895f45a49838328e0bd200dca2cae22db",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.11.1",
+                    "olm.substitutesFor": "fuse-console.v7.11.1-0.1669922044.p",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.11/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:a636b283b20af58a0a9edc5ac7895b7e6feb61e42c4d52707667584ecc50b541"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-78390359632270b6635f65e98299194895f45a49838328e0bd200dca2cae22db-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:78390359632270b6635f65e98299194895f45a49838328e0bd200dca2cae22db"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:78390359632270b6635f65e98299194895f45a49838328e0bd200dca2cae22db"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.11.1-0.1681224695.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:5a35593357fbf280561a1d4a64ecc0d5c2044409acff3ce6cb490a4a61462a4e",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.11.1+0.1681224695.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.11\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:518b5ace9178e2aafd7b6f247fd41d9392abd1a7bccb4cb53783531820611193",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.11.1",
+                    "olm.substitutesFor": "fuse-console.v7.11.1-0.1675972857.p",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.11/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:5a35593357fbf280561a1d4a64ecc0d5c2044409acff3ce6cb490a4a61462a4e"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-518b5ace9178e2aafd7b6f247fd41d9392abd1a7bccb4cb53783531820611193-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:518b5ace9178e2aafd7b6f247fd41d9392abd1a7bccb4cb53783531820611193"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:518b5ace9178e2aafd7b6f247fd41d9392abd1a7bccb4cb53783531820611193"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.12.1",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:791ac512370af5cde1e089de3def760e7dbce69badc03137051520ce316d63e2",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.12.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.12\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:4e6889bf76d323956e0b594db7381e8162fea6b108f53f9e6dd0b38cf3596c8d",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.12.1",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\"]",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.12/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:791ac512370af5cde1e089de3def760e7dbce69badc03137051520ce316d63e2"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-4e6889bf76d323956e0b594db7381e8162fea6b108f53f9e6dd0b38cf3596c8d-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:4e6889bf76d323956e0b594db7381e8162fea6b108f53f9e6dd0b38cf3596c8d"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:4e6889bf76d323956e0b594db7381e8162fea6b108f53f9e6dd0b38cf3596c8d"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.13.0",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:cdf301288e5b1af10382ff636d00cb0697d2770da97856d42d9d16b659518b78",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.13.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.13\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:8558ee718c5a791a8c83a1062af8a9f6feaf20bf67b560d9fe7e7799ab9c2353",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=7.7.0 <7.13.0",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\"]",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.13/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:cdf301288e5b1af10382ff636d00cb0697d2770da97856d42d9d16b659518b78"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-8558ee718c5a791a8c83a1062af8a9f6feaf20bf67b560d9fe7e7799ab9c2353-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:8558ee718c5a791a8c83a1062af8a9f6feaf20bf67b560d9fe7e7799ab9c2353"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:8558ee718c5a791a8c83a1062af8a9f6feaf20bf67b560d9fe7e7799ab9c2353"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.13.0-0.1719822976.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:4e748b14736c6984a468c06aacfd8856cead49bb97597dee950d218cef186cbb",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.13.0+0.1719822976.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.13\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:8558ee718c5a791a8c83a1062af8a9f6feaf20bf67b560d9fe7e7799ab9c2353",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=7.7.0 <7.13.0",
+                    "olm.substitutesFor": "fuse-console.v7.13.0",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\"]",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.13/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:4e748b14736c6984a468c06aacfd8856cead49bb97597dee950d218cef186cbb"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-8558ee718c5a791a8c83a1062af8a9f6feaf20bf67b560d9fe7e7799ab9c2353-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:8558ee718c5a791a8c83a1062af8a9f6feaf20bf67b560d9fe7e7799ab9c2353"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:8558ee718c5a791a8c83a1062af8a9f6feaf20bf67b560d9fe7e7799ab9c2353"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.13.0-0.1721224332.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:11e4c52309f31b0666efb677a17f4e8913c809ad303915749733cac281625744",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.13.0+0.1721224332.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.13\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:d16c1e365308b9a9bda247fc4065650744f6d93ae102406aef570f2af84939cc",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=7.7.0 <7.13.0",
+                    "olm.substitutesFor": "fuse-console.v7.13.0-0.1719822976.p",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\"]",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.13/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:11e4c52309f31b0666efb677a17f4e8913c809ad303915749733cac281625744"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-d16c1e365308b9a9bda247fc4065650744f6d93ae102406aef570f2af84939cc-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:d16c1e365308b9a9bda247fc4065650744f6d93ae102406aef570f2af84939cc"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:d16c1e365308b9a9bda247fc4065650744f6d93ae102406aef570f2af84939cc"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.13.0-0.1723709432.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:0b30a59facd535a18fd02f5adcbc25e3e6de5b1a91bf106f17e79e8839562308",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.13.0+0.1723709432.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.13\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:b0fffb423dfcb26fa20f19cf36e714b505a00a5fc190a03d61d9d738d0953ff7",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=7.7.0 <7.13.0",
+                    "olm.substitutesFor": "fuse-console.v7.13.0-0.1721224332.p",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\"]",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.13/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:0b30a59facd535a18fd02f5adcbc25e3e6de5b1a91bf106f17e79e8839562308"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-b0fffb423dfcb26fa20f19cf36e714b505a00a5fc190a03d61d9d738d0953ff7-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:b0fffb423dfcb26fa20f19cf36e714b505a00a5fc190a03d61d9d738d0953ff7"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:b0fffb423dfcb26fa20f19cf36e714b505a00a5fc190a03d61d9d738d0953ff7"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.13.0-0.1724659726.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:527d4908a18c1d075bb4aa56a14b26b8eca833bca6f7ab0437da00df3fbc5b9b",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.13.0+0.1724659726.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.13\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:ac23f8e09abf1273520f9775458ac80b998385db90b2c1cd1f8e79ecd379d4af",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=7.7.0 <7.13.0",
+                    "olm.substitutesFor": "fuse-console.v7.13.0-0.1723709432.p",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\"]",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.13/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:527d4908a18c1d075bb4aa56a14b26b8eca833bca6f7ab0437da00df3fbc5b9b"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-ac23f8e09abf1273520f9775458ac80b998385db90b2c1cd1f8e79ecd379d4af-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:ac23f8e09abf1273520f9775458ac80b998385db90b2c1cd1f8e79ecd379d4af"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:ac23f8e09abf1273520f9775458ac80b998385db90b2c1cd1f8e79ecd379d4af"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.13.0-0.1725026290.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:7ae49a8b196d0e9fd8a1efc5998f682a3852f9fd8bbd90a56538c6898b00cbcb",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.13.0+0.1725026290.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.13\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:518b028735b389e48d342cfee4dc69128fb65a844b16141125a63192f372210d",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=7.7.0 <7.13.0",
+                    "olm.substitutesFor": "fuse-console.v7.13.0",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\"]",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.13/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:7ae49a8b196d0e9fd8a1efc5998f682a3852f9fd8bbd90a56538c6898b00cbcb"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-518b028735b389e48d342cfee4dc69128fb65a844b16141125a63192f372210d-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:518b028735b389e48d342cfee4dc69128fb65a844b16141125a63192f372210d"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:518b028735b389e48d342cfee4dc69128fb65a844b16141125a63192f372210d"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.13.0-0.1731460809.p",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:d1d73e04d35248a239f1ad5688216a48388393eefa378561b3504c85b3a7b9d2",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.13.0+0.1731460809.p"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"auth\": {\n        \"clientCertCheckSchedule\": \"* */12 * * *\",\n        \"clientCertExpirationPeriod\": 24\n      },\n      \"replicas\": 1,\n      \"version\": \"1.13\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"512Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:6175e3620f4743dcf76ea17cfdfbf2932138e2ab184574f6fe1ab68349268a2f",
+                    "createdAt": "2022-09-07T14:03:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=7.7.0 <7.13.0",
+                    "olm.substitutesFor": "fuse-console.v7.13.0-0.1725026290.p",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat Integration\"]",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.13/html/managing_fuse_on_openshift"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:d1d73e04d35248a239f1ad5688216a48388393eefa378561b3504c85b3a7b9d2"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-6175e3620f4743dcf76ea17cfdfbf2932138e2ab184574f6fe1ab68349268a2f-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:6175e3620f4743dcf76ea17cfdfbf2932138e2ab184574f6fe1ab68349268a2f"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:6175e3620f4743dcf76ea17cfdfbf2932138e2ab184574f6fe1ab68349268a2f"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "fuse-console.v7.9.0",
+    "package": "fuse-console",
+    "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:ddfdf850c9238a6988889e1840efe3175f03dad2489a5651e21cac62ac44e23e",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "hawt.io",
+                "kind": "Hawtio",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "fuse-console",
+                "version": "7.9.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"hawt.io/v1alpha1\",\n    \"kind\": \"Hawtio\",\n    \"metadata\": {\n      \"name\": \"fuse-console\"\n    },\n    \"spec\": {\n      \"replicas\": 1,\n      \"version\": \"1.9\",\n      \"resources\": {\n        \"limits\": {\n          \"cpu\": \"1\",\n          \"memory\": \"100Mi\"\n        },\n        \"requests\": {\n          \"cpu\": \"200m\",\n          \"memory\": \"32Mi\"\n        }\n      },\n      \"type\": \"Namespace\"\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:846d57f3fd9f307a98b0169b6733c26299209d99ed189f219c48f36ba771b198",
+                    "createdAt": "2020-09-14T10:59:00Z",
+                    "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.",
+                    "olm.skipRange": ">=7.7.0 <7.9.0",
+                    "repository": "https://github.com/hawtio/hawtio-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "hawtios.hawt.io",
+                            "version": "v1alpha1",
+                            "kind": "Hawtio",
+                            "displayName": "Hawtio",
+                            "description": "A Fuse Console",
+                            "specDescriptors": [
+                                {
+                                    "path": "replicas",
+                                    "displayName": "Replicas",
+                                    "description": "The number of Fuse Console pods to deploy",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:podCount"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The version used for the Fuse Console",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldGroup:Deployment",
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "The Fuse Console eases the discovery and management of Fuse applications deployed on OpenShift.\n\nTo secure the communication between the Fuse Console and the Jolokia agents, a client certificate is automatically generated.\n\nNote that the client certificate CN (defaults to `fuse-console.fuse.svc`) must be trusted by the Jolokia agents, for which client certification authentication is enabled. See the `clientPrincipal` parameter from the [Jolokia agent configuration options](https://jolokia.org/reference/html/agents.html#agent-jvm-config).\n",
+                "displayName": "Red Hat Integration - Fuse Console",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "Fuse",
+                    "Hawtio",
+                    "Java",
+                    "Management",
+                    "Console"
+                ],
+                "links": [
+                    {
+                        "name": "Red Hat Fuse Console Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_fuse/7.9/html/managing_fuse"
+                    },
+                    {
+                        "name": "Upstream Hawtio Web site",
+                        "url": "https://hawt.io"
+                    },
+                    {
+                        "name": "Upstream Hawtio operator",
+                        "url": "https://github.com/hawtio/hawtio-operator"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Jon Anstey",
+                        "email": "janstey@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator-bundle@sha256:ddfdf850c9238a6988889e1840efe3175f03dad2489a5651e21cac62ac44e23e"
+        },
+        {
+            "name": "fuse-console-rhel8-operator-846d57f3fd9f307a98b0169b6733c26299209d99ed189f219c48f36ba771b198-annotation",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:846d57f3fd9f307a98b0169b6733c26299209d99ed189f219c48f36ba771b198"
+        },
+        {
+            "name": "fuse-console-operator",
+            "image": "registry.redhat.io/fuse7/fuse-console-rhel8-operator@sha256:846d57f3fd9f307a98b0169b6733c26299209d99ed189f219c48f36ba771b198"
+        }
+    ]
+}

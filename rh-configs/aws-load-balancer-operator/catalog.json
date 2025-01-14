@@ -1,0 +1,1074 @@
+{
+    "schema": "olm.package",
+    "name": "aws-load-balancer-operator",
+    "defaultChannel": "stable-v1",
+    "icon": {
+        "base64data": "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",
+        "mediatype": "image/png"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "alpha",
+    "package": "aws-load-balancer-operator",
+    "entries": [
+        {
+            "name": "aws-load-balancer-operator.v0.0.1"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-v0",
+    "package": "aws-load-balancer-operator",
+    "entries": [
+        {
+            "name": "aws-load-balancer-operator.v0.2.0",
+            "skipRange": "<0.2.0"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-v0.1",
+    "package": "aws-load-balancer-operator",
+    "entries": [
+        {
+            "name": "aws-load-balancer-operator.v0.0.1"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-v0.2",
+    "package": "aws-load-balancer-operator",
+    "entries": [
+        {
+            "name": "aws-load-balancer-operator.v0.2.0",
+            "skipRange": "<0.2.0"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-v1",
+    "package": "aws-load-balancer-operator",
+    "entries": [
+        {
+            "name": "aws-load-balancer-operator.v1.1.0",
+            "skipRange": "<1.1.0"
+        },
+        {
+            "name": "aws-load-balancer-operator.v1.1.1",
+            "replaces": "aws-load-balancer-operator.v1.1.0",
+            "skipRange": "<1.1.1"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-v1.0",
+    "package": "aws-load-balancer-operator",
+    "entries": [
+        {
+            "name": "aws-load-balancer-operator.v1.0.0",
+            "skipRange": "<1.0.0"
+        },
+        {
+            "name": "aws-load-balancer-operator.v1.0.1",
+            "replaces": "aws-load-balancer-operator.v1.0.0",
+            "skipRange": "<1.0.1"
+        }
+    ]
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-v1.1",
+    "package": "aws-load-balancer-operator",
+    "entries": [
+        {
+            "name": "aws-load-balancer-operator.v1.1.0",
+            "skipRange": "<1.1.0"
+        },
+        {
+            "name": "aws-load-balancer-operator.v1.1.1",
+            "replaces": "aws-load-balancer-operator.v1.1.0",
+            "skipRange": "<1.1.1"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "aws-load-balancer-operator.v0.0.1",
+    "package": "aws-load-balancer-operator",
+    "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:50b9402635dd4b312a86bed05dcdbda8c00120d3789ec2e9b527045100b3bdb4",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "IngressClassParams",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "aws-load-balancer-operator",
+                "version": "0.0.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1alpha1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"IngressClassParams\",\n    \"metadata\": {\n      \"name\": \"awesome-class\"\n    },\n    \"spec\": {\n      \"group\": {\n        \"name\": \"my-group\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1alpha1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "containerImage": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:95c45fae0ca9e9bee0fa2c13652634e726d8133e4e3009b363fcae6814b3461d",
+                    "createdAt": "2022-06-28T17:56:41",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API"
+                        },
+                        {
+                            "name": "ingressclassparams.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "IngressClassParams"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1alpha1",
+                            "kind": "TargetGroupBinding"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "TargetGroupBinding"
+                        }
+                    ]
+                },
+                "description": "Operator to simplify management of aws-load-balancer-controller\n\n### Prerequisites for installation\nThe operator requires AWS credentials in the installation namespace before it can be installed.\n\n1. Create the operator namespace with the following command:\n```bash\noc create namespace aws-load-balancer-operator\n```\n2. Create the `CredentialsRequest` in the `openshift-cloud-credential-operator`\n   namespace with the following command:\n\n```\ncat << EOF| oc create -f -\napiVersion: cloudcredential.openshift.io/v1\nkind: CredentialsRequest\nmetadata:\n  name: aws-load-balancer-operator\n  namespace: openshift-cloud-credential-operator\nspec:\n  providerSpec:\n    apiVersion: cloudcredential.openshift.io/v1\n    kind: AWSProviderSpec\n    statementEntries:\n      - action:\n          - ec2:DescribeSubnets\n        effect: Allow\n        resource: \"*\"\n      - action:\n          - ec2:CreateTags\n          - ec2:DeleteTags\n        effect: Allow\n        resource: arn:aws:ec2:*:*:subnet/*\n      - action:\n          - ec2:DescribeVpcs\n        effect: Allow\n        resource: \"*\"\n  secretRef:\n    name: aws-load-balancer-operator\n    namespace: aws-load-balancer-operator\n  serviceAccountNames:\n    - aws-load-balancer-operator-controller-manager\n  EOF\n```\n3. Ensure the credentials have been correctly provisioned\n```bash\noc get secret -n aws-load-balancer-operator aws-load-balancer-operator\n```\n\nAfter this the operator can be installated through the console or through the command line.\n\n__Note:__ For UPI based installs, additional documentation can be found\n[here](https://github.com/openshift/aws-load-balancer-operator/blob/main/docs/prerequisites.md#vpc-and-subnets)",
+                "displayName": "AWS Load Balancer Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "aws",
+                    "load-balancer",
+                    "ALB",
+                    "ingress"
+                ],
+                "links": [
+                    {
+                        "name": "Aws Load Balancer Operator",
+                        "url": "https://aws-load-balancer-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.20.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "controller",
+            "image": "registry.redhat.io/albo/aws-load-balancer-controller-rhel8@sha256:d7bc364512178c36671d8a4b5a76cf7cb10f8e56997106187b0fe1f032670ece"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:50b9402635dd4b312a86bed05dcdbda8c00120d3789ec2e9b527045100b3bdb4"
+        },
+        {
+            "name": "aws-load-balancer-rhel8-operator-95c45fae0ca9e9bee0fa2c13652634e726d8133e4e3009b363fcae6814b3461d-annotation",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:95c45fae0ca9e9bee0fa2c13652634e726d8133e4e3009b363fcae6814b3461d"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:95c45fae0ca9e9bee0fa2c13652634e726d8133e4e3009b363fcae6814b3461d"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:3658954f199040b0f244945c94955f794ee68008657421002e1b32962e7c30fc"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "aws-load-balancer-operator.v0.2.0",
+    "package": "aws-load-balancer-operator",
+    "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:3939323bc858e2a71b9ef0f858c5020ffd501e664a3652bd0be5f17176eb63f5",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "IngressClassParams",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "aws-load-balancer-operator",
+                "version": "0.2.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1alpha1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"IngressClassParams\",\n    \"metadata\": {\n      \"name\": \"awesome-class\"\n    },\n    \"spec\": {\n      \"group\": {\n        \"name\": \"my-group\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1alpha1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "containerImage": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:ab38b37c14f7f0897e09a18eca4a232a6c102b76e9283e401baed832852290b5",
+                    "createdAt": "2022-12-09T15:32:32",
+                    "olm.skipRange": "<0.2.0",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API"
+                        },
+                        {
+                            "name": "ingressclassparams.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "IngressClassParams"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1alpha1",
+                            "kind": "TargetGroupBinding"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "TargetGroupBinding"
+                        }
+                    ]
+                },
+                "description": "Operator to simplify management of aws-load-balancer-controller\n\n### Prerequisites for installation\nThe operator requires AWS credentials in the installation namespace before it can be installed.\n\n1. Create the operator namespace with the following command:\n```bash\noc create namespace aws-load-balancer-operator\n```\n2. Create the `CredentialsRequest` in the `openshift-cloud-credential-operator`\n   namespace with the following command:\n\n```\ncat << EOF| oc create -f -\napiVersion: cloudcredential.openshift.io/v1\nkind: CredentialsRequest\nmetadata:\n  name: aws-load-balancer-operator\n  namespace: openshift-cloud-credential-operator\nspec:\n  providerSpec:\n    apiVersion: cloudcredential.openshift.io/v1\n    kind: AWSProviderSpec\n    statementEntries:\n      - action:\n          - ec2:DescribeSubnets\n        effect: Allow\n        resource: \"*\"\n      - action:\n          - ec2:CreateTags\n          - ec2:DeleteTags\n        effect: Allow\n        resource: arn:aws:ec2:*:*:subnet/*\n      - action:\n          - ec2:DescribeVpcs\n        effect: Allow\n        resource: \"*\"\n  secretRef:\n    name: aws-load-balancer-operator\n    namespace: aws-load-balancer-operator\n  serviceAccountNames:\n    - aws-load-balancer-operator-controller-manager\n  EOF\n```\n3. Ensure the credentials have been correctly provisioned\n```bash\noc get secret -n aws-load-balancer-operator aws-load-balancer-operator\n```\n\nAfter this the operator can be installated through the console or through the command line.\n\n__Note:__ For UPI based installs, additional documentation can be found\n[here](https://github.com/openshift/aws-load-balancer-operator/blob/main/docs/prerequisites.md#vpc-and-subnets)",
+                "displayName": "AWS Load Balancer Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "aws",
+                    "load-balancer",
+                    "ALB",
+                    "ingress"
+                ],
+                "links": [
+                    {
+                        "name": "Aws Load Balancer Operator",
+                        "url": "https://aws-load-balancer-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.20.0",
+                "provider": {
+                    "name": "Red Hat",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "controller",
+            "image": "registry.redhat.io/albo/aws-load-balancer-controller-rhel8@sha256:cfd210a2cb705156883fda126d052e05eb84345cc27ba04688067f8ed9a802ea"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:3939323bc858e2a71b9ef0f858c5020ffd501e664a3652bd0be5f17176eb63f5"
+        },
+        {
+            "name": "aws-load-balancer-rhel8-operator-ab38b37c14f7f0897e09a18eca4a232a6c102b76e9283e401baed832852290b5-annotation",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:ab38b37c14f7f0897e09a18eca4a232a6c102b76e9283e401baed832852290b5"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:ab38b37c14f7f0897e09a18eca4a232a6c102b76e9283e401baed832852290b5"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:e3dad360d0351237a16593ca0862652809c41a2127c2f98b9e0a559568efbd10"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "aws-load-balancer-operator.v1.0.0",
+    "package": "aws-load-balancer-operator",
+    "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:d4d65d0d7c249d076da74da22296280ddef534da2bf54efb9e46d2bd7b9a602d",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "IngressClassParams",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "aws-load-balancer-operator",
+                "version": "1.0.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1alpha1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"IngressClassParams\",\n    \"metadata\": {\n      \"name\": \"awesome-class\"\n    },\n    \"spec\": {\n      \"group\": {\n        \"name\": \"my-group\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1alpha1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "containerImage": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:cbb31de2108b57172409cede667fa24d68d635ac3cc6db4af6e9b6f9dd1c5cd0",
+                    "createdAt": "2023-04-21T14:47:10",
+                    "olm.skipRange": "<1.0.0",
+                    "operatorframework.io/suggested-namespace": "aws-load-balancer-operator",
+                    "operators.openshift.io/infrastructure-features": "[\"proxy-aware\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/aws-load-balancer-operator",
+                    "support": "Red Hat, Inc."
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API."
+                        },
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API"
+                        },
+                        {
+                            "name": "ingressclassparams.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "IngressClassParams"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1alpha1",
+                            "kind": "TargetGroupBinding"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "TargetGroupBinding"
+                        }
+                    ]
+                },
+                "description": "Operator to simplify management of aws-load-balancer-controller\n\n### Prerequisites for installation\nThe operator requires AWS credentials in the installation namespace before it can be installed.\n\n1. Create the operator namespace with the following command:\n```bash\noc create namespace aws-load-balancer-operator\n```\n2. Create the `CredentialsRequest` in the `openshift-cloud-credential-operator`\n   namespace with the following command:\n\n```\ncat <<EOF | oc create -f -\napiVersion: cloudcredential.openshift.io/v1\nkind: CredentialsRequest\nmetadata:\n  name: aws-load-balancer-operator\n  namespace: openshift-cloud-credential-operator\nspec:\n  providerSpec:\n    apiVersion: cloudcredential.openshift.io/v1\n    kind: AWSProviderSpec\n    statementEntries:\n      - action:\n          - ec2:DescribeSubnets\n        effect: Allow\n        resource: \"*\"\n      - action:\n          - ec2:CreateTags\n          - ec2:DeleteTags\n        effect: Allow\n        resource: arn:aws:ec2:*:*:subnet/*\n      - action:\n          - ec2:DescribeVpcs\n        effect: Allow\n        resource: \"*\"\n  secretRef:\n    name: aws-load-balancer-operator\n    namespace: aws-load-balancer-operator\n  serviceAccountNames:\n    - aws-load-balancer-operator-controller-manager\nEOF\n```\n3. Ensure the credentials have been correctly provisioned\n```bash\noc get secret -n aws-load-balancer-operator aws-load-balancer-operator\n```\n\nAfter this the operator can be installated through the console or through the command line.\n\n__Note about UPI:__ For UPI based installs, additional documentation can be found in\n[VPC and subnets](https://github.com/openshift/aws-load-balancer-operator/blob/main/docs/prerequisites.md#vpc-and-subnets)\n\n__Note about STS:__ For clusters using STS, use the [STS documentation](https://github.com/openshift/aws-load-balancer-operator/blob/main/docs/prerequisites.md#for-sts-clusters) instead.",
+                "displayName": "AWS Load Balancer Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "aws",
+                    "load-balancer",
+                    "ALB",
+                    "ingress"
+                ],
+                "links": [
+                    {
+                        "name": "Aws Load Balancer Operator",
+                        "url": "https://aws-load-balancer-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.20.0",
+                "provider": {
+                    "name": "Red Hat Inc.",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "controller",
+            "image": "registry.redhat.io/albo/aws-load-balancer-controller-rhel8@sha256:cad8f6380b4dd4e1396dafcd7dfbf0f405aa10e4ae36214f849e6a77e6210d92"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:d4d65d0d7c249d076da74da22296280ddef534da2bf54efb9e46d2bd7b9a602d"
+        },
+        {
+            "name": "aws-load-balancer-rhel8-operator-cbb31de2108b57172409cede667fa24d68d635ac3cc6db4af6e9b6f9dd1c5cd0-annotation",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:cbb31de2108b57172409cede667fa24d68d635ac3cc6db4af6e9b6f9dd1c5cd0"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:cbb31de2108b57172409cede667fa24d68d635ac3cc6db4af6e9b6f9dd1c5cd0"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:422e4fbe1ed81c79084f43a826dc0674510a7ff578e62b4ddda119ed3266d0b6"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "aws-load-balancer-operator.v1.0.1",
+    "package": "aws-load-balancer-operator",
+    "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:59ff4966f4f653e49d42d97bfed6351d3730128db74f666ee4ecacff11790baf",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "IngressClassParams",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "aws-load-balancer-operator",
+                "version": "1.0.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1alpha1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"IngressClassParams\",\n    \"metadata\": {\n      \"name\": \"awesome-class\"\n    },\n    \"spec\": {\n      \"group\": {\n        \"name\": \"my-group\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1alpha1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "containerImage": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:6e15df39a3d25755a79888f739e1af8b052c3fba57bf8f6b3434ef58fd4288cf",
+                    "createdAt": "2024-01-24T09:13:21",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": "<1.0.1",
+                    "operatorframework.io/suggested-namespace": "aws-load-balancer-operator",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/aws-load-balancer-operator",
+                    "support": "Red Hat, Inc."
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API."
+                        },
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API"
+                        },
+                        {
+                            "name": "ingressclassparams.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "IngressClassParams"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1alpha1",
+                            "kind": "TargetGroupBinding"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "TargetGroupBinding"
+                        }
+                    ]
+                },
+                "description": "Operator to simplify management of aws-load-balancer-controller\n\n### Prerequisites for installation\nThe operator requires AWS credentials in the installation namespace before it can be installed.\n\n1. Create the operator namespace with the following command:\n```bash\noc create namespace aws-load-balancer-operator\n```\n2. Create the `CredentialsRequest` in the `openshift-cloud-credential-operator`\n   namespace with the following command:\n\n```\ncat <<EOF | oc create -f -\napiVersion: cloudcredential.openshift.io/v1\nkind: CredentialsRequest\nmetadata:\n  name: aws-load-balancer-operator\n  namespace: openshift-cloud-credential-operator\nspec:\n  providerSpec:\n    apiVersion: cloudcredential.openshift.io/v1\n    kind: AWSProviderSpec\n    statementEntries:\n      - action:\n          - ec2:DescribeSubnets\n        effect: Allow\n        resource: \"*\"\n      - action:\n          - ec2:CreateTags\n          - ec2:DeleteTags\n        effect: Allow\n        resource: arn:aws:ec2:*:*:subnet/*\n      - action:\n          - ec2:DescribeVpcs\n        effect: Allow\n        resource: \"*\"\n  secretRef:\n    name: aws-load-balancer-operator\n    namespace: aws-load-balancer-operator\n  serviceAccountNames:\n    - aws-load-balancer-operator-controller-manager\nEOF\n```\n3. Ensure the credentials have been correctly provisioned\n```bash\noc get secret -n aws-load-balancer-operator aws-load-balancer-operator\n```\n\nAfter this the operator can be installated through the console or through the command line.\n\n__Note about UPI:__ For UPI based installs, additional documentation can be found in\n[VPC and subnets](https://github.com/openshift/aws-load-balancer-operator/blob/release-1.0/docs/prerequisites.md#vpc-and-subnets)\n\n__Note about STS:__ For clusters using STS, use the [STS documentation](https://github.com/openshift/aws-load-balancer-operator/blob/main/docs/prerequisites.md#for-sts-clusters) instead.",
+                "displayName": "AWS Load Balancer Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "aws",
+                    "load-balancer",
+                    "ALB",
+                    "ingress"
+                ],
+                "links": [
+                    {
+                        "name": "Aws Load Balancer Operator",
+                        "url": "https://aws-load-balancer-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.20.0",
+                "provider": {
+                    "name": "Red Hat Inc.",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "controller",
+            "image": "registry.redhat.io/albo/aws-load-balancer-controller-rhel8@sha256:73db97d20ee9415e9a8941cc6a36ed81d901d760d9949e95e10c90866ef8bf64"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:59ff4966f4f653e49d42d97bfed6351d3730128db74f666ee4ecacff11790baf"
+        },
+        {
+            "name": "aws-load-balancer-rhel8-operator-6e15df39a3d25755a79888f739e1af8b052c3fba57bf8f6b3434ef58fd4288cf-annotation",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:6e15df39a3d25755a79888f739e1af8b052c3fba57bf8f6b3434ef58fd4288cf"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:6e15df39a3d25755a79888f739e1af8b052c3fba57bf8f6b3434ef58fd4288cf"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:9f9f8f69ab98c1f25cc301572339e0cc5c5b76f2e29ed26e10ac91ad20e0090c"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "aws-load-balancer-operator.v1.1.0",
+    "package": "aws-load-balancer-operator",
+    "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:e4799ae4d44aae350cf3307a23d3957fb68003a64dbae5e29be801a993a90f69",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "IngressClassParams",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "aws-load-balancer-operator",
+                "version": "1.1.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1alpha1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"IngressClassParams\",\n    \"metadata\": {\n      \"name\": \"awesome-class\"\n    },\n    \"spec\": {\n      \"group\": {\n        \"name\": \"my-group\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1alpha1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "containerImage": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:b13db5fb28d1282bc53f73baeae75ab54854b41b0091be32431af35fb51950a0",
+                    "createdAt": "2023-10-31T09:53:06",
+                    "olm.skipRange": "<1.1.0",
+                    "operatorframework.io/suggested-namespace": "aws-load-balancer-operator",
+                    "operators.openshift.io/infrastructure-features": "[\"proxy-aware\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/aws-load-balancer-operator",
+                    "support": "Red Hat, Inc."
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API."
+                        },
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API"
+                        },
+                        {
+                            "name": "ingressclassparams.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "IngressClassParams"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1alpha1",
+                            "kind": "TargetGroupBinding"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "TargetGroupBinding"
+                        }
+                    ]
+                },
+                "description": "Operator to simplify the management of aws-load-balancer-controller.\n\n### Prerequisites for installation\nIn certain scenarios, the operator requires extra steps to be executed before it can be installed.\n\n#### Instructions for STS cluster (including ROSA in STS mode)\n\n[Bootstrapping AWS Load Balancer Operator on Security Token Service cluster](https://docs.openshift.com/container-platform/latest/networking/aws_load_balancer_operator/installing-albo-sts-cluster.html#nw-bootstra-albo-on-sts-cluster_albo-sts-cluster).\n\n#### Instructions for UPI based installation\n\nAdditional documentation can be found in [VPC and Subnets](https://github.com/openshift/aws-load-balancer-operator/blob/main/docs/prerequisites.md#vpc-and-subnets).",
+                "displayName": "AWS Load Balancer Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "aws",
+                    "load-balancer",
+                    "ALB",
+                    "ingress"
+                ],
+                "links": [
+                    {
+                        "name": "Aws Load Balancer Operator",
+                        "url": "https://aws-load-balancer-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.20.0",
+                "provider": {
+                    "name": "Red Hat Inc.",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "controller",
+            "image": "registry.redhat.io/albo/aws-load-balancer-controller-rhel8@sha256:537fc6c0219e98795bc9560869487bc1605a2556f2a06a9702d81c7fbea35132"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:e4799ae4d44aae350cf3307a23d3957fb68003a64dbae5e29be801a993a90f69"
+        },
+        {
+            "name": "aws-load-balancer-rhel8-operator-b13db5fb28d1282bc53f73baeae75ab54854b41b0091be32431af35fb51950a0-annotation",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:b13db5fb28d1282bc53f73baeae75ab54854b41b0091be32431af35fb51950a0"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:b13db5fb28d1282bc53f73baeae75ab54854b41b0091be32431af35fb51950a0"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:1dddb0988d1612c996707d43eb839bc49fc7e7554afaf085436eeddb37a12438"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "aws-load-balancer-operator.v1.1.1",
+    "package": "aws-load-balancer-operator",
+    "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:01f2ca529d2486f113bcefc9fedce6a6fd07bcb48aaf534394b5b04c353f8853",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "IngressClassParams",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "elbv2.k8s.aws",
+                "kind": "TargetGroupBinding",
+                "version": "v1beta1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "networking.olm.openshift.io",
+                "kind": "AWSLoadBalancerController",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "aws-load-balancer-operator",
+                "version": "1.1.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1alpha1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"IngressClassParams\",\n    \"metadata\": {\n      \"name\": \"awesome-class\"\n    },\n    \"spec\": {\n      \"group\": {\n        \"name\": \"my-group\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"elbv2.k8s.aws/v1beta1\",\n    \"kind\": \"TargetGroupBinding\",\n    \"metadata\": {\n      \"name\": \"my-tgb\"\n    },\n    \"spec\": {\n      \"serviceRef\": {\n        \"name\": \"awesome-service\",\n        \"port\": 80\n      },\n      \"targetGroupARN\": \"\\u003carn-to-targetGroup\\u003e\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  },\n  {\n    \"apiVersion\": \"networking.olm.openshift.io/v1alpha1\",\n    \"kind\": \"AWSLoadBalancerController\",\n    \"metadata\": {\n      \"name\": \"cluster\"\n    },\n    \"spec\": {\n      \"subnetTagging\": \"Auto\"\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "containerImage": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:16e9ffed36107527a37713ac5bd34a7bc20f042269a81077429fb5884914c4d0",
+                    "createdAt": "2024-01-23T11:21:00",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "true",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": "<1.1.1",
+                    "operatorframework.io/suggested-namespace": "aws-load-balancer-operator",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.16.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/openshift/aws-load-balancer-operator",
+                    "support": "Red Hat, Inc."
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API."
+                        },
+                        {
+                            "name": "awsloadbalancercontrollers.networking.olm.openshift.io",
+                            "version": "v1alpha1",
+                            "kind": "AWSLoadBalancerController",
+                            "displayName": "AWSLoad Balancer Controller",
+                            "description": "AWSLoadBalancerController is the Schema for the awsloadbalancercontrollers API"
+                        },
+                        {
+                            "name": "ingressclassparams.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "IngressClassParams"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1alpha1",
+                            "kind": "TargetGroupBinding"
+                        },
+                        {
+                            "name": "targetgroupbindings.elbv2.k8s.aws",
+                            "version": "v1beta1",
+                            "kind": "TargetGroupBinding"
+                        }
+                    ]
+                },
+                "description": "Operator to simplify the management of aws-load-balancer-controller.\n\n### Prerequisites for installation\nIn certain scenarios, the operator requires extra steps to be executed before it can be installed.\n\n#### Instructions for STS cluster (including ROSA in STS mode)\n\n[Bootstrapping AWS Load Balancer Operator on Security Token Service cluster](https://docs.openshift.com/container-platform/latest/networking/aws_load_balancer_operator/installing-albo-sts-cluster.html#nw-bootstra-albo-on-sts-cluster_albo-sts-cluster).\n\n#### Instructions for UPI based installation\n\nAdditional documentation can be found in [VPC and Subnets](https://github.com/openshift/aws-load-balancer-operator/blob/main/docs/prerequisites.md#vpc-and-subnets).",
+                "displayName": "AWS Load Balancer Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "aws",
+                    "load-balancer",
+                    "ALB",
+                    "ingress"
+                ],
+                "links": [
+                    {
+                        "name": "Aws Load Balancer Operator",
+                        "url": "https://aws-load-balancer-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.20.0",
+                "provider": {
+                    "name": "Red Hat Inc.",
+                    "url": "https://redhat.com"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "controller",
+            "image": "registry.redhat.io/albo/aws-load-balancer-controller-rhel8@sha256:2e0b9332a44d8d9c23e19c7accab0813a651f39210257820db508cac28876595"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/albo/aws-load-balancer-operator-bundle@sha256:01f2ca529d2486f113bcefc9fedce6a6fd07bcb48aaf534394b5b04c353f8853"
+        },
+        {
+            "name": "aws-load-balancer-rhel8-operator-16e9ffed36107527a37713ac5bd34a7bc20f042269a81077429fb5884914c4d0-annotation",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:16e9ffed36107527a37713ac5bd34a7bc20f042269a81077429fb5884914c4d0"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/albo/aws-load-balancer-rhel8-operator@sha256:16e9ffed36107527a37713ac5bd34a7bc20f042269a81077429fb5884914c4d0"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:f11f71448986aa17abec9caadb568a6cc34ef1a7898e6dc20bc6a512830ba476"
+        }
+    ]
+}

@@ -1,0 +1,1977 @@
+{
+    "schema": "olm.package",
+    "name": "mtr-operator",
+    "defaultChannel": "alpha",
+    "icon": {
+        "base64data": "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",
+        "mediatype": "image/png"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "alpha",
+    "package": "mtr-operator",
+    "entries": [
+        {
+            "name": "mtr-operator.1.0.0"
+        },
+        {
+            "name": "mtr-operator.1.0.1",
+            "replaces": "mtr-operator.1.0.0"
+        },
+        {
+            "name": "mtr-operator.1.0.2",
+            "replaces": "mtr-operator.1.0.1"
+        },
+        {
+            "name": "mtr-operator.1.0.3",
+            "replaces": "mtr-operator.1.0.2"
+        },
+        {
+            "name": "mtr-operator.1.1.0",
+            "replaces": "mtr-operator.1.0.3"
+        },
+        {
+            "name": "mtr-operator.1.1.1",
+            "replaces": "mtr-operator.1.1.0"
+        },
+        {
+            "name": "mtr-operator.1.2.0",
+            "replaces": "mtr-operator.1.1.1"
+        },
+        {
+            "name": "mtr-operator.1.2.1",
+            "replaces": "mtr-operator.1.2.0"
+        },
+        {
+            "name": "mtr-operator.1.2.2",
+            "replaces": "mtr-operator.1.2.1"
+        },
+        {
+            "name": "mtr-operator.1.2.3",
+            "replaces": "mtr-operator.1.2.2"
+        },
+        {
+            "name": "mtr-operator.1.2.4",
+            "replaces": "mtr-operator.1.2.3"
+        },
+        {
+            "name": "mtr-operator.1.2.5",
+            "replaces": "mtr-operator.1.2.4"
+        },
+        {
+            "name": "mtr-operator.1.2.6",
+            "replaces": "mtr-operator.1.2.5"
+        },
+        {
+            "name": "mtr-operator.1.2.7",
+            "replaces": "mtr-operator.1.2.6"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.0.0",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:aa33e38931e7a99930a26fc9912a5422401bc590eb0589e24fd6341c6b8965ea",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.0.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {\n     \"hostname_http\": \"\",\n     \"volumeCapacity\": \"20G\",\n     \"windup_Volume_Capacity\": \"20G\",\n     \"messaging_serializer\": \"http.post.serializer\",\n     \"db_jndi\": \"java:jboss/datasources/WindupServicesDS\",\n     \"db_username\": \"\",\n     \"db_password\": \"\",\n     \"db_min_pool_size\": \"\",\n     \"db_max_pool_size\": \"\",\n     \"db_tx_isolation\": \"\",\n     \"mq_cluster_password\": \"\",\n     \"mq_queues\": \"\",\n     \"mq_topics\": \"\",\n     \"jgroups_encrypt_secret\": \"eap-app-secret\",\n     \"jgroups_encrypt_keystore\": \"jgroups.jceks\",\n     \"jgroups_encrypt_name\": \"\",\n     \"jgroups_encrypt_password\": \"\",\n     \"jgroups_cluster_password\": \"\",\n     \"auto_deploy_exploded\": \"false\",\n     \"sso_url\": \"/auth\",\n     \"sso_service_url\": \"/auth\",\n     \"sso_realm\": \"mtr\",\n     \"sso_username\": \"\",\n     \"sso_password\": \"\",\n     \"sso_public_key\": \"\",\n     \"sso_bearer_only\": \"\",\n     \"sso_saml_keystore_secret\": \"eap7-app-secret\",\n     \"sso_saml_keystore\": \"keystore.jks\",\n     \"sso_saml_certificate_name\": \"jboss\",\n     \"sso_saml_keystore_password\": \"mykeystorepass\",\n     \"sso_secret\": \"\",\n     \"sso_enable_cors\": \"false\",\n     \"sso_saml_logout_page\": \"/\",\n     \"sso_disable_ssl_certificate_validation\": \"true\",\n     \"sso_truststore\": \"\",\n     \"sso_truststore_password\": \"\",\n     \"sso_truststore_secret\": \"eap7-app-secret\",\n     \"gc_max_metaspace_size\": 512,\n     \"max_post_size\": \"4294967296\",\n     \"sso_force_legacy_security\": \"false\",\n     \"db_database\": \"mta\",\n     \"postgresql_max_connections\": \"200\",\n     \"postgresql_shared_buffers\": \"\",\n     \"postgresql_cpu_request\": \"0.5\",\n     \"postgresql_mem_request\": \"0.5Gi\",\n     \"postgresql_cpu_limit\": \"2\",\n     \"postgresql_mem_limit\": \"2Gi\",\n     \"webLivenessInitialDelaySeconds\": \"120\",\n     \"webLivenessTimeoutSeconds\": \"10\",\n     \"webLivenessFailureThreshold\": \"3\",\n     \"webReadinessInitialDelaySeconds\": \"120\",\n     \"webReadinessTimeoutSeconds\": \"10\",\n     \"webReadinessFailureThreshold\": \"3\",\n     \"web_cpu_request\": \"0.5\",\n     \"web_mem_request\": \"0.5Gi\",\n     \"web_cpu_limit\": \"4\",\n     \"web_mem_limit\": \"4Gi\",\n     \"executor_cpu_request\": \"0.5\",\n     \"executor_mem_request\": \"0.5Gi\",\n     \"executor_cpu_limit\": \"4\",\n     \"executor_mem_limit\": \"4Gi\",\n     \"web_readiness_probe\": \"/bin/bash, -c, /opt/eap/bin/readinessProbe.sh\",\n     \"web_liveness_probe\": \"/bin/bash, -c, /opt/eap/bin/livenessProbe.sh\",\n     \"executor_readiness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"executor_liveness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"tls_secret\": \"\"\n   }\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:3db6f6dfeebdfaeccd132355e7167a3b7d2ba99f43558b9ff43021fbb05d451a",
+                    "createdAt": "2022-11-03T17:12:25Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:aa33e38931e7a99930a26fc9912a5422401bc590eb0589e24fd6341c6b8965ea"
+        },
+        {
+            "name": "mtr-rhel8-operator-3db6f6dfeebdfaeccd132355e7167a3b7d2ba99f43558b9ff43021fbb05d451a-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:3db6f6dfeebdfaeccd132355e7167a3b7d2ba99f43558b9ff43021fbb05d451a"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:3db6f6dfeebdfaeccd132355e7167a3b7d2ba99f43558b9ff43021fbb05d451a"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:64a1ed3908eece071352769f6f52460912bdf43a8bf1e49669164d53ff1fb094"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:b16638f3f00f1a87a9f75f9914ac4ba90020b32a9bddd206a2d59f58a89bafcc"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:bacb75e3f57c9a8b1e7e22785673bcd23179f2ba58cf559a04ebf9709a6ce9c7"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.0.1",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:e43aaeccb5b9fc164fc1efc8187c47c65f264169d9713146a7147774ec865549",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.0.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {\n     \"hostname_http\": \"\",\n     \"volumeCapacity\": \"20G\",\n     \"windup_Volume_Capacity\": \"20G\",\n     \"messaging_serializer\": \"http.post.serializer\",\n     \"db_jndi\": \"java:jboss/datasources/WindupServicesDS\",\n     \"db_username\": \"\",\n     \"db_password\": \"\",\n     \"db_min_pool_size\": \"\",\n     \"db_max_pool_size\": \"\",\n     \"db_tx_isolation\": \"\",\n     \"mq_cluster_password\": \"\",\n     \"mq_queues\": \"\",\n     \"mq_topics\": \"\",\n     \"jgroups_encrypt_secret\": \"eap-app-secret\",\n     \"jgroups_encrypt_keystore\": \"jgroups.jceks\",\n     \"jgroups_encrypt_name\": \"\",\n     \"jgroups_encrypt_password\": \"\",\n     \"jgroups_cluster_password\": \"\",\n     \"auto_deploy_exploded\": \"false\",\n     \"sso_url\": \"/auth\",\n     \"sso_service_url\": \"/auth\",\n     \"sso_realm\": \"mtr\",\n     \"sso_username\": \"\",\n     \"sso_password\": \"\",\n     \"sso_public_key\": \"\",\n     \"sso_bearer_only\": \"\",\n     \"sso_saml_keystore_secret\": \"eap7-app-secret\",\n     \"sso_saml_keystore\": \"keystore.jks\",\n     \"sso_saml_certificate_name\": \"jboss\",\n     \"sso_saml_keystore_password\": \"mykeystorepass\",\n     \"sso_secret\": \"\",\n     \"sso_enable_cors\": \"false\",\n     \"sso_saml_logout_page\": \"/\",\n     \"sso_disable_ssl_certificate_validation\": \"true\",\n     \"sso_truststore\": \"\",\n     \"sso_truststore_password\": \"\",\n     \"sso_truststore_secret\": \"eap7-app-secret\",\n     \"gc_max_metaspace_size\": 512,\n     \"max_post_size\": \"4294967296\",\n     \"sso_force_legacy_security\": \"false\",\n     \"db_database\": \"mta\",\n     \"postgresql_max_connections\": \"200\",\n     \"postgresql_shared_buffers\": \"\",\n     \"postgresql_cpu_request\": \"0.5\",\n     \"postgresql_mem_request\": \"0.5Gi\",\n     \"postgresql_cpu_limit\": \"2\",\n     \"postgresql_mem_limit\": \"2Gi\",\n     \"webLivenessInitialDelaySeconds\": \"120\",\n     \"webLivenessTimeoutSeconds\": \"10\",\n     \"webLivenessFailureThreshold\": \"3\",\n     \"webReadinessInitialDelaySeconds\": \"120\",\n     \"webReadinessTimeoutSeconds\": \"10\",\n     \"webReadinessFailureThreshold\": \"3\",\n     \"web_cpu_request\": \"0.5\",\n     \"web_mem_request\": \"0.5Gi\",\n     \"web_cpu_limit\": \"4\",\n     \"web_mem_limit\": \"4Gi\",\n     \"executor_cpu_request\": \"0.5\",\n     \"executor_mem_request\": \"0.5Gi\",\n     \"executor_cpu_limit\": \"4\",\n     \"executor_mem_limit\": \"4Gi\",\n     \"web_readiness_probe\": \"/bin/bash, -c, /opt/eap/bin/readinessProbe.sh\",\n     \"web_liveness_probe\": \"/bin/bash, -c, /opt/eap/bin/livenessProbe.sh\",\n     \"executor_readiness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"executor_liveness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"tls_secret\": \"\"\n   }\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:df46254d7e82efe533f843c422f810daef220005a11b9bb873e3a134ea62fcc8",
+                    "createdAt": "2023-01-17T15:19:42Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:e43aaeccb5b9fc164fc1efc8187c47c65f264169d9713146a7147774ec865549"
+        },
+        {
+            "name": "mtr-rhel8-operator-df46254d7e82efe533f843c422f810daef220005a11b9bb873e3a134ea62fcc8-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:df46254d7e82efe533f843c422f810daef220005a11b9bb873e3a134ea62fcc8"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:df46254d7e82efe533f843c422f810daef220005a11b9bb873e3a134ea62fcc8"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:192ed83fea237f20f9a47207feda21531d643a851deb4a128f48f4ea496f9a86"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:232063d942eed4b4d980f50d9f3b9871037a1320e97d46fdc366ccd53fb01767"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:b05bd536f3f288919a0327cad34d8ba000ace3849f1fe82c359f28fec0fc2828"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.0.2",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:00a133578915e07a223f8c61015ad48d121d07ceb7a94639c9c696fa5bcfe99c",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.0.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {\n     \"hostname_http\": \"\",\n     \"volumeCapacity\": \"20G\",\n     \"windup_Volume_Capacity\": \"20G\",\n     \"messaging_serializer\": \"http.post.serializer\",\n     \"db_jndi\": \"java:jboss/datasources/WindupServicesDS\",\n     \"db_username\": \"\",\n     \"db_password\": \"\",\n     \"db_min_pool_size\": \"\",\n     \"db_max_pool_size\": \"\",\n     \"db_tx_isolation\": \"\",\n     \"mq_cluster_password\": \"\",\n     \"mq_queues\": \"\",\n     \"mq_topics\": \"\",\n     \"jgroups_encrypt_secret\": \"eap-app-secret\",\n     \"jgroups_encrypt_keystore\": \"jgroups.jceks\",\n     \"jgroups_encrypt_name\": \"\",\n     \"jgroups_encrypt_password\": \"\",\n     \"jgroups_cluster_password\": \"\",\n     \"auto_deploy_exploded\": \"false\",\n     \"sso_url\": \"/auth\",\n     \"sso_service_url\": \"/auth\",\n     \"sso_realm\": \"mtr\",\n     \"sso_username\": \"\",\n     \"sso_password\": \"\",\n     \"sso_public_key\": \"\",\n     \"sso_bearer_only\": \"\",\n     \"sso_saml_keystore_secret\": \"eap7-app-secret\",\n     \"sso_saml_keystore\": \"keystore.jks\",\n     \"sso_saml_certificate_name\": \"jboss\",\n     \"sso_saml_keystore_password\": \"mykeystorepass\",\n     \"sso_secret\": \"\",\n     \"sso_enable_cors\": \"false\",\n     \"sso_saml_logout_page\": \"/\",\n     \"sso_disable_ssl_certificate_validation\": \"true\",\n     \"sso_truststore\": \"\",\n     \"sso_truststore_password\": \"\",\n     \"sso_truststore_secret\": \"eap7-app-secret\",\n     \"gc_max_metaspace_size\": 512,\n     \"max_post_size\": \"4294967296\",\n     \"sso_force_legacy_security\": \"false\",\n     \"db_database\": \"mta\",\n     \"postgresql_max_connections\": \"200\",\n     \"postgresql_shared_buffers\": \"\",\n     \"postgresql_cpu_request\": \"0.5\",\n     \"postgresql_mem_request\": \"0.5Gi\",\n     \"postgresql_cpu_limit\": \"2\",\n     \"postgresql_mem_limit\": \"2Gi\",\n     \"webLivenessInitialDelaySeconds\": \"120\",\n     \"webLivenessTimeoutSeconds\": \"10\",\n     \"webLivenessFailureThreshold\": \"3\",\n     \"webReadinessInitialDelaySeconds\": \"120\",\n     \"webReadinessTimeoutSeconds\": \"10\",\n     \"webReadinessFailureThreshold\": \"3\",\n     \"web_cpu_request\": \"0.5\",\n     \"web_mem_request\": \"0.5Gi\",\n     \"web_cpu_limit\": \"4\",\n     \"web_mem_limit\": \"4Gi\",\n     \"executor_cpu_request\": \"0.5\",\n     \"executor_mem_request\": \"0.5Gi\",\n     \"executor_cpu_limit\": \"4\",\n     \"executor_mem_limit\": \"4Gi\",\n     \"web_readiness_probe\": \"/bin/bash, -c, /opt/eap/bin/readinessProbe.sh\",\n     \"web_liveness_probe\": \"/bin/bash, -c, /opt/eap/bin/livenessProbe.sh\",\n     \"executor_readiness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"executor_liveness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"tls_secret\": \"\"\n   }\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:85a547cca5149a15ae58c1a691cfb3ce80abae7e86b87d766aaaade8e88c0b96",
+                    "createdAt": "2023-02-27T15:01:45Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:00a133578915e07a223f8c61015ad48d121d07ceb7a94639c9c696fa5bcfe99c"
+        },
+        {
+            "name": "mtr-rhel8-operator-85a547cca5149a15ae58c1a691cfb3ce80abae7e86b87d766aaaade8e88c0b96-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:85a547cca5149a15ae58c1a691cfb3ce80abae7e86b87d766aaaade8e88c0b96"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:85a547cca5149a15ae58c1a691cfb3ce80abae7e86b87d766aaaade8e88c0b96"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:d147c42cb86c1956e1f0402dca2f6c14cb457675aeb07230e12ff5f2c13ff46e"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:8466fffd8b7a264413d91da236856a4299604d5d710084afa49a70dbeeb57430"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:51a2ded764efc3f2f88986e1f7d0080f0e4a6a4f97d1971bdaf624cd5f9c3a64"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.0.3",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:432408207aa660d30a2bcd3cd142a65d4bcd3b9eee03d5b0d1ec6e6d594c6e8d",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.0.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {\n     \"hostname_http\": \"\",\n     \"volumeCapacity\": \"20G\",\n     \"windup_Volume_Capacity\": \"20G\",\n     \"messaging_serializer\": \"http.post.serializer\",\n     \"db_jndi\": \"java:jboss/datasources/WindupServicesDS\",\n     \"db_username\": \"\",\n     \"db_password\": \"\",\n     \"db_min_pool_size\": \"\",\n     \"db_max_pool_size\": \"\",\n     \"db_tx_isolation\": \"\",\n     \"mq_cluster_password\": \"\",\n     \"mq_queues\": \"\",\n     \"mq_topics\": \"\",\n     \"jgroups_encrypt_secret\": \"eap-app-secret\",\n     \"jgroups_encrypt_keystore\": \"jgroups.jceks\",\n     \"jgroups_encrypt_name\": \"\",\n     \"jgroups_encrypt_password\": \"\",\n     \"jgroups_cluster_password\": \"\",\n     \"auto_deploy_exploded\": \"false\",\n     \"sso_url\": \"/auth\",\n     \"sso_service_url\": \"/auth\",\n     \"sso_realm\": \"mtr\",\n     \"sso_username\": \"\",\n     \"sso_password\": \"\",\n     \"sso_public_key\": \"\",\n     \"sso_bearer_only\": \"\",\n     \"sso_saml_keystore_secret\": \"eap7-app-secret\",\n     \"sso_saml_keystore\": \"keystore.jks\",\n     \"sso_saml_certificate_name\": \"jboss\",\n     \"sso_saml_keystore_password\": \"mykeystorepass\",\n     \"sso_secret\": \"\",\n     \"sso_enable_cors\": \"false\",\n     \"sso_saml_logout_page\": \"/\",\n     \"sso_disable_ssl_certificate_validation\": \"true\",\n     \"sso_truststore\": \"\",\n     \"sso_truststore_password\": \"\",\n     \"sso_truststore_secret\": \"eap7-app-secret\",\n     \"gc_max_metaspace_size\": 512,\n     \"max_post_size\": \"4294967296\",\n     \"sso_force_legacy_security\": \"false\",\n     \"db_database\": \"mta\",\n     \"postgresql_max_connections\": \"200\",\n     \"postgresql_shared_buffers\": \"\",\n     \"postgresql_cpu_request\": \"0.5\",\n     \"postgresql_mem_request\": \"0.5Gi\",\n     \"postgresql_cpu_limit\": \"2\",\n     \"postgresql_mem_limit\": \"2Gi\",\n     \"webLivenessInitialDelaySeconds\": \"120\",\n     \"webLivenessTimeoutSeconds\": \"10\",\n     \"webLivenessFailureThreshold\": \"3\",\n     \"webReadinessInitialDelaySeconds\": \"120\",\n     \"webReadinessTimeoutSeconds\": \"10\",\n     \"webReadinessFailureThreshold\": \"3\",\n     \"web_cpu_request\": \"0.5\",\n     \"web_mem_request\": \"0.5Gi\",\n     \"web_cpu_limit\": \"4\",\n     \"web_mem_limit\": \"4Gi\",\n     \"executor_cpu_request\": \"0.5\",\n     \"executor_mem_request\": \"0.5Gi\",\n     \"executor_cpu_limit\": \"4\",\n     \"executor_mem_limit\": \"4Gi\",\n     \"web_readiness_probe\": \"/bin/bash, -c, /opt/eap/bin/readinessProbe.sh\",\n     \"web_liveness_probe\": \"/bin/bash, -c, /opt/eap/bin/livenessProbe.sh\",\n     \"executor_readiness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"executor_liveness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"tls_secret\": \"\"\n   }\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:f55984b89d2a087fa34ba60a5d1117c61195a0848e52ab4a7d7f924961973178",
+                    "createdAt": "2023-04-20T14:41:45Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:432408207aa660d30a2bcd3cd142a65d4bcd3b9eee03d5b0d1ec6e6d594c6e8d"
+        },
+        {
+            "name": "mtr-rhel8-operator-f55984b89d2a087fa34ba60a5d1117c61195a0848e52ab4a7d7f924961973178-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:f55984b89d2a087fa34ba60a5d1117c61195a0848e52ab4a7d7f924961973178"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:f55984b89d2a087fa34ba60a5d1117c61195a0848e52ab4a7d7f924961973178"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:7f6dd1127bda91b9f7aa401f667858f58650512b1c6d9455ddf4a23ea7096886"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:d93a759be84c997478d4e77ad593912acf9861b5dda98266997d5fe71ef2e8cd"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:5b86bb27efd94e18aab515d72995f5402c4811540cae9350bfb5470a69005519"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.1.0",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:90794f222e3d06e5312a808475d784b9c19c5830f3095c26d1d486a2c4c65744",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.1.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {\n     \"hostname_http\": \"\",\n     \"volumeCapacity\": \"20G\",\n     \"windup_Volume_Capacity\": \"20G\",\n     \"messaging_serializer\": \"http.post.serializer\",\n     \"db_jndi\": \"java:jboss/datasources/WindupServicesDS\",\n     \"db_username\": \"\",\n     \"db_password\": \"\",\n     \"db_min_pool_size\": \"\",\n     \"db_max_pool_size\": \"\",\n     \"db_tx_isolation\": \"\",\n     \"mq_cluster_password\": \"\",\n     \"mq_queues\": \"\",\n     \"mq_topics\": \"\",\n     \"jgroups_encrypt_secret\": \"eap-app-secret\",\n     \"jgroups_encrypt_keystore\": \"jgroups.jceks\",\n     \"jgroups_encrypt_name\": \"\",\n     \"jgroups_encrypt_password\": \"\",\n     \"jgroups_cluster_password\": \"\",\n     \"auto_deploy_exploded\": \"false\",\n     \"sso_url\": \"/auth\",\n     \"sso_service_url\": \"/auth\",\n     \"sso_realm\": \"mtr\",\n     \"sso_username\": \"\",\n     \"sso_password\": \"\",\n     \"sso_public_key\": \"\",\n     \"sso_bearer_only\": \"\",\n     \"sso_saml_keystore_secret\": \"eap7-app-secret\",\n     \"sso_saml_keystore\": \"keystore.jks\",\n     \"sso_saml_certificate_name\": \"jboss\",\n     \"sso_saml_keystore_password\": \"mykeystorepass\",\n     \"sso_secret\": \"\",\n     \"sso_enable_cors\": \"false\",\n     \"sso_saml_logout_page\": \"/\",\n     \"sso_disable_ssl_certificate_validation\": \"true\",\n     \"sso_truststore\": \"\",\n     \"sso_truststore_password\": \"\",\n     \"sso_truststore_secret\": \"eap7-app-secret\",\n     \"gc_max_metaspace_size\": 512,\n     \"max_post_size\": \"4294967296\",\n     \"sso_force_legacy_security\": \"false\",\n     \"db_database\": \"mta\",\n     \"postgresql_max_connections\": \"200\",\n     \"postgresql_shared_buffers\": \"\",\n     \"postgresql_cpu_request\": \"0.5\",\n     \"postgresql_mem_request\": \"0.5Gi\",\n     \"postgresql_cpu_limit\": \"2\",\n     \"postgresql_mem_limit\": \"2Gi\",\n     \"webLivenessInitialDelaySeconds\": \"120\",\n     \"webLivenessTimeoutSeconds\": \"10\",\n     \"webLivenessFailureThreshold\": \"3\",\n     \"webReadinessInitialDelaySeconds\": \"120\",\n     \"webReadinessTimeoutSeconds\": \"10\",\n     \"webReadinessFailureThreshold\": \"3\",\n     \"web_cpu_request\": \"0.5\",\n     \"web_mem_request\": \"0.5Gi\",\n     \"web_cpu_limit\": \"4\",\n     \"web_mem_limit\": \"4Gi\",\n     \"executor_cpu_request\": \"0.5\",\n     \"executor_mem_request\": \"0.5Gi\",\n     \"executor_cpu_limit\": \"4\",\n     \"executor_mem_limit\": \"4Gi\",\n     \"web_readiness_probe\": \"/bin/bash, -c, /opt/eap/bin/readinessProbe.sh\",\n     \"web_liveness_probe\": \"/bin/bash, -c, /opt/eap/bin/livenessProbe.sh\",\n     \"executor_readiness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"executor_liveness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"tls_secret\": \"\"\n   }\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:e560739c9c01dde1b3df776f36bba4ca8c9e24017a16af2eadbd11ecad44d3ac",
+                    "createdAt": "2023-05-25T05:46:49Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:90794f222e3d06e5312a808475d784b9c19c5830f3095c26d1d486a2c4c65744"
+        },
+        {
+            "name": "mtr-rhel8-operator-e560739c9c01dde1b3df776f36bba4ca8c9e24017a16af2eadbd11ecad44d3ac-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:e560739c9c01dde1b3df776f36bba4ca8c9e24017a16af2eadbd11ecad44d3ac"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:e560739c9c01dde1b3df776f36bba4ca8c9e24017a16af2eadbd11ecad44d3ac"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:aba008c2d358315f8533676dd9faa676fa17ca046c307a6dbf42e56e0b79d977"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:91e7502029df8bfc7f2b34ea47a72f8c57f8d69756115773c104788028a8bb6f"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:924009a404f2a48d204e014fd47278f1f9bb8c74a950a29092549c132b474002"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.1.1",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:e43184e29882918430c515933e4669185cb49764bed4ef5da7ce2580f0a79ecd",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.1.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {\n     \"hostname_http\": \"\",\n     \"volumeCapacity\": \"20G\",\n     \"windup_Volume_Capacity\": \"20G\",\n     \"messaging_serializer\": \"http.post.serializer\",\n     \"db_jndi\": \"java:jboss/datasources/WindupServicesDS\",\n     \"db_username\": \"\",\n     \"db_password\": \"\",\n     \"db_min_pool_size\": \"\",\n     \"db_max_pool_size\": \"\",\n     \"db_tx_isolation\": \"\",\n     \"mq_cluster_password\": \"\",\n     \"mq_queues\": \"\",\n     \"mq_topics\": \"\",\n     \"jgroups_encrypt_secret\": \"eap-app-secret\",\n     \"jgroups_encrypt_keystore\": \"jgroups.jceks\",\n     \"jgroups_encrypt_name\": \"\",\n     \"jgroups_encrypt_password\": \"\",\n     \"jgroups_cluster_password\": \"\",\n     \"auto_deploy_exploded\": \"false\",\n     \"sso_url\": \"/auth\",\n     \"sso_service_url\": \"/auth\",\n     \"sso_realm\": \"mtr\",\n     \"sso_username\": \"\",\n     \"sso_password\": \"\",\n     \"sso_public_key\": \"\",\n     \"sso_bearer_only\": \"\",\n     \"sso_saml_keystore_secret\": \"eap7-app-secret\",\n     \"sso_saml_keystore\": \"keystore.jks\",\n     \"sso_saml_certificate_name\": \"jboss\",\n     \"sso_saml_keystore_password\": \"mykeystorepass\",\n     \"sso_secret\": \"\",\n     \"sso_enable_cors\": \"false\",\n     \"sso_saml_logout_page\": \"/\",\n     \"sso_disable_ssl_certificate_validation\": \"true\",\n     \"sso_truststore\": \"\",\n     \"sso_truststore_password\": \"\",\n     \"sso_truststore_secret\": \"eap7-app-secret\",\n     \"gc_max_metaspace_size\": 512,\n     \"max_post_size\": \"4294967296\",\n     \"sso_force_legacy_security\": \"false\",\n     \"db_database\": \"mta\",\n     \"postgresql_max_connections\": \"200\",\n     \"postgresql_shared_buffers\": \"\",\n     \"postgresql_cpu_request\": \"0.5\",\n     \"postgresql_mem_request\": \"0.5Gi\",\n     \"postgresql_cpu_limit\": \"2\",\n     \"postgresql_mem_limit\": \"2Gi\",\n     \"webLivenessInitialDelaySeconds\": \"120\",\n     \"webLivenessTimeoutSeconds\": \"10\",\n     \"webLivenessFailureThreshold\": \"3\",\n     \"webReadinessInitialDelaySeconds\": \"120\",\n     \"webReadinessTimeoutSeconds\": \"10\",\n     \"webReadinessFailureThreshold\": \"3\",\n     \"web_cpu_request\": \"0.5\",\n     \"web_mem_request\": \"0.5Gi\",\n     \"web_cpu_limit\": \"4\",\n     \"web_mem_limit\": \"4Gi\",\n     \"executor_cpu_request\": \"0.5\",\n     \"executor_mem_request\": \"0.5Gi\",\n     \"executor_cpu_limit\": \"4\",\n     \"executor_mem_limit\": \"4Gi\",\n     \"web_readiness_probe\": \"/bin/bash, -c, /opt/eap/bin/readinessProbe.sh\",\n     \"web_liveness_probe\": \"/bin/bash, -c, /opt/eap/bin/livenessProbe.sh\",\n     \"executor_readiness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"executor_liveness_probe\": \"/bin/bash, -c, /opt/windup-cli/bin/livenessProbe.sh\",\n     \"tls_secret\": \"\"\n   }\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:a44944525c0b6d4956883db3b5ba42cebcd585213ecbd213f27e2bcb03a74122",
+                    "createdAt": "2023-06-16T07:44:45Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:e43184e29882918430c515933e4669185cb49764bed4ef5da7ce2580f0a79ecd"
+        },
+        {
+            "name": "mtr-rhel8-operator-a44944525c0b6d4956883db3b5ba42cebcd585213ecbd213f27e2bcb03a74122-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:a44944525c0b6d4956883db3b5ba42cebcd585213ecbd213f27e2bcb03a74122"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:a44944525c0b6d4956883db3b5ba42cebcd585213ecbd213f27e2bcb03a74122"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:811fac755847c7fadeb7800d4e0b74f67023538e2afa376fcf8af472d99d55ed"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:36ae2ee07f5580685c012de7a1fd19913c0314dc5eea7c2b2665f8ba6f67a737"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:924009a404f2a48d204e014fd47278f1f9bb8c74a950a29092549c132b474002"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.2.0",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:55b696dc19ee394bfeb0d0523df0f77db82c18d533cabb4643c0e13e33a11da3",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.2.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {}\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:bce7f8a79bae099ea33570fd4ce9555086cd563b3451dec1b6f39a00c536e60f",
+                    "createdAt": "2023-09-05T16:08:40Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:55b696dc19ee394bfeb0d0523df0f77db82c18d533cabb4643c0e13e33a11da3"
+        },
+        {
+            "name": "mtr-rhel8-operator-bce7f8a79bae099ea33570fd4ce9555086cd563b3451dec1b6f39a00c536e60f-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:bce7f8a79bae099ea33570fd4ce9555086cd563b3451dec1b6f39a00c536e60f"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:bce7f8a79bae099ea33570fd4ce9555086cd563b3451dec1b6f39a00c536e60f"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:3edb7f4c6fa1eb32bf5b8ef17906864c14d9b1f9d6ea3c9725a9fc8477583c83"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:478f9ca8d58e7378bc4baa982e73b1c571937c4651acb8db1c12d74c3a7686ae"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:9fa695c8de9fd034dcf05ac3ae89a51c18d97951fab209c1743e937adbe778c0"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.2.1",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:60acebf53444e65bab7e216838cd9da49928fed27db24d75f5d1a244993f42dd",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.2.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {}\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:2e9a30e9b911b0b26a7ec798ce05f1c02f761055e25dc942a32d6765130cd83f",
+                    "createdAt": "2023-10-14T15:17:42Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:60acebf53444e65bab7e216838cd9da49928fed27db24d75f5d1a244993f42dd"
+        },
+        {
+            "name": "mtr-rhel8-operator-2e9a30e9b911b0b26a7ec798ce05f1c02f761055e25dc942a32d6765130cd83f-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:2e9a30e9b911b0b26a7ec798ce05f1c02f761055e25dc942a32d6765130cd83f"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:2e9a30e9b911b0b26a7ec798ce05f1c02f761055e25dc942a32d6765130cd83f"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:a709d4f01f53a14281328a7254b3883a47fade1eb79d8891f22133ea8abced53"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:f337c72ba75726dc5e5ec78d0561dd58c6e7744a0d42802db3503242ff3749ca"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:e2e3cd004f1f661621c5174a1dc69856547db818cea44e7cb5d44b962c332240"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.2.2",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:d625ba8a43c5e2f672fc1eacf894792cb11be7397a7678ae768dfb37f5feaf29",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.2.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {}\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b7325b6e5a3adcf3280658e6b2d1bab1abdf90aec79d3c8c37d59f0dd9bdaec6",
+                    "createdAt": "2023-10-23T18:59:03Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:d625ba8a43c5e2f672fc1eacf894792cb11be7397a7678ae768dfb37f5feaf29"
+        },
+        {
+            "name": "mtr-rhel8-operator-b7325b6e5a3adcf3280658e6b2d1bab1abdf90aec79d3c8c37d59f0dd9bdaec6-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b7325b6e5a3adcf3280658e6b2d1bab1abdf90aec79d3c8c37d59f0dd9bdaec6"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b7325b6e5a3adcf3280658e6b2d1bab1abdf90aec79d3c8c37d59f0dd9bdaec6"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:2bebb2cb6c3c2168d513f356c03914dd0d12682a66f657f97faf0994b9a00f1b"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:0d273b6d82e16e288353ae3d5762adfa1d32123e7258e55a444cdc87df99e6e0"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:c902fe830fc8c6282a5ebf1d15bcfe7191be484fd53c1c72e04c2a49117b1db4"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.2.3",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:ea528174239334026f81ccad0492e81fca95353e50a7772e0492159cb900e0e8",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.2.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {}\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b9d62f527018fdb311d84fcca575e0f7b2768d7957b0f68aec4bb117579eec94",
+                    "createdAt": "2023-11-23T14:00:50Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:ea528174239334026f81ccad0492e81fca95353e50a7772e0492159cb900e0e8"
+        },
+        {
+            "name": "mtr-rhel8-operator-b9d62f527018fdb311d84fcca575e0f7b2768d7957b0f68aec4bb117579eec94-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b9d62f527018fdb311d84fcca575e0f7b2768d7957b0f68aec4bb117579eec94"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b9d62f527018fdb311d84fcca575e0f7b2768d7957b0f68aec4bb117579eec94"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:f50f37ef1d928457353ce6b27c729602c86800eaf13a82330f0310b73599b9e8"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:1e9d386021503a0e25663c21e723cd41f52a859b63b96142132569fe25aa364c"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:67a556d5ab5a6d52f0516845052988e249861f97da14d2090d33e5be5ee15317"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.2.4",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:b786a18de43145dbe1ec6a137bf6dbe72adca095146c7158424eda0ad84abd82",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.2.4"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {}\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:abe602663f54b1dc70ca513481d1e315e06fab37f93bb163ea2057e61edc8b27",
+                    "createdAt": "2024-01-24T18:01:29Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:b786a18de43145dbe1ec6a137bf6dbe72adca095146c7158424eda0ad84abd82"
+        },
+        {
+            "name": "mtr-rhel8-operator-abe602663f54b1dc70ca513481d1e315e06fab37f93bb163ea2057e61edc8b27-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:abe602663f54b1dc70ca513481d1e315e06fab37f93bb163ea2057e61edc8b27"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:abe602663f54b1dc70ca513481d1e315e06fab37f93bb163ea2057e61edc8b27"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:20230274d252d31998b79fcdc7dcb15ae7286a8a2ae801bbd921a72a8391410d"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:9f790123a6cf2c3aba02e98625cac81b23e9feb330d6b5dd0451f2e90a5758f5"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:b7fa644277d5e406b642685ff2ace1b1de7aea2e2a1421b3cbcda7d60405f44d"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.2.5",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:6818c3c795716c2cdb80050e705be0198aed6fef11d63fd28eeb8c21bf5fcb25",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.2.5"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {}\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b009711296a0e7cdb3f526ce29240349b6a0ec746d8282b745f3bfd1b8c6ad6f",
+                    "createdAt": "2024-04-12T07:54:09Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:6818c3c795716c2cdb80050e705be0198aed6fef11d63fd28eeb8c21bf5fcb25"
+        },
+        {
+            "name": "mtr-rhel8-operator-b009711296a0e7cdb3f526ce29240349b6a0ec746d8282b745f3bfd1b8c6ad6f-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b009711296a0e7cdb3f526ce29240349b6a0ec746d8282b745f3bfd1b8c6ad6f"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:b009711296a0e7cdb3f526ce29240349b6a0ec746d8282b745f3bfd1b8c6ad6f"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:23e9ab336231504b325a90be0a043df03df7a9120571e329842fe1f2d0eefe01"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:f199575156868e78a0330c43459754068f4a31ad471a19d8286204026bc92ec7"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:415b3229b33ec628a98d6e1e98962ac638468f39d53bf9e01fdd1b97694299a3"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.2.6",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:2c132bd429d741bcb1a36895f65dadc37450c647fc0861136710727bb69bc5d1",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.2.6"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {}\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:f5b03a0896f9d3f97b3c736bf882e8cf35e483f299a01cce8e00256b11cc0f97",
+                    "createdAt": "2024-06-07T08:46:17Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:2c132bd429d741bcb1a36895f65dadc37450c647fc0861136710727bb69bc5d1"
+        },
+        {
+            "name": "mtr-rhel8-operator-f5b03a0896f9d3f97b3c736bf882e8cf35e483f299a01cce8e00256b11cc0f97-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:f5b03a0896f9d3f97b3c736bf882e8cf35e483f299a01cce8e00256b11cc0f97"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:f5b03a0896f9d3f97b3c736bf882e8cf35e483f299a01cce8e00256b11cc0f97"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:a134bfe57f5dddf58b46431252b27bbe958350d519035ed35e2561b3071e3b79"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:91e958e0340d3391f5368698d6241be026197ed19b5c6ef462fee42ea1e4b443"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:eec360a32519d45c885efbfc6539dc5ff74447e1aceeb5115d1aa30b40c52aeb"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "mtr-operator.1.2.7",
+    "package": "mtr-operator",
+    "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:190a6fa2a6a9b6b182cdf9cab18814d05c203b54ca18dc533e553fa5dcca779e",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "windup.jboss.org",
+                "kind": "Windup",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "mtr-operator",
+                "version": "1.2.7"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n {\n   \"apiVersion\": \"windup.jboss.org/v1\",\n   \"kind\": \"Windup\",\n   \"metadata\": {\n     \"namespace\": \"mtr\",\n     \"name\": \"mtr\",\n     \"labels\": {\n       \"application\": \"windup\"\n     }\n   },\n   \"spec\": {}\n }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Modernization & Migration",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:4df7c4ad353339e8b958ffc651e811667767c8a0dcdd61f89352c926da52a513",
+                    "createdAt": "2024-09-03T17:22:23Z",
+                    "description": "Migration Toolkit for Runtimes is an analysis tool that supports the modernization and migration of Java applications.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "false",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "imagePullPolicy": "Always",
+                    "operatorframework.io/suggested-namespace": "mtr",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "repository": "https://github.com/windup/windup-operator/",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "windups.windup.jboss.org",
+                            "version": "v1",
+                            "kind": "Windup",
+                            "displayName": "Migration Toolkit for Runtimes",
+                            "description": "Create an MTR Web Console application.  \n\nTo access the MTR Web Console application from the \"Developer\" perspective, please go to Topology and click on the \"Open URL\" icon on the web-console pod.  \n\nAlternatively from the \"Administrator\" perspective, please go to Networking->Routes and click on the Location hyperlink.  \n\nIn order to connect with default login credentials, please use \"migration\" as username and \"password\" as password.  \n\nKnown issue  \nIf you want to customize the MTR Web Console instance's parameters and you can not see any in the `Form view`, please switch to the `YAML view` and change them as needed.\n"
+                        }
+                    ]
+                },
+                "description": "The Migration Toolkit for Runtimes (MTR) is a web console application that supports large-scale Java application modernization and migration projects across a broad range of transformations and use cases.  \n\nIt analyzes application code, supports effort estimation, accelerates code migration, and enables users to move applications to containers.  \n\nFor more information please refer to the [https://developers.redhat.com/products/mtr/overview](https://developers.redhat.com/products/mtr/overview) page.\n",
+                "displayName": "Migration Toolkit for Runtimes Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "monitoring",
+                    "security",
+                    "alerting",
+                    "metric",
+                    "troubleshooting",
+                    "run-time",
+                    "migration",
+                    "modernization"
+                ],
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://developers.redhat.com/products/mtr/overview"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/windup/windup-operator"
+                    },
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/migration_toolkit_for_runtimes"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Migration Toolkit for Runtimes",
+                        "email": "migrate@redhat.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/mtr/mtr-operator-bundle@sha256:190a6fa2a6a9b6b182cdf9cab18814d05c203b54ca18dc533e553fa5dcca779e"
+        },
+        {
+            "name": "mtr-rhel8-operator-4df7c4ad353339e8b958ffc651e811667767c8a0dcdd61f89352c926da52a513-annotation",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:4df7c4ad353339e8b958ffc651e811667767c8a0dcdd61f89352c926da52a513"
+        },
+        {
+            "name": "windup-operator",
+            "image": "registry.redhat.io/mtr/mtr-rhel8-operator@sha256:4df7c4ad353339e8b958ffc651e811667767c8a0dcdd61f89352c926da52a513"
+        },
+        {
+            "name": "windup_web",
+            "image": "registry.redhat.io/mtr/mtr-web-container-rhel8@sha256:cb88a5453b506ca70563537ec6db2f44ff8cb4050c9652ec86eb5128aa313003"
+        },
+        {
+            "name": "windup_web_executor",
+            "image": "registry.redhat.io/mtr/mtr-web-executor-container-rhel8@sha256:2f0622774367f33efc321926196681322ab1535144e6a0785608c8050fc59f2e"
+        },
+        {
+            "name": "postgresql",
+            "image": "registry.redhat.io/rhel8/postgresql-10@sha256:eec360a32519d45c885efbfc6539dc5ff74447e1aceeb5115d1aa30b40c52aeb"
+        }
+    ]
+}

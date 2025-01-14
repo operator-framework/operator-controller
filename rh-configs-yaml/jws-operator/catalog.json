@@ -1,0 +1,1696 @@
+{
+    "schema": "olm.package",
+    "name": "jws-operator",
+    "defaultChannel": "alpha",
+    "icon": {
+        "base64data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2Q3MWUwMH0uY2xzLTJ7ZmlsbDojYzIxYTAwfS5jbHMtM3tmaWxsOiNmZmZ9LmNscy00e2ZpbGw6I2NkY2RjZH0uY2xzLTV7ZmlsbDojZWFlYWVhfTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5Mb2dvPC90aXRsZT48ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIj48Y2lyY2xlIGNsYXNzPSJjbHMtMSIgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiB0cmFuc2Zvcm09InJvdGF0ZSgtNDUgNTAgNTApIi8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNODUuMzYgMTQuNjRhNTAgNTAgMCAwIDEtNzAuNzIgNzAuNzJ6Ii8+PHBhdGggY2xhc3M9ImNscy0zIiBkPSJNNzEuNjEgMzUuODVMODEgMjYuNDNhMi43NCAyLjc0IDAgMCAwLTIuMjUtLjU4bC0xNC4wOSAyLjY3Yy0uNjQuMTItMS40NS4yMy0yLjM1LjMyTDUwIDQxLjE0IDM3LjcxIDI4Ljg1Yy4zNiAwLTEuNC0uMTUtMi4zNy0uMzRsLTE0LjEyLTIuNjVhMi43NCAyLjc0IDAgMCAwLTIuMjUuNThsOS40MiA5LjQyYy0zIDMuNzItNi42NCA5LjgtNy4wNiAxNy4zN0wyNiA1MS43MWExOS4yNCAxOS4yNCAwIDAgMCAuNzcgMTNsMy40NS0zLjMyUzMwLjI3IDY2IDM2IDcybC44Ni0zIDYuNDEgNi40MWE5LjUyIDkuNTIgMCAwIDAgMTMuNDYgMEw2My4xNCA2OWwuODYgM2M1Ljc2LTYgNS44NS0xMC42MSA1Ljg1LTEwLjYxbDMuNDUgMy4zMmExOS4yNCAxOS4yNCAwIDAgMCAuNzctMTNsNC42NCAxLjUyYy0uNDctNy41OC00LjE1LTEzLjY2LTcuMS0xNy4zOHptLTMzIDIxLjg4QTIuOTEgMi45MSAwIDAgMSAzNiA1My41N2wtLjg4LS44OGExIDEgMCAwIDEgMS40MS0xLjQxbC44OC44OGEyLjkyIDIuOTIgMCAxIDEgMS4yMyA1LjU3ek01NiA2MS42N2wtNSA1djQuNzJhMSAxIDAgMCAxLTIgMHYtNC43NGwtNS01YTEgMSAwIDAgMSAxLjQxLTEuNDFMNTAgNjQuODJsNC41Ny00LjU3QTEgMSAwIDAgMSA1NiA2MS42N3ptOS4xNC05bC0uODguODhhMi45NSAyLjk1IDAgMSAxLTEuNDEtMS40MWwuODgtLjg4YTEgMSAwIDAgMSAxLjQxIDEuNDF6bS40OC0xNS4wN0w1MCA1My4yMmwtMTUuNjEtMTUuNmEuNC40IDAgMCAxIC40Ny0uNjVMNTAgNDQuNTQgNjUuMTQgMzdhLjQuNCAwIDAgMSAuNDcuNjJ6Ii8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNODEuNDcgMjYuODh6TTY1LjE0IDM3TDUwIDQ0LjU0IDM0Ljg2IDM3YS40LjQgMCAwIDAtLjQ3LjY1TDUwIDUzLjIybDE1LjYxLTE1LjZhLjQuNCAwIDAgMC0uNDctLjYyeiIvPjxwYXRoIGNsYXNzPSJjbHMtNCIgZD0iTTYyLjMxIDI4LjgzYy0yLjg0LjI5LTYuNTYuNDQtOC42Mi40NGgtOC4zNGMtMiAwLTUuMS0uMTQtNy42NC0uNDJMNTAgNDEuMTR6Ii8+PHBhdGggZD0iTTU0LjU3IDYwLjI1TDUwIDY0LjgybC00LjU3LTQuNTdBMSAxIDAgMCAwIDQ0IDYxLjY3bDUgNXY0LjcyYTEgMSAwIDAgMCAyIDB2LTQuNzRsNS01YTEgMSAwIDAgMC0xLjQxLTEuNDF6TTM4LjYzIDUxLjg4YTIuOSAyLjkgMCAwIDAtMS4yMy4yOGwtLjg4LS44OGExIDEgMCAwIDAtMS40MSAxLjQxbC44OC44OGEyLjkyIDIuOTIgMCAxIDAgMi42NS0xLjY5ek02NS4xMyA1MS4yOGExIDEgMCAwIDAtMS40MSAwbC0uODguODhhMi45NSAyLjk1IDAgMSAwIDEuNDEgMS40MWwuODgtLjg4YTEgMSAwIDAgMCAwLTEuNDF6Ii8+PHBhdGggY2xhc3M9ImNscy01IiBkPSJNODIgMjguNjhhMi43NSAyLjc1IDAgMCAwIDAtLjU4di0uMThhMi43IDIuNyAwIDAgMC0uMTMtLjM5bC0uMDctLjE2YTIuNzQgMi43NCAwIDAgMC0uMjktLjQ3IDIuNzkgMi43OSAwIDAgMC0uNDQtLjQ1bC05LjQyIDkuNDJhMzYuMTYgMzYuMTYgMCAwIDEgMy44MiA1LjljNS4yNS0zLjEgNi40My05LjIxIDYuNjEtMTMuMDZ6TTE4IDI4LjY5Yy4xOCAzLjg1IDEuMzYgMTAgNi42MSAxMy4wNmEzNi4xNSAzNi4xNSAwIDAgMSAzLjgyLTUuOUwxOSAyNi40M2EyLjc0IDIuNzQgMCAwIDAtMSAyLjI2eiIvPjwvZz48L3N2Zz4=",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "alpha",
+    "package": "jws-operator",
+    "entries": [
+        {
+            "name": "jws-operator.v2.0.1",
+            "replaces": "jws-operator.v2.0.0"
+        },
+        {
+            "name": "jws-operator.v2.0.10",
+            "replaces": "jws-operator.v2.0.9"
+        },
+        {
+            "name": "jws-operator.v2.0.11",
+            "replaces": "jws-operator.v2.0.10"
+        },
+        {
+            "name": "jws-operator.v2.0.12",
+            "replaces": "jws-operator.v2.0.11"
+        },
+        {
+            "name": "jws-operator.v2.0.13",
+            "replaces": "jws-operator.v2.0.12"
+        },
+        {
+            "name": "jws-operator.v2.0.14",
+            "replaces": "jws-operator.v2.0.13"
+        },
+        {
+            "name": "jws-operator.v2.0.2",
+            "replaces": "jws-operator.v2.0.1"
+        },
+        {
+            "name": "jws-operator.v2.0.3",
+            "replaces": "jws-operator.v2.0.2"
+        },
+        {
+            "name": "jws-operator.v2.0.4",
+            "replaces": "jws-operator.v2.0.3"
+        },
+        {
+            "name": "jws-operator.v2.0.5",
+            "replaces": "jws-operator.v2.0.4"
+        },
+        {
+            "name": "jws-operator.v2.0.6",
+            "replaces": "jws-operator.v2.0.5"
+        },
+        {
+            "name": "jws-operator.v2.0.7",
+            "replaces": "jws-operator.v2.0.6"
+        },
+        {
+            "name": "jws-operator.v2.0.8",
+            "replaces": "jws-operator.v2.0.7"
+        },
+        {
+            "name": "jws-operator.v2.0.9",
+            "replaces": "jws-operator.v2.0.8"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.1",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:3a3293e1ec3baab6f4fd7f2b7a3137e3f542a43dcc81145f5cf292396862fa3e",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws56-openjdk8-openshift-rhel8@sha256:ed4f28495cebacb1500f009b0fca4a32634ef035964f65e872a48f94a0d78da7\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver56-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:336a465dfec07f99554b1cf51d6c64c8cde52f4ab54e448bb925bcde930f7ce3",
+                    "createdAt": "2022-08-05T11:20:01.133283Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:3a3293e1ec3baab6f4fd7f2b7a3137e3f542a43dcc81145f5cf292396862fa3e"
+        },
+        {
+            "name": "jws5-rhel8-operator-336a465dfec07f99554b1cf51d6c64c8cde52f4ab54e448bb925bcde930f7ce3-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:336a465dfec07f99554b1cf51d6c64c8cde52f4ab54e448bb925bcde930f7ce3"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:336a465dfec07f99554b1cf51d6c64c8cde52f4ab54e448bb925bcde930f7ce3"
+        },
+        {
+            "name": "jws56-openjdk8-openshift-rhel8-ed4f28495cebacb1500f009b0fca4a32634ef035964f65e872a48f94a0d78da7-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws56-openjdk8-openshift-rhel8@sha256:ed4f28495cebacb1500f009b0fca4a32634ef035964f65e872a48f94a0d78da7"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:f6cd56e942be303d282c1f0470fbfa8f6f5fb20481ba58a7b580dc1ae92c6bc8"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.10",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:7eb95f4b5750d9da985f7982696384ee0dfc05b12300da97cd1b944cb1bee0e3",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.10"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:534f51d486c5db289e0ca79fbeabe9187ff4f6074566b0cf095f88af3b7db832\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:d222277228056adc050228cf187e5678a7a8fde872fd89c922ed1817fb8db828",
+                    "createdAt": "2023-10-25T12:18:42.578879Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:7eb95f4b5750d9da985f7982696384ee0dfc05b12300da97cd1b944cb1bee0e3"
+        },
+        {
+            "name": "jws5-rhel8-operator-d222277228056adc050228cf187e5678a7a8fde872fd89c922ed1817fb8db828-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:d222277228056adc050228cf187e5678a7a8fde872fd89c922ed1817fb8db828"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:d222277228056adc050228cf187e5678a7a8fde872fd89c922ed1817fb8db828"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-534f51d486c5db289e0ca79fbeabe9187ff4f6074566b0cf095f88af3b7db832-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:534f51d486c5db289e0ca79fbeabe9187ff4f6074566b0cf095f88af3b7db832"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:26561c1e88292f7ba1c8d636907a27e4288a6bb87628454466f7050a5de871df"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.11",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:c0f5b4e3f11ab85fa692145dea5a6b701fd08e7776c6cc28ebe7ef8ff64d1fb2",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.11"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:0d12d438216f2f37c8d088106853e1d203526d9052ef9ef4803c18e77e306279\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:f8ffc4fee985690460e2eb522d0c12478949247857acfd5ddc347d4c412cfa94",
+                    "createdAt": "2024-02-02T10:20:34.230145Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:c0f5b4e3f11ab85fa692145dea5a6b701fd08e7776c6cc28ebe7ef8ff64d1fb2"
+        },
+        {
+            "name": "jws5-rhel8-operator-f8ffc4fee985690460e2eb522d0c12478949247857acfd5ddc347d4c412cfa94-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:f8ffc4fee985690460e2eb522d0c12478949247857acfd5ddc347d4c412cfa94"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:f8ffc4fee985690460e2eb522d0c12478949247857acfd5ddc347d4c412cfa94"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-0d12d438216f2f37c8d088106853e1d203526d9052ef9ef4803c18e77e306279-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:0d12d438216f2f37c8d088106853e1d203526d9052ef9ef4803c18e77e306279"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:26561c1e88292f7ba1c8d636907a27e4288a6bb87628454466f7050a5de871df"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.12",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:428e21ef1bec2a35ac24ea0ac4f0d8e3c766613220a49a4366c63af819c3698a",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.12"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:2dd13270c5ad373fec1285053579bce9d4ee48ea9951ae385623e28172db02c2",
+                    "createdAt": "2024-05-23T22:50:35.404833Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:428e21ef1bec2a35ac24ea0ac4f0d8e3c766613220a49a4366c63af819c3698a"
+        },
+        {
+            "name": "jws5-rhel8-operator-2dd13270c5ad373fec1285053579bce9d4ee48ea9951ae385623e28172db02c2-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:2dd13270c5ad373fec1285053579bce9d4ee48ea9951ae385623e28172db02c2"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:2dd13270c5ad373fec1285053579bce9d4ee48ea9951ae385623e28172db02c2"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:26561c1e88292f7ba1c8d636907a27e4288a6bb87628454466f7050a5de871df"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.13",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:995cf5596103a60e1ac43709410831fbb013e38c5710c3494cbbeb4bade55d52",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.13"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:0987cf586034f95c176147ae1b32c0a88f2174ebeef9565b77b7d96bc8393c76",
+                    "createdAt": "2024-08-20T20:26:26.381650Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:995cf5596103a60e1ac43709410831fbb013e38c5710c3494cbbeb4bade55d52"
+        },
+        {
+            "name": "jws5-rhel8-operator-0987cf586034f95c176147ae1b32c0a88f2174ebeef9565b77b7d96bc8393c76-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:0987cf586034f95c176147ae1b32c0a88f2174ebeef9565b77b7d96bc8393c76"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:0987cf586034f95c176147ae1b32c0a88f2174ebeef9565b77b7d96bc8393c76"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:26561c1e88292f7ba1c8d636907a27e4288a6bb87628454466f7050a5de871df"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.14",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:ed1aa49241b9b769839d60e5f92c61ff89e5f5ef0b8b9c25ecadddec0bd11449",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.14"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:f948e09da06cc4f8cf37ee8c9ae1d65c9729b3ad7c5b5787d02190711b64b65e",
+                    "createdAt": "2024-11-19T16:23:46.582864Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "false",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:ed1aa49241b9b769839d60e5f92c61ff89e5f5ef0b8b9c25ecadddec0bd11449"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:0987cf586034f95c176147ae1b32c0a88f2174ebeef9565b77b7d96bc8393c76"
+        },
+        {
+            "name": "jws5-rhel8-operator-f948e09da06cc4f8cf37ee8c9ae1d65c9729b3ad7c5b5787d02190711b64b65e-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:f948e09da06cc4f8cf37ee8c9ae1d65c9729b3ad7c5b5787d02190711b64b65e"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:c3be665aaaf863f73b7d07d915eaa3c7e626b7b246d774ca1f259e970bbdbaf7"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:26561c1e88292f7ba1c8d636907a27e4288a6bb87628454466f7050a5de871df"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.2",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:915582b543f2308a2ebaeda2211d54421badd940e72bd76595da42ee4d27c5e8",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.2"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws56-openjdk8-openshift-rhel8@sha256:1e5f49190b97be6c35e3dfba98f91fbdb41879f7d175ebe6dbd9dd559e27723b\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver56-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:9eb98135479066b6b96bf210347ad7986c0f7aa7050cd6730c389b282aee5ecc",
+                    "createdAt": "2022-09-15T13:04:15.430978Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:915582b543f2308a2ebaeda2211d54421badd940e72bd76595da42ee4d27c5e8"
+        },
+        {
+            "name": "jws5-rhel8-operator-9eb98135479066b6b96bf210347ad7986c0f7aa7050cd6730c389b282aee5ecc-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:9eb98135479066b6b96bf210347ad7986c0f7aa7050cd6730c389b282aee5ecc"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:9eb98135479066b6b96bf210347ad7986c0f7aa7050cd6730c389b282aee5ecc"
+        },
+        {
+            "name": "jws56-openjdk8-openshift-rhel8-1e5f49190b97be6c35e3dfba98f91fbdb41879f7d175ebe6dbd9dd559e27723b-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws56-openjdk8-openshift-rhel8@sha256:1e5f49190b97be6c35e3dfba98f91fbdb41879f7d175ebe6dbd9dd559e27723b"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:b0c440b6d8f6129a0918bcf8798d6348d2545709212992f021cd70ce4d834a56"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.3",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:fa344ede083a3866497acb55d2931f96eb0956609637ff59b8c1a47e1c65842e",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.3"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws56-openjdk11-openshift-rhel8@sha256:fa73311ddb871d2726c83792439f2748fe01997652630bc000ce7702bf417151\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver56-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:622539631dff945d7bdf24743414d6a51e9546f66b18a9e90ed48ecff884422a",
+                    "createdAt": "2022-10-28T16:37:25.663446Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:fa344ede083a3866497acb55d2931f96eb0956609637ff59b8c1a47e1c65842e"
+        },
+        {
+            "name": "jws5-rhel8-operator-622539631dff945d7bdf24743414d6a51e9546f66b18a9e90ed48ecff884422a-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:622539631dff945d7bdf24743414d6a51e9546f66b18a9e90ed48ecff884422a"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:622539631dff945d7bdf24743414d6a51e9546f66b18a9e90ed48ecff884422a"
+        },
+        {
+            "name": "jws56-openjdk11-openshift-rhel8-fa73311ddb871d2726c83792439f2748fe01997652630bc000ce7702bf417151-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws56-openjdk11-openshift-rhel8@sha256:fa73311ddb871d2726c83792439f2748fe01997652630bc000ce7702bf417151"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:2d88ae80ee14ab0420c3c929a2ab51c26cf3a85add157e5b89439f58e407e5f7"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.4",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:77380698ff97a9d973357d2930b022bbc09adf766aef7bfea272005f1794cdd0",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.4"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:9957b861bc978e46e55b149ef0bc71a0c76540a133c0262afc1a219f2fc017eb\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:80d3be501ca2abd7e569af0e5ed709ffc0f935bab46f2d69305642c82f9665d0",
+                    "createdAt": "2022-12-05T16:15:28.738569Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:77380698ff97a9d973357d2930b022bbc09adf766aef7bfea272005f1794cdd0"
+        },
+        {
+            "name": "jws5-rhel8-operator-80d3be501ca2abd7e569af0e5ed709ffc0f935bab46f2d69305642c82f9665d0-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:80d3be501ca2abd7e569af0e5ed709ffc0f935bab46f2d69305642c82f9665d0"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:80d3be501ca2abd7e569af0e5ed709ffc0f935bab46f2d69305642c82f9665d0"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-9957b861bc978e46e55b149ef0bc71a0c76540a133c0262afc1a219f2fc017eb-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:9957b861bc978e46e55b149ef0bc71a0c76540a133c0262afc1a219f2fc017eb"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:ffb9d709bad595d4801a7a4bbfd4a219ebfc599b5c3c8ef31350bf9b87de0805"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.5",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:dff3c5a6b0fc211299cafd27df10c570876e42e1ba32bb5c910e2afdba85a5db",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.5"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:6af72f1cae4f230621fdbd0c6b1d5d8ab16f74f180c74c60ae53a11f6bbc7da2\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:eaa122fb2926c37be0d71cf6b133e883fabdf2bbf6188d9a5bd892749ff780b9",
+                    "createdAt": "2023-02-07T19:58:57.558238Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:dff3c5a6b0fc211299cafd27df10c570876e42e1ba32bb5c910e2afdba85a5db"
+        },
+        {
+            "name": "jws5-rhel8-operator-eaa122fb2926c37be0d71cf6b133e883fabdf2bbf6188d9a5bd892749ff780b9-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:eaa122fb2926c37be0d71cf6b133e883fabdf2bbf6188d9a5bd892749ff780b9"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:eaa122fb2926c37be0d71cf6b133e883fabdf2bbf6188d9a5bd892749ff780b9"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-6af72f1cae4f230621fdbd0c6b1d5d8ab16f74f180c74c60ae53a11f6bbc7da2-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:6af72f1cae4f230621fdbd0c6b1d5d8ab16f74f180c74c60ae53a11f6bbc7da2"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:a14005483fe878770d16fcad5b5ba9553e6d9ed5a10ccb3bde73879a451365c0"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.6",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:a96348f26c4f7ff17e5b47c5f28921965cc9887b940a52ad43b25523c2b89a12",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.6"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:e9d84dc0bba9d6f214eee87cdc952fba7feaf431d94de18ffbb50a749c22a15d\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:7d92501ee774466722f51c611644525ff276c18ea5f9fd97742556ebc8e2c9db",
+                    "createdAt": "2023-03-22T11:25:30.907853Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:a96348f26c4f7ff17e5b47c5f28921965cc9887b940a52ad43b25523c2b89a12"
+        },
+        {
+            "name": "jws5-rhel8-operator-7d92501ee774466722f51c611644525ff276c18ea5f9fd97742556ebc8e2c9db-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:7d92501ee774466722f51c611644525ff276c18ea5f9fd97742556ebc8e2c9db"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:7d92501ee774466722f51c611644525ff276c18ea5f9fd97742556ebc8e2c9db"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-e9d84dc0bba9d6f214eee87cdc952fba7feaf431d94de18ffbb50a749c22a15d-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:e9d84dc0bba9d6f214eee87cdc952fba7feaf431d94de18ffbb50a749c22a15d"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:aaf5d5a4efde53426e9ba964cab34ccca7b2edc1803b4abdb9428b17d269e4a2"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.7",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:b6639e3f24b2aebb5833c30bcecae98b638721c4f87b61ed32b121cfaf6ba055",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.7"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:807ec78b01eab4f3ca15ada3d46a78432d8424833202348ecc189383f9ac969b\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:c6bec294b18e893c69b9337b1d96d0040f05e692a5a8d4d50fd0430de2433581",
+                    "createdAt": "2023-06-20T13:50:28.724207Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:b6639e3f24b2aebb5833c30bcecae98b638721c4f87b61ed32b121cfaf6ba055"
+        },
+        {
+            "name": "jws5-rhel8-operator-c6bec294b18e893c69b9337b1d96d0040f05e692a5a8d4d50fd0430de2433581-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:c6bec294b18e893c69b9337b1d96d0040f05e692a5a8d4d50fd0430de2433581"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:c6bec294b18e893c69b9337b1d96d0040f05e692a5a8d4d50fd0430de2433581"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-807ec78b01eab4f3ca15ada3d46a78432d8424833202348ecc189383f9ac969b-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:807ec78b01eab4f3ca15ada3d46a78432d8424833202348ecc189383f9ac969b"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:26561c1e88292f7ba1c8d636907a27e4288a6bb87628454466f7050a5de871df"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.8",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:bc8dafa89824d2840c98297e1f203316cafbdbc0cee1a13596d426fc50839983",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.8"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:ff929a7d764a46739d3907b0317c2471266bb97c6d8df1e966398a27a22feb4b\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:705bbbd134245a598a8130763ada123e8795259cb6fb19e312b4fa1df7f0fdc8",
+                    "createdAt": "2023-08-23T09:08:18.811485Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:bc8dafa89824d2840c98297e1f203316cafbdbc0cee1a13596d426fc50839983"
+        },
+        {
+            "name": "jws5-rhel8-operator-705bbbd134245a598a8130763ada123e8795259cb6fb19e312b4fa1df7f0fdc8-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:705bbbd134245a598a8130763ada123e8795259cb6fb19e312b4fa1df7f0fdc8"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:705bbbd134245a598a8130763ada123e8795259cb6fb19e312b4fa1df7f0fdc8"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-ff929a7d764a46739d3907b0317c2471266bb97c6d8df1e966398a27a22feb4b-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:ff929a7d764a46739d3907b0317c2471266bb97c6d8df1e966398a27a22feb4b"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:26561c1e88292f7ba1c8d636907a27e4288a6bb87628454466f7050a5de871df"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "jws-operator.v2.0.9",
+    "package": "jws-operator",
+    "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:f25bddfa6bffa7b573808d32b87cd08e500bd8ff0bb93a7e4603261a17779436",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "web.servers.org",
+                "kind": "WebServer",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "jws-operator",
+                "version": "2.0.9"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-image-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImage\": {\n        \"applicationImage\": \"registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:d82408a30cb342d9f960ebcd27fd8bf7e7cb8df159cad60bea002e4afad06674\"\n      }\n    }\n  },\n  {\n    \"apiVersion\": \"web.servers.org/v1alpha1\",\n    \"kind\": \"WebServer\",\n    \"metadata\": {\n      \"name\": \"example-imagestream-webserver\"\n    },\n    \"spec\": {\n      \"applicationName\": \"jws-app\",\n      \"replicas\": 2,\n      \"webImageStream\": {\n        \"imageStreamName\": \"jboss-webserver57-openjdk8-tomcat9-openshift-ubi8\",\n        \"imageStreamNamespace\": \"openshift\",\n        \"webSources\": {\n          \"contextDir\": \"tomcat-websocket-chat\",\n          \"sourceRepositoryRef\": \"1.2\",\n          \"sourceRepositoryUrl\": \"https://github.com/jboss-openshift/openshift-quickstarts.git\"\n        }\n      }\n    }\n  }\n]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Application Runtime",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:7acbeed89d32725041bba9b7a878adbb2e7bc5bd13fed7b94ee4f1f045dd398f",
+                    "createdAt": "2023-10-05T19:22:10.035755Z",
+                    "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                    "operators.openshift.io/valid-subscription": "[\"Red Hat JBoss Web Server\", \"Red Hat Runtimes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.12.0+git",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/web-servers/jws-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "webservers.web.servers.org",
+                            "version": "v1alpha1",
+                            "kind": "WebServer",
+                            "description": "Web Server is the schema for the webservers API"
+                        }
+                    ]
+                },
+                "description": "Operator that creates and manages Java applications running on JWS or Tomcat",
+                "displayName": "JWS Operator",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": true
+                    }
+                ],
+                "keywords": [
+                    "tomcat",
+                    "jws"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Jws Operator",
+                        "url": "https://jws-operator.domain"
+                    }
+                ],
+                "maturity": "alpha",
+                "provider": {
+                    "name": "JWS team"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-operator-bundle@sha256:f25bddfa6bffa7b573808d32b87cd08e500bd8ff0bb93a7e4603261a17779436"
+        },
+        {
+            "name": "jws5-rhel8-operator-7acbeed89d32725041bba9b7a878adbb2e7bc5bd13fed7b94ee4f1f045dd398f-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:7acbeed89d32725041bba9b7a878adbb2e7bc5bd13fed7b94ee4f1f045dd398f"
+        },
+        {
+            "name": "manager",
+            "image": "registry.redhat.io/jboss-webserver-5/jws5-rhel8-operator@sha256:7acbeed89d32725041bba9b7a878adbb2e7bc5bd13fed7b94ee4f1f045dd398f"
+        },
+        {
+            "name": "jws57-openjdk11-openshift-rhel8-d82408a30cb342d9f960ebcd27fd8bf7e7cb8df159cad60bea002e4afad06674-annotation",
+            "image": "registry.redhat.io/jboss-webserver-5/jws57-openjdk11-openshift-rhel8@sha256:d82408a30cb342d9f960ebcd27fd8bf7e7cb8df159cad60bea002e4afad06674"
+        },
+        {
+            "name": "kube-rbac-proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:26561c1e88292f7ba1c8d636907a27e4288a6bb87628454466f7050a5de871df"
+        }
+    ]
+}

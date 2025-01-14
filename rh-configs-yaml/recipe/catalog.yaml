@@ -1,0 +1,237 @@
+{
+  "schema": "olm.package",
+  "name": "recipe",
+  "defaultChannel": "stable-4.17",
+  "icon": {
+    "base64data": "PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=",
+    "mediatype": "image/svg+xml"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-4.17",
+  "package": "recipe",
+  "entries": [
+    {
+      "name": "recipe.v4.17.0-rhodf",
+      "skipRange": ">=4.2.0 <4.17.0-rhodf"
+    },
+    {
+      "name": "recipe.v4.17.1-rhodf",
+      "replaces": "recipe.v4.17.0-rhodf",
+      "skipRange": ">=4.2.0 <4.17.1-rhodf"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "recipe.v4.17.0-rhodf",
+  "package": "recipe",
+  "image": "registry.redhat.io/odf4/odr-recipe-operator-bundle@sha256:0223d74679590c8a5fbd34f3d793c05ec671ecb406b2055166bd54f09f75bbda",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "ramendr.openshift.io",
+        "kind": "Recipe",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "recipe",
+        "version": "4.17.0-rhodf"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"ramendr.openshift.io/v1alpha1\",\n    \"kind\": \"Recipe\",\n    \"metadata\": {\n      \"labels\": {\n        \"app.kubernetes.io/created-by\": \"recipe\",\n        \"app.kubernetes.io/instance\": \"recipe-sample\",\n        \"app.kubernetes.io/managed-by\": \"kustomize\",\n        \"app.kubernetes.io/name\": \"recipe\",\n        \"app.kubernetes.io/part-of\": \"recipe\"\n      },\n      \"name\": \"recipe-sample\"\n    },\n    \"spec\": null\n  }\n]",
+          "capabilities": "Deep Insights",
+          "createdAt": "2024-10-17T11:37:55Z",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=4.2.0 <4.17.0-rhodf",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\",\"OpenShift Data Foundation Essentials\",\"OpenShift Data Foundation Advanced\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.31.0",
+          "operators.operatorframework.io/operator-type": "non-standalone",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "recipes.ramendr.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Recipe",
+              "displayName": "Recipe",
+              "description": "Recipe is the Schema for the recipes API"
+            }
+          ]
+        },
+        "description": "Recipe describes a workflow used for capturing or recovering Kubernetes resources. This can be referred to by a Ramen DRPlacementControl object when kubeObjectProtection is enabled.\n",
+        "displayName": "Recipe",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "recipe"
+        ],
+        "links": [
+          {
+            "name": "Source Code",
+            "url": "https://github.com/red-hat-storage/recipe"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "ocs-support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat, Inc."
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/odf4/odr-recipe-operator-bundle@sha256:0223d74679590c8a5fbd34f3d793c05ec671ecb406b2055166bd54f09f75bbda"
+    },
+    {
+      "name": "odr-operator",
+      "image": "registry.redhat.io/odf4/odr-rhel9-operator@sha256:e39835f1e5c809b9490e50a87b8b4d0819858c34138f06305f838151b53e5b4c"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "recipe.v4.17.1-rhodf",
+  "package": "recipe",
+  "image": "registry.redhat.io/odf4/odr-recipe-operator-bundle@sha256:76369c4ae3fae85d0a5497f164e566c16fcc581f6d5cd449ce030a19b9892ed0",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "ramendr.openshift.io",
+        "kind": "Recipe",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "recipe",
+        "version": "4.17.1-rhodf"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"ramendr.openshift.io/v1alpha1\",\n    \"kind\": \"Recipe\",\n    \"metadata\": {\n      \"labels\": {\n        \"app.kubernetes.io/created-by\": \"recipe\",\n        \"app.kubernetes.io/instance\": \"recipe-sample\",\n        \"app.kubernetes.io/managed-by\": \"kustomize\",\n        \"app.kubernetes.io/name\": \"recipe\",\n        \"app.kubernetes.io/part-of\": \"recipe\"\n      },\n      \"name\": \"recipe-sample\"\n    },\n    \"spec\": null\n  }\n]",
+          "capabilities": "Deep Insights",
+          "createdAt": "2024-12-09T12:00:37Z",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=4.2.0 <4.17.1-rhodf",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\",\"OpenShift Data Foundation Essentials\",\"OpenShift Data Foundation Advanced\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.31.0",
+          "operators.operatorframework.io/operator-type": "non-standalone",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "recipes.ramendr.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Recipe",
+              "displayName": "Recipe",
+              "description": "Recipe is the Schema for the recipes API"
+            }
+          ]
+        },
+        "description": "Recipe describes a workflow used for capturing or recovering Kubernetes resources. This can be referred to by a Ramen DRPlacementControl object when kubeObjectProtection is enabled.\n",
+        "displayName": "Recipe",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "recipe"
+        ],
+        "links": [
+          {
+            "name": "Source Code",
+            "url": "https://github.com/red-hat-storage/recipe"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "ocs-support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat, Inc."
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "registry.redhat.io/odf4/odr-recipe-operator-bundle@sha256:76369c4ae3fae85d0a5497f164e566c16fcc581f6d5cd449ce030a19b9892ed0"
+    },
+    {
+      "name": "odr-operator",
+      "image": "registry.redhat.io/odf4/odr-rhel9-operator@sha256:8fa789f3de7a2d74151380b8fbb5501c9ff42582d5b16b6abadeaa62c3f01ace"
+    }
+  ]
+}

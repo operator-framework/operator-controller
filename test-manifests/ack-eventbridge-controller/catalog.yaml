@@ -1,0 +1,683 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-eventbridge-controller
+schema: olm.package
+---
+entries:
+- name: ack-eventbridge-controller.v0.0.3
+- name: ack-eventbridge-controller.v0.0.4
+  replaces: ack-eventbridge-controller.v0.0.3
+- name: ack-eventbridge-controller.v0.0.5
+  replaces: ack-eventbridge-controller.v0.0.4
+- name: ack-eventbridge-controller.v0.0.6
+  replaces: ack-eventbridge-controller.v0.0.5
+- name: ack-eventbridge-controller.v0.0.7
+  replaces: ack-eventbridge-controller.v0.0.6
+- name: ack-eventbridge-controller.v1.0.0
+  replaces: ack-eventbridge-controller.v0.0.7
+- name: ack-eventbridge-controller.v1.0.1
+  replaces: ack-eventbridge-controller.v1.0.0
+- name: ack-eventbridge-controller.v1.0.11
+  replaces: ack-eventbridge-controller.v1.0.6
+- name: ack-eventbridge-controller.v1.0.12
+  replaces: ack-eventbridge-controller.v1.0.11
+- name: ack-eventbridge-controller.v1.0.13
+  replaces: ack-eventbridge-controller.v1.0.12
+- name: ack-eventbridge-controller.v1.0.14
+  replaces: ack-eventbridge-controller.v1.0.13
+- name: ack-eventbridge-controller.v1.0.3
+  replaces: ack-eventbridge-controller.v1.0.1
+- name: ack-eventbridge-controller.v1.0.4
+  replaces: ack-eventbridge-controller.v1.0.3
+- name: ack-eventbridge-controller.v1.0.5
+  replaces: ack-eventbridge-controller.v1.0.4
+- name: ack-eventbridge-controller.v1.0.6
+  replaces: ack-eventbridge-controller.v1.0.5
+name: alpha
+package: ack-eventbridge-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:32fa035ca3fe8011c7a71abacbd2d2733d6d0f114850f6850bc619cb0aabfb83
+name: ack-eventbridge-controller.v0.0.3
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 0.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:v0.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:32fa035ca3fe8011c7a71abacbd2d2733d6d0f114850f6850bc619cb0aabfb83
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:34e2577e7c4dafaa042f7dc30c1b1ca0ce6837b85a8bef8c138c8313427c13f0
+name: ack-eventbridge-controller.v0.0.4
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:v0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:34e2577e7c4dafaa042f7dc30c1b1ca0ce6837b85a8bef8c138c8313427c13f0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:381704b74d731fa5ff25c6c11c58df89e011e81139f9ed3a2e488bbf9c27b094
+name: ack-eventbridge-controller.v0.0.5
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:381704b74d731fa5ff25c6c11c58df89e011e81139f9ed3a2e488bbf9c27b094
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:b6bb160f194b76b276655e7ee9d2b8ce4669798bb92eb918602f51b53e2540a3
+name: ack-eventbridge-controller.v0.0.6
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:b6bb160f194b76b276655e7ee9d2b8ce4669798bb92eb918602f51b53e2540a3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:5afe4f42eee06c559c4720bf2d692aa3ea2285d866c92e935adf79d79159b572
+name: ack-eventbridge-controller.v0.0.7
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:5afe4f42eee06c559c4720bf2d692aa3ea2285d866c92e935adf79d79159b572
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:f5ff4c376f9af20c8127ce70b308d1833d5c411577adad67415a9bc4ca020c17
+name: ack-eventbridge-controller.v1.0.0
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:f5ff4c376f9af20c8127ce70b308d1833d5c411577adad67415a9bc4ca020c17
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:35f8ce5e2a119256752ab9cde52656dc76d003d7718dd941206909e17cd07f37
+name: ack-eventbridge-controller.v1.0.1
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:v1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:35f8ce5e2a119256752ab9cde52656dc76d003d7718dd941206909e17cd07f37
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:96eaa605105358dd800dc62346fa2018274ba8065bbc9aa12cdf8669471c22a9
+name: ack-eventbridge-controller.v1.0.11
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:96eaa605105358dd800dc62346fa2018274ba8065bbc9aa12cdf8669471c22a9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:fe3c54d46e50a53a75a69911ccb901592f4a0e9867cc7d9f2d3a6d9ef7a18df1
+name: ack-eventbridge-controller.v1.0.12
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:fe3c54d46e50a53a75a69911ccb901592f4a0e9867cc7d9f2d3a6d9ef7a18df1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:695c4048eda03cb645525d75685e2876a3bab44199a4126de60ed6ff485c17ad
+name: ack-eventbridge-controller.v1.0.13
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:695c4048eda03cb645525d75685e2876a3bab44199a4126de60ed6ff485c17ad
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:ffde088f88ff244b1e27527ec5b501dd24833ebb55747c5adb8ea0e6120431c0
+name: ack-eventbridge-controller.v1.0.14
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.14
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "eventbridge.services.k8s.aws/v1alpha1",
+            "kind": "Archive",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "eventbridge.services.k8s.aws/v1alpha1",
+            "kind": "Endpoint",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "eventbridge.services.k8s.aws/v1alpha1",
+            "kind": "EventBus",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "eventbridge.services.k8s.aws/v1alpha1",
+            "kind": "Rule",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.14
+      createdAt: "2024-08-30T23:29:35Z"
+      description: AWS EventBridge controller is a service controller for managing
+        EventBridge resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Archive represents the state of an AWS eventbridge Archive resource.
+        displayName: Archive
+        kind: Archive
+        name: archives.eventbridge.services.k8s.aws
+        version: v1alpha1
+      - description: Endpoint represents the state of an AWS eventbridge Endpoint
+          resource.
+        displayName: Endpoint
+        kind: Endpoint
+        name: endpoints.eventbridge.services.k8s.aws
+        version: v1alpha1
+      - description: EventBus represents the state of an AWS eventbridge EventBus
+          resource.
+        displayName: EventBus
+        kind: EventBus
+        name: eventbuses.eventbridge.services.k8s.aws
+        version: v1alpha1
+      - description: Rule represents the state of an AWS eventbridge Rule resource.
+        displayName: Rule
+        kind: Rule
+        name: rules.eventbridge.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon EventBridge resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon EventBridge**
+
+      EventBridge is a serverless service that uses events to connect application components together, making it easier for you to build scalable event-driven applications. Use it to route events from sources such as home-grown applications, AWS services, and third- party software to consumer applications across your organization. EventBridge provides a simple and consistent way to ingest, filter, transform, and deliver events so you can build new applications quickly.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon EventBridge
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - eventbridge
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon EventBridge Developer Resources
+      url: https://aws.amazon.com/eventbridge/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: eventbridge maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:ffde088f88ff244b1e27527ec5b501dd24833ebb55747c5adb8ea0e6120431c0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:4dc265a7ab92a58a12a1fd1d9cdb4fca0bb15b58c904de6be83a3ea356c4d17f
+name: ack-eventbridge-controller.v1.0.3
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:4dc265a7ab92a58a12a1fd1d9cdb4fca0bb15b58c904de6be83a3ea356c4d17f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:6d428d4b89532988c0acc3bcc9b34067e66ce9d574fb8553641e88180485f6c4
+name: ack-eventbridge-controller.v1.0.4
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:6d428d4b89532988c0acc3bcc9b34067e66ce9d574fb8553641e88180485f6c4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:f93902e23ed4a753c3fdabd6a080d4ab1f977a100f9f1f1d03c7baa87ef745e1
+name: ack-eventbridge-controller.v1.0.5
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:f93902e23ed4a753c3fdabd6a080d4ab1f977a100f9f1f1d03c7baa87ef745e1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:b2a0469783a50cd3006ce4204a6efaa960a621f866be7380aac718c9f5ca16d3
+name: ack-eventbridge-controller.v1.0.6
+package: ack-eventbridge-controller
+properties:
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Archive
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Endpoint
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: EventBus
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: eventbridge.services.k8s.aws
+    kind: Rule
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-eventbridge-controller
+    version: 1.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/eventbridge-controller:1.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-eventbridge-controller@sha256:b2a0469783a50cd3006ce4204a6efaa960a621f866be7380aac718c9f5ca16d3
+  name: ""
+schema: olm.bundle

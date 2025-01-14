@@ -1,0 +1,696 @@
+---
+defaultChannel: stable
+icon:
+  base64data: PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDojMzUzNTM1O30uY2xzLTJ7ZmlsbDojMzg1ODZjO30uY2xzLTN7ZmlsbDojZmZmO30uY2xzLTR7ZmlsbDojZDVjNWI3O308L3N0eWxlPjwvZGVmcz48dGl0bGU+c2t1cHBlcl9pY29uX3JnYl9kZWZhdWx0PC90aXRsZT48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik05OTkuOTEsNDQ2LjQxbC0xMy42LTEuMzVjLTEuNzUtLjI2LTIyLjYtMy42OS01My4zNS0yMS44MS0xOC44MS0xMS4wOC0zNy42LTI1LjQyLTU1Ljg1LTQyLjYxLTIzLTIxLjY0LTQ1LjE1LTQ3Ljg5LTY1LjktNzhBNjAzLjIsNjAzLjIsMCwwLDAsNjI1LjgyLDEyOC40QzU0My43NCw3OS4yNyw0ODEuNDYsNjguOTMsNDY0LjMzLDY2LjkzYTMzMC44NSwzMzAuODUsMCwwLDAtMzcuODQtMi4zNEEyMjcuMjIsMjI3LjIyLDAsMCwwLDM5MCw2Ny4zN0MzNTYuNjcsNzIuNzYsMzI4LjUsODYsMzA2LjI0LDEwNi43OWMtMjAuNDYsMTkuMDktMzUuNjMsNDQuMzItNDUuMSw3NS05LjcxLDMxLjQ4LTEzLjU5LDY5LjY2LTExLjU0LDExMy40OCwyLDQyLjk0LTIuMjUsOTEuODEtMTIuMzEsMTQxLjMyYTcyOS4zMSw3MjkuMzEsMCwwLDEtNDUuNzUsMTQ0Ljg2Yy0yMC42MSw0Ny4wNy00NC43Miw4Ny44NC03MS42NSwxMjEuMTgtMjcuNDIsMzMuOTQtNTYuMjMsNTguMjEtODUuNjQsNzIuMTNsLTEyLjUyLDUuOTNMMSw3OTAuNWw3LjgyLDIxLjU1LDQuNzMsMTNjMS4zMywzLjY3LDEzLjg2LDM2LjY0LDQzLjU0LDY0LjY5LDguNDEsOCwxOS45NCwxOC4xNCwzNC41NiwyNi40MywxNy40Miw5Ljg5LDM1LjYsMTQuOSw1NCwxNC45YTEwNS4zNCwxMDUuMzQsMCwwLDAsMTUuNi0xLjE4YzU4Ljg4LTguODcsMTI2LjI3LTMwLjY2LDE3NC4yNS00OC4xNGExNDMuMjksMTQzLjI5LDAsMCwwLDE0LjU4LDE4LjdjMzUuOTUsMzkuMTEsOTMuNzEsNTguOTQsMTcxLjY1LDU4Ljk0LDM5LDAsODQtNSwxMzMuNTktMTQuOTFDNzIzLjYxLDkzMC44OCw3NzkuNTQsOTA5LDgyMS42LDg3OS4zNWMzNi4yNS0yNS41Miw2Mi4zNi01Ni42Nyw3Ny42Mi05Mi42YTE5MC4yMiwxOTAuMjIsMCwwLDAsMTUtODAuMjQsNTguNzksNTguNzksMCwwLDAsMjcuMzUsN2MxMy44NiwwLDIzLTUuMzcsMjYuMzQtNy42OGw2Ljc3LTQuNzNhOS4xNiw5LjE2LDAsMCwwLDMuODEtNi4xM2wxLjI1LTguMTdjLjMzLTIuMTQsMi42OS0xOS4zLTEuMzEtNDMuMzUsMS0xLjA1LDItMi4xLDMtMy4yLDE0LjYzLTE2LjU5LDI1LTM4LjgzLDMxLjgzLTY4LDUuNjItMjQuMTIsOC42Mi01Mi4zNiw5LjE4LTg2LjM1bC4yMy0xNCwuMzgtMjMuMloiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik05ODMuNDgsNDcwLjFjLS45NC0uMDktOTUtMTAuOTMtMTkzLTE1My4xOUE1NzcuNTUsNTc3LjU1LDAsMCwwLDYxMi44OCwxNTBDNTM1LjExLDEwMy40Nyw0NzcuMjgsOTMuODEsNDYxLjQxLDkyYy0yNS42OC0zLTQ3LjczLTIuOS02Ny40My4yOC0yOC4yNyw0LjU4LTUyLDE1LjY3LTcwLjU1LDMzLTE3LjIsMTYtMzAuMDYsMzcuNTktMzguMjEsNjQtOC44NSwyOC42OC0xMi4zNyw2NC0xMC40NSwxMDQuODcsMi4xLDQ1LTIuMzIsOTYtMTIuOCwxNDcuNTJhNzU0LjU5LDc1NC41OSwwLDAsMS00Ny4zNSwxNDkuOTVjLTIxLjUxLDQ5LjEyLTQ2Ljc5LDkxLjgyLTc1LjEzLDEyNi45QzEwOS42Nyw3NTUuMzgsNzcuODksNzgyLDQ1LDc5Ny41M2wtMTIuNTEsNS45Myw0LjcyLDEzYTE1Ny44NCwxNTcuODQsMCwwLDAsMzcuMTcsNTVjMTcuNzQsMTYuNzcsNDUuNDQsMzkuMjMsODMuMTMsMzMuNTUsNTMuODEtOC4xMSwxMTctMjgsMTY2LTQ1LjY2YTE2NC45LDE2NC45LDAsMCwxLTEyLTQ1Ljc0Yy03LjM2LDYtMTQuNDIsMTEtMjAuNTcsMTUuNDQtNC43MiwzLjM3LTkuNjEsNi44Ni0xMS42LDguNzVhMzYuNzEsMzYuNzEsMCwwLDEtMjUuMjcsMTAuMjhjLTE2LjQ2LDAtMzAuOS0xMC44Mi0zOC42My0yOS02LjMyLTE0LjgzLTcuNjEtMzMuMTEtMy42NS01MS41LDQuNy0yMS44NCwxNi44LTQzLjM5LDM1LTYyLjMyLDI5Ljg1LTMxLjA4LDQxLjc2LTU4LjgsNTAuNDYtNzksNS42Ny0xMy4yMSwxMC41Ny0yNC42MiwxOS4xNS0zMy4xMSw5LjQ3LTkuMzksMjIuODQtMTMuOTUsNDAuODgtMTMuOTVhMTY4LjI0LDE2OC4yNCwwLDAsMSwzMC44OSwzLjQxYzI0LjEtMjUuMDcsNTAuNjktMzAuODIsMTAxLjI1LTQxLjc2LDE3LjcyLTMuODQsMzkuNzktOC42MSw2Ni43NS0xNS4yMyw4MS4zMS0xOS45NSwxMzIuMS0yNC4xNCwxNjAuMzgtMjQuMTQsNy44MywwLDE0LjkyLjMxLDIxLjE0LjkzLDQuODMtMi43NiwxMy4xLTcuNjEsMjctMTYsMTQuODktOSwyOC0xNSw0My4zMS0xNSwyNC40NywwLDQzLjA5LDE0LjQ2LDgwLjE5LDQzLjI3bC4wOS4wN2M2LjA3LDQuNzEsMTIuOTQsMTAuMDUsMjAuNDUsMTUuODEsMzQuNTEsMjYuNDUsNTIuMzcsNTcuMSw2MS42LDgyLjUsMTguNjItMjkuMDgsMjUuOTItNzQuNiwyNi43OS0xMjcuNDhsLjIzLTE0WiIvPjxwYXRoIGNsYXNzPSJjbHMtMyIgZD0iTTUyMi4yOSwxNjEuMDhhOTMuNTQsOTMuNTQsMCwwLDEsMjkuODEsMi41OCw4OC43Myw4OC43MywwLDAsMSwyNS40LDEwLjc5LDc1LjY0LDc1LjY0LDAsMCwxLDE5LjIxLDE3LDYxLjM2LDYxLjM2LDAsMCwxLDExLjE4LDIxLjksNTQuMTEsNTQuMTEsMCwwLDEsMS45MSwxNS4wNyw1MS45NCw1MS45NCwwLDAsMS0yLjMxLDE0LjQ5LDU0LjgxLDU0LjgxLDAsMCwxLTYuMjUsMTMuNDYsNjEuNCw2MS40LDAsMCwxLTEwLDEyLDEyLjIsMTIuMiwwLDAsMC0yLjMyLDMsMTQsMTQsMCwwLDAtMS40MSwzLjYxLDE2LjMxLDE2LjMxLDAsMCwwLS40NCw0LDE3LjY3LDE3LjY3LDAsMCwwLC41OSw0LjIzbDMuODgsMTQuNTlhMTguMjcsMTguMjcsMCwwLDEsLjU0LDYuNCwxNi41NSwxNi41NSwwLDAsMS0xLjYyLDUuNzgsMTQuNDYsMTQuNDYsMCwwLDEtMy41MSw0LjU1LDEyLjg3LDEyLjg3LDAsMCwxLTUuMTIsMi42NmwtMzYuMDYsOS4yNmExNC43MywxNC43MywwLDAsMS02LjMzLjIsMTYuMjMsMTYuMjMsMCwwLDEtNS45LTIuMzgsMTgsMTgsMCwwLDEtNC43Ny00LjU3LDE4LjgxLDE4LjgxLDAsMCwxLTIuOTQtNi4zbC00LTE1LjczYTE4LjYyLDE4LjYyLDAsMCwwLTEuNzEtNC4zMiwxOC4xNiwxOC4xNiwwLDAsMC0yLjctMy42OCwxNy44NSwxNy44NSwwLDAsMC0zLjUtMi44NywxNi45MSwxNi45MSwwLDAsMC00LjE2LTEuODYsODkuODgsODkuODgsMCwwLDEtMTguMTMtNy41QTc5LjkxLDc5LjkxLDAsMCwxLDQ3NiwyNjYuMjdhNjguMzcsNjguMzcsMCwwLDEtMTItMTQuMzdBNTkuNTQsNTkuNTQsMCwwLDEsNDU2LjgzLDIzNWE1Mi45NCw1Mi45NCwwLDAsMSwuMzYtMjcuMzUsNTcsNTcsMCwwLDEsMTMuMjEtMjMuMTIsNzAuODEsNzAuODEsMCwwLDEsMjIuNzctMTYuMTZBODUuODcsODUuODcsMCwwLDEsNTIyLjI5LDE2MS4wOFoiLz48cGF0aCBjbGFzcz0iY2xzLTMiIGQ9Ik02NDcuMzUsMjc4bDEwLjEzLDEzLjc3YTE0LjQ1LDE0LjQ1LDAsMCwxLDIuNzUsOC41MiwxMi41MywxMi41MywwLDAsMS0uNzEsNC4yMUE5LjgxLDkuODEsMCwwLDEsNjU3LjQsMzA4bC0zMCwzMS4zM2ExNC43MiwxNC43MiwwLDAsMC0zLjczLDcuMzVBMTguNTcsMTguNTcsMCwwLDAsNjI0LDM1NWExNy41MywxNy41MywwLDAsMCwzLjg2LDcuMjUsMTMsMTMsMCwwLDAsNi44MSw0LjA2bDM4LjksOC42NmExMS4yNSwxMS4yNSwwLDAsMSw0LjUsMi4xOSwxNC43NiwxNC43NiwwLDAsMSwzLjQ3LDQsMTgsMTgsMCwwLDEsMi4xMSw1LjI1LDE5LjIyLDE5LjIyLDAsMCwxLC40Myw2LDE3LjY0LDE3LjY0LDAsMCwxLS44NCw0LjE2LDE1LjM1LDE1LjM1LDAsMCwxLTEuNjksMy41MywxMy4yMiwxMy4yMiwwLDAsMS0yLjM5LDIuNzQsMTAuNjksMTAuNjksMCwwLDEtMi45NSwxLjc5LDkuNCw5LjQsMCwwLDEtMS4yNy40MSwxMCwxMCwwLDAsMS0xLjMzLjIzLDguOTMsOC45MywwLDAsMS0xLjM3LDAsOS42Niw5LjY2LDAsMCwxLTEuNDEtLjE2bC04My0xNS45YTEzLjE0LDEzLjE0LDAsMCwwLTEuNjQtLjIxLDEyLjY1LDEyLjY1LDAsMCwwLTEuNjMsMCwxMi4zOCwxMi4zOCwwLDAsMC0xLjYyLjIyLDEyLjc1LDEyLjc1LDAsMCwwLTEuNTguNDMsMTAuODIsMTAuODIsMCwwLDAtMS41NC42MywxMi42OSwxMi42OSwwLDAsMC0xLjQ4LjgzLDE1LjEzLDE1LjEzLDAsMCwwLTEuNCwxLDE0Ljc5LDE0Ljc5LDAsMCwwLTEuMywxLjIxbC03OS4xOCw4Mi43M2ExNi40MywxNi40MywwLDAsMS0yLjY4LDIuMjgsMTYuODUsMTYuODUsMCwwLDEtMS40NS44NywxNC43OCwxNC43OCwwLDAsMS01LjQ4LDEuNjgsMTMuNTEsMTMuNTEsMCwwLDEtNC0uMjIsMTIuMzksMTIuMzksMCwwLDEtNi44Ny00LjA2bC0yLjM2LTIuNzJhMTcuNDMsMTcuNDMsMCwwLDEtMy41MS02LjQ4LDIwLjI4LDIwLjI4LDAsMCwxLS43My03LjQyQTIyLjE4LDIyLjE4LDAsMCwxLDQ3Niw0NDYuMTZsNDEuNjgtNDAuODlhMTguOCwxOC44LDAsMCwwLDUuMS04LjgzLDE5LjQ2LDE5LjQ2LDAsMCwwLDAtOS41MywxNy45LDE3LjksMCwwLDAtNC40Ni04LjExLDE1Ljg0LDE1Ljg0LDAsMCwwLTguNDMtNC41MmwtNTcuNTUtMTFhMTQuNDEsMTQuNDEsMCwwLDEtNS40LTIuMjUsMTQuNjMsMTQuNjMsMCwwLDEtNi4xLTkuMzUsMTQuMzMsMTQuMzMsMCwwLDEsLjA5LTUuOWwxLjU4LTcuMTlhMTQuNzcsMTQuNzcsMCwwLDEsMS41MS00LDE0LjUyLDE0LjUyLDAsMCwxLDIuNDktMy4yNiwxNC42OCwxNC42OCwwLDAsMSw3LTMuODhjLjUyLS4xMiwxLS4yMSwxLjU4LS4yOGExNC4xNywxNC4xNywwLDAsMSwxLjYtLjEsMTIuOCwxMi44LDAsMCwxLDEuNjMuMDgsMTEuOTIsMTEuOTIsMCwwLDEsMS42NC4yN2wxMDQuNjUsMjMuM2ExMy45NCwxMy45NCwwLDAsMCwxLjY4LjI2LDExLjY1LDExLjY1LDAsMCwwLDEuNjcsMCwxMi44MSwxMi44MSwwLDAsMCwxLjY0LS4xNSwxNC43NywxNC43NywwLDAsMCwxLjYtLjM2LDEyLjM0LDEyLjM0LDAsMCwwLDEuNTQtLjU2LDEyLjY0LDEyLjY0LDAsMCwwLDEuNDctLjc0LDEyLjksMTIuOSwwLDAsMCwxLjM4LS45NCwxMy41LDEzLjUsMCwwLDAsMS4yOS0xLjExWiIvPjxwYXRoIGNsYXNzPSJjbHMtNCIgZD0iTTk1MS41OCw2ODIuNVM5NDgsNjg1LDk0MS41Niw2ODVjLTEwLjkyLDAtMjkuOTEtNy40Mi01Mi42LTQ3LjY0aDBjLTM3LjM3LTY4LjIyLTc1LjY3LTgyLjc4LTc3LjMyLTgzLjM4YTQuNDgsNC40OCwwLDAsMC0zLDguNDRjLjM4LjE0LDM4LjgyLDE0Ljc0LDc1LjU1LDg0Ljg2bDAsLjA5Yy00LjkxLDguNC05LjQ4LDExLjMxLTkuNDgsMTEuMzEsMTUuNDUsMjQuMDYsNTQuODcsMjAyLTIyNC45NCwyNTcuODUtNTAsMTAtOTIuMzQsMTQuMzctMTI4LDE0LjM3LTE2My43NywwLTE4Ny45NS05Mi4yNy0xODIuNDMtMTU3Ljg4YTQ2LjYzLDQ2LjYzLDAsMCwwLTExLjY2LTUuNjdjNC43Mi04LjI0LDEyLjExLTIyLjMsMjMuMy00Ni4xNCw3LjEtMTUuMTMsMTAuMTctMzIsOS4xMy01MGE0LjUyLDQuNTIsMCwwLDAtMS4zOS0zLDQuMzksNC4zOSwwLDAsMC0zLjMyLTEuMjEsNC40OCw0LjQ4LDAsMCwwLTQuMTksNC43NGMxLDE2Ljc4LTEuNzQsMzEuNzEtOC4yOSw0NS42Ny0xNS4xOCwzMi4zNS0yMy4xMiw0Ni4xNS0yNi42NSw1MS42N2wwLDBjLTE5LjM5LDI0LjEtNDYsMzguMTEtNTYuNDMsNDhhOC4yLDguMiwwLDAsMS01LjY5LDIuNDhjLTE1LjI0LDAtMzEuOS00Ny41NiwxMy4yNC05NC41Nyw1MS01My4wNyw1NS42Mi05OC4yOSw2OS4xMS0xMTEuNjYsNC4yOS00LjI0LDEyLjEzLTUuNjksMjAuODQtNS42OSwxOC43MywwLDQxLjQ1LDYuNjksNDEuNDUsNi42OSwyOC4zNS0zOC43Nyw1MC44OC0zMy4yNywxNjQuMjMtNjEuMDksNzguODMtMTkuMzUsMTI3LjE2LTIzLjMzLDE1My41OS0yMy4zMywxOC40NiwwLDI2LjIyLDEuOTUsMjYuMjIsMS45NWgwYy4xOCwwLDIuNjgtLjU4LDM2LjcxLTIxLjE4LDExLjc0LTcuMTEsMjAuMTItMTAuOTEsMjguNTYtMTAuOTEsMTcuNDgsMCwzNS4xOSwxNi4zLDgzLjQxLDUzLjI3Qzk2Myw2MDcuODksOTUxLjU4LDY4Mi41LDk1MS41OCw2ODIuNVoiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MzIuNDcsNjg4LjQ2czUyLTk3LTUyLjg3LTEyMS4xN1M2NDYuMTIsNjE0LjcsNjU5LjY4LDY1OWMwLDAtNDYtMS40MS01NS40NywxMy43MiwwLDAtMzEuNDYtMTAzLjkzLTE2Ny0zMS44MkMzNTcuMzQsNjgzLjM4LDM4NC45NCw3NjQuMTksNDE5LDc4Mi41MWM0Ljg3LDIuNjIsNy44Nyw5LjQ5LDIuNywyMC4xMWE1Ni4xNyw1Ni4xNywwLDAsMC01LjE0LDMyLjQ4YzQuMTQsMzAuOTUsMzMuNDgsNDQuNjMsMTA5LjI2LDM0LjNxMTEtMS41LDIxLjE5LTMuOGwxLjU4LS4zN3EyLjQ5LS41Nyw0Ljk0LTEuMThhMjUzLDI1MywwLDAsMCwxMTgtNjcuMzJjMy45My04LjEyLDQuNDItMjIuNS43NS0zMi40MS02LjU2LTE3LjY4LTI0Ljk0LTI2LjE0LTI1LjEzLTI2LjIybDAtLjA5Yy04LjUyLTQuNDktMTguNDMtNy43MS0yNS41Mi0zLjg4LTEzLjIzLDcuMTYtMjMuNjcsMTYuMjQtMjUuNTUsMS40NC0uODgtNi45MiwxLjI5LTQxLjkzLDQyLjkyLTUzLjM2czU5Ljc1LDguMjEsNjIsMTguMzVjMS41NCw2Ljg4LTIuMTksMjAuNjQtMTEuODcsMjEuMTctNS4yNS4yOC03LjI3LDQuNi05LjExLDkuNzZhOC43LDguNywwLDAsMCwxLDgsNjEuNTgsNjEuNTgsMCwwLDEsMTAuMzEsMTcuNzNjNC44OSwxMy4xOSw0Ljg2LDI3LjUsMCw0Mi42N0ExNTYuOTEsMTU2LjkxLDAsMCwwLDc3Mi43Miw4MDZsMS45My0uMzgsMi42NC0uNTVhMTY3LDE2NywwLDAsMCwzMS44My0xMC40NUM4NzIsNzY2Ljg2LDg0MS40MSw2OTUuMzEsODMyLjQ3LDY4OC40NloiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik03NDMuNDksODMyLjA1YTE4MC41MywxODAuNTMsMCwwLDEtNjMuMS0xMS40MywyNzkuMjksMjc5LjI5LDAsMCwxLTM4LjYsMzAuMDksMjc0LjYyLDI3NC42MiwwLDAsMS03MC4yMiwzMi40OWMxNi45LDExLjM2LDQ4Ljc2LDIwLjQ1LDEwNi4yOSwzLjE0LDU1LjgxLTE2Ljc4LDc4LjY5LTM5LDg3Ljk0LTU1LjdBMTc5Ljg5LDE3OS44OSwwLDAsMSw3NDMuNDksODMyLjA1WiIvPjxwYXRoIGNsYXNzPSJjbHMtMyIgZD0iTTU3MS4xNiw2NzMuMzFjLTkuNzktMjUuMDctNDAuOTQtMzcuMTktNzUuMTItMzEuNjhhNTcuNjIsNTcuNjIsMCwxLDEtNjUuNDUsMzYuMjVjLTE0LjQ4LDE3LjQ5LTIwLjEzLDM4LjI4LTEzLjA3LDU2LjM4LDEyLDMwLjc0LDU2LjEyLDQyLDk4LjU0LDI1LjE4UzU4My4xNiw3MDQuMDUsNTcxLjE2LDY3My4zMVoiLz48cGF0aCBjbGFzcz0iY2xzLTMiIGQ9Ik03NzYsNjc2LjExYTUwLjUsNTAuNSwwLDAsMS0zMS4xMi05MC4yOGMtMjguNTEsMi41My01MS4yMiwyMC43OC01My4xNSw0NC42OC0yLjIzLDI3LjQ5LDIzLjg4LDUyLDU4LjMxLDU0Ljg0LDIwLjg5LDEuNjksNDAtNSw1Mi4zNy0xNi43QTUwLjIzLDUwLjIzLDAsMCwxLDc3Niw2NzYuMTFaIi8+PC9zdmc+
+  mediatype: image/svg+xml
+name: skupper-operator
+schema: olm.package
+---
+entries:
+- name: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.0
+  replaces: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.1
+  replaces: skupper-operator.v1.5.0
+- name: skupper-operator.v1.5.2
+  replaces: skupper-operator.v1.5.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.5.3
+  replaces: skupper-operator.v1.5.2
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.6.0
+  replaces: skupper-operator.v1.5.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.0
+  replaces: skupper-operator.v1.6.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.1
+  replaces: skupper-operator.v1.7.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.3
+  replaces: skupper-operator.v1.7.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.8.0
+  replaces: skupper-operator.v1.7.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.8.1
+  replaces: skupper-operator.v1.8.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+name: alpha
+package: skupper-operator
+schema: olm.channel
+---
+entries:
+- name: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.0
+  replaces: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.1
+  replaces: skupper-operator.v1.5.0
+- name: skupper-operator.v1.5.2
+  replaces: skupper-operator.v1.5.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.5.3
+  replaces: skupper-operator.v1.5.2
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.6.0
+  replaces: skupper-operator.v1.5.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.0
+  replaces: skupper-operator.v1.6.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.1
+  replaces: skupper-operator.v1.7.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.3
+  replaces: skupper-operator.v1.7.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.8.0
+  replaces: skupper-operator.v1.7.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.8.1
+  replaces: skupper-operator.v1.8.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+name: stable
+package: skupper-operator
+schema: olm.channel
+---
+entries:
+- name: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.0
+  replaces: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.1
+  replaces: skupper-operator.v1.5.0
+- name: skupper-operator.v1.5.2
+  replaces: skupper-operator.v1.5.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.5.3
+  replaces: skupper-operator.v1.5.2
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.6.0
+  replaces: skupper-operator.v1.5.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.0
+  replaces: skupper-operator.v1.6.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.1
+  replaces: skupper-operator.v1.7.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.3
+  replaces: skupper-operator.v1.7.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.8.0
+  replaces: skupper-operator.v1.7.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.8.1
+  replaces: skupper-operator.v1.8.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+name: stable-1
+package: skupper-operator
+schema: olm.channel
+---
+entries:
+- name: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.0
+  replaces: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.1
+  replaces: skupper-operator.v1.5.0
+- name: skupper-operator.v1.5.2
+  replaces: skupper-operator.v1.5.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.5.3
+  replaces: skupper-operator.v1.5.2
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.6.0
+  replaces: skupper-operator.v1.5.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+name: stable-1.6
+package: skupper-operator
+schema: olm.channel
+---
+entries:
+- name: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.0
+  replaces: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.1
+  replaces: skupper-operator.v1.5.0
+- name: skupper-operator.v1.5.2
+  replaces: skupper-operator.v1.5.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.5.3
+  replaces: skupper-operator.v1.5.2
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.6.0
+  replaces: skupper-operator.v1.5.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.0
+  replaces: skupper-operator.v1.6.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.1
+  replaces: skupper-operator.v1.7.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.3
+  replaces: skupper-operator.v1.7.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+name: stable-1.7
+package: skupper-operator
+schema: olm.channel
+---
+entries:
+- name: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.0
+  replaces: skupper-operator.v1.4.3
+- name: skupper-operator.v1.5.1
+  replaces: skupper-operator.v1.5.0
+- name: skupper-operator.v1.5.2
+  replaces: skupper-operator.v1.5.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.5.3
+  replaces: skupper-operator.v1.5.2
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.6.0
+  replaces: skupper-operator.v1.5.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.0
+  replaces: skupper-operator.v1.6.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.1
+  replaces: skupper-operator.v1.7.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.7.3
+  replaces: skupper-operator.v1.7.1
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.8.0
+  replaces: skupper-operator.v1.7.3
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+- name: skupper-operator.v1.8.1
+  replaces: skupper-operator.v1.8.0
+  skips:
+  - skupper-operator.v1.4.0-rc2
+  - skupper-operator.v1.4.0-rc3
+name: stable-1.8
+package: skupper-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:f138318737d86c80596c71a8b823bfa6eaa240533fc84eb626539eb3aee00e37
+name: skupper-operator.v1.4.3
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.4.3
+relatedImages:
+- image: quay.io/operatorhubio/skupper-operator@sha256:f138318737d86c80596c71a8b823bfa6eaa240533fc84eb626539eb3aee00e37
+  name: ""
+- image: quay.io/skupper/site-controller@sha256:77388f3353f103ba453f6152ea7c4b24212212a0798dc624cd928d36ba6c75ca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:29eba08cd08356019e7e9db14eced4e9e8d94d398d20db6bf6f0ade4f804acca
+name: skupper-operator.v1.5.0
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.5.0
+relatedImages:
+- image: quay.io/operatorhubio/skupper-operator@sha256:29eba08cd08356019e7e9db14eced4e9e8d94d398d20db6bf6f0ade4f804acca
+  name: ""
+- image: quay.io/skupper/site-controller@sha256:ae7145417d85c9e2ab9435178802fe1be98547bb06ec30c55b754988bf798ba0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:a261e4bd99dda1739d30957a4161ade077db2e5094599147e24a9a06673620fa
+name: skupper-operator.v1.5.1
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.5.1
+relatedImages:
+- image: quay.io/operatorhubio/skupper-operator@sha256:a261e4bd99dda1739d30957a4161ade077db2e5094599147e24a9a06673620fa
+  name: ""
+- image: quay.io/skupper/site-controller@sha256:79f70af267c8db0de51469dff74894f785e791a8357a6fd3f52361cf78745f4a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:2d99690878a49dd05ad837cd7bf33e1a2e5e56c636296f9853aa0d4a6376ab8d
+name: skupper-operator.v1.5.2
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.5.2
+relatedImages:
+- image: quay.io/operatorhubio/skupper-operator@sha256:2d99690878a49dd05ad837cd7bf33e1a2e5e56c636296f9853aa0d4a6376ab8d
+  name: ""
+- image: quay.io/skupper/site-controller@sha256:e6453fab518537a9852f5752183a6f4f701d4673d8f9d5ee9385fd7871437557
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:4cb09c661c6c171e03fee6dada50793acc18d8d2a48b8361de53f3c39b92efdc
+name: skupper-operator.v1.5.3
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.5.3
+relatedImages:
+- image: quay.io/operatorhubio/skupper-operator@sha256:4cb09c661c6c171e03fee6dada50793acc18d8d2a48b8361de53f3c39b92efdc
+  name: ""
+- image: quay.io/skupper/site-controller@sha256:2d90f1afd494042c4448245f9a46fa983a20cd5e48db7f1bac3e362dc4ac3874
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:2a60542d5f60731a564ca14a5b1663408e3e2dc4b22e39fb47df51c0a4d6895d
+name: skupper-operator.v1.6.0
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.6.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: '[]'
+      capabilities: Seamless Upgrades
+      categories: Integration & Delivery, Networking, Streaming & Messaging
+      certified: "false"
+      containerImage: quay.io/skupper/site-controller@sha256:e5f8b2ddf378cf3e40f4c7b7ec8482eb3321947cd46481c868d727932c449d78
+      createdAt: "2024-02-26T18:22:07Z"
+      description: Skupper Operator provides the ability to create a service network
+      operators.operatorframework.io/builder: operator-sdk-v1.4.0+git
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/skupperproject/skupper-operator
+      support: Skupper Project
+    apiServiceDefinitions: {}
+    crdDescriptions: {}
+    description: |
+      Skupper enables communication between services running in different network locations.
+      It allows geographically distributed services to connect as if they were all running in the same site.
+
+      Each site is a namespace with a running Skupper instance.
+
+      The Skupper operator allows you create and manage sites.
+      The operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.
+
+      To get started, create the following ConfigMap in the desired namespace, the
+      Skupper operator will create the Skupper instance and configure the site.
+
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: skupper-site
+
+      The operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.
+    displayName: Skupper
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - skupper
+    - service
+    - mesh
+    - van
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: Skupper Operator
+      url: https://github.com/skupperproject/skupper-operator
+    maintainers:
+    - email: skupper@googlegroups.com
+      name: Skupper Community
+    maturity: alpha
+    provider:
+      name: Skupper Project
+      url: https://skupper.io
+relatedImages:
+- image: quay.io/openshift/origin-oauth-proxy@sha256:a7dff785d821acc4b972d94964947713fade45f007dedb5deee17a2869bf5d24
+  name: ose-oauth-proxy
+- image: quay.io/operatorhubio/skupper-operator@sha256:2a60542d5f60731a564ca14a5b1663408e3e2dc4b22e39fb47df51c0a4d6895d
+  name: ""
+- image: quay.io/prometheus/prometheus@sha256:d2ab0a27783fd4ad96a8853e2847b99a0be0043687b8a5d1ebfb2dd3fa4fd1b8
+  name: ose-prometheus
+- image: quay.io/skupper/config-sync@sha256:659fe28d1df7c99bba3bb854b1e9991c715ae4de99d91c88d5db5e4f9ef4c852
+  name: skupper-config-sync
+- image: quay.io/skupper/flow-collector@sha256:3870c5bc89e623b7cebe21856bfefc22de76313705efa0ec551a5963789fff3b
+  name: skupper-flow-collector
+- image: quay.io/skupper/service-controller@sha256:345edf2d9d72b5a97bcce0e8cea8cda82d120f7bf83756d73f9ac114c2fcced8
+  name: skupper-service-controller
+- image: quay.io/skupper/site-controller@sha256:e5f8b2ddf378cf3e40f4c7b7ec8482eb3321947cd46481c868d727932c449d78
+  name: skupper-site-controller
+- image: quay.io/skupper/skupper-router@sha256:bf8d5955ce4e406275a4934278efe51c1af9a1a269a70e8fe642b7d94d80cb81
+  name: skupper-router
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:c284b88d40a17bea39cf79a9286ed8485077d99564664461fe1561f3a21bfaa5
+name: skupper-operator.v1.7.0
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.7.0
+relatedImages:
+- image: quay.io/openshift/origin-oauth-proxy@sha256:a7dff785d821acc4b972d94964947713fade45f007dedb5deee17a2869bf5d24
+  name: ""
+- image: quay.io/operatorhubio/skupper-operator@sha256:c284b88d40a17bea39cf79a9286ed8485077d99564664461fe1561f3a21bfaa5
+  name: ""
+- image: quay.io/prometheus/prometheus@sha256:d2ab0a27783fd4ad96a8853e2847b99a0be0043687b8a5d1ebfb2dd3fa4fd1b8
+  name: ""
+- image: quay.io/skupper/config-sync@sha256:d7f3f918b80c6dffff25b506137b21f112c8529217729c93d08b457218219736
+  name: ""
+- image: quay.io/skupper/flow-collector@sha256:0c0c58a9105ec09514e55d7e3eada464736cd29dc81a776017f5c1602693b589
+  name: ""
+- image: quay.io/skupper/service-controller@sha256:5306d1b2ecbcdec4a13d4968e360cd467f5a9f376a8b93923ef5ef7d271fe009
+  name: ""
+- image: quay.io/skupper/site-controller@sha256:f028e86d2d317500afd17ba653ecf06c54fd2aa99709c26f0f8d44db1f9ef8d9
+  name: ""
+- image: quay.io/skupper/skupper-router@sha256:ef575029bbc499f05b1e31f7358234b0c453849ee3a72dd826573573f9c4fee4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:632fd1f8e9533f3ca0c859e7c7f5b7f08ff47d4712ef3ce2aff9d3bac080abbe
+name: skupper-operator.v1.7.1
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.7.1
+relatedImages:
+- image: quay.io/openshift/origin-oauth-proxy@sha256:a7dff785d821acc4b972d94964947713fade45f007dedb5deee17a2869bf5d24
+  name: ""
+- image: quay.io/operatorhubio/skupper-operator@sha256:632fd1f8e9533f3ca0c859e7c7f5b7f08ff47d4712ef3ce2aff9d3bac080abbe
+  name: ""
+- image: quay.io/prometheus/prometheus@sha256:d2ab0a27783fd4ad96a8853e2847b99a0be0043687b8a5d1ebfb2dd3fa4fd1b8
+  name: ""
+- image: quay.io/skupper/config-sync@sha256:a884b26a32179af5a2bfa85118bf873852eec6e2930e92da778b57506c0a0880
+  name: ""
+- image: quay.io/skupper/flow-collector@sha256:bf646b0cb75e1c29bbe0261aa9943e06d33118f5e6a5ccb7503c60c974167692
+  name: ""
+- image: quay.io/skupper/service-controller@sha256:624e88e695297df28e485db7e802945ad1978ac6b0c9e9edca8b5e6013af8991
+  name: ""
+- image: quay.io/skupper/site-controller@sha256:4809db7263d77a95797061798e910f1bdbb5d5fe2db2bb3c743b97f5d0c7b3af
+  name: ""
+- image: quay.io/skupper/skupper-router@sha256:5eb258a0927e7706e7c035f1def2eb5211c8c33dd371fafa7210517fd894f68b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:f3fec2000f4214944d9887979e8fe796766e7d1cf69cbad296dbe408b198633e
+name: skupper-operator.v1.7.3
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.7.3
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: '[]'
+      capabilities: Seamless Upgrades
+      categories: Integration & Delivery, Networking, Streaming & Messaging
+      certified: "false"
+      containerImage: quay.io/skupper/site-controller@sha256:2a2db4b28afdfe20f788d6e47162fef7d9e16a63ef0de163f8e50d23f1797185
+      createdAt: "2024-07-16T16:00:09Z"
+      description: Skupper Operator provides the ability to create a service network
+      operators.operatorframework.io/builder: operator-sdk-v1.4.0+git
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/skupperproject/skupper-operator
+      support: Skupper Project
+    apiServiceDefinitions: {}
+    crdDescriptions: {}
+    description: |
+      Skupper enables communication between services running in different network locations.
+      It allows geographically distributed services to connect as if they were all running in the same site.
+
+      Each site is a namespace with a running Skupper instance.
+
+      The Skupper operator allows you create and manage sites.
+      The operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.
+
+      To get started, create the following ConfigMap in the desired namespace, the
+      Skupper operator will create the Skupper instance and configure the site.
+
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: skupper-site
+
+      The operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.
+    displayName: Skupper
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - skupper
+    - service
+    - mesh
+    - van
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: Skupper Operator
+      url: https://github.com/skupperproject/skupper-operator
+    maintainers:
+    - email: skupper@googlegroups.com
+      name: Skupper Community
+    maturity: alpha
+    provider:
+      name: Skupper Project
+      url: https://skupper.io
+relatedImages:
+- image: quay.io/openshift/origin-oauth-proxy@sha256:a7dff785d821acc4b972d94964947713fade45f007dedb5deee17a2869bf5d24
+  name: ose-oauth-proxy
+- image: quay.io/operatorhubio/skupper-operator@sha256:f3fec2000f4214944d9887979e8fe796766e7d1cf69cbad296dbe408b198633e
+  name: ""
+- image: quay.io/prometheus/prometheus@sha256:d2ab0a27783fd4ad96a8853e2847b99a0be0043687b8a5d1ebfb2dd3fa4fd1b8
+  name: ose-prometheus
+- image: quay.io/skupper/config-sync@sha256:8fdc242127e6c1e60649d84f82917f82ea6bedd90e7f3cf5a5d8be70080c8679
+  name: skupper-config-sync
+- image: quay.io/skupper/flow-collector@sha256:c8745a11e707e5a6dd44d048e28111e206b4be9c9a3d872788693b3bb584b366
+  name: skupper-flow-collector
+- image: quay.io/skupper/service-controller@sha256:6c8dbd525099a6a48525a76c4674ec9b4ced6519ce8db3d141308b5cf7f84438
+  name: skupper-service-controller
+- image: quay.io/skupper/site-controller@sha256:2a2db4b28afdfe20f788d6e47162fef7d9e16a63ef0de163f8e50d23f1797185
+  name: skupper-site-controller
+- image: quay.io/skupper/skupper-router@sha256:bf65368a8b27d8be6c09909769425f7f1281606a15b6a7bd3a7d6f6872473adc
+  name: skupper-router
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:dbf48640ec331b78cee2e287d691614a6b5d98e557ac22db54900b12bc0bc4ea
+name: skupper-operator.v1.8.0
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.8.0
+relatedImages:
+- image: quay.io/openshift/origin-oauth-proxy@sha256:a7dff785d821acc4b972d94964947713fade45f007dedb5deee17a2869bf5d24
+  name: ""
+- image: quay.io/operatorhubio/skupper-operator@sha256:dbf48640ec331b78cee2e287d691614a6b5d98e557ac22db54900b12bc0bc4ea
+  name: ""
+- image: quay.io/prometheus/prometheus@sha256:d2ab0a27783fd4ad96a8853e2847b99a0be0043687b8a5d1ebfb2dd3fa4fd1b8
+  name: ""
+- image: quay.io/skupper/config-sync@sha256:0002f4fd396d2aa94f51403974ae6b77453c0bc97872ff78edd6a38033745705
+  name: ""
+- image: quay.io/skupper/flow-collector@sha256:db5b25bd00b5c4b25f11a2bbbdf758fe1faf7f99e12a71e5975820d70b400511
+  name: ""
+- image: quay.io/skupper/service-controller@sha256:74a5ff88666af51d577c341c625d204eca6609b882783bf03e91333eb1bc1c2f
+  name: ""
+- image: quay.io/skupper/site-controller@sha256:461c3820f35e55fbc0f9bb6fac9ec8cc493b976dc69eed69eb28624e8cb446b6
+  name: ""
+- image: quay.io/skupper/skupper-router@sha256:a1c07d18a45377d307621b401fb1c86570379ab2d6603fcb1ef86857f4b2f45b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/skupper-operator@sha256:a698963dc25f9dc98472534853a207c748f639cc9a309ef55a0bab4836fe73c6
+name: skupper-operator.v1.8.1
+package: skupper-operator
+properties:
+- type: olm.package
+  value:
+    packageName: skupper-operator
+    version: 1.8.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: '[]'
+      capabilities: Seamless Upgrades
+      categories: Integration & Delivery, Networking, Streaming & Messaging
+      certified: "false"
+      containerImage: quay.io/skupper/site-controller@sha256:ac851aefb0943a00d8730e07af126db7292e6585be1a1b450335b8ada66cac50
+      createdAt: "2024-09-09T15:29:32Z"
+      description: Skupper Operator provides the ability to create a service network
+      operators.operatorframework.io/builder: operator-sdk-v1.4.0+git
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/skupperproject/skupper-operator
+      support: Skupper Project
+    apiServiceDefinitions: {}
+    crdDescriptions: {}
+    description: |
+      Skupper enables communication between services running in different network locations.
+      It allows geographically distributed services to connect as if they were all running in the same site.
+
+      Each site is a namespace with a running Skupper instance.
+
+      The Skupper operator allows you create and manage sites.
+      The operator processes any ConfigMap named skupper-site and configures the site for the service network accordingly.
+
+      To get started, create the following ConfigMap in the desired namespace, the
+      Skupper operator will create the Skupper instance and configure the site.
+
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: skupper-site
+
+      The operator can be installed to a single namespace or at cluster level, watching for the skupper-site ConfigMap in all namespaces.
+    displayName: Skupper
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - skupper
+    - service
+    - mesh
+    - van
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: Skupper Operator
+      url: https://github.com/skupperproject/skupper-operator
+    maintainers:
+    - email: skupper@googlegroups.com
+      name: Skupper Community
+    maturity: alpha
+    minKubeVersion: 1.19.0
+    provider:
+      name: Skupper Project
+      url: https://skupper.io
+relatedImages:
+- image: quay.io/openshift/origin-oauth-proxy@sha256:a7dff785d821acc4b972d94964947713fade45f007dedb5deee17a2869bf5d24
+  name: ose-oauth-proxy
+- image: quay.io/operatorhubio/skupper-operator@sha256:a698963dc25f9dc98472534853a207c748f639cc9a309ef55a0bab4836fe73c6
+  name: ""
+- image: quay.io/prometheus/prometheus@sha256:d2ab0a27783fd4ad96a8853e2847b99a0be0043687b8a5d1ebfb2dd3fa4fd1b8
+  name: ose-prometheus
+- image: quay.io/skupper/config-sync@sha256:2b018bc34179a2f8727cd80034e6ef1473381ef869ab423036c0ed721af95f9c
+  name: skupper-config-sync
+- image: quay.io/skupper/flow-collector@sha256:6162a54f1f2ea9e9f12becf7089c8eb684ab6ccfbc279a55dfac4e8cb23d5784
+  name: skupper-flow-collector
+- image: quay.io/skupper/service-controller@sha256:7486df521be1ad97418a79e7fe259f329e0ecce17dd458fad3041314295068e1
+  name: skupper-service-controller
+- image: quay.io/skupper/site-controller@sha256:ac851aefb0943a00d8730e07af126db7292e6585be1a1b450335b8ada66cac50
+  name: skupper-site-controller
+- image: quay.io/skupper/skupper-router@sha256:666858d5e85bfa7fd3956ee48d1820000147cb42a672011697450f2204defb71
+  name: skupper-router
+schema: olm.bundle

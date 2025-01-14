@@ -1,0 +1,2833 @@
+---
+defaultChannel: v5
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyMC4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4KCjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0iTGF5ZXJfMSIKICAgeD0iMHB4IgogICB5PSIwcHgiCiAgIHdpZHRoPSI1Ny43OTk5OTkiCiAgIGhlaWdodD0iNTcuNzk5OTk5IgogICB2aWV3Qm94PSIwIDAgNTcuNzk5OTk5IDU3LjgiCiAgIHhtbDpzcGFjZT0icHJlc2VydmUiCiAgIHNvZGlwb2RpOmRvY25hbWU9ImxvZ29fc21hbGwuc3ZnIgogICBpbmtzY2FwZTp2ZXJzaW9uPSIwLjkyLjQgKDVkYTY4OWMzMTMsIDIwMTktMDEtMTQpIj48bWV0YWRhdGEKICAgaWQ9Im1ldGFkYXRhMzc4NSI+PHJkZjpSREY+PGNjOldvcmsKICAgICAgIHJkZjphYm91dD0iIj48ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD48ZGM6dHlwZQogICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPjxkYzp0aXRsZT48L2RjOnRpdGxlPjwvY2M6V29yaz48L3JkZjpSREY+PC9tZXRhZGF0YT48ZGVmcwogICBpZD0iZGVmczM3ODMiIC8+PHNvZGlwb2RpOm5hbWVkdmlldwogICBwYWdlY29sb3I9IiNmZmZmZmYiCiAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2IgogICBib3JkZXJvcGFjaXR5PSIxIgogICBvYmplY3R0b2xlcmFuY2U9IjEwIgogICBncmlkdG9sZXJhbmNlPSIxMCIKICAgZ3VpZGV0b2xlcmFuY2U9IjEwIgogICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMCIKICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiIKICAgaW5rc2NhcGU6d2luZG93LXdpZHRoPSIyNTYwIgogICBpbmtzY2FwZTp3aW5kb3ctaGVpZ2h0PSIxMzg2IgogICBpZD0ibmFtZWR2aWV3Mzc4MSIKICAgc2hvd2dyaWQ9ImZhbHNlIgogICBpbmtzY2FwZTp6b29tPSIxMy44NTg3MTQiCiAgIGlua3NjYXBlOmN4PSI3NS40MTI5MDQiCiAgIGlua3NjYXBlOmN5PSIyMy4wNzc2MDYiCiAgIGlua3NjYXBlOndpbmRvdy14PSIwIgogICBpbmtzY2FwZTp3aW5kb3cteT0iMCIKICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMSIKICAgaW5rc2NhcGU6Y3VycmVudC1sYXllcj0iTGF5ZXJfMSIgLz4KPHN0eWxlCiAgIHR5cGU9InRleHQvY3NzIgogICBpZD0ic3R5bGUzNzY5Ij4KCS5zdDB7ZmlsbDojRTZFN0U4O30KCS5zdDF7ZmlsbDp1cmwoI1NWR0lEXzFfKTt9Cjwvc3R5bGU+Cgo8bGluZWFyR3JhZGllbnQKICAgaWQ9IlNWR0lEXzFfIgogICBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIKICAgeDE9IjI2LjcwMDAwMSIKICAgeTE9Ii05Ljg1MDE5OTciCiAgIHgyPSIyNi43MDAwMDEiCiAgIHkyPSI0My4xNjYiCiAgIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsLTEsMiw2MC4wMDAwMDIpIj4KCTxzdG9wCiAgIG9mZnNldD0iMCIKICAgc3R5bGU9InN0b3AtY29sb3I6I0ZGRjEwMCIKICAgaWQ9InN0b3AzNzczIiAvPgoJPHN0b3AKICAgb2Zmc2V0PSIxIgogICBzdHlsZT0ic3RvcC1jb2xvcjojRjA1QTI4IgogICBpZD0ic3RvcDM3NzUiIC8+CjwvbGluZWFyR3JhZGllbnQ+CjxwYXRoCiAgIGNsYXNzPSJzdDEiCiAgIGQ9Im0gNTUuMSwyNS41MDAwMDIgYyAtMC4xLC0xIC0wLjMsLTIuMSAtMC42LC0zLjMgLTAuMywtMS4yIC0wLjgsLTIuNiAtMS41LC00IC0wLjcsLTEuNCAtMS42LC0yLjkgLTIuOCwtNC4zIC0wLjUsLTAuNiAtMSwtMS4xIC0xLjUsLTEuNiAwLjgsLTMuMjAwMDAwNCAtMSwtNi4wMDAwMDA0IC0xLC02LjAwMDAwMDQgLTMuMSwtMC4yIC01LjEsMSAtNS44LDEuNSAtMC4xLC0wLjEgLTAuMiwtMC4xIC0wLjQsLTAuMiAtMC41LC0wLjIgLTEsLTAuNCAtMS42LC0wLjYgLTAuNiwtMC4yIC0xLjEsLTAuMyAtMS43LC0wLjUgLTAuNiwtMC4xIC0xLjIsLTAuMyAtMS44LC0wLjMgLTAuMSwwIC0wLjIsMCAtMC4zLDAgQyAzNC44LDEuODAwMDAxNiAzMC45LDEuNTI1ODc4OWUtNiAzMC45LDEuNTI1ODc4OWUtNiAyNi42LDIuODAwMDAxNiAyNS43LDYuNjAwMDAxNiAyNS43LDYuNjAwMDAxNiBjIDAsMCAwLDAuMSAwLDAuMiAtMC4yLDAuMSAtMC41LDAuMSAtMC43LDAuMiAtMC4zLDAuMSAtMC43LDAuMiAtMSwwLjMgLTAuMywwLjEgLTAuNywwLjMgLTEsMC40IC0wLjcsMC4zIC0xLjMsMC42IC0xLjksMSAtMC42LDAuMyAtMS4yLDAuNyAtMS44LDEuMSAtMC4xLDAgLTAuMiwtMC4xIC0wLjIsLTAuMSAtNiwtMi4zIC0xMS40LDAuNTAwMDAwNCAtMTEuNCwwLjUwMDAwMDQgLTAuNSw2LjQgMi40LDEwLjQgMywxMS4yIC0wLjEsMC40IC0wLjMsMC44IC0wLjQsMS4yIC0wLjQsMS40IC0wLjgsMi45IC0xLDQuNSAwLDAuMiAtMC4xLDAuNCAtMC4xLDAuNyAtNS42LDIuNyAtNy4yLDguNCAtNy4yLDguNCA0LjYsNS4zIDEwLDUuNyAxMCw1LjcgdiAwIGMgMC43LDEuMiAxLjUsMi40IDIuNCwzLjUgMC40LDAuNSAwLjgsMC45IDEuMiwxLjMgLTEuNyw0LjggMC4yLDguOSAwLjIsOC45IDUuMiwwLjIgOC42LC0yLjMgOS4zLC0yLjggMC41LDAuMiAxLDAuMyAxLjYsMC41IDEuNiwwLjQgMy4yLDAuNiA0LjgsMC43IDAuNCwwIDAuOCwwIDEuMiwwIGggMC4yIDAuMSAwLjMgMC4zIHYgMCBjIDIuNCwzLjUgNi43LDQgNi43LDQgMy40LC0zLjYgMy4yLC03LjIgMy4yLC03LjIgbCAtMC4xLC0wLjEgYyAwLjcsLTAuNSAxLjMsLTEgMS45LC0xLjUgMS4yLC0xLjEgMi4zLC0yLjQgMy4yLC0zLjcgMC4xLC0wLjEgMC4yLC0wLjMgMC4yLC0wLjQgMy40LDAuMiA1LjksLTIuMSA1LjksLTIuMSAtMC42LC00IC0zLjEsLTUuNyAtMy4xLC01LjcgaCAtMC4xIGMgMCwtMC4yIDAsLTAuNSAwLjEsLTAuNyAwLC0wLjQgMCwtMC44IDAsLTEuMiB2IC0wLjMgLTAuMSAtMC4xIGMgMCwtMC4xIDAsLTAuMSAwLC0wLjEgdiAtMC4yIC0wLjMgYyAwLC0wLjEgMCwtMC4yIDAsLTAuMyAwLC0wLjEgMCwtMC4yIDAsLTAuMyB2IC0wLjMgLTAuMyBjIC0wLjEsLTAuNCAtMC4xLC0wLjggLTAuMiwtMS4yIC0wLjQsLTEuNSAtMSwtMyAtMS44LC00LjMgLTAuOCwtMS4zIC0xLjgsLTIuNSAtMi45LC0zLjUgLTEuMSwtMSAtMi40LC0xLjggLTMuNywtMi40IC0xLjMsLTAuNiAtMi43LC0xIC00LjEsLTEuMSAtMC43LC0wLjEgLTEuNCwtMC4xIC0yLC0wLjEgaCAtMC4zIC0wLjEgLTAuMSAtMC4xIC0wLjMgYyAtMC4xLDAgLTAuMiwwIC0wLjMsMCAtMC4zLDAgLTAuNywwLjEgLTEsMC4xIC0xLjQsMC4zIC0yLjcsMC43IC0zLjgsMS40IC0xLjEsMC43IC0yLjEsMS41IC0yLjksMi41IC0wLjgsMSAtMS40LDIgLTEuOSwzLjEgLTAuNCwxLjEgLTAuNywyLjIgLTAuNywzLjMgMCwwLjMgMCwwLjYgMCwwLjggMCwwLjEgMCwwLjEgMCwwLjIgdiAwLjIgYyAwLDAuMSAwLDAuMyAwLDAuNCAwLjEsMC42IDAuMiwxLjEgMC4zLDEuNiAwLjMsMSAwLjgsMiAxLjQsMi44IDAuNiwwLjggMS4zLDEuNSAyLjEsMiAwLjgsMC41IDEuNiwwLjkgMi40LDEuMSAwLjgsMC4yIDEuNiwwLjMgMi4zLDAuMyAwLjEsMCAwLjIsMCAwLjMsMCBoIDAuMSAwLjEgYyAwLjEsMCAwLjIsMCAwLjIsMCAwLDAgMCwwIDAuMSwwIGggMC4xIDAuMSBjIDAuMSwwIDAuMiwwIDAuMywwIDAuMSwwIDAuMiwwIDAuMywtMC4xIDAuMiwwIDAuMywtMC4xIDAuNSwtMC4xIDAuMywtMC4xIDAuNiwtMC4yIDAuOSwtMC40IDAuMywtMC4xIDAuNSwtMC4zIDAuOCwtMC41IDAuMSwtMC4xIDAuMSwtMC4xIDAuMiwtMC4yIDAuMywtMC4yIDAuMywtMC42IDAuMSwtMC44IC0wLjIsLTAuMiAtMC41LC0wLjMgLTAuNywtMC4xIC0wLjIsLTAuMiAtMC4yLC0wLjEgLTAuMywtMC4xIC0wLjIsMC4xIC0wLjQsMC4yIC0wLjcsMC4zIC0wLjIsMC4xIC0wLjUsMC4xIC0wLjgsMC4yIC0wLjEsMCAtMC4zLDAgLTAuNCwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjEsMCAtMC4yLDAgLTAuMiwwIHYgMCAwIEggMzQuMSAzNCBjIC0wLjEsMCAtMC4xLDAgLTAuMiwwIC0wLjYsLTAuMSAtMS4yLC0wLjMgLTEuNywtMC41IC0wLjYsLTAuMyAtMS4xLC0wLjYgLTEuNiwtMS4xIC0wLjUsLTAuNCAtMC45LC0xIC0xLjMsLTEuNiAtMC4zLC0wLjYgLTAuNiwtMS4zIC0wLjcsLTIgLTAuMSwtMC4zIC0wLjEsLTAuNyAtMC4xLC0xLjEgMCwtMC4xIDAsLTAuMiAwLC0wLjMgdiAwIDAgLTAuMSAtMC4xIGMgMCwtMC4yIDAsLTAuNCAwLjEsLTAuNiAwLjMsLTEuNSAxLC0zIDIuMiwtNC4yIDAuMywtMC4zIDAuNiwtMC41IDEsLTAuOCAwLjMsLTAuMiAwLjcsLTAuNCAxLjEsLTAuNiAwLjQsLTAuMiAwLjgsLTAuMyAxLjIsLTAuNCAwLjQsLTAuMSAwLjgsLTAuMiAxLjIsLTAuMiAwLjIsMCAwLjQsMCAwLjYsMCAwLjEsMCAwLjEsMCAwLjEsMCBoIDAuMiAwLjEgdiAwIDAgaCAwLjIgYyAwLjUsMCAwLjksMC4xIDEuNCwwLjIgMC45LDAuMiAxLjgsMC41IDIuNiwxIDEuNiwwLjkgMywyLjMgMy45LDQgMC40LDAuOCAwLjcsMS44IDAuOSwyLjcgMCwwLjIgMC4xLDAuNSAwLjEsMC43IHYgMC4yIDAuMiBjIDAsMC4xIDAsMC4xIDAsMC4yIDAsMC4xIDAsMC4xIDAsMC4yIHYgMC4yIDAuMiBjIDAsMC4xIDAsMC4zIDAsMC40IDAsMC4zIDAsMC41IC0wLjEsMC44IDAsMC4zIC0wLjEsMC41IC0wLjEsMC44IC0wLjEsMC4xIC0wLjEsMC4zIC0wLjIsMC42IC0wLjEsMC41IC0wLjMsMSAtMC41LDEuNSAtMC40LDEgLTAuOSwxLjkgLTEuNSwyLjcgLTEuMiwxLjcgLTIuOSwzLjEgLTQuOCwzLjkgLTEsMC40IC0yLDAuNyAtMywwLjkgLTAuNSwwLjEgLTEsMC4xIC0xLjYsMC4yIGggLTAuMSAtMC4xIC0wLjIgLTAuMyAtMC4xIGMgMC4xLDAgMCwwIDAsMCBoIC0wLjEgYyAtMC4zLDAgLTAuNiwwIC0wLjgsMCAtMS4xLC0wLjEgLTIuMiwtMC4zIC0zLjMsLTAuNiAtMS4xLC0wLjMgLTIuMSwtMC43IC0zLjEsLTEuMiAtMiwtMSAtMy43LC0yLjUgLTUuMSwtNC4yIC0wLjcsLTAuOSAtMS4zLC0xLjggLTEuOCwtMi44IC0wLjUsLTEgLTAuOSwtMiAtMS4yLC0zIC0wLjMsLTEgLTAuNSwtMi4xIC0wLjUsLTMuMiB2IC0wLjIgLTAuMSAwIC0wLjEgLTAuMiAwIC0wLjEgLTAuMSAtMC4zIDAgMCAtMC4xIGMgMCwtMC4xIDAsLTAuMyAwLC0wLjQgMCwtMC41IDAuMSwtMS4xIDAuMSwtMS42IDAuMSwtMC41IDAuMiwtMS4xIDAuMywtMS42IDAuMSwtMC41IDAuMiwtMS4xIDAuNCwtMS42IDAuMywtMS4xIDAuNywtMi4xIDEuMSwtMy4xIDAuOSwtMiAyLjEsLTMuNyAzLjUsLTUuMSAwLjQsLTAuMyAwLjcsLTAuNyAxLjEsLTEgMC40LC0wLjMgMC44LC0wLjYgMS4yLC0wLjkgMC40LC0wLjMgMC44LC0wLjUgMS4zLC0wLjcgMC4yLC0wLjEgMC40LC0wLjIgMC43LC0wLjMgMC4xLDAgMC4yLC0wLjEgMC4zLC0wLjEgMC4xLC0wLjEgMC4yLC0wLjEgMC4zLC0wLjEgMC40LC0wLjIgMC45LC0wLjQgMS40LC0wLjUgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4yLC0wLjEgMC41LC0wLjEgMC43LC0wLjIgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLC0wLjEgMC40LC0wLjEgMC4xLDAgMC4yLDAgMC40LC0wLjEgaCAwLjIgMC4yIGMgMC4xLDAgMC4yLDAgMC40LC0wLjEgMC4xLDAgMC4zLDAgMC40LC0wLjEgMC4xLDAgMC4zLDAgMC40LDAgMC4xLDAgMC4yLDAgMC4zLDAgaCAwLjIgMC4xIDAuMSBjIDAuMSwwIDAuMywwIDAuNCwwIGggMC4yIGMgMCwwIDAuMSwwIDAsMCB2IDAgaCAwLjEgYyAwLjEsMCAwLjIsMCAwLjQsMCAwLjUsMCAwLjksMCAxLjQsMCAwLjksMCAxLjgsMC4xIDIuNywwLjMgMS44LDAuMyAzLjQsMC45IDQuOSwxLjYgMS41LDAuNyAyLjksMS42IDQsMi42IDAuMSwwLjEgMC4xLDAuMSAwLjIsMC4yIDAuMSwwLjEgMC4xLDAuMSAwLjIsMC4yIDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuMSwwLjEgMC4zLDAuMyAwLjQsMC40IDAuNSwwLjUgMSwxLjEgMS40LDEuNiAwLjgsMS4xIDEuNSwyLjEgMiwzLjIgMCwwLjEgMC4xLDAuMSAwLjEsMC4yIDAsMC4xIDAuMSwwLjEgMC4xLDAuMiAwLjEsMC4xIDAuMSwwLjMgMC4yLDAuNCAwLjEsMC4xIDAuMSwwLjIgMC4yLDAuNCAwLjEsMC4xIDAuMSwwLjIgMC4yLDAuNCAwLjIsMC41IDAuNCwwLjkgMC41LDEuNCAwLjIsMC43IDAuNCwxLjMgMC42LDEuOSAwLjEsMC4yIDAuMywwLjQgMC41LDAuMyAwLjIsMCAwLjQsLTAuMiAwLjQsLTAuNCAtMC4yLC0xLjEgLTAuMiwtMS44IC0wLjMsLTIuNiB6IgogICBpZD0icGF0aDM3NzgiCiAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgIHN0eWxlPSJmaWxsOnVybCgjU1ZHSURfMV8pIiAvPgo8L3N2Zz4=
+  mediatype: image/svg+xml
+name: grafana-operator
+schema: olm.package
+---
+entries:
+- name: grafana-operator.v3.0.2
+- name: grafana-operator.v3.10.0
+  replaces: grafana-operator.v3.9.0
+- name: grafana-operator.v3.10.1
+  replaces: grafana-operator.v3.10.0
+- name: grafana-operator.v3.10.2
+  replaces: grafana-operator.v3.10.1
+- name: grafana-operator.v3.10.3
+  replaces: grafana-operator.v3.10.2
+- name: grafana-operator.v3.2.0
+  replaces: grafana-operator.v3.0.2
+- name: grafana-operator.v3.5.0
+  replaces: grafana-operator.v3.2.0
+- name: grafana-operator.v3.6.0
+  replaces: grafana-operator.v3.5.0
+- name: grafana-operator.v3.7.0
+  replaces: grafana-operator.v3.6.0
+- name: grafana-operator.v3.8.0
+  replaces: grafana-operator.v3.7.0
+- name: grafana-operator.v3.8.1
+  replaces: grafana-operator.v3.8.0
+- name: grafana-operator.v3.9.0
+  replaces: grafana-operator.v3.8.1
+name: alpha
+package: grafana-operator
+schema: olm.channel
+---
+entries:
+- name: grafana-operator.v1.3.0
+- name: grafana-operator.v2.0.0
+  replaces: grafana-operator.v1.3.0
+name: original
+package: grafana-operator
+schema: olm.channel
+---
+entries:
+- name: grafana-operator.v4.0.0
+- name: grafana-operator.v4.0.1
+  replaces: grafana-operator.v4.0.0
+- name: grafana-operator.v4.0.2
+  replaces: grafana-operator.v4.0.1
+- name: grafana-operator.v4.1.0
+  replaces: grafana-operator.v4.0.2
+- name: grafana-operator.v4.1.1
+  replaces: grafana-operator.v4.1.0
+- name: grafana-operator.v4.10.0
+  replaces: grafana-operator.v4.9.0
+- name: grafana-operator.v4.10.1
+  replaces: grafana-operator.v4.10.0
+- name: grafana-operator.v4.2.0
+  replaces: grafana-operator.v4.1.1
+- name: grafana-operator.v4.3.0
+  replaces: grafana-operator.v4.2.0
+- name: grafana-operator.v4.4.0
+  replaces: grafana-operator.v4.3.0
+- name: grafana-operator.v4.4.1
+  replaces: grafana-operator.v4.4.0
+- name: grafana-operator.v4.5.0
+  replaces: grafana-operator.v4.4.1
+- name: grafana-operator.v4.5.1
+  replaces: grafana-operator.v4.5.0
+- name: grafana-operator.v4.6.0
+  replaces: grafana-operator.v4.5.1
+- name: grafana-operator.v4.7.0
+  replaces: grafana-operator.v4.6.0
+- name: grafana-operator.v4.7.1
+  replaces: grafana-operator.v4.7.0
+- name: grafana-operator.v4.8.0
+  replaces: grafana-operator.v4.7.1
+- name: grafana-operator.v4.9.0
+  replaces: grafana-operator.v4.8.0
+name: v4
+package: grafana-operator
+schema: olm.channel
+---
+entries:
+- name: grafana-operator.v5.0.0
+- name: grafana-operator.v5.0.1
+  replaces: grafana-operator.v5.0.0
+- name: grafana-operator.v5.0.2
+  replaces: grafana-operator.v5.0.1
+- name: grafana-operator.v5.1.0
+  replaces: grafana-operator.v5.0.2
+- name: grafana-operator.v5.10.0
+  replaces: grafana-operator.v5.9.2
+  skips:
+  - grafana-operator.v5.6.1
+  - grafana-operator.v5.6.2
+  - grafana-operator.v5.6.3
+  - grafana-operator.v5.7.0
+  - grafana-operator.v5.8.0
+  - grafana-operator.v5.9.2
+- name: grafana-operator.v5.11.0
+  replaces: grafana-operator.v5.10.0
+  skips:
+  - grafana-operator.v5.6.1
+  - grafana-operator.v5.6.2
+  - grafana-operator.v5.6.3
+  - grafana-operator.v5.7.0
+  - grafana-operator.v5.8.0
+  - grafana-operator.v5.9.2
+  - grafana-operator.v5.10.0
+- name: grafana-operator.v5.12.0
+  replaces: grafana-operator.v5.11.0
+  skips:
+  - grafana-operator.v5.6.1
+  - grafana-operator.v5.6.2
+  - grafana-operator.v5.6.3
+  - grafana-operator.v5.7.0
+  - grafana-operator.v5.8.0
+  - grafana-operator.v5.9.2
+  - grafana-operator.v5.10.0
+  - grafana-operator.v5.11.0
+- name: grafana-operator.v5.13.0
+  replaces: grafana-operator.v5.12.0
+  skips:
+  - grafana-operator.v5.6.1
+  - grafana-operator.v5.6.2
+  - grafana-operator.v5.6.3
+  - grafana-operator.v5.7.0
+  - grafana-operator.v5.8.0
+  - grafana-operator.v5.9.2
+  - grafana-operator.v5.10.0
+  - grafana-operator.v5.11.0
+  - grafana-operator.v5.12.0
+- name: grafana-operator.v5.2.0
+  replaces: grafana-operator.v5.1.0
+- name: grafana-operator.v5.3.0
+  replaces: grafana-operator.v5.2.0
+- name: grafana-operator.v5.4.0
+  replaces: grafana-operator.v5.3.0
+- name: grafana-operator.v5.4.1
+  replaces: grafana-operator.v5.4.0
+- name: grafana-operator.v5.4.2
+  replaces: grafana-operator.v5.4.1
+- name: grafana-operator.v5.5.0
+  replaces: grafana-operator.v5.4.2
+- name: grafana-operator.v5.5.2
+  replaces: grafana-operator.v5.5.0
+- name: grafana-operator.v5.6.0
+  replaces: grafana-operator.v5.5.2
+- name: grafana-operator.v5.6.1
+  replaces: grafana-operator.v5.6.0
+- name: grafana-operator.v5.6.2
+  replaces: grafana-operator.v5.6.1
+- name: grafana-operator.v5.6.3
+  replaces: grafana-operator.v5.6.2
+  skips:
+  - grafana-operator.v5.6.1
+- name: grafana-operator.v5.7.0
+  replaces: grafana-operator.v5.6.3
+  skips:
+  - grafana-operator.v5.6.1
+- name: grafana-operator.v5.8.0
+  replaces: grafana-operator.v5.7.0
+  skips:
+  - grafana-operator.v5.6.1
+- name: grafana-operator.v5.9.2
+  replaces: grafana-operator.v5.8.0
+  skips:
+  - grafana-operator.v5.6.1
+  - grafana-operator.v5.6.2
+  - grafana-operator.v5.6.3
+  - grafana-operator.v5.7.0
+  - grafana-operator.v5.8.0
+name: v5
+package: grafana-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:498cbe2aac31b096c0ae6c009fad1bf8c93b54adc12fd99031cabb12ac0481ec
+name: grafana-operator.v1.3.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 1.3.0
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v1.3.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:498cbe2aac31b096c0ae6c009fad1bf8c93b54adc12fd99031cabb12ac0481ec
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:9397e47f0cf6cf96b2dfe9d8c3850ba99ca3b076b72edf6a4f7b46885fee5144
+name: grafana-operator.v2.0.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 2.0.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+        {
+          "apiVersion": "integreatly.org/v1alpha1",
+          "kind": "Grafana",
+          "metadata": {
+            "name": "example-grafana"
+          },
+          "spec": {
+            "ingress": {
+              "enabled": true
+            },
+            "config": {
+              "auth": {
+                "disable_signout_menu": true
+              },
+              "auth.anonymous": {
+                "enabled": true
+              },
+              "log": {
+                "level": "warn",
+                "mode": "console"
+              },
+              "security": {
+                "admin_password": "secret",
+                "admin_user": "root"
+              }
+            },
+            "dashboardLabelSelector": [
+            {
+              "matchExpressions": [
+              {
+                "key": "app",
+                "operator": "In",
+                "values": [
+                  "grafana"
+                ]
+              }
+              ]
+            }
+            ]
+          }
+        },
+        {
+          "apiVersion": "integreatly.org/v1alpha1",
+          "kind": "GrafanaDashboard",
+          "metadata": {
+            "labels": {
+              "app": "grafana"
+            },
+            "name": "simple-dashboard"
+          },
+          "spec": {
+            "json": "{\n  \"id\": null,\n  \"title\": \"Simple Dashboard\",\n  \"tags\": [],\n  \"style\": \"dark\",\n  \"timezone\": \"browser\",\n  \"editable\": true,\n  \"hideControls\": false,\n  \"graphTooltip\": 1,\n  \"panels\": [],\n  \"time\": {\n    \"from\": \"now-6h\",\n    \"to\": \"now\"\n  },\n  \"timepicker\": {\n    \"time_options\": [],\n    \"refresh_intervals\": []\n  },\n  \"templating\": {\n    \"list\": []\n  },\n  \"annotations\": {\n    \"list\": []\n  },\n  \"refresh\": \"5s\",\n  \"schemaVersion\": 17,\n  \"version\": 0,\n  \"links\": []\n}\n",
+            "name": "simple-dashboard.json"
+          }
+        },
+        {
+          "apiVersion": "integreatly.org/v1alpha1",
+          "kind": "GrafanaDataSource",
+          "metadata": {
+            "name": "example-grafanadatasource"
+          },
+          "spec": {
+            "datasources": [
+            {
+              "access": "proxy",
+              "editable": true,
+              "isDefault": true,
+              "jsonData": {
+                "timeInterval": "5s"
+              },
+              "name": "Prometheus",
+              "type": "prometheus",
+              "url": "http://prometheus-service:9090",
+              "version": 1
+            }
+            ],
+            "name": "example-datasources.yaml"
+          }
+        }
+        ]
+      capabilities: Basic Install
+      categories: Monitoring
+      certified: "False"
+      containerImage: quay.io/integreatly/grafana-operator:v2.0.0
+      createdAt: "2019-07-23 00:00:00"
+      description: An Operator for managing Grafana instances, dashboards and data
+        sources
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/integr8ly/grafana-operator
+      support: Red Hat
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Grafana Instance
+        displayName: Grafana
+        kind: Grafana
+        name: grafanas.integreatly.org
+        version: v1alpha1
+      - description: Represents a Grafana Dashboard
+        displayName: Grafana Dashboard
+        kind: GrafanaDashboard
+        name: grafanadashboards.integreatly.org
+        version: v1alpha1
+      - description: Represents a Grafana Data Source
+        displayName: Grafana Data Source
+        kind: GrafanaDataSource
+        name: grafanadatasources.integreatly.org
+        version: v1alpha1
+    description: |
+      A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
+
+      Grafana is an open platform for beautiful analytics and monitoring. For more information please visit the [Grafana website](https://grafana.com)
+
+      # Current status
+
+      The Operator can deploy and manage a Grafana instance on Kubernetes and OpenShift. The following features are supported:
+
+      * Install Grafana to a namespace
+      * Configure Grafana through the custom resource
+      * Import Grafana dashboards from the same or other namespaces
+      * Import Grafana data sources from the same namespace
+      * Install Plugins (panels)
+    displayName: Grafana Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - Grafana
+    - Metrics
+    - Monitoring
+    links:
+    - name: Documentation
+      url: https://github.com/integr8ly/grafana-operator/tree/v2.0.0/documentation
+    - name: Grafana
+      url: https://grafana.com
+    maintainers:
+    - email: integreatly-dev@redhat.com
+      name: Red Hat
+    maturity: alpha
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v2.0.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:9397e47f0cf6cf96b2dfe9d8c3850ba99ca3b076b72edf6a4f7b46885fee5144
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:cad4c82d783f417762f48f619b347f57ad3028389d9a05aefcbef2895cf97c39
+name: grafana-operator.v3.0.2
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.0.2
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.0.2
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:cad4c82d783f417762f48f619b347f57ad3028389d9a05aefcbef2895cf97c39
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:06b11ff9e76e87ce1b65cc7c7a10e32e610f1e0fb311f40e414969778af4e10c
+name: grafana-operator.v3.10.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.10.0
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.10.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:06b11ff9e76e87ce1b65cc7c7a10e32e610f1e0fb311f40e414969778af4e10c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:19c0e12a5adb7c92bd0571df677b9c55e507613254ceef2062263460d24c8d5d
+name: grafana-operator.v3.10.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.10.1
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.10.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:19c0e12a5adb7c92bd0571df677b9c55e507613254ceef2062263460d24c8d5d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:730523086eef4c1636cfe101cc715c67be66d4ab13742653d8df6fbb1129f869
+name: grafana-operator.v3.10.2
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.10.2
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.10.2
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:730523086eef4c1636cfe101cc715c67be66d4ab13742653d8df6fbb1129f869
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:a7c7749e7e140bac0c7c2a38e66f5392a14b92df7f2d4fa73be0f98495ea7666
+name: grafana-operator.v3.10.3
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.8"
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.10.3
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+        {
+          "apiVersion": "integreatly.org/v1alpha1",
+          "kind": "Grafana",
+          "metadata": {
+            "name": "example-grafana"
+          },
+          "spec": {
+            "ingress": {
+              "enabled": true
+            },
+            "config": {
+              "auth": {
+                "disable_signout_menu": true
+              },
+              "auth.anonymous": {
+                "enabled": true
+              },
+              "log": {
+                "level": "warn",
+                "mode": "console"
+              },
+              "security": {
+                "admin_password": "secret",
+                "admin_user": "root"
+              }
+            },
+            "dashboardLabelSelector": [
+            {
+              "matchExpressions": [
+              {
+                "key": "app",
+                "operator": "In",
+                "values": [
+                  "grafana"
+                ]
+              }
+              ]
+            }
+            ]
+          }
+        },
+        {
+          "apiVersion": "integreatly.org/v1alpha1",
+          "kind": "GrafanaDashboard",
+          "metadata": {
+            "labels": {
+              "app": "grafana"
+            },
+            "name": "simple-dashboard"
+          },
+          "spec": {
+            "json": "{\n  \"id\": null,\n  \"title\": \"Simple Dashboard\",\n  \"tags\": [],\n  \"style\": \"dark\",\n  \"timezone\": \"browser\",\n  \"editable\": true,\n  \"hideControls\": false,\n  \"graphTooltip\": 1,\n  \"panels\": [],\n  \"time\": {\n    \"from\": \"now-6h\",\n    \"to\": \"now\"\n  },\n  \"timepicker\": {\n    \"time_options\": [],\n    \"refresh_intervals\": []\n  },\n  \"templating\": {\n    \"list\": []\n  },\n  \"annotations\": {\n    \"list\": []\n  },\n  \"refresh\": \"5s\",\n  \"schemaVersion\": 17,\n  \"version\": 0,\n  \"links\": []\n}\n",
+            "name": "simple-dashboard.json"
+          }
+        },
+        {
+          "apiVersion": "integreatly.org/v1alpha1",
+          "kind": "GrafanaDataSource",
+          "metadata": {
+            "name": "example-grafanadatasource"
+          },
+          "spec": {
+            "datasources": [
+            {
+              "access": "proxy",
+              "editable": true,
+              "isDefault": true,
+              "jsonData": {
+                "timeInterval": "5s"
+              },
+              "name": "Prometheus",
+              "type": "prometheus",
+              "url": "http://prometheus-service:9090",
+              "version": 1
+            }
+            ],
+            "name": "example-datasources.yaml"
+          }
+        }
+        ]
+      capabilities: Basic Install
+      categories: Monitoring
+      certified: "False"
+      containerImage: quay.io/grafana-operator/grafana-operator:v3.10.3
+      createdAt: "2020-07-31 00:00:00"
+      description: An Operator for managing Grafana instances, dashboards and data
+        sources
+      olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.8"}]'
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/integr8ly/grafana-operator
+      support: Red Hat
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Represents a Grafana Instance
+        displayName: Grafana
+        kind: Grafana
+        name: grafanas.integreatly.org
+        version: v1alpha1
+      - description: Represents a Grafana Dashboard
+        displayName: Grafana Dashboard
+        kind: GrafanaDashboard
+        name: grafanadashboards.integreatly.org
+        version: v1alpha1
+      - description: Represents a Grafana Data Source
+        displayName: Grafana Data Source
+        kind: GrafanaDataSource
+        name: grafanadatasources.integreatly.org
+        version: v1alpha1
+    description: |
+      A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
+
+      Grafana is an open platform for beautiful analytics and monitoring. For more information please visit the [Grafana website](https://grafana.com)
+
+      # Current status
+
+      The Operator can deploy and manage a Grafana instance on Kubernetes and OpenShift. The following features are supported:
+
+      * Install Grafana to a namespace
+      * Configure Grafana through the custom resource
+      * Import Grafana dashboards from the same or other namespaces
+      * Import Grafana data sources from the same namespace
+      * Install Plugins (panels)
+    displayName: Grafana Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - Grafana
+    - Metrics
+    - Monitoring
+    links:
+    - name: Documentation
+      url: https://github.com/integr8ly/grafana-operator/tree/v3.10.3/documentation
+    - name: Grafana
+      url: https://grafana.com
+    maintainers:
+    - email: integreatly-dev@redhat.com
+      name: Red Hat
+    maturity: alpha
+    provider:
+      name: Red Hat
+relatedImages:
+- image: quay.io/grafana-operator/grafana-operator:v3.10.3
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:a7c7749e7e140bac0c7c2a38e66f5392a14b92df7f2d4fa73be0f98495ea7666
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:e4f8c724b591aa82d17852543c3fc6d138157df870cd606448e16daf54d757e9
+name: grafana-operator.v3.2.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.2.0
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.2.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:e4f8c724b591aa82d17852543c3fc6d138157df870cd606448e16daf54d757e9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:3648f2270d09a8f68a5c271f61e7f4e45f2a450c0cd566d0f57143b855745800
+name: grafana-operator.v3.5.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.5.0
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.5.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:3648f2270d09a8f68a5c271f61e7f4e45f2a450c0cd566d0f57143b855745800
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:96a21c4a728ff768510d151b4b8facc56ebc44784dbc5ca3dfe09de38af6acbe
+name: grafana-operator.v3.6.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.6.0
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.6.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:96a21c4a728ff768510d151b4b8facc56ebc44784dbc5ca3dfe09de38af6acbe
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:3003bbf35ad56c436f9474a2b39ddcf307c65d38f1e3b0905c81695f75f77f25
+name: grafana-operator.v3.7.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.7.0
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.7.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:3003bbf35ad56c436f9474a2b39ddcf307c65d38f1e3b0905c81695f75f77f25
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:646f1039a7ea57fc231dfccf0f2ace70d426006a700fd9321c7a921ccf967bc0
+name: grafana-operator.v3.8.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.8.0
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.8.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:646f1039a7ea57fc231dfccf0f2ace70d426006a700fd9321c7a921ccf967bc0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:45861207b9ec4598e0ab863399c5a92212b5d76de6c46176d8e8c1c4e705cbfd
+name: grafana-operator.v3.8.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.8.1
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.8.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:45861207b9ec4598e0ab863399c5a92212b5d76de6c46176d8e8c1c4e705cbfd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:abef302be0aac62c84925e76cdc7ba34e9a1cec51e033e99018a1ecdfb36d827
+name: grafana-operator.v3.9.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 3.9.0
+relatedImages:
+- image: quay.io/integreatly/grafana-operator:v3.9.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:abef302be0aac62c84925e76cdc7ba34e9a1cec51e033e99018a1ecdfb36d827
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:207c411edcc65a03d11173b6c18daae8c225592c4d7972ee96ec5aad5f1e52cb
+name: grafana-operator.v4.0.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.8"
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.0.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.0.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:207c411edcc65a03d11173b6c18daae8c225592c4d7972ee96ec5aad5f1e52cb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:0ca980d8a020b2792cd6b4a235048dac5d43f30822323eaf21a98710bdd75212
+name: grafana-operator.v4.0.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.0.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.0.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:0ca980d8a020b2792cd6b4a235048dac5d43f30822323eaf21a98710bdd75212
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:e908fddf5ee82b6a64c6c32648363c4e97ae7d79c84fd6920983e7352ebf7885
+name: grafana-operator.v4.0.2
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.0.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.0.2
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:e908fddf5ee82b6a64c6c32648363c4e97ae7d79c84fd6920983e7352ebf7885
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:4befd7f476ef14ba78a46f08a083a89599aa5d33ef23b046f9cb22e7da66d43c
+name: grafana-operator.v4.1.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.1.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.1.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:4befd7f476ef14ba78a46f08a083a89599aa5d33ef23b046f9cb22e7da66d43c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:f6a9cbadbeb0e129f16bd096b4025e199feb4391d86e4bd2ef3176f18c774bcb
+name: grafana-operator.v4.1.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.1.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.1.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:f6a9cbadbeb0e129f16bd096b4025e199feb4391d86e4bd2ef3176f18c774bcb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:813608862cffb2f73213d9c44078ba6c3f592b85ff73ff92302166189966ca2b
+name: grafana-operator.v4.10.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaFolder
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.10.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.10.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:813608862cffb2f73213d9c44078ba6c3f592b85ff73ff92302166189966ca2b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:f249b94eddb01372ff1ffe2a5fac7eb8412719290cbb2c9533f43e656c41174e
+name: grafana-operator.v4.10.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaFolder
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.10.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: '[]'
+      capabilities: Basic Install
+      categories: Monitoring
+      certified: "False"
+      containerImage: quay.io/grafana-operator/grafana-operator:v4.10.1
+      createdAt: "2023-05-29T10:00:12Z"
+      description: A Kubernetes Operator based on the Operator SDK for creating and
+        managing Grafana instances
+      operators.operatorframework.io/builder: operator-sdk-v1.13.1
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+      repository: https://github.com/grafana-operator/grafana-operator
+      support: Red Hat
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: GrafanaDashboard is the Schema for the grafanadashboards API
+        displayName: Grafana Dashboard
+        kind: GrafanaDashboard
+        name: grafanadashboards.integreatly.org
+        version: v1alpha1
+      - kind: GrafanaDataSource
+        name: grafanadatasources.integreatly.org
+        version: v1alpha1
+      - kind: GrafanaFolder
+        name: grafanafolders.integreatly.org
+        version: v1alpha1
+      - kind: GrafanaNotificationChannel
+        name: grafananotificationchannels.integreatly.org
+        version: v1alpha1
+      - description: Grafana is the Schema for the grafanas API
+        displayName: Grafana
+        kind: Grafana
+        name: grafanas.integreatly.org
+        version: v1alpha1
+    description: |
+      A Kubernetes Operator based on the Operator SDK for creating and managing Grafana instances.
+
+      Grafana is an open platform for beautiful analytics and monitoring. For more information please visit the [Grafana website](https://grafana.com)
+
+      # Current status
+
+      The Operator can deploy and manage a Grafana instance on Kubernetes and OpenShift. The following features are supported:
+
+      * Install Grafana to a namespace
+      * Configure Grafana through the custom resource
+      * Import Grafana dashboards from the same or other namespaces
+      * Import Grafana data sources from the same namespace
+      * Install Plugins (panels)
+    displayName: Grafana Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - grafana
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/arch.ppc64le: supported
+      operatorframework.io/arch.s390x: supported
+    links:
+    - name: Grafana Operator
+      url: https://grafana-operator.domain
+    maintainers:
+    - email: pbraun@redhat.com
+      name: Peter Braun
+    - email: hstefans@redhat.com
+      name: Hubert Stefanski
+    maturity: alpha
+    provider:
+      name: Red Hat
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.10.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:f249b94eddb01372ff1ffe2a5fac7eb8412719290cbb2c9533f43e656c41174e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:5b1c800a83e354e65bc4b9a087ca98a2c37354f9a35b6eef1d90f98ce5ef5cd7
+name: grafana-operator.v4.2.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.2.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.2.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:5b1c800a83e354e65bc4b9a087ca98a2c37354f9a35b6eef1d90f98ce5ef5cd7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:0ff39119588862c7b1d37f573157f743a51bc438c5816438fef3a69b4c43385c
+name: grafana-operator.v4.3.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.3.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.3.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:0ff39119588862c7b1d37f573157f743a51bc438c5816438fef3a69b4c43385c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:aae98819e111a1308f5a0d756fe60b187ba1171243cf2c16675356967fc7484e
+name: grafana-operator.v4.4.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.4.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.4.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:aae98819e111a1308f5a0d756fe60b187ba1171243cf2c16675356967fc7484e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:0007d6855a94da9b7cb1ed2b63b916134db616231f41082b4fe2a7f9b2b9784e
+name: grafana-operator.v4.4.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.4.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.4.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:0007d6855a94da9b7cb1ed2b63b916134db616231f41082b4fe2a7f9b2b9784e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:d147c2d63115cf357f883afb54509c1a019259f31a53fba4c2e2c029522b82bd
+name: grafana-operator.v4.5.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.5.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.5.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:d147c2d63115cf357f883afb54509c1a019259f31a53fba4c2e2c029522b82bd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:4c319fc12bbb9867d858a16c5506d169d735731268ea2df7005deaaf8bf35796
+name: grafana-operator.v4.5.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.5.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.5.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:4c319fc12bbb9867d858a16c5506d169d735731268ea2df7005deaaf8bf35796
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:b589e30a102d473278a8bf5519ce286a9ecc69a91d6d246d13c33fe9a3f27d9e
+name: grafana-operator.v4.6.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.6.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.6.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:b589e30a102d473278a8bf5519ce286a9ecc69a91d6d246d13c33fe9a3f27d9e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:63692276c8f19d87ae2270ac1e6caa7d811b365769474a55d3fc839533ddc42f
+name: grafana-operator.v4.7.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaFolder
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.7.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.7.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:63692276c8f19d87ae2270ac1e6caa7d811b365769474a55d3fc839533ddc42f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:6c1aa28ec64c1b7d5daa5ddb49c5d035a1ead19213bb4d932aa202531025863c
+name: grafana-operator.v4.7.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaFolder
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.7.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.7.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:6c1aa28ec64c1b7d5daa5ddb49c5d035a1ead19213bb4d932aa202531025863c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:1b011759566a31525e95cf6239573da5514b4b07f3973bd24511a46c40f23402
+name: grafana-operator.v4.8.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaFolder
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.8.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.8.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:1b011759566a31525e95cf6239573da5514b4b07f3973bd24511a46c40f23402
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:12dfd9c403faee8331f2c004e74959ccd1d9f18e35d1675d9ccee94172a10f06
+name: grafana-operator.v4.9.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: Grafana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDashboard
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaDataSource
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaFolder
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: integreatly.org
+    kind: GrafanaNotificationChannel
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 4.9.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/grafana-operator/grafana-operator:v4.9.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:12dfd9c403faee8331f2c004e74959ccd1d9f18e35d1675d9ccee94172a10f06
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:450fad04128f18e25ca08036812cfa0e72f642247519b0756cd297bc053709b8
+name: grafana-operator.v5.0.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.0.0
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.0.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:450fad04128f18e25ca08036812cfa0e72f642247519b0756cd297bc053709b8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:13a5c64baff6f9603c7322f4c23735eb3d2cd4ce4a16b25c31c10e70803fd369
+name: grafana-operator.v5.0.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.0.1
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.0.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:13a5c64baff6f9603c7322f4c23735eb3d2cd4ce4a16b25c31c10e70803fd369
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:99ffe813da30f3b538533074336450d26c9fbf920379cbde1c7c598d7c599b66
+name: grafana-operator.v5.0.2
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.0.2
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.0.2
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:99ffe813da30f3b538533074336450d26c9fbf920379cbde1c7c598d7c599b66
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:63cad5f210ab8725145e4cd8f3146f028c1921b93523393891e7243fac7ec5e4
+name: grafana-operator.v5.1.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.1.0
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.1.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:63cad5f210ab8725145e4cd8f3146f028c1921b93523393891e7243fac7ec5e4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:b4ed2a2b6b6d66fcfd938500ed636db2e987fe04f50828567f1193cd57b8ba39
+name: grafana-operator.v5.10.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaAlertRuleGroup
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaContactPoint
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.10.0
+relatedImages:
+- image: docker.io/grafana/grafana:10.4.3
+  name: ""
+- image: ghcr.io/grafana/grafana-operator:v5.10.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:b4ed2a2b6b6d66fcfd938500ed636db2e987fe04f50828567f1193cd57b8ba39
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:c89465a53e3ecd5badb5278e3f3939eab3f7fa4a66e604a89357e6dd51cce9f1
+name: grafana-operator.v5.11.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaAlertRuleGroup
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaContactPoint
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.11.0
+relatedImages:
+- image: docker.io/grafana/grafana:10.4.3
+  name: ""
+- image: ghcr.io/grafana/grafana-operator:v5.11.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:c89465a53e3ecd5badb5278e3f3939eab3f7fa4a66e604a89357e6dd51cce9f1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:c43c33a9c73bef8eabbdeb10a3dfff2b6ee393493ca11a997e50ab2857363e51
+name: grafana-operator.v5.12.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaAlertRuleGroup
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaContactPoint
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaNotificationPolicy
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.12.0
+relatedImages:
+- image: docker.io/grafana/grafana:10.4.3
+  name: ""
+- image: ghcr.io/grafana/grafana-operator:v5.12.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:c43c33a9c73bef8eabbdeb10a3dfff2b6ee393493ca11a997e50ab2857363e51
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:07463a1c969524d8f827accce72cd20b608f52877c425f6b26a47c92fc7dad8d
+name: grafana-operator.v5.13.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaAlertRuleGroup
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaContactPoint
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaNotificationPolicy
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.13.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "grafana.integreatly.org/v1beta1",
+            "kind": "Grafana",
+            "metadata": {
+              "labels": {
+                "dashboards": "grafana-a",
+                "folders": "grafana-a"
+              },
+              "name": "grafana-a"
+            },
+            "spec": {
+              "config": {
+                "auth": {
+                  "disable_login_form": "false"
+                },
+                "log": {
+                  "mode": "console"
+                },
+                "security": {
+                  "admin_password": "start",
+                  "admin_user": "root"
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "grafana.integreatly.org/v1beta1",
+            "kind": "GrafanaAlertRuleGroup",
+            "metadata": {
+              "name": "grafanaalertrulegroup-sample"
+            },
+            "spec": {
+              "folderRef": "test-folder-from-operator",
+              "instanceSelector": {
+                "matchLabels": {
+                  "dashboards": "grafana"
+                }
+              },
+              "interval": "5m",
+              "rules": [
+                {
+                  "condition": "B",
+                  "data": [
+                    {
+                      "datasourceUid": "grafanacloud-demoinfra-prom",
+                      "model": {
+                        "datasource": {
+                          "type": "prometheus",
+                          "uid": "grafanacloud-demoinfra-prom"
+                        },
+                        "editorMode": "code",
+                        "expr": "weather_temp_c{}",
+                        "instant": true,
+                        "intervalMs": 1000,
+                        "legendFormat": "__auto",
+                        "maxDataPoints": 43200,
+                        "range": false,
+                        "refId": "A"
+                      },
+                      "refId": "A",
+                      "relativeTimeRange": {
+                        "from": 600
+                      }
+                    },
+                    {
+                      "datasourceUid": "__expr__",
+                      "model": {
+                        "conditions": [
+                          {
+                            "evaluator": {
+                              "params": [
+                                0
+                              ],
+                              "type": "gt"
+                            },
+                            "operator": {
+                              "type": "and"
+                            },
+                            "query": {
+                              "params": [
+                                "C"
+                              ]
+                            },
+                            "reducer": {
+                              "params": [],
+                              "type": "last"
+                            },
+                            "type": "query"
+                          }
+                        ],
+                        "datasource": {
+                          "type": "__expr__",
+                          "uid": "__expr__"
+                        },
+                        "expression": "A",
+                        "intervalMs": 1000,
+                        "maxDataPoints": 43200,
+                        "refId": "B",
+                        "type": "threshold"
+                      },
+                      "refId": "B",
+                      "relativeTimeRange": {
+                        "from": 600
+                      }
+                    }
+                  ],
+                  "execErrState": "Error",
+                  "for": "5m0s",
+                  "noDataState": "NoData",
+                  "title": "Temperature below freezing",
+                  "uid": "4843de5c-4f8a-4af0-9509-23526a04faf8"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "grafana.integreatly.org/v1beta1",
+            "kind": "GrafanaContactPoint",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/created-by": "grafana-operator",
+                "app.kubernetes.io/instance": "grafanacontactpoint-sample",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "grafanacontactpoint",
+                "app.kubernetes.io/part-of": "grafana-operator"
+              },
+              "name": "grafanacontactpoint-sample"
+            },
+            "spec": {
+              "instanceSelector": {
+                "matchLabels": {
+                  "dashboards": "grafana-a"
+                }
+              },
+              "name": "grafanacontactpoint-sample",
+              "settings": {
+                "email": null
+              },
+              "type": "email"
+            }
+          },
+          {
+            "apiVersion": "grafana.integreatly.org/v1beta1",
+            "kind": "GrafanaDashboard",
+            "metadata": {
+              "name": "grafanadashboard-sample"
+            },
+            "spec": {
+              "instanceSelector": {
+                "matchLabels": {
+                  "dashboards": "grafana-a"
+                }
+              },
+              "json": "{\n\n  \"id\": null,\n  \"title\": \"Simple Dashboard\",\n  \"tags\": [],\n  \"style\": \"dark\",\n  \"timezone\": \"browser\",\n  \"editable\": true,\n  \"hideControls\": false,\n  \"graphTooltip\": 1,\n  \"panels\": [],\n  \"time\": {\n    \"from\": \"now-6h\",\n    \"to\": \"now\"\n  },\n  \"timepicker\": {\n    \"time_options\": [],\n    \"refresh_intervals\": []\n  },\n  \"templating\": {\n    \"list\": []\n  },\n  \"annotations\": {\n    \"list\": []\n  },\n  \"refresh\": \"5s\",\n  \"schemaVersion\": 17,\n  \"version\": 0,\n  \"links\": []\n}\n"
+            }
+          },
+          {
+            "apiVersion": "grafana.integreatly.org/v1beta1",
+            "kind": "GrafanaDatasource",
+            "metadata": {
+              "name": "grafanadatasource-sample"
+            },
+            "spec": {
+              "datasource": {
+                "access": "proxy",
+                "isDefault": true,
+                "jsonData": {
+                  "timeInterval": "5s",
+                  "tlsSkipVerify": true
+                },
+                "name": "prometheus",
+                "type": "prometheus",
+                "url": "http://prometheus-service:9090"
+              },
+              "instanceSelector": {
+                "matchLabels": {
+                  "dashboards": "grafana-a"
+                }
+              },
+              "plugins": [
+                {
+                  "name": "grafana-clock-panel",
+                  "version": "1.3.0"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "grafana.integreatly.org/v1beta1",
+            "kind": "GrafanaFolder",
+            "metadata": {
+              "name": "grafanafolder-sample"
+            },
+            "spec": {
+              "instanceSelector": {
+                "matchLabels": {
+                  "dashboards": "grafana-a"
+                }
+              },
+              "title": "Example Folder"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Monitoring
+      containerImage: ghcr.io/grafana/grafana-operator:v5.13.0
+      createdAt: "2024-09-11T09:10:16Z"
+      description: Deploys and manages Grafana instances, dashboards and data sources
+      operators.operatorframework.io/builder: operator-sdk-v1.32.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/grafana/grafana-operator
+      support: Grafana Labs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: GrafanaAlertRuleGroup is the Schema for the grafanaalertrulegroups
+          API
+        displayName: Grafana Alert Rule Group
+        kind: GrafanaAlertRuleGroup
+        name: grafanaalertrulegroups.grafana.integreatly.org
+        version: v1beta1
+      - description: GrafanaContactPoint is the Schema for the grafanacontactpoints
+          API
+        displayName: Grafana Contact Point
+        kind: GrafanaContactPoint
+        name: grafanacontactpoints.grafana.integreatly.org
+        version: v1beta1
+      - description: GrafanaDashboard is the Schema for the grafanadashboards API
+        displayName: Grafana Dashboard
+        kind: GrafanaDashboard
+        name: grafanadashboards.grafana.integreatly.org
+        version: v1beta1
+      - description: GrafanaDatasource is the Schema for the grafanadatasources API
+        displayName: Grafana Datasource
+        kind: GrafanaDatasource
+        name: grafanadatasources.grafana.integreatly.org
+        version: v1beta1
+      - description: GrafanaFolder is the Schema for the grafanafolders API
+        displayName: Grafana Folder
+        kind: GrafanaFolder
+        name: grafanafolders.grafana.integreatly.org
+        version: v1beta1
+      - kind: GrafanaNotificationPolicy
+        name: grafananotificationpolicies.grafana.integreatly.org
+        version: v1beta1
+      - description: Grafana is the Schema for the grafanas API
+        displayName: Grafana
+        kind: Grafana
+        name: grafanas.grafana.integreatly.org
+        version: v1beta1
+    description: Deploys and manages Grafana instances, dashboards and data sources
+    displayName: Grafana Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - Grafana
+    - Metrics
+    - Observability
+    links:
+    - name: Grafana Operator
+      url: https://grafana.github.io/grafana-operator
+    maintainers:
+    - email: grafana-operator@grafana.com
+      name: Grafana-operator maintainers
+    maturity: stable
+    minKubeVersion: 1.23.0
+    provider:
+      name: Grafana Labs
+      url: https://grafana.com
+relatedImages:
+- image: docker.io/grafana/grafana:10.4.3
+  name: grafana
+- image: ghcr.io/grafana/grafana-operator:v5.13.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:07463a1c969524d8f827accce72cd20b608f52877c425f6b26a47c92fc7dad8d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:6a8ee684fe129fa3ed50e100bcba8eeb17d37eb9f260986d01b4ba523239a861
+name: grafana-operator.v5.2.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.2.0
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.2.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:6a8ee684fe129fa3ed50e100bcba8eeb17d37eb9f260986d01b4ba523239a861
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:3574e614d9b30fe6066d5fda43551ded27c9e996be97194c700aa6ae4674e0e8
+name: grafana-operator.v5.3.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.3.0
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.3.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:3574e614d9b30fe6066d5fda43551ded27c9e996be97194c700aa6ae4674e0e8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:0ab1baee4f95c3f278be36ebb829856e6737d62a96ccf36df02223cb174bd21d
+name: grafana-operator.v5.4.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.4.0
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.4.0
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:0ab1baee4f95c3f278be36ebb829856e6737d62a96ccf36df02223cb174bd21d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:6d5daf0a77921b383f0a0f9a22699d942be734cce6ea6a03698bc82636805c57
+name: grafana-operator.v5.4.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.4.1
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.4.1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:6d5daf0a77921b383f0a0f9a22699d942be734cce6ea6a03698bc82636805c57
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:d1bba1ab6352c1530f645e9de57f7a4413e0ac23b0430e33880c83a848ae0137
+name: grafana-operator.v5.4.2
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.4.2
+relatedImages:
+- image: ghcr.io/grafana-operator/grafana-operator:v5.4.2
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:d1bba1ab6352c1530f645e9de57f7a4413e0ac23b0430e33880c83a848ae0137
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:6121b080036677fa6c0aaf40cb349026fb0c44d04a2b2c3e048f5048da3e5133
+name: grafana-operator.v5.5.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.5.0
+relatedImages:
+- image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+  name: ""
+- image: ghcr.io/grafana-operator/grafana-operator@sha256:fa0330b2ed2ee62bb6bbfc65d3af69188eb7724990b326d0cfb277b5dddfea09
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:6121b080036677fa6c0aaf40cb349026fb0c44d04a2b2c3e048f5048da3e5133
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:b7ca644a9c69cbcfe500e208018ae8d8f96c99c37c9f2eada6f943a4a275655f
+name: grafana-operator.v5.5.2
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.5.2
+relatedImages:
+- image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+  name: ""
+- image: ghcr.io/grafana-operator/grafana-operator@sha256:2c0c5c09a5801a6c2bacb11126c3f98eaf3873ebee90e269a8a3b2fcae069583
+  name: ""
+- image: ghcr.io/grafana-operator/grafana-operator@sha256:fa0330b2ed2ee62bb6bbfc65d3af69188eb7724990b326d0cfb277b5dddfea09
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:b7ca644a9c69cbcfe500e208018ae8d8f96c99c37c9f2eada6f943a4a275655f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:dcdb4a8c15a54df774541a8fccb727744caa5fc01528f0445ae2eb74c72e35c7
+name: grafana-operator.v5.6.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.6.0
+relatedImages:
+- image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:dcdb4a8c15a54df774541a8fccb727744caa5fc01528f0445ae2eb74c72e35c7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:a8ed53d1ed8091938c1a93bc7a0efeeda23b12ac2c6ad0939fb8cf8828c37d06
+name: grafana-operator.v5.6.1
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.6.1
+relatedImages:
+- image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:49ed7bdbae0b9a43e31df2e8ad2baad07042cf098d3c5944c4ce96e20a296695
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:a8ed53d1ed8091938c1a93bc7a0efeeda23b12ac2c6ad0939fb8cf8828c37d06
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:888283d52ec212e11ee1d8ed4517a8cee9ad80c4f6d4e1b84d945efe57e52c43
+name: grafana-operator.v5.6.2
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.6.2
+relatedImages:
+- image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:c24be6bbde79e4a689d6398327d3ec4223a84d94d3b59d5535ccb14eb56f6886
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:888283d52ec212e11ee1d8ed4517a8cee9ad80c4f6d4e1b84d945efe57e52c43
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:f4bde02a3d962553f8e8a3eccbabeff02195e9a5d1288f9d689af70b7e61a384
+name: grafana-operator.v5.6.3
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.6.3
+relatedImages:
+- image: docker.io/grafana/grafana@sha256:ff68ed4324e471ffa269aa5308cdcf12276ef2d5a660daea95db9d629a32a7d8
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:e398d39e48abdd16ae126233bc3b485b0c7f79e9b087fc5db5c164e9d64da276
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:f4bde02a3d962553f8e8a3eccbabeff02195e9a5d1288f9d689af70b7e61a384
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:0af6c172ecb79f84a3420bc8227c6cddfa4b3877324706318698bc07319ba09f
+name: grafana-operator.v5.7.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaAlertRuleGroup
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.7.0
+relatedImages:
+- image: docker.io/grafana/grafana@sha256:9a2acaa26a0b302a56d8e113068a1297cf0726fcaff5e6bb77344888e5f1c976
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:f286ca4291c05b937b90ff5d340aad3dab23d2c274885d3ed874d144c8e7e5c1
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:0af6c172ecb79f84a3420bc8227c6cddfa4b3877324706318698bc07319ba09f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:e9c459b33a3f97cb8084a64763ff3d4a0427556893a52945188fa6facb78ef70
+name: grafana-operator.v5.8.0
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaAlertRuleGroup
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.8.0
+relatedImages:
+- image: docker.io/grafana/grafana@sha256:9a2acaa26a0b302a56d8e113068a1297cf0726fcaff5e6bb77344888e5f1c976
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:2532f42ae54bf47885831886845767b3de9f824f2956c193f5f946cc58b14df3
+  name: ""
+- image: ghcr.io/grafana/grafana-operator@sha256:97561cef949b58f55ec67d133c02ac205e2ec3fb77388aeb868dacfcebad0752
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:e9c459b33a3f97cb8084a64763ff3d4a0427556893a52945188fa6facb78ef70
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/grafana-operator@sha256:c60c52ed99c5133ccedb192ebecd2474be888e76bc0ba58e3a6ae9de436dd7b4
+name: grafana-operator.v5.9.2
+package: grafana-operator
+properties:
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: Grafana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaAlertRuleGroup
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaContactPoint
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDashboard
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaDatasource
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: grafana.integreatly.org
+    kind: GrafanaFolder
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: grafana-operator
+    version: 5.9.2
+relatedImages:
+- image: docker.io/grafana/grafana:10.4.3
+  name: ""
+- image: ghcr.io/grafana/grafana-operator:v5.9.2
+  name: ""
+- image: quay.io/operatorhubio/grafana-operator@sha256:c60c52ed99c5133ccedb192ebecd2474be888e76bc0ba58e3a6ae9de436dd7b4
+  name: ""
+schema: olm.bundle

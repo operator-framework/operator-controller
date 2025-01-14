@@ -1,0 +1,126 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV/TSkVaHAwi4pChOlkQFREnrUIRKoRaoVUH89EvaNKQpLg4Cq4FBz8Wqw4uzro6uAqC4AeIm5uToouU+L+k0CLGg+N+vLv3uHsHcI2KolmhMUDTbTOdTAjZ3KoQfkUI/YhiBrykWMacKKbgO77uEWDrXZxl+Z/7c0TVvKUAAYF4VjFMm3iDeGrTNhjvE/NKSVKJz4lHTbog8SPTZY/fGBdd5lgmb2bS88Q8sVDsYLmDlZKpEU8Sx1RNp3wu67HKeIuxVqkprXuyF0by+soy02kOIYlFLEGEABk1lFGBjTitOikW0rSf8PEPun6RXDK5ylDIsYAqNEiuH+wPfndrFSbGvaRIAuh6cZyPYSC8CzTrjvN97DjNEyD4DFzpbX+1AUx/kl5va7EjoHcbuLhua/IecLkDDDwZkim5UpAmVygA72f0TTmg7xboWfN6a+3j9AHIUFepG+DgEBgpUva6z7u7O3v790yrvx+RE3KzUJ2xwQAAAAZiS0dEAP8A0QAAv2wj9AAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAd0SU1FB+UEFg4KE35gCkwAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABSUlEQVR42u3bsQ2CQBSAYThchNKEEE1cw4Jd1BloHIaELYwJCY2dLHLgBNoZIHxf+5rLy3/XXZIA25X+Gh5vzWmaksesJ8zGvKurYY3LLS9tEdLYz7u+sH/ez69v8+AObJsABIAAEAACQAAIAAEgAASAABAAAkAACAABIAAEgAAQAAJAAAgAASAABIAAEAACQAAIAAEgAASAABAAAkAACAABIAAEgAAQAAJAAMxlt/gTxvA+XJuVrjd6ARAAAkAACAABIAAEgAAQAAJAAAgAASAABIAAEAACQAAIAAEgAP5p+f8CsjHv6mpY43LLS1uENPZeAASAABAAAkAACAABIAAEgAAQAAJAAAgAASAABIAAEAACQAAIAAEgAASAABAAAkAACAABIAAEgAAQAAJAAAgAASAABIAAEAACQAAIAAEgAASAABAAbNwHrgkbLzobYhAAAAAASUVORK5CYII=
+  mediatype: image/png
+name: horreum-operator
+schema: olm.package
+---
+entries:
+- name: horreum-operator.v0.0.2
+- name: horreum-operator.v0.7.9
+  replaces: horreum-operator.v0.0.2
+name: alpha
+package: horreum-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/horreum-operator@sha256:f11971235701af017fe4329665bfdb803e7deb4bffe15da01eea16407d735969
+name: horreum-operator.v0.0.2
+package: horreum-operator
+properties:
+- type: olm.gvk
+  value:
+    group: hyperfoil.io
+    kind: Horreum
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: horreum-operator
+    version: 0.0.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/hyperfoil/horreum-operator:v0.0.2
+  name: ""
+- image: quay.io/operatorhubio/horreum-operator@sha256:f11971235701af017fe4329665bfdb803e7deb4bffe15da01eea16407d735969
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/horreum-operator@sha256:967c0f8e0f153b40bdfe1c3c6e12496334ccab9557c481344fce2b42caa6c12b
+name: horreum-operator.v0.7.9
+package: horreum-operator
+properties:
+- type: olm.gvk
+  value:
+    group: hyperfoil.io
+    kind: Horreum
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: horreum-operator
+    version: 0.7.9
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "hyperfoil.io/v1alpha1",
+            "kind": "Horreum",
+            "metadata": {
+              "name": "horreum"
+            },
+            "spec": {
+              "nodeHost": "127.0.0.1"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Integration & Delivery
+      containerImage: quay.io/hyperfoil/horreum-operator:0.7.9
+      createdAt: "2023-06-13T10:42:39Z"
+      description: Performance results repository
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/hyperfoil/horreum-operator
+      support: Red Hat Application Runtimes Performance Team
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Horreum is the object configuring Horreum performance results
+          repository
+        displayName: Horreum
+        kind: Horreum
+        name: horreums.hyperfoil.io
+        version: v1alpha1
+    description: Performance results repository
+    displayName: Horreum
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - performance
+    - repository
+    - database
+    - results
+    - hyperfoil
+    - benchmark
+    links:
+    - name: Horreum Operator
+      url: https://horreum-operator.domain
+    maintainers:
+    - email: rvansa@redhat.com
+      name: Radim Vansa
+    - email: spederse@redhat.com
+      name: Ståle W. Pedersen
+    - email: wreicher@redhat.com
+      name: Will Reichert
+    maturity: alpha
+    minKubeVersion: 1.16.0
+    provider:
+      name: Red Hat, Inc.
+      url: https://horreum.hyperfoil.io
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/hyperfoil/horreum-operator:0.7.9
+  name: ""
+- image: quay.io/operatorhubio/horreum-operator@sha256:967c0f8e0f153b40bdfe1c3c6e12496334ccab9557c481344fce2b42caa6c12b
+  name: ""
+schema: olm.bundle

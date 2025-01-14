@@ -1,0 +1,3473 @@
+---
+defaultChannel: stable
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgaW5rc2NhcGU6dmVyc2lvbj0iMS4wICg0MDM1YTRmYjQ5LCAyMDIwLTA1LTAxKSIKICAgaGVpZ2h0PSI2NCIKICAgd2lkdGg9IjY0IgogICBzb2RpcG9kaTpkb2NuYW1lPSJjbHVzdGVyLWNvbG9yLTY0eDY0LnN2ZyIKICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIKICAgdmlld0JveD0iMCAwIDY0IDY0IgogICB5PSIwcHgiCiAgIHg9IjBweCIKICAgaWQ9IkxheWVyXzEiCiAgIHZlcnNpb249IjEuMSI+PG1ldGFkYXRhCiAgIGlkPSJtZXRhZGF0YTExOCI+PHJkZjpSREY+PGNjOldvcmsKICAgICAgIHJkZjphYm91dD0iIj48ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD48ZGM6dHlwZQogICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPjxkYzp0aXRsZT48L2RjOnRpdGxlPjwvY2M6V29yaz48L3JkZjpSREY+PC9tZXRhZGF0YT48ZGVmcwogICBpZD0iZGVmczExNiIgLz48c29kaXBvZGk6bmFtZWR2aWV3CiAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9IkxheWVyXzEiCiAgIGlua3NjYXBlOndpbmRvdy1tYXhpbWl6ZWQ9IjEiCiAgIGlua3NjYXBlOndpbmRvdy15PSIwIgogICBpbmtzY2FwZTp3aW5kb3cteD0iMCIKICAgaW5rc2NhcGU6Y3k9IjUwLjkwMzQ1NiIKICAgaW5rc2NhcGU6Y3g9IjEyIgogICBpbmtzY2FwZTp6b29tPSIzNC45NTgzMzMiCiAgIGZpdC1tYXJnaW4tYm90dG9tPSIwIgogICBmaXQtbWFyZ2luLXJpZ2h0PSIwIgogICBmaXQtbWFyZ2luLWxlZnQ9IjAiCiAgIGZpdC1tYXJnaW4tdG9wPSIwIgogICBzaG93Z3JpZD0iZmFsc2UiCiAgIGlkPSJuYW1lZHZpZXcxMTQiCiAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEzODgiCiAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMjU2MCIKICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiIKICAgaW5rc2NhcGU6cGFnZW9wYWNpdHk9IjAiCiAgIGd1aWRldG9sZXJhbmNlPSIxMCIKICAgZ3JpZHRvbGVyYW5jZT0iMTAiCiAgIG9iamVjdHRvbGVyYW5jZT0iMTAiCiAgIGJvcmRlcm9wYWNpdHk9IjEiCiAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2IgogICBwYWdlY29sb3I9IiNmZmZmZmYiIC8+CjxzdHlsZQogICBpZD0ic3R5bGU5MSIKICAgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiNGRkQxMDY7fQoJLnN0MXtmaWxsOiMyMUJBQjA7fQoJLnN0MntmaWxsOiNFRTRGOTc7fQoJLnN0M3tmaWxsOiMxNEE3REY7fQoJLnN0NHtmaWxsOiM5MUM3M0U7fQoJLnN0NXtmaWxsOiMwMjc5QTA7fQoJLnN0NntmaWxsOm5vbmU7fQo8L3N0eWxlPgo8ZwogICB0cmFuc2Zvcm09InNjYWxlKDIuNjU1NjAxNywyLjY2NjY2NjcpIgogICBpZD0iZzEwOSI+Cgk8ZwogICBpZD0iZzEwNyI+CgkJPGcKICAgaWQ9ImcxMDUiPgoJCQk8cGF0aAogICBpZD0icGF0aDkzIgogICBkPSJtIDkuMiwxMC4yIDUuNywyLjYgNS43LC01IEMgMjAuNyw3LjQgMjAuNyw3IDIwLjcsNi41IDIwLjcsMyAxNy44LDAuMSAxNC4zLDAuMSAxMi4yLDAuMSAxMC4yLDEuMSA5LDIuOSBsIC0xLDUgeiIKICAgY2xhc3M9InN0MCIgLz4KCQkJPHBhdGgKICAgaWQ9InBhdGg5NSIKICAgZD0ibSAzLjMsMTYuMiBjIC0wLjEsMC40IC0wLjEsMC44IC0wLjEsMS4zIDAsMy41IDIuOSw2LjQgNi40LDYuNCAyLjEsMCA0LjEsLTEuMSA1LjMsLTIuOCBsIDAuOSwtNC45IC0xLjMsLTIuNCAtNS43LC0yLjYgeiIKICAgY2xhc3M9InN0MSIgLz4KCQkJPHBhdGgKICAgaWQ9InBhdGg5NyIKICAgZD0iTSAzLjMsNi40IDcuMiw3LjMgOCwyLjkgQyA3LjUsMi40IDYuOSwyLjIgNi4yLDIuMiA0LjUsMi4yIDMuMSwzLjYgMy4xLDUuMyAzLjEsNS43IDMuMiw2IDMuMyw2LjQiCiAgIGNsYXNzPSJzdDIiIC8+CgkJCTxwYXRoCiAgIGlkPSJwYXRoOTkiCiAgIGQ9Im0gMyw3LjMgYyAtMS43LDAuNiAtMywyLjIgLTMsNC4xIDAsMS44IDEuMSwzLjQgMi44LDQgbCA1LjUsLTQuOSAtMSwtMi4xIHoiCiAgIGNsYXNzPSJzdDMiIC8+CgkJCTxwYXRoCiAgIGlkPSJwYXRoMTAxIgogICBkPSJtIDE2LDIxLjEgYyAwLjUsMC40IDEuMiwwLjYgMS45LDAuNiAxLjcsMCAzLjEsLTEuNCAzLjEsLTMuMSAwLC0wLjQgLTAuMSwtMC43IC0wLjIsLTEuMSBsIC0zLjksLTAuOSB6IgogICBjbGFzcz0ic3Q0IiAvPgoJCQk8cGF0aAogICBpZD0icGF0aDEwMyIKICAgZD0ibSAxNi44LDE1LjcgNC4zLDEgYyAxLjcsLTAuNiAzLC0yLjIgMywtNC4xIDAsLTEuOCAtMS4xLC0zLjQgLTIuOCwtNCBsIC01LjYsNC45IHoiCiAgIGNsYXNzPSJzdDUiIC8+CgkJPC9nPgoJPC9nPgo8L2c+CjxyZWN0CiAgIHN0eWxlPSJzdHJva2Utd2lkdGg6Mi42NjExMyIKICAgeT0iMCIKICAgeD0iMCIKICAgaWQ9InJlY3QxMTEiCiAgIGhlaWdodD0iNjQiCiAgIHdpZHRoPSI2My43MzQ0NCIKICAgY2xhc3M9InN0NiIgLz4KPC9zdmc+Cg==
+  mediatype: image/svg+xml
+name: elastic-cloud-eck
+schema: olm.package
+---
+entries:
+- name: elastic-cloud-eck.v0.9.0
+- name: elastic-cloud-eck.v1.0.0
+  replaces: elastic-cloud-eck.v1.0.0-beta1
+- name: elastic-cloud-eck.v1.0.0-beta1
+  replaces: elastic-cloud-eck.v0.9.0
+- name: elastic-cloud-eck.v1.0.1
+  replaces: elastic-cloud-eck.v1.0.0
+- name: elastic-cloud-eck.v1.1.0
+  replaces: elastic-cloud-eck.v1.0.1
+- name: elastic-cloud-eck.v1.1.1
+  replaces: elastic-cloud-eck.v1.1.0
+- name: elastic-cloud-eck.v1.1.2
+  replaces: elastic-cloud-eck.v1.1.1
+- name: elastic-cloud-eck.v1.2.0
+  replaces: elastic-cloud-eck.v1.1.2
+- name: elastic-cloud-eck.v1.2.1
+  replaces: elastic-cloud-eck.v1.2.0
+- name: elastic-cloud-eck.v1.3.0
+  replaces: elastic-cloud-eck.v1.2.1
+- name: elastic-cloud-eck.v1.3.1
+  replaces: elastic-cloud-eck.v1.3.0
+- name: elastic-cloud-eck.v1.4.0
+  replaces: elastic-cloud-eck.v1.3.1
+- name: elastic-cloud-eck.v1.5.0
+  replaces: elastic-cloud-eck.v1.4.0
+- name: elastic-cloud-eck.v1.6.0
+  replaces: elastic-cloud-eck.v1.5.0
+- name: elastic-cloud-eck.v1.7.0
+  replaces: elastic-cloud-eck.v1.6.0
+- name: elastic-cloud-eck.v1.7.1
+  replaces: elastic-cloud-eck.v1.7.0
+- name: elastic-cloud-eck.v1.8.0
+  replaces: elastic-cloud-eck.v1.7.1
+- name: elastic-cloud-eck.v1.9.0
+  replaces: elastic-cloud-eck.v1.8.0
+- name: elastic-cloud-eck.v1.9.1
+  replaces: elastic-cloud-eck.v1.9.0
+- name: elastic-cloud-eck.v2.0.0
+  replaces: elastic-cloud-eck.v1.9.1
+- name: elastic-cloud-eck.v2.1.0
+  replaces: elastic-cloud-eck.v2.0.0
+- name: elastic-cloud-eck.v2.10.0
+  replaces: elastic-cloud-eck.v2.9.0
+- name: elastic-cloud-eck.v2.11.0
+  replaces: elastic-cloud-eck.v2.10.0
+- name: elastic-cloud-eck.v2.11.1
+  replaces: elastic-cloud-eck.v2.11.0
+- name: elastic-cloud-eck.v2.12.0
+  replaces: elastic-cloud-eck.v2.11.1
+- name: elastic-cloud-eck.v2.12.1
+  replaces: elastic-cloud-eck.v2.12.0
+- name: elastic-cloud-eck.v2.13.0
+  replaces: elastic-cloud-eck.v2.12.1
+- name: elastic-cloud-eck.v2.14.0
+  replaces: elastic-cloud-eck.v2.13.0
+- name: elastic-cloud-eck.v2.2.0
+  replaces: elastic-cloud-eck.v2.1.0
+- name: elastic-cloud-eck.v2.3.0
+  replaces: elastic-cloud-eck.v2.2.0
+- name: elastic-cloud-eck.v2.4.0
+  replaces: elastic-cloud-eck.v2.3.0
+- name: elastic-cloud-eck.v2.5.0
+  replaces: elastic-cloud-eck.v2.4.0
+- name: elastic-cloud-eck.v2.6.1
+  replaces: elastic-cloud-eck.v2.5.0
+- name: elastic-cloud-eck.v2.6.2
+  replaces: elastic-cloud-eck.v2.6.1
+- name: elastic-cloud-eck.v2.7.0
+  replaces: elastic-cloud-eck.v2.6.2
+- name: elastic-cloud-eck.v2.8.0
+  replaces: elastic-cloud-eck.v2.7.0
+- name: elastic-cloud-eck.v2.9.0
+  replaces: elastic-cloud-eck.v2.8.0
+name: stable
+package: elastic-cloud-eck
+schema: olm.channel
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:08e71832b163dce0407ce3f7d44971e63684cf7ce6dd4da3471773fba11fbf64
+name: elastic-cloud-eck.v0.9.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 0.9.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:0.9.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:08e71832b163dce0407ce3f7d44971e63684cf7ce6dd4da3471773fba11fbf64
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:39f1e6cbc5c12d6589bc997a3a808cd1da5d9acc674b27f413c546cc778a91de
+name: elastic-cloud-eck.v1.0.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.0.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.0.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:39f1e6cbc5c12d6589bc997a3a808cd1da5d9acc674b27f413c546cc778a91de
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:b2aadf440e1c579fd67dd0c08139dff75fc8211ef75dc3833e6943bae3085df2
+name: elastic-cloud-eck.v1.0.0-beta1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.0.0-beta1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.0.0-beta1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:b2aadf440e1c579fd67dd0c08139dff75fc8211ef75dc3833e6943bae3085df2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:7a38b6abf44d7000dea92ecd88257da2dec3fd28cec37b3d6d2677ab18cb1638
+name: elastic-cloud-eck.v1.0.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.0.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.0.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:7a38b6abf44d7000dea92ecd88257da2dec3fd28cec37b3d6d2677ab18cb1638
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:db8157d841fd83725af0d7ea203e5d7581009742389952f72ce3aa535c80247c
+name: elastic-cloud-eck.v1.1.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.1.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.1.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:db8157d841fd83725af0d7ea203e5d7581009742389952f72ce3aa535c80247c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:a809743e77728b138f7f280d4221609033e0ad0e3c4d67600b8fc04379c7899d
+name: elastic-cloud-eck.v1.1.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.1.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.1.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:a809743e77728b138f7f280d4221609033e0ad0e3c4d67600b8fc04379c7899d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:a65a884b9075e3ac8f132cb64e1099a1351c8bb5ad02922f19aa3789059281de
+name: elastic-cloud-eck.v1.1.2
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.1.2
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.1.2
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:a65a884b9075e3ac8f132cb64e1099a1351c8bb5ad02922f19aa3789059281de
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:7787c7d56e2b04d909074d89d26998c4dc37666df4963589230d9bc039951b6d
+name: elastic-cloud-eck.v1.2.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.2.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.2.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:7787c7d56e2b04d909074d89d26998c4dc37666df4963589230d9bc039951b6d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:7e50f575312e7cd674c09ee99e5629f8e6152c978b4ddd679a22208abb5de31d
+name: elastic-cloud-eck.v1.2.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.2.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.2.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:7e50f575312e7cd674c09ee99e5629f8e6152c978b4ddd679a22208abb5de31d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:43aa0a91b8daad53a6b8cf16c1304c0525b3dee98c9b5b61396d94e246f2f179
+name: elastic-cloud-eck.v1.3.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.3.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.3.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:43aa0a91b8daad53a6b8cf16c1304c0525b3dee98c9b5b61396d94e246f2f179
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:884ad51737fd60a348ba0791c9cd2953845ecc3cf3a72f27cd9581966124b388
+name: elastic-cloud-eck.v1.3.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.3.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.3.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:884ad51737fd60a348ba0791c9cd2953845ecc3cf3a72f27cd9581966124b388
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:212c1570c7fb708ce8ae676841c360b1e5b6b697bf5921d290a482a47e97fe4f
+name: elastic-cloud-eck.v1.4.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.4.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.4.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:212c1570c7fb708ce8ae676841c360b1e5b6b697bf5921d290a482a47e97fe4f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:dff8de19e5d297ab014eab704152898b26d004cdf834efbb950ebb84b6fea973
+name: elastic-cloud-eck.v1.5.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.5.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.5.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:dff8de19e5d297ab014eab704152898b26d004cdf834efbb950ebb84b6fea973
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:7c93e760eaa0dea5d5397115f3c937a888bbb8c43e06aef310571a55706b6ef1
+name: elastic-cloud-eck.v1.6.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.6.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.6.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:7c93e760eaa0dea5d5397115f3c937a888bbb8c43e06aef310571a55706b6ef1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:0275070eb6198a52c455cfe1bd886739482e3a3717bb71c9ea41f577421ed36c
+name: elastic-cloud-eck.v1.7.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.7.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.7.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:0275070eb6198a52c455cfe1bd886739482e3a3717bb71c9ea41f577421ed36c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:061e64857a482b348c57faef889410ae60125a489d8ed788a4a5e18a71cdc12b
+name: elastic-cloud-eck.v1.7.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.7.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.7.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:061e64857a482b348c57faef889410ae60125a489d8ed788a4a5e18a71cdc12b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:663067af9f9436dff780331d08c1df8205251c3fdbc840586a2772d1497f2f12
+name: elastic-cloud-eck.v1.8.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.8.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.8.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:663067af9f9436dff780331d08c1df8205251c3fdbc840586a2772d1497f2f12
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:63760f4533edbde1415434337870c6da79211fae4cc7a2e2b51c2462c01fa78f
+name: elastic-cloud-eck.v1.9.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.9.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.9.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:63760f4533edbde1415434337870c6da79211fae4cc7a2e2b51c2462c01fa78f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:8c41aabcd27c6db55a043ce2e5fece2043b9144debc6ab33dc6e5d1be371332c
+name: elastic-cloud-eck.v1.9.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 1.9.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:1.9.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:8c41aabcd27c6db55a043ce2e5fece2043b9144debc6ab33dc6e5d1be371332c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:e251214e17632ff38ec1455ec273fd276968d5a34d535b20e246edca8505cf27
+name: elastic-cloud-eck.v2.0.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.0.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.0.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:e251214e17632ff38ec1455ec273fd276968d5a34d535b20e246edca8505cf27
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:ac5d05f049b7fe74f3b9c3428eeac7d59233fd1815e5c54e938ff6f54f436369
+name: elastic-cloud-eck.v2.1.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.1.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.1.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:ac5d05f049b7fe74f3b9c3428eeac7d59233fd1815e5c54e938ff6f54f436369
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:c78daf3996cff2450ec7bcb7c1591b991ef0a630d42aadd316eb50d45d927ebf
+name: elastic-cloud-eck.v2.10.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.10.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.10.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:c78daf3996cff2450ec7bcb7c1591b991ef0a630d42aadd316eb50d45d927ebf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:0daf8a6509886550f3de803ed48779723fd20d56b61bd6b31a3e8fbeeb561a36
+name: elastic-cloud-eck.v2.11.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.11.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.11.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:0daf8a6509886550f3de803ed48779723fd20d56b61bd6b31a3e8fbeeb561a36
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:6da34730686fce7f5bf849f49e70f3c9b781da079f7781571219ddec4a4917a9
+name: elastic-cloud-eck.v2.11.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.11.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.11.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:6da34730686fce7f5bf849f49e70f3c9b781da079f7781571219ddec4a4917a9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:6f16e3c0d95aa0634e8dceae25b5b1418e3ec034cbb666ed553b33fca2721f9c
+name: elastic-cloud-eck.v2.12.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.12.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.12.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:6f16e3c0d95aa0634e8dceae25b5b1418e3ec034cbb666ed553b33fca2721f9c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:db6b632b076cdc0524fd4f9a4f60e81babedef0b5e1c977ad544af91c6132604
+name: elastic-cloud-eck.v2.12.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.12.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.12.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:db6b632b076cdc0524fd4f9a4f60e81babedef0b5e1c977ad544af91c6132604
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:3fe8e2d5967441a85f3699f8bbc08e7a0fc848ab04d89d93c1773a27257a3e0d
+name: elastic-cloud-eck.v2.13.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.13.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.13.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:3fe8e2d5967441a85f3699f8bbc08e7a0fc848ab04d89d93c1773a27257a3e0d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:3314089d552eb36c33320ef07e8a521cf62e5af4440234e27f5273b899cb3242
+name: elastic-cloud-eck.v2.14.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.14.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+            {
+                "apiVersion": "elasticsearch.k8s.elastic.co/v1",
+                "kind": "Elasticsearch",
+                "metadata": {
+                    "name": "elasticsearch-sample"
+                },
+                "spec": {
+                    "version": "8.15.0",
+                    "nodeSets": [
+                        {
+                            "name": "default",
+                            "config": {
+                                "node.roles": ["master", "data"],
+                                "node.attr.attr_name": "attr_value",
+                                "node.store.allow_mmap": false
+                            },
+                            "podTemplate": {
+                                "metadata": {
+                                    "labels": {
+                                        "foo": "bar"
+                                    }
+                                },
+                                "spec": {
+                                    "containers": [
+                                        {
+                                            "name": "elasticsearch",
+                                            "resources": {
+                                                "requests": {
+                                                    "memory": "4Gi",
+                                                    "cpu": 1
+                                                },
+                                                "limits": {
+                                                    "memory": "4Gi",
+                                                    "cpu": 2
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "count": 3
+                        }
+                    ]
+                }
+            },
+            {
+                "apiVersion": "kibana.k8s.elastic.co/v1",
+                "kind": "Kibana",
+                "metadata": {
+                    "name": "kibana-sample"
+                },
+                "spec": {
+                    "version": "8.15.0",
+                    "count": 1,
+                    "elasticsearchRef": {
+                        "name": "elasticsearch-sample"
+                    },
+                    "podTemplate": {
+                        "metadata": {
+                            "labels": {
+                                "foo": "bar"
+                            }
+                        },
+                        "spec": {
+                            "containers": [
+                                {
+                                    "name": "kibana",
+                                    "resources": {
+                                        "requests": {
+                                            "memory": "1Gi",
+                                            "cpu": 0.5
+                                        },
+                                        "limits": {
+                                            "memory": "2Gi",
+                                            "cpu": 2
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "apiVersion": "apm.k8s.elastic.co/v1",
+                "kind": "ApmServer",
+                "metadata": {
+                    "name": "apmserver-sample"
+                },
+                "spec": {
+                    "version": "8.15.0",
+                    "count": 1,
+                    "elasticsearchRef": {
+                        "name": "elasticsearch-sample"
+                    }
+                }
+            },
+            {
+                "apiVersion": "enterprisesearch.k8s.elastic.co/v1",
+                "kind": "EnterpriseSearch",
+                "metadata": {
+                    "name": "ent-sample"
+                },
+                "spec": {
+                    "version": "8.15.0",
+                    "config": {
+                        "ent_search.external_url": "https://localhost:3002"
+                    },
+                    "count": 1,
+                    "elasticsearchRef": {
+                        "name": "elasticsearch-sample"
+                    }
+                }
+            },
+            {
+              "apiVersion": "beat.k8s.elastic.co/v1beta1",
+              "kind": "Beat",
+              "metadata": {
+                "name": "heartbeat-sample"
+              },
+              "spec": {
+                "type": "heartbeat",
+                "version": "8.15.0",
+                "elasticsearchRef": {
+                  "name": "elasticsearch-sample"
+                },
+                "config": {
+                  "heartbeat.monitors": [
+                    {
+                      "type": "tcp",
+                      "schedule": "@every 5s",
+                      "hosts": [
+                        "elasticsearch-sample-es-http.default.svc:9200"
+                      ]
+                    }
+                  ]
+                },
+                "deployment": {
+                  "replicas": 1,
+                  "podTemplate": {
+                    "spec": {
+                      "securityContext": {
+                        "runAsUser": 0
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "apiVersion": "agent.k8s.elastic.co/v1alpha1",
+              "kind": "Agent",
+              "metadata": {
+                "name": "agent-sample"
+              },
+              "spec": {
+                "version": "8.15.0",
+                "elasticsearchRefs": [
+                  {
+                    "name": "elasticsearch-sample"
+                  }
+                ],
+                "daemonSet": {},
+                "config": {
+                  "inputs": [
+                    {
+                      "name": "system-1",
+                      "revision": 1,
+                      "type": "system/metrics",
+                      "use_output": "default",
+                      "meta": {
+                        "package": {
+                          "name": "system",
+                          "version": "0.9.1"
+                        }
+                      },
+                      "data_stream": {
+                        "namespace": "default"
+                      },
+                      "streams": [
+                        {
+                          "id": "system/metrics-system.cpu",
+                          "data_stream": {
+                            "dataset": "system.cpu",
+                            "type": "metrics"
+                          },
+                          "metricsets": [
+                            "cpu"
+                          ],
+                          "cpu.metrics": [
+                            "percentages",
+                            "normalized_percentages"
+                          ],
+                          "period": "10s"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+                "apiVersion": "maps.k8s.elastic.co/v1alpha1",
+                "kind": "ElasticMapsServer",
+                "metadata": {
+                    "name": "ems-sample"
+                },
+                "spec": {
+                    "version": "8.15.0",
+                    "count": 1,
+                    "elasticsearchRef": {
+                        "name": "elasticsearch-sample"
+                    }
+                }
+            },
+            {
+                "apiVersion": "logstash.k8s.elastic.co/v1alpha1",
+                "kind": "Logstash",
+                "metadata" : {
+                    "name": "logstash-sample"
+                },
+                "spec": {
+                    "version": "8.15.0",
+                    "count": 1
+                }
+            }
+        ]
+      capabilities: Deep Insights
+      categories: Database
+      certified: "false"
+      containerImage: docker.elastic.co/eck/eck-operator:2.14.0
+      createdAt: "2024-08-08 13:42:27"
+      description: Run Elasticsearch, Kibana, APM Server, Beats, Enterprise Search,
+        Elastic Agent, Elastic Maps Server and Logstash on Kubernetes and OpenShift
+      features.operators.openshift.io/disconnected: "false"
+      features.operators.openshift.io/fips-compliant: "false"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      operators.openshift.io/valid-subscription: Elastic Basic license
+      repository: https://github.com/elastic/cloud-on-k8s
+      support: elastic.co
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Elastic Agent instance
+        displayName: Elastic Agent
+        kind: Agent
+        name: agents.agent.k8s.elastic.co
+        version: v1alpha1
+      - description: APM Server instance
+        displayName: APM Server
+        kind: ApmServer
+        name: apmservers.apm.k8s.elastic.co
+        version: v1
+      - description: Beats instance
+        displayName: Beats
+        kind: Beat
+        name: beats.beat.k8s.elastic.co
+        version: v1beta1
+      - description: Elastic Maps Server instance
+        displayName: Elastic Maps Server
+        kind: ElasticMapsServer
+        name: elasticmapsservers.maps.k8s.elastic.co
+        version: v1alpha1
+      - description: Instance of an Elasticsearch autoscaler
+        displayName: Elasticsearch Autoscaler
+        kind: ElasticsearchAutoscaler
+        name: elasticsearchautoscalers.autoscaling.k8s.elastic.co
+        version: v1alpha1
+      - description: Instance of an Elasticsearch cluster
+        displayName: Elasticsearch Cluster
+        kind: Elasticsearch
+        name: elasticsearches.elasticsearch.k8s.elastic.co
+        version: v1
+      - description: Enterprise Search instance
+        displayName: Enterprise Search
+        kind: EnterpriseSearch
+        name: enterprisesearches.enterprisesearch.k8s.elastic.co
+        version: v1
+      - description: Kibana instance
+        displayName: Kibana
+        kind: Kibana
+        name: kibanas.kibana.k8s.elastic.co
+        version: v1
+      - description: Logstash instance
+        displayName: Logstash
+        kind: Logstash
+        name: logstashes.logstash.k8s.elastic.co
+        version: v1alpha1
+      - description: Elastic Stack Config Policy
+        displayName: Elastic Stack Config Policy
+        kind: StackConfigPolicy
+        name: stackconfigpolicies.stackconfigpolicy.k8s.elastic.co
+        version: v1alpha1
+    description: |-
+      Elastic Cloud on Kubernetes (ECK) is the official operator by Elastic for automating the deployment, provisioning, management, and orchestration of Elasticsearch, Kibana, APM Server, Beats, Enterprise Search, Elastic Agent, Elastic Maps Server, and Logstash on Kubernetes.
+
+      Current features:
+
+      *  Elasticsearch, Kibana, APM Server, Enterprise Search, Beats, Elastic Agent, Elastic Maps Server, and Logstash deployments
+      *  TLS Certificates management
+      *  Safe Elasticsearch cluster configuration and topology changes
+      *  Persistent volumes usage
+      *  Custom node configuration and attributes
+      *  Secure settings keystore updates
+
+      Supported versions:
+
+      * Kubernetes 1.26-1.30
+      * OpenShift 4.12-4.16
+      * Google Kubernetes Engine (GKE), Azure Kubernetes Service (AKS), and Amazon Elastic Kubernetes Service (EKS)
+      * Elasticsearch, Kibana, APM Server: 6.8+, 7.1+, 8+
+      * Enterprise Search: 7.7+, 8+
+      * Beats: 7.0+, 8+
+      * Elastic Agent: 7.10+, 8+
+      * Elastic Maps Server: 7.11+, 8+
+      * Logstash 8.7+
+
+      ECK should work with all conformant installers as listed in these [FAQs](https://github.com/cncf/k8s-conformance/blob/master/faq.md#what-is-a-distribution-hosted-platform-and-an-installer). Distributions include source patches and so may not work as-is with ECK.
+      Alpha, beta, and stable API versions follow the same [conventions used by Kubernetes](https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning).
+      See the full [Elastic support matrix](https://www.elastic.co/support/matrix#matrix_kubernetes) for more information.
+      See the [Quickstart](https://www.elastic.co/guide/en/cloud-on-k8s/2.14/k8s-quickstart.html) to get started with ECK.
+    displayName: Elasticsearch (ECK) Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - elasticsearch
+    - kibana
+    - analytics
+    - search
+    - database
+    - apm
+    - logstash
+    links:
+    - name: Documentation
+      url: https://www.elastic.co/guide/en/cloud-on-k8s/2.14/index.html
+    maintainers:
+    - email: eck@elastic.co
+      name: Elastic
+    maturity: stable
+    minKubeVersion: 1.21.0
+    provider:
+      name: Elastic
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.14.0
+  name: eck-operator
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:3314089d552eb36c33320ef07e8a521cf62e5af4440234e27f5273b899cb3242
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:d3872053437dadb05cc3d1362c42ec57567a073c29ff2432b324cd6a9d7b8c32
+name: elastic-cloud-eck.v2.2.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.2.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.2.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:d3872053437dadb05cc3d1362c42ec57567a073c29ff2432b324cd6a9d7b8c32
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:b89ad42412ceca93505dd5b9b41edf0cfc17009fabc0b2156066584bb36b45de
+name: elastic-cloud-eck.v2.3.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.3.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.3.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:b89ad42412ceca93505dd5b9b41edf0cfc17009fabc0b2156066584bb36b45de
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:a6c1d596b476e27ccc4bc4e8d08e9908eaccfbc6336cec3b412aed25ef009b32
+name: elastic-cloud-eck.v2.4.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.4.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.4.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:a6c1d596b476e27ccc4bc4e8d08e9908eaccfbc6336cec3b412aed25ef009b32
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:0a9ca925dd28a1fa0174fd3b5a1cbb1448e8c33a35bbae0fe173463763278b29
+name: elastic-cloud-eck.v2.5.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.5.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.5.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:0a9ca925dd28a1fa0174fd3b5a1cbb1448e8c33a35bbae0fe173463763278b29
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:734bd896ba5ce43a10348a89b558de14463a22e4c1fe65ab29de48afa823f60f
+name: elastic-cloud-eck.v2.6.1
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.6.1
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.6.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:734bd896ba5ce43a10348a89b558de14463a22e4c1fe65ab29de48afa823f60f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:954775a7283d5cb76272ca1ea7d262abe00e0e42de87b5ec967e71e9488f2561
+name: elastic-cloud-eck.v2.6.2
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.6.2
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.6.1
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:954775a7283d5cb76272ca1ea7d262abe00e0e42de87b5ec967e71e9488f2561
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:0a37e794085999885462c347b517980b5973a24162baf3e5e498ffd803b05860
+name: elastic-cloud-eck.v2.7.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.7.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.7.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:0a37e794085999885462c347b517980b5973a24162baf3e5e498ffd803b05860
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:fdf58e3ec0e01ec6a1c7f0f55631fa3ea96df36af7250c5183b9c4f9c9da9a7c
+name: elastic-cloud-eck.v2.8.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.8.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.8.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:fdf58e3ec0e01ec6a1c7f0f55631fa3ea96df36af7250c5183b9c4f9c9da9a7c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/elastic-cloud-eck@sha256:6b1b88200f0fd311713acdc4b816de4d9eaa6139e5f1c8bc45e8e620fc6cdf85
+name: elastic-cloud-eck.v2.9.0
+package: elastic-cloud-eck
+properties:
+- type: olm.gvk
+  value:
+    group: agent.k8s.elastic.co
+    kind: Agent
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: apm.k8s.elastic.co
+    kind: ApmServer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: autoscaling.k8s.elastic.co
+    kind: ElasticsearchAutoscaler
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: beat.k8s.elastic.co
+    kind: Beat
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: elasticsearch.k8s.elastic.co
+    kind: Elasticsearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1
+- type: olm.gvk
+  value:
+    group: enterprisesearch.k8s.elastic.co
+    kind: EnterpriseSearch
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kibana.k8s.elastic.co
+    kind: Kibana
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: logstash.k8s.elastic.co
+    kind: Logstash
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: maps.k8s.elastic.co
+    kind: ElasticMapsServer
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: stackconfigpolicy.k8s.elastic.co
+    kind: StackConfigPolicy
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: elastic-cloud-eck
+    version: 2.9.0
+relatedImages:
+- image: docker.elastic.co/eck/eck-operator:2.9.0
+  name: ""
+- image: quay.io/operatorhubio/elastic-cloud-eck@sha256:6b1b88200f0fd311713acdc4b816de4d9eaa6139e5f1c8bc45e8e620fc6cdf85
+  name: ""
+schema: olm.bundle

@@ -1,0 +1,2859 @@
+---
+defaultChannel: beta
+icon:
+  base64data: iVBORw0KGgoAAAANSUhEUgAAAKsAAACrCAYAAAAZ6GwZAAAACXBIWXMAAAsSAAALEgHS3X78AAALWUlEQVR4nO2dPWwcxxXHR0GgQBICMhAQwI4BXgqnsJOINnZrnly4iALwAgJGUokswgBsRFfpTtSmSiW6MA2zEdkKJnwCLBcpomN9Z+cYWy7swneAYReBYx0QxYibC+bwTh4d583H3pJ7j/f/AQuCvP2YmfefN2/ezB7PDQYDBYAEfgArASlArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjH8cBZMdbCzPq+UWjylxz1a2djtnNKzZooz/1oLCbWplLoyBcXJw9rKxu6evGIXzyyEAZuChaq5MwVlmAoQswIxQKxADBArEAPECsQwE6mrIvjks6+i71J57rK6eOH8NFZHJBBrAHff/1Ddvf9B9HWXLpxXb/3lDxBsQSAMCODhp1/muu7xt9+p7hdfn3Jpzy4QawC/feVXua7TYcALzz9zyqU9uyAMCCD99YJ6580/Tn05zzrwrEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjHMglgbSqn+FJQjL/syi1085waDwVmr0zEOdtYr+j/9TFmxgljZ2G0KKOapMBNiBWcDxKxADKX907aDnfV5pdSmUKl0VjZ2G+N/PNhZX1RK1cop0sQ0VjZ2O9NcwNLCgIOddW3s5VIeXgy/MwVLcbE29pzQ+uhJ6OLKxm53CspipcwwYL7EZxfB4tg9KoKFqqjsUz0JRcwKxACxAjFArEAMECsQQ2mpqyJo/bOn3vv7R1F3unTxR+q1ay+rys8uT2Wd7r7/oXr46ZdR17z4i2fVa795+cTKNC2IFeu//v0f9de3/5br2u4XX6ud7PeFl2lS7j/4WN29/0H0XR5+9pW6dOG8unb1l9NWpUIRGwZo4+gjDxdzXgfKRaxn1YL7859eVe89+Fg9/u//gq/76eUfq2uvTKcH0p7x8bffRYcBP3/u8pn3qkp6zPrC888Mj7PEMPacgfgzD8gGADFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxACxAjFArEAMZYp1CTIBMcCzAjFArEAMECsQA8QKxACxAjFArEAMECsQA8QKxFCmWPuQCYihTLFWBQv2SCm1bf5hZWO3qZTaL69IE7NPdZhazg0GA7nNC2YKxKxADBArEAPECsQAsQIxQKxADBArEAPECsRw6v8VO0mzeaXUolKqQkdHKfWo3apPdUJ6lkjSTNtn3qiytk+n7CY4lUUBEugqHVccp95TSjXarfreiRcKPEWSZjWyj15ZnHPYZ6/dqjfKaL0nYk3SbMt2QrtVt/49SbPNsd5nst1u1R8Z5205GsCGXs7c5LxtkmZValSTjqsRkzSrkDHG6erOkaTZKnl66+eO+9rKMkS3nevzAJrUxtrT2XjSzpZy1bjrTJtS+bY9TmScnm7LSPtwdHU9261613eiGQbcZM45JtYkzXTlbjDn39INSN5UG3k5sNAmuuEeJGn2ertV37Z8XrWVN0mzlxzDVYWp4yGVc5GpU58+59Aiv2757IjazlrWCJqO67u2shltb3MQh8Z5WznLtkD2ucU4s+g6J2mmy1XjOp/KM8EiD8QJdZ+8yTw1ch6hmtymjhFKk56dB06QcxTDcdSYv8eUm4W81xOBjbHpKBM3kg1HlyTN9ibsRJqbdJ8i0K/md8krW4kSKxmNM8KR0Xh7kcOKixvUQUKYo04SDXnkI+Y66/OpPThRFBnXWUMx3cZMR+JErJ1Jl0Iz22iQh+tcCJmDOfLYtnAsXKzksRqMcfojF07C8nnUHgXrb5DX8G0V3OYqYOFKpDc24bwE19u5TnTPNZzFEuNdyTNxjmKLxH07oAiHxuHjpmf0icVqhxjP2qBYxUaNeuy8Z/jTnutqu1WvtFt1fY2eRFXbrbq+7nWHaOcc3sVGjDc24cR6heksnIhPIpvB1f/6WOjD1XufJjEu+/TJDj8huwwP/btSas3jVAoJe4glWzgQlGclT8V93c+aMSt0xUr7NMO3ehw9kUrSrEnDuO0ew+EmZNZI6Pt1YvKDNDLcY0aGqilCEq/Ng/UDUzvc5IQrW5MmITY7rBqjDze8j7wqZ8cjmuEfay+ymc6YNMg+tnoPBebJlx+S+IeQILnRujoe0nk9a8CEyvQiXK/uuYQ6ghrKlfLgJjM2dAM0cky4OK84/myuLCeZg+TEPQoFfF6V+7zPCdWE7FdzeNio0YyEzbXXsbAixLOyE6p2qz5eOK7XeoU6QjdYkmb7jIeoRQ43CyS+YJFrr5ikWd/S28e9LdepQstX9UxM9sZHEYd3XSAvZZtY9Q2Rs2UOHYEo3NtmMgl58smcLo45mRCxchOqpwrmSDmEDosme4xY8wTxyySKmCxBw/Z8nWg36mILFXoRYceS55sUm5RHHUfX5QFTZputtg3RcxOv2BibS3txcxorNOpxjuSYiPNuZOlEzHaj15QdcU/MKpjJzcgQgvOOw3vQ6lDMdYVBbXPPcj/OqWyr72NsKxHzgCF0fs/2mStPqp2NnpeMDuqMnMCPaSCvWJcoVycJLu4+BnlHmzFGhigjXjUJbXtzOZYTK5db9hElcGLOGFGWHM7Humo4yRbB24G5tegVpYic6jiHEzT+ODYvuUB1tnmPw1gPlRd6ju+1775ZB8dolXfxhrN9Efll656HSfezmurnDMXlKF1wQ0mIEIv6PgLOS24yQ1ds3Kc71i3H4RO+L+3FbnIZxzN0285nV+4K2Eq4z6X0QvezcrnH4WoRJfe7zCxakYFjwgbOEN6GoFypbvx/RDzPdp8uM/O2Tfz6OUKAZkyelSkflzXpMyMDl6fdjJyAcrYsYlRjdRLiWXXSv+ZY7rth9EzOYDdCey+lRbigO0gQ1LvXQs71EOotG0Uur0bAeV9uAsy133Loih9NLrmFB599ejSSuEIYVqxez2ok/VfJs9k8556xyYWtiG4Qz55T19bDXkwKjPaoVifcsNGgOvmyEHkmVpWQDlzwGxQNx76AO0maKc/e3VVPxsPXubuj0YTqbnNKw51ctvg/OGali7lha4GS2B0mraLI4O9S2mJ1FMfqQuvMQpJmXc+MPXrIpEWL3EMTeSevt8i5c/465Ut9R2GQDd9w3O8O2ac2WvnTP+l33WnuuJbTIyeYLk9u7RBREyzaCM2FA8s0RGx6JjhLVOnPkzQbkKFuexLKhxO86jLphMv33FJe8ZiALS5HSmj7vKuU+obs8w397lrA6EfOSXw7yZZto06ebIBrbdgMGYqiH5nQfwryjrkFS43qMu5JLgS4npuLgPX9PDh3+Dtw6WTyPCsVinvInPFCWRETnOGy7qSTFwpPJlnE4Lzn0QnnVk/k3kZ7FCHYtbxxtScsWRhfeMqVZyUxcrHpEm3l0z3j6gTeQQ8RlaJeAabyuOI1F5z3FPsWLrVHdQL76OteKuBN5C1Hp9kyd82d+KvY9LBRnjVkbV83wtYsvo5dxvv6OewzyuG63qytMMu71vpY6m3yJA13al8mbOywqVJFRgF7j4a7DuUr8WUXJWDYZ/QKtznh7Y3sU2JOGd98DeSA77oCYoBYgRggViAGiBWIAWIFYoBYgRggViAGiBWIAWIFYoBYgRggViAGiBWIAWIFYoBYgRggViAGiBWIAWIFMlBK/R87h9mrJ0MSUgAAAABJRU5ErkJggg==
+  mediatype: image/png
+name: konveyor-operator
+schema: olm.package
+---
+entries:
+- name: konveyor-operator.v0.2.0-alpha.1
+  skipRange: '>=0.0.0 <0.2.0-alpha.1'
+- name: konveyor-operator.v0.2.0-alpha.2
+  replaces: konveyor-operator.v0.2.0-alpha.1
+  skipRange: '>=0.0.0 <0.2.0-alpha.2'
+- name: konveyor-operator.v0.2.0-alpha.3
+  replaces: konveyor-operator.v0.2.0-alpha.2
+  skipRange: '>=0.0.0 <0.2.0-alpha.3'
+- name: konveyor-operator.v0.3.0-alpha.1
+  replaces: konveyor-operator.v0.2.0-alpha.3
+  skipRange: '>=0.0.0 <0.3.0-alpha.1'
+- name: konveyor-operator.v0.3.0-alpha.2
+  replaces: konveyor-operator.v0.3.0-alpha.1
+  skipRange: '>=0.0.0 <0.3.0-alpha.2'
+- name: konveyor-operator.v0.3.0-alpha.3
+  replaces: konveyor-operator.v0.3.0-alpha.2
+  skipRange: '>=0.0.0 <0.3.0-alpha.3'
+- name: konveyor-operator.v0.3.0-alpha.4
+  replaces: konveyor-operator.v0.3.0-alpha.3
+  skipRange: '>=0.0.0 <0.3.0-alpha.4'
+- name: konveyor-operator.v0.3.0-alpha.5
+  replaces: konveyor-operator.v0.3.0-alpha.4
+  skipRange: '>=0.0.0 <0.3.0-alpha.5'
+- name: konveyor-operator.v0.3.0-alpha.6
+  replaces: konveyor-operator.v0.3.0-alpha.5
+  skipRange: '>=0.0.0 <0.3.0-alpha.6'
+- name: konveyor-operator.v0.4.0-alpha.1
+  replaces: konveyor-operator.v0.3.0-alpha.6
+  skipRange: '>=0.0.0 <0.4.0-alpha.1'
+- name: konveyor-operator.v0.6.0-alpha.1
+  replaces: konveyor-operator.v0.4.0-alpha.1
+  skipRange: '>=0.0.0 <0.6.0-alpha.1'
+name: alpha
+package: konveyor-operator
+schema: olm.channel
+---
+entries:
+- name: konveyor-operator.v0.3.0-beta.1
+  skipRange: '>=0.0.0 <0.3.0-beta.1'
+- name: konveyor-operator.v0.3.0-beta.1.1
+  replaces: konveyor-operator.v0.3.0-beta.1
+  skipRange: '>=0.0.0 <0.3.0-beta.1.1'
+- name: konveyor-operator.v0.3.0-beta.1.2
+  replaces: konveyor-operator.v0.3.0-beta.1.1
+  skipRange: '>=0.0.0 <0.3.0-beta.1.2'
+- name: konveyor-operator.v0.3.0-beta.2
+  replaces: konveyor-operator.v0.3.0-beta.1.2
+  skipRange: '>=0.0.0 <0.3.0-beta.2'
+- name: konveyor-operator.v0.3.0-beta.3
+  replaces: konveyor-operator.v0.3.0-beta.2
+  skipRange: '>=0.0.0 <0.3.0-beta.3'
+name: beta
+package: konveyor-operator
+schema: olm.channel
+---
+entries:
+- name: konveyor-operator.v0.1.0
+  skipRange: '>=0.0.0 <0.1.0'
+- name: konveyor-operator.v0.1.1
+  replaces: konveyor-operator.v0.1.0
+  skipRange: '>=0.0.0 <0.1.1'
+- name: konveyor-operator.v0.1.2
+  replaces: konveyor-operator.v0.1.1
+  skipRange: '>=0.0.0 <0.1.2'
+name: konveyor-0.1
+package: konveyor-operator
+schema: olm.channel
+---
+entries:
+- name: konveyor-operator.v0.2.0
+  skipRange: '>=0.0.0 <0.2.0'
+- name: konveyor-operator.v0.2.1
+  replaces: konveyor-operator.v0.2.0
+  skipRange: '>=0.0.0 <0.2.1'
+name: konveyor-0.2
+package: konveyor-operator
+schema: olm.channel
+---
+entries:
+- name: konveyor-operator.v0.3.0
+  skipRange: '>=0.0.0 <0.3.0'
+- name: konveyor-operator.v0.3.1
+  replaces: konveyor-operator.v0.3.0
+  skipRange: '>=0.0.0 <0.3.1'
+- name: konveyor-operator.v0.3.2
+  replaces: konveyor-operator.v0.3.1
+  skipRange: '>=0.0.0 <0.3.2'
+name: konveyor-0.3
+package: konveyor-operator
+schema: olm.channel
+---
+entries:
+- name: konveyor-operator.v0.4.0
+  skipRange: '>=0.0.0 <0.4.0'
+name: konveyor-0.4
+package: konveyor-operator
+schema: olm.channel
+---
+entries:
+- name: konveyor-operator.v0.5.0
+  skipRange: '>=0.0.0 <0.5.0'
+- name: konveyor-operator.v0.5.1
+  replaces: konveyor-operator.v0.5.0
+  skipRange: '>=0.0.0 <0.5.1'
+- name: konveyor-operator.v0.5.3
+  replaces: konveyor-operator.v0.5.1
+  skipRange: '>=0.0.0 <0.5.3'
+name: konveyor-0.5
+package: konveyor-operator
+schema: olm.channel
+---
+entries:
+- name: konveyor-operator.v0.3.0-rc.1
+  skipRange: '>=0.0.0 <0.3.0-rc.1'
+- name: konveyor-operator.v0.3.0-rc.2
+  replaces: konveyor-operator.v0.3.0-rc.1
+  skipRange: '>=0.0.0 <0.3.0-rc.2'
+- name: konveyor-operator.v0.3.0-rc.3
+  replaces: konveyor-operator.v0.3.0-rc.2
+  skipRange: '>=0.0.0 <0.3.0-rc.3'
+- name: konveyor-operator.v0.3.0-rc.4
+  replaces: konveyor-operator.v0.3.0-rc.3
+  skipRange: '>=0.0.0 <0.3.0-rc.4'
+- name: konveyor-operator.v0.5.0-rc.1
+  replaces: konveyor-operator.v0.3.0-rc.4
+  skipRange: '>=0.0.0 <0.5.0-rc.1'
+name: rc
+package: konveyor-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:74b2674431a9c024f80c7a8871b802ff1398b303c741cd3d716a53606f074f80
+name: konveyor-operator.v0.1.0
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.1.0
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:f57475bd3f6f49efeb742d2cb58585c657db1c795cdac9e8807d115568adc624
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:f6812b0bb7d325ef5d83ebb572e12ce795fb91439847e619766f33666a715a45
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:df6720f8fb3d43ec8658ea631e316f58afcea485bc255b5186419516571d157c
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-windup@sha256:de8633b94fa65c62b07560a4be0199c827600f171ccff1f8b95380d1493081cb
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:4dc60307d7b367c90be22197df44d62a0e2a979ff269015c7e59395925808f34
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:6b8d42d7dbbf938158c6e87238a23d6d9dcda6d81363e614089a18c7f685b7a4
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:8bf4720b6ee2b52ec8134243f666b77f395ad738d909d58edd4d687cd1996900
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:e3ed8be65da6574f07d37290d2e562b3cf930bceeb80460dd7ecc77e6ef84987
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:74b2674431a9c024f80c7a8871b802ff1398b303c741cd3d716a53606f074f80
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:27d81b79cdca372f57b9448add4a460f148ce8a8884f051f06176e0825422c4f
+name: konveyor-operator.v0.1.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.1.1
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:3e50f54ed6bff4738f811f69b9584dbe64276abefce29ca11801cd5762cbe82c
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:6314a07dc9a84c51391e9bb882aca0df9a153790ef4834328c59b4a2c11731b3
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:bb0e0582302a19094b70703bcbd44c08fe722becef1ee2e1e7bf8f02c3d44768
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-windup@sha256:1adc2526b9154de520cd5e54fd2de99ac44f41c927b98ef10ab72194519056ee
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:229e43b9e6d2320b63421557cb7e785d1b9a73867f059f7f2b478bf45e269456
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:a4e9b1c07b15a568c4c4ec215d4e075f72aff8eb5e30c56423e27abb0983b4a2
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:55ac2807824c9c8be6a8b5316286c4a0afdd8439097f7bb4a433410ef5bc7e1a
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:b6ce84cbab475a309f8865996d317b95c2c7d4146ae4bfa1e7d9c2082d5a86a1
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:27d81b79cdca372f57b9448add4a460f148ce8a8884f051f06176e0825422c4f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:ad12b9882682a11ac7c2fee4b145d019d954decae222915c81e6526d52223d37
+name: konveyor-operator.v0.1.2
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.1.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Tackle",
+            "metadata": {
+              "name": "tackle",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "feature_auth_required": "false"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Addon",
+            "metadata": {
+              "name": "move2kube-plan",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "image": "quay.io/konveyor/tackle-addon-move2kube-plan:latest"
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Modernization & Migration
+      certified: "false"
+      containerImage: quay.io/konveyor/tackle2-operator@sha256:9688d0763d8c7812beee715a061c3c198006448855d7b891d45833f62cf869fb
+      createdAt: "2023-05-25T15:23:45Z"
+      description: Konveyor is an open-source application modernization platform that
+        helps organizations safely and predictably modernize applications to Kubernetes
+        at scale.
+      olm.skipRange: '>=0.0.0 <0.1.2'
+      operatorframework.io/initialization-resource: |-
+        {
+          "apiVersion": "tackle.konveyor.io/v1alpha1",
+          "kind": "Tackle",
+          "metadata": {
+            "name": "tackle",
+            "namespace": "konveyor-tackle"
+          },
+          "spec": {
+            "feature_auth_required": "false"
+          }
+        }
+      operatorframework.io/suggested-namespace: konveyor-tackle
+      repository: https://github.com/konveyor/tackle2-operator
+      support: https://github.com/konveyor/tackle2-operator/issues
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Tackle
+        displayName: Tackle
+        kind: Tackle
+        name: tackles.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle Addon
+        displayName: Addon
+        kind: Addon
+        name: addons.tackle.konveyor.io
+        version: v1alpha1
+    description: |+
+      Konveyor is an open-source application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to Kubernetes.
+
+      See the [Konveyor Unified Experience](https://github.com/konveyor/enhancements/tree/master/enhancements/unified_experience) to understand the vision of the project and the [Konveyor Charter](https://github.com/konveyor/community/blob/main/Charter.md) for more information on the community.
+
+      ### Install
+
+      Once you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.
+
+      By default, the Operator installs the following components on a target cluster:
+
+      * Hub, to manage the application inventory and coordinate the migration process.
+      * UI, the web console to manage the application inventory and drive the migration waves.
+      * Pathfinder, a service to manage the assessment questionnaires.
+
+      Authentication capabilities may be enabled via the `feature_auth_required` parameter in the Tackle CR. When enabled, the Operator installs the following components:
+      * Keycloak, to manage authentication, including with 3rd-party providers.
+
+      ### Examples
+      If you are just getting started using Konveyor, take a look at an [example application analysis here](https://github.com/konveyor/example-applications/tree/main/example-1)
+
+      ### Documentation
+      Documentation can be found on our [website](https://konveyor.github.io/tackle).
+
+      ### Getting help
+      If you encounter any issues while using Konveyor operator, you can create an issue on our [Github repo](https://github.com/konveyor/tackle2-operator/issues), for bugs, enhancements or other requests.
+      Or reach out to us in [#konveyor](https://kubernetes.slack.com/archives/CR85S82A2) on kubernetes.slack.com
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using Konveyor Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/konveyor/tackle2-operator/pulls)
+      * Improving [documentation](https://github.com/konveyor/tackle-documentation)
+
+    displayName: Konveyor Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - modernization
+    - migration
+    - konveyor
+    - tackle
+    links:
+    - name: Documentation
+      url: https://konveyor.github.io/tackle
+    - name: Operator
+      url: https://github.com/konveyor/tackle2-operator
+    maintainers:
+    - email: konveyor-dev@googlegroups.com
+      name: Konveyor Community
+    maturity: alpha
+    minKubeVersion: 1.22.0
+    provider:
+      name: Konveyor
+      url: https://www.konveyor.io
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: tackle-keycloak
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:1287d947464fbf5275feb31d106d2feb856c6117f0eaec8d947f2e03bd8618c5
+  name: tackle-postgres
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:b0347e5a608352c4b7bb796b65a67d417e98ba4896db71a487fa26243214cfcf
+  name: tackle-keycloak-init
+- image: quay.io/konveyor/tackle-pathfinder@sha256:f9c5aa49f1d27f477cdd82c21441ae0287acdcdc9b2b3fcf197884007dc5f7dd
+  name: tackle-pathfinder
+- image: quay.io/konveyor/tackle2-addon-windup@sha256:81f0625cb82eb24ded51c7258f229f57778820c62e3be6ec05fb2b12d2970825
+  name: tackle-addon-windup
+- image: quay.io/konveyor/tackle2-addon@sha256:35be344bbd3393f5634f52aafd21e9c3964d1e0ba5011ecad1561600d476bbe9
+  name: tackle-addon
+- image: quay.io/konveyor/tackle2-hub@sha256:3d15d158ffb6f1fc4ca5aaf29a12173fe344c289773902c9161056bdf69acc92
+  name: tackle-hub
+- image: quay.io/konveyor/tackle2-operator@sha256:9688d0763d8c7812beee715a061c3c198006448855d7b891d45833f62cf869fb
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:99650804e65e2b6cb15a37c00189d7f463e4d19a0f866a79e9c09c8420a4d028
+  name: tackle-ui
+- image: quay.io/operatorhubio/konveyor-operator@sha256:ad12b9882682a11ac7c2fee4b145d019d954decae222915c81e6526d52223d37
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:aaa2f50cfae06a5cdbf8fbea139a5387da08741474387784df64dc93bb4317c1
+name: konveyor-operator.v0.2.0
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.2.0
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:e16a3fd1d9d37a0d741ba4ca42eeae4ccb492999cd5c5f6dee7e2cf8250c30c8
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:c21fd4445053dc98a4d55348425bf7c257163614dc17c152313e53b4a02d138c
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:4bd787c95ff7e07bce671774b0c6647c690aba57a2e241489db2dfb8a0401d2a
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-windup@sha256:41fd5334c32e7c621e8ff2146c139b61cbf7cdc1a793e07672d312b5ce560fb3
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:899f0b61d3d67441a62b9942cdfbf351dfc9e3cdb5cc8e12e6a1eeb5fe57a9b6
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:1f9acf9dc3f163fd00f35b046edc1b26947bb699039ab2ee89a439ca4289224b
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:9c6049d052c1f6bfb5e4f337ffd816b29f825e65a215ab538b7a1c04f23eda6f
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:b202a433c9a360f107b3b37554907eabce6374a76c1999a6d2bfcb66ee141ea8
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:aaa2f50cfae06a5cdbf8fbea139a5387da08741474387784df64dc93bb4317c1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:07f0b43693c4a18601a1be24fda15d83ead3fdb3446017ce34f794665d1a7593
+name: konveyor-operator.v0.2.0-alpha.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.2.0-alpha.1
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:1287d947464fbf5275feb31d106d2feb856c6117f0eaec8d947f2e03bd8618c5
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:1272cad8451a4653d36252d0c512c4c3f9fb9d71cb9a166dfe7cfd30660793ec
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:17688c2b24709e5c4b66e03b09e7eba6d65ab83e66744a252c7d3669ed8f437c
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-windup@sha256:cec1ffcc8c2197ddede1ed8c5d24fa51da9452b06834ed4b1f18b2d7211c6b7a
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:980cb6329fdca6a80ae6437216987cf96a1bac9baab1aca0c4d7b042621916a0
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:761d9c484a3a5201ed439d3ee5ffa93379c3dc3d9d45542e6078fc31e0cc2154
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:cd5aba83bb4b2b2e49eb6eced2244412f1dc79dfa9dbaa0dc5acbcf81d796828
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:8ee6fa6b54a03f51b0c043b27f62ba47b7a381c82b7084cf88dcb05dc36c09ca
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:07f0b43693c4a18601a1be24fda15d83ead3fdb3446017ce34f794665d1a7593
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:65082c1299a2f7252fb38fdd5a058eabe11d5078f3481dc708374a837b3dfdbe
+name: konveyor-operator.v0.2.0-alpha.2
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.2.0-alpha.2
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:1287d947464fbf5275feb31d106d2feb856c6117f0eaec8d947f2e03bd8618c5
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:b69103eb73a0bbb3f17d5d8483e7a7c18397204296080c1f48687f993a51cf23
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:505c16c76027c67274cba0f25445ecf38fe5a85eb51959fa798a6e67a70872df
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-windup@sha256:fe466e2e8545b4a2a96c96d82b30b533f5bde5d1e073de94db84f693a4e34ee1
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:1d5be2614c047039f02df05cad65523975f4c8dffb050292a8f7d4e04bcfe0fb
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:ce41ae997a46dcb80f822aa3868d5bed712b22940006dc9801b2289ce15e0364
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:161d29bad9fdc1fe3f493f6ffebffa4f05352f551037d997a0c53de10e4c8aab
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:66acbec934c19dee8c80b3851f0546133505ec80009e403fcffa9463e93bb370
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:65082c1299a2f7252fb38fdd5a058eabe11d5078f3481dc708374a837b3dfdbe
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:0fa479dcf51613e47668c8a367f3ad5df6639b8da938a2380af4c14e328bf0da
+name: konveyor-operator.v0.2.0-alpha.3
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.2.0-alpha.3
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:0b31d22f50183f08e53f1d99c8e825dea79ce8f3b163932c9ad4b6290236f9a2
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:578ff8bb4ad8263f4c7a2c27c40716e734103f5e88e22cb0f7d81f6d75228ea1
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:18cab68d8742ca85df7e5b216c646bb1881ebeba5025b2668a07eda999ee04f9
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-windup@sha256:54a223f2acdf4313659425598903723f08d69a4bff157f9c25c0507bbc1d698c
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:31d5a9e3ba9880b0e47dbf23391d0744d4727912129d11b8c71a71b568e5d178
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:471e25c8e104f12eb89bbd8b12d20e4ef6e2c5e0abab06f2cd723a5f7944447e
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:1bd2e80768ead556fcb041930c61b7848e5a65a45e0ba1a95b8adb0b1a2f5785
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:c294f02d50c06cc455adaf5e1c8348fad83327a6b50ca7d27b4280d287213035
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:0fa479dcf51613e47668c8a367f3ad5df6639b8da938a2380af4c14e328bf0da
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:4dc6d50bea8e0ea106d9f4a521a27a3dd1a0bb414aaba9e704ec807a64aa48ff
+name: konveyor-operator.v0.2.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.2.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Tackle",
+            "metadata": {
+              "name": "tackle",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "feature_auth_required": "false"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Addon",
+            "metadata": {
+              "name": "move2kube-plan",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "image": "quay.io/konveyor/tackle-addon-move2kube-plan:latest"
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Modernization & Migration
+      certified: "false"
+      containerImage: quay.io/konveyor/tackle2-operator@sha256:1860bb099ac64d9a2af27692f0671b7240e4d19746fffa9f9ae2356ff2818e10
+      createdAt: "2023-07-06T06:17:40Z"
+      description: Konveyor is an open-source application modernization platform that
+        helps organizations safely and predictably modernize applications to Kubernetes
+        at scale.
+      olm.skipRange: '>=0.0.0 <0.2.1'
+      operatorframework.io/initialization-resource: |-
+        {
+          "apiVersion": "tackle.konveyor.io/v1alpha1",
+          "kind": "Tackle",
+          "metadata": {
+            "name": "tackle",
+            "namespace": "konveyor-tackle"
+          },
+          "spec": {
+            "feature_auth_required": "false"
+          }
+        }
+      operatorframework.io/suggested-namespace: konveyor-tackle
+      repository: https://github.com/konveyor/tackle2-operator
+      support: https://github.com/konveyor/tackle2-operator/issues
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Tackle
+        displayName: Tackle
+        kind: Tackle
+        name: tackles.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle Addon
+        displayName: Addon
+        kind: Addon
+        name: addons.tackle.konveyor.io
+        version: v1alpha1
+    description: |+
+      Konveyor is an open-source application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to Kubernetes.
+
+      See the [Konveyor Unified Experience](https://github.com/konveyor/enhancements/tree/master/enhancements/unified_experience) to understand the vision of the project and the [Konveyor Charter](https://github.com/konveyor/community/blob/main/Charter.md) for more information on the community.
+
+      ### Install
+
+      Once you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.
+
+      By default, the Operator installs the following components on a target cluster:
+
+      * Hub, to manage the application inventory and coordinate the migration process.
+      * UI, the web console to manage the application inventory and drive the migration waves.
+      * Pathfinder, a service to manage the assessment questionnaires.
+
+      Authentication capabilities may be enabled via the `feature_auth_required` parameter in the Tackle CR. When enabled, the Operator installs the following components:
+      * Keycloak, to manage authentication, including with 3rd-party providers.
+
+      ### Examples
+      If you are just getting started using Konveyor, take a look at an [example application analysis here](https://github.com/konveyor/example-applications/tree/main/example-1)
+
+      ### Documentation
+      Documentation can be found on our [website](https://konveyor.github.io/tackle).
+
+      ### Getting help
+      If you encounter any issues while using Konveyor operator, you can create an issue on our [Github repo](https://github.com/konveyor/tackle2-operator/issues), for bugs, enhancements or other requests.
+      Or reach out to us in [#konveyor](https://kubernetes.slack.com/archives/CR85S82A2) on kubernetes.slack.com
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using Konveyor Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/konveyor/tackle2-operator/pulls)
+      * Improving [documentation](https://github.com/konveyor/tackle-documentation)
+
+    displayName: Konveyor Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - modernization
+    - migration
+    - konveyor
+    - tackle
+    links:
+    - name: Documentation
+      url: https://konveyor.github.io/tackle
+    - name: Operator
+      url: https://github.com/konveyor/tackle2-operator
+    maintainers:
+    - email: konveyor-dev@googlegroups.com
+      name: Konveyor Community
+    maturity: alpha
+    minKubeVersion: 1.22.0
+    provider:
+      name: Konveyor
+      url: https://www.konveyor.io
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: tackle-keycloak
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:6016530ab1fce71d29421ce9a97b3a89fbbb126b87b1b079c6aadebb7ff5664c
+  name: tackle-postgres
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:ca6c85bdf8417d4be116c2098b8d8ad5ae8b7ab0b636c4cbe4a392aa424e2d47
+  name: tackle-keycloak-init
+- image: quay.io/konveyor/tackle-pathfinder@sha256:190269b061b2065ca8ba9357bf9b959a2f587a547a44769ae0afd1ac86b4b197
+  name: tackle-pathfinder
+- image: quay.io/konveyor/tackle2-addon-windup@sha256:538dfdb134d53a876d126dbd16679638584a606ef2b9e8fbe69ed1f29733c03a
+  name: tackle-addon-windup
+- image: quay.io/konveyor/tackle2-addon@sha256:11693e16363bcd98249209d63a29f0c6cfffab3a4071649cbeea2fd276bc2440
+  name: tackle-addon
+- image: quay.io/konveyor/tackle2-hub@sha256:d9c4f21f44098a2526474968b6d88094dca8b5eaeb9042716332c9cb67df47cd
+  name: tackle-hub
+- image: quay.io/konveyor/tackle2-operator@sha256:1860bb099ac64d9a2af27692f0671b7240e4d19746fffa9f9ae2356ff2818e10
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:d10c1e717d160c5eb2581649a8dd7cdf4922a74d92db014f72f42a48a3134341
+  name: tackle-ui
+- image: quay.io/operatorhubio/konveyor-operator@sha256:4dc6d50bea8e0ea106d9f4a521a27a3dd1a0bb414aaba9e704ec807a64aa48ff
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:7ca59ca1a0acc55b3355def159c4ed5b6abaeeeadfd412688386c00a4d83feab
+name: konveyor-operator.v0.3.0
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:4fdaa07ca1d132086fca95b9bd71bb8f563432a048ed21f0905d7ef40cddceea
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:330eba1be334a4c0854adbcdc2008a18ebd150f15fa650560f5a6b0df61ef5a8
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:04174c133e8b527a6b32787ee9b6292722771671a17a15f2e46351e93ffb45bc
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:65f4d2127d535e68c16f51c3a62d63325c3b7bbc57857229125bc3b2e7b4b2af
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:3a716efe42a9e73b8c7e19f65148da9f22c4d4154edab819a55780cd836fcdd8
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:5dfeb01e2d31d85306a6a0bde718386b7065d2166dba2fa6f087a86489e5b949
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:7ca59ca1a0acc55b3355def159c4ed5b6abaeeeadfd412688386c00a4d83feab
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:3e1c31081f78301c8fdea2776d9d7a9265c25985436e2fcfa9c472ac4ae3e5ac
+name: konveyor-operator.v0.3.0-alpha.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-alpha.1
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:67fdbce34dbb37ba4802c6144360cdfa5ebf38553bf4cc1159de255ee7b288fd
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:f7614850164e32048106ad1b4f2e4c0a83f3d9f930a677271e9dd207c44cd160
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:0c2ce8169d115cd76490726b77a2259c90fb1e7673b7f89e15aaac7058e0f72d
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:3036489292f535fbbab762a65ae5409e74c1c3ff9098e65614188d71f3d8cb09
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:10c7f62170502b36b394f4fbf81f59d0cf5e9e51eb8bd556f5b44d069644a6cf
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:23a2689b021e02568b5fa715d6ee690a9c1a932407a8f1e93d04a1e428e3dd1e
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:dc2f9726d98c3f2b02550fb3e89caed408ddeb73f292cf7acf53cb66bfa9b7e2
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:3e1c31081f78301c8fdea2776d9d7a9265c25985436e2fcfa9c472ac4ae3e5ac
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:56b89334bb14e423a239f5f5bcbd13d681199ace98233db90c961b557c724270
+name: konveyor-operator.v0.3.0-alpha.2
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-alpha.2
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:22b1d4487101651332f19285216bd7852a7066aa2cb34ea0ef0ea41bbc517237
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:48815cd91356973b32fc853f55a0a2c7f6a9ef73c43d5ea90fdda0797876bc9f
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:75f1f97c4488484bcedb7a3331d711b42b08fb947a9b14624efc11375761e30e
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:afd970d3232434a1020ec0d6d95f5ace327d45a8b29da016114e676493ccdd4a
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:547b3a625a82ba1b6ec28d35e5f761f13f9fe87af845b941071187bc1bb75da5
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:7a96132168b783e94ef05fcdad968bec4373ae18bbfc96ea6d0ec6a8ac258627
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:f21a695efd044caa39729cd54e7c2c3264a676dfa2420205cd33c46ba6759d4e
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:56b89334bb14e423a239f5f5bcbd13d681199ace98233db90c961b557c724270
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:d77fa9e5758548b4bbf6285114cfa46face7f55fed0a6db740efcb3527f62df2
+name: konveyor-operator.v0.3.0-alpha.3
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-alpha.3
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:1989573f944e45755bdfcc7ecc500009ddc343cb085b95a8f8dfa7515f9ccce5
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:fa9c2768c712963ef6513a7f0af98bb952f8a87ad9c4031776b19dbc744dfe93
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:d13c4e7f5ed7e7f00eb2b119059c0648adbb5fdd0aa0c6e1bb40514a937cb48e
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:a8e1efe5fbdbe595f50a08193738841d62a68a6933bf952326bcabadbb559cf7
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:c97b44ad4bbcfc2d4f70794b934d04928c2ad9ba7ac1cd0e0ba597b1e4725c78
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:eda43b0d0538bcb080c61823ca82c81c6c745e1eaafdf7e42cd791552343898f
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:a5d79cfe4d1566cdec2ade9911c8390e5a36b22a01985362af5515116039f593
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:d77fa9e5758548b4bbf6285114cfa46face7f55fed0a6db740efcb3527f62df2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:355e159ec470678c0ddcef19e23d46ba61543fb60aa51b28657faa344311feae
+name: konveyor-operator.v0.3.0-alpha.4
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-alpha.4
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:38af83710a8538eb61b408fd78ad28745d703edcc7969831be19d000a6e17df2
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:7c766a862558a7a1f9bb2bdd098e82ab2c5b3d81ffd47e4c0161bdfdd9fbc334
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:2995a31144fa8bca4ae76fa924c229b1a483a2cc18e36b61ebae966708fe7cb4
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:96951c81664b00770f2d1173f3db05293855949e6ab9cbf823a3824469f5c644
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:ac10862e15611e675112ea30110057743dee86b84e4c72e9029c4d19bc547875
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:d822235095e04b14b7ad73250582cec2dc13fad10fffe739a067414906f1bdd4
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:c7ff9eb3b46f578961cd9be6d85f81515aa77261014237215949c1219c20dc98
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:355e159ec470678c0ddcef19e23d46ba61543fb60aa51b28657faa344311feae
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:a1860f7642619989b1510b46dff44533a444c8a4c52f01cb4929d6247bdd43f2
+name: konveyor-operator.v0.3.0-alpha.5
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-alpha.5
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:aec4ac0481f21c4504b925a70e5a72ae2831f7b24b214fafb520a8845eb457f9
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:4f0055bacff5cf6431f5c9af1d5adb9eb5d733f95dfca4cb533b04749302bc34
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:e6f16f95086a92cbf916c6b6dd3fcfc497997cd15e54f45702510410c69fac37
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:6caf85b88765027b626303b6b9a0f07c7fdabbfcf9e87b4a3aa287f04c0ece67
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:09c5c069da852eac40e8dc3e5977d5af39bb62f3a2ab8a78f4276508ccc9d930
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:fca605980d62df94ddfd000f536ff5247b4321853859712a5ad2622bb2a84fa1
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:6d871eea8319ca5314de2f322e8cafe406d7a0055a924a33761a415282dffbec
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:a1860f7642619989b1510b46dff44533a444c8a4c52f01cb4929d6247bdd43f2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:4f8116d738cf4f90364ff1b81125e8707994fb7ddb683a754d09197d94936eb1
+name: konveyor-operator.v0.3.0-alpha.6
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-alpha.6
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:c4a4bfc6b42209fc8894c342edd29c3a04455b9705ad7a08550f8fddc4acdb15
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:06b7db1c0703131deb7b9c052688cb5248dbac9dce6b4f6aa3df2fdca44a8a57
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:bca938b4f6f1125b283af5c3eca95e01662fdb01cab9f7226d5a0ff48c873aa1
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:e0ba86934e3a41c9e95c1ea59068779605c8c52dd9f8f14554f58e51be429888
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:7e280d75109ce33b0840b8e2763f94d67f1694b1b84d47059752d6f7568dd17e
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:6c8b7e0122a763cc327e6f709a96fd8e680246cc50d3148fc3fe2f5b4bb82a1d
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:e9ba79891fafac6a2938489b253c3d417aa4fb45802522b7e7848d4fddb9a78a
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:4f8116d738cf4f90364ff1b81125e8707994fb7ddb683a754d09197d94936eb1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:64682d0e46a9c71b8ee49bf5640f0a093bc249876d239803998c7163395825a4
+name: konveyor-operator.v0.3.0-beta.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-beta.1
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:4cee7162c39c502484b5b21ed5964912bbeccb5caf61b524f11b598d6ddd41bc
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:455762cb297990f1cf31cc62e52dbc8af53c065398c67a089f176dd65544782f
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:57139853dbd4fe0b78c04b18c3e89e97d96917d01199ef3c38e2bad948c918d5
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:d6768ecc42e718b19987dbf6283bf8b3a4790008155cd7b6fe1e44cc318cdbd5
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:79cc38a43e183876b62e9c0c5dfd465aac552d3efac2d706f9c38b150a8b4065
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:e98eeb5ac42d5000fbb8d54c1d4b6a99ed782f0ecd09d9dba4faedc8be4f6cd6
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:9f64e2376ce521b55b20ef2f992b99356bb709568d677838e3acdd5302bdb068
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:64682d0e46a9c71b8ee49bf5640f0a093bc249876d239803998c7163395825a4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:4efd812bb182b91393c42d87bb49378341b4cfc82d67732fe2cc530b6202e4d2
+name: konveyor-operator.v0.3.0-beta.1.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-beta.1.1
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/oauth-proxy@sha256:6bc1759a3202b4614739f12441461e344907f6b3f758c34314284debe36d4e15
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:d18bc8d4d4838967de9b3d3e1b93fb93171be0c817f286901b5340667a9e655b
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:1ffe2baa9d72562450a0f88c29deb8ccb06b0cd642d49f9d13f7297bf7d17c81
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:961473ff47d622409e59de7654bf668da05278c9c827b1caae8033bd5b9ba67f
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:3ecb3495383995d72870f54431014c2a5f3f5ab7e02817b986e88de45e60cd63
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:055e4bf4cbc6fec2694adbd9cc8babb40a701114501a03b39fa7b31f7b82eea4
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:6b89e8c42dd632c80013ef4997e75e4c503e6c0069448ddf7bb61b9be8988df0
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:28cbbe64401e479ddc43218b044d54ec6fecd068978ca36fd0b7982e2662488b
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:4efd812bb182b91393c42d87bb49378341b4cfc82d67732fe2cc530b6202e4d2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:8d3b75349d22d92e3b40b9dcf2541a9c5b76ae564225b46c4f0855709608c6df
+name: konveyor-operator.v0.3.0-beta.1.2
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-beta.1.2
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:5cc83e6017437688294219d133fc6589092ae26ee8f093412a848dcbd7defed0
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:3d88e72d25b29308eb6144445d64bc61833aa0b586a79f39efa5e2cc67075c42
+  name: ""
+- image: quay.io/konveyor/tackle-pathfinder@sha256:9dace845c37239c4cf67386f09bcfb9cb0108057384cf740e5ff5a883ee60432
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:3ae238bcfdf92fc0f90724dc0c4333b89bc85af4023146502bd0e09ea7cad2a8
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:0f4d110e6e70fe0db8ababac97c9799b4d3fc66e0a26558dd2d767e0fbeabb92
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:a67cd409fc441b17a23efca95aba10feb91e456c9ee39b0b0864ef1cc79416b6
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:926a9ef82f505064fe24e969f39f594286a1c8a0d21aaa3b4838f9a5b5bbb04b
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:907b786b7a6742ad17a9843e96d02a06715f5015a7c9c536d99bda4b67241334
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:8d3b75349d22d92e3b40b9dcf2541a9c5b76ae564225b46c4f0855709608c6df
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:4aea7c19bf24c7e8a23a48a9d15140fc72181c8777599c6df5151f341c04c984
+name: konveyor-operator.v0.3.0-beta.2
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-beta.2
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:5cc83e6017437688294219d133fc6589092ae26ee8f093412a848dcbd7defed0
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:2b55a0680f332590d4c9b642c5b09eeaa3412b2cbb13659ee7a0434e3f5a1af9
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:fe3b25ecb831e66849aef89a24b11f935fe0a1230fcc44e1ab74ddf075c51870
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:6d0eb44b186018f98e942be04d01566ed8f22881e892a7a51d3206a62e1dc0d6
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:6d96cba826071182483bb60935b4ef1e33c2d6a3a5ff1720194830ec4ba45696
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:21bf1e4efec17973672da5f29ca37af5830781815b33cb2cdf3b317b0733ddda
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:a62e7cc61dbb98ff9121a660d477de77dfa521d7b9c3537e52966f5c36ad7242
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:4aea7c19bf24c7e8a23a48a9d15140fc72181c8777599c6df5151f341c04c984
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:19d881b8ea838ec20a5d0b6354c5c617e1f6b00211a36fc88d53bd3e89cbaa1f
+name: konveyor-operator.v0.3.0-beta.3
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-beta.3
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Tackle",
+            "metadata": {
+              "name": "tackle",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "feature_auth_required": "false"
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Modernization & Migration
+      certified: "false"
+      containerImage: quay.io/konveyor/tackle2-operator@sha256:0d4ecd4f3b922952fdbd00dc48f8cdd3e3f7d33741ef24c68bdc7287d2446e4f
+      createdAt: "2023-11-22T20:59:58Z"
+      description: Konveyor is an open-source application modernization platform that
+        helps organizations safely and predictably modernize applications to Kubernetes
+        at scale.
+      olm.skipRange: '>=0.0.0 <0.3.0-beta.3'
+      operatorframework.io/initialization-resource: |-
+        {
+          "apiVersion": "tackle.konveyor.io/v1alpha1",
+          "kind": "Tackle",
+          "metadata": {
+            "name": "tackle",
+            "namespace": "konveyor-tackle"
+          },
+          "spec": {
+            "feature_auth_required": "false"
+          }
+        }
+      operatorframework.io/suggested-namespace: konveyor-tackle
+      operators.operatorframework.io/builder: operator-sdk-v1.28.1
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      repository: https://github.com/konveyor/tackle2-operator
+      support: https://github.com/konveyor/tackle2-operator/issues
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Tackle Addon
+        displayName: Addon
+        kind: Addon
+        name: addons.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle
+        displayName: Tackle
+        kind: Tackle
+        name: tackles.tackle.konveyor.io
+        version: v1alpha1
+    description: |
+      Konveyor is an open-source application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to Kubernetes.
+
+      See the [Konveyor Unified Experience](https://github.com/konveyor/enhancements/tree/master/enhancements/unified_experience) to understand the vision of the project and the [Konveyor Charter](https://github.com/konveyor/community/blob/main/Charter.md) for more information on the community.
+
+      ### Install
+
+      Once you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.
+
+      By default, the Operator installs the following components on a target cluster:
+
+      * Hub, to manage the application inventory and coordinate the migration process.
+      * UI, the web console to manage the application inventory and drive the migration waves.
+
+      Authentication capabilities may be enabled via the `feature_auth_required` parameter in the Tackle CR. When enabled, the Operator installs the following components:
+      * Keycloak, to manage authentication, including with 3rd-party providers.
+
+      ### Examples
+      If you are just getting started using Konveyor, take a look at an [example application analysis here](https://github.com/konveyor/example-applications/tree/main/example-1)
+
+      ### Documentation
+      Documentation can be found on our [website](https://konveyor.github.io/tackle).
+
+      ### Getting help
+      If you encounter any issues while using Konveyor operator, you can create an issue on our [Github repo](https://github.com/konveyor/tackle2-operator/issues), for bugs, enhancements or other requests.
+      Or reach out to us in [#konveyor](https://kubernetes.slack.com/archives/CR85S82A2) on kubernetes.slack.com
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using Konveyor Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/konveyor/tackle2-operator/pulls)
+      * Improving [documentation](https://github.com/konveyor/tackle-documentation)
+    displayName: Konveyor Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - modernization
+    - migration
+    - konveyor
+    - tackle
+    links:
+    - name: Documentation
+      url: https://konveyor.github.io/tackle
+    - name: Operator
+      url: https://github.com/konveyor/tackle2-operator
+    maintainers:
+    - email: konveyor-dev@googlegroups.com
+      name: Konveyor Community
+    maturity: alpha
+    minKubeVersion: 1.22.0
+    provider:
+      name: Konveyor
+      url: https://www.konveyor.io
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: keycloak-sso
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:4ef87f18ba7fbd00154901b6f343cb28ff0393483877aa9e73486448ed1aa453
+  name: oauth-proxy
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: tackle-postgres
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:493c8003e5def8c4d994af6a79b768130a10a1d770ba10c778f3e043931064f8
+  name: keycloak-init
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:fb40cc580f0dfb964f9f1592286ae6e7e11c5ae045043c71efeb8065d9ea647a
+  name: addon-analyzer
+- image: quay.io/konveyor/tackle2-addon@sha256:25d02c2a879b943606f92da1e85183f135b17875e809b94f3b3a81f4c7c63bef
+  name: addon-admin
+- image: quay.io/konveyor/tackle2-hub@sha256:0f436df75d8ffdae1ff7aa23df6b9b267b016b1eea144a7ec5453eccfd3f414f
+  name: tackle-hub
+- image: quay.io/konveyor/tackle2-operator@sha256:0d4ecd4f3b922952fdbd00dc48f8cdd3e3f7d33741ef24c68bdc7287d2446e4f
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:339ed47b784d58fd78e82b4639b6aa8a0ad3149715ce5879d0d899f9716060ac
+  name: tackle-ui
+- image: quay.io/operatorhubio/konveyor-operator@sha256:19d881b8ea838ec20a5d0b6354c5c617e1f6b00211a36fc88d53bd3e89cbaa1f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:8a7b067968ac2ee6c29933a3986e82e47474f24a6cb1f13aa45a27cbf26db8c4
+name: konveyor-operator.v0.3.0-rc.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-rc.1
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:53faf3b54e562e1fa4c301fcdc9591a14d0639fc6c77ab88aaca003c5b2f6c11
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:5202765fc67259f3d79fd9f28db26b6611f9edf7b03fb8c76797cdabb1ebe717
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:690501dc8e2ae12c14324a27dc3bf0f131f1a47d8b8f7e9cd7fbf821b84423fa
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:8b198b6666c4a91340f309bf2fb0d14590df20693db6d51b160b6d7fd15a3b64
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:fc667223a6d52fe9bda3a38489ca1362fe16965a35f7021476a69d4f931ceb83
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:f1c142c43b3973ba2bcdabb4586f5a2d6e4e4d2566639c49f410ad317e20436c
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:43fa5d2d67d07ce21b82ef37798d38a74dcbe694732c69a40d8c7d5ba24c5ae9
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:8a7b067968ac2ee6c29933a3986e82e47474f24a6cb1f13aa45a27cbf26db8c4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:2483d6d4263d6604a8c721a02606961fd55229ed723c8f4344971e4582331f1c
+name: konveyor-operator.v0.3.0-rc.2
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-rc.2
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:53faf3b54e562e1fa4c301fcdc9591a14d0639fc6c77ab88aaca003c5b2f6c11
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:8c5b7c856c02ca220deba57e7eed167116170e871a8fb7cc2f51fb1f3e2855f3
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:92480f0aa8eef6564b0d9be53cf46d587de66658180d0e4b2fcfbe62c20c82e8
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:8bcc2d39e98541734847705c558283ee4c0bc6264cd6b63a8ee5cc2856afabe0
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:4d8b734cb1b4bf410fa3c498d6a827a698a3cc80a5269b7f198567947be2ab83
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:841320091e57f3e08a932110b780418df89d939891a82f6a246435950069c311
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:6a774e6273e7631ef23144e6f193134a6f6c41f4ef7167bb53c05166d82ecdda
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:2483d6d4263d6604a8c721a02606961fd55229ed723c8f4344971e4582331f1c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:b541aa49704bdc8f052cc0ad01aff56a87dde9e84e9183cf150e29645144a3f9
+name: konveyor-operator.v0.3.0-rc.3
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-rc.3
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:22717627c636c8576ec284bc74a367f973c90689b90358fad3bf6a52712312d0
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:72cfb9e945fd634abddb6c70b3dae57e96af9224e4e8796ab9e48cea6994d014
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:8f3a9fc26c681b63100e7ab0d6a6f9e1b7231aafcb0f4cc65ad94e0639da2643
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:edfa604034470b4d756adabd4df4e7f81d77a4eb471cc5abe704aac02fbc9de6
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:98635a176b5f63674041cdaf0b673bb753f5a925906baac89da5f2fd13a7eba3
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:ec56c340877cb0d887c6d72cc583e768bbf35d2fbec853294943a0803e415d25
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:b541aa49704bdc8f052cc0ad01aff56a87dde9e84e9183cf150e29645144a3f9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:fb592252cd89dacf62ef2043a6a3b94481f61c03ac8379a0de0c022b7ad19418
+name: konveyor-operator.v0.3.0-rc.4
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.0-rc.4
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:19ef21b1394d8c4ff95e8eb28e1287633e32edae0b7fd02c51308338d8438254
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:2b95eddf21c4127ef34186c26414128e986fb5718f4e2a7e622352971e5b06a0
+  name: ""
+- image: quay.io/konveyor/tackle2-addon@sha256:ebe4b94947013597c370ae714dff68b31f83812fae390f83eda761dbd0abbfc7
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:b5cb09786bc39ac6d8e7da0a658b536db4056b1eca63225f3e8cbe11afda67da
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:f9121ecd58f1a1cae9f12d3084e38c1ed407e7bcf7ee57aa7765b588990a4cd1
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:c584be1ecf7f83213c5a8affd9d48235eabfe989ab8cfeac03778bba68247ac0
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:fb592252cd89dacf62ef2043a6a3b94481f61c03ac8379a0de0c022b7ad19418
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:e9e3ea890c7f94e51919ad8bbad499bc3d05c11e413843e324a141d78a948576
+name: konveyor-operator.v0.3.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.1
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:1178039769c0c09dd3900141bc3ea5be32a9f31376ad0cc9baaca6d7f447b50a
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:41cd67d84ce92dd9aad8aafb5c72a21b15597f13b3b75eb05fad8148c63bdb67
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:1a7154e2a222cbc4ba413926967e8ab756b979bcc0c690fa53148c9511ca2982
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:9f9f4607638282c2261d99a335cb364fd9bdb4e960d32dca01ad42a0c1e23b9c
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:f64e4b84ce46a0d4230b74f9b9c5cc649adbad59b72c7e50c31908340fb5bdfe
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:e9e3ea890c7f94e51919ad8bbad499bc3d05c11e413843e324a141d78a948576
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:11be372e8e86f2ac4add76d8ba97646f41a3722a0fcd8ed748fb624697792ca4
+name: konveyor-operator.v0.3.2
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.3.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Tackle",
+            "metadata": {
+              "name": "tackle",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "feature_auth_required": "false"
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Modernization & Migration
+      certified: "false"
+      containerImage: quay.io/konveyor/tackle2-operator@sha256:cd2305373f50ce927393e43f5735915e46c32d6f8a76091ee2808218885bba72
+      createdAt: "2024-05-02T22:12:42Z"
+      description: Konveyor is an open-source application modernization platform that
+        helps organizations safely and predictably modernize applications to Kubernetes
+        at scale.
+      olm.skipRange: '>=0.0.0 <0.3.2'
+      operatorframework.io/initialization-resource: |-
+        {
+          "apiVersion": "tackle.konveyor.io/v1alpha1",
+          "kind": "Tackle",
+          "metadata": {
+            "name": "tackle",
+            "namespace": "konveyor-tackle"
+          },
+          "spec": {
+            "feature_auth_required": "false"
+          }
+        }
+      operatorframework.io/suggested-namespace: konveyor-tackle
+      operators.operatorframework.io/builder: operator-sdk-v1.28.1
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      repository: https://github.com/konveyor/tackle2-operator
+      support: https://github.com/konveyor/tackle2-operator/issues
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Tackle Addon
+        displayName: Addon
+        kind: Addon
+        name: addons.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle
+        displayName: Tackle
+        kind: Tackle
+        name: tackles.tackle.konveyor.io
+        version: v1alpha1
+    description: |
+      Konveyor is an open-source application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to Kubernetes.
+
+      See the [Konveyor Unified Experience](https://github.com/konveyor/enhancements/tree/master/enhancements/unified_experience) to understand the vision of the project and the [Konveyor Charter](https://github.com/konveyor/community/blob/main/Charter.md) for more information on the community.
+
+      ### Install
+
+      Once you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.
+
+      By default, the Operator installs the following components on a target cluster:
+
+      * Hub, to manage the application inventory and coordinate the migration process.
+      * UI, the web console to manage the application inventory and drive the migration waves.
+
+      Authentication capabilities may be enabled via the `feature_auth_required` parameter in the Tackle CR. When enabled, the Operator installs the following components:
+      * Keycloak, to manage authentication, including with 3rd-party providers.
+
+      ### Examples
+      If you are just getting started using Konveyor, take a look at an [example application analysis here](https://github.com/konveyor/example-applications/tree/main/example-1)
+
+      ### Documentation
+      Documentation can be found on our [website](https://konveyor.github.io/tackle).
+
+      ### Getting help
+      If you encounter any issues while using Konveyor operator, you can create an issue on our [Github repo](https://github.com/konveyor/tackle2-operator/issues), for bugs, enhancements or other requests.
+      Or reach out to us in [#konveyor](https://kubernetes.slack.com/archives/CR85S82A2) on kubernetes.slack.com
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using Konveyor Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/konveyor/tackle2-operator/pulls)
+      * Improving [documentation](https://github.com/konveyor/tackle-documentation)
+    displayName: Konveyor Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - modernization
+    - migration
+    - konveyor
+    - tackle
+    links:
+    - name: Documentation
+      url: https://konveyor.github.io/tackle
+    - name: Operator
+      url: https://github.com/konveyor/tackle2-operator
+    maintainers:
+    - email: konveyor-dev@googlegroups.com
+      name: Konveyor Community
+    maturity: alpha
+    minKubeVersion: 1.22.0
+    provider:
+      name: Konveyor
+      url: https://www.konveyor.io
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: keycloak-sso
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: oauth-proxy
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: tackle-postgres
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:a63702cc0cb36830a7830ed70ca344a9aacc201ba6f3c94806ca2e93160df4dd
+  name: keycloak-init
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:51bda0c6577c15684583d607a4f0cebef760814102423f4b2025016093a19fc1
+  name: addon-analyzer
+- image: quay.io/konveyor/tackle2-hub@sha256:bf8803721d06d1a39251e22892343a013d5ef0fb4c1883c95e1eb55aa683f486
+  name: tackle-hub
+- image: quay.io/konveyor/tackle2-operator@sha256:cd2305373f50ce927393e43f5735915e46c32d6f8a76091ee2808218885bba72
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:bbf58d2ea613489f91efae450421afafb9052416b0d7971606e2729e89fd7de6
+  name: tackle-ui
+- image: quay.io/operatorhubio/konveyor-operator@sha256:11be372e8e86f2ac4add76d8ba97646f41a3722a0fcd8ed748fb624697792ca4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:f56aa47026c5fadcb405b78ecf3818bd03086d9f4864611aa54658fda94499b9
+name: konveyor-operator.v0.4.0
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.4.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Tackle",
+            "metadata": {
+              "name": "tackle",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "feature_auth_required": "false"
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Modernization & Migration
+      certified: "false"
+      containerImage: quay.io/konveyor/tackle2-operator@sha256:496db8ca859608d04008ac36cf7bdc9cafd7214294d33a9c5646083c361ffcb6
+      createdAt: "2024-06-05T03:08:51Z"
+      description: Konveyor is an open-source application modernization platform that
+        helps organizations safely and predictably modernize applications to Kubernetes
+        at scale.
+      olm.skipRange: '>=0.0.0 <0.4.0'
+      operatorframework.io/initialization-resource: |-
+        {
+          "apiVersion": "tackle.konveyor.io/v1alpha1",
+          "kind": "Tackle",
+          "metadata": {
+            "name": "tackle",
+            "namespace": "konveyor-tackle"
+          },
+          "spec": {
+            "feature_auth_required": "false"
+          }
+        }
+      operatorframework.io/suggested-namespace: konveyor-tackle
+      operators.operatorframework.io/builder: operator-sdk-v1.28.1
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      repository: https://github.com/konveyor/tackle2-operator
+      support: https://github.com/konveyor/tackle2-operator/issues
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Tackle Addon
+        displayName: Addon
+        kind: Addon
+        name: addons.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle
+        displayName: Tackle
+        kind: Tackle
+        name: tackles.tackle.konveyor.io
+        version: v1alpha1
+    description: |
+      Konveyor is an open-source application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to Kubernetes.
+
+      See the [Konveyor Unified Experience](https://github.com/konveyor/enhancements/tree/master/enhancements/unified_experience) to understand the vision of the project and the [Konveyor Charter](https://github.com/konveyor/community/blob/main/Charter.md) for more information on the community.
+
+      ### Install
+
+      Once you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.
+
+      By default, the Operator installs the following components on a target cluster:
+
+      * Hub, to manage the application inventory and coordinate the migration process.
+      * UI, the web console to manage the application inventory and drive the migration waves.
+
+      Authentication capabilities may be enabled via the `feature_auth_required` parameter in the Tackle CR. When enabled, the Operator installs the following components:
+      * Keycloak, to manage authentication, including with 3rd-party providers.
+
+      ### Examples
+      If you are just getting started using Konveyor, take a look at an [example application analysis here](https://github.com/konveyor/example-applications/tree/main/example-1)
+
+      ### Documentation
+      Documentation can be found on our [website](https://konveyor.github.io/tackle).
+
+      ### Getting help
+      If you encounter any issues while using Konveyor operator, you can create an issue on our [Github repo](https://github.com/konveyor/tackle2-operator/issues), for bugs, enhancements or other requests.
+      Or reach out to us in [#konveyor](https://kubernetes.slack.com/archives/CR85S82A2) on kubernetes.slack.com
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using Konveyor Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/konveyor/tackle2-operator/pulls)
+      * Improving [documentation](https://github.com/konveyor/tackle-documentation)
+    displayName: Konveyor Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - modernization
+    - migration
+    - konveyor
+    - tackle
+    links:
+    - name: Documentation
+      url: https://konveyor.github.io/tackle
+    - name: Operator
+      url: https://github.com/konveyor/tackle2-operator
+    maintainers:
+    - email: konveyor-dev@googlegroups.com
+      name: Konveyor Community
+    maturity: alpha
+    minKubeVersion: 1.22.0
+    provider:
+      name: Konveyor
+      url: https://www.konveyor.io
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: keycloak-sso
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: oauth-proxy
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: tackle-postgres
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:4c7e07b1fce05f7dca47edecc0ba0ce373cc38e48879cc7eed72510d2865a18e
+  name: keycloak-init
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:e84ea36d206a8c143794e3986940377e77c7618225cad594bdf9a4047d7823dc
+  name: addon-analyzer
+- image: quay.io/konveyor/tackle2-hub@sha256:b87acd8e2ee4a7edc4369bc375f64e2b98bc479d09556439e2ee4d74b74970a9
+  name: tackle-hub
+- image: quay.io/konveyor/tackle2-operator@sha256:496db8ca859608d04008ac36cf7bdc9cafd7214294d33a9c5646083c361ffcb6
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:cb1255fc5fa4608fc659c3455f3164664b960cc2d9a3b2208967798e3532df78
+  name: tackle-ui
+- image: quay.io/operatorhubio/konveyor-operator@sha256:f56aa47026c5fadcb405b78ecf3818bd03086d9f4864611aa54658fda94499b9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:3dc8dbe3bcb79d900bc5852a8c1829ef9c6e1a81423fc69ad34986cb9c0448e0
+name: konveyor-operator.v0.4.0-alpha.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.4.0-alpha.1
+relatedImages:
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: ""
+- image: quay.io/konveyor/postgresql-12-centos7@sha256:c65e48c23994a077f618075f06faa8e24a58f64f78e47902f7cf4174c43b4b1b
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:f9941f27c3dff5ee6a0345801206896c85f4d3ba3e6e4fcac2f1b06712b90e37
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:32b27c822c1b72c5c9b37b2be6f0e70364ff46afa91a573706e3187566910bb9
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:6cd18cdbf6b9d3ee26b46706311fd0aa034b390503d255b362a7a3868b5fa403
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:625a43582298ef2d001182f4d367598dc0930a4950e72b76be04c7ead2967b98
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:b7faa41581d38c19fc3f830dc6558e0ca7f9a75670e1bf8ea533cd9d1eb8c0e0
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:3dc8dbe3bcb79d900bc5852a8c1829ef9c6e1a81423fc69ad34986cb9c0448e0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:6f9f888ca2b139df7f184bc6b526d8d52308e7686ef05efd892a8a842c4ef5e9
+name: konveyor-operator.v0.5.0
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Extension
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Task
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.5.0
+relatedImages:
+- image: quay.io/konveyor/generic-external-provider@sha256:06fab7ec83cdbb18bf834dadc11941c0a45d2e7d95b55b0936b37507e0b33b6f
+  name: ""
+- image: quay.io/konveyor/java-external-provider@sha256:d40537064565e9a2059c2a6e3feb362ffbe1ca776a0aacdc10efa4c86951ad48
+  name: ""
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: ""
+- image: quay.io/konveyor/postgresql-15-c9s@sha256:4150cbf775373dbef07355477611f0b91c5e6f79169c3a4d349c75d437f57978
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:157da846710a6ec31ffd6d8efdfb90380773532ae43490b84c2ece62cfd10953
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:e4a40146bb7bd6af869d7d1eef37450f19db2413f6c9e9e8aa16fd58b0689124
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-discovery@sha256:0308bec5f3ada2a16e0318115cc8b412a417779f8a465d60f232f96d958c77d8
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:e29bb418089f9f96ea928ac9cd9c6f480cfbdaf73eb3df709552e31a5ed13d6d
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:c577801273eccccce20f1e9dd116f763226e63d250209b2e095734129eec1422
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:f6d246101362a3bce1d17710b9d0d735e7a1ade29cf48b623c92b9d55233c09f
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:6f9f888ca2b139df7f184bc6b526d8d52308e7686ef05efd892a8a842c4ef5e9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:1a3f67391bfe634a05fbdf09410472fce8db4efc9e86247d606ef92ffe904869
+name: konveyor-operator.v0.5.0-rc.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Extension
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Task
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.5.0-rc.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Addon",
+            "metadata": {
+              "name": "myaddon",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "container": {
+                "image": "quay.io/konveyor/tackle2-addon-analyzer:latest",
+                "imagePullPolicy": "Always",
+                "name": "myaddon",
+                "resources": {
+                  "limits": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  },
+                  "requests": {
+                    "cpu": 1,
+                    "memory": "512Mi"
+                  }
+                }
+              },
+              "task": "mytask"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Extension",
+            "metadata": {
+              "name": "myextension",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "addon": "myaddon",
+              "container": {
+                "args": [
+                  "--port",
+                  "$(PORT)"
+                ],
+                "env": [
+                  {
+                    "name": "PORT",
+                    "value": "${seq:8000}"
+                  }
+                ],
+                "image": "quay.io/konveyor/generic-external-provider:latest",
+                "imagePullPolicy": "Always",
+                "name": "myextension",
+                "resources": {
+                  "limits": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  },
+                  "requests": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  }
+                }
+              },
+              "metadata": {
+                "provider": {
+                  "address": "localhost:$(PORT)",
+                  "name": "myextension"
+                }
+              },
+              "selector": "tag:Language=MyLang"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Tackle",
+            "metadata": {
+              "name": "tackle",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "feature_auth_required": "false"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Task",
+            "metadata": {
+              "name": "mytask",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "dependencies": [
+                "myaddon"
+              ],
+              "priority": 10
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Modernization & Migration
+      certified: "false"
+      containerImage: quay.io/konveyor/tackle2-operator@sha256:226ba561ae79eb01fe433060ce3b4cbe2bea601d0288a70e893d59953f00f381
+      createdAt: "2024-07-25T03:47:57Z"
+      description: Konveyor is an open-source application modernization platform that
+        helps organizations safely and predictably modernize applications to Kubernetes
+        at scale.
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "false"
+      features.operators.openshift.io/proxy-aware: "true"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      olm.skipRange: '>=0.0.0 <0.5.0-rc.1'
+      operatorframework.io/initialization-resource: |-
+        {
+          "apiVersion": "tackle.konveyor.io/v1alpha1",
+          "kind": "Tackle",
+          "metadata": {
+            "name": "tackle",
+            "namespace": "konveyor-tackle"
+          },
+          "spec": {
+            "feature_auth_required": "false"
+          }
+        }
+      operatorframework.io/suggested-namespace: konveyor-tackle
+      operators.operatorframework.io/builder: operator-sdk-v1.28.1
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      repository: https://github.com/konveyor/tackle2-operator
+      support: https://github.com/konveyor/tackle2-operator/issues
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Tackle Addon
+        displayName: Addon
+        kind: Addon
+        name: addons.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle Extension
+        displayName: Extension
+        kind: Extension
+        name: extensions.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle
+        displayName: Tackle
+        kind: Tackle
+        name: tackles.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle Task
+        displayName: Task
+        kind: Task
+        name: tasks.tackle.konveyor.io
+        version: v1alpha1
+    description: |
+      Konveyor is an open-source application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to Kubernetes.
+
+      See the [Konveyor Unified Experience](https://github.com/konveyor/enhancements/tree/master/enhancements/unified_experience) to understand the vision of the project and the [Konveyor Charter](https://github.com/konveyor/community/blob/main/Charter.md) for more information on the community.
+
+      ### Install
+
+      Once you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.
+
+      By default, the Operator installs the following components on a target cluster:
+
+      * Hub, to manage the application inventory and coordinate the migration process.
+      * UI, the web console to manage the application inventory and drive the migration waves.
+
+      Authentication capabilities may be enabled via the `feature_auth_required` parameter in the Tackle CR. When enabled, the Operator installs the following components:
+      * Keycloak, to manage authentication, including with 3rd-party providers.
+
+      ### Examples
+      If you are just getting started using Konveyor, take a look at an [example application analysis here](https://github.com/konveyor/example-applications/tree/main/example-1)
+
+      ### Documentation
+      Documentation can be found on our [website](https://konveyor.github.io/tackle).
+
+      ### Getting help
+      If you encounter any issues while using Konveyor operator, you can create an issue on our [Github repo](https://github.com/konveyor/tackle2-operator/issues), for bugs, enhancements or other requests.
+      Or reach out to us in [#konveyor](https://kubernetes.slack.com/archives/CR85S82A2) on kubernetes.slack.com
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using Konveyor Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/konveyor/tackle2-operator/pulls)
+      * Improving [documentation](https://github.com/konveyor/tackle-documentation)
+    displayName: Konveyor Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - modernization
+    - migration
+    - konveyor
+    - tackle
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/arch.ppc64le: unsupported
+      operatorframework.io/arch.s390x: unsupported
+    links:
+    - name: Documentation
+      url: https://konveyor.github.io/tackle
+    - name: Operator
+      url: https://github.com/konveyor/tackle2-operator
+    maintainers:
+    - email: konveyor-dev@googlegroups.com
+      name: Konveyor Community
+    maturity: alpha
+    minKubeVersion: 1.22.0
+    provider:
+      name: Konveyor
+      url: https://www.konveyor.io
+relatedImages:
+- image: quay.io/konveyor/generic-external-provider@sha256:de614e90e5bd8347f4957a18940f61d884710316f4406d675258c20691161181
+  name: provider-generic
+- image: quay.io/konveyor/java-external-provider@sha256:b62411a7517a3bd40b0f73bfeacfa644e15ab1da497950fce7acb22e0ebd7d92
+  name: provider-java
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: keycloak-sso
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: oauth-proxy
+- image: quay.io/konveyor/postgresql-15-c9s@sha256:4150cbf775373dbef07355477611f0b91c5e6f79169c3a4d349c75d437f57978
+  name: tackle-postgres
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:c4654721a89d4f2080dc5fd510b1cb6ae12db9fd42b4a1aaf2f948a774867cca
+  name: keycloak-init
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:9cc31bb5bb5c60ae675cf77a33da107eabc3f2158b8baff1c4e6558f08739feb
+  name: addon-analyzer
+- image: quay.io/konveyor/tackle2-addon-discovery@sha256:075a77561ba2ae3cf5dbe41a7ecd8919ee78ffe46e677b13876e56ba9964b050
+  name: addon-discovery
+- image: quay.io/konveyor/tackle2-hub@sha256:03faab6e0cbc2d897f869751d449266e68c2a5d176e643fcbcdc62c71aba3960
+  name: tackle-hub
+- image: quay.io/konveyor/tackle2-operator@sha256:226ba561ae79eb01fe433060ce3b4cbe2bea601d0288a70e893d59953f00f381
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:7261049b2ec2d8df50ce927ae2fe2ddd4a34033d8c904098c6012f53ec57b923
+  name: tackle-ui
+- image: quay.io/operatorhubio/konveyor-operator@sha256:1a3f67391bfe634a05fbdf09410472fce8db4efc9e86247d606ef92ffe904869
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:990134385da1691fe2153d1771a6ddbd85559650433e83009fca615b6a057366
+name: konveyor-operator.v0.5.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Extension
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Task
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.5.1
+relatedImages:
+- image: quay.io/konveyor/generic-external-provider@sha256:3ef35c5d88461863a77b277dc67a16ca23d7b07887271617f177690d143dc512
+  name: ""
+- image: quay.io/konveyor/java-external-provider@sha256:6032ebb628a661873453494c7a1b4334741119ce2930f0b5ecac22023cb179fb
+  name: ""
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: ""
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:05f6bd1216b921b1f47a3821f0e22b84ed6b141bb2ada474c12bd9fde613108c
+  name: ""
+- image: quay.io/konveyor/postgresql-15-c9s@sha256:7734ee4e428bb945c5295d2f80bb9a9f32eba532ad4720cb248b0751fc6960ae
+  name: ""
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:0ec5324fed3866e68ed796ec7cf9ce743696522cb2a828b44cb3c5dc66180e4b
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:d5ea72778736fa4cf82a00aee35d4815900fbaf9109bec7838ab636671db04a6
+  name: ""
+- image: quay.io/konveyor/tackle2-addon-discovery@sha256:79b75eb5594fe8a2a7a51cab34f6a633b3c242eb81fc4db4637c81204e9418c0
+  name: ""
+- image: quay.io/konveyor/tackle2-hub@sha256:5c9d431f90f5c5c056d29c90c74ac4cd62dce81f2fa6c0f970dea4909c0f79a1
+  name: ""
+- image: quay.io/konveyor/tackle2-operator@sha256:16edf24777d323eda580b70bad1a6173a3bfb19dce0dc40451bf849d8b86682f
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:75df9d547db384e0f634fdd0e57b684a31fad85316941ec712a7177a83d01b89
+  name: ""
+- image: quay.io/operatorhubio/konveyor-operator@sha256:990134385da1691fe2153d1771a6ddbd85559650433e83009fca615b6a057366
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:95be92c2f0e4be1114bcd193ac357ed6b4ee23da6810a2bf31c508f9c1fa69e6
+name: konveyor-operator.v0.5.3
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Extension
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Task
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.5.3
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Addon",
+            "metadata": {
+              "name": "myaddon",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "container": {
+                "image": "quay.io/konveyor/tackle2-addon-analyzer:latest",
+                "imagePullPolicy": "Always",
+                "name": "myaddon",
+                "resources": {
+                  "limits": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  },
+                  "requests": {
+                    "cpu": 1,
+                    "memory": "512Mi"
+                  }
+                }
+              },
+              "task": "mytask"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Extension",
+            "metadata": {
+              "name": "myextension",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "addon": "myaddon",
+              "container": {
+                "args": [
+                  "--port",
+                  "$(PORT)"
+                ],
+                "env": [
+                  {
+                    "name": "PORT",
+                    "value": "${seq:8000}"
+                  }
+                ],
+                "image": "quay.io/konveyor/generic-external-provider:latest",
+                "imagePullPolicy": "Always",
+                "name": "myextension",
+                "resources": {
+                  "limits": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  },
+                  "requests": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  }
+                }
+              },
+              "metadata": {
+                "provider": {
+                  "address": "localhost:$(PORT)",
+                  "name": "myextension"
+                }
+              },
+              "selector": "tag:Language=MyLang"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Tackle",
+            "metadata": {
+              "name": "tackle",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "feature_auth_required": "false"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Task",
+            "metadata": {
+              "name": "mytask",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "dependencies": [
+                "myaddon"
+              ],
+              "priority": 10
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Modernization & Migration
+      certified: "false"
+      containerImage: quay.io/konveyor/tackle2-operator@sha256:474d739ed470701b628f1f9e971925ac7fbe0b543f3e36305d932b963b1225fd
+      createdAt: "2024-08-27T15:48:02Z"
+      description: Konveyor is an open-source application modernization platform that
+        helps organizations safely and predictably modernize applications to Kubernetes
+        at scale.
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "false"
+      features.operators.openshift.io/proxy-aware: "true"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      olm.skipRange: '>=0.0.0 <0.5.3'
+      operatorframework.io/initialization-resource: |-
+        {
+          "apiVersion": "tackle.konveyor.io/v1alpha1",
+          "kind": "Tackle",
+          "metadata": {
+            "name": "tackle",
+            "namespace": "konveyor-tackle"
+          },
+          "spec": {
+            "feature_auth_required": "false"
+          }
+        }
+      operatorframework.io/suggested-namespace: konveyor-tackle
+      operators.operatorframework.io/builder: operator-sdk-v1.28.1
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      repository: https://github.com/konveyor/tackle2-operator
+      support: https://github.com/konveyor/tackle2-operator/issues
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Tackle Addon
+        displayName: Addon
+        kind: Addon
+        name: addons.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle Extension
+        displayName: Extension
+        kind: Extension
+        name: extensions.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle
+        displayName: Tackle
+        kind: Tackle
+        name: tackles.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle Task
+        displayName: Task
+        kind: Task
+        name: tasks.tackle.konveyor.io
+        version: v1alpha1
+    description: |
+      Konveyor is an open-source application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to Kubernetes.
+
+      See the [Konveyor Unified Experience](https://github.com/konveyor/enhancements/tree/master/enhancements/unified_experience) to understand the vision of the project and the [Konveyor Charter](https://github.com/konveyor/community/blob/main/Charter.md) for more information on the community.
+
+      ### Install
+
+      Once you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.
+
+      By default, the Operator installs the following components on a target cluster:
+
+      * Hub, to manage the application inventory and coordinate the migration process.
+      * UI, the web console to manage the application inventory and drive the migration waves.
+
+      Authentication capabilities may be enabled via the `feature_auth_required` parameter in the Tackle CR. When enabled, the Operator installs the following components:
+      * Keycloak, to manage authentication, including with 3rd-party providers.
+
+      ### Examples
+      If you are just getting started using Konveyor, take a look at an [example application analysis here](https://github.com/konveyor/example-applications/tree/main/example-1)
+
+      ### Documentation
+      Documentation can be found on our [website](https://konveyor.github.io/tackle).
+
+      ### Getting help
+      If you encounter any issues while using Konveyor operator, you can create an issue on our [Github repo](https://github.com/konveyor/tackle2-operator/issues), for bugs, enhancements or other requests.
+      Or reach out to us in [#konveyor](https://kubernetes.slack.com/archives/CR85S82A2) on kubernetes.slack.com
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using Konveyor Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/konveyor/tackle2-operator/pulls)
+      * Improving [documentation](https://github.com/konveyor/tackle-documentation)
+    displayName: Konveyor Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - modernization
+    - migration
+    - konveyor
+    - tackle
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/arch.ppc64le: unsupported
+      operatorframework.io/arch.s390x: unsupported
+    links:
+    - name: Documentation
+      url: https://konveyor.github.io/tackle
+    - name: Operator
+      url: https://github.com/konveyor/tackle2-operator
+    maintainers:
+    - email: konveyor-dev@googlegroups.com
+      name: Konveyor Community
+    maturity: alpha
+    minKubeVersion: 1.22.0
+    provider:
+      name: Konveyor
+      url: https://www.konveyor.io
+relatedImages:
+- image: quay.io/konveyor/generic-external-provider@sha256:334a631538d31efc8d82adae4f52303336800fa3037b5055c72400918d81955c
+  name: provider-generic
+- image: quay.io/konveyor/java-external-provider@sha256:33fb5d24b998f01c481a0a03e3f1bf3f7a6c93f5b662885102a0c966026e3375
+  name: provider-java
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: keycloak-sso
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:1db28585d10c8ccc65a38b5d4977e6566661411f51d44ec1fb8b8a562087d86c
+  name: oauth-proxy
+- image: quay.io/konveyor/postgresql-15-c9s@sha256:039ce764cadd03b4cfea954700139b8ceff415a9a0970baa7f2cf60f7f929174
+  name: tackle-postgres
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:5f652be5914ae6e23537b9fe02ccc9cd638c08de5462d9f58135a405c81f5287
+  name: keycloak-init
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:2afbe8bea09904e084e026cd0a294fbe1c7b05d0e387f6633b09c5eaf4665e02
+  name: addon-analyzer
+- image: quay.io/konveyor/tackle2-addon-discovery@sha256:461f960bb1d29e719fb472fe9be9cf3deca17d984687957f54546a09047b0d3c
+  name: addon-discovery
+- image: quay.io/konveyor/tackle2-hub@sha256:faf91ca68e24979642a44fa013b1fb9edfee415eee835ccef9dce2eb418e2909
+  name: tackle-hub
+- image: quay.io/konveyor/tackle2-operator@sha256:474d739ed470701b628f1f9e971925ac7fbe0b543f3e36305d932b963b1225fd
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:36f29fe01d3078f0e100b24d1ed126850c5a773f4b0ae922fd4c4487de1ac29d
+  name: tackle-ui
+- image: quay.io/operatorhubio/konveyor-operator@sha256:95be92c2f0e4be1114bcd193ac357ed6b4ee23da6810a2bf31c508f9c1fa69e6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/konveyor-operator@sha256:f64470b99751b48826e67548cd26bda3caf7a2721701cd973f489b9f70a845d2
+name: konveyor-operator.v0.6.0-alpha.1
+package: konveyor-operator
+properties:
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Addon
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Extension
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Tackle
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: tackle.konveyor.io
+    kind: Task
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: konveyor-operator
+    version: 0.6.0-alpha.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Addon",
+            "metadata": {
+              "name": "myaddon",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "container": {
+                "image": "quay.io/konveyor/tackle2-addon-analyzer:latest",
+                "imagePullPolicy": "Always",
+                "name": "myaddon",
+                "resources": {
+                  "limits": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  },
+                  "requests": {
+                    "cpu": 1,
+                    "memory": "512Mi"
+                  }
+                }
+              },
+              "task": "mytask"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Extension",
+            "metadata": {
+              "name": "myextension",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "addon": "myaddon",
+              "container": {
+                "args": [
+                  "--port",
+                  "$(PORT)"
+                ],
+                "env": [
+                  {
+                    "name": "PORT",
+                    "value": "${seq:8000}"
+                  }
+                ],
+                "image": "quay.io/konveyor/generic-external-provider:latest",
+                "imagePullPolicy": "Always",
+                "name": "myextension",
+                "resources": {
+                  "limits": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  },
+                  "requests": {
+                    "cpu": 1,
+                    "memory": "1Gi"
+                  }
+                }
+              },
+              "metadata": {
+                "provider": {
+                  "address": "localhost:$(PORT)",
+                  "name": "myextension"
+                }
+              },
+              "selector": "tag:Language=MyLang"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Tackle",
+            "metadata": {
+              "name": "tackle",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "feature_auth_required": "false"
+            }
+          },
+          {
+            "apiVersion": "tackle.konveyor.io/v1alpha1",
+            "kind": "Task",
+            "metadata": {
+              "name": "mytask",
+              "namespace": "konveyor-tackle"
+            },
+            "spec": {
+              "dependencies": [
+                "myaddon"
+              ],
+              "priority": 10
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Modernization & Migration
+      certified: "false"
+      containerImage: quay.io/konveyor/tackle2-operator@sha256:f659b3b4f753dabc79921e142bdb4970edd8f5552e819bbc81f2c5e06390c919
+      createdAt: "2024-10-01T21:41:02Z"
+      description: Konveyor is an open-source application modernization platform that
+        helps organizations safely and predictably modernize applications to Kubernetes
+        at scale.
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "false"
+      features.operators.openshift.io/proxy-aware: "true"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      olm.skipRange: '>=0.0.0 <0.6.0-alpha.1'
+      operatorframework.io/initialization-resource: |-
+        {
+          "apiVersion": "tackle.konveyor.io/v1alpha1",
+          "kind": "Tackle",
+          "metadata": {
+            "name": "tackle",
+            "namespace": "konveyor-tackle"
+          },
+          "spec": {
+            "feature_auth_required": "false"
+          }
+        }
+      operatorframework.io/suggested-namespace: konveyor-tackle
+      operators.operatorframework.io/builder: operator-sdk-v1.28.1
+      operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
+      repository: https://github.com/konveyor/tackle2-operator
+      support: https://github.com/konveyor/tackle2-operator/issues
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Tackle Addon
+        displayName: Addon
+        kind: Addon
+        name: addons.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle Extension
+        displayName: Extension
+        kind: Extension
+        name: extensions.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle
+        displayName: Tackle
+        kind: Tackle
+        name: tackles.tackle.konveyor.io
+        version: v1alpha1
+      - description: Tackle Task
+        displayName: Task
+        kind: Task
+        name: tasks.tackle.konveyor.io
+        version: v1alpha1
+    description: |
+      Konveyor is an open-source application modernization platform that helps organizations safely and predictably modernize applications to new technologies, with an initial focus on accelerating the adoption of legacy applications to Kubernetes.
+
+      See the [Konveyor Unified Experience](https://github.com/konveyor/enhancements/tree/master/enhancements/unified_experience) to understand the vision of the project and the [Konveyor Charter](https://github.com/konveyor/community/blob/main/Charter.md) for more information on the community.
+
+      ### Install
+
+      Once you have successfully installed the Operator, proceed to deploy components by creating the required Tackle CR.
+
+      By default, the Operator installs the following components on a target cluster:
+
+      * Hub, to manage the application inventory and coordinate the migration process.
+      * UI, the web console to manage the application inventory and drive the migration waves.
+
+      Authentication capabilities may be enabled via the `feature_auth_required` parameter in the Tackle CR. When enabled, the Operator installs the following components:
+      * Keycloak, to manage authentication, including with 3rd-party providers.
+
+      ### Examples
+      If you are just getting started using Konveyor, take a look at an [example application analysis here](https://github.com/konveyor/example-applications/tree/main/example-1)
+
+      ### Documentation
+      Documentation can be found on our [website](https://konveyor.github.io/tackle).
+
+      ### Getting help
+      If you encounter any issues while using Konveyor operator, you can create an issue on our [Github repo](https://github.com/konveyor/tackle2-operator/issues), for bugs, enhancements or other requests.
+      Or reach out to us in [#konveyor](https://kubernetes.slack.com/archives/CR85S82A2) on kubernetes.slack.com
+
+      ### Contributing
+      You can contribute by:
+
+      * Raising any issues you find using Konveyor Operator
+      * Fixing issues by opening [Pull Requests](https://github.com/konveyor/tackle2-operator/pulls)
+      * Improving [documentation](https://github.com/konveyor/tackle-documentation)
+    displayName: Konveyor Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - modernization
+    - migration
+    - konveyor
+    - tackle
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/arch.ppc64le: unsupported
+      operatorframework.io/arch.s390x: unsupported
+    links:
+    - name: Documentation
+      url: https://konveyor.github.io/tackle
+    - name: Operator
+      url: https://github.com/konveyor/tackle2-operator
+    maintainers:
+    - email: konveyor-dev@googlegroups.com
+      name: Konveyor Community
+    maturity: alpha
+    minKubeVersion: 1.22.0
+    provider:
+      name: Konveyor
+      url: https://www.konveyor.io
+relatedImages:
+- image: quay.io/konveyor/generic-external-provider@sha256:ab4a5a9880bf1bc72277208086812859c007ff4e51cd43c304788d6612b49c70
+  name: provider-generic
+- image: quay.io/konveyor/java-external-provider@sha256:b57a672ed7222d0df326f24eb9d81a1dd680ed23da247ef0d54f4f1a110a61d3
+  name: provider-java
+- image: quay.io/konveyor/kai@sha256:f48554af90c182b47794c02abc45da1ec712fbea5a2d26b0650c360c0dc46576
+  name: kai
+- image: quay.io/konveyor/keycloak@sha256:9342435929d8ed447864694383a7fb50d91f0f4913b5f85f4a43ba8bc36f9b82
+  name: keycloak-sso
+- image: quay.io/konveyor/origin-oauth-proxy@sha256:1db28585d10c8ccc65a38b5d4977e6566661411f51d44ec1fb8b8a562087d86c
+  name: oauth-proxy
+- image: quay.io/konveyor/postgresql-15-c9s@sha256:9e6fed7835752b40b909861adbbf577d253739f5e9166aceb973fcff19d5170b
+  name: tackle-postgres
+- image: quay.io/konveyor/tackle-keycloak-init@sha256:6577c1b95078c8ed6d141a39198b2a16160816a76a3c38633e2ca4cd3787d323
+  name: keycloak-init
+- image: quay.io/konveyor/tackle2-addon-analyzer@sha256:182c8e679e14173f77b886878e7e8ff440e6fb0febfa5b49ef7d83cf74095a7a
+  name: addon-analyzer
+- image: quay.io/konveyor/tackle2-addon-discovery@sha256:9bfe44e458d420fe20eeeb22412be018a38023018ce26565c75f99e695a33b1b
+  name: addon-discovery
+- image: quay.io/konveyor/tackle2-hub@sha256:462c991047a9a7471f4e3eaffe9d38e7414d58016697c9c2e60898a2dbeb17e6
+  name: tackle-hub
+- image: quay.io/konveyor/tackle2-operator@sha256:f659b3b4f753dabc79921e142bdb4970edd8f5552e819bbc81f2c5e06390c919
+  name: ""
+- image: quay.io/konveyor/tackle2-ui@sha256:4b44fa5c04ecc141374c10f616499603bb9e23e8ced00671fc29d0a6b7901d41
+  name: tackle-ui
+- image: quay.io/operatorhubio/konveyor-operator@sha256:f64470b99751b48826e67548cd26bda3caf7a2721701cd973f489b9f70a845d2
+  name: ""
+schema: olm.bundle

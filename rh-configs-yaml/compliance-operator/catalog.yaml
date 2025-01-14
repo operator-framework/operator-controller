@@ -1,0 +1,2312 @@
+{
+  "schema": "olm.package",
+  "name": "compliance-operator",
+  "defaultChannel": "stable",
+  "icon": {
+    "base64data": "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",
+    "mediatype": "image/png"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "4.7",
+  "package": "compliance-operator",
+  "entries": [
+    {
+      "name": "compliance-operator.v0.1.32",
+      "skipRange": ">=0.1.17 <0.1.32"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "release-0.1",
+  "package": "compliance-operator",
+  "entries": [
+    {
+      "name": "compliance-operator.v0.1.61",
+      "skipRange": ">=0.1.17 <0.1.61"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable",
+  "package": "compliance-operator",
+  "entries": [
+    {
+      "name": "compliance-operator.v1.4.0",
+      "skipRange": ">=0.1.17 <1.4.0"
+    },
+    {
+      "name": "compliance-operator.v1.4.1",
+      "replaces": "compliance-operator.v1.4.0",
+      "skipRange": ">=0.1.17 <1.4.1"
+    },
+    {
+      "name": "compliance-operator.v1.5.0",
+      "replaces": "compliance-operator.v1.4.1",
+      "skipRange": ">=0.1.17 <1.5.0"
+    },
+    {
+      "name": "compliance-operator.v1.5.1",
+      "replaces": "compliance-operator.v1.5.0",
+      "skipRange": ">=0.1.17 <1.5.1"
+    },
+    {
+      "name": "compliance-operator.v1.6.0",
+      "replaces": "compliance-operator.v1.5.1",
+      "skipRange": ">=0.1.17 <1.6.0"
+    },
+    {
+      "name": "compliance-operator.v1.6.1",
+      "replaces": "compliance-operator.v1.6.0",
+      "skipRange": ">=0.1.17 <1.6.1"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "compliance-operator.v0.1.32",
+  "package": "compliance-operator",
+  "image": "registry.redhat.io/openshift4/compliance-rhel8-operator-metadata@sha256:1c06868bce1f5d7145ef658bfcc284c44011aa24a17166aa124547b38f2259e4",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceCheckResult",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceScan",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceSuite",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Profile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ProfileBundle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Rule",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSetting",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSettingBinding",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "TailoredProfile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Variable",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "compliance-operator",
+        "version": "0.1.32"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-rhcos4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-ocp4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n      \"scanType\": \"Platform\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceSuite\",\n    \"metadata\": {\n      \"name\": \"example-compliancesuite\"\n    },\n    \"spec\": {\n      \"autoApplyRemediations\": false,\n      \"scans\": [\n        {\n          \"content\": \"ssg-rhcos4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/openshift4/compliance-content-rhel8@sha256:4529b9bb32c1846a38e38363fa872713b1c1e6b26b34d887813432f97cff368c\",\n          \"name\": \"workers-scan\",\n          \"nodeSelector\": {\n            \"node-role.kubernetes.io/worker\": \"\"\n          },\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n        },\n        {\n          \"content\": \"ssg-ocp4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/openshift4/compliance-content-rhel8@sha256:4529b9bb32c1846a38e38363fa872713b1c1e6b26b34d887813432f97cff368c\",\n          \"name\": \"platform-scan\",\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n          \"scanType\": \"Platform\"\n        }\n      ],\n      \"schedule\": \"0 1 * * *\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ProfileBundle\",\n    \"metadata\": {\n      \"name\": \"ocp4\"\n    },\n    \"spec\": {\n      \"contentFile\": \"ssg-ocp4-ds.xml\",\n      \"contentImage\": \"registry.redhat.io/openshift4/compliance-content-rhel8@sha256:4529b9bb32c1846a38e38363fa872713b1c1e6b26b34d887813432f97cff368c\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"autoApplyRemediations\": false,\n    \"debug\": true,\n    \"kind\": \"ScanSetting\",\n    \"metadata\": {\n      \"name\": \"my-companys-constraints\"\n    },\n    \"rawResultStorage\": {\n      \"rotation\": 10,\n      \"size\": \"2Gi\"\n    },\n    \"roles\": [\n      \"worker\",\n      \"master\"\n    ],\n    \"schedule\": \"0 1 * * *\"\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ScanSettingBinding\",\n    \"metadata\": {\n      \"name\": \"nist-moderate\"\n    },\n    \"profiles\": [\n      {\n        \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n        \"kind\": \"Profile\",\n        \"name\": \"rhcos4-moderate\"\n      }\n    ],\n    \"settingsRef\": {\n      \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n      \"kind\": \"ScanSetting\",\n      \"name\": \"default\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"TailoredProfile\",\n    \"metadata\": {\n      \"name\": \"example-tailoredprofile\"\n    },\n    \"spec\": {\n      \"disableRules\": [\n        {\n          \"name\": \"ocp4-file-permissions-node-config\",\n          \"rationale\": \"This breaks X application.\"\n        },\n        {\n          \"name\": \"ocp4-account-disable-post-pw-expiration\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-accounts-no-uid-except-zero\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chown\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmodat\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchown\",\n          \"rationale\": \"testing this\"\n        }\n      ],\n      \"extends\": \"ocp4-moderate\",\n      \"setValues\": [\n        {\n          \"name\": \"ocp4-var-selinux-state\",\n          \"rationale\": \"trolling dwalsh\",\n          \"value\": \"permissive\"\n        }\n      ],\n      \"title\": \"My little profile\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "olm.skipRange": ">=0.1.17 <0.1.32",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-compliance",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\"]",
+          "repository": "https://github.com/openshift/compliance-operator",
+          "support": "Red Hat Inc."
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "compliancecheckresults.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceCheckResult",
+              "description": "ComplianceCheckResult represent a result of a single compliance \"test\""
+            },
+            {
+              "name": "complianceremediations.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceRemediation",
+              "description": "ComplianceRemediation represents a remediation that can be applied to the cluster to fix the found issues."
+            },
+            {
+              "name": "compliancescans.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceScan",
+              "description": "ComplianceScan represents a scan with a certain configuration that will be applied to objects of a certain entity in the host. These could be nodes that apply to a certain nodeSelector, or the cluster itself."
+            },
+            {
+              "name": "compliancesuites.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceSuite",
+              "description": "ComplianceSuite represents a set of scans that will be applied to the cluster. These should help deployers achieve a certain compliance target."
+            },
+            {
+              "name": "profilebundles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ProfileBundle",
+              "description": "ProfileBundle is the Schema for the profilebundles API"
+            },
+            {
+              "name": "profiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Profile",
+              "description": "Profile is the Schema for the profiles API"
+            },
+            {
+              "name": "rules.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Rule",
+              "description": "Rule is the Schema for the rules API"
+            },
+            {
+              "name": "scansettingbindings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSettingBinding",
+              "description": "ScanSettingBinding is the Schema for the scansettingbindings API"
+            },
+            {
+              "name": "scansettings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSetting",
+              "description": "ScanSetting is the Schema for the scansettings API"
+            },
+            {
+              "name": "tailoredprofiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "TailoredProfile",
+              "description": "TailoredProfile is the Schema for the tailoredprofiles API"
+            },
+            {
+              "name": "variables.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Variable",
+              "description": "Variable describes a tunable in the XCCDF profile"
+            }
+          ]
+        },
+        "description": "An operator which runs OpenSCAP and allows you to keep your cluster compliant with the security benchmark you need.",
+        "displayName": "Compliance Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": false
+          }
+        ],
+        "keywords": [
+          "security",
+          "compliance",
+          "openscap",
+          "audit"
+        ],
+        "links": [
+          {
+            "name": "Compliance Operator upstream repo",
+            "url": "https://github.com/openshift/compliance-operator"
+          },
+          {
+            "name": "Compliance Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/4.7/security/compliance_operator/compliance-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat Inc.",
+          "url": "www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "profile",
+      "image": "registry.redhat.io/openshift4/compliance-content-rhel8@sha256:4529b9bb32c1846a38e38363fa872713b1c1e6b26b34d887813432f97cff368c"
+    },
+    {
+      "name": "compliance-content-rhel8-4529b9bb32c1846a38e38363fa872713b1c1e6b26b34d887813432f97cff368c-annotation",
+      "image": "registry.redhat.io/openshift4/compliance-content-rhel8@sha256:4529b9bb32c1846a38e38363fa872713b1c1e6b26b34d887813432f97cff368c"
+    },
+    {
+      "name": "openscap",
+      "image": "registry.redhat.io/openshift4/compliance-openscap-rhel8@sha256:867c6d4205653d8a954d234cbaf470313009eb983d4f455fb45f49c4a7764422"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/openshift4/compliance-rhel8-operator-metadata@sha256:1c06868bce1f5d7145ef658bfcc284c44011aa24a17166aa124547b38f2259e4"
+    },
+    {
+      "name": "compliance-operator",
+      "image": "registry.redhat.io/openshift4/compliance-rhel8-operator@sha256:ed68a0574ddeaf7d676403cd843f28cb586894f35dbb3ca5e06a5264bd42f030"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/openshift4/compliance-rhel8-operator@sha256:ed68a0574ddeaf7d676403cd843f28cb586894f35dbb3ca5e06a5264bd42f030"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "compliance-operator.v0.1.61",
+  "package": "compliance-operator",
+  "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:8a2194d8d26dff03ec53ac0ab93c62c268e48675079a88db18bb14a977a391be",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceCheckResult",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceScan",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceSuite",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Profile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ProfileBundle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Rule",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSetting",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSettingBinding",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "TailoredProfile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Variable",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "compliance-operator",
+        "version": "0.1.61"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-node\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-rhcos4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-platform\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-ocp4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n      \"scanType\": \"Platform\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceSuite\",\n    \"metadata\": {\n      \"name\": \"example-compliancesuite\"\n    },\n    \"spec\": {\n      \"autoApplyRemediations\": false,\n      \"scans\": [\n        {\n          \"content\": \"ssg-rhcos4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:c4bf5b2b20ff538adbc430b7ee993fbd7c291203a9810534005148304e3b169b\",\n          \"name\": \"workers-scan\",\n          \"nodeSelector\": {\n            \"node-role.kubernetes.io/worker\": \"\"\n          },\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n        },\n        {\n          \"content\": \"ssg-ocp4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:c4bf5b2b20ff538adbc430b7ee993fbd7c291203a9810534005148304e3b169b\",\n          \"name\": \"platform-scan\",\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n          \"scanType\": \"Platform\"\n        }\n      ],\n      \"schedule\": \"0 1 * * *\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ProfileBundle\",\n    \"metadata\": {\n      \"name\": \"ocp4\"\n    },\n    \"spec\": {\n      \"contentFile\": \"ssg-ocp4-ds.xml\",\n      \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:c4bf5b2b20ff538adbc430b7ee993fbd7c291203a9810534005148304e3b169b\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"autoApplyRemediations\": false,\n    \"debug\": true,\n    \"kind\": \"ScanSetting\",\n    \"metadata\": {\n      \"name\": \"my-companys-constraints\"\n    },\n    \"rawResultStorage\": {\n      \"rotation\": 10,\n      \"size\": \"2Gi\"\n    },\n    \"roles\": [\n      \"worker\",\n      \"master\"\n    ],\n    \"schedule\": \"0 1 * * *\"\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ScanSettingBinding\",\n    \"metadata\": {\n      \"name\": \"nist-moderate\"\n    },\n    \"profiles\": [\n      {\n        \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n        \"kind\": \"Profile\",\n        \"name\": \"rhcos4-moderate\"\n      }\n    ],\n    \"settingsRef\": {\n      \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n      \"kind\": \"ScanSetting\",\n      \"name\": \"default\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"TailoredProfile\",\n    \"metadata\": {\n      \"name\": \"example-tailoredprofile\"\n    },\n    \"spec\": {\n      \"description\": \"Example of a tailoredProfile that extends OCP4 FedRAMP Moderate\",\n      \"disableRules\": [\n        {\n          \"name\": \"ocp4-file-permissions-node-config\",\n          \"rationale\": \"This breaks X application.\"\n        },\n        {\n          \"name\": \"ocp4-account-disable-post-pw-expiration\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-accounts-no-uid-except-zero\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chown\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmodat\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchown\",\n          \"rationale\": \"testing this\"\n        }\n      ],\n      \"extends\": \"ocp4-moderate\",\n      \"setValues\": [\n        {\n          \"name\": \"ocp4-var-selinux-state\",\n          \"rationale\": \"trolling dwalsh\",\n          \"value\": \"permissive\"\n        }\n      ],\n      \"title\": \"My little profile\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "olm.skipRange": ">=0.1.17 <0.1.61",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-compliance",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\", \"proxy-aware\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.19.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/openshift/compliance-operator",
+          "support": "Red Hat Inc."
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "compliancecheckresults.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceCheckResult",
+              "description": "ComplianceCheckResult represent a result of a single compliance \"test\""
+            },
+            {
+              "name": "complianceremediations.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceRemediation",
+              "displayName": "Compliance Remediation",
+              "description": "ComplianceRemediation represents a remediation that can be applied to the cluster to fix the found issues."
+            },
+            {
+              "name": "compliancescans.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceScan",
+              "displayName": "Compliance Scan",
+              "description": "ComplianceScan represents a scan with a certain configuration that will be applied to objects of a certain entity in the host. These could be nodes that apply to a certain nodeSelector, or the cluster itself."
+            },
+            {
+              "name": "compliancesuites.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceSuite",
+              "displayName": "Compliance Suite",
+              "description": "ComplianceSuite represents a set of scans that will be applied to the cluster. These should help deployers achieve a certain compliance target."
+            },
+            {
+              "name": "profilebundles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ProfileBundle",
+              "displayName": "Profile Bundle",
+              "description": "ProfileBundle is the Schema for the profilebundles API"
+            },
+            {
+              "name": "profiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Profile",
+              "description": "Profile is the Schema for the profiles API"
+            },
+            {
+              "name": "rules.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Rule",
+              "description": "Rule is the Schema for the rules API"
+            },
+            {
+              "name": "scansettingbindings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSettingBinding",
+              "displayName": "Scan Setting Binding",
+              "description": "ScanSettingBinding is the Schema for the scansettingbindings API"
+            },
+            {
+              "name": "scansettings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSetting",
+              "description": "ScanSetting is the Schema for the scansettings API"
+            },
+            {
+              "name": "tailoredprofiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "TailoredProfile",
+              "displayName": "Tailored Profile",
+              "description": "TailoredProfile is the Schema for the tailoredprofiles API"
+            },
+            {
+              "name": "variables.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Variable",
+              "description": "Variable describes a tunable in the XCCDF profile"
+            }
+          ]
+        },
+        "description": "An operator which runs OpenSCAP and allows you to keep your cluster compliant with the security benchmark you need.",
+        "displayName": "Compliance Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "security",
+          "compliance",
+          "openscap",
+          "audit"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Compliance Operator upstream repo",
+            "url": "https://github.com/openshift/compliance-operator"
+          },
+          {
+            "name": "Compliance Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat Inc.",
+          "url": "www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "profile",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:c4bf5b2b20ff538adbc430b7ee993fbd7c291203a9810534005148304e3b169b"
+    },
+    {
+      "name": "openshift-compliance-content-rhel8-c4bf5b2b20ff538adbc430b7ee993fbd7c291203a9810534005148304e3b169b-annotation",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:c4bf5b2b20ff538adbc430b7ee993fbd7c291203a9810534005148304e3b169b"
+    },
+    {
+      "name": "openscap",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:83ad3113964ec48c5cf28315d923adb6edb95e45960e2756665d617dcd9b2e47"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:8a2194d8d26dff03ec53ac0ab93c62c268e48675079a88db18bb14a977a391be"
+    },
+    {
+      "name": "compliance-operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:5578e2225365ac1c15e4c189c5c7a8d14fd3fd26189414b36028f7f0879bb1dc"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:5578e2225365ac1c15e4c189c5c7a8d14fd3fd26189414b36028f7f0879bb1dc"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "compliance-operator.v1.4.0",
+  "package": "compliance-operator",
+  "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:f176e3a1ca1c77fb285bae8d9009a91abf310363eed4fc79a778b7306a38e480",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceCheckResult",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceScan",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceSuite",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Profile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ProfileBundle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Rule",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSetting",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSettingBinding",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "TailoredProfile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Variable",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "compliance-operator",
+        "version": "1.4.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-node\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-rhcos4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-platform\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-ocp4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n      \"scanType\": \"Platform\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceSuite\",\n    \"metadata\": {\n      \"name\": \"example-compliancesuite\"\n    },\n    \"spec\": {\n      \"autoApplyRemediations\": false,\n      \"scans\": [\n        {\n          \"content\": \"ssg-rhcos4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:7c1285f294f4630766bf158924ea7eff9b6549b2a9881e6dea6bad07887525a0\",\n          \"name\": \"workers-scan\",\n          \"nodeSelector\": {\n            \"node-role.kubernetes.io/worker\": \"\"\n          },\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n        },\n        {\n          \"content\": \"ssg-ocp4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:7c1285f294f4630766bf158924ea7eff9b6549b2a9881e6dea6bad07887525a0\",\n          \"name\": \"platform-scan\",\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n          \"scanType\": \"Platform\"\n        }\n      ],\n      \"schedule\": \"0 1 * * *\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ProfileBundle\",\n    \"metadata\": {\n      \"name\": \"ocp4\"\n    },\n    \"spec\": {\n      \"contentFile\": \"ssg-ocp4-ds.xml\",\n      \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:7c1285f294f4630766bf158924ea7eff9b6549b2a9881e6dea6bad07887525a0\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"autoApplyRemediations\": false,\n    \"debug\": true,\n    \"kind\": \"ScanSetting\",\n    \"metadata\": {\n      \"name\": \"my-companys-constraints\"\n    },\n    \"rawResultStorage\": {\n      \"rotation\": 10,\n      \"size\": \"2Gi\"\n    },\n    \"roles\": [\n      \"worker\",\n      \"master\"\n    ],\n    \"schedule\": \"0 1 * * *\"\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ScanSettingBinding\",\n    \"metadata\": {\n      \"name\": \"nist-moderate\"\n    },\n    \"profiles\": [\n      {\n        \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n        \"kind\": \"Profile\",\n        \"name\": \"rhcos4-moderate\"\n      }\n    ],\n    \"settingsRef\": {\n      \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n      \"kind\": \"ScanSetting\",\n      \"name\": \"default\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"TailoredProfile\",\n    \"metadata\": {\n      \"name\": \"example-tailoredprofile\"\n    },\n    \"spec\": {\n      \"description\": \"Example of a tailoredProfile that extends OCP4 FedRAMP Moderate\",\n      \"disableRules\": [\n        {\n          \"name\": \"ocp4-file-permissions-node-config\",\n          \"rationale\": \"This breaks X application.\"\n        },\n        {\n          \"name\": \"ocp4-account-disable-post-pw-expiration\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-accounts-no-uid-except-zero\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chown\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmodat\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchown\",\n          \"rationale\": \"testing this\"\n        }\n      ],\n      \"extends\": \"ocp4-moderate\",\n      \"setValues\": [\n        {\n          \"name\": \"ocp4-var-selinux-state\",\n          \"rationale\": \"trolling dwalsh\",\n          \"value\": \"permissive\"\n        }\n      ],\n      \"title\": \"My little profile\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "olm.skipRange": ">=0.1.17 <1.4.0",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-compliance",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\", \"proxy-aware\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.19.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/ComplianceAsCode/compliance-operator",
+          "support": "Red Hat Inc."
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "compliancecheckresults.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceCheckResult",
+              "description": "ComplianceCheckResult represent a result of a single compliance \"test\""
+            },
+            {
+              "name": "complianceremediations.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceRemediation",
+              "displayName": "Compliance Remediation",
+              "description": "ComplianceRemediation represents a remediation that can be applied to the cluster to fix the found issues."
+            },
+            {
+              "name": "compliancescans.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceScan",
+              "displayName": "Compliance Scan",
+              "description": "ComplianceScan represents a scan with a certain configuration that will be applied to objects of a certain entity in the host. These could be nodes that apply to a certain nodeSelector, or the cluster itself."
+            },
+            {
+              "name": "compliancesuites.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceSuite",
+              "displayName": "Compliance Suite",
+              "description": "ComplianceSuite represents a set of scans that will be applied to the cluster. These should help deployers achieve a certain compliance target."
+            },
+            {
+              "name": "profilebundles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ProfileBundle",
+              "displayName": "Profile Bundle",
+              "description": "ProfileBundle is the Schema for the profilebundles API"
+            },
+            {
+              "name": "profiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Profile",
+              "description": "Profile is the Schema for the profiles API"
+            },
+            {
+              "name": "rules.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Rule",
+              "description": "Rule is the Schema for the rules API"
+            },
+            {
+              "name": "scansettingbindings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSettingBinding",
+              "displayName": "Scan Setting Binding",
+              "description": "ScanSettingBinding is the Schema for the scansettingbindings API"
+            },
+            {
+              "name": "scansettings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSetting",
+              "description": "ScanSetting is the Schema for the scansettings API"
+            },
+            {
+              "name": "tailoredprofiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "TailoredProfile",
+              "displayName": "Tailored Profile",
+              "description": "TailoredProfile is the Schema for the tailoredprofiles API"
+            },
+            {
+              "name": "variables.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Variable",
+              "description": "Variable describes a tunable in the XCCDF profile"
+            }
+          ]
+        },
+        "description": "An operator which runs OpenSCAP and allows you to keep your cluster compliant with the security benchmark you need.",
+        "displayName": "Compliance Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "security",
+          "compliance",
+          "openscap",
+          "audit"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Compliance Operator upstream repository",
+            "url": "https://github.com/ComplianceAsCode/compliance-operator"
+          },
+          {
+            "name": "Compliance Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat Inc.",
+          "url": "www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "profile",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:7c1285f294f4630766bf158924ea7eff9b6549b2a9881e6dea6bad07887525a0"
+    },
+    {
+      "name": "openshift-compliance-content-rhel8-7c1285f294f4630766bf158924ea7eff9b6549b2a9881e6dea6bad07887525a0-annotation",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:7c1285f294f4630766bf158924ea7eff9b6549b2a9881e6dea6bad07887525a0"
+    },
+    {
+      "name": "openscap",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:cc9faf4820afd8bc94622528f340602cee13691f7511152e2da393a859250b0a"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:f176e3a1ca1c77fb285bae8d9009a91abf310363eed4fc79a778b7306a38e480"
+    },
+    {
+      "name": "compliance-operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:f00b64570a1e753f68e617d3583956d71084073541f50d7c2e3ac9d66d6a0486"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:f00b64570a1e753f68e617d3583956d71084073541f50d7c2e3ac9d66d6a0486"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "compliance-operator.v1.4.1",
+  "package": "compliance-operator",
+  "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:cf9d9e16e4660cfff746b3517d32fc73f4d9716d61c5bcae60a60a8fb42ae38e",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceCheckResult",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceScan",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceSuite",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Profile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ProfileBundle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Rule",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSetting",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSettingBinding",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "TailoredProfile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Variable",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "compliance-operator",
+        "version": "1.4.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-node\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-rhcos4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-platform\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-ocp4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n      \"scanType\": \"Platform\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceSuite\",\n    \"metadata\": {\n      \"name\": \"example-compliancesuite\"\n    },\n    \"spec\": {\n      \"autoApplyRemediations\": false,\n      \"scans\": [\n        {\n          \"content\": \"ssg-rhcos4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:5af18a9f28eadeea4087eee1efc41f85153a85ac2e3372de3c35fc5bcd5a361c\",\n          \"name\": \"workers-scan\",\n          \"nodeSelector\": {\n            \"node-role.kubernetes.io/worker\": \"\"\n          },\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n        },\n        {\n          \"content\": \"ssg-ocp4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:5af18a9f28eadeea4087eee1efc41f85153a85ac2e3372de3c35fc5bcd5a361c\",\n          \"name\": \"platform-scan\",\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n          \"scanType\": \"Platform\"\n        }\n      ],\n      \"schedule\": \"0 1 * * *\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ProfileBundle\",\n    \"metadata\": {\n      \"name\": \"ocp4\"\n    },\n    \"spec\": {\n      \"contentFile\": \"ssg-ocp4-ds.xml\",\n      \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:5af18a9f28eadeea4087eee1efc41f85153a85ac2e3372de3c35fc5bcd5a361c\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"autoApplyRemediations\": false,\n    \"debug\": true,\n    \"kind\": \"ScanSetting\",\n    \"metadata\": {\n      \"name\": \"my-companys-constraints\"\n    },\n    \"rawResultStorage\": {\n      \"rotation\": 10,\n      \"size\": \"2Gi\"\n    },\n    \"roles\": [\n      \"worker\",\n      \"master\"\n    ],\n    \"schedule\": \"0 1 * * *\"\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ScanSettingBinding\",\n    \"metadata\": {\n      \"name\": \"nist-moderate\"\n    },\n    \"profiles\": [\n      {\n        \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n        \"kind\": \"Profile\",\n        \"name\": \"rhcos4-moderate\"\n      }\n    ],\n    \"settingsRef\": {\n      \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n      \"kind\": \"ScanSetting\",\n      \"name\": \"default\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"TailoredProfile\",\n    \"metadata\": {\n      \"name\": \"example-tailoredprofile\"\n    },\n    \"spec\": {\n      \"description\": \"Example of a tailoredProfile that extends OCP4 FedRAMP Moderate\",\n      \"disableRules\": [\n        {\n          \"name\": \"ocp4-file-permissions-node-config\",\n          \"rationale\": \"This breaks X application.\"\n        },\n        {\n          \"name\": \"ocp4-account-disable-post-pw-expiration\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-accounts-no-uid-except-zero\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chown\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmodat\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchown\",\n          \"rationale\": \"testing this\"\n        }\n      ],\n      \"extends\": \"ocp4-moderate\",\n      \"setValues\": [\n        {\n          \"name\": \"ocp4-var-selinux-state\",\n          \"rationale\": \"trolling dwalsh\",\n          \"value\": \"permissive\"\n        }\n      ],\n      \"title\": \"My little profile\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.1.17 <1.4.1",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-compliance",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\", \"proxy-aware\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.19.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/ComplianceAsCode/compliance-operator",
+          "support": "Red Hat Inc."
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "compliancecheckresults.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceCheckResult",
+              "description": "ComplianceCheckResult represent a result of a single compliance \"test\""
+            },
+            {
+              "name": "complianceremediations.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceRemediation",
+              "displayName": "Compliance Remediation",
+              "description": "ComplianceRemediation represents a remediation that can be applied to the cluster to fix the found issues."
+            },
+            {
+              "name": "compliancescans.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceScan",
+              "displayName": "Compliance Scan",
+              "description": "ComplianceScan represents a scan with a certain configuration that will be applied to objects of a certain entity in the host. These could be nodes that apply to a certain nodeSelector, or the cluster itself."
+            },
+            {
+              "name": "compliancesuites.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceSuite",
+              "displayName": "Compliance Suite",
+              "description": "ComplianceSuite represents a set of scans that will be applied to the cluster. These should help deployers achieve a certain compliance target."
+            },
+            {
+              "name": "profilebundles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ProfileBundle",
+              "displayName": "Profile Bundle",
+              "description": "ProfileBundle is the Schema for the profilebundles API"
+            },
+            {
+              "name": "profiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Profile",
+              "description": "Profile is the Schema for the profiles API"
+            },
+            {
+              "name": "rules.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Rule",
+              "description": "Rule is the Schema for the rules API"
+            },
+            {
+              "name": "scansettingbindings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSettingBinding",
+              "displayName": "Scan Setting Binding",
+              "description": "ScanSettingBinding is the Schema for the scansettingbindings API"
+            },
+            {
+              "name": "scansettings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSetting",
+              "description": "ScanSetting is the Schema for the scansettings API"
+            },
+            {
+              "name": "tailoredprofiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "TailoredProfile",
+              "displayName": "Tailored Profile",
+              "description": "TailoredProfile is the Schema for the tailoredprofiles API"
+            },
+            {
+              "name": "variables.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Variable",
+              "description": "Variable describes a tunable in the XCCDF profile"
+            }
+          ]
+        },
+        "description": "An operator which runs OpenSCAP and allows you to keep your cluster compliant with the security benchmark you need.",
+        "displayName": "Compliance Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "security",
+          "compliance",
+          "openscap",
+          "audit"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Compliance Operator upstream repository",
+            "url": "https://github.com/ComplianceAsCode/compliance-operator"
+          },
+          {
+            "name": "Compliance Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat Inc.",
+          "url": "www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "profile",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:dee91b7c0551a01fe2a3e6fcf3788e76f3ab5be8daa5ca59709840af6592203a"
+    },
+    {
+      "name": "openscap",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:5af18a9f28eadeea4087eee1efc41f85153a85ac2e3372de3c35fc5bcd5a361c"
+    },
+    {
+      "name": "openshift-compliance-openscap-rhel8-5af18a9f28eadeea4087eee1efc41f85153a85ac2e3372de3c35fc5bcd5a361c-annotation",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:5af18a9f28eadeea4087eee1efc41f85153a85ac2e3372de3c35fc5bcd5a361c"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:cf9d9e16e4660cfff746b3517d32fc73f4d9716d61c5bcae60a60a8fb42ae38e"
+    },
+    {
+      "name": "compliance-operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:9fd537c417480d608f0f299564303eb1153d7aaa83b605c4de282f856eca39fa"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:9fd537c417480d608f0f299564303eb1153d7aaa83b605c4de282f856eca39fa"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "compliance-operator.v1.5.0",
+  "package": "compliance-operator",
+  "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:a4f4aabb46ca34f6bdd63e752f6b7de37ac41fed6cf87709506857b4819d4e98",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceCheckResult",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceScan",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceSuite",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Profile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ProfileBundle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Rule",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSetting",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSettingBinding",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "TailoredProfile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Variable",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "compliance-operator",
+        "version": "1.5.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-node\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-rhcos4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-platform\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-ocp4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n      \"scanType\": \"Platform\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceSuite\",\n    \"metadata\": {\n      \"name\": \"example-compliancesuite\"\n    },\n    \"spec\": {\n      \"autoApplyRemediations\": false,\n      \"scans\": [\n        {\n          \"content\": \"ssg-rhcos4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:a92792041cc697aeff51b543bf62a85bc56a70427b2f0b90d11149effe93ed4f\",\n          \"name\": \"workers-scan\",\n          \"nodeSelector\": {\n            \"node-role.kubernetes.io/worker\": \"\"\n          },\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n        },\n        {\n          \"content\": \"ssg-ocp4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:a92792041cc697aeff51b543bf62a85bc56a70427b2f0b90d11149effe93ed4f\",\n          \"name\": \"platform-scan\",\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n          \"scanType\": \"Platform\"\n        }\n      ],\n      \"schedule\": \"0 1 * * *\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ProfileBundle\",\n    \"metadata\": {\n      \"name\": \"ocp4\"\n    },\n    \"spec\": {\n      \"contentFile\": \"ssg-ocp4-ds.xml\",\n      \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:a92792041cc697aeff51b543bf62a85bc56a70427b2f0b90d11149effe93ed4f\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"autoApplyRemediations\": false,\n    \"debug\": true,\n    \"kind\": \"ScanSetting\",\n    \"metadata\": {\n      \"name\": \"my-companys-constraints\"\n    },\n    \"rawResultStorage\": {\n      \"rotation\": 10,\n      \"size\": \"2Gi\"\n    },\n    \"roles\": [\n      \"worker\",\n      \"master\"\n    ],\n    \"schedule\": \"0 1 * * *\"\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ScanSettingBinding\",\n    \"metadata\": {\n      \"name\": \"nist-moderate\"\n    },\n    \"profiles\": [\n      {\n        \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n        \"kind\": \"Profile\",\n        \"name\": \"rhcos4-moderate\"\n      }\n    ],\n    \"settingsRef\": {\n      \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n      \"kind\": \"ScanSetting\",\n      \"name\": \"default\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"TailoredProfile\",\n    \"metadata\": {\n      \"name\": \"example-tailoredprofile\"\n    },\n    \"spec\": {\n      \"description\": \"Example of a tailoredProfile that extends OCP4 FedRAMP Moderate\",\n      \"disableRules\": [\n        {\n          \"name\": \"ocp4-file-permissions-node-config\",\n          \"rationale\": \"This breaks X application.\"\n        },\n        {\n          \"name\": \"ocp4-account-disable-post-pw-expiration\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-accounts-no-uid-except-zero\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chown\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmodat\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchown\",\n          \"rationale\": \"testing this\"\n        }\n      ],\n      \"extends\": \"ocp4-moderate\",\n      \"setValues\": [\n        {\n          \"name\": \"ocp4-var-selinux-state\",\n          \"rationale\": \"trolling dwalsh\",\n          \"value\": \"permissive\"\n        }\n      ],\n      \"title\": \"My little profile\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.1.17 <1.5.0",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-compliance",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\", \"proxy-aware\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.19.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/ComplianceAsCode/compliance-operator",
+          "support": "Red Hat Inc."
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "compliancecheckresults.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceCheckResult",
+              "description": "ComplianceCheckResult represent a result of a single compliance \"test\""
+            },
+            {
+              "name": "complianceremediations.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceRemediation",
+              "displayName": "Compliance Remediation",
+              "description": "ComplianceRemediation represents a remediation that can be applied to the cluster to fix the found issues."
+            },
+            {
+              "name": "compliancescans.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceScan",
+              "displayName": "Compliance Scan",
+              "description": "ComplianceScan represents a scan with a certain configuration that will be applied to objects of a certain entity in the host. These could be nodes that apply to a certain nodeSelector, or the cluster itself."
+            },
+            {
+              "name": "compliancesuites.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceSuite",
+              "displayName": "Compliance Suite",
+              "description": "ComplianceSuite represents a set of scans that will be applied to the cluster. These should help deployers achieve a certain compliance target."
+            },
+            {
+              "name": "profilebundles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ProfileBundle",
+              "displayName": "Profile Bundle",
+              "description": "ProfileBundle is the Schema for the profilebundles API"
+            },
+            {
+              "name": "profiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Profile",
+              "description": "Profile is the Schema for the profiles API"
+            },
+            {
+              "name": "rules.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Rule",
+              "description": "Rule is the Schema for the rules API"
+            },
+            {
+              "name": "scansettingbindings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSettingBinding",
+              "displayName": "Scan Setting Binding",
+              "description": "ScanSettingBinding is the Schema for the scansettingbindings API"
+            },
+            {
+              "name": "scansettings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSetting",
+              "description": "ScanSetting is the Schema for the scansettings API"
+            },
+            {
+              "name": "tailoredprofiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "TailoredProfile",
+              "displayName": "Tailored Profile",
+              "description": "TailoredProfile is the Schema for the tailoredprofiles API"
+            },
+            {
+              "name": "variables.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Variable",
+              "description": "Variable describes a tunable in the XCCDF profile"
+            }
+          ]
+        },
+        "description": "An operator which runs OpenSCAP and allows you to keep your cluster compliant with the security benchmark you need.",
+        "displayName": "Compliance Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "security",
+          "compliance",
+          "openscap",
+          "audit"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Compliance Operator upstream repository",
+            "url": "https://github.com/ComplianceAsCode/compliance-operator"
+          },
+          {
+            "name": "Compliance Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat Inc.",
+          "url": "www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "profile",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:5d484bbfee6c70aa604aece7031305c07335d2ce4a4cd827c7733452c41c0742"
+    },
+    {
+      "name": "openscap",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:a92792041cc697aeff51b543bf62a85bc56a70427b2f0b90d11149effe93ed4f"
+    },
+    {
+      "name": "openshift-compliance-openscap-rhel8-a92792041cc697aeff51b543bf62a85bc56a70427b2f0b90d11149effe93ed4f-annotation",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:a92792041cc697aeff51b543bf62a85bc56a70427b2f0b90d11149effe93ed4f"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:a4f4aabb46ca34f6bdd63e752f6b7de37ac41fed6cf87709506857b4819d4e98"
+    },
+    {
+      "name": "compliance-operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:2f53eddedfec4f6565b698a843c060aa00b6fa6f88888e1b0cc20c604b63ca26"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:2f53eddedfec4f6565b698a843c060aa00b6fa6f88888e1b0cc20c604b63ca26"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "compliance-operator.v1.5.1",
+  "package": "compliance-operator",
+  "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:91546ecf49cb877652a69f2773054af56c6cf5011d61ab190e1cfee156fc66f9",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceCheckResult",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceScan",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceSuite",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Profile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ProfileBundle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Rule",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSetting",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSettingBinding",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "TailoredProfile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Variable",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "compliance-operator",
+        "version": "1.5.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-node\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-rhcos4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-platform\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-ocp4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n      \"scanType\": \"Platform\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceSuite\",\n    \"metadata\": {\n      \"name\": \"example-compliancesuite\"\n    },\n    \"spec\": {\n      \"autoApplyRemediations\": false,\n      \"scans\": [\n        {\n          \"content\": \"ssg-rhcos4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:dddc04167415729e51f962ff7baa3ebeb6093867e7702f2613cd0615e1825882\",\n          \"name\": \"workers-scan\",\n          \"nodeSelector\": {\n            \"node-role.kubernetes.io/worker\": \"\"\n          },\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n        },\n        {\n          \"content\": \"ssg-ocp4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:dddc04167415729e51f962ff7baa3ebeb6093867e7702f2613cd0615e1825882\",\n          \"name\": \"platform-scan\",\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n          \"scanType\": \"Platform\"\n        }\n      ],\n      \"schedule\": \"0 1 * * *\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ProfileBundle\",\n    \"metadata\": {\n      \"name\": \"ocp4\"\n    },\n    \"spec\": {\n      \"contentFile\": \"ssg-ocp4-ds.xml\",\n      \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:dddc04167415729e51f962ff7baa3ebeb6093867e7702f2613cd0615e1825882\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"autoApplyRemediations\": false,\n    \"debug\": true,\n    \"kind\": \"ScanSetting\",\n    \"metadata\": {\n      \"name\": \"my-companys-constraints\"\n    },\n    \"rawResultStorage\": {\n      \"rotation\": 10,\n      \"size\": \"2Gi\"\n    },\n    \"roles\": [\n      \"worker\",\n      \"master\"\n    ],\n    \"schedule\": \"0 1 * * *\"\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ScanSettingBinding\",\n    \"metadata\": {\n      \"name\": \"nist-moderate\"\n    },\n    \"profiles\": [\n      {\n        \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n        \"kind\": \"Profile\",\n        \"name\": \"rhcos4-moderate\"\n      }\n    ],\n    \"settingsRef\": {\n      \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n      \"kind\": \"ScanSetting\",\n      \"name\": \"default\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"TailoredProfile\",\n    \"metadata\": {\n      \"name\": \"example-tailoredprofile\"\n    },\n    \"spec\": {\n      \"description\": \"Example of a tailoredProfile that extends OCP4 FedRAMP Moderate\",\n      \"disableRules\": [\n        {\n          \"name\": \"ocp4-file-permissions-node-config\",\n          \"rationale\": \"This breaks X application.\"\n        },\n        {\n          \"name\": \"ocp4-account-disable-post-pw-expiration\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-accounts-no-uid-except-zero\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chown\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmodat\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchown\",\n          \"rationale\": \"testing this\"\n        }\n      ],\n      \"extends\": \"ocp4-moderate\",\n      \"setValues\": [\n        {\n          \"name\": \"ocp4-var-selinux-state\",\n          \"rationale\": \"trolling dwalsh\",\n          \"value\": \"permissive\"\n        }\n      ],\n      \"title\": \"My little profile\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.1.17 <1.5.1",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-compliance",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\", \"proxy-aware\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.19.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/ComplianceAsCode/compliance-operator",
+          "support": "Red Hat Inc."
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "compliancecheckresults.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceCheckResult",
+              "description": "ComplianceCheckResult represent a result of a single compliance \"test\""
+            },
+            {
+              "name": "complianceremediations.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceRemediation",
+              "displayName": "Compliance Remediation",
+              "description": "ComplianceRemediation represents a remediation that can be applied to the cluster to fix the found issues."
+            },
+            {
+              "name": "compliancescans.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceScan",
+              "displayName": "Compliance Scan",
+              "description": "ComplianceScan represents a scan with a certain configuration that will be applied to objects of a certain entity in the host. These could be nodes that apply to a certain nodeSelector, or the cluster itself."
+            },
+            {
+              "name": "compliancesuites.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceSuite",
+              "displayName": "Compliance Suite",
+              "description": "ComplianceSuite represents a set of scans that will be applied to the cluster. These should help deployers achieve a certain compliance target."
+            },
+            {
+              "name": "profilebundles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ProfileBundle",
+              "displayName": "Profile Bundle",
+              "description": "ProfileBundle is the Schema for the profilebundles API"
+            },
+            {
+              "name": "profiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Profile",
+              "description": "Profile is the Schema for the profiles API"
+            },
+            {
+              "name": "rules.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Rule",
+              "description": "Rule is the Schema for the rules API"
+            },
+            {
+              "name": "scansettingbindings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSettingBinding",
+              "displayName": "Scan Setting Binding",
+              "description": "ScanSettingBinding is the Schema for the scansettingbindings API"
+            },
+            {
+              "name": "scansettings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSetting",
+              "description": "ScanSetting is the Schema for the scansettings API"
+            },
+            {
+              "name": "tailoredprofiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "TailoredProfile",
+              "displayName": "Tailored Profile",
+              "description": "TailoredProfile is the Schema for the tailoredprofiles API"
+            },
+            {
+              "name": "variables.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Variable",
+              "description": "Variable describes a tunable in the XCCDF profile"
+            }
+          ]
+        },
+        "description": "An operator which runs OpenSCAP and allows you to keep your cluster compliant with the security benchmark you need.",
+        "displayName": "Compliance Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "security",
+          "compliance",
+          "openscap",
+          "audit"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Compliance Operator upstream repository",
+            "url": "https://github.com/ComplianceAsCode/compliance-operator"
+          },
+          {
+            "name": "Compliance Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat Inc.",
+          "url": "www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "profile",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:a26f0ad9b48cdb4e65312f4066033ca018feafc0033013240692407f74b28430"
+    },
+    {
+      "name": "openscap",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:dddc04167415729e51f962ff7baa3ebeb6093867e7702f2613cd0615e1825882"
+    },
+    {
+      "name": "openshift-compliance-openscap-rhel8-dddc04167415729e51f962ff7baa3ebeb6093867e7702f2613cd0615e1825882-annotation",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:dddc04167415729e51f962ff7baa3ebeb6093867e7702f2613cd0615e1825882"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:91546ecf49cb877652a69f2773054af56c6cf5011d61ab190e1cfee156fc66f9"
+    },
+    {
+      "name": "compliance-operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:134b24ed52ec515fec3b268e9c859a7cfb15db56707de5eee0cb4253776d0329"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:134b24ed52ec515fec3b268e9c859a7cfb15db56707de5eee0cb4253776d0329"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "compliance-operator.v1.6.0",
+  "package": "compliance-operator",
+  "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:8e2ae4ec6fb99d69494763893be9e0a22f85f7fdfcfe09d90df07909c94877be",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceCheckResult",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceScan",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceSuite",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Profile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ProfileBundle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Rule",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSetting",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSettingBinding",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "TailoredProfile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Variable",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "compliance-operator",
+        "version": "1.6.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-node\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-rhcos4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-platform\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-ocp4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n      \"scanType\": \"Platform\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceSuite\",\n    \"metadata\": {\n      \"name\": \"example-compliancesuite\"\n    },\n    \"spec\": {\n      \"autoApplyRemediations\": false,\n      \"scans\": [\n        {\n          \"content\": \"ssg-rhcos4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:6fbf5179f0738224f498b12e6b3756f53993c8c441020a78ff133b433ed0b44d\",\n          \"name\": \"workers-scan\",\n          \"nodeSelector\": {\n            \"node-role.kubernetes.io/worker\": \"\"\n          },\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n        },\n        {\n          \"content\": \"ssg-ocp4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:6fbf5179f0738224f498b12e6b3756f53993c8c441020a78ff133b433ed0b44d\",\n          \"name\": \"platform-scan\",\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n          \"scanType\": \"Platform\"\n        }\n      ],\n      \"schedule\": \"0 1 * * *\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ProfileBundle\",\n    \"metadata\": {\n      \"name\": \"ocp4\"\n    },\n    \"spec\": {\n      \"contentFile\": \"ssg-ocp4-ds.xml\",\n      \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:6fbf5179f0738224f498b12e6b3756f53993c8c441020a78ff133b433ed0b44d\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"autoApplyRemediations\": false,\n    \"debug\": true,\n    \"kind\": \"ScanSetting\",\n    \"metadata\": {\n      \"name\": \"my-companys-constraints\"\n    },\n    \"rawResultStorage\": {\n      \"rotation\": 10,\n      \"size\": \"2Gi\"\n    },\n    \"roles\": [\n      \"worker\",\n      \"master\"\n    ],\n    \"schedule\": \"0 1 * * *\"\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ScanSettingBinding\",\n    \"metadata\": {\n      \"name\": \"nist-moderate\"\n    },\n    \"profiles\": [\n      {\n        \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n        \"kind\": \"Profile\",\n        \"name\": \"rhcos4-moderate\"\n      }\n    ],\n    \"settingsRef\": {\n      \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n      \"kind\": \"ScanSetting\",\n      \"name\": \"default\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"TailoredProfile\",\n    \"metadata\": {\n      \"name\": \"example-tailoredprofile\"\n    },\n    \"spec\": {\n      \"description\": \"Example of a tailoredProfile that extends OCP4 FedRAMP Moderate\",\n      \"disableRules\": [\n        {\n          \"name\": \"ocp4-file-permissions-node-config\",\n          \"rationale\": \"This breaks X application.\"\n        },\n        {\n          \"name\": \"ocp4-account-disable-post-pw-expiration\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-accounts-no-uid-except-zero\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chown\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmodat\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchown\",\n          \"rationale\": \"testing this\"\n        }\n      ],\n      \"extends\": \"ocp4-moderate\",\n      \"setValues\": [\n        {\n          \"name\": \"ocp4-var-selinux-state\",\n          \"rationale\": \"trolling dwalsh\",\n          \"value\": \"permissive\"\n        }\n      ],\n      \"title\": \"My little profile\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.1.17 <1.6.0",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-compliance",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\", \"proxy-aware\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.19.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/ComplianceAsCode/compliance-operator",
+          "support": "Red Hat Inc."
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "compliancecheckresults.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceCheckResult",
+              "description": "ComplianceCheckResult represent a result of a single compliance \"test\""
+            },
+            {
+              "name": "complianceremediations.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceRemediation",
+              "displayName": "Compliance Remediation",
+              "description": "ComplianceRemediation represents a remediation that can be applied to the cluster to fix the found issues."
+            },
+            {
+              "name": "compliancescans.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceScan",
+              "displayName": "Compliance Scan",
+              "description": "ComplianceScan represents a scan with a certain configuration that will be applied to objects of a certain entity in the host. These could be nodes that apply to a certain nodeSelector, or the cluster itself."
+            },
+            {
+              "name": "compliancesuites.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceSuite",
+              "displayName": "Compliance Suite",
+              "description": "ComplianceSuite represents a set of scans that will be applied to the cluster. These should help deployers achieve a certain compliance target."
+            },
+            {
+              "name": "profilebundles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ProfileBundle",
+              "displayName": "Profile Bundle",
+              "description": "ProfileBundle is the Schema for the profilebundles API"
+            },
+            {
+              "name": "profiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Profile",
+              "description": "Profile is the Schema for the profiles API"
+            },
+            {
+              "name": "rules.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Rule",
+              "description": "Rule is the Schema for the rules API"
+            },
+            {
+              "name": "scansettingbindings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSettingBinding",
+              "displayName": "Scan Setting Binding",
+              "description": "ScanSettingBinding is the Schema for the scansettingbindings API"
+            },
+            {
+              "name": "scansettings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSetting",
+              "description": "ScanSetting is the Schema for the scansettings API"
+            },
+            {
+              "name": "tailoredprofiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "TailoredProfile",
+              "displayName": "Tailored Profile",
+              "description": "TailoredProfile is the Schema for the tailoredprofiles API"
+            },
+            {
+              "name": "variables.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Variable",
+              "description": "Variable describes a tunable in the XCCDF profile"
+            }
+          ]
+        },
+        "description": "An operator which runs OpenSCAP and allows you to keep your cluster compliant with the security benchmark you need.",
+        "displayName": "Compliance Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "security",
+          "compliance",
+          "openscap",
+          "audit"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Compliance Operator upstream repository",
+            "url": "https://github.com/ComplianceAsCode/compliance-operator"
+          },
+          {
+            "name": "Compliance Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat Inc.",
+          "url": "www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "profile",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:079ae32f6705235f47ad2084496d80509e3dfe76b104bd3e9499af87af114116"
+    },
+    {
+      "name": "must-gather",
+      "image": "registry.redhat.io/compliance/openshift-compliance-must-gather-rhel8@sha256:a1151d854a47d0aaa1777bf715e220fb022630705896f6b217f2b71187b66684"
+    },
+    {
+      "name": "openscap",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:6fbf5179f0738224f498b12e6b3756f53993c8c441020a78ff133b433ed0b44d"
+    },
+    {
+      "name": "openshift-compliance-openscap-rhel8-6fbf5179f0738224f498b12e6b3756f53993c8c441020a78ff133b433ed0b44d-annotation",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:6fbf5179f0738224f498b12e6b3756f53993c8c441020a78ff133b433ed0b44d"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:8e2ae4ec6fb99d69494763893be9e0a22f85f7fdfcfe09d90df07909c94877be"
+    },
+    {
+      "name": "compliance-operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:f4c8a1837dc62b16f0ad86f402a6ca38d208ff4abbbb64d41ab486323b7eceef"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:f4c8a1837dc62b16f0ad86f402a6ca38d208ff4abbbb64d41ab486323b7eceef"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "compliance-operator.v1.6.1",
+  "package": "compliance-operator",
+  "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:3e3061777afbdf83d18258380af8ed74a347e3daa5d0b647ed13711698c58a0f",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceCheckResult",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceScan",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ComplianceSuite",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Profile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ProfileBundle",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Rule",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSetting",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "ScanSettingBinding",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "TailoredProfile",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "compliance.openshift.io",
+        "kind": "Variable",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "compliance-operator",
+        "version": "1.6.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-node\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-rhcos4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceScan\",\n    \"metadata\": {\n      \"name\": \"example-compliancescan-platform\"\n    },\n    \"spec\": {\n      \"content\": \"ssg-ocp4-ds.xml\",\n      \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n      \"scanType\": \"Platform\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ComplianceSuite\",\n    \"metadata\": {\n      \"name\": \"example-compliancesuite\"\n    },\n    \"spec\": {\n      \"autoApplyRemediations\": false,\n      \"scans\": [\n        {\n          \"content\": \"ssg-rhcos4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:52c1c5cd622f9dbded7e466d7529db7722c00350c66bcbd3b0a904171b4f4184\",\n          \"name\": \"workers-scan\",\n          \"nodeSelector\": {\n            \"node-role.kubernetes.io/worker\": \"\"\n          },\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\"\n        },\n        {\n          \"content\": \"ssg-ocp4-ds.xml\",\n          \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:52c1c5cd622f9dbded7e466d7529db7722c00350c66bcbd3b0a904171b4f4184\",\n          \"name\": \"platform-scan\",\n          \"profile\": \"xccdf_org.ssgproject.content_profile_moderate\",\n          \"scanType\": \"Platform\"\n        }\n      ],\n      \"schedule\": \"0 1 * * *\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ProfileBundle\",\n    \"metadata\": {\n      \"name\": \"ocp4\"\n    },\n    \"spec\": {\n      \"contentFile\": \"ssg-ocp4-ds.xml\",\n      \"contentImage\": \"registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:52c1c5cd622f9dbded7e466d7529db7722c00350c66bcbd3b0a904171b4f4184\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"autoApplyRemediations\": false,\n    \"debug\": true,\n    \"kind\": \"ScanSetting\",\n    \"metadata\": {\n      \"name\": \"my-companys-constraints\"\n    },\n    \"rawResultStorage\": {\n      \"rotation\": 10,\n      \"size\": \"2Gi\"\n    },\n    \"roles\": [\n      \"worker\",\n      \"master\"\n    ],\n    \"schedule\": \"0 1 * * *\"\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"ScanSettingBinding\",\n    \"metadata\": {\n      \"name\": \"nist-moderate\"\n    },\n    \"profiles\": [\n      {\n        \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n        \"kind\": \"Profile\",\n        \"name\": \"rhcos4-moderate\"\n      }\n    ],\n    \"settingsRef\": {\n      \"apiGroup\": \"compliance.openshift.io/v1alpha1\",\n      \"kind\": \"ScanSetting\",\n      \"name\": \"default\"\n    }\n  },\n  {\n    \"apiVersion\": \"compliance.openshift.io/v1alpha1\",\n    \"kind\": \"TailoredProfile\",\n    \"metadata\": {\n      \"name\": \"example-tailoredprofile\"\n    },\n    \"spec\": {\n      \"description\": \"Example of a tailoredProfile that extends OCP4 FedRAMP Moderate\",\n      \"disableRules\": [\n        {\n          \"name\": \"ocp4-file-permissions-node-config\",\n          \"rationale\": \"This breaks X application.\"\n        },\n        {\n          \"name\": \"ocp4-account-disable-post-pw-expiration\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-accounts-no-uid-except-zero\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-chown\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmod\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchmodat\",\n          \"rationale\": \"testing this\"\n        },\n        {\n          \"name\": \"ocp4-audit-rules-dac-modification-fchown\",\n          \"rationale\": \"testing this\"\n        }\n      ],\n      \"extends\": \"ocp4-moderate\",\n      \"setValues\": [\n        {\n          \"name\": \"ocp4-var-selinux-state\",\n          \"rationale\": \"trolling dwalsh\",\n          \"value\": \"permissive\"\n        }\n      ],\n      \"title\": \"My little profile\"\n    }\n  }\n]",
+          "capabilities": "Seamless Upgrades",
+          "categories": "Monitoring,Security",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "true",
+          "features.operators.openshift.io/proxy-aware": "true",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.1.17 <1.6.1",
+          "operatorframework.io/cluster-monitoring": "true",
+          "operatorframework.io/suggested-namespace": "openshift-compliance",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"fips\", \"proxy-aware\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.19.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/ComplianceAsCode/compliance-operator",
+          "support": "Red Hat Inc."
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "compliancecheckresults.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceCheckResult",
+              "description": "ComplianceCheckResult represent a result of a single compliance \"test\""
+            },
+            {
+              "name": "complianceremediations.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceRemediation",
+              "displayName": "Compliance Remediation",
+              "description": "ComplianceRemediation represents a remediation that can be applied to the cluster to fix the found issues."
+            },
+            {
+              "name": "compliancescans.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceScan",
+              "displayName": "Compliance Scan",
+              "description": "ComplianceScan represents a scan with a certain configuration that will be applied to objects of a certain entity in the host. These could be nodes that apply to a certain nodeSelector, or the cluster itself."
+            },
+            {
+              "name": "compliancesuites.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ComplianceSuite",
+              "displayName": "Compliance Suite",
+              "description": "ComplianceSuite represents a set of scans that will be applied to the cluster. These should help deployers achieve a certain compliance target."
+            },
+            {
+              "name": "profilebundles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ProfileBundle",
+              "displayName": "Profile Bundle",
+              "description": "ProfileBundle is the Schema for the profilebundles API"
+            },
+            {
+              "name": "profiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Profile",
+              "description": "Profile is the Schema for the profiles API"
+            },
+            {
+              "name": "rules.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Rule",
+              "description": "Rule is the Schema for the rules API"
+            },
+            {
+              "name": "scansettingbindings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSettingBinding",
+              "displayName": "Scan Setting Binding",
+              "description": "ScanSettingBinding is the Schema for the scansettingbindings API"
+            },
+            {
+              "name": "scansettings.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "ScanSetting",
+              "description": "ScanSetting is the Schema for the scansettings API"
+            },
+            {
+              "name": "tailoredprofiles.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "TailoredProfile",
+              "displayName": "Tailored Profile",
+              "description": "TailoredProfile is the Schema for the tailoredprofiles API"
+            },
+            {
+              "name": "variables.compliance.openshift.io",
+              "version": "v1alpha1",
+              "kind": "Variable",
+              "description": "Variable describes a tunable in the XCCDF profile"
+            }
+          ]
+        },
+        "description": "An operator which runs OpenSCAP and allows you to keep your cluster compliant with the security benchmark you need.",
+        "displayName": "Compliance Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": true
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": true
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": true
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "security",
+          "compliance",
+          "openscap",
+          "audit"
+        ],
+        "labels": {
+          "operatorframework.io/arch.amd64": "supported",
+          "operatorframework.io/arch.ppc64le": "supported",
+          "operatorframework.io/arch.s390x": "supported"
+        },
+        "links": [
+          {
+            "name": "Compliance Operator upstream repository",
+            "url": "https://github.com/ComplianceAsCode/compliance-operator"
+          },
+          {
+            "name": "Compliance Operator documentation",
+            "url": "https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Red Hat Support",
+            "email": "support@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "provider": {
+          "name": "Red Hat Inc.",
+          "url": "www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "profile",
+      "image": "registry.redhat.io/compliance/openshift-compliance-content-rhel8@sha256:b286929357b82f8ff3845f535bab23382bf06f075ff2379063e2456f1a93e809"
+    },
+    {
+      "name": "must-gather",
+      "image": "registry.redhat.io/compliance/openshift-compliance-must-gather-rhel8@sha256:81cfb7ecb96e48c08d8cfec0e519df3c8502be11490043a9b0a1aae2e8f8e174"
+    },
+    {
+      "name": "openscap",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:52c1c5cd622f9dbded7e466d7529db7722c00350c66bcbd3b0a904171b4f4184"
+    },
+    {
+      "name": "openshift-compliance-openscap-rhel8-52c1c5cd622f9dbded7e466d7529db7722c00350c66bcbd3b0a904171b4f4184-annotation",
+      "image": "registry.redhat.io/compliance/openshift-compliance-openscap-rhel8@sha256:52c1c5cd622f9dbded7e466d7529db7722c00350c66bcbd3b0a904171b4f4184"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/compliance/openshift-compliance-operator-bundle@sha256:3e3061777afbdf83d18258380af8ed74a347e3daa5d0b647ed13711698c58a0f"
+    },
+    {
+      "name": "compliance-operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:6f81b37e7dc8d4f328ea78aaf0e1dbbad6c30fc026c7851f306533c829fc8751"
+    },
+    {
+      "name": "operator",
+      "image": "registry.redhat.io/compliance/openshift-compliance-rhel8-operator@sha256:6f81b37e7dc8d4f328ea78aaf0e1dbbad6c30fc026c7851f306533c829fc8751"
+    }
+  ]
+}

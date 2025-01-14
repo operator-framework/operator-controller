@@ -1,0 +1,3101 @@
+---
+defaultChannel: 1.x
+icon:
+  base64data: PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDojMDg1ODcwO30uY2xzLTJ7ZmlsbDojZmZmO30uY2xzLTN7ZmlsbDojZjU4OTFmO30uY2xzLTR7ZmlsbDojOTdkNGU4O308L3N0eWxlPjwvZGVmcz48dGl0bGU+a29naXRvX2ljb25fcmdiX2NvbG9yX2RlZmF1bHQ8L3RpdGxlPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTkyOS4zNywzMC41QTcwLjMxLDcwLjMxLDAsMCwwLDg3Mi4xOSwxQzg2OC4wOSwxLDczOCwyMy42Nyw3MzgsMjMuNjdhNzAuMTUsNzAuMTUsMCwwLDAtNDguMSwzMy4yNUw2NjgsOTMuNzdjLTQ4LjQxLTQyLjQ2LTEwMS43NC02NC43LTE1Ni02NC43UzQwNC40Myw1MS4zMSwzNTYsOTMuNzdMMzM0LjExLDU2LjkyQTcwLjEzLDcwLjEzLDAsMCwwLDI4NiwyMy42N1MxNTUuOSwxLDE1MS44MSwxQTcwLjE5LDcwLjE5LDAsMCwwLDkwLjU0LDEwNS40MWw1MC4yNCw5MGExMTUuMTIsMTE1LjEyLDAsMCwwLDYwLjMsMTY5LjlMMTA4LjMsNzk0LjYsNTEyLDEwMjMsOTE1LjcsNzk0LjYsODIyLjkyLDM2NS4yN2ExMTUuMTIsMTE1LjEyLDAsMCwwLDYwLjMtMTY5LjlsNTAuMjQtOTBBNzAuNDksNzAuNDksMCwwLDAsOTI5LjM3LDMwLjVaIi8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNNDgwLjA5LDI3OC4zbDguNTctLjA5TDUxMiwzMDEuNGwyMy4xOS0yMy4xOSw4LjYuMDhjNjMuMjMuNjMsMTIzLjgyLDMuMTQsMTc2LjI4LDcuMjctNDUuOTQtOTkuNDktMTIyLTE4Ni4zLTIwOC0xODYuM1MzNDkuOSwxODYuMDcsMzA0LDI4NS41N0MzNTYuMzksMjgxLjQ0LDQxNi45NCwyNzguOTIsNDgwLjA5LDI3OC4zWiIvPjxwYXRoIGNsYXNzPSJjbHMtMyIgZD0iTTQ0OC43LDY5Ni4xNmExMTYuMzYsMTE2LjM2LDAsMCwwLDEzMS4xNy41MSw1ODEuNDcsNTgxLjQ3LDAsMCwwLTEzMS4xNy0uNTFaIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNNjkxLjU3LDY3OS43M2ExODUuNDQsMTg1LjQ0LDAsMCwwLTE3LjI3LTQxLjQ3Yy0xLjIxLTIuMTItMi41LTQuMTgtMy43OC02LjI0LS43My0xLjE5LTEuNDMtMi40MS0yLjE5LTMuNTgtMS4yLTEuODUtMi40OS0zLjYzLTMuNzUtNS40My0uOTQtMS4zNC0xLjg1LTIuNzEtMi44Mi00LTEuMTItMS41MS0yLjMyLTMtMy40OC00LjQzcy0yLjM4LTMuMDgtMy42NC00LjU3Yy0xLTEuMTgtMi0yLjI5LTMtMy40NEExODYuNjksMTg2LjY5LDAsMCwwLDU3MC43Myw1NTNjLTE3LjI1LDExLjU2LTM5LDIyLjY5LTU4LjczLDIyLjY5UzQ3MC41Miw1NjQuNTcsNDUzLjI3LDU1M2ExODYuNTksMTg2LjU5LDAsMCwwLTgwLjkxLDUzLjZjLTEsMS4xMy0yLDIuMjItMywzLjM3LTEuMjYsMS41LTIuNDQsMy4wNi0zLjY2LDQuNnMtMi4zNCwyLjkxLTMuNDYsNC40MWMtMSwxLjMyLTEuODgsMi42OS0yLjgzLDQtMS4yNiwxLjc5LTIuNTQsMy41Ni0zLjczLDUuNC0uNzcsMS4xOS0xLjQ4LDIuNDItMi4yMiwzLjYyLTEuMjcsMi4wNS0yLjU2LDQuMS0zLjc1LDYuMjFhMTg1LDE4NSwwLDAsMC0xNy4yOCw0MS40N2MxMi44NC00LjQsMjYuNDMtOC4yMyw0MC40Ni0xMS42NywwLDAtLjA1LS4wOS0uMDctLjE0LDEuNDUtLjM1LDIuOTUtLjY2LDQuNDEtMWwxNi45NS00Ny4yNnY0My41MWMxLS4yLDItLjM0LDMtLjU0cTkuNDQtMS44NSwxOS4xNC0zLjM5Yy43OS0uMTMsMS41Ny0uMjcsMi4zNi0uMzlxMTEuNzQtMS44MywyMy44Ni0zLjJsMTMuODctNTUuNTF2NTQuMDljOC41Ni0uNzcsMTcuMjYtMS4zMSwyNi0xLjcybDMuOTItLjE3YzMuMjctLjEzLDYuNTMtLjI3LDkuODMtLjM1LDUuMjMtLjE0LDEwLjUtLjIzLDE1LjgtLjIzLDUuNDksMCwxMC45My4xLDE2LjM0LjI1LDIuOS4wOCw1Ljc5LjE5LDguNjcuMzFsNS43NS4yNmM4LjM2LjQxLDE2LjY2Ljk0LDI0LjgyLDEuNjhWNjAwLjEzbDEzLjg4LDU1LjUzYy41NS4wNiwxLjA5LjE1LDEuNjUuMjIsNy4zLjg1LDE0LjU0LDEuNzksMjEuNjUsMi44OSwyLjczLjQxLDUuMzguOTIsOC4wOCwxLjM3LDMuOTUuNjgsNy45LDEuMzUsMTEuNzgsMi4xLDEuNzIuMzIsMy41LjU4LDUuMi45MlY2MTkuNjVsMTcsNDcuMjljMS4yMy4yOSwyLjQuNjQsMy42Mi45NCwxLjg0LjQ1LDMuNzIuODYsNS41NCwxLjMybC0uMDYuMUM2NjguMTksNjcyLjQ0LDY4MC4yMSw2NzUuODMsNjkxLjU3LDY3OS43M1oiLz48cGF0aCBjbGFzcz0iY2xzLTMiIGQ9Ik03MzcuNTcsMzI4LjA3bC0xMC0uODRjLTUxLjU2LTQuMzgtMTEyLjEzLTcuMS0xNzUuNjctNy45TDUxMiwzNTkuMjRsLTQwLjA5LTM5LjkxYy02My40OC44MS0xMjQsMy41My0xNzUuNTQsNy45bC0xMCwuODVDMjY4LjI3LDM3Ny44MiwyNTgsNDI4LjExLDI1OCw0NzAuMjRjMCw2OS45NCwyOC4zMSwxMDQuMTYsNzQsMTIwLjkzQTIyOS40OCwyMjkuNDgsMCwwLDEsNDE4LjI4LDUyM2EyMC40MywyMC40MywwLDAsMSwzMi4xNi0yNC4xNmMxNi4xMiwxNC45LDQ1Ljg5LDM1LjkxLDYxLjU2LDM1LjkxczQ1Ljk0LTIxLjQzLDYxLjU1LTM1LjkxQTIwLjQzLDIwLjQzLDAsMCwxLDYwNS43Miw1MjMsMjI5LjY1LDIyOS42NSwwLDAsMSw2OTIsNTkxLjE3YzQ1Ljc0LTE2Ljc3LDc0LTUxLDc0LTEyMC45M0M3NjYsNDI4LjExLDc1NS43MywzNzcuODIsNzM3LjU3LDMyOC4wN1pNNDAzLjUsNDYyLjc3Yy0yOS4zMS42Ni01Ni0xNi4yLTc0LjgyLTQzLjUxLDE3LjUzLTI4LjEzLDQzLjQ3LTQ2LjE3LDcyLjc4LTQ2LjgzczU2LDE2LjE5LDc0LjgyLDQzLjUxQzQ1OC43NSw0NDQuMDcsNDMyLjgxLDQ2Mi4xMSw0MDMuNSw0NjIuNzdabTI5MS44Mi0xMy4xOC0zMiwzMi0zMi0zMi0zMiwzMi0zMi0zMiwzMi0zMi0zMi0zMiwzMi0zMiwzMiwzMiwzMi0zMiwzMiwzMi0zMiwzMloiLz48cGF0aCBjbGFzcz0iY2xzLTQiIGQ9Ik02MDguMjMsNzk3bDE5LjkxLDc5LjY3LDc2LjMyLTQzLjE4Vjc0NWwxOS4zOCw3Ny41MywxMTIuMzUtNjMuNTZMNzkxLjUyLDU1Mi4yN2MtMTQuOTQsMzMuOTItNDAuNjgsNTguNzctNzcuMiw3NC4xMkEyMjUuMTQsMjI1LjE0LDAsMCwxLDczMSw2NjguNzFhNDAuOTQsNDAuOTQsMCwwLDEtNTIuNzIsNDkuNzUsNDM4LjI3LDQzOC4yNywwLDAsMC00Ni43My0xMywxNTcuMDcsMTU3LjA3LDAsMCwxLTIzNC42LTEsNDQzLjg2LDQ0My44NiwwLDAsMC01MS4yMywxNEE0MC45NCw0MC45NCwwLDAsMSwyOTMsNjY4LjcxYTIyNC44NiwyMjQuODYsMCwwLDEsMTYuNjktNDIuMzNjLTM2LjUzLTE1LjM0LTYyLjI3LTQwLjItNzcuMjEtNzQuMTFMMTg3LjgxLDc1OC45NCwzMDAuMTYsODIyLjUsMzE5LjU0LDc0NXY4OC41bDc2LjMyLDQzLjE4TDQxNS43Nyw3OTd2OTAuOTNMNTEyLDk0Mi4zNmw5Ni4yMy01NC40NVoiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yNTMuOTEsMjk4LjQzYTU4MC4wNiw1ODAuMDYsMCwwLDEsNDMuNTUtODcuNjRxMTEuOTMtMTkuNTEsMjQuNjktMzYuNjRMMjczLjc4LDkyLjc5bC0xMjItMjEuNiw3OC43NiwxNDEsLjA2LjA3YTQ0LjgxLDQ0LjgxLDAsMSwwLDIzLjI3LDg2LjEzWiIvPjxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTc5My4zNSwyMTIuM2wuMDctLjA3LDc4Ljc2LTE0MS0xMjIsMjEuNi00OC4zNyw4MS4zNnExMi43MiwxNy4xNywyNC42OSwzNi42NGE1ODAuMDYsNTgwLjA2LDAsMCwxLDQzLjU1LDg3LjY0LDQ0LjgsNDQuOCwwLDEsMCwyMy4yNi04Ni4xM1oiLz48L3N2Zz4=
+  mediatype: image/svg+xml
+name: kogito-operator
+schema: olm.package
+---
+entries:
+- name: kogito-operator.v0.11.0
+- name: kogito-operator.v0.12.0
+  replaces: kogito-operator.v0.11.0
+- name: kogito-operator.v0.13.0
+  replaces: kogito-operator.v0.12.0
+- name: kogito-operator.v0.14.0
+  replaces: kogito-operator.v0.13.0
+- name: kogito-operator.v0.15.0
+  replaces: kogito-operator.v0.14.0
+- name: kogito-operator.v0.16.0
+  replaces: kogito-operator.v0.15.0
+- name: kogito-operator.v0.17.0
+  replaces: kogito-operator.v0.16.0
+- name: kogito-operator.v1.0.0
+  replaces: kogito-operator.v0.17.0
+- name: kogito-operator.v1.1.0
+  replaces: kogito-operator.v1.0.0
+- name: kogito-operator.v1.10.0
+  replaces: kogito-operator.v1.9.1
+- name: kogito-operator.v1.11.0
+  replaces: kogito-operator.v1.10.0
+- name: kogito-operator.v1.11.1
+  replaces: kogito-operator.v1.11.0
+- name: kogito-operator.v1.12.0
+  replaces: kogito-operator.v1.11.1
+- name: kogito-operator.v1.13.0
+  replaces: kogito-operator.v1.12.0
+- name: kogito-operator.v1.14.0
+  replaces: kogito-operator.v1.13.0
+- name: kogito-operator.v1.15.0
+  replaces: kogito-operator.v1.14.0
+- name: kogito-operator.v1.16.0
+  replaces: kogito-operator.v1.15.0
+- name: kogito-operator.v1.16.1
+  replaces: kogito-operator.v1.16.0
+- name: kogito-operator.v1.17.0
+  replaces: kogito-operator.v1.16.1
+- name: kogito-operator.v1.18.0
+  replaces: kogito-operator.v1.17.0
+- name: kogito-operator.v1.19.0
+  replaces: kogito-operator.v1.18.0
+- name: kogito-operator.v1.2.0
+  replaces: kogito-operator.v1.1.0
+- name: kogito-operator.v1.20.0
+  replaces: kogito-operator.v1.19.0
+- name: kogito-operator.v1.21.0
+  replaces: kogito-operator.v1.20.0
+- name: kogito-operator.v1.22.0
+  replaces: kogito-operator.v1.21.0
+- name: kogito-operator.v1.22.1
+  replaces: kogito-operator.v1.22.0
+- name: kogito-operator.v1.23.0
+  replaces: kogito-operator.v1.22.1
+- name: kogito-operator.v1.24.0
+  replaces: kogito-operator.v1.23.0
+- name: kogito-operator.v1.25.0
+  replaces: kogito-operator.v1.24.0
+- name: kogito-operator.v1.26.0
+  replaces: kogito-operator.v1.25.0
+- name: kogito-operator.v1.27.0
+  replaces: kogito-operator.v1.26.0
+- name: kogito-operator.v1.28.0
+  replaces: kogito-operator.v1.27.0
+- name: kogito-operator.v1.29.0
+  replaces: kogito-operator.v1.28.0
+- name: kogito-operator.v1.3.0
+  replaces: kogito-operator.v1.2.0
+- name: kogito-operator.v1.30.0
+  replaces: kogito-operator.v1.29.0
+- name: kogito-operator.v1.31.0
+  replaces: kogito-operator.v1.30.0
+- name: kogito-operator.v1.32.0
+  replaces: kogito-operator.v1.31.0
+- name: kogito-operator.v1.33.0
+  replaces: kogito-operator.v1.32.0
+- name: kogito-operator.v1.34.0
+  replaces: kogito-operator.v1.33.0
+- name: kogito-operator.v1.35.0
+  replaces: kogito-operator.v1.34.0
+- name: kogito-operator.v1.36.0
+  replaces: kogito-operator.v1.35.0
+- name: kogito-operator.v1.37.0
+  replaces: kogito-operator.v1.36.0
+- name: kogito-operator.v1.38.0
+  replaces: kogito-operator.v1.37.0
+- name: kogito-operator.v1.39.0
+  replaces: kogito-operator.v1.38.0
+- name: kogito-operator.v1.4.0
+  replaces: kogito-operator.v1.3.0
+- name: kogito-operator.v1.40.0
+  replaces: kogito-operator.v1.39.0
+- name: kogito-operator.v1.41.0
+  replaces: kogito-operator.v1.40.0
+- name: kogito-operator.v1.42.0
+  replaces: kogito-operator.v1.41.0
+- name: kogito-operator.v1.43.0
+  replaces: kogito-operator.v1.42.0
+- name: kogito-operator.v1.44.1
+  replaces: kogito-operator.v1.43.0
+- name: kogito-operator.v1.5.0
+  replaces: kogito-operator.v1.4.0
+- name: kogito-operator.v1.6.0
+  replaces: kogito-operator.v1.5.0
+- name: kogito-operator.v1.7.0
+  replaces: kogito-operator.v1.6.0
+- name: kogito-operator.v1.8.0
+  replaces: kogito-operator.v1.7.0
+- name: kogito-operator.v1.9.0
+  replaces: kogito-operator.v1.8.0
+- name: kogito-operator.v1.9.1
+  replaces: kogito-operator.v1.9.0
+name: 1.x
+package: kogito-operator
+schema: olm.channel
+---
+entries:
+- name: kogito-operator.v0.11.0
+- name: kogito-operator.v0.12.0
+  replaces: kogito-operator.v0.11.0
+- name: kogito-operator.v0.13.0
+  replaces: kogito-operator.v0.12.0
+- name: kogito-operator.v0.14.0
+  replaces: kogito-operator.v0.13.0
+- name: kogito-operator.v0.15.0
+  replaces: kogito-operator.v0.14.0
+- name: kogito-operator.v0.16.0
+  replaces: kogito-operator.v0.15.0
+- name: kogito-operator.v0.17.0
+  replaces: kogito-operator.v0.16.0
+- name: kogito-operator.v1.0.0
+  replaces: kogito-operator.v0.17.0
+- name: kogito-operator.v1.1.0
+  replaces: kogito-operator.v1.0.0
+- name: kogito-operator.v1.10.0
+  replaces: kogito-operator.v1.9.1
+- name: kogito-operator.v1.11.0
+  replaces: kogito-operator.v1.10.0
+- name: kogito-operator.v1.11.1
+  replaces: kogito-operator.v1.11.0
+- name: kogito-operator.v1.12.0
+  replaces: kogito-operator.v1.11.1
+- name: kogito-operator.v1.13.0
+  replaces: kogito-operator.v1.12.0
+- name: kogito-operator.v1.14.0
+  replaces: kogito-operator.v1.13.0
+- name: kogito-operator.v1.15.0
+  replaces: kogito-operator.v1.14.0
+- name: kogito-operator.v1.16.0
+  replaces: kogito-operator.v1.15.0
+- name: kogito-operator.v1.16.1
+  replaces: kogito-operator.v1.16.0
+- name: kogito-operator.v1.17.0
+  replaces: kogito-operator.v1.16.1
+- name: kogito-operator.v1.18.0
+  replaces: kogito-operator.v1.17.0
+- name: kogito-operator.v1.19.0
+  replaces: kogito-operator.v1.18.0
+- name: kogito-operator.v1.2.0
+  replaces: kogito-operator.v1.1.0
+- name: kogito-operator.v1.20.0
+  replaces: kogito-operator.v1.19.0
+- name: kogito-operator.v1.21.0
+  replaces: kogito-operator.v1.20.0
+- name: kogito-operator.v1.22.0
+  replaces: kogito-operator.v1.21.0
+- name: kogito-operator.v1.22.1
+  replaces: kogito-operator.v1.22.0
+- name: kogito-operator.v1.23.0
+  replaces: kogito-operator.v1.22.1
+- name: kogito-operator.v1.24.0
+  replaces: kogito-operator.v1.23.0
+- name: kogito-operator.v1.25.0
+  replaces: kogito-operator.v1.24.0
+- name: kogito-operator.v1.26.0
+  replaces: kogito-operator.v1.25.0
+- name: kogito-operator.v1.27.0
+  replaces: kogito-operator.v1.26.0
+- name: kogito-operator.v1.28.0
+  replaces: kogito-operator.v1.27.0
+- name: kogito-operator.v1.29.0
+  replaces: kogito-operator.v1.28.0
+- name: kogito-operator.v1.3.0
+  replaces: kogito-operator.v1.2.0
+- name: kogito-operator.v1.30.0
+  replaces: kogito-operator.v1.29.0
+- name: kogito-operator.v1.31.0
+  replaces: kogito-operator.v1.30.0
+- name: kogito-operator.v1.32.0
+  replaces: kogito-operator.v1.31.0
+- name: kogito-operator.v1.33.0
+  replaces: kogito-operator.v1.32.0
+- name: kogito-operator.v1.34.0
+  replaces: kogito-operator.v1.33.0
+- name: kogito-operator.v1.35.0
+  replaces: kogito-operator.v1.34.0
+- name: kogito-operator.v1.36.0
+  replaces: kogito-operator.v1.35.0
+- name: kogito-operator.v1.37.0
+  replaces: kogito-operator.v1.36.0
+- name: kogito-operator.v1.38.0
+  replaces: kogito-operator.v1.37.0
+- name: kogito-operator.v1.39.0
+  replaces: kogito-operator.v1.38.0
+- name: kogito-operator.v1.4.0
+  replaces: kogito-operator.v1.3.0
+- name: kogito-operator.v1.40.0
+  replaces: kogito-operator.v1.39.0
+- name: kogito-operator.v1.41.0
+  replaces: kogito-operator.v1.40.0
+- name: kogito-operator.v1.42.0
+  replaces: kogito-operator.v1.41.0
+- name: kogito-operator.v1.43.0
+  replaces: kogito-operator.v1.42.0
+- name: kogito-operator.v1.44.1
+  replaces: kogito-operator.v1.43.0
+- name: kogito-operator.v1.5.0
+  replaces: kogito-operator.v1.4.0
+- name: kogito-operator.v1.6.0
+  replaces: kogito-operator.v1.5.0
+- name: kogito-operator.v1.7.0
+  replaces: kogito-operator.v1.6.0
+- name: kogito-operator.v1.8.0
+  replaces: kogito-operator.v1.7.0
+- name: kogito-operator.v1.9.0
+  replaces: kogito-operator.v1.8.0
+- name: kogito-operator.v1.9.1
+  replaces: kogito-operator.v1.9.0
+name: alpha
+package: kogito-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:cab01421ceb58438229600167ea29c44e8095ee35162f190a8693ba2fe257e3c
+name: kogito-operator.v0.11.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoApp
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoDataIndex
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoJobsService
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoMgmtConsole
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk.required
+  value:
+    group: kafka.strimzi.io
+    kind: Kafka
+    version: v1beta1
+- type: olm.gvk.required
+  value:
+    group: kafka.strimzi.io
+    kind: KafkaTopic
+    version: v1beta1
+- type: olm.gvk.required
+  value:
+    group: keycloak.org
+    kind: Keycloak
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 0.11.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:0.11.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:cab01421ceb58438229600167ea29c44e8095ee35162f190a8693ba2fe257e3c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:50b3d5bf3572fd9e28e06f21b6fecd99a4b1f83fabd06b69bef369fd5fec3280
+name: kogito-operator.v0.12.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoApp
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoDataIndex
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoJobsService
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoMgmtConsole
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk.required
+  value:
+    group: kafka.strimzi.io
+    kind: Kafka
+    version: v1beta1
+- type: olm.gvk.required
+  value:
+    group: kafka.strimzi.io
+    kind: KafkaTopic
+    version: v1beta1
+- type: olm.gvk.required
+  value:
+    group: keycloak.org
+    kind: Keycloak
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 0.12.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:0.12.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:50b3d5bf3572fd9e28e06f21b6fecd99a4b1f83fabd06b69bef369fd5fec3280
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:0b5404720f537d745dae2d14692787f57a4614ca1c0db3ca03bd1561f292504c
+name: kogito-operator.v0.13.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoApp
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoDataIndex
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoJobsService
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoMgmtConsole
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk.required
+  value:
+    group: kafka.strimzi.io
+    kind: Kafka
+    version: v1beta1
+- type: olm.gvk.required
+  value:
+    group: kafka.strimzi.io
+    kind: KafkaTopic
+    version: v1beta1
+- type: olm.gvk.required
+  value:
+    group: keycloak.org
+    kind: Keycloak
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 0.13.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:0.13.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:0b5404720f537d745dae2d14692787f57a4614ca1c0db3ca03bd1561f292504c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:486976e7e5a974a930e822b5fa1bf244de2573fa9aeccb85c37b7ef61758eb67
+name: kogito-operator.v0.14.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoDataIndex
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoJobsService
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoMgmtConsole
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoTrusty
+    version: v1alpha1
+- type: olm.gvk.required
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk.required
+  value:
+    group: kafka.strimzi.io
+    kind: Kafka
+    version: v1beta1
+- type: olm.gvk.required
+  value:
+    group: kafka.strimzi.io
+    kind: KafkaTopic
+    version: v1beta1
+- type: olm.gvk.required
+  value:
+    group: keycloak.org
+    kind: Keycloak
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 0.14.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:0.14.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:486976e7e5a974a930e822b5fa1bf244de2573fa9aeccb85c37b7ef61758eb67
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:f6524467cea9ff75f4dfc93572a370bdeb9c9d8b5e7434ed3e74e0730d3709a6
+name: kogito-operator.v0.15.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoDataIndex
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoExplainability
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoJobsService
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoMgmtConsole
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoTrusty
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoTrustyUI
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 0.15.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:0.15.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:f6524467cea9ff75f4dfc93572a370bdeb9c9d8b5e7434ed3e74e0730d3709a6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:69066765939eae4da18628d9bbdb00b5ab6af8ae3699935f3cc99714898675a7
+name: kogito-operator.v0.16.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoDataIndex
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoExplainability
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoJobsService
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoMgmtConsole
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoTrusty
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoTrustyUI
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 0.16.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:0.16.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:69066765939eae4da18628d9bbdb00b5ab6af8ae3699935f3cc99714898675a7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:e5ccd04743ce5e8a595896be8a09a10c03aa43f9f754b739a0e199ca38e44f41
+name: kogito-operator.v0.17.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoDataIndex
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoExplainability
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoJobsService
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoMgmtConsole
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoTrusty
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoTrustyUI
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 0.17.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:0.17.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:e5ccd04743ce5e8a595896be8a09a10c03aa43f9f754b739a0e199ca38e44f41
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:ba4aca42e8ec0668193a1dcf4a623c5ae0a14fa8819b7c666fd00b87d47061c1
+name: kogito-operator.v1.0.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.0.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:1.0.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:ba4aca42e8ec0668193a1dcf4a623c5ae0a14fa8819b7c666fd00b87d47061c1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:02c9c12d56475c854d206f5601e74870a923cc0ee74d322fe54e347633649cd1
+name: kogito-operator.v1.1.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.1.0
+relatedImages:
+- image: quay.io/kiegroup/kogito-cloud-operator:1.1.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:02c9c12d56475c854d206f5601e74870a923cc0ee74d322fe54e347633649cd1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:822a320b5448b2122bc61cddab65f1051351de5f5573f3b1a71387e739b857b2
+name: kogito-operator.v1.10.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.10.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.10.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:822a320b5448b2122bc61cddab65f1051351de5f5573f3b1a71387e739b857b2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:5fba66b1e80694fc43a35ef521a3c8e068a4045c6525c5d696df315b6672a8b8
+name: kogito-operator.v1.11.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.11.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.11.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:5fba66b1e80694fc43a35ef521a3c8e068a4045c6525c5d696df315b6672a8b8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:18f8e2e93b93bcf2cae8b8ede08c43ad026086b765519807b11ab6f425378e31
+name: kogito-operator.v1.11.1
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.11.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.11.1
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:18f8e2e93b93bcf2cae8b8ede08c43ad026086b765519807b11ab6f425378e31
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:9ce172eb6cb2567ade0c10be156e7be5e90a403718370212759501b104600c0f
+name: kogito-operator.v1.12.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.12.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.12.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:9ce172eb6cb2567ade0c10be156e7be5e90a403718370212759501b104600c0f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:1758a9180c1069e8bfdc180489c6c96d77a5d0c9918e088492d90b2a4833b3e9
+name: kogito-operator.v1.13.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.13.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.13.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:1758a9180c1069e8bfdc180489c6c96d77a5d0c9918e088492d90b2a4833b3e9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:6bb7bbc9ce68cb857e68716c881eef85daba4730608dfb6ec2ec2dacebc786be
+name: kogito-operator.v1.14.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.14.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.14.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:6bb7bbc9ce68cb857e68716c881eef85daba4730608dfb6ec2ec2dacebc786be
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:b4dd2dfd624112bdeeb67c2497254b9da2a01d863e58a2f3f603a95c19fcff62
+name: kogito-operator.v1.15.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.15.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.15.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:b4dd2dfd624112bdeeb67c2497254b9da2a01d863e58a2f3f603a95c19fcff62
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:477821692aa197029f77298312f31e66d29dbf44c8d0bfd275e64c34af116865
+name: kogito-operator.v1.16.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.16.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.16.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:477821692aa197029f77298312f31e66d29dbf44c8d0bfd275e64c34af116865
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:682c77645851808c3bfc423476e9c88822fb9ae2e9a287acea968bffa97ea356
+name: kogito-operator.v1.16.1
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.16.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.16.1
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:682c77645851808c3bfc423476e9c88822fb9ae2e9a287acea968bffa97ea356
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:598c91c4e0fe797ac756006aa63a611970daa57ce0d8cf962adab3ac7f6092ab
+name: kogito-operator.v1.17.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.17.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.17.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:598c91c4e0fe797ac756006aa63a611970daa57ce0d8cf962adab3ac7f6092ab
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:3a95bf40d55ff073338961668c70d9df8f9209101185802123066bee9925121b
+name: kogito-operator.v1.18.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.18.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.18.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:3a95bf40d55ff073338961668c70d9df8f9209101185802123066bee9925121b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:ecef17c64512b10a035d4dd0f324f325c930df709883798438ec2ea5616a32d7
+name: kogito-operator.v1.19.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.19.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.19.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:ecef17c64512b10a035d4dd0f324f325c930df709883798438ec2ea5616a32d7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:16555a96ba85b24316ed37f048798ab9542225a3a7bfd280f9ab8859f90cc342
+name: kogito-operator.v1.2.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.2.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-cloud-operator:1.2.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:16555a96ba85b24316ed37f048798ab9542225a3a7bfd280f9ab8859f90cc342
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:21779e53281faa9a345f6332d8587440131b1cc3b468ee28d4bc480f0c4885ca
+name: kogito-operator.v1.20.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.20.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.20.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:21779e53281faa9a345f6332d8587440131b1cc3b468ee28d4bc480f0c4885ca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:acfa0d85654532ec51c65553d580a1555c22272787a22b93c9097299af376deb
+name: kogito-operator.v1.21.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.21.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.21.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:acfa0d85654532ec51c65553d580a1555c22272787a22b93c9097299af376deb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:0f790a6617b3bdafd526aa9aff7387ef56b770e8c8ecf4501a9af3241f00a67e
+name: kogito-operator.v1.22.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.22.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.22.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:0f790a6617b3bdafd526aa9aff7387ef56b770e8c8ecf4501a9af3241f00a67e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:e080635585f6c0680eb0fbaaaa9bfa8384922e9e37603b0a8bf2f865c6153293
+name: kogito-operator.v1.22.1
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.22.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.22.1
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:e080635585f6c0680eb0fbaaaa9bfa8384922e9e37603b0a8bf2f865c6153293
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:2509bc943d0a0a1ea626dbcfb582ca084c200188afa392ef7c50bfcff75aab08
+name: kogito-operator.v1.23.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.23.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.23.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:2509bc943d0a0a1ea626dbcfb582ca084c200188afa392ef7c50bfcff75aab08
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:c0cb87653a0649f34178f8f113f4f63b418798c712c79861cb4d53bcab4d1694
+name: kogito-operator.v1.24.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.24.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.24.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:c0cb87653a0649f34178f8f113f4f63b418798c712c79861cb4d53bcab4d1694
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:5fdb27b8a01dc351203e4c8d1d14eee5cf66141ac5352ded8eb15eef8f58d961
+name: kogito-operator.v1.25.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.25.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.25.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:5fdb27b8a01dc351203e4c8d1d14eee5cf66141ac5352ded8eb15eef8f58d961
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:fe44c376e94a87bed66bcf9644fb29294a8899270dabea79ee14b9c75d8a9b2a
+name: kogito-operator.v1.26.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.26.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.26.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:fe44c376e94a87bed66bcf9644fb29294a8899270dabea79ee14b9c75d8a9b2a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:73f87e907fbd012c329dcf7259454a75b2d49be048d0af7d70835d5030cc77dc
+name: kogito-operator.v1.27.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.27.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.27.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:73f87e907fbd012c329dcf7259454a75b2d49be048d0af7d70835d5030cc77dc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:38757a06bb32e29398ae7e7076c0695330f51c9326dabef5c00747cc2ab071d1
+name: kogito-operator.v1.28.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.28.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.28.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:38757a06bb32e29398ae7e7076c0695330f51c9326dabef5c00747cc2ab071d1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:dd9d1d8b4227504224ca0bc4a13041eeef0beae0b049b8f3a9d1ec2fc2a8d790
+name: kogito-operator.v1.29.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.29.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.29.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:dd9d1d8b4227504224ca0bc4a13041eeef0beae0b049b8f3a9d1ec2fc2a8d790
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:aa64746ba34791e75baa31d2d459ef4af426c8236e86e978015cff8fdd033588
+name: kogito-operator.v1.3.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.3.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-cloud-operator:1.3.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:aa64746ba34791e75baa31d2d459ef4af426c8236e86e978015cff8fdd033588
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:d29b36e82ada905726f4356be77b3a31fbc44172e0869041e678abea420d8ed3
+name: kogito-operator.v1.30.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.30.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.30.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:d29b36e82ada905726f4356be77b3a31fbc44172e0869041e678abea420d8ed3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:76fdd2d1d6a7eac5d141421c27cf7240c53d5330b4dfae7ae0da6aa004a57ddf
+name: kogito-operator.v1.31.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.31.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.31.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:76fdd2d1d6a7eac5d141421c27cf7240c53d5330b4dfae7ae0da6aa004a57ddf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:4d4a292e004a1e88ed91e4e2f073f8872a6d287a0135b78cb487fd4a47cbee6a
+name: kogito-operator.v1.32.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.32.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.32.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:4d4a292e004a1e88ed91e4e2f073f8872a6d287a0135b78cb487fd4a47cbee6a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:bea0cb2219b47b5fe1070814f5a408642aa5407b3aee65ac25994b2748d78f59
+name: kogito-operator.v1.33.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.33.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.33.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:bea0cb2219b47b5fe1070814f5a408642aa5407b3aee65ac25994b2748d78f59
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:eaa8426de6e4dec248ed715b9bcb8a6f3c2e97d835887542371fbc4c8455acc3
+name: kogito-operator.v1.34.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.34.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.34.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:eaa8426de6e4dec248ed715b9bcb8a6f3c2e97d835887542371fbc4c8455acc3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:d2c05511fd25fea697ed6ee0cd11d6a203807d7e8bbfe6157d245b4df0b3edfe
+name: kogito-operator.v1.35.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.35.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.35.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:d2c05511fd25fea697ed6ee0cd11d6a203807d7e8bbfe6157d245b4df0b3edfe
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:27421976b742388eef4d5568dd8c1836c4022f3fd28232606d0dd2ca59df37f0
+name: kogito-operator.v1.36.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.36.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.36.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:27421976b742388eef4d5568dd8c1836c4022f3fd28232606d0dd2ca59df37f0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:29e98bd47c5ece1cba3e2576a5fbd156da5a66684a9f85a634c7b267b8fa5605
+name: kogito-operator.v1.37.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.37.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.37.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:29e98bd47c5ece1cba3e2576a5fbd156da5a66684a9f85a634c7b267b8fa5605
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:a4d4492b8fd27111c608a209b7f75354a9b6ef2f22f5a2ec621fb363b7df9289
+name: kogito-operator.v1.38.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.38.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.38.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:a4d4492b8fd27111c608a209b7f75354a9b6ef2f22f5a2ec621fb363b7df9289
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:5dec4389206826473d5b162d02aa8442043a2ef98b3b2df79c74a83229941473
+name: kogito-operator.v1.39.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.39.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.39.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:5dec4389206826473d5b162d02aa8442043a2ef98b3b2df79c74a83229941473
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:b80c395afa17df607f1935bd55768ccbed18c6255231ec428bbd3c6e5ac7a551
+name: kogito-operator.v1.4.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.4.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-cloud-operator:1.4.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:b80c395afa17df607f1935bd55768ccbed18c6255231ec428bbd3c6e5ac7a551
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:e2242a2500434c4aa874bc01d14f7ac23f8a399bf3b06aee68e2e0d60ab74260
+name: kogito-operator.v1.40.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.40.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.40.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:e2242a2500434c4aa874bc01d14f7ac23f8a399bf3b06aee68e2e0d60ab74260
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:d7777be6401a33c954b23fb60ae3db8b581dfb5c6c3c91bbecb3395b9f218072
+name: kogito-operator.v1.41.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.41.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.41.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:d7777be6401a33c954b23fb60ae3db8b581dfb5c6c3c91bbecb3395b9f218072
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:b0d877535c22bc1c2f962233e125f1cd19e02342621b0899aba735fcd8a0d8c5
+name: kogito-operator.v1.42.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.42.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.42.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:b0d877535c22bc1c2f962233e125f1cd19e02342621b0899aba735fcd8a0d8c5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:01dbd18eefc8110f576cf2e679d9936461e9914c9a8c9f1a8959133daac3600c
+name: kogito-operator.v1.43.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.43.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.43.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:01dbd18eefc8110f576cf2e679d9936461e9914c9a8c9f1a8959133daac3600c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:f965cf9ebb3da485e337b71970142a25f4de64bda72ea3667b046b002ed8ead7
+name: kogito-operator.v1.44.1
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.44.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "app.kiegroup.org/v1beta1",
+            "kind": "KogitoBuild",
+            "metadata": {
+              "name": "process-quarkus-example"
+            },
+            "spec": {
+              "gitSource": {
+                "contextDir": "process-quarkus-example",
+                "uri": "https://github.com/kiegroup/kogito-examples"
+              },
+              "type": "RemoteSource"
+            }
+          },
+          {
+            "apiVersion": "app.kiegroup.org/v1beta1",
+            "kind": "KogitoInfra",
+            "metadata": {
+              "name": "kogito-infinispan-infra"
+            },
+            "spec": {
+              "resource": {
+                "apiVersion": "infinispan.org/v1",
+                "kind": "Infinispan"
+              }
+            }
+          },
+          {
+            "apiVersion": "app.kiegroup.org/v1beta1",
+            "kind": "KogitoRuntime",
+            "metadata": {
+              "name": "process-quarkus-example"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          },
+          {
+            "apiVersion": "app.kiegroup.org/v1beta1",
+            "kind": "KogitoSupportingService",
+            "metadata": {
+              "name": "kogito-jobs-service"
+            },
+            "spec": {
+              "replicas": 1,
+              "serviceType": "JobsService"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Integration & Delivery
+      certified: "false"
+      containerImage: quay.io/kiegroup/kogito-operator:1.44.1
+      createdAt: "2019-08-22T13:12:22Z"
+      description: Kogito Operator for deployment and management of Kogito services.
+      operators.operatorframework.io/builder: operator-sdk-v1.21.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/kiegroup/kogito-operator
+      support: Red Hat
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: KogitoBuild handles how to build a custom Kogito service in a
+          Kubernetes/OpenShift cluster.
+        displayName: Kogito Build
+        kind: KogitoBuild
+        name: kogitobuilds.app.kiegroup.org
+        resources:
+        - kind: BuildConfig
+          name: A Openshift Build Config
+          version: build.openshift.io/v1
+        - kind: ImageStream
+          name: A Openshift Image Stream
+          version: image.openshift.io/v1
+        specDescriptors:
+        - description: "Artifact contains override information for building the Maven
+            artifact (used for Local Source builds). \n You might want to override
+            this information when building from decisions, rules or process files.
+            In this scenario the Kogito Images will generate a new Java project for
+            you underneath. This information will be used to generate this project."
+          displayName: Final Artifact
+          path: artifact
+        - description: "Image used to build the Kogito Service from source (Local
+            and Remote). \n If not defined the operator will use image provided by
+            the Kogito Team based on the \"Runtime\" field. \n Example: \"quay.io/kiegroup/kogito-jvm-builder:latest\".
+            \n On OpenShift an ImageStream will be created in the current namespace
+            pointing to the given image."
+          displayName: Build Image
+          path: buildImage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: DisableIncremental indicates that source to image builds should
+            NOT be incremental. Defaults to false.
+          displayName: Disable Incremental Builds
+          path: disableIncremental
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: If set to true will print the logs for downloading/uploading
+            of maven dependencies. Defaults to false.
+          displayName: Enable Maven Download Output
+          path: enableMavenDownloadOutput
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Environment variables used during build time.
+          displayName: Build Env Variables
+          path: env
+        - description: "Information about the git repository where the Kogito Service
+            source code resides. \n Ignored for binary builds."
+          displayName: Kogito Git Source
+          path: gitSource
+        - description: Context/subdirectory where the code is located, relative to
+            the repo root.
+          displayName: Git Context
+          path: gitSource.contextDir
+        - description: Branch to use in the Git repository.
+          displayName: Git Reference
+          path: gitSource.reference
+        - description: Git URI for the s2i source.
+          displayName: Git URI
+          path: gitSource.uri
+        - description: Maven Mirror URL to be used during source-to-image builds (Local
+            and Remote) to considerably increase build speed.
+          displayName: Maven Mirror URL
+          path: mavenMirrorURL
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: "Native indicates if the Kogito Service built should be compiled
+            to run on native mode when Runtime is Quarkus (Source to Image build only).
+            \n For more information, see https://www.graalvm.org/docs/reference-manual/aot-compilation/."
+          displayName: Native Build
+          path: native
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Resources Requirements for builder pods.
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: 'Which runtime Kogito service base image to use when building
+            the Kogito service. If "BuildImage" is set, this value is ignored by the
+            operator. Default value: quarkus.'
+          displayName: Runtime
+          path: runtime
+        - description: "Image used as the base image for the final Kogito service.
+            This image only has the required packages to run the application. \n For
+            example: quarkus based services will have only JVM installed, native services
+            only the packages required by the OS. \n If not defined the operator will
+            use image provided by the Kogito Team based on the \"Runtime\" field.
+            \n Example: \"quay.io/kiegroup/kogito-jvm-builder:latest\". \n On OpenShift
+            an ImageStream will be created in the current namespace pointing to the
+            given image."
+          displayName: Base Image
+          path: runtimeImage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: "Set this field targeting the desired KogitoRuntime when this
+            KogitoBuild instance has a different name than the KogitoRuntime. \n By
+            default this KogitoBuild instance will generate a final image named after
+            its own name (.metadata.name). \n On OpenShift, an ImageStream will be
+            created causing a redeployment on any KogitoRuntime with the same name.
+            On Kubernetes, the final image will be pushed to the KogitoRuntime deployment.
+            \n If you have multiple KogitoBuild instances (let's say BinaryBuildType
+            and Remote Source), you might need that both target the same KogitoRuntime.
+            Both KogitoBuilds will update the same ImageStream or generate a final
+            image to the same KogitoRuntime deployment."
+          displayName: Target kogito Runtime
+          path: targetKogitoRuntime
+        - description: "Sets the type of build that this instance will handle: \n
+            Binary - takes an uploaded binary file already compiled and creates a
+            Kogito service image from it. \n RemoteSource - pulls the source code
+            from a Git repository, builds the binary and then the final Kogito service
+            image. \n LocalSource - takes an uploaded resource file such as DRL (rules),
+            DMN (decision) or BPMN (process), builds the binary and the final Kogito
+            service image."
+          displayName: Build Type
+          path: type
+        statusDescriptors:
+        - description: History of builds
+          displayName: Builds
+          path: builds
+        - description: History of conditions for the resource
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - displayName: Latest Build
+          path: latestBuild
+        version: v1beta1
+      - description: "KogitoInfra is the resource to bind a Custom Resource (CR) not
+          managed by Kogito Operator to a given deployed Kogito service. \n It holds
+          the reference of a CR managed by another operator such as Strimzi. For example:
+          one can create a Kafka CR via Strimzi and link this resource using KogitoInfra
+          to a given Kogito service (custom or supporting, such as Data Index). \n
+          Please refer to the Kogito Operator documentation (https://docs.jboss.org/kogito/release/latest/html_single/)
+          for more information."
+        displayName: Kogito Infra
+        kind: KogitoInfra
+        name: kogitoinfras.app.kiegroup.org
+        resources:
+        - kind: Infinispan
+          name: A Infinispan instance
+          version: infinispan.org/v1
+        - kind: Kafka
+          name: A Kafka instance
+          version: kafka.strimzi.io/v1beta2
+        - kind: Keycloak
+          name: A Keycloak Instance
+          version: keycloak.org/v1alpha1
+        - kind: Secret
+          name: A Kubernetes Secret
+          version: v1
+        specDescriptors:
+        - description: List of secret that should be mounted to the services as envs
+          displayName: Config Map Env From References
+          path: configMapEnvFromReferences
+        - description: List of configmap that should be added to the services bound
+            to this infra instance
+          displayName: Config Map Volume References
+          path: configMapVolumeReferences
+        - description: Environment variables to be added to the runtime container.
+            Keys must be a C_IDENTIFIER.
+          displayName: Envs
+          path: envs
+        - description: "Optional properties which would be needed to setup correct
+            runtime/service configuration, based on the resource type. \n For example,
+            MongoDB will require `username` and `database` as properties for a correct
+            setup, else it will fail"
+          displayName: Infra Properties
+          path: infraProperties
+        - description: 'Resource for the service. Example: Infinispan/Kafka/Keycloak.'
+          displayName: Resource
+          path: resource
+        - description: APIVersion describes the API Version of referred Kubernetes
+            resource for example, infinispan.org/v1
+          displayName: APIVersion
+          path: resource.apiVersion
+        - description: Kind describes the kind of referred Kubernetes resource for
+            example, Infinispan
+          displayName: Kind
+          path: resource.kind
+        - description: Name of referred resource.
+          displayName: Name
+          path: resource.name
+        - description: Namespace where referred resource exists.
+          displayName: Namespace
+          path: resource.namespace
+        - description: List of secret that should be mounted to the services as envs
+          displayName: Secret Env From References
+          path: secretEnvFromReferences
+        - description: List of secret that should be munted to the services bound
+            to this infra instance
+          displayName: Secret Volume References
+          path: secretVolumeReferences
+        statusDescriptors:
+        - description: History of conditions for the resource
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: List of Configmap that should be mounted to the services as
+            envs
+          displayName: Config Map Env From References
+          path: configMapEnvFromReferences
+        - description: List of configmap that should be added as volume mount to this
+            infra instance
+          displayName: Config Map Volume References
+          path: configMapVolumeReferences
+        - description: Environment variables to be added to the runtime container.
+            Keys must be a C_IDENTIFIER.
+          displayName: Envs
+          path: env
+        - description: List of secret that should be mounted to the services as envs
+          displayName: Secret Env From References
+          path: secretEnvFromReferences
+        - description: List of secret that should be added as volume mount to this
+            infra instance
+          displayName: Secret Volume References
+          path: secretVolumeReferences
+        version: v1beta1
+      - description: KogitoRuntime is a custom Kogito service.
+        displayName: Kogito Runtime
+        kind: KogitoRuntime
+        name: kogitoruntimes.app.kiegroup.org
+        resources:
+        - kind: ConfigMap
+          name: A Kubernetes ConfigMap
+          version: v1
+        - kind: Deployment
+          name: A Kubernetes Deployment
+          version: apps/v1
+        - kind: Service
+          name: A Kubernetes Service
+          version: v1
+        - kind: Route
+          name: A Openshift Route
+          version: route.openshift.io/v1
+        specDescriptors:
+        - description: 'Application properties that will be set to the service. For
+            example ''MY_VAR: my_value''.'
+          displayName: Configs
+          path: config
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: Additional labels to be added to the Deployment and Pods managed
+            by the operator.
+          displayName: Additional Deployment Labels
+          path: deploymentLabels
+        - description: "A flag indicating that routes are disabled. Usable just on
+            OpenShift. \n If not provided, defaults to 'false'."
+          displayName: DisableRoute
+          path: disableRoute
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Annotates the pods managed by the operator with the required
+            metadata for Istio to setup its sidecars, enabling the mesh. Defaults
+            to false.
+          displayName: Enable Istio
+          path: enableIstio
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Environment variables to be added to the runtime container.
+            Keys must be a C_IDENTIFIER.
+          displayName: Env
+          path: env
+        - description: "Image definition for the service. Example: \"quay.io/kiegroup/kogito-service:latest\".
+            \n On OpenShift an ImageStream will be created in the current namespace
+            pointing to the given image."
+          displayName: Image
+          path: image
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: "A flag indicating that image streams created by Kogito Operator
+            should be configured to allow pulling from insecure registries. Usable
+            just on OpenShift. \n Defaults to 'false'."
+          displayName: Insecure Image Registry
+          path: insecureImageRegistry
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: "Custom ConfigMap with application.properties file to be mounted
+            for the Kogito service. \n The ConfigMap must be created in the same namespace.
+            \n Use this property if you need custom properties to be mounted before
+            the application deployment. \n If left empty, one will be created for
+            you. Later it can be updated to add any custom properties to apply to
+            the service."
+          displayName: ConfigMap Properties
+          path: propertiesConfigMap
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:ConfigMap
+        - description: "Number of replicas that the service will have deployed in
+            the cluster. \n Default value: 1."
+          displayName: Replicas
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: Defined compute resource requirements for the deployed service.
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: "The name of the runtime used, either Quarkus or SpringBoot.
+            \n Default value: quarkus"
+          displayName: Runtime
+          path: runtime
+        - description: Additional labels to be added to the Service managed by the
+            operator.
+          displayName: Additional Service Labels
+          path: serviceLabels
+        - description: "Custom JKS TrustStore that will be used by this service to
+            make calls to TLS endpoints. \n It's expected that the secret has two
+            keys: `keyStorePassword` containing the password for the KeyStore and
+            `cacerts` containing the binary data of the given KeyStore."
+          displayName: Trust Store Secret
+          path: trustStoreSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        statusDescriptors:
+        - description: Describes the CloudEvents that this instance can consume or
+            produce
+          displayName: Cloud Events
+          path: cloudEvents
+        - displayName: Consumes
+          path: cloudEvents.consumes
+        - displayName: Source
+          path: cloudEvents.consumes[0].source
+        - displayName: Type
+          path: cloudEvents.consumes[0].type
+        - displayName: Produces
+          path: cloudEvents.produces
+        - displayName: Source
+          path: cloudEvents.produces[0].source
+        - displayName: Type
+          path: cloudEvents.produces[0].type
+        - description: History of conditions for the resource
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: General conditions for the Kogito Service deployment.
+          displayName: Deployment Conditions
+          path: deploymentConditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: URI is where the service is exposed.
+          displayName: External URI
+          path: externalURI
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Image is the resolved image for this service.
+          displayName: Image
+          path: image
+        - description: General conditions for the Kogito Service route.
+          displayName: Route Conditions
+          path: routeConditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        version: v1beta1
+      - description: KogitoSupportingService deploys the Supporting service in the
+          given namespace.
+        displayName: Kogito Supporting Service
+        kind: KogitoSupportingService
+        name: kogitosupportingservices.app.kiegroup.org
+        resources:
+        - kind: Deployment
+          name: A Kubernetes Deployment
+          version: apps/v1
+        - kind: Service
+          name: A Kubernetes Service
+          version: v1
+        - kind: ImageStream
+          name: A Openshift ImageStream
+          version: image.openshift.io/v1
+        - kind: Route
+          name: A Openshift Route
+          version: route.openshift.io/v1
+        specDescriptors:
+        - description: 'Application properties that will be set to the service. For
+            example ''MY_VAR: my_value''.'
+          displayName: Configs
+          path: config
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: Additional labels to be added to the Deployment and Pods managed
+            by the operator.
+          displayName: Additional Deployment Labels
+          path: deploymentLabels
+        - description: "A flag indicating that routes are disabled. Usable just on
+            OpenShift. \n If not provided, defaults to 'false'."
+          displayName: DisableRoute
+          path: disableRoute
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Environment variables to be added to the runtime container.
+            Keys must be a C_IDENTIFIER.
+          displayName: Env
+          path: env
+        - description: "Image definition for the service. Example: \"quay.io/kiegroup/kogito-service:latest\".
+            \n On OpenShift an ImageStream will be created in the current namespace
+            pointing to the given image."
+          displayName: Image
+          path: image
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: "A flag indicating that image streams created by Kogito Operator
+            should be configured to allow pulling from insecure registries. Usable
+            just on OpenShift. \n Defaults to 'false'."
+          displayName: Insecure Image Registry
+          path: insecureImageRegistry
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: "Custom ConfigMap with application.properties file to be mounted
+            for the Kogito service. \n The ConfigMap must be created in the same namespace.
+            \n Use this property if you need custom properties to be mounted before
+            the application deployment. \n If left empty, one will be created for
+            you. Later it can be updated to add any custom properties to apply to
+            the service."
+          displayName: ConfigMap Properties
+          path: propertiesConfigMap
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:ConfigMap
+        - description: "Number of replicas that the service will have deployed in
+            the cluster. \n Default value: 1."
+          displayName: Replicas
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: Defined compute resource requirements for the deployed service.
+          displayName: Resources
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: Additional labels to be added to the Service managed by the
+            operator.
+          displayName: Additional Service Labels
+          path: serviceLabels
+        - description: 'Defines the type for the supporting service, eg: DataIndex,
+            JobsService Default value: JobsService'
+          displayName: Service Type
+          path: serviceType
+        - description: "Custom JKS TrustStore that will be used by this service to
+            make calls to TLS endpoints. \n It's expected that the secret has two
+            keys: `keyStorePassword` containing the password for the KeyStore and
+            `cacerts` containing the binary data of the given KeyStore."
+          displayName: Trust Store Secret
+          path: trustStoreSecret
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        statusDescriptors:
+        - description: Describes the CloudEvents that this instance can consume or
+            produce
+          displayName: Cloud Events
+          path: cloudEvents
+        - displayName: Consumes
+          path: cloudEvents.consumes
+        - displayName: Source
+          path: cloudEvents.consumes[0].source
+        - displayName: Type
+          path: cloudEvents.consumes[0].type
+        - displayName: Produces
+          path: cloudEvents.produces
+        - displayName: Source
+          path: cloudEvents.produces[0].source
+        - displayName: Type
+          path: cloudEvents.produces[0].type
+        - description: History of conditions for the resource
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: General conditions for the Kogito Service deployment.
+          displayName: Deployment Conditions
+          path: deploymentConditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: URI is where the service is exposed.
+          displayName: External URI
+          path: externalURI
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: Image is the resolved image for this service.
+          displayName: Image
+          path: image
+        - description: General conditions for the Kogito Service route.
+          displayName: Route Conditions
+          path: routeConditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        version: v1beta1
+    description: |-
+      Kogito Operator is designed to deploy Kogito services from source (only on OpenShift) and every piece of infrastructure that the services might need:
+
+      * Creates two kinds of build configuration: Native or JVM. For more information refer to [Native build and deployment](https://docs.jboss.org/kogito/release/latest/html_single/#_native_build_and_deployment) section on our docs
+      * Builds a Kogito service from a remote git repository and creates a custom image for the given runtime: Quarkus or Springboot. [See more](https://docs.jboss.org/kogito/release/latest/html_single/#con-kogito-operator-deployment-options_kogito-deploying-on-openshift).
+      * Installs the [Kogito Data Index Service](https://docs.jboss.org/kogito/release/latest/html_single/#con-kogito-operator-with-data-index-service_kogito-deploying-on-openshift) to enable data index feature for Kogito services.
+      * Installs the [Kogito Jobs Service](https://docs.jboss.org/kogito/release/latest/html_single/#con-kogito-operator-with-jobs-service_kogito-deploying-on-openshift) to enable jobs scheduling.
+
+      For Kubernetes deployment of Kogito services, please refer to the section [Deploying Kogito services on Kubernetes](https://docs.jboss.org/kogito/release/latest/html_single/#proc-kogito-deploying-on-kubernetes_kogito-deploying-on-openshift) on our docs.
+
+      **IMPORTANT!** Kogito Operator might need Infinispan Operator and Strimzi to implement persistence and messaging use cases if you do not provide these services beforehand.
+      If you need these features to be automatically provisioned for you, bear in mind that those operators must be installed in the same namespace as the Kogito Operator.
+    displayName: Kogito
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - cloud
+    - kogito
+    - quarkus
+    - springboot
+    - operator
+    - native
+    - automation
+    labels:
+      operator-kogitocloud: "true"
+    links:
+    - name: Product Page
+      url: https://kogito.kie.org/
+    - name: Documentation
+      url: https://github.com/kiegroup/kogito-operator/blob/main/README.md
+    - name: Source
+      url: https://github.com/kiegroup/kogito-operator/
+    maintainers:
+    - email: bsig-cloud@redhat.com
+      name: Red Hat
+    maturity: beta
+    provider:
+      name: Red Hat
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.12.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.44.1
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:f965cf9ebb3da485e337b71970142a25f4de64bda72ea3667b046b002ed8ead7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:f93db0d5eeca9d89e3e39ba7d1a497567decfe4710ecfdf561447ed651df99ca
+name: kogito-operator.v1.5.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.5.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.5.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:f93db0d5eeca9d89e3e39ba7d1a497567decfe4710ecfdf561447ed651df99ca
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:21df26920a53564ec026550ac37378d118432b1ba8e1d98fcd04e940c2358c03
+name: kogito-operator.v1.6.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.6.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.6.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:21df26920a53564ec026550ac37378d118432b1ba8e1d98fcd04e940c2358c03
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:43a73ef82d455f77645be1ef4d93c5d9349f009213289f30bcf4bdcf5b14209f
+name: kogito-operator.v1.7.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.7.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.7.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:43a73ef82d455f77645be1ef4d93c5d9349f009213289f30bcf4bdcf5b14209f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:5fde85a94e12f424d43b391fcffd8b4ae1f3f8c34efcdfc99edf2b5b487004fe
+name: kogito-operator.v1.8.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.8.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.8.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:5fde85a94e12f424d43b391fcffd8b4ae1f3f8c34efcdfc99edf2b5b487004fe
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:68cace2df6ab95715ce6cc3ed1bb3f7939fd13fd1c18aa4317549cb880c6ae30
+name: kogito-operator.v1.9.0
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.9.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.9.0
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:68cace2df6ab95715ce6cc3ed1bb3f7939fd13fd1c18aa4317549cb880c6ae30
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/kogito-operator@sha256:f9746a5529d24e75c0959d1ab0f2ebb0eacb1cb3d2593fad10990dab09587b74
+name: kogito-operator.v1.9.1
+package: kogito-operator
+properties:
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoBuild
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoInfra
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoRuntime
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: app.kiegroup.org
+    kind: KogitoSupportingService
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: kogito-operator
+    version: 1.9.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/kiegroup/kogito-operator:1.9.1
+  name: ""
+- image: quay.io/operatorhubio/kogito-operator@sha256:f9746a5529d24e75c0959d1ab0f2ebb0eacb1cb3d2593fad10990dab09587b74
+  name: ""
+schema: olm.bundle

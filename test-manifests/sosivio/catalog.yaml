@@ -1,0 +1,1666 @@
+---
+defaultChannel: stable
+icon:
+  base64data: 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
+  mediatype: image/png
+name: sosivio
+schema: olm.package
+---
+entries:
+- name: sosivio-operator.v1.2.0-1
+- name: sosivio-operator.v1.2.1-1
+  replaces: sosivio-operator.v1.2.0-1
+- name: sosivio-operator.v1.3.0-75
+  replaces: sosivio-operator.v1.2.1-1
+- name: sosivio-operator.v1.3.1-76
+  replaces: sosivio-operator.v1.3.0-75
+- name: sosivio-operator.v1.4.1-78
+  replaces: sosivio-operator.v1.3.1-76
+- name: sosivio-operator.v1.4.1.1-80
+  replaces: sosivio-operator.v1.4.1-78
+- name: sosivio-operator.v1.4.2-82
+  replaces: sosivio-operator.v1.4.1.1-80
+- name: sosivio-operator.v1.4.3-83
+  replaces: sosivio-operator.v1.4.2-82
+- name: sosivio-operator.v1.4.4-85
+  replaces: sosivio-operator.v1.4.3-83
+- name: sosivio-operator.v1.5.0-95
+  replaces: sosivio-operator.v1.4.4-85
+- name: sosivio-operator.v1.5.1-97
+  replaces: sosivio-operator.v1.5.0-95
+- name: sosivio-operator.v1.5.2-98
+  replaces: sosivio-operator.v1.5.1-97
+- name: sosivio-operator.v1.5.3-101
+  replaces: sosivio-operator.v1.5.3-82
+- name: sosivio-operator.v1.5.3-102
+  replaces: sosivio-operator.v1.5.3-101
+- name: sosivio-operator.v1.5.3-82
+  replaces: sosivio-operator.v1.5.2-98
+- name: sosivio-operator.v1.6.0-88
+  replaces: sosivio-operator.v1.5.3-102
+- name: sosivio-operator.v1.6.1-92
+  replaces: sosivio-operator.v1.6.0-88
+- name: sosivio-operator.v1.7.0-117
+  replaces: sosivio-operator.v1.6.1-92
+- name: sosivio-operator.v1.7.1-120
+  replaces: sosivio-operator.v1.7.0-117
+- name: sosivio-operator.v1.7.1-130
+  replaces: sosivio-operator.v1.7.1-120
+- name: sosivio-operator.v1.8.0-137
+  replaces: sosivio-operator.v1.7.1-130
+- name: sosivio-operator.v1.8.1-144
+  replaces: sosivio-operator.v1.8.0-137
+- name: sosivio-operator.v2.0.0-150
+  replaces: sosivio-operator.v1.8.1-144
+- name: sosivio-operator.v2.1.0-158
+  replaces: sosivio-operator.v2.0.0-150
+name: stable
+package: sosivio
+schema: olm.channel
+---
+image: quay.io/operatorhubio/sosivio@sha256:dc5225458df4b0d67ca027643d603bb8c339ac96c7822371f6be2a46bfa37be6
+name: sosivio-operator.v1.2.0-1
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.2.0-1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/sosivio@sha256:dc5225458df4b0d67ca027643d603bb8c339ac96c7822371f6be2a46bfa37be6
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.2.0-1
+  name: ""
+- image: release.sosiv.io/actuator:release-1.2.0
+  name: ""
+- image: release.sosiv.io/analyzer:release-1.2.0
+  name: ""
+- image: release.sosiv.io/authentication:release-1.2.0
+  name: ""
+- image: release.sosiv.io/classifier:release-1.2.0
+  name: ""
+- image: release.sosiv.io/communicator:release-1.2.0
+  name: ""
+- image: release.sosiv.io/contract-testing:release-1.2.0
+  name: ""
+- image: release.sosiv.io/correlation-entities:release-1.2.0
+  name: ""
+- image: release.sosiv.io/crud-manager:release-1.2.0
+  name: ""
+- image: release.sosiv.io/nsqadmin:release-1.2.0
+  name: ""
+- image: release.sosiv.io/nsqd:release-1.2.0
+  name: ""
+- image: release.sosiv.io/nsqlookupd:release-1.2.0
+  name: ""
+- image: release.sosiv.io/ruleengine:release-1.2.0
+  name: ""
+- image: release.sosiv.io/sequence-recognition:release-1.2.0
+  name: ""
+- image: release.sosiv.io/sosivio-dashboard:release-1.2.0
+  name: ""
+- image: release.sosiv.io/sosivio-node-collector:release-1.2.0
+  name: ""
+- image: release.sosiv.io/sosivio-node-exporter:release-1.2.0
+  name: ""
+- image: release.sosiv.io/sosiviodb:release-1.2.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:3b1b7e09a9de5e40b6f1a15fadae1ea3a55277597f2d3090db02dbf74ef81d50
+name: sosivio-operator.v1.2.1-1
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.2.1-1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy@sha256:db06cc4c084dd0253134f156dddaaf53ef1c3fb3cc809e5d81711baa4029ea4c
+  name: ""
+- image: quay.io/operatorhubio/sosivio@sha256:3b1b7e09a9de5e40b6f1a15fadae1ea3a55277597f2d3090db02dbf74ef81d50
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.2.1-1
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:bd3f72340f08b7277ef69b1a0b923e100322c16111dc5d65171e0b38f4ed486e
+  name: ""
+- image: release.sosiv.io/actuator@sha256:94e682b667381dbe1238b94204b63c6d904abd7913a5e3e0339d649caac463a2
+  name: ""
+- image: release.sosiv.io/analyzer@sha256:f10c6ece458f11b9719b7ede0abf114bd48f250bad60ae95da26117e14c9bd10
+  name: ""
+- image: release.sosiv.io/authentication@sha256:a6e565fe983a82a31c51faf89ec79d46e5692ec66267a7824f245e413f9259f0
+  name: ""
+- image: release.sosiv.io/classifier@sha256:b749240f9c09096cac88b887324bc990922cfd687e7171c873ae8befd761a80b
+  name: ""
+- image: release.sosiv.io/communicator@sha256:f9e1bff4dc539db79efb0427214ad10e29ef17b872cba92e6c2654e186680eb9
+  name: ""
+- image: release.sosiv.io/contract-testing@sha256:bdf64e08e5f12c1802d9a9ff3c442c4367455963abc3a7f52c2f8d002a3446fb
+  name: ""
+- image: release.sosiv.io/correlation-entities@sha256:f5e5632267379ac213c423732f97057ff605608fa31db748181d9dee5e3d0c82
+  name: ""
+- image: release.sosiv.io/crud-manager@sha256:0b31b739e4e246cb89b1dab9bc75c395e77548c5cdbdf32ce5c90026f7f5d975
+  name: ""
+- image: release.sosiv.io/discovery-engine@sha256:dd0ffc5e9df3852f56559ea256b1d89bc584817d59447a46aaa9a16937a8cb84
+  name: ""
+- image: release.sosiv.io/draingo@sha256:357203984b06da3975e852e73a181d93ea68842289c9878845f70cb2fa8a9123
+  name: ""
+- image: release.sosiv.io/nsqadmin@sha256:0d6a57ef29531250b37fb767f7e7674703e69e3ff4c2601554dff7344cafc37a
+  name: ""
+- image: release.sosiv.io/nsqd@sha256:fb3692bfe18d845215a5712bf5579afd507d2563c216031923a31e6cd040bb0b
+  name: ""
+- image: release.sosiv.io/nsqlookupd@sha256:57e6235c5b166e4903618ddb00bcdaa33a89f9af8bb0ea33ac217e3f4ad7b556
+  name: ""
+- image: release.sosiv.io/ruleengine@sha256:f6b02bd3c3d6dac298b815b3cd5e66dd0401d927a03c368f196136181cebfd9c
+  name: ""
+- image: release.sosiv.io/sequence-recognition@sha256:0454191c37bff6be23a5678b367066aea106eda2a600e6dff4c34014a138d43e
+  name: ""
+- image: release.sosiv.io/sosivio-dashboard@sha256:4261054410d0ae2fd5893d52144010524cce1c5c09f5b44243641d703b1bdb61
+  name: ""
+- image: release.sosiv.io/sosivio-node-collector@sha256:b845b15a468ff5835a02a62cc9e8feb1b44244f4984454f0f8838f73aa80fa9d
+  name: ""
+- image: release.sosiv.io/sosivio-node-pinger@sha256:e34fccd9a72886efa1a160fc0c721d539a50a2abe1439b84105a1b7e00bdfa12
+  name: ""
+- image: release.sosiv.io/sosiviodb@sha256:91cc368e3fe6263427ae3e999181afe9d47870125a2973c18c3cee2350651506
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:e0abf6355d6fa9d673b8f2d4df7fa42dbf78b75d0c202a7046a8449b8cf35fd9
+name: sosivio-operator.v1.3.0-75
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.3.0-75
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/sosivio@sha256:e0abf6355d6fa9d673b8f2d4df7fa42dbf78b75d0c202a7046a8449b8cf35fd9
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.3.0-75
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:492382ba4c9377d54ccc9b11441318180ab8a137cd76ae082f7c66c9af1a4eb1
+  name: ""
+- image: release.sosiv.io/actuator@sha256:7e5206fef5f30e0cdf473b4fcadfce561249a96bb10cdd9ea898c135b9f1ebaa
+  name: ""
+- image: release.sosiv.io/analyzer@sha256:8bb05fd4384f50fd9fc539683290793da4cefb968049bd10481ff469e761dbe1
+  name: ""
+- image: release.sosiv.io/authentication@sha256:e3361c5c092880b7187f286f0385b472eadf1f9eddb7159699f58293ee966d17
+  name: ""
+- image: release.sosiv.io/classifier@sha256:d8610cf39a572ef3c8e39a1b9802a6d113200346a697d083890343ce708d19df
+  name: ""
+- image: release.sosiv.io/communicator@sha256:648716ace52faaea815373d245d78eba3473b66855f208c802af243bf13a611c
+  name: ""
+- image: release.sosiv.io/contract-testing@sha256:22cd10e52fe3d2c33975b9f7222fc029f20505436184433340183c620cae6618
+  name: ""
+- image: release.sosiv.io/correlation-entities@sha256:a4b9e78e123e388c7e09d9a528747ed8ce2013c08e3413d89fb53bdfc7ec89c5
+  name: ""
+- image: release.sosiv.io/crud-manager@sha256:afcc5c757927e6be0f263be83832b42e597b86aa36548e26657473b39c9d0395
+  name: ""
+- image: release.sosiv.io/discovery-engine@sha256:7aee271b3073bfca7c9580b0360f29f9712797443d2717f8b7ee41dd40aa0471
+  name: ""
+- image: release.sosiv.io/draingo@sha256:ece90b8c674bb1792712d8d02ba8b45eb92fb1c9992e06f826deda416cba36ef
+  name: ""
+- image: release.sosiv.io/notifier@sha256:0bf0e80f68b9cd00bc4595fdbd6f2d535a01be5377fa20891a96530bb1331ad9
+  name: ""
+- image: release.sosiv.io/nsqadmin@sha256:14328eed02625cd0b2f63c50493c93e3f27d15e0289e5ff2b639ca484136d7f5
+  name: ""
+- image: release.sosiv.io/nsqd@sha256:857a47b3eb60a311a2d6794984c3bad85b6e99ab1af52de0f600e02a1bcbb359
+  name: ""
+- image: release.sosiv.io/nsqlookupd@sha256:b9a46aad888bfc8118f61a33f21e6f6c5a26de603b6209db34bcd254a5b42c15
+  name: ""
+- image: release.sosiv.io/sequence-recognition@sha256:fd95939cf28d199e228b6d4feea67b4469429548b31f97794671f517242f6512
+  name: ""
+- image: release.sosiv.io/sosivio-dashboard@sha256:1c793b4eb583801f15ff18b73de8d003c3e59d8555531f4efc4dca818d8e87de
+  name: ""
+- image: release.sosiv.io/sosivio-node-collector@sha256:280d513585f371cb29cfcfc74979ae8c5e6189bbb68428dee65e545464937b92
+  name: ""
+- image: release.sosiv.io/sosivio-node-pinger@sha256:7dba96bcecd3fd730f5950f1dbf6e5d1cf6a7bf349cfac78aac708456cc09507
+  name: ""
+- image: release.sosiv.io/sosiviodb@sha256:4e8d3a2570299a409d40d18bb002cc7e79ed4ca8f8e7f91d983d63bf0b188931
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:f87011942b6e80f7139dfd4745e0d3f2e371e8a71eaabd5b1142b88926cdfd67
+name: sosivio-operator.v1.3.1-76
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.3.1-76
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/sosivio@sha256:f87011942b6e80f7139dfd4745e0d3f2e371e8a71eaabd5b1142b88926cdfd67
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.3.1-76
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:54833c7fc78070e3215dafc4a90b44fb0191278f22f416fdda4ebb0b30baf3ca
+  name: ""
+- image: release.sosiv.io/actuator@sha256:5cd94db305edfc5f79fd32b127993ae5a9be16ba917345a823417055f767ca98
+  name: ""
+- image: release.sosiv.io/analyzer@sha256:62b44a2cbc7587b01603407f262527a67011816d42e89c6bebf7d9a3a28d46b5
+  name: ""
+- image: release.sosiv.io/authentication@sha256:8334cca2058b91c69091d7fdcce46dfa9c09befdad40909d4ab16f6bd5d2f810
+  name: ""
+- image: release.sosiv.io/classifier@sha256:64492c8b0500194f8e76786723c676783b04aa2b8ebc30af7a79b8ad455edfc5
+  name: ""
+- image: release.sosiv.io/communicator@sha256:d7e2b6509a1d8117f1a2de6675ccf56672402c081a3095981e1ecd40225c461a
+  name: ""
+- image: release.sosiv.io/contract-testing@sha256:a4baa361c1f63c67fabd9b394449ca24c27226bac920abcf64b00f251513126c
+  name: ""
+- image: release.sosiv.io/correlation-entities@sha256:6064c9a80f504c87fb356278580523a31f61851ac353827fcb33dda360358b6e
+  name: ""
+- image: release.sosiv.io/crud-manager@sha256:a1252e44223fa5f5900c664a697e97d572965a8c5bafa65f4f0c48f74c371d54
+  name: ""
+- image: release.sosiv.io/discovery-engine@sha256:2dad130ba5ad2e91d1b50b9668cceebde6bca4fd4d15b3933428b1c4f0d0f25d
+  name: ""
+- image: release.sosiv.io/draingo@sha256:bdbd95c9ffd7cd7ee482992589944b6b078b838614b921a5b309664653ab1584
+  name: ""
+- image: release.sosiv.io/notifier@sha256:a809f8fb046847c3fa91d984cc8162f0dd92245e3c0c0b6a847404a10f450214
+  name: ""
+- image: release.sosiv.io/nsqadmin@sha256:62e82b3ed550bc9f417dd259b38add12e037b1c5b0d09e75e1d41eb30b00c16d
+  name: ""
+- image: release.sosiv.io/nsqd@sha256:1a87ae9876adea742b2b69a16e246c362992c47fd041185b7b00a9e27f95fedc
+  name: ""
+- image: release.sosiv.io/nsqlookupd@sha256:171556aa3c48acedf0ae7c0907943129ef9074d07c4dd8dec830c41770edad2a
+  name: ""
+- image: release.sosiv.io/sequence-recognition@sha256:05a4702937efa67bf71eb149ae2ecf59855b7503567902897410aff61401b9ee
+  name: ""
+- image: release.sosiv.io/sosivio-dashboard@sha256:a0bec736207be74ccaf118d75618fe0b33c7a0ac8543ce1aaf7ea0db875569cb
+  name: ""
+- image: release.sosiv.io/sosivio-node-collector@sha256:b9da902efee437c7c96cfcb7c392b3777855d0fbab5a88249d16989bc146f194
+  name: ""
+- image: release.sosiv.io/sosivio-node-pinger@sha256:64a83d81d4e3e7adc730eea7ffdb626e3adaaed7780df8608dcd72101e8cec94
+  name: ""
+- image: release.sosiv.io/sosiviodb@sha256:ddde5ce59df6d68f9a7adf71d1e61132783c3cc4af2c7ccfc0941af35a4d0ad1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:ab42c7c2d75f21cafe569611be2a92d6ff676791a5916d00173942d2bc0de70a
+name: sosivio-operator.v1.4.1-78
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.4.1-79
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/sosivio@sha256:ab42c7c2d75f21cafe569611be2a92d6ff676791a5916d00173942d2bc0de70a
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:4668f76145189f644c71bffe29a02ddb50b233951e9d143d141518965c6fd160
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:f073ef0f633bbf1e8dcd347b457194f0ce371614e00a586e87f13e1d79ae8d1f
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:9df1753db4e5cabb9c1ceafdbff5022bf718dfe33b721262ff5c36d4ca42efb2
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:87ff1581778b8cbab8290be0eb89c81681d21faa7430cbb22652d1402669d825
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:cbc869d3b4ed72d5fa19bdcaff77accd6f67580719828d32a9f125d7bed9fa2a
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:39d98e396f796c190b39cf74b9242f510bd8097fb416c7eb5ec1530890c3255a
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:fd064489203f751a0ba40caef3eee690aae7e3c47b390ea29869712f0d80be40
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:40a73d943c036ba3f8c9601ceaf22da23d12ce87b26058325b74698597bfe1f4
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:3891fe02fe82941e56fdac8fb18d23f70b84a100b1162dc7c724088bed43e78c
+  name: ""
+- image: quay.io/sosivio/draingo@sha256:c86f5b58a03a3c56ae1338e3803f336fa8a0d0bf0c0612f8f477acb6982cb9a2
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:7f2dae6056e913325ce0cdbb34e0374e8a8d5f3ff34e75f0e927d4c51aaa358f
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:fbe431430454b4254c09d09c7c9f4ab5f8d6cb685de62f7fefc98e319c4ce46e
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:14c54670698e1ec56a5f185831d7f82496a812c0237dfa1687520476a071e2f0
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:c2771aad810aba12a351b6f1eee34c6a54e036bca2f92669c4cdc5f44e9f4435
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:b784e3f0f578d55a747c73df4aa13b4050c6186f78ead7746b8c325a4464b58a
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:59f6d312b347fe9522f6c5b16079003fa8a547ef072b0f2e1a0864b323b6bc5a
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.4.1-78
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:8ee5d093187561c63a935a7ca5f49645a07945f294c6d99166e5f82bf7684658
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:df701f1be70a2c738af46d919ce0cf926425210501889e872471a1bb230a53dc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:67bc34ef4f5ea951892b9de188fcad737c334129f4fe95b6d01438e737758000
+name: sosivio-operator.v1.4.1.1-80
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.4.1-80
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:67bc34ef4f5ea951892b9de188fcad737c334129f4fe95b6d01438e737758000
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:4716e63974669407925f36c379cf89f108b118a5355f6db085f15ad3fc98c12c
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:cc1bde116f0d47b09a7bd6a3da20a978e3c179f53fd2956c34364c9caf119894
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:515c843a63129d33dc4687c6149fbc4b7493664636e6840f1fb4706ebe073ca1
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:f8d676f8fb0351487428e96a28ad53fec54cbb2de5f84ba30a45e2dd5cffe12d
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:e5336a602385ceadd6541805ee905fe78f68f1d5cbabb2c623020815aee22ba0
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:952b6a2b36ba4cac72b15476e6ebb218a2f3f0b5f22ab17f4de29495c85f56bb
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:abcd8745ddaa8da097d267b5732f37e55742631c510d864970837151e4c0ec1a
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:98d77dce05ad6cbcbc901c78eca66ba0cc4472247097d53901b30ed57669c775
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:8fc3a90640b8852bae736dd7a915e74d983e178f0c16c4205331617686f1d89e
+  name: ""
+- image: quay.io/sosivio/draingo@sha256:52e17ece3b199781eba07095a7bdd814a6d14ce1d3f9916f2f09d909488a84d8
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:162e74e31a69a4112b992bfd555223c6dedd9d81bb46fcdebffd4ed206659ac6
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:7a8d36d9a1540164cac615c067448bb748be326c69a79940f153b8e04b9cf223
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:6992ab75149dcbff9d908e4ef403fc37851cf817168dc1be70b91e541880ceb8
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:fc39ffc711fc8998d7c56d96b11b54a82de70e6c99bf98e30745b67ea3392ca9
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:dfc0114ed2be67790d7fec223d5f650964112095daff79419a16f6dbe0cc836f
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:489bc2d4daccf07c56d5aea6abf2ef81e32cfa0bb211a7f74c6a2483f3240581
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.4.1.1-80
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:28b281d3fe4aec0c2f03422f22cf347b63ab1e9e0380168538197f7a7c71ed1e
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:9e180d8f93f663f3a3041d8035467bf8343d93bd5d3568063b971780c6b85fa2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:f59bd42e1aeb04202f06e7a936d80ccd2ee5c35b4bb347856c003c82033e7733
+name: sosivio-operator.v1.4.2-82
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.4.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/sosivio@sha256:f59bd42e1aeb04202f06e7a936d80ccd2ee5c35b4bb347856c003c82033e7733
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:3de930d90879b9f4b6ee97e270214705820cfe51e75a354f3430dd7561b94e2e
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:5a544c764042f1fdc9d2b0d9da3cd08f99c4b14851d404f9b920ecc962f35dfa
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:0db5b46f3cbb4591ddf275c2cf93c27b5ffe4a4742d86aaea03ff717b1da45fd
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:268dcec436b98e94299907e0773e6b02fde1b45d4dc9d1f642e5e7e56d9999d0
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:4e610bd035811ca60a46485a5a24acd3c57f022ab5cf09940057f9f25840773f
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:3e418204086e34710c6b238c958c33cb7c1151ced2026b3fa37dd351b777eec8
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:2dfc2fa9d5d41399b44d9881d1c98bd950024264e07f705ed7f8cf8e44989dfe
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:4fb01cfaef4494b9ff5b38467c807a89d21cda2aeb30517c7c0f638d2d9e339e
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:e749459635ac3d925da29e004089b06fd695cd6d7553ccba211b204933f9fff9
+  name: ""
+- image: quay.io/sosivio/draingo@sha256:4e51942a0a7ef4f2f2f1b5b1f0560869945afcf54a07c232d1df4690c1d465cf
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:696f6deb36feacf8b63aff56eb8a4cb141a1fa54972139c06abe62c1f8f1e45d
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:a51c32065931cc58d14a6fe2bb1bc8a8a2d3e781636b517b47abe8a86b2e3236
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:032ada4643aa5d6bcf5b3643e7cf4638112f881bdfbc9b5d133cbae30dc9b80b
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:0dcb02213a2cf35f66a15d3d9db38195108a143c12e0d8dceb0556d3c78a106f
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:7b4ef542d6a1af017739f5e75643a90e3dadefd114b5e69d138da694f90a8a39
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:0bedba0cf99a8830a2fca4d94d72a6bf9424a4ba287a3c3740b111d12687a5a2
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.4.2-82
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:faf4ad503ccdc4d4d9e8dc71f15bd6e23176af0d7d078145ae9a2e9c463b2810
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:51d5cb7a245bf5cf90dfc5075834c9a21db71098e63ca7ab83ac2b1b03b58b0e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:1de31ab286addce1a0c52482e2e2572314ab408d01ca766e7e4416b7a8346898
+name: sosivio-operator.v1.4.3-83
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.4.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/sosivio@sha256:1de31ab286addce1a0c52482e2e2572314ab408d01ca766e7e4416b7a8346898
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:3de930d90879b9f4b6ee97e270214705820cfe51e75a354f3430dd7561b94e2e
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:5a544c764042f1fdc9d2b0d9da3cd08f99c4b14851d404f9b920ecc962f35dfa
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:0db5b46f3cbb4591ddf275c2cf93c27b5ffe4a4742d86aaea03ff717b1da45fd
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:268dcec436b98e94299907e0773e6b02fde1b45d4dc9d1f642e5e7e56d9999d0
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:4e610bd035811ca60a46485a5a24acd3c57f022ab5cf09940057f9f25840773f
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:3e418204086e34710c6b238c958c33cb7c1151ced2026b3fa37dd351b777eec8
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:2dfc2fa9d5d41399b44d9881d1c98bd950024264e07f705ed7f8cf8e44989dfe
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:4fb01cfaef4494b9ff5b38467c807a89d21cda2aeb30517c7c0f638d2d9e339e
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:e749459635ac3d925da29e004089b06fd695cd6d7553ccba211b204933f9fff9
+  name: ""
+- image: quay.io/sosivio/draingo@sha256:4e51942a0a7ef4f2f2f1b5b1f0560869945afcf54a07c232d1df4690c1d465cf
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:696f6deb36feacf8b63aff56eb8a4cb141a1fa54972139c06abe62c1f8f1e45d
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:a51c32065931cc58d14a6fe2bb1bc8a8a2d3e781636b517b47abe8a86b2e3236
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:032ada4643aa5d6bcf5b3643e7cf4638112f881bdfbc9b5d133cbae30dc9b80b
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:0dcb02213a2cf35f66a15d3d9db38195108a143c12e0d8dceb0556d3c78a106f
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:7b4ef542d6a1af017739f5e75643a90e3dadefd114b5e69d138da694f90a8a39
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:0bedba0cf99a8830a2fca4d94d72a6bf9424a4ba287a3c3740b111d12687a5a2
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.4.3-83
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:10048ddf675fe4c8fc041b794ea9f7fe156e850c25333f6d84d7a056febc4380
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:51d5cb7a245bf5cf90dfc5075834c9a21db71098e63ca7ab83ac2b1b03b58b0e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:d07b9e7d15228da1466f7f0b5b42da98f838fab99c8e4512f73ab1d7ea24d188
+name: sosivio-operator.v1.4.4-85
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.4.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/operatorhubio/sosivio@sha256:d07b9e7d15228da1466f7f0b5b42da98f838fab99c8e4512f73ab1d7ea24d188
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:7ba2e52e7952af6e5bda74aad44bcfda409e31ef29d4a83fc6f5604f2f1038e9
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:0b55dbba467cc9dc39a943d88c3ce986d174545803ea86d84dd699d622d566ca
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:e36612ca4da6efd202e073e6f8ded6333717da638d3ee020bab22d1944214cc1
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:225ec8e2739d4a3d82725a1906999c9587e9dfa3c7f920a6fd740b786be9e73f
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:6457649019f88ddf151541de9d8cc92c1ac8ee2e26f7ee8498d3ac8344f6cd7d
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:42fb0c232d1668e2061354dba29b8d4c571ee3b699ac89b00090124fa49485e1
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:774623800248d0dcfa74690a3872fcdea6dd9984dfb41ccef5b62ae9ec94a73f
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:47967a0f177b4f3e067599773f2724ed794002289df906d102c3223c0d8d1007
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:075c91acb0f575d3240d81abcf832f0cb9d17e8ca7c0f2c0870bde6403a4bfbb
+  name: ""
+- image: quay.io/sosivio/draingo@sha256:831a658ef2939b9f8cf08538e8aa56114146868214706c50f089e781c47a86ad
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:de59cdf84e22b63312d0a94ff30cc4e3c3954ccdeaa87af609a3f83a1cf1a4ea
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:1462fa02686e9e376085f583212cbb219434cf0b469378e30e409626f280256b
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:582cac97b71f956a2478ce3b317ad09af6fb282938fd185f80022944bdb18097
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:f290555c3312e5e676f19d0f860b18052bffbe8b8d0d46ac0da1f7c3af543f76
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:b35b6c1ab798b17233d2917df41549766d9d99b7be0315265c0ba266fd6c9d93
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:1fce05fdebd43cb681495bf8d6268adc62c374079014766e548eb9858b8104de
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.4.4-85
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:02d9c341c7b35555f8d21b6c5d073c26f0c55585867b3e47908b8f394b3ee4f8
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:3e77f1ef83bf2246b7f58aa921a2c6131c3689e5f3fdaf9dc9bd3eed9274de3a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:939ca53bd8c8c03d68e998bdc59b6ef1049a77309999b4b79a574caed89b3d62
+name: sosivio-operator.v1.5.0-95
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.5.0
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:939ca53bd8c8c03d68e998bdc59b6ef1049a77309999b4b79a574caed89b3d62
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:45ec03286299310cd0c63b18efc4fa7803f428b2ad9d557bf4eb7836a9de2a92
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:70a6852996e5f9a8a7042de19518655f5537b3f6bd8e4b979b2591997a70dea9
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:32c47be61787b6d2a7b958d2013ea0e1e9d005a13c272b9026376647f8b1b858
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:663233a058845108f0aea97dea9cf4e4884992ed0beb671098564946fd0ce0db
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:44977cd360e85a1ee9bec46b225484d20cc7c251ec88ac421bb60f68b3a3124b
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:2ac97ce5a0cdb3965a123c9eb6ed96bc6d6d4592c9d0db588b4ab2363f7a26ed
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:9c9e644ce852ecb3a3b35292ad9350ae1be242204b63c37a4e8ab29eb44c60c6
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:4d078b2e725855d48dbf6621675642909d854efaf24457d543f93a2a27190044
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:efaa1afbd0acd59ddae1eb211e78f94a528d83daadbb2c30180693ef4f9e715e
+  name: ""
+- image: quay.io/sosivio/draingo@
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:c7dc3a530d44ba0cd9fd4a014c3f3a8dd891f9cde8f2bda628a709715dcee7dc
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:d182d6ba4d5b4f4a28df90734ad908f376e605a8a2871bc364a22c9b6ef9c229
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:2412ffb527a8b99df374c7722dd3ab28ea4aad265e1425933000a61d3207e915
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:8e43e66041fe123f32bdb3bdfa9dd759684a7f766e06c714932186a4edc2419d
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:317b2d85e6c901c6d5fed2453d125f68d9f644ff7bda35fd6fc3f10f67a48ae7
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:8dec1269ee3792f9279f6357e68f9e6ed4fe1c3150bccfa6ac42d6adf5d12d71
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:c8b1ed1b3c733753de5bdd0a7538bcb3643857af5f247f5cac3b9d0a84e2b523
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:d8346706ad71769ba8030c22baec08f81326dd14007df7842ee5ae5286cdb830
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.5.0-95
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:f8ec4bf6358f361500b77b93207f3492b6511a0e211543f5b2154676462bef50
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:9390d84c9c1ec2eeccea5a34cca93bd889f6e1070309b401c56d9a4ad3842539
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:5dfb978e8615bbbe06b4d05eb8ace8b2e6cefa9c071d9df5a1de864bf57f6dde
+name: sosivio-operator.v1.5.1-97
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.5.1
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:5dfb978e8615bbbe06b4d05eb8ace8b2e6cefa9c071d9df5a1de864bf57f6dde
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:a9abe9730800ca2b0a1bbd7a361b2ab3a818cbf127798314e5477fb1cb16ba4c
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:3825608fe7c43ef059108e76665acc99fe72bea77d4d9e3852f6ad45e74379b1
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:0ea6025f333576792f5b1fc4d96d9ab1a404749f185830410e71248683004da2
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:dd8bf145524db23ff333efa1bcdff258dab116d3534f95f73775d8dd339e6963
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:fffec9a6c66594fde5f05e2dfb84361544ca9d53a345188c197a0ea6f53bc4b9
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:cad6fac6ed3fdf2597ceb09ba5dbb7d81f70cf45f483a7064e3968215dd982e3
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:c00af09b2589bad4740fd44d7a81c69b2e29138c360939b2a45f65edd44b6901
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:38289a28829fa737917d76dd4810ba6140e123061ead0a4b79fa79b2e246a293
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:b87b3f7c9ed3aed80d0a77788fd8925789450d9dc05d25017e89dff611cd82da
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:e59d937f4d9c52acad0adadab39c6849d20b4ee72a83e239a33ea137f08323f4
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:35f5f3e8e5ccad914fcfe34fb4b4a1b044ee87f5a6141284cd5273f0b2b3bf22
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:781aac23ef0a1ed0af2b8e93d625ae49bd11dbdd98787d3c79dde8d128f3810d
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:7335cf8f3e40bc46e8ca0de525d99f0655833b7c52d36dc273aa7b096eb70fa2
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:fdfca5bb2123d1008cec2b656cde73c7e9364f84c5ff4f4a6fee5751b1bfb2f8
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:61ed8dd52de5edc09d16a31b18f2f65ad9344c0b6c9cfab323c3eb3d7e7ed060
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:84dd159b1dfdb52dee3eb1c4c93f323bae49ce517ff44663b69978e14bdd8390
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:937de52ad7b76e6cff4ad5197de9705988d61f285ebadac5ebadb5856f59ee58
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.5.1-97
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:11bc627773bb5e08b629e0b013e7f600fcb4aaefbd97f2de337d339475616763
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:a3c6c3975bc2b0316135ee5c547f1eb215f3a1f9c8b0a9c8eceff23415f93597
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:0ba738a885ef20bfb29b3967e1e30ff02bb19e661df6b0f174c152d00f2b3133
+name: sosivio-operator.v1.5.2-98
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.5.2
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:0ba738a885ef20bfb29b3967e1e30ff02bb19e661df6b0f174c152d00f2b3133
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:e754c696835a00536bde5cab56da1be6cca524cd23f615600af0043141d8b9c1
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:862f89ed289d70e1d5aa738f9f69b06d457d5c3e9bd53ab45d269e2414df409c
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:f0b95c7baca2c7a03e78b0d72d12fdabce6d1437abf3c096df02efec722cfa81
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:4af34fffd6eef7485e12a0b0efbc24d5cef08fc84ab1767b13a1445f21d50668
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:12e638abf2ac546ab0162c7b8e82c3252f52fb3b31b2f7be8fac13f8a7ad6edd
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:793f98841db895ccfd1912113382fd2569ebc8f9cec0e4c2478e09557cc2774b
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:fbfc27910639d2bff95e2dde90923765ad16ea0c179f49d8c2dc327ac5df360e
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:bcd4985292d565fe8dfb9e17319a2f2700421b27fe1b1b824555818c2035e41f
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:bb9cd15253dd2e98ba850af9dc1e3190756f74182a6d135021dc2ef79a5bdb12
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:a991ec202a627cbf7c14fadf841f4d65bdee1f1f15c8c70fbde70597d4e23648
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:92c6d50ed4451cac685bdfe8fe565f3eb4ce76a0cc5ca9c1f28aa78dbaf001be
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:283bfd4f0fb3665c56fe76a62709f6e8ed26388dd02dcc6b75345bf50ebb704a
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:26c7190367e6fe2cbcef3cd1870134f3faab142577ecc5f5a5a40d6adf07ce7a
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:336c3ab917b85e74f8189c184ad5238d56046d46df04fd18a5e1fd005a21581a
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:dc7fbe9eaefd9927e21c8fb3456112f5a7260e2762245cc29eab7ef2e408e2b0
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:bb7d34eb8ff1f88e0a1266099eb183dde3cd6c39ce82c0f261799a7ca9f927a9
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:4818109072e2bd4830d4c1ee2b0de9f950c574b1b4a76f147266d9bc72e5f30c
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.5.2-98
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:f1cb0d698b6defc772a26fe038549adbada2cb2721faaad6c8182ea436692393
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:d43de69ef8646b20f06d822d54416da6be945e7ab4b816db03a60d634121b575
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:8e47b889cbc4dfdb14357339a848b2b2a598a91acad105d0c5fe2a64edc2d666
+name: sosivio-operator.v1.5.3-101
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.5.3-101
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:8e47b889cbc4dfdb14357339a848b2b2a598a91acad105d0c5fe2a64edc2d666
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:268cdae17ad72b2d84c1555c47e1323a8fab735aca3951780a874d3d801a4338
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:44b80d4e9ae32811bff1b5a46540cb34cfdb46648c1cd4c4f709b5a48cf01476
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:476af4e016e8cd549e592f8c5b359ae3c0562ddf16e1d321a50212be097ea401
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:e1870dbc9ffa1caf7ab906aebb4c4cfdcadd4ceb003bd1a1938c636afae9c35c
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:f1b88ffeb728f39a97813693f47ae61a55c9ef0739a4f9f7f4488a7cb23ec9e6
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:8587170d9208f9ba8063873211d7f69d6e08960c3ae129cb66f49b0fdf701444
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:24e4c9a1b849b307c2022f4e04c69e61f7c1fa50e09348368bf290ee16584513
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:a2e9965371b9fa1f1251201a2a97d29f3c390e5147c4df961ac8dced751bac41
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:1b21e0d595f29bb19e43628faf3806af5d2565080aac38e1d1e751f2ac30a46d
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:1d68e29880051d84c00e5c744d47cc64b4736e57e1a91c9876e36db868f8b44d
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:d597c12cfe730a73608557ba5628cf79ec56367af2a3cb9c50fee95beb8db1ff
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:56a3e21c921047cac9e931e641531fbc1097913664d089e57d5cae466e7ed5c4
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:522de7be2b2f0b1e2e5075dcfff4f30d8804d0671a93308a8b1f35236ab46580
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:a58413797f15bf1c6ebcd806ed5a6238e618fc7f47ccf9b2d83e94627a812392
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:2c4e855c32119e44a87e437aea97cf1eac06a3133c9d9e4041cf592ebd35de1e
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:bf044bdbb2125cc2d8ce79759651cabaf93e0c17a6f2b8c1c33b38a426e1aac8
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:6204691efe8d6179d7a0f356ddc70cbf799ac73db56d1ac9324e1978596b66a2
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.5.3-101
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:b7a71a34b4e70401ad5594488d8eaf2aa2a92a8dfcc33676bcd9aa13676d9417
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:b6b3925e9041e607961e5f5cc780d069afaab882a209837317efdca41c48a565
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:721c80eeae35934921c9bf98ba17a703a653262f2f5f14cab0dd5586caa58c4b
+name: sosivio-operator.v1.5.3-102
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.5.3-102
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:721c80eeae35934921c9bf98ba17a703a653262f2f5f14cab0dd5586caa58c4b
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:268cdae17ad72b2d84c1555c47e1323a8fab735aca3951780a874d3d801a4338
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:44b80d4e9ae32811bff1b5a46540cb34cfdb46648c1cd4c4f709b5a48cf01476
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:476af4e016e8cd549e592f8c5b359ae3c0562ddf16e1d321a50212be097ea401
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:e1870dbc9ffa1caf7ab906aebb4c4cfdcadd4ceb003bd1a1938c636afae9c35c
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:f1b88ffeb728f39a97813693f47ae61a55c9ef0739a4f9f7f4488a7cb23ec9e6
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:8587170d9208f9ba8063873211d7f69d6e08960c3ae129cb66f49b0fdf701444
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:24e4c9a1b849b307c2022f4e04c69e61f7c1fa50e09348368bf290ee16584513
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:a2e9965371b9fa1f1251201a2a97d29f3c390e5147c4df961ac8dced751bac41
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:1b21e0d595f29bb19e43628faf3806af5d2565080aac38e1d1e751f2ac30a46d
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:1d68e29880051d84c00e5c744d47cc64b4736e57e1a91c9876e36db868f8b44d
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:d597c12cfe730a73608557ba5628cf79ec56367af2a3cb9c50fee95beb8db1ff
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:56a3e21c921047cac9e931e641531fbc1097913664d089e57d5cae466e7ed5c4
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:522de7be2b2f0b1e2e5075dcfff4f30d8804d0671a93308a8b1f35236ab46580
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:a58413797f15bf1c6ebcd806ed5a6238e618fc7f47ccf9b2d83e94627a812392
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:2c4e855c32119e44a87e437aea97cf1eac06a3133c9d9e4041cf592ebd35de1e
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:bf044bdbb2125cc2d8ce79759651cabaf93e0c17a6f2b8c1c33b38a426e1aac8
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:6204691efe8d6179d7a0f356ddc70cbf799ac73db56d1ac9324e1978596b66a2
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.5.3-82
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:73851c372a790299dbd37c6d68d278197ea40c4c4c1703c8217c607e9a85a238
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:b6b3925e9041e607961e5f5cc780d069afaab882a209837317efdca41c48a565
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:138fe5f1029b3a89c808c43d6fe9b6a5c50c14f7014a796388f037c6cc27cec6
+name: sosivio-operator.v1.5.3-82
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.5.3-82
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:138fe5f1029b3a89c808c43d6fe9b6a5c50c14f7014a796388f037c6cc27cec6
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:268cdae17ad72b2d84c1555c47e1323a8fab735aca3951780a874d3d801a4338
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:44b80d4e9ae32811bff1b5a46540cb34cfdb46648c1cd4c4f709b5a48cf01476
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:476af4e016e8cd549e592f8c5b359ae3c0562ddf16e1d321a50212be097ea401
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:e1870dbc9ffa1caf7ab906aebb4c4cfdcadd4ceb003bd1a1938c636afae9c35c
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:f1b88ffeb728f39a97813693f47ae61a55c9ef0739a4f9f7f4488a7cb23ec9e6
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:8587170d9208f9ba8063873211d7f69d6e08960c3ae129cb66f49b0fdf701444
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:24e4c9a1b849b307c2022f4e04c69e61f7c1fa50e09348368bf290ee16584513
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:a2e9965371b9fa1f1251201a2a97d29f3c390e5147c4df961ac8dced751bac41
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:1b21e0d595f29bb19e43628faf3806af5d2565080aac38e1d1e751f2ac30a46d
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:1d68e29880051d84c00e5c744d47cc64b4736e57e1a91c9876e36db868f8b44d
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:d597c12cfe730a73608557ba5628cf79ec56367af2a3cb9c50fee95beb8db1ff
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:56a3e21c921047cac9e931e641531fbc1097913664d089e57d5cae466e7ed5c4
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:522de7be2b2f0b1e2e5075dcfff4f30d8804d0671a93308a8b1f35236ab46580
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:a58413797f15bf1c6ebcd806ed5a6238e618fc7f47ccf9b2d83e94627a812392
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:2c4e855c32119e44a87e437aea97cf1eac06a3133c9d9e4041cf592ebd35de1e
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:bf044bdbb2125cc2d8ce79759651cabaf93e0c17a6f2b8c1c33b38a426e1aac8
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:6204691efe8d6179d7a0f356ddc70cbf799ac73db56d1ac9324e1978596b66a2
+  name: ""
+- image: quay.io/sosivio/sosivio-operator:v1.5.3-82
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:73851c372a790299dbd37c6d68d278197ea40c4c4c1703c8217c607e9a85a238
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:b6b3925e9041e607961e5f5cc780d069afaab882a209837317efdca41c48a565
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:c999161defa6568b657d9f67a02f2fb816c4379f22a571c7597de78c207a039e
+name: sosivio-operator.v1.6.0-88
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.6.0-88
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:c999161defa6568b657d9f67a02f2fb816c4379f22a571c7597de78c207a039e
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:dc13e0fa7dc8914e0384278ddab4a4edee31ea70b4f104c571434029fc56c4e7
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:16cd1f610fc6f07827beec0deba233f921f9fa797d81ee6658d674e74f5d7dcc
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:d4724ee2654f7fa246a77b35299c3c8d66d283ad771818db2deb128a6b1a77a6
+  name: ""
+- image: quay.io/sosivio/classifier-container-logs@sha256:8251cfc071cb5bdd1226c0fbd231826b9746d00f71aa4fc344ec3e40618d1b6b
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:190e63684d55d9269a68feaae285b08eb390bffa1a9e4f1ce936bbb2672b0634
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:1b16079f759549d62cf5c06040897b6167d75f7834e1e43627bc84927fd2d737
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:2614ea024c9977faa77695074b3b6f95152d06678dad5f6ba820353febab1005
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:f534603569601127da32aadcedd8c3749aa3f316423d83b2df643da271d18816
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:a89bc459baf1df8365600256f9561b048f77ac98b5d5655b3e1476dc3e8e6213
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:52a15f610b7a7ddf33329cfc64a2c9a5d4f8350d9891eec8a0c40256b96ebc2e
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:eefc5ee14fb5eb3d19baf8ec4b42a10eb7138e8a4133be46d1ded184a441ae94
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:3aa9db2ac6b0d5dd36cb25338645f698330bc4a06d96e09d2754d29e7d542890
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:fe9bc090c96290e8745a9df21e9fbd8d0cd3b9871fe99617332dcd357d27db81
+  name: ""
+- image: quay.io/sosivio/prediction-engine@sha256:99492e2e249522e1600308705034fdcd7d734d9a722df2f38ded87ca01a40f87
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:13d6bfe28b916f6dcc717e17ac07c85cf48681067b6030e2e92281861d153956
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:2efef136c950b401ce5253882f4bac60f0547833be88b9417931f4cfa87abeed
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:4e488df0b3af2b96cfaa77aaa33e6fa0ce3ae6164e266eaeebe5fe2c84ac8da3
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:68fb47ecf77047063fae3c3db58ec0bba71334350ccb8e88d021ccfc1ddad604
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:643907598fd55b740092eed4dc894cc78bae01f359ba417e2d283b68853d7c88
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:bd220165d564cea64ba5b848a88083c89ecb3ea9c002a6dd78644482541e73e3
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:8513a4444c9c074576989c8794b27da5fe9c39b07148437073ab997c99134228
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:812d587d34be494f21812b2efa7ec129b5d47eb306deed75f8a8be6dfc0d4054
+name: sosivio-operator.v1.6.1-92
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.6.1-92
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:812d587d34be494f21812b2efa7ec129b5d47eb306deed75f8a8be6dfc0d4054
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:8f84d91541e5eb7e5f5246d50ead03f6cc22eeb1738672533e89be9eac47ff86
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:b539a923967bf94cca63bcc358d3357b214cba02d275f7d577e36bd2a3cd18e3
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:945bbf13e6b49c9bb84176e2b172d200c814f99ca6307a8bdc0d822165772ae3
+  name: ""
+- image: quay.io/sosivio/classifier-container-logs@sha256:746a8eaed5bd73e23a9a38956e6d96f587583c188880320234cbc07c7312dc1e
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:723d8a5886883af4bbcfaed28baee6b214510f4aa011a95c389b7ac3bf26dba5
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:57c4960cafcfd3b0f944b2f4cd5deb80db7da902e01a753bcc82510a4d1f3f50
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:d5ca33ddb441d1d6e3b94427bfd9655148f4ccd5cffb3d24b88e999fd7e4373e
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:e15f0dfbc4bfd721c2a451ed00acc4ecf51409136ede524452b0fd44a6538348
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:b5af118519b3b97a303bd9a41f24b45da652dfda3ffe84930890b8a8bbfa922e
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:4dc115149c8a15b5b83e41479717a532e95b1121b66949f9cd8ad6b1d2364f55
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:78833007e65007a85385743b4af6e5d5530343f5b797159d9fcaf4b3909db140
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:47ebccaa82bf40fed9f11551aa2caca5069405cfd91e6902d2add263a3adadad
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:d04e064abff0bb52d27d64bb99d99e0d77bf32edd6f78228c0445eb4cd68a7ef
+  name: ""
+- image: quay.io/sosivio/prediction-engine@sha256:35b7273ba26be9badcac0bad53ad70193bbe866d214e11eb3454955ce0166626
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:aafe2de8d8b8082ea2c8b87a892511c4d66fe1ba507b314609a50e8d0a6b6791
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:5b1e73750b4bf8650eecd6ca2177c5762770e69934ee5bde8e1df83d52eb1e95
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:3a050dfd56ee6f8590e92a2387bd3d73b6cc8526e30c55eaaaa497d22a2d9421
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:243f8e00f167057ae261f5cc0e7a4f95c4d76f3d3d98a8f7ed2c4c6c7ab2d800
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:8e82d166a77484c2bc5ca157f1e9a20baef6c49adfd5e59a9fcb8bcf55bad3e1
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:070afac2a80517bd5f1655a526c755b264f9d38607d5a8ebcfac9059368a6b46
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:c10c50959e0277ab2a8554bc64afda5147b94574584fc751722accbaa1cc01d7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:92fcdddbf1121fe3363d03a646d3a9051b93439236d0d798f100cbb88ef5d405
+name: sosivio-operator.v1.7.0-117
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.7.0-117
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:92fcdddbf1121fe3363d03a646d3a9051b93439236d0d798f100cbb88ef5d405
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:db7457573a7760965e7196d7b2c987f09aae8e689af4fc1f74129b11a804e641
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:2c839c01a5e0a833df55dce027dfef6465ef281b302060fff9e2eb174c34c433
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:948803193f7917fa484be3a5fc77386be71b80b045d602bc5e96a87c99d1dfac
+  name: ""
+- image: quay.io/sosivio/classifier-container-logs@sha256:5704d880641b1c4cf499fc71509bf396a59937575dd1a9089978b2360cdbdfcb
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:890fb0e40dc0e83a2bc7d22e6de57c6c1f009d683ed15b724cb037c99f220739
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:33ad04aca179d783a623f696688ae6d65d38a78c53de6b42c3f571083778075c
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:adb061bb983b92cc1d0f01de915371bf2b8418dde69698ce3fbb861eb7caedde
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:ade1e9b9aa00056f6e1602ac821093e84bf32dc3e40d0bda029a849fb2406849
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:d2226a0dee77de97fe185d5759c239a716a4283158766b28113373a0742c1a2f
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:e6d502e608adea676d12417538be822d2d2e4ed08caf679c334b95351f791217
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:126b124162775469012e9bb09439fb4630a294a6366cb9293a6bb30920182b0a
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:8239a2a5bc4aed9eb342f8ee5dc84242f6ae44b67b2b8b8bc502b5c9325f641f
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:b9611b7e60ed202df000546caa01f16d653c435f3103e9886829c4363957c59f
+  name: ""
+- image: quay.io/sosivio/prediction-engine@sha256:32f4fc02e0fc3034ee437f19114e4c761520a77f668159a07e664367f7daa99d
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:c697b2282b9474aa862abd857355914c12f6dd47cb67958990e4ed747288fdca
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:c29d527d468152896b057ad3d3be9c24d8d5574c874cba0154901525802c2ffc
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:be389a1f0f775c7bdaf5042fc20a2da952836239b5d4e97848a3f34dc3a9affe
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:f10322502bfba7b2c486f61a287e088f3f5010f6b4df2702647469d041ea9187
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:e5b08d51af6aefc047e95ea2a8253a9a27df8a01d412ca60ef1556f447d3df52
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:01d369b65714ec5eab6e8cca30820d43b493bbb459fa7ff2dac5e82904075519
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:67297d80f852fac386b9c54c3f90e5cc4fc3c66d17573d105c55ae7598bbce9d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:12ddc50f67bb9f7fc09bb4a9c24006080bbc316286be6197b02cff15791e9e4f
+name: sosivio-operator.v1.7.1-120
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.7.1-120
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:12ddc50f67bb9f7fc09bb4a9c24006080bbc316286be6197b02cff15791e9e4f
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:957bb3a1ad90e879f92686b252c4b8f6e6a6a51b96346082fae561a125e7c2ba
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:3413b4303ce20bfe3096b52827e2da1588c1bb4ae3c777bbbe772c24da3d9a12
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:b5fe791db263674bc85fc349eb814f44da699675e8ff9955d0fa634a96f251a4
+  name: ""
+- image: quay.io/sosivio/classifier-container-logs@sha256:495aebeea9e2b1b4796099ae75a15dcee816963760cf16765b3f164a81935e15
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:7db8137d5260c533b3d748f568af6420a56e8413e7627e7802f08156cd2e8b68
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:1d9106d63ecb6e6abb493e80dc5886a9d4210bbfb452da65f7833320beb92c29
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:6009f3d49173a2138fe097500e7b28abe8027de149b81cf3fa5f0de7a015fc8e
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:0d52bea2bb1955522396f53d96e950e3475f6f845c3832893f07f99be6579498
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:ea4e4e3d936b09701a33c6f0fb36f18a91065e8a14a17ffe0868f007462ec43a
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:18d2059f23da918e62875bff20ca291f4ec6a1b1e1ec3a30df54d32617ad5b24
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:fcd6667476e3401db36f4857eaec8aad98b590d5e2c8feb0ecd62005cf120f93
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:ea48c1ca89882d6b0eaeb88e115e5153939bf8c481a36ba6734d165f200735f4
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:b63d7e787f62d7d495fe61c5aa87b63e97e6c880e3a8f4369901484a17ceafc5
+  name: ""
+- image: quay.io/sosivio/prediction-engine@sha256:8435eaab43693987e4f29011699ac3ed0c1264e63b527b61609ce71a4d3c14aa
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:b3143edb2174e27b75dd805dc82f960acda693623b3b75919b0c38905057919f
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:701279f3adf1891256acc066eb281eb808f7cf7ab23ba335fb08eda8368bae0c
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:2ca60db12b1212f55186523f2635fd7ff3a3d756bcff7c2c450a5f81dfd7dab6
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:7ea7064b0b368e4d06ad4f9d3bb2fe7832f689a12febee772336640b7dd54935
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:d90d502cb98bbab80a89fa618f48c08eb19146b4ffa482c45795bf84f40e40c5
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:23b16732d11328cdf8d6d7122d963d75d10b8121b0b80cac0b7e817d0003492c
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:9573377a433788b709b69823ffaae47c413fc96c398e758d6fcc9a005b07c0c5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:ef09d50a62715f85ecfd31d58726526c56c5558b91e19f073d6b84decc2b72d4
+name: sosivio-operator.v1.7.1-130
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.7.1-130
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:ef09d50a62715f85ecfd31d58726526c56c5558b91e19f073d6b84decc2b72d4
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:957bb3a1ad90e879f92686b252c4b8f6e6a6a51b96346082fae561a125e7c2ba
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:3413b4303ce20bfe3096b52827e2da1588c1bb4ae3c777bbbe772c24da3d9a12
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:b5fe791db263674bc85fc349eb814f44da699675e8ff9955d0fa634a96f251a4
+  name: ""
+- image: quay.io/sosivio/classifier-container-logs@sha256:495aebeea9e2b1b4796099ae75a15dcee816963760cf16765b3f164a81935e15
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:7db8137d5260c533b3d748f568af6420a56e8413e7627e7802f08156cd2e8b68
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:1d9106d63ecb6e6abb493e80dc5886a9d4210bbfb452da65f7833320beb92c29
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:6009f3d49173a2138fe097500e7b28abe8027de149b81cf3fa5f0de7a015fc8e
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:0d52bea2bb1955522396f53d96e950e3475f6f845c3832893f07f99be6579498
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:ea4e4e3d936b09701a33c6f0fb36f18a91065e8a14a17ffe0868f007462ec43a
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:18d2059f23da918e62875bff20ca291f4ec6a1b1e1ec3a30df54d32617ad5b24
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:fcd6667476e3401db36f4857eaec8aad98b590d5e2c8feb0ecd62005cf120f93
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:ea48c1ca89882d6b0eaeb88e115e5153939bf8c481a36ba6734d165f200735f4
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:b63d7e787f62d7d495fe61c5aa87b63e97e6c880e3a8f4369901484a17ceafc5
+  name: ""
+- image: quay.io/sosivio/prediction-engine@sha256:8435eaab43693987e4f29011699ac3ed0c1264e63b527b61609ce71a4d3c14aa
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:b3143edb2174e27b75dd805dc82f960acda693623b3b75919b0c38905057919f
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:701279f3adf1891256acc066eb281eb808f7cf7ab23ba335fb08eda8368bae0c
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:2ca60db12b1212f55186523f2635fd7ff3a3d756bcff7c2c450a5f81dfd7dab6
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:7ea7064b0b368e4d06ad4f9d3bb2fe7832f689a12febee772336640b7dd54935
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:d90d502cb98bbab80a89fa618f48c08eb19146b4ffa482c45795bf84f40e40c5
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:779fd0666282c244d48d50ec59919fb8458fce18a6a82e57775cfa5591413b8f
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:9573377a433788b709b69823ffaae47c413fc96c398e758d6fcc9a005b07c0c5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:a32c5cbb99e871e2cb3e7d1ee9abdb0f85251ad78431da3cb17b89d771a371ee
+name: sosivio-operator.v1.8.0-137
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.8.0-137
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:a32c5cbb99e871e2cb3e7d1ee9abdb0f85251ad78431da3cb17b89d771a371ee
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:a5030b7e42d3e276a680a9f79afd52afd6eb02c957d07fc9ee519e3f65ec8fff
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:e92e1a717c614f60a4cf1882d483d9fa82054e2ce8166553b2fc8dc56de72544
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:a1ae29112823be55c0a65c109128374cef8e2fd55cc7bd47683beaa1649c38f8
+  name: ""
+- image: quay.io/sosivio/classifier-container-logs@sha256:4660d4c465b41962a9e14a4135332dead3c2b04c03afddb4790744b65cb2b8f6
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:4072b4d3028d2f5ba1ba9355348b08363598f0d58451ca55a40b04d12908c595
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:8977fc346d0cc2598956ee01587090cd174bbbadab9d8f72def95fbb5dbceb10
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:71832222c5744e021f072bc67aa1361d996a19064945b2950c8b2f0c8d9a2054
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:b800d905b301e08c93df40c3874a2044dfb2618b0f0287bb407f590d9781aac5
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:23a21d4322278c77e144c70b385bd010b041580858979316e855bd6b0aa2fe8a
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:caa93440156568108dd02de9de0432c48adfc0164cfad970b2ba502db4bdd92f
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:56c09cdf0a527dd9c382d43c1a50d8e894bd2e8f15b7b8f961de01b133df3dd7
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:4e901d2abae95d53422ae0ce9c2080456ecf54dcb749a2d1d2a1c18fe81ccbb4
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:d72eed29a412fc3a1e09dbe77028742adb76bcbc829d9b5090eaea3cc6fe11eb
+  name: ""
+- image: quay.io/sosivio/prediction-engine@sha256:d4e98677a203830499f6477ea094a9cd4ac39360e7ec23d1707d8b43ead6536b
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:9c3addff52943fc1c86585c2988ca2c86fd15530e0123752d33ac108277e7c4e
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:b792e76082e615c3e83a24ef6d2f8239180fc31298e47207a1d7a6128cd09de0
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:5a0c2a3229355f35f89958e42de7a2b6af7c36d024f4105a65a9adaae92f9429
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:157bad8efa2026a58256792b67df023ebdb6cbf95db2bfea165db033c89d3fce
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:8bcf04af1f9e12b941374ada35a454a41e33b19df0b160d259b1a7ff32710b14
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:60f5a35eee645dd6dddf318327e1ebfa5070f2faeca2346125a35a1fe56a5959
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:a726d3958a0b45c9bfb2a83872d9c07163453fed41b3baae9dff34b1063cae2b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:853c66abc5b01d48c58704bb1ca938b60dc94b1de61a6c45424992a12c771c00
+name: sosivio-operator.v1.8.1-144
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 1.8.1-144
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:853c66abc5b01d48c58704bb1ca938b60dc94b1de61a6c45424992a12c771c00
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:a862eec0ec8c78594fc6df8e192359be13d3842812ddccd6d67b1eadf8893622
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:0585432ced8846e0239bec2f49e5173a8a0f7110292fb24870519b9df74a7b98
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:84cc99efb5f739628ca1eb65fcf70f3b789ac66c335fdde578652871593f3042
+  name: ""
+- image: quay.io/sosivio/classifier-container-logs@sha256:604f2f32e7fe5e549a9ff5c7b2c4aa3dac1bfb29f38ccd4a989e00711f8b6cea
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:76f17ec9cf16346df0ffc06c401ac9f4eb4852614cc59db2938761dc992c886b
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:1b9dd436113333e0283b5374c58c03dd2bf4fbc8f04a263728d3f895426ad053
+  name: ""
+- image: quay.io/sosivio/contract-testing@sha256:ed13bd1af8ce5e0ecc8f498ae4005603b9f5e825087618f948a3410d1c5a476d
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:36e4d7a9e4159d457109dabe3e020039a2ca624efcb3da56a780212bddea6f3e
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:796d480924422ff7a70188e6f6382579b68b3a15f82bb2c301e458e303d8c139
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:3ba869d4be19e4397a9b4e2fc4e6fbba973916f1a12e6f09909a87d6b161d46f
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:eace4bb3e2d9f1ec99ddf5e2f737bd31f1c15ca3939e89b3b620218ac92b7a10
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:480764e5117070d9a5d60bc6c5a26e930d482f5456470364319e38bcba7397ee
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:58cfa9b9a9a3d248c5d315af0b2539d4a3eb78f151651538a06bf6342f8628c4
+  name: ""
+- image: quay.io/sosivio/prediction-engine@sha256:772a600ea79b5c87c3ac608d933670ddad17158aba44fce084c22977bf9a7ddb
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:a7d326012a7a98b5e9244e1c09bf8037c54bf6bf7cd3e8c77e9c197054de0da8
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:ff5d85881fa9520753999d104a5e3039f6636774e0337ccbbc11129d455b0533
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:d2eade0a14cd8fc297a7abfac0c8d69b0f0bf1c423d0ab95f48f89993f719e51
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:30f4e37d8c78c8772a02251d582c1d7380a2303883d9ad44f674c9de6527a430
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:207b1290b06b5d9a9d612ab99da561102325b5f4d42cfaa0cd44441045000c95
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:c62a0a4437d7c9eb246a407ac0bd11cdde2ff8aa85df906d81ddae779c8e51fd
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:c7246bfd9e6a03db2bb1853934c40a3b09292fa7102e666ebf9048fac77ccd92
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:c63afcb3703e4a4786ce2be8cd71921cc67c49c8b4524675de9f0e469b20ee12
+name: sosivio-operator.v2.0.0-150
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 2.0.0-150
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:c63afcb3703e4a4786ce2be8cd71921cc67c49c8b4524675de9f0e469b20ee12
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:6886f269aaa68d1e75c2041a826d9881eaa393edbc8cbf9efbd4d3050c8e1fe3
+  name: ""
+- image: quay.io/sosivio/aggregator@sha256:5c1530a07d77a4183ad6f8e1eadf0ae4632897a5be8c059115824c28ab293671
+  name: ""
+- image: quay.io/sosivio/analyzer@sha256:842c5e521ca9a92885d9b20f322116f0c9d5c6551e6a8f7b605151f304a352d6
+  name: ""
+- image: quay.io/sosivio/authentication@sha256:c0722c23cb9277d61d609ed37870a43be45ea5a68735b4963043a5accd2b0277
+  name: ""
+- image: quay.io/sosivio/classifier-container-logs@sha256:1d119220210115669d3e0234f8ed23146031a7968436f133eb989e9f722abb12
+  name: ""
+- image: quay.io/sosivio/classifier@sha256:21f7e0207fd1756c96519a8bd0488bb93cf373f2223a097435598bea84840f48
+  name: ""
+- image: quay.io/sosivio/communicator@sha256:b7cd17b04a03d998538cfcaa977c0691370deb97c7335b6c0e11e3875248f4e1
+  name: ""
+- image: quay.io/sosivio/correlation-entities@sha256:13356ec4c15a7a779911250179ae196ebc7db4444b14bf9a335b14cde5b955e1
+  name: ""
+- image: quay.io/sosivio/crud-manager@sha256:196b6060f798764420f5fce8d4870788bdfd03d7c94ce29376608d859ceccdca
+  name: ""
+- image: quay.io/sosivio/discovery-engine@sha256:86f80b4b4df3e792a6791a2b9a78216c700ebda4007cc56e5fb5b7986c32361c
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: ""
+- image: quay.io/sosivio/network-aggregator@sha256:3dd5c105557797444fd74c5729b2cbd156f1333a508d4357bb635d28a2e2655d
+  name: ""
+- image: quay.io/sosivio/notifier@sha256:bf7c725869398a4a43f99d63afc565ec730bb26d7cfade5c7ec35e26d25840c0
+  name: ""
+- image: quay.io/sosivio/nsq@sha256:e0b66742815729d4ff94543dc2bded10ee46418cfb37efc058ac2a4751ae0579
+  name: ""
+- image: quay.io/sosivio/prediction-engine@sha256:ef747a0255bc9d33b4ec64d4d6c0b21d9b7a252a7f8cf71f873a3527ada5fa02
+  name: ""
+- image: quay.io/sosivio/sequence-recognition@sha256:0b7b34abecc44b7bfc3054e0f01d343a34f1e356a3f8dde6def59fdf939a37ab
+  name: ""
+- image: quay.io/sosivio/sosivio-dashboard@sha256:e1229524f1e1d8cb31e160cb41a2465f2a3aa1b354c7cc13723b63d8e2cfc247
+  name: ""
+- image: quay.io/sosivio/sosivio-node-collector@sha256:077b521156b8303af3348b832f7651c4adeb3b26f4077452418d9bc1c3a8a8ae
+  name: ""
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:cc83e80dcae3da78e8e63e3d5b7c2df61bdb44e9ee2d1e94f5c2334c3555f6f3
+  name: ""
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:88d569fee68accffa26999aa227845a141b5c05fc2e16cb51519519664c44e11
+  name: ""
+- image: quay.io/sosivio/sosivio-operator@sha256:6029c0f4955dbf5c8d2793aaacd77137283fac3e3dd8ebd1272f77b5cdda341e
+  name: ""
+- image: quay.io/sosivio/sosiviodb@sha256:4ebcdb3b519b3d4178678415d9c5c0c785b4e89b470518f4fd5576f444b73d74
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/sosivio@sha256:4b43015dfe205a0409fe6fda2d469e8b54d7fadd653822521cf16029ba4d57e5
+name: sosivio-operator.v2.1.0-158
+package: sosivio
+properties:
+- type: olm.gvk
+  value:
+    group: sosivio.sosiv.io
+    kind: Sosivio
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: sosivio
+    version: 2.1.0-158
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "sosivio.sosiv.io/v1alpha1",
+            "kind": "Sosivio",
+            "metadata": {
+              "name": "sosivio"
+            },
+            "spec": {
+              "platform": "ocp4",
+              "useSha": false
+            }
+          },
+          {
+            "apiVersion": "sosivio.sosiv.io/v1alpha1",
+            "kind": "Sosivio",
+            "metadata": {
+              "name": "sosivio"
+            },
+            "spec": {
+              "platform": "ocp4",
+              "useSha": false
+            }
+          }
+        ]
+      capabilities: Auto Pilot
+      categories: Monitoring,Integration & Delivery,Logging & Tracing,Developer Tools
+      com.redhat.openshift.versions: v4.6-v4.13
+      containerImage: quay.io/sosivio/sosivio-operator@sha256:8bc7f23f180a425f55b3e8438cb99398650f968f262d0f1066bd1b8355c2aa4d
+      createdAt: "2021-10-28 01:01:01"
+      description: Sosivio | Predictive Troubleshooting for Kubernetes
+      operatorhub.io/ui-metadata-max-k8s-version: "1.27"
+      operators.openshift.io/infrastructure-features: '["disconnected"]'
+      operators.openshift.io/valid-subscription: '[]'
+      operators.operatorframework.io/builder: operator-sdk-v1.13.0+git
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      support: Sosivio
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Sosivio is the Schema for the sosivios API
+        displayName: Sosivio
+        kind: Sosivio
+        name: sosivios.sosivio.sosiv.io
+        version: v1alpha1
+    description: "# Sosivio Operator\nThe Sosivio Operator for RedHat’s Openshift
+      Container Platform allows users to quickly and easily deploy Sosivio’s Kubernetes
+      Predictive Troubleshooting Platform on your cluster.\n\n# Sosivio Overview\n\nSosivio
+      is the first and only non-intrusive and predictive autonomous cloud-native platform
+      built specifically for Kubernetes from the ground up. Sosivio provides predictive
+      troubleshooting tools, root cause determination and instant remediation for
+      any failures in Kubernetes environments.\n\nPredict and Prevent!\n\nThe Operator
+      will deploy and manage Sosivio on Kubernetes and OpenShift. Included are the
+      following features;\n-   **Root Cause Analysis and Remediation** - predictive
+      troubleshooting to prevent failures before they occur. Instantly understand
+      where the root cause is and how to fix it.\n-   **Application Profiling** -
+      analyze container resource consumption and recommendations for requests and
+      limits.\n-   **Real-time Metrics** - in-depth, granular, and accurate real-time
+      data from the process level inside containers (and pods) with failure correlation.\n-
+      \  **Cluster Health Checks** - proactive health checks for cluster infrastructure
+      and applications running on the cluster.\n-   **Multi-Cluster View** - management,
+      monitoring, and maintenance capabilities for all clusters from one location.
+      \n-   **Kubernetes Components Alerting** - notifications sent through Slack,
+      email and other 3rd party platforms.\n\n# Installation\nSosivio is completely
+      **non-intrusive** and **does not require any persistent storage**. There is
+      **no data offloading** outside of your Kubernetes cluster. Applying our Data
+      Swirling methodology enables the product to perform at a **remarkably low resource
+      footprint** and requires **no persistent volume configurations**.\n\n\nSosivio
+      is installed under one namespace (labeled: \"sosivio\") which creates all the
+      required components for the product.\n\nAll users will start with 4 weeks of
+      Sosivio Premium after which Sosivio will automatically convert to the Community
+      Version (free forever).\n\n# Help\nMore information about Sosivio and our product
+      usage instructions can be found in our documentation [here](https://docs.sosiv.io/)
+      \ \n"
+    displayName: Sosivio | Predictive Troubleshooting for Kubernetes
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - sosivio
+    - kubernetes
+    - observabillity
+    - monitoring
+    - root cause
+    - predictive troubleshooting
+    links:
+    - name: Sosivio
+      url: https://www.sosiv.io
+    - name: Documentation
+      url: https://docs.sosiv.io
+    - name: Release Notes
+      url: https://docs.sosiv.io/releasenotes
+    maintainers:
+    - email: info@sosiv.io
+      name: Sosivio
+    maturity: stable
+    minKubeVersion: 1.19.0
+    provider:
+      name: sosivio
+      url: https://www.sosiv.io
+relatedImages:
+- image: quay.io/operatorhubio/sosivio@sha256:4b43015dfe205a0409fe6fda2d469e8b54d7fadd653822521cf16029ba4d57e5
+  name: ""
+- image: quay.io/sosivio/actuator@sha256:e5d14e2403b604514a48ce16485555e83e01c85650ab57443d7ec78484c88a61
+  name: actuator
+- image: quay.io/sosivio/aggregator@sha256:1259449329b74de173436714e6dd0b80a4be42f3443dd8bdce04236044c99794
+  name: aggregator
+- image: quay.io/sosivio/analyzer@sha256:70fb897480e57c2a3c7a734a92a29e54db714fb0a0f881e1949569ea115c9ca7
+  name: analyzer
+- image: quay.io/sosivio/authentication@sha256:c7fa1bb31a4825e75f2e8151d1395abe7b9456f1039207cb50eece0d6642b281
+  name: authentication
+- image: quay.io/sosivio/classifier-container-logs@sha256:2e4d5fd5b9f9907a108919cf5168ffc7d1dc03e33ada5dfeaa4e793f42fcfcfa
+  name: classifier-container-logs
+- image: quay.io/sosivio/classifier@sha256:b54728df98c49232d41f265cf9a9a3dded016b06a59f12f3c4297d3e0ac19987
+  name: classifier
+- image: quay.io/sosivio/communicator@sha256:aa86090c3d0995c786cd8214d6cbd1e67f743463df3080443b810d7b82a7f99c
+  name: communicator
+- image: quay.io/sosivio/correlation-entities@sha256:9145397996366ab24c72e999c9dc781a90529314bcb0b5e58796f0a3f0a69ab2
+  name: correlation-entities
+- image: quay.io/sosivio/crud-manager@sha256:7caa6698f0613d96d3f28e612eb516d8a30877dada5083265f3f4c25de8cd5da
+  name: crud-manager
+- image: quay.io/sosivio/discovery-engine@sha256:d7f612b76bb93390e57029a035ef14814722082f0ab5d6945f2e57e44ef820a3
+  name: discovery-engine
+- image: quay.io/sosivio/kube-rbac-proxy:v0.8.0
+  name: ""
+- image: quay.io/sosivio/kube-rbac-proxy@sha256:34e8724e0f47e31eb2ec3279ac398b657db5f60f167426ee73138e2e84af6486
+  name: kube-rbac-proxy
+- image: quay.io/sosivio/network-aggregator@sha256:cac10345caf7d4c3b0fb8a8ec6cc9c9f3aa9f0d331377d5f48d25732c3fe42ac
+  name: network-aggregator
+- image: quay.io/sosivio/notifier@sha256:c89bceee1f5dbfb40d3b6f1d5e3893d6a3335a1fc8b35e42271fc9f65f510c5a
+  name: notifier
+- image: quay.io/sosivio/nsq@sha256:4195f86c83b5b683b8edcf73c8c4127bab0be6994325471e06481c5440e4453f
+  name: nsq
+- image: quay.io/sosivio/prediction-engine@sha256:424c08352104d5e6c8558ca1e8ac3b60f9b9e6ad6feab66886c610a747523b13
+  name: prediction-engine
+- image: quay.io/sosivio/sequence-recognition@sha256:2fcdddd26c1c9cdeb0670ccdb715b5abb875aeea4729e0b5002821ed3428e1f1
+  name: sequence-recognition
+- image: quay.io/sosivio/sosivio-dashboard@sha256:aeba61d69af6d7b461fb67d7b4bb6abb335f85017dec7adff2d819c3c9ef4e1a
+  name: sosivio-dashboard
+- image: quay.io/sosivio/sosivio-node-collector@sha256:f9e9ea992e0e6470189db1c4df6a07aa327d864fad4954268c302b637357c818
+  name: sosivio-node-collector
+- image: quay.io/sosivio/sosivio-node-netpacket@sha256:f9dbb9fdebbec8f47162c02d1e843fa1663a93b6b40aff525e898d2c803703fd
+  name: sosivio-node-netpacket
+- image: quay.io/sosivio/sosivio-node-pinger@sha256:a5f66439b65fdc66c37b355bb81430d48353f0403c67a4c8653f7974f436cb58
+  name: sosivio-node-pinger
+- image: quay.io/sosivio/sosivio-operator@sha256:8bc7f23f180a425f55b3e8438cb99398650f968f262d0f1066bd1b8355c2aa4d
+  name: operator
+- image: quay.io/sosivio/sosiviodb@sha256:51c7a7920a47ae65632763a79a04b53ef230e95c7d1f4f8f65083221dd0918d0
+  name: sosiviodb
+schema: olm.bundle

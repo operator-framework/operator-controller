@@ -1,0 +1,1729 @@
+{
+  "schema": "olm.package",
+  "name": "node-healthcheck-operator",
+  "defaultChannel": "stable",
+  "icon": {
+    "base64data": "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",
+    "mediatype": "image/png"
+  }
+}
+{
+  "schema": "olm.channel",
+  "name": "4.12-eus",
+  "package": "node-healthcheck-operator",
+  "entries": [
+    {
+      "name": "node-healthcheck-operator.v0.4.1",
+      "skipRange": ">=0.3.0 <0.4.1"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "4.14-eus",
+  "package": "node-healthcheck-operator",
+  "entries": [
+    {
+      "name": "node-healthcheck-operator.v0.6.1",
+      "skipRange": ">=0.4.0 <0.6.1"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "4.16-eus",
+  "package": "node-healthcheck-operator",
+  "entries": [
+    {
+      "name": "node-healthcheck-operator.v0.6.1",
+      "skipRange": ">=0.4.0 <0.6.1"
+    },
+    {
+      "name": "node-healthcheck-operator.v0.7.0",
+      "replaces": "node-healthcheck-operator.v0.6.1",
+      "skipRange": ">=0.6.0 <0.7.0"
+    },
+    {
+      "name": "node-healthcheck-operator.v0.8.1",
+      "replaces": "node-healthcheck-operator.v0.7.0",
+      "skipRange": ">=0.6.0 <0.8.1"
+    },
+    {
+      "name": "node-healthcheck-operator.v0.8.2",
+      "replaces": "node-healthcheck-operator.v0.8.1",
+      "skipRange": ">=0.6.0 <0.8.2"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "candidate",
+  "package": "node-healthcheck-operator",
+  "entries": [
+    {
+      "name": "node-healthcheck-operator.v0.3.1",
+      "skipRange": ">=0.2.0 <0.3.1"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable",
+  "package": "node-healthcheck-operator",
+  "entries": [
+    {
+      "name": "node-healthcheck-operator.v0.6.1",
+      "skipRange": ">=0.4.0 <0.6.1"
+    },
+    {
+      "name": "node-healthcheck-operator.v0.7.0",
+      "replaces": "node-healthcheck-operator.v0.6.1",
+      "skipRange": ">=0.6.0 <0.7.0"
+    },
+    {
+      "name": "node-healthcheck-operator.v0.8.1",
+      "replaces": "node-healthcheck-operator.v0.7.0",
+      "skipRange": ">=0.6.0 <0.8.1"
+    },
+    {
+      "name": "node-healthcheck-operator.v0.8.2",
+      "replaces": "node-healthcheck-operator.v0.8.1",
+      "skipRange": ">=0.6.0 <0.8.2"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "node-healthcheck-operator.v0.3.1",
+  "package": "node-healthcheck-operator",
+  "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:8223bda16ac5ffac4b7407c849c4c30ee006ddafd34cad8a03d2af8314d56f58",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "remediation.medik8s.io",
+        "kind": "NodeHealthCheck",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk.required",
+      "value": {
+        "group": "self-node-remediation.medik8s.io",
+        "kind": "SelfNodeRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "node-healthcheck-operator",
+        "version": "0.3.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"remediation.medik8s.io/v1alpha1\",\n    \"kind\": \"NodeHealthCheck\",\n    \"metadata\": {\n      \"name\": \"nodehealthcheck-sample\"\n    },\n    \"spec\": {\n      \"minHealthy\": \"51%\",\n      \"remediationTemplate\": {\n        \"apiVersion\": \"self-node-remediation.medik8s.io/v1alpha1\",\n        \"kind\": \"SelfNodeRemediationTemplate\",\n        \"name\": \"self-node-remediation-resource-deletion-template\",\n        \"namespace\": \"openshift-operators\"\n      },\n      \"selector\": {\n        \"matchExpressions\": [\n          {\n            \"key\": \"node-role.kubernetes.io/worker\",\n            \"operator\": \"Exists\"\n          }\n        ]\n      },\n      \"unhealthyConditions\": [\n        {\n          \"duration\": \"300s\",\n          \"status\": \"False\",\n          \"type\": \"Ready\"\n        },\n        {\n          \"duration\": \"300s\",\n          \"status\": \"Unknown\",\n          \"type\": \"Ready\"\n        }\n      ]\n    }\n  }\n]",
+          "capabilities": "Basic Install",
+          "categories": "OpenShift Optional",
+          "containerImage": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:8e1dbc35126101e1025bd4c0eac4f4c614eb779ccafbb55050541a27ba7e9706",
+          "createdAt": "2022-08-15 12:34:34",
+          "description": "Detect failed Nodes and trigger remediation with e.g. Self Node Remediation.",
+          "olm.skipRange": ">=0.2.0 <0.3.1",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.18.0+git",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/medik8s/node-healthcheck-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "nodehealthchecks.remediation.medik8s.io",
+              "version": "v1alpha1",
+              "kind": "NodeHealthCheck",
+              "displayName": "Node Health Check",
+              "description": "NodeHealthCheck is the Schema for the nodehealthchecks API",
+              "resources": [
+                {
+                  "name": "nodehealthchecks",
+                  "kind": "NodeHealthCheck",
+                  "version": "v1alpha1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "conditions",
+                  "description": "Represents the observations of a NodeHealthCheck's current state. Known .status.conditions.type are: \"Disabled\"",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:conditions"
+                  ]
+                },
+                {
+                  "path": "healthyNodes",
+                  "displayName": "healthynodes",
+                  "description": "HealthyNodes specified the number of healthy nodes observed",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:healthyNodes"
+                  ]
+                },
+                {
+                  "path": "inFlightRemediations",
+                  "displayName": "inFlightRemediations",
+                  "description": "InFlightRemediations records the timestamp when remediation triggered per node",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:inFlightRemediations"
+                  ]
+                },
+                {
+                  "path": "observedNodes",
+                  "displayName": "observedNodes",
+                  "description": "ObservedNodes specified the number of nodes observed by using the NHC spec.selecor",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:observedNodes"
+                  ]
+                },
+                {
+                  "path": "phase",
+                  "displayName": "phase",
+                  "description": "Phase represents the current phase of this Config. Known phases are Disabled, Paused, Remediating and Enabled, based on:\\n - the status of the Disabled condition\\n - the value of PauseRequests\\n - the value of InFlightRemediations",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "reason",
+                  "displayName": "reason",
+                  "description": "Reason explains the current phase in more detail.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "minHealthy",
+                  "displayName": "Min Healthy",
+                  "description": "Remediation is allowed if at least \"MinHealthy\" nodes selected by \"selector\" are healthy. Expects either a positive integer value or a percentage value. Percentage values must be positive whole numbers and are capped at 100%. 100% is valid and will block all remediation."
+                },
+                {
+                  "path": "pauseRequests",
+                  "displayName": "Pause Requests",
+                  "description": "PauseRequests will prevent any new remdiation to start, while in-flight remediations keep running. Each entry is free form, and ideally represents the requested party reason for this pausing - i.e: \"imaginary-cluster-upgrade-manager-operator\""
+                },
+                {
+                  "path": "remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by an infrastructure provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider."
+                },
+                {
+                  "path": "selector",
+                  "displayName": "Selector",
+                  "description": "Label selector to match nodes whose health will be exercised. Note: An empty selector will match all nodes."
+                },
+                {
+                  "path": "unhealthyConditions",
+                  "displayName": "Unhealthy Conditions",
+                  "description": "UnhealthyConditions contains a list of the conditions that determine whether a node is considered unhealthy.  The conditions are combined in a logical OR, i.e. if any of the conditions is met, the node is unhealthy."
+                }
+              ]
+            }
+          ]
+        },
+        "description": "### Introduction\nHardware is imperfect, and software contains bugs. When node level failures such as kernel hangs or dead NICs\noccur, the work required from the cluster does not decrease - workloads from affected nodes need to be\nrestarted somewhere.\n\nHowever some workloads, such as RWO volumes and StatefulSets, may require at-most-one semantics.\nFailures affecting these kind of workloads risk data loss and/or corruption if nodes (and the workloads\nrunning on them) are assumed to be dead whenever we stop hearing from them. For this reason it is important\nto know that the node has reached a safe state before initiating recovery of the workload.\n\nUnfortunately it is not always practical to require admin intervention in order to confirm the node’s true status.\nIn order to automate the recovery of exclusive workloads, we provide operators for failure detection\nand remediation.\n\n### Failure detection: Node Health Check operator\nThe “Node Health Check” (NHC) operator checks each Node’s set of\nNodeConditions (eg. NotReady) against the criteria and thresholds defined in\nNodeHealthCheck configuration. If the Node is deemed to be in a failed\nstate, NHC will initiate recovery by using the SIG Cluster API's “External\nRemediation” API to instantiate the configured remediation template which\nspecifies the mechanism/controller to be used.\n\n### Failure handling: Self Node Remediation\nBy default NHC depends on the “Self Node Remediation” (SNR) operator, which\nis installed automatically.\nSNR uses watchdog timers and heuristics to ensure nodes enter a safe state\n(no longer hosting workloads) within a known and finite period of time,\nbefore signaling to the system that all Pods and VolumeAttachments on the\nfailed Node are no longer active and can be relocated elsewhere.\nIn the case of transient errors, the watchdog’s actions will also result in\nthe node rebooting and rejoining the cluster - restoring capacity.\n",
+        "displayName": "Node Health Check Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": false
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "NHC",
+          "Self Node Remediation",
+          "SNR",
+          "Remediation",
+          "Fencing",
+          "medik8s",
+          "k8s"
+        ],
+        "links": [
+          {
+            "name": "Node Healthcheck Operator",
+            "url": "https://docs.openshift.com/container-platform/4.11/nodes/nodes/eco-node-health-check-operator.html"
+          },
+          {
+            "name": "Source Code",
+            "url": "https://github.com/medik8s/node-healthcheck-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Dragonfly Team",
+            "email": "team-dragonfly@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:b5786bbbef725badf3dfcc2c2c7a86ead5ebb584c978c47aae8b9a62e241b80d"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:8223bda16ac5ffac4b7407c849c4c30ee006ddafd34cad8a03d2af8314d56f58"
+    },
+    {
+      "name": "node-healthcheck-rhel8-operator-8e1dbc35126101e1025bd4c0eac4f4c614eb779ccafbb55050541a27ba7e9706-annotation",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:8e1dbc35126101e1025bd4c0eac4f4c614eb779ccafbb55050541a27ba7e9706"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:8e1dbc35126101e1025bd4c0eac4f4c614eb779ccafbb55050541a27ba7e9706"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "node-healthcheck-operator.v0.4.1",
+  "package": "node-healthcheck-operator",
+  "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:151e7d9bc500b7252af46d0856e3e16559ff310a1d0efedcc5d914164bbdef55",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "remediation.medik8s.io",
+        "kind": "NodeHealthCheck",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk.required",
+      "value": {
+        "group": "self-node-remediation.medik8s.io",
+        "kind": "SelfNodeRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "node-healthcheck-operator",
+        "version": "0.4.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"remediation.medik8s.io/v1alpha1\",\n    \"kind\": \"NodeHealthCheck\",\n    \"metadata\": {\n      \"name\": \"nodehealthcheck-sample\"\n    },\n    \"spec\": {\n      \"minHealthy\": \"51%\",\n      \"remediationTemplate\": {\n        \"apiVersion\": \"self-node-remediation.medik8s.io/v1alpha1\",\n        \"kind\": \"SelfNodeRemediationTemplate\",\n        \"name\": \"self-node-remediation-resource-deletion-template\",\n        \"namespace\": \"openshift-operators\"\n      },\n      \"selector\": {\n        \"matchExpressions\": [\n          {\n            \"key\": \"node-role.kubernetes.io/worker\",\n            \"operator\": \"Exists\"\n          }\n        ]\n      },\n      \"unhealthyConditions\": [\n        {\n          \"duration\": \"300s\",\n          \"status\": \"False\",\n          \"type\": \"Ready\"\n        },\n        {\n          \"duration\": \"300s\",\n          \"status\": \"Unknown\",\n          \"type\": \"Ready\"\n        }\n      ]\n    }\n  }\n]",
+          "capabilities": "Basic Install",
+          "categories": "OpenShift Optional",
+          "console.openshift.io/plugins": "[\"node-remediation-console-plugin\"]",
+          "containerImage": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:60d95ea8240ecf701ba974b6df3ee296a7fb3ef5393e0dcf43af15e782f2d153",
+          "createdAt": "2023-11-02 11:44:50",
+          "description": "Detect failed Nodes and trigger remediation with e.g. Self Node Remediation.",
+          "olm.skipRange": ">=0.3.0 <0.4.1",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.23.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/medik8s/node-healthcheck-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "nodehealthchecks.remediation.medik8s.io",
+              "version": "v1alpha1",
+              "kind": "NodeHealthCheck",
+              "displayName": "Node Health Check",
+              "description": "NodeHealthCheck is the Schema for the nodehealthchecks API",
+              "resources": [
+                {
+                  "name": "nodehealthchecks",
+                  "kind": "NodeHealthCheck",
+                  "version": "v1alpha1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "conditions",
+                  "description": "Represents the observations of a NodeHealthCheck's current state. Known .status.conditions.type are: \"Disabled\"",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:conditions"
+                  ]
+                },
+                {
+                  "path": "healthyNodes",
+                  "displayName": "healthynodes",
+                  "description": "HealthyNodes specified the number of healthy nodes observed",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:healthyNodes"
+                  ]
+                },
+                {
+                  "path": "inFlightRemediations",
+                  "displayName": "inFlightRemediations",
+                  "description": "InFlightRemediations records the timestamp when remediation triggered per node",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:inFlightRemediations"
+                  ]
+                },
+                {
+                  "path": "observedNodes",
+                  "displayName": "observedNodes",
+                  "description": "ObservedNodes specified the number of nodes observed by using the NHC spec.selector",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:observedNodes"
+                  ]
+                },
+                {
+                  "path": "phase",
+                  "displayName": "phase",
+                  "description": "Phase represents the current phase of this Config. Known phases are Disabled, Paused, Remediating and Enabled, based on:\\n - the status of the Disabled condition\\n - the value of PauseRequests\\n - the value of InFlightRemediations",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                },
+                {
+                  "path": "reason",
+                  "displayName": "reason",
+                  "description": "Reason explains the current phase in more detail.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:text"
+                  ]
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "minHealthy",
+                  "displayName": "Min Healthy",
+                  "description": "Remediation is allowed if at least \"MinHealthy\" nodes selected by \"selector\" are healthy. Expects either a positive integer value or a percentage value. Percentage values must be positive whole numbers and are capped at 100%. 100% is valid and will block all remediation."
+                },
+                {
+                  "path": "pauseRequests",
+                  "displayName": "Pause Requests",
+                  "description": "PauseRequests will prevent any new remdiation to start, while in-flight remediations keep running. Each entry is free form, and ideally represents the requested party reason for this pausing - i.e: \"imaginary-cluster-upgrade-manager-operator\""
+                },
+                {
+                  "path": "remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by an infrastructure provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider."
+                },
+                {
+                  "path": "selector",
+                  "displayName": "Selector",
+                  "description": "Label selector to match nodes whose health will be exercised. Note: An empty selector will match all nodes."
+                },
+                {
+                  "path": "unhealthyConditions",
+                  "displayName": "Unhealthy Conditions",
+                  "description": "UnhealthyConditions contains a list of the conditions that determine whether a node is considered unhealthy.  The conditions are combined in a logical OR, i.e. if any of the conditions is met, the node is unhealthy."
+                }
+              ]
+            }
+          ]
+        },
+        "description": "### Introduction\nHardware is imperfect, and software contains bugs. When node level failures such as kernel hangs or dead NICs\noccur, the work required from the cluster does not decrease - workloads from affected nodes need to be\nrestarted somewhere.\n\nHowever some workloads, such as RWO volumes and StatefulSets, may require at-most-one semantics.\nFailures affecting these kind of workloads risk data loss and/or corruption if nodes (and the workloads\nrunning on them) are assumed to be dead whenever we stop hearing from them. For this reason it is important\nto know that the node has reached a safe state before initiating recovery of the workload.\n\nUnfortunately it is not always practical to require admin intervention in order to confirm the node’s true status.\nIn order to automate the recovery of exclusive workloads, we provide operators for failure detection\nand remediation.\n\n### Failure detection: Node Health Check operator\nThe “Node Health Check” (NHC) operator checks each Node’s set of\nNodeConditions (eg. NotReady) against the criteria and thresholds defined in\nNodeHealthCheck configuration. If the Node is deemed to be in a failed\nstate, NHC will initiate recovery by using the SIG Cluster API's “External\nRemediation” API to instantiate the configured remediation template which\nspecifies the mechanism/controller to be used.\n\n### Failure handling: Self Node Remediation\nBy default NHC depends on the “Self Node Remediation” (SNR) operator, which\nis installed automatically.\nSNR uses watchdog timers and heuristics to ensure nodes enter a safe state\n(no longer hosting workloads) within a known and finite period of time,\nbefore signaling to the system that all Pods and VolumeAttachments on the\nfailed Node are no longer active and can be relocated elsewhere.\nIn the case of transient errors, the watchdog’s actions will also result in\nthe node rebooting and rejoining the cluster - restoring capacity.\n",
+        "displayName": "Node Health Check Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": false
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "NHC",
+          "Self Node Remediation",
+          "SNR",
+          "Remediation",
+          "Fencing",
+          "medik8s",
+          "k8s"
+        ],
+        "links": [
+          {
+            "name": "Node Healthcheck Operator",
+            "url": "https://docs.openshift.com/container-platform/4.12/nodes/nodes/eco-node-health-check-operator.html"
+          },
+          {
+            "name": "Source Code",
+            "url": "https://github.com/medik8s/node-healthcheck-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Dragonfly Team",
+            "email": "team-dragonfly@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:796753816645b35cd08da53d925df5e4fb12df8b2a14db98db361f0ff787a028"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:151e7d9bc500b7252af46d0856e3e16559ff310a1d0efedcc5d914164bbdef55"
+    },
+    {
+      "name": "node-healthcheck-rhel8-operator-60d95ea8240ecf701ba974b6df3ee296a7fb3ef5393e0dcf43af15e782f2d153-annotation",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:60d95ea8240ecf701ba974b6df3ee296a7fb3ef5393e0dcf43af15e782f2d153"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:60d95ea8240ecf701ba974b6df3ee296a7fb3ef5393e0dcf43af15e782f2d153"
+    },
+    {
+      "name": "node-remediation-console-plugin",
+      "image": "registry.redhat.io/workload-availability/node-remediation-console-rhel8@sha256:8d32dee5c72ec1c94e4e92f8d1da935a384e40e379f237c432086a2781f4ecb9"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "node-healthcheck-operator.v0.6.1",
+  "package": "node-healthcheck-operator",
+  "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:309ba89dece3ee9901ed66c40bd28d71f20c7d91a7feff552e28ea0c772b9178",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "remediation.medik8s.io",
+        "kind": "NodeHealthCheck",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk.required",
+      "value": {
+        "group": "self-node-remediation.medik8s.io",
+        "kind": "SelfNodeRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "node-healthcheck-operator",
+        "version": "0.6.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"remediation.medik8s.io/v1alpha1\",\n    \"kind\": \"NodeHealthCheck\",\n    \"metadata\": {\n      \"name\": \"nodehealthcheck-sample\"\n    },\n    \"spec\": {\n      \"minHealthy\": \"51%\",\n      \"remediationTemplate\": {\n        \"apiVersion\": \"self-node-remediation.medik8s.io/v1alpha1\",\n        \"kind\": \"SelfNodeRemediationTemplate\",\n        \"name\": \"self-node-remediation-resource-deletion-template\",\n        \"namespace\": \"openshift-operators\"\n      },\n      \"selector\": {\n        \"matchExpressions\": [\n          {\n            \"key\": \"node-role.kubernetes.io/worker\",\n            \"operator\": \"Exists\"\n          }\n        ]\n      },\n      \"unhealthyConditions\": [\n        {\n          \"duration\": \"300s\",\n          \"status\": \"False\",\n          \"type\": \"Ready\"\n        },\n        {\n          \"duration\": \"300s\",\n          \"status\": \"Unknown\",\n          \"type\": \"Ready\"\n        }\n      ]\n    }\n  }\n]",
+          "capabilities": "Basic Install",
+          "categories": "OpenShift Optional",
+          "console.openshift.io/plugins": "[\"node-remediation-console-plugin\"]",
+          "containerImage": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:90cceb176fa903cc8e9aa4c0f7316560a8a354a3138dc26abbfc9884c1c576b5",
+          "createdAt": "2023-10-30 14:21:41",
+          "description": "Detect failed Nodes and trigger remediation with e.g. Self Node Remediation.",
+          "olm.skipRange": ">=0.4.0 <0.6.1",
+          "operators.openshift.io/infrastructure-features": "[\"disconnected\"]",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.31.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/medik8s/node-healthcheck-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "nodehealthchecks.remediation.medik8s.io",
+              "version": "v1alpha1",
+              "kind": "NodeHealthCheck",
+              "displayName": "Node Health Check",
+              "description": "NodeHealthCheck is the Schema for the nodehealthchecks API",
+              "resources": [
+                {
+                  "name": "nodehealthchecks",
+                  "kind": "NodeHealthCheck",
+                  "version": "v1alpha1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Conditions",
+                  "description": "Represents the observations of a NodeHealthCheck's current state. Known .status.conditions.type are: \"Disabled\"",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                },
+                {
+                  "path": "healthyNodes",
+                  "displayName": "Healthy Nodes",
+                  "description": "HealthyNodes specified the number of healthy nodes observed"
+                },
+                {
+                  "path": "inFlightRemediations",
+                  "displayName": "In Flight Remediations",
+                  "description": "InFlightRemediations records the timestamp when remediation triggered per node. Deprecated in favour of UnhealthyNodes."
+                },
+                {
+                  "path": "lastUpdateTime",
+                  "displayName": "Last Update Time",
+                  "description": "LastUpdateTime is the last time the status was updated."
+                },
+                {
+                  "path": "observedNodes",
+                  "displayName": "Observed Nodes",
+                  "description": "ObservedNodes specified the number of nodes observed by using the NHC spec.selector"
+                },
+                {
+                  "path": "phase",
+                  "displayName": "Phase",
+                  "description": "Phase represents the current phase of this Config. Known phases are Disabled, Paused, Remediating and Enabled, based on:\\n - the status of the Disabled condition\\n - the value of PauseRequests\\n - the value of InFlightRemediations",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.phase"
+                  ]
+                },
+                {
+                  "path": "reason",
+                  "displayName": "Reason",
+                  "description": "Reason explains the current phase in more detail.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.phase:reason"
+                  ]
+                },
+                {
+                  "path": "unhealthyNodes",
+                  "displayName": "Unhealthy Nodes",
+                  "description": "UnhealthyNodes tracks currently unhealthy nodes and their remediations."
+                },
+                {
+                  "path": "unhealthyNodes[0].conditionsHealthyTimestamp",
+                  "displayName": "Conditions Healthy Timestamp",
+                  "description": "ConditionsHealthyTimestamp is RFC 3339 date and time at which the unhealthy conditions didn't match anymore. The remediation CR will be deleted at that time, but the node will still be tracked as unhealthy until all remediation CRs are actually deleted, when remediators finished cleanup and removed their finalizers."
+                },
+                {
+                  "path": "unhealthyNodes[0].name",
+                  "displayName": "Name",
+                  "description": "Name is the name of the unhealthy node"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations",
+                  "displayName": "Remediations",
+                  "description": "Remediations tracks the remediations created for this node"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].resource",
+                  "displayName": "Resource",
+                  "description": "Resource is the reference to the remediation CR which was created"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].started",
+                  "displayName": "Started",
+                  "description": "Started is the creation time of the remediation CR"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].timedOut",
+                  "displayName": "Timed Out",
+                  "description": "TimedOut is the time when the remediation timed out. Applicable for escalating remediations only."
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "escalatingRemediations",
+                  "displayName": "Escalating Remediations",
+                  "description": "EscalatingRemediations contain a list of ordered remediation templates with a timeout. The remediation templates will be used one after another, until the unhealthy node gets healthy within the timeout of the currently processed remediation. The order of remediation is defined by the \"order\" field of each \"escalatingRemediation\". \n Mutually exclusive with RemediationTemplate"
+                },
+                {
+                  "path": "escalatingRemediations[0].order",
+                  "displayName": "Order",
+                  "description": "Order defines the order for this remediation. Remediations with lower order will be used before remediations with higher order. Remediations must not have the same order."
+                },
+                {
+                  "path": "escalatingRemediations[0].remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by a remediation provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider."
+                },
+                {
+                  "path": "escalatingRemediations[0].timeout",
+                  "displayName": "Timeout",
+                  "description": "Timeout defines how long NHC will wait for the node getting healthy before the next remediation (if any) will be used. When the last remediation times out, the overall remediation is considered as failed. As a safeguard for preventing parallel remediations, a minimum of 60s is enforced. \n Expects a string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"."
+                },
+                {
+                  "path": "minHealthy",
+                  "displayName": "Min Healthy",
+                  "description": "Remediation is allowed if at least \"MinHealthy\" nodes selected by \"selector\" are healthy. Expects either a positive integer value or a percentage value. Percentage values must be positive whole numbers and are capped at 100%. 100% is valid and will block all remediation."
+                },
+                {
+                  "path": "pauseRequests",
+                  "displayName": "Pause Requests",
+                  "description": "PauseRequests will prevent any new remediation to start, while in-flight remediations keep running. Each entry is free form, and ideally represents the requested party reason for this pausing - i.e: \"imaginary-cluster-upgrade-manager-operator\""
+                },
+                {
+                  "path": "remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by an infrastructure provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider. \n Mutually exclusive with EscalatingRemediations"
+                },
+                {
+                  "path": "selector",
+                  "displayName": "Selector",
+                  "description": "Label selector to match nodes whose health will be exercised. \n Selecting both control-plane and worker nodes in one NHC CR is highly discouraged and can result in undesired behaviour. \n Note: mandatory now for above reason, but for backwards compatibility existing CRs will continue to work with an empty selector, which matches all nodes."
+                },
+                {
+                  "path": "unhealthyConditions",
+                  "displayName": "Unhealthy Conditions",
+                  "description": "UnhealthyConditions contains a list of the conditions that determine whether a node is considered unhealthy.  The conditions are combined in a logical OR, i.e. if any of the conditions is met, the node is unhealthy."
+                },
+                {
+                  "path": "unhealthyConditions[0].duration",
+                  "displayName": "Duration",
+                  "description": "Duration of the condition specified when a node is considered unhealthy. \n Expects a string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"."
+                },
+                {
+                  "path": "unhealthyConditions[0].status",
+                  "displayName": "Status",
+                  "description": "The condition status in the node's status to watch for. Typically False, True or Unknown."
+                },
+                {
+                  "path": "unhealthyConditions[0].type",
+                  "displayName": "Type",
+                  "description": "The condition type in the node's status to watch for."
+                }
+              ]
+            }
+          ]
+        },
+        "description": "### Introduction\nHardware is imperfect, and software contains bugs. When node level failures such as kernel hangs or dead NICs\noccur, the work required from the cluster does not decrease - workloads from affected nodes need to be\nrestarted somewhere.\n\nHowever some workloads, such as RWO volumes and StatefulSets, may require at-most-one semantics.\nFailures affecting these kind of workloads risk data loss and/or corruption if nodes (and the workloads\nrunning on them) are assumed to be dead whenever we stop hearing from them. For this reason it is important\nto know that the node has reached a safe state before initiating recovery of the workload.\n\nUnfortunately it is not always practical to require admin intervention in order to confirm the node’s true status.\nIn order to automate the recovery of exclusive workloads, we provide operators for failure detection\nand remediation.\n\n### Failure detection: Node Health Check operator\nThe “Node Health Check” (NHC) operator checks each Node’s set of\nNodeConditions (eg. NotReady) against the criteria and thresholds defined in\nNodeHealthCheck configuration. If the Node is deemed to be in a failed\nstate, NHC will initiate recovery by using the SIG Cluster API's “External\nRemediation” API to instantiate the configured remediation template which\nspecifies the mechanism/controller to be used.\n\n### Failure handling: Self Node Remediation\nBy default NHC depends on the “Self Node Remediation” (SNR) operator, which\nis installed automatically.\nSNR uses watchdog timers and heuristics to ensure nodes enter a safe state\n(no longer hosting workloads) within a known and finite period of time,\nbefore signaling to the system that all Pods and VolumeAttachments on the\nfailed Node are no longer active and can be relocated elsewhere.\nIn the case of transient errors, the watchdog’s actions will also result in\nthe node rebooting and rejoining the cluster - restoring capacity.\n",
+        "displayName": "Node Health Check Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": false
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "NHC",
+          "Self Node Remediation",
+          "SNR",
+          "Remediation",
+          "Fencing",
+          "medik8s",
+          "k8s"
+        ],
+        "links": [
+          {
+            "name": "Node Healthcheck Operator",
+            "url": "https://access.redhat.com/documentation/en-us/workload_availability_for_red_hat_openshift/23.3/html/remediation_fencing_and_maintenance/node-health-check-operator"
+          },
+          {
+            "name": "Source Code",
+            "url": "https://github.com/medik8s/node-healthcheck-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Dragonfly Team",
+            "email": "team-dragonfly@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:53d3620bb0490d83aaf6a356bb7d3b9e7147222d1a2017f8317f05fa90cd3de9"
+    },
+    {
+      "name": "must_gather",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-must-gather-rhel8@sha256:85054b34e119c16cc95cda9dc3f5d63f2d7bfc70634f70973410b2a1b1fa58d4"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:309ba89dece3ee9901ed66c40bd28d71f20c7d91a7feff552e28ea0c772b9178"
+    },
+    {
+      "name": "node-healthcheck-rhel8-operator-90cceb176fa903cc8e9aa4c0f7316560a8a354a3138dc26abbfc9884c1c576b5-annotation",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:90cceb176fa903cc8e9aa4c0f7316560a8a354a3138dc26abbfc9884c1c576b5"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:90cceb176fa903cc8e9aa4c0f7316560a8a354a3138dc26abbfc9884c1c576b5"
+    },
+    {
+      "name": "node-remediation-console-plugin",
+      "image": "registry.redhat.io/workload-availability/node-remediation-console-rhel8@sha256:b8d5db068bfc81031c2eef86e8649e4fc008b7480e08c9cfab2ab4497098eecf"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "node-healthcheck-operator.v0.7.0",
+  "package": "node-healthcheck-operator",
+  "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:765e34146932010fb979bdf85e529e84cc772bb4e3af74733091c4a185459406",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "remediation.medik8s.io",
+        "kind": "NodeHealthCheck",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk.required",
+      "value": {
+        "group": "self-node-remediation.medik8s.io",
+        "kind": "SelfNodeRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "node-healthcheck-operator",
+        "version": "0.7.0"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"remediation.medik8s.io/v1alpha1\",\n    \"kind\": \"NodeHealthCheck\",\n    \"metadata\": {\n      \"name\": \"nodehealthcheck-sample\"\n    },\n    \"spec\": {\n      \"minHealthy\": \"51%\",\n      \"remediationTemplate\": {\n        \"apiVersion\": \"self-node-remediation.medik8s.io/v1alpha1\",\n        \"kind\": \"SelfNodeRemediationTemplate\",\n        \"name\": \"self-node-remediation-automatic-strategy-template\",\n        \"namespace\": \"openshift-operators\"\n      },\n      \"selector\": {\n        \"matchExpressions\": [\n          {\n            \"key\": \"node-role.kubernetes.io/worker\",\n            \"operator\": \"Exists\"\n          }\n        ]\n      },\n      \"unhealthyConditions\": [\n        {\n          \"duration\": \"300s\",\n          \"status\": \"False\",\n          \"type\": \"Ready\"\n        },\n        {\n          \"duration\": \"300s\",\n          \"status\": \"Unknown\",\n          \"type\": \"Ready\"\n        }\n      ]\n    }\n  }\n]",
+          "capabilities": "Basic Install",
+          "categories": "OpenShift Optional",
+          "console.openshift.io/plugins": "[\"node-remediation-console-plugin\"]",
+          "containerImage": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:f608f05c0bb9cde37768fbb7c4cbf661c9d7fed42b6f6cd5151d876c8ec948e9",
+          "createdAt": "2024-02-08 16:14:03",
+          "description": "Detect failed Nodes and trigger remediation with e.g. Self Node Remediation.",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.6.0 <0.7.0",
+          "operatorframework.io/suggested-namespace": "openshift-workload-availability",
+          "operatorframework.io/suggested-namespace-template": "{\"kind\":\"Namespace\",\"apiVersion\":\"v1\",\"metadata\":{\"name\":\"openshift-workload-availability\",\"annotations\":{\"openshift.io/node-selector\":\"\"}}}",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.33.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/medik8s/node-healthcheck-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "nodehealthchecks.remediation.medik8s.io",
+              "version": "v1alpha1",
+              "kind": "NodeHealthCheck",
+              "displayName": "Node Health Check",
+              "description": "NodeHealthCheck is the Schema for the nodehealthchecks API",
+              "resources": [
+                {
+                  "name": "nodehealthchecks",
+                  "kind": "NodeHealthCheck",
+                  "version": "v1alpha1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Conditions",
+                  "description": "Represents the observations of a NodeHealthCheck's current state. Known .status.conditions.type are: \"Disabled\"",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                },
+                {
+                  "path": "healthyNodes",
+                  "displayName": "Healthy Nodes",
+                  "description": "HealthyNodes specified the number of healthy nodes observed"
+                },
+                {
+                  "path": "inFlightRemediations",
+                  "displayName": "In Flight Remediations",
+                  "description": "InFlightRemediations records the timestamp when remediation triggered per node. Deprecated in favour of UnhealthyNodes."
+                },
+                {
+                  "path": "lastUpdateTime",
+                  "displayName": "Last Update Time",
+                  "description": "LastUpdateTime is the last time the status was updated."
+                },
+                {
+                  "path": "observedNodes",
+                  "displayName": "Observed Nodes",
+                  "description": "ObservedNodes specified the number of nodes observed by using the NHC spec.selector"
+                },
+                {
+                  "path": "phase",
+                  "displayName": "Phase",
+                  "description": "Phase represents the current phase of this Config. Known phases are Disabled, Paused, Remediating and Enabled, based on:\\n - the status of the Disabled condition\\n - the value of PauseRequests\\n - the value of InFlightRemediations",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.phase"
+                  ]
+                },
+                {
+                  "path": "reason",
+                  "displayName": "Reason",
+                  "description": "Reason explains the current phase in more detail.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.phase:reason"
+                  ]
+                },
+                {
+                  "path": "unhealthyNodes",
+                  "displayName": "Unhealthy Nodes",
+                  "description": "UnhealthyNodes tracks currently unhealthy nodes and their remediations."
+                },
+                {
+                  "path": "unhealthyNodes[0].conditionsHealthyTimestamp",
+                  "displayName": "Conditions Healthy Timestamp",
+                  "description": "ConditionsHealthyTimestamp is RFC 3339 date and time at which the unhealthy conditions didn't match anymore. The remediation CR will be deleted at that time, but the node will still be tracked as unhealthy until all remediation CRs are actually deleted, when remediators finished cleanup and removed their finalizers."
+                },
+                {
+                  "path": "unhealthyNodes[0].name",
+                  "displayName": "Name",
+                  "description": "Name is the name of the unhealthy node"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations",
+                  "displayName": "Remediations",
+                  "description": "Remediations tracks the remediations created for this node"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].resource",
+                  "displayName": "Resource",
+                  "description": "Resource is the reference to the remediation CR which was created"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].started",
+                  "displayName": "Started",
+                  "description": "Started is the creation time of the remediation CR"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].timedOut",
+                  "displayName": "Timed Out",
+                  "description": "TimedOut is the time when the remediation timed out. Applicable for escalating remediations only."
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "escalatingRemediations",
+                  "displayName": "Escalating Remediations",
+                  "description": "EscalatingRemediations contain a list of ordered remediation templates with a timeout. The remediation templates will be used one after another, until the unhealthy node gets healthy within the timeout of the currently processed remediation. The order of remediation is defined by the \"order\" field of each \"escalatingRemediation\". \n Mutually exclusive with RemediationTemplate"
+                },
+                {
+                  "path": "escalatingRemediations[0].order",
+                  "displayName": "Order",
+                  "description": "Order defines the order for this remediation. Remediations with lower order will be used before remediations with higher order. Remediations must not have the same order."
+                },
+                {
+                  "path": "escalatingRemediations[0].remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by a remediation provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider."
+                },
+                {
+                  "path": "escalatingRemediations[0].timeout",
+                  "displayName": "Timeout",
+                  "description": "Timeout defines how long NHC will wait for the node getting healthy before the next remediation (if any) will be used. When the last remediation times out, the overall remediation is considered as failed. As a safeguard for preventing parallel remediations, a minimum of 60s is enforced. \n Expects a string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"."
+                },
+                {
+                  "path": "minHealthy",
+                  "displayName": "Min Healthy",
+                  "description": "Remediation is allowed if at least \"MinHealthy\" nodes selected by \"selector\" are healthy. Expects either a positive integer value or a percentage value. Percentage values must be positive whole numbers and are capped at 100%. 100% is valid and will block all remediation."
+                },
+                {
+                  "path": "pauseRequests",
+                  "displayName": "Pause Requests",
+                  "description": "PauseRequests will prevent any new remediation to start, while in-flight remediations keep running. Each entry is free form, and ideally represents the requested party reason for this pausing - i.e: \"imaginary-cluster-upgrade-manager-operator\""
+                },
+                {
+                  "path": "remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by an infrastructure provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider. \n Mutually exclusive with EscalatingRemediations"
+                },
+                {
+                  "path": "selector",
+                  "displayName": "Selector",
+                  "description": "Label selector to match nodes whose health will be exercised. \n Selecting both control-plane and worker nodes in one NHC CR is highly discouraged and can result in undesired behaviour. \n Note: mandatory now for above reason, but for backwards compatibility existing CRs will continue to work with an empty selector, which matches all nodes."
+                },
+                {
+                  "path": "unhealthyConditions",
+                  "displayName": "Unhealthy Conditions",
+                  "description": "UnhealthyConditions contains a list of the conditions that determine whether a node is considered unhealthy.  The conditions are combined in a logical OR, i.e. if any of the conditions is met, the node is unhealthy."
+                },
+                {
+                  "path": "unhealthyConditions[0].duration",
+                  "displayName": "Duration",
+                  "description": "Duration of the condition specified when a node is considered unhealthy. \n Expects a string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"."
+                },
+                {
+                  "path": "unhealthyConditions[0].status",
+                  "displayName": "Status",
+                  "description": "The condition status in the node's status to watch for. Typically False, True or Unknown."
+                },
+                {
+                  "path": "unhealthyConditions[0].type",
+                  "displayName": "Type",
+                  "description": "The condition type in the node's status to watch for."
+                }
+              ]
+            }
+          ]
+        },
+        "description": "### Introduction\nHardware is imperfect, and software contains bugs. When node level failures such as kernel hangs or dead NICs\noccur, the work required from the cluster does not decrease - workloads from affected nodes need to be\nrestarted somewhere.\n\nHowever some workloads, such as RWO volumes and StatefulSets, may require at-most-one semantics.\nFailures affecting these kind of workloads risk data loss and/or corruption if nodes (and the workloads\nrunning on them) are assumed to be dead whenever we stop hearing from them. For this reason it is important\nto know that the node has reached a safe state before initiating recovery of the workload.\n\nUnfortunately it is not always practical to require admin intervention in order to confirm the node’s true status.\nIn order to automate the recovery of exclusive workloads, we provide operators for failure detection\nand remediation.\n\n### Failure detection: Node Health Check operator\nThe “Node Health Check” (NHC) operator checks each Node’s set of\nNodeConditions (eg. NotReady) against the criteria and thresholds defined in\nNodeHealthCheck configuration. If the Node is deemed to be in a failed\nstate, NHC will initiate recovery by using the SIG Cluster API's “External\nRemediation” API to instantiate the configured remediation template which\nspecifies the mechanism/controller to be used.\n\n### Failure handling: External remediators\nThere are multiple remediators for handling node failure that we recommend:\n- Self Node Remediation (SNR)\n- Fence Agents Remediation (FAR)\n- Machine Deletion Remediation (MDR)\n\nSNR is installed automatically when installing NHC.\n\n#### Self Node Remediation (SNR)\nSNR uses watchdog timers and heuristics to ensure nodes enter a safe state\n(no longer hosting workloads) within a known and finite period of time,\nbefore signaling to the system that all Pods on the failed Node are no longer active\nand can be relocated elsewhere.\nIn the case of transient errors, the watchdog’s actions will also result in\nthe node rebooting and rejoining the cluster - restoring capacity.\n\n#### Fence Agents Remediation (FAR)\nFAR uses well-known agents to fence unhealthy nodes, and eventually FAR remediates the nodes.\nThe remediation includes rebooting the unhealthy node using a fence agent,\nand then evicting workloads from the unhealthy node.\n\n#### Machine Deletion Remediation (MDR)\nMDR is limited to OpenShift, and it uses Machine API for reprovisioning unhealthy nodes by deleting their machines.\n",
+        "displayName": "Node Health Check Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": false
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "NHC",
+          "Self Node Remediation",
+          "SNR",
+          "Remediation",
+          "Fencing",
+          "medik8s",
+          "k8s"
+        ],
+        "links": [
+          {
+            "name": "Node Healthcheck Operator",
+            "url": "https://access.redhat.com/documentation/en-us/workload_availability_for_red_hat_openshift/24.1/html/remediation_fencing_and_maintenance/node-health-check-operator"
+          },
+          {
+            "name": "Source Code",
+            "url": "https://github.com/medik8s/node-healthcheck-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Dragonfly Team",
+            "email": "team-dragonfly@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:62c44057a27abd41cf3daf60b8736da59a82dadb65fa6c32bef65d19bd49ea49"
+    },
+    {
+      "name": "must_gather",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-must-gather-rhel8@sha256:c958f26cc81a3e20f9537a6203ab53d9f7ca45be91185e29c622f52e59a2e53e"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:765e34146932010fb979bdf85e529e84cc772bb4e3af74733091c4a185459406"
+    },
+    {
+      "name": "node-healthcheck-rhel8-operator-f608f05c0bb9cde37768fbb7c4cbf661c9d7fed42b6f6cd5151d876c8ec948e9-annotation",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:f608f05c0bb9cde37768fbb7c4cbf661c9d7fed42b6f6cd5151d876c8ec948e9"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:f608f05c0bb9cde37768fbb7c4cbf661c9d7fed42b6f6cd5151d876c8ec948e9"
+    },
+    {
+      "name": "node-remediation-console-plugin",
+      "image": "registry.redhat.io/workload-availability/node-remediation-console-rhel8@sha256:12c5c665395780d28769ea8e65a32da7a3db32046cdd836716e556ed4462add4"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "node-healthcheck-operator.v0.8.1",
+  "package": "node-healthcheck-operator",
+  "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:3d4656c9dc0352e9884484e8b0439bdff140259298630a7ce3dd8946a9c6870a",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "remediation.medik8s.io",
+        "kind": "NodeHealthCheck",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk.required",
+      "value": {
+        "group": "self-node-remediation.medik8s.io",
+        "kind": "SelfNodeRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "node-healthcheck-operator",
+        "version": "0.8.1"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"remediation.medik8s.io/v1alpha1\",\n    \"kind\": \"NodeHealthCheck\",\n    \"metadata\": {\n      \"name\": \"nodehealthcheck-sample\"\n    },\n    \"spec\": {\n      \"minHealthy\": \"51%\",\n      \"remediationTemplate\": {\n        \"apiVersion\": \"self-node-remediation.medik8s.io/v1alpha1\",\n        \"kind\": \"SelfNodeRemediationTemplate\",\n        \"name\": \"self-node-remediation-automatic-strategy-template\",\n        \"namespace\": \"openshift-operators\"\n      },\n      \"selector\": {\n        \"matchExpressions\": [\n          {\n            \"key\": \"node-role.kubernetes.io/worker\",\n            \"operator\": \"Exists\"\n          }\n        ]\n      },\n      \"unhealthyConditions\": [\n        {\n          \"duration\": \"300s\",\n          \"status\": \"False\",\n          \"type\": \"Ready\"\n        },\n        {\n          \"duration\": \"300s\",\n          \"status\": \"Unknown\",\n          \"type\": \"Ready\"\n        }\n      ]\n    }\n  }\n]",
+          "capabilities": "Basic Install",
+          "categories": "OpenShift Optional",
+          "console.openshift.io/plugins": "[\"node-remediation-console-plugin\"]",
+          "containerImage": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:e96c12998f72478de446aeda193447aa483284cc4cbaaa563773bbde7fba603e",
+          "createdAt": "2024-05-30T19:34:55Z",
+          "description": "Detect failed Nodes and trigger remediation with e.g. Self Node Remediation.",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.6.0 <0.8.1",
+          "operatorframework.io/suggested-namespace": "openshift-workload-availability",
+          "operatorframework.io/suggested-namespace-template": "{\"kind\":\"Namespace\",\"apiVersion\":\"v1\",\"metadata\":{\"name\":\"openshift-workload-availability\",\"annotations\":{\"openshift.io/node-selector\":\"\"}}}",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.33.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/medik8s/node-healthcheck-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "nodehealthchecks.remediation.medik8s.io",
+              "version": "v1alpha1",
+              "kind": "NodeHealthCheck",
+              "displayName": "Node Health Check",
+              "description": "NodeHealthCheck is the Schema for the nodehealthchecks API",
+              "resources": [
+                {
+                  "name": "nodehealthchecks",
+                  "kind": "NodeHealthCheck",
+                  "version": "v1alpha1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Conditions",
+                  "description": "Represents the observations of a NodeHealthCheck's current state. Known .status.conditions.type are: \"Disabled\"",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                },
+                {
+                  "path": "healthyNodes",
+                  "displayName": "Healthy Nodes",
+                  "description": "HealthyNodes specified the number of healthy nodes observed"
+                },
+                {
+                  "path": "inFlightRemediations",
+                  "displayName": "In Flight Remediations",
+                  "description": "InFlightRemediations records the timestamp when remediation triggered per node. Deprecated in favour of UnhealthyNodes."
+                },
+                {
+                  "path": "lastUpdateTime",
+                  "displayName": "Last Update Time",
+                  "description": "LastUpdateTime is the last time the status was updated."
+                },
+                {
+                  "path": "observedNodes",
+                  "displayName": "Observed Nodes",
+                  "description": "ObservedNodes specified the number of nodes observed by using the NHC spec.selector"
+                },
+                {
+                  "path": "phase",
+                  "displayName": "Phase",
+                  "description": "Phase represents the current phase of this Config. Known phases are Disabled, Paused, Remediating and Enabled, based on:\\n - the status of the Disabled condition\\n - the value of PauseRequests\\n - the value of InFlightRemediations",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.phase"
+                  ]
+                },
+                {
+                  "path": "reason",
+                  "displayName": "Reason",
+                  "description": "Reason explains the current phase in more detail.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.phase:reason"
+                  ]
+                },
+                {
+                  "path": "unhealthyNodes",
+                  "displayName": "Unhealthy Nodes",
+                  "description": "UnhealthyNodes tracks currently unhealthy nodes and their remediations."
+                },
+                {
+                  "path": "unhealthyNodes[0].conditionsHealthyTimestamp",
+                  "displayName": "Conditions Healthy Timestamp",
+                  "description": "ConditionsHealthyTimestamp is RFC 3339 date and time at which the unhealthy conditions didn't match anymore. The remediation CR will be deleted at that time, but the node will still be tracked as unhealthy until all remediation CRs are actually deleted, when remediators finished cleanup and removed their finalizers."
+                },
+                {
+                  "path": "unhealthyNodes[0].name",
+                  "displayName": "Name",
+                  "description": "Name is the name of the unhealthy node"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations",
+                  "displayName": "Remediations",
+                  "description": "Remediations tracks the remediations created for this node"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].resource",
+                  "displayName": "Resource",
+                  "description": "Resource is the reference to the remediation CR which was created"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].started",
+                  "displayName": "Started",
+                  "description": "Started is the creation time of the remediation CR"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].templateName",
+                  "displayName": "Template Name",
+                  "description": "TemplateName is required when using several templates of the same kind"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].timedOut",
+                  "displayName": "Timed Out",
+                  "description": "TimedOut is the time when the remediation timed out. Applicable for escalating remediations only."
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "escalatingRemediations",
+                  "displayName": "Escalating Remediations",
+                  "description": "EscalatingRemediations contain a list of ordered remediation templates with a timeout. The remediation templates will be used one after another, until the unhealthy node gets healthy within the timeout of the currently processed remediation. The order of remediation is defined by the \"order\" field of each \"escalatingRemediation\". \n Mutually exclusive with RemediationTemplate"
+                },
+                {
+                  "path": "escalatingRemediations[0].order",
+                  "displayName": "Order",
+                  "description": "Order defines the order for this remediation. Remediations with lower order will be used before remediations with higher order. Remediations must not have the same order."
+                },
+                {
+                  "path": "escalatingRemediations[0].remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by a remediation provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider."
+                },
+                {
+                  "path": "escalatingRemediations[0].timeout",
+                  "displayName": "Timeout",
+                  "description": "Timeout defines how long NHC will wait for the node getting healthy before the next remediation (if any) will be used. When the last remediation times out, the overall remediation is considered as failed. As a safeguard for preventing parallel remediations, a minimum of 60s is enforced. \n Expects a string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"."
+                },
+                {
+                  "path": "minHealthy",
+                  "displayName": "Min Healthy",
+                  "description": "Remediation is allowed if at least \"MinHealthy\" nodes selected by \"selector\" are healthy. Expects either a positive integer value or a percentage value. Percentage values must be positive whole numbers and are capped at 100%. 100% is valid and will block all remediation."
+                },
+                {
+                  "path": "pauseRequests",
+                  "displayName": "Pause Requests",
+                  "description": "PauseRequests will prevent any new remediation to start, while in-flight remediations keep running. Each entry is free form, and ideally represents the requested party reason for this pausing - i.e: \"imaginary-cluster-upgrade-manager-operator\""
+                },
+                {
+                  "path": "remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by an infrastructure provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider. \n Mutually exclusive with EscalatingRemediations"
+                },
+                {
+                  "path": "selector",
+                  "displayName": "Selector",
+                  "description": "Label selector to match nodes whose health will be exercised. \n Selecting both control-plane and worker nodes in one NHC CR is highly discouraged and can result in undesired behaviour. \n Note: mandatory now for above reason, but for backwards compatibility existing CRs will continue to work with an empty selector, which matches all nodes."
+                },
+                {
+                  "path": "unhealthyConditions",
+                  "displayName": "Unhealthy Conditions",
+                  "description": "UnhealthyConditions contains a list of the conditions that determine whether a node is considered unhealthy.  The conditions are combined in a logical OR, i.e. if any of the conditions is met, the node is unhealthy."
+                },
+                {
+                  "path": "unhealthyConditions[0].duration",
+                  "displayName": "Duration",
+                  "description": "Duration of the condition specified when a node is considered unhealthy. \n Expects a string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"."
+                },
+                {
+                  "path": "unhealthyConditions[0].status",
+                  "displayName": "Status",
+                  "description": "The condition status in the node's status to watch for. Typically False, True or Unknown."
+                },
+                {
+                  "path": "unhealthyConditions[0].type",
+                  "displayName": "Type",
+                  "description": "The condition type in the node's status to watch for."
+                }
+              ]
+            }
+          ]
+        },
+        "description": "### Introduction\nHardware is imperfect, and software contains bugs. When node level failures such as kernel hangs or dead NICs\noccur, the work required from the cluster does not decrease - workloads from affected nodes need to be\nrestarted somewhere.\n\nHowever some workloads, such as RWO volumes and StatefulSets, may require at-most-one semantics.\nFailures affecting these kind of workloads risk data loss and/or corruption if nodes (and the workloads\nrunning on them) are assumed to be dead whenever we stop hearing from them. For this reason it is important\nto know that the node has reached a safe state before initiating recovery of the workload.\n\nUnfortunately it is not always practical to require admin intervention in order to confirm the node’s true status.\nIn order to automate the recovery of exclusive workloads, we provide operators for failure detection\nand remediation.\n\n### Failure detection: Node Health Check operator\nThe “Node Health Check” (NHC) operator checks each Node’s set of\nNodeConditions (eg. NotReady) against the criteria and thresholds defined in\nNodeHealthCheck configuration. If the Node is deemed to be in a failed\nstate, NHC will initiate recovery by using the SIG Cluster API's “External\nRemediation” API to instantiate the configured remediation template which\nspecifies the mechanism/controller to be used.\n\n### Failure handling: External remediators\nThere are multiple remediators for handling node failure that we recommend:\n- Self Node Remediation (SNR)\n- Fence Agents Remediation (FAR)\n- Machine Deletion Remediation (MDR)\n\nSNR is installed automatically when installing NHC.\n\n#### Self Node Remediation (SNR)\nSNR uses watchdog timers and heuristics to ensure nodes enter a safe state\n(no longer hosting workloads) within a known and finite period of time,\nbefore signaling to the system that all Pods on the failed Node are no longer active\nand can be relocated elsewhere.\nIn the case of transient errors, the watchdog’s actions will also result in\nthe node rebooting and rejoining the cluster - restoring capacity.\n\n#### Fence Agents Remediation (FAR)\nFAR uses well-known agents to fence unhealthy nodes, and eventually FAR remediates the nodes.\nThe remediation includes rebooting the unhealthy node using a fence agent,\nand then evicting workloads from the unhealthy node.\n\n#### Machine Deletion Remediation (MDR)\nMDR is limited to OpenShift, and it uses Machine API for reprovisioning unhealthy nodes by deleting their machines.\n",
+        "displayName": "Node Health Check Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": false
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "NHC",
+          "Self Node Remediation",
+          "SNR",
+          "Remediation",
+          "Fencing",
+          "medik8s",
+          "k8s"
+        ],
+        "links": [
+          {
+            "name": "Node Healthcheck Operator",
+            "url": "https://access.redhat.com/documentation/en-us/workload_availability_for_red_hat_openshift/24.2/html/remediation_fencing_and_maintenance/node-health-check-operator"
+          },
+          {
+            "name": "Source Code",
+            "url": "https://github.com/medik8s/node-healthcheck-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Dragonfly Team",
+            "email": "team-dragonfly@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:6b33793126e32e75f4fa02dbb014eaa7458f36c70f316a7383171a02c38509f1"
+    },
+    {
+      "name": "must_gather",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-must-gather-rhel8@sha256:5222f5e7ababbb5f8f4cfff9853b1884836f2f59ffdba909ef3f3f4f6e21d967"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:3d4656c9dc0352e9884484e8b0439bdff140259298630a7ce3dd8946a9c6870a"
+    },
+    {
+      "name": "node-healthcheck-rhel8-operator-e96c12998f72478de446aeda193447aa483284cc4cbaaa563773bbde7fba603e-annotation",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:e96c12998f72478de446aeda193447aa483284cc4cbaaa563773bbde7fba603e"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:e96c12998f72478de446aeda193447aa483284cc4cbaaa563773bbde7fba603e"
+    },
+    {
+      "name": "node-remediation-console-plugin",
+      "image": "registry.redhat.io/workload-availability/node-remediation-console-rhel8@sha256:f8b1ce0d967c111c6a6967e071f2478d174bb52cd02baea1df08961c06c4b1d0"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "node-healthcheck-operator.v0.8.2",
+  "package": "node-healthcheck-operator",
+  "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:63bd0faf0b64e4672014205f9dcfeec6c436edd7dc2aaf83cd053d6e4569d90a",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "remediation.medik8s.io",
+        "kind": "NodeHealthCheck",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.gvk.required",
+      "value": {
+        "group": "self-node-remediation.medik8s.io",
+        "kind": "SelfNodeRemediation",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "node-healthcheck-operator",
+        "version": "0.8.2"
+      }
+    },
+    {
+      "type": "olm.csv.metadata",
+      "value": {
+        "annotations": {
+          "alm-examples": "[\n  {\n    \"apiVersion\": \"remediation.medik8s.io/v1alpha1\",\n    \"kind\": \"NodeHealthCheck\",\n    \"metadata\": {\n      \"name\": \"nodehealthcheck-sample\"\n    },\n    \"spec\": {\n      \"minHealthy\": \"51%\",\n      \"remediationTemplate\": {\n        \"apiVersion\": \"self-node-remediation.medik8s.io/v1alpha1\",\n        \"kind\": \"SelfNodeRemediationTemplate\",\n        \"name\": \"self-node-remediation-automatic-strategy-template\",\n        \"namespace\": \"openshift-operators\"\n      },\n      \"selector\": {\n        \"matchExpressions\": [\n          {\n            \"key\": \"node-role.kubernetes.io/worker\",\n            \"operator\": \"Exists\"\n          }\n        ]\n      },\n      \"unhealthyConditions\": [\n        {\n          \"duration\": \"300s\",\n          \"status\": \"False\",\n          \"type\": \"Ready\"\n        },\n        {\n          \"duration\": \"300s\",\n          \"status\": \"Unknown\",\n          \"type\": \"Ready\"\n        }\n      ]\n    }\n  }\n]",
+          "capabilities": "Basic Install",
+          "categories": "OpenShift Optional",
+          "console.openshift.io/plugins": "[\"node-remediation-console-plugin\"]",
+          "containerImage": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:4811046e26846b1f12a3b20ddc6209980897c11b171ddd61d26b43630cc1d4b4",
+          "createdAt": "2024-08-09T14:54:37Z",
+          "description": "Detect failed Nodes and trigger remediation with e.g. Self Node Remediation.",
+          "features.operators.openshift.io/disconnected": "true",
+          "features.operators.openshift.io/fips-compliant": "false",
+          "features.operators.openshift.io/proxy-aware": "false",
+          "features.operators.openshift.io/tls-profiles": "false",
+          "features.operators.openshift.io/token-auth-aws": "false",
+          "features.operators.openshift.io/token-auth-azure": "false",
+          "features.operators.openshift.io/token-auth-gcp": "false",
+          "olm.skipRange": ">=0.6.0 <0.8.2",
+          "operatorframework.io/suggested-namespace": "openshift-workload-availability",
+          "operatorframework.io/suggested-namespace-template": "{\"kind\":\"Namespace\",\"apiVersion\":\"v1\",\"metadata\":{\"name\":\"openshift-workload-availability\",\"annotations\":{\"openshift.io/node-selector\":\"\"}}}",
+          "operators.openshift.io/valid-subscription": "[\"OpenShift Kubernetes Engine\", \"OpenShift Container Platform\", \"OpenShift Platform Plus\"]",
+          "operators.operatorframework.io/builder": "operator-sdk-v1.33.0",
+          "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+          "repository": "https://github.com/medik8s/node-healthcheck-operator",
+          "support": "Red Hat"
+        },
+        "apiServiceDefinitions": {},
+        "crdDescriptions": {
+          "owned": [
+            {
+              "name": "nodehealthchecks.remediation.medik8s.io",
+              "version": "v1alpha1",
+              "kind": "NodeHealthCheck",
+              "displayName": "Node Health Check",
+              "description": "NodeHealthCheck is the Schema for the nodehealthchecks API",
+              "resources": [
+                {
+                  "name": "nodehealthchecks",
+                  "kind": "NodeHealthCheck",
+                  "version": "v1alpha1"
+                }
+              ],
+              "statusDescriptors": [
+                {
+                  "path": "conditions",
+                  "displayName": "Conditions",
+                  "description": "Represents the observations of a NodeHealthCheck's current state. Known .status.conditions.type are: \"Disabled\"",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.conditions"
+                  ]
+                },
+                {
+                  "path": "healthyNodes",
+                  "displayName": "Healthy Nodes",
+                  "description": "HealthyNodes specified the number of healthy nodes observed"
+                },
+                {
+                  "path": "inFlightRemediations",
+                  "displayName": "In Flight Remediations",
+                  "description": "InFlightRemediations records the timestamp when remediation triggered per node. Deprecated in favour of UnhealthyNodes."
+                },
+                {
+                  "path": "lastUpdateTime",
+                  "displayName": "Last Update Time",
+                  "description": "LastUpdateTime is the last time the status was updated."
+                },
+                {
+                  "path": "observedNodes",
+                  "displayName": "Observed Nodes",
+                  "description": "ObservedNodes specified the number of nodes observed by using the NHC spec.selector"
+                },
+                {
+                  "path": "phase",
+                  "displayName": "Phase",
+                  "description": "Phase represents the current phase of this Config. Known phases are Disabled, Paused, Remediating and Enabled, based on:\\n - the status of the Disabled condition\\n - the value of PauseRequests\\n - the value of InFlightRemediations",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.phase"
+                  ]
+                },
+                {
+                  "path": "reason",
+                  "displayName": "Reason",
+                  "description": "Reason explains the current phase in more detail.",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:io.kubernetes.phase:reason"
+                  ]
+                },
+                {
+                  "path": "unhealthyNodes",
+                  "displayName": "Unhealthy Nodes",
+                  "description": "UnhealthyNodes tracks currently unhealthy nodes and their remediations."
+                },
+                {
+                  "path": "unhealthyNodes[0].conditionsHealthyTimestamp",
+                  "displayName": "Conditions Healthy Timestamp",
+                  "description": "ConditionsHealthyTimestamp is RFC 3339 date and time at which the unhealthy conditions didn't match anymore. The remediation CR will be deleted at that time, but the node will still be tracked as unhealthy until all remediation CRs are actually deleted, when remediators finished cleanup and removed their finalizers."
+                },
+                {
+                  "path": "unhealthyNodes[0].name",
+                  "displayName": "Name",
+                  "description": "Name is the name of the unhealthy node"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations",
+                  "displayName": "Remediations",
+                  "description": "Remediations tracks the remediations created for this node"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].resource",
+                  "displayName": "Resource",
+                  "description": "Resource is the reference to the remediation CR which was created"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].started",
+                  "displayName": "Started",
+                  "description": "Started is the creation time of the remediation CR"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].templateName",
+                  "displayName": "Template Name",
+                  "description": "TemplateName is required when using several templates of the same kind"
+                },
+                {
+                  "path": "unhealthyNodes[0].remediations[0].timedOut",
+                  "displayName": "Timed Out",
+                  "description": "TimedOut is the time when the remediation timed out. Applicable for escalating remediations only."
+                }
+              ],
+              "specDescriptors": [
+                {
+                  "path": "escalatingRemediations",
+                  "displayName": "Escalating Remediations",
+                  "description": "EscalatingRemediations contain a list of ordered remediation templates with a timeout. The remediation templates will be used one after another, until the unhealthy node gets healthy within the timeout of the currently processed remediation. The order of remediation is defined by the \"order\" field of each \"escalatingRemediation\". \n Mutually exclusive with RemediationTemplate"
+                },
+                {
+                  "path": "escalatingRemediations[0].order",
+                  "displayName": "Order",
+                  "description": "Order defines the order for this remediation. Remediations with lower order will be used before remediations with higher order. Remediations must not have the same order."
+                },
+                {
+                  "path": "escalatingRemediations[0].remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by a remediation provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider."
+                },
+                {
+                  "path": "escalatingRemediations[0].timeout",
+                  "displayName": "Timeout",
+                  "description": "Timeout defines how long NHC will wait for the node getting healthy before the next remediation (if any) will be used. When the last remediation times out, the overall remediation is considered as failed. As a safeguard for preventing parallel remediations, a minimum of 60s is enforced. \n Expects a string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"."
+                },
+                {
+                  "path": "minHealthy",
+                  "displayName": "Min Healthy",
+                  "description": "Remediation is allowed if at least \"MinHealthy\" nodes selected by \"selector\" are healthy. Expects either a positive integer value or a percentage value. Percentage values must be positive whole numbers and are capped at 100%. 100% is valid and will block all remediation."
+                },
+                {
+                  "path": "pauseRequests",
+                  "displayName": "Pause Requests",
+                  "description": "PauseRequests will prevent any new remediation to start, while in-flight remediations keep running. Each entry is free form, and ideally represents the requested party reason for this pausing - i.e: \"imaginary-cluster-upgrade-manager-operator\""
+                },
+                {
+                  "path": "remediationTemplate",
+                  "displayName": "Remediation Template",
+                  "description": "RemediationTemplate is a reference to a remediation template provided by an infrastructure provider. \n If a node needs remediation the controller will create an object from this template and then it should be picked up by a remediation provider. \n Mutually exclusive with EscalatingRemediations"
+                },
+                {
+                  "path": "selector",
+                  "displayName": "Selector",
+                  "description": "Label selector to match nodes whose health will be exercised. \n Selecting both control-plane and worker nodes in one NHC CR is highly discouraged and can result in undesired behaviour. \n Note: mandatory now for above reason, but for backwards compatibility existing CRs will continue to work with an empty selector, which matches all nodes."
+                },
+                {
+                  "path": "unhealthyConditions",
+                  "displayName": "Unhealthy Conditions",
+                  "description": "UnhealthyConditions contains a list of the conditions that determine whether a node is considered unhealthy.  The conditions are combined in a logical OR, i.e. if any of the conditions is met, the node is unhealthy."
+                },
+                {
+                  "path": "unhealthyConditions[0].duration",
+                  "displayName": "Duration",
+                  "description": "Duration of the condition specified when a node is considered unhealthy. \n Expects a string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"."
+                },
+                {
+                  "path": "unhealthyConditions[0].status",
+                  "displayName": "Status",
+                  "description": "The condition status in the node's status to watch for. Typically False, True or Unknown."
+                },
+                {
+                  "path": "unhealthyConditions[0].type",
+                  "displayName": "Type",
+                  "description": "The condition type in the node's status to watch for."
+                }
+              ]
+            }
+          ]
+        },
+        "description": "### Introduction\nHardware is imperfect, and software contains bugs. When node level failures such as kernel hangs or dead NICs\noccur, the work required from the cluster does not decrease - workloads from affected nodes need to be\nrestarted somewhere.\n\nHowever some workloads, such as RWO volumes and StatefulSets, may require at-most-one semantics.\nFailures affecting these kind of workloads risk data loss and/or corruption if nodes (and the workloads\nrunning on them) are assumed to be dead whenever we stop hearing from them. For this reason it is important\nto know that the node has reached a safe state before initiating recovery of the workload.\n\nUnfortunately it is not always practical to require admin intervention in order to confirm the node’s true status.\nIn order to automate the recovery of exclusive workloads, we provide operators for failure detection\nand remediation.\n\n### Failure detection: Node Health Check operator\nThe “Node Health Check” (NHC) operator checks each Node’s set of\nNodeConditions (eg. NotReady) against the criteria and thresholds defined in\nNodeHealthCheck configuration. If the Node is deemed to be in a failed\nstate, NHC will initiate recovery by using the SIG Cluster API's “External\nRemediation” API to instantiate the configured remediation template which\nspecifies the mechanism/controller to be used.\n\n### Failure handling: External remediators\nThere are multiple remediators for handling node failure that we recommend:\n- Self Node Remediation (SNR)\n- Fence Agents Remediation (FAR)\n- Machine Deletion Remediation (MDR)\n\nSNR is installed automatically when installing NHC.\n\n#### Self Node Remediation (SNR)\nSNR uses watchdog timers and heuristics to ensure nodes enter a safe state\n(no longer hosting workloads) within a known and finite period of time,\nbefore signaling to the system that all Pods on the failed Node are no longer active\nand can be relocated elsewhere.\nIn the case of transient errors, the watchdog’s actions will also result in\nthe node rebooting and rejoining the cluster - restoring capacity.\n\n#### Fence Agents Remediation (FAR)\nFAR uses well-known agents to fence unhealthy nodes, and eventually FAR remediates the nodes.\nThe remediation includes rebooting the unhealthy node using a fence agent,\nand then evicting workloads from the unhealthy node.\n\n#### Machine Deletion Remediation (MDR)\nMDR is limited to OpenShift, and it uses Machine API for reprovisioning unhealthy nodes by deleting their machines.\n",
+        "displayName": "Node Health Check Operator",
+        "installModes": [
+          {
+            "type": "OwnNamespace",
+            "supported": false
+          },
+          {
+            "type": "SingleNamespace",
+            "supported": false
+          },
+          {
+            "type": "MultiNamespace",
+            "supported": false
+          },
+          {
+            "type": "AllNamespaces",
+            "supported": true
+          }
+        ],
+        "keywords": [
+          "NHC",
+          "Self Node Remediation",
+          "SNR",
+          "Remediation",
+          "Fencing",
+          "medik8s",
+          "k8s"
+        ],
+        "links": [
+          {
+            "name": "Node Healthcheck Operator",
+            "url": "https://access.redhat.com/documentation/en-us/workload_availability_for_red_hat_openshift/24.3/html/remediation_fencing_and_maintenance/node-health-check-operator"
+          },
+          {
+            "name": "Source Code",
+            "url": "https://github.com/medik8s/node-healthcheck-operator"
+          }
+        ],
+        "maintainers": [
+          {
+            "name": "Dragonfly Team",
+            "email": "team-dragonfly@redhat.com"
+          }
+        ],
+        "maturity": "alpha",
+        "minKubeVersion": "1.20.0",
+        "provider": {
+          "name": "Red Hat",
+          "url": "https://www.redhat.com"
+        }
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "kube-rbac-proxy",
+      "image": "registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:77df668a9591bbaae675d0553f8dca5423c0f257317bc08fe821d965f44ed019"
+    },
+    {
+      "name": "must_gather",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-must-gather-rhel8@sha256:062cd9def39a087ae3802cd5208e2f0d5bfca29ba76ebd5139d88348e8c9e923"
+    },
+    {
+      "name": "",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-operator-bundle@sha256:63bd0faf0b64e4672014205f9dcfeec6c436edd7dc2aaf83cd053d6e4569d90a"
+    },
+    {
+      "name": "node-healthcheck-rhel8-operator-4811046e26846b1f12a3b20ddc6209980897c11b171ddd61d26b43630cc1d4b4-annotation",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:4811046e26846b1f12a3b20ddc6209980897c11b171ddd61d26b43630cc1d4b4"
+    },
+    {
+      "name": "manager",
+      "image": "registry.redhat.io/workload-availability/node-healthcheck-rhel8-operator@sha256:4811046e26846b1f12a3b20ddc6209980897c11b171ddd61d26b43630cc1d4b4"
+    },
+    {
+      "name": "node-remediation-console-plugin",
+      "image": "registry.redhat.io/workload-availability/node-remediation-console-rhel8@sha256:942f69efc7ae05d6c4d9c33335e4be71bfae2e6f9ef062dcd7887eebfe02120e"
+    }
+  ]
+}

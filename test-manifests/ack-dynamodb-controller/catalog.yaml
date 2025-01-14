@@ -1,0 +1,1431 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-dynamodb-controller
+schema: olm.package
+---
+entries:
+- name: ack-dynamodb-controller.v0.0.10
+  replaces: ack-dynamodb-controller.v0.0.9
+- name: ack-dynamodb-controller.v0.0.11
+  replaces: ack-dynamodb-controller.v0.0.10
+- name: ack-dynamodb-controller.v0.0.12
+  replaces: ack-dynamodb-controller.v0.0.11
+- name: ack-dynamodb-controller.v0.0.13
+  replaces: ack-dynamodb-controller.v0.0.12
+- name: ack-dynamodb-controller.v0.0.14
+  replaces: ack-dynamodb-controller.v0.0.13
+- name: ack-dynamodb-controller.v0.0.15
+  replaces: ack-dynamodb-controller.v0.0.14
+- name: ack-dynamodb-controller.v0.0.16
+  replaces: ack-dynamodb-controller.v0.0.15
+- name: ack-dynamodb-controller.v0.0.17
+  replaces: ack-dynamodb-controller.v0.0.16
+- name: ack-dynamodb-controller.v0.0.18
+  replaces: ack-dynamodb-controller.v0.0.17
+- name: ack-dynamodb-controller.v0.0.19
+  replaces: ack-dynamodb-controller.v0.0.18
+- name: ack-dynamodb-controller.v0.0.20
+  replaces: ack-dynamodb-controller.v0.0.19
+- name: ack-dynamodb-controller.v0.0.8
+- name: ack-dynamodb-controller.v0.0.9
+  replaces: ack-dynamodb-controller.v0.0.8
+- name: ack-dynamodb-controller.v0.1.0
+  replaces: ack-dynamodb-controller.v0.0.20
+- name: ack-dynamodb-controller.v0.1.1
+  replaces: ack-dynamodb-controller.v0.1.0
+- name: ack-dynamodb-controller.v0.1.10
+  replaces: ack-dynamodb-controller.v0.1.9
+- name: ack-dynamodb-controller.v0.1.3
+  replaces: ack-dynamodb-controller.v0.1.1
+- name: ack-dynamodb-controller.v0.1.4
+  replaces: ack-dynamodb-controller.v0.1.3
+- name: ack-dynamodb-controller.v0.1.5
+  replaces: ack-dynamodb-controller.v0.1.4
+- name: ack-dynamodb-controller.v0.1.6
+  replaces: ack-dynamodb-controller.v0.1.5
+- name: ack-dynamodb-controller.v0.1.7
+  replaces: ack-dynamodb-controller.v0.1.6
+- name: ack-dynamodb-controller.v0.1.8
+  replaces: ack-dynamodb-controller.v0.1.7
+- name: ack-dynamodb-controller.v0.1.9
+  replaces: ack-dynamodb-controller.v0.1.8
+- name: ack-dynamodb-controller.v1.0.0
+  replaces: ack-dynamodb-controller.v0.1.10
+- name: ack-dynamodb-controller.v1.0.1
+  replaces: ack-dynamodb-controller.v1.0.0
+- name: ack-dynamodb-controller.v1.0.2
+  replaces: ack-dynamodb-controller.v1.0.1
+- name: ack-dynamodb-controller.v1.0.3
+  replaces: ack-dynamodb-controller.v1.0.2
+- name: ack-dynamodb-controller.v1.1.0
+  replaces: ack-dynamodb-controller.v1.0.3
+- name: ack-dynamodb-controller.v1.1.1
+  replaces: ack-dynamodb-controller.v1.1.0
+- name: ack-dynamodb-controller.v1.2.0
+  replaces: ack-dynamodb-controller.v1.1.1
+- name: ack-dynamodb-controller.v1.2.1
+  replaces: ack-dynamodb-controller.v1.2.0
+- name: ack-dynamodb-controller.v1.2.11
+  replaces: ack-dynamodb-controller.v1.2.9
+- name: ack-dynamodb-controller.v1.2.12
+  replaces: ack-dynamodb-controller.v1.2.11
+- name: ack-dynamodb-controller.v1.2.13
+  replaces: ack-dynamodb-controller.v1.2.12
+- name: ack-dynamodb-controller.v1.2.14
+  replaces: ack-dynamodb-controller.v1.2.13
+- name: ack-dynamodb-controller.v1.2.2
+  replaces: ack-dynamodb-controller.v1.2.1
+- name: ack-dynamodb-controller.v1.2.4
+  replaces: ack-dynamodb-controller.v1.2.2
+- name: ack-dynamodb-controller.v1.2.5
+  replaces: ack-dynamodb-controller.v1.2.4
+- name: ack-dynamodb-controller.v1.2.6
+  replaces: ack-dynamodb-controller.v1.2.5
+- name: ack-dynamodb-controller.v1.2.8
+  replaces: ack-dynamodb-controller.v1.2.6
+- name: ack-dynamodb-controller.v1.2.9
+  replaces: ack-dynamodb-controller.v1.2.8
+name: alpha
+package: ack-dynamodb-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:fa9df73304b05f220842f74999714efc17f82eab7b85565e686ba170ea9154cb
+name: ack-dynamodb-controller.v0.0.10
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:fa9df73304b05f220842f74999714efc17f82eab7b85565e686ba170ea9154cb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:473b462f4466bd642da8a312ff92b2120f53a79b9ae661f1b102d89b01a3096b
+name: ack-dynamodb-controller.v0.0.11
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:473b462f4466bd642da8a312ff92b2120f53a79b9ae661f1b102d89b01a3096b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:8c153e077f5d2e0d0b09641d2c3a582ce0bcb133742d0ef2d5ef3f0073de7f97
+name: ack-dynamodb-controller.v0.0.12
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:8c153e077f5d2e0d0b09641d2c3a582ce0bcb133742d0ef2d5ef3f0073de7f97
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:d9afdbd25aedb85dec8b333734bf03a2f3c394eb3638c55941f91670f6cbecdf
+name: ack-dynamodb-controller.v0.0.13
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:d9afdbd25aedb85dec8b333734bf03a2f3c394eb3638c55941f91670f6cbecdf
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:12d3ba6ceee0a366f944b1e3a090f19b4bede6068723b5d0d873443494f31e98
+name: ack-dynamodb-controller.v0.0.14
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:12d3ba6ceee0a366f944b1e3a090f19b4bede6068723b5d0d873443494f31e98
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:0afe971ec51f050b9125895d4bb0fe040ba080210508124738210db515ace427
+name: ack-dynamodb-controller.v0.0.15
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:0afe971ec51f050b9125895d4bb0fe040ba080210508124738210db515ace427
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:165ce00cc2da26740f4d39f1c6d6de70109aa82c64f01fc0119d66ee73c37f82
+name: ack-dynamodb-controller.v0.0.16
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:165ce00cc2da26740f4d39f1c6d6de70109aa82c64f01fc0119d66ee73c37f82
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:80d0b87d07068622dbf21a592045f6805e556b410e645c227d88df1f98c12464
+name: ack-dynamodb-controller.v0.0.17
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:80d0b87d07068622dbf21a592045f6805e556b410e645c227d88df1f98c12464
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:e8b5e45697af6bb0b35c966b5588c59a984dc49f303c78edff4333adad6710c3
+name: ack-dynamodb-controller.v0.0.18
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.18
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.18
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:e8b5e45697af6bb0b35c966b5588c59a984dc49f303c78edff4333adad6710c3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:7dc55317910511f3756adf7e0b72840535b31625f0490a370eb9b6727efd765e
+name: ack-dynamodb-controller.v0.0.19
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:7dc55317910511f3756adf7e0b72840535b31625f0490a370eb9b6727efd765e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:5ce7cac6af1ffc04c2393c36a50040edcbf5ad8f93c99264068b9470911447a2
+name: ack-dynamodb-controller.v0.0.20
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.20
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.20
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:5ce7cac6af1ffc04c2393c36a50040edcbf5ad8f93c99264068b9470911447a2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:45ce5cb125cb58b919b45e40fbd79338a21b5b4e987ede2606a1551fbe74a2df
+name: ack-dynamodb-controller.v0.0.8
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:45ce5cb125cb58b919b45e40fbd79338a21b5b4e987ede2606a1551fbe74a2df
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:769dbc90e649a053461c9941f933276dc8b57b9c0df5f9f40f59d01dbd202f8a
+name: ack-dynamodb-controller.v0.0.9
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:769dbc90e649a053461c9941f933276dc8b57b9c0df5f9f40f59d01dbd202f8a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:610f4a8402bb222a735a5001d1db7683ccc0302a6b71dbcfdf2a2f215a72e1ef
+name: ack-dynamodb-controller.v0.1.0
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:610f4a8402bb222a735a5001d1db7683ccc0302a6b71dbcfdf2a2f215a72e1ef
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:ae80edde30dddbc349137c4d9e289c8d503807c849ffc3c5a841e35dc6869551
+name: ack-dynamodb-controller.v0.1.1
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:ae80edde30dddbc349137c4d9e289c8d503807c849ffc3c5a841e35dc6869551
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:17172a84870734b35e9264da34a0ea913019ebbff134ccee42b09e37614fc160
+name: ack-dynamodb-controller.v0.1.10
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.10
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:17172a84870734b35e9264da34a0ea913019ebbff134ccee42b09e37614fc160
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:3bf44976b07989dc421df69e336324549e9cb1cce48d358eaf5ca8095884e638
+name: ack-dynamodb-controller.v0.1.3
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:3bf44976b07989dc421df69e336324549e9cb1cce48d358eaf5ca8095884e638
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:a8ffe46731b0ecab47b784f1ab5c75931dd4e8c037b8d76d900b57aa62569b9a
+name: ack-dynamodb-controller.v0.1.4
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.4
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:a8ffe46731b0ecab47b784f1ab5c75931dd4e8c037b8d76d900b57aa62569b9a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:893556567e0f05c1ae65ff481b8dcd6275d192811a3f8ca3a9e50d04161a10a7
+name: ack-dynamodb-controller.v0.1.5
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.5
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:893556567e0f05c1ae65ff481b8dcd6275d192811a3f8ca3a9e50d04161a10a7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:55db60e675a133d4250d00cc426fb17e148f389c8ae3bcc7de99f45c54dde756
+name: ack-dynamodb-controller.v0.1.6
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.6
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:55db60e675a133d4250d00cc426fb17e148f389c8ae3bcc7de99f45c54dde756
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:03d89e977172528454cda50fd41d57a498efb42f5803e8fb9a1547c3e85c62ba
+name: ack-dynamodb-controller.v0.1.7
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.7
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:03d89e977172528454cda50fd41d57a498efb42f5803e8fb9a1547c3e85c62ba
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:c5d4df89178fcd303cd4a2dce8ea45a211b2388923666a54bc24aa45dc362d27
+name: ack-dynamodb-controller.v0.1.8
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.8
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:c5d4df89178fcd303cd4a2dce8ea45a211b2388923666a54bc24aa45dc362d27
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:d2231942a219d6eccebccc8f059f69fd40bdbd8402f7440fd382cd9a80d43930
+name: ack-dynamodb-controller.v0.1.9
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 0.1.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v0.1.9
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:d2231942a219d6eccebccc8f059f69fd40bdbd8402f7440fd382cd9a80d43930
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:65e8d50e4caddb20e0cb399f2fb965846d5fe56997cc82515314274b50880053
+name: ack-dynamodb-controller.v1.0.0
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:65e8d50e4caddb20e0cb399f2fb965846d5fe56997cc82515314274b50880053
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:b17d4bf932a78766e1f900740b54ec4879fb4fcfcda6e17b61cc21ccf01b5a67
+name: ack-dynamodb-controller.v1.0.1
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:b17d4bf932a78766e1f900740b54ec4879fb4fcfcda6e17b61cc21ccf01b5a67
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:b67bcdc5a10f5e51c36ab53d10352b4033bbacb3994e6e5b37777c05aff0bb23
+name: ack-dynamodb-controller.v1.0.2
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:b67bcdc5a10f5e51c36ab53d10352b4033bbacb3994e6e5b37777c05aff0bb23
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:c1018120c0c5aef60532289e19d8bb6b66cc8a91a864016a2414953cda16c216
+name: ack-dynamodb-controller.v1.0.3
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:c1018120c0c5aef60532289e19d8bb6b66cc8a91a864016a2414953cda16c216
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:381b7fd57a26bba80da6df421a82a4f7eb41144f7d22a261649d2db07e4aac1c
+name: ack-dynamodb-controller.v1.1.0
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v1.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:381b7fd57a26bba80da6df421a82a4f7eb41144f7d22a261649d2db07e4aac1c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:074ed61c580a7b39daa9ffda29a42648f8aa1fb8cce598ce73ae5476113c16f1
+name: ack-dynamodb-controller.v1.1.1
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:v1.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:074ed61c580a7b39daa9ffda29a42648f8aa1fb8cce598ce73ae5476113c16f1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:d2ce6fde24f56f4a3e2ce82d71d9879a861fa9a2ebf76c0ae6fa7e8ef9ca402e
+name: ack-dynamodb-controller.v1.2.0
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.0
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:d2ce6fde24f56f4a3e2ce82d71d9879a861fa9a2ebf76c0ae6fa7e8ef9ca402e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:2e869bd52705286d6d9da78cda89b556cd09822faa0f4657a7eaec165ad7c7f6
+name: ack-dynamodb-controller.v1.2.1
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.1
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:2e869bd52705286d6d9da78cda89b556cd09822faa0f4657a7eaec165ad7c7f6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:a84e80f8cd4a855e76c2c96ee0355b5194473d92a3a536924de5dd8e34bf967d
+name: ack-dynamodb-controller.v1.2.11
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.11
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:a84e80f8cd4a855e76c2c96ee0355b5194473d92a3a536924de5dd8e34bf967d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:748a2d7c72db8336fb0e26bf65fe30620a06332deb8aea0467d89c9f3d5f2696
+name: ack-dynamodb-controller.v1.2.12
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.12
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:748a2d7c72db8336fb0e26bf65fe30620a06332deb8aea0467d89c9f3d5f2696
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:d7951205e2f9237a503df86115a4a1526b865f7dfb0b514b9719de17a7d9a349
+name: ack-dynamodb-controller.v1.2.13
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.13
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:d7951205e2f9237a503df86115a4a1526b865f7dfb0b514b9719de17a7d9a349
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:4fe88ef63f82f33e5400e6c7ebac6702d0e8c0d0e4360948037fd0257a8e2c1b
+name: ack-dynamodb-controller.v1.2.14
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.14
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "dynamodb.services.k8s.aws/v1alpha1",
+            "kind": "Backup",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "dynamodb.services.k8s.aws/v1alpha1",
+            "kind": "GlobalTable",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "dynamodb.services.k8s.aws/v1alpha1",
+            "kind": "Table",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.14
+      createdAt: "2024-08-31T01:33:16Z"
+      description: AWS DynamoDB controller is a service controller for managing DynamoDB
+        resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Backup represents the state of an AWS dynamodb Backup resource.
+        displayName: Backup
+        kind: Backup
+        name: backups.dynamodb.services.k8s.aws
+        version: v1alpha1
+      - description: GlobalTable represents the state of an AWS dynamodb GlobalTable
+          resource.
+        displayName: GlobalTable
+        kind: GlobalTable
+        name: globaltables.dynamodb.services.k8s.aws
+        version: v1alpha1
+      - description: Table represents the state of an AWS dynamodb Table resource.
+        displayName: Table
+        kind: Table
+        name: tables.dynamodb.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Amazon DynamoDB resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon DynamoDB**
+
+      Amazon DynamoDB is a fully managed NoSQL database service that provides fast and predictable performance with seamless scalability. DynamoDB lets you offload the administrative burdens of operating and scaling a distributed database so that you don't have to worry about hardware provisioning, setup and configuration, replication, software patching, or cluster scaling. DynamoDB also offers encryption at rest, which eliminates the operational burden and complexity involved in protecting sensitive data. For more information, see [DynamoDB Encryption at Rest](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html).
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon DynamoDB
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - dynamodb
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon DynamoDB Developer Resources
+      url: https://aws.amazon.com/dynamodb/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: dynamodb maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.14
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:4fe88ef63f82f33e5400e6c7ebac6702d0e8c0d0e4360948037fd0257a8e2c1b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:abc6c078ec92e0e4689f2d5b6cd854ef8c369d0348159b4da89d56887ba18e3a
+name: ack-dynamodb-controller.v1.2.2
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.2
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:abc6c078ec92e0e4689f2d5b6cd854ef8c369d0348159b4da89d56887ba18e3a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:f808361f98fd8e9ed0906dc60fc647f4438e644c9746897b7bbee28e06ac2cb7
+name: ack-dynamodb-controller.v1.2.4
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.4
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:f808361f98fd8e9ed0906dc60fc647f4438e644c9746897b7bbee28e06ac2cb7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:db60964f421a26d1ef443fabd3745fceba94bf88a62beb32a7a0975a6146e646
+name: ack-dynamodb-controller.v1.2.5
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.5
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:db60964f421a26d1ef443fabd3745fceba94bf88a62beb32a7a0975a6146e646
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:bb0b34ed254818a1eea38c747f40816f262b11a1c4a3a14d15ba08784b6cac8b
+name: ack-dynamodb-controller.v1.2.6
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.6
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:bb0b34ed254818a1eea38c747f40816f262b11a1c4a3a14d15ba08784b6cac8b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:6670f244e583c6ac7e15580c0bad3b35792215d19f108b8a659cb60ed7644336
+name: ack-dynamodb-controller.v1.2.8
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.8
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:6670f244e583c6ac7e15580c0bad3b35792215d19f108b8a659cb60ed7644336
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:36d214ec33adce4000486d82f79cbfdb484a31bbd844497f1d7029bb18d3c7a7
+name: ack-dynamodb-controller.v1.2.9
+package: ack-dynamodb-controller
+properties:
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Backup
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: GlobalTable
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: dynamodb.services.k8s.aws
+    kind: Table
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-dynamodb-controller
+    version: 1.2.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/dynamodb-controller:1.2.9
+  name: ""
+- image: quay.io/operatorhubio/ack-dynamodb-controller@sha256:36d214ec33adce4000486d82f79cbfdb484a31bbd844497f1d7029bb18d3c7a7
+  name: ""
+schema: olm.bundle

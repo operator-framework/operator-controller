@@ -1,0 +1,50 @@
+---
+defaultChannel: stable
+name: argocd-helm
+schema: olm.package
+---
+entries:
+- name: argocd-helm.v7.6.6
+- name: argocd-helm.v7.6.7
+  replaces: argocd-helm.v7.6.6
+- name: argocd-helm.v7.6.8
+  replaces: argocd-helm.v7.6.7
+name: stable
+package: argocd-helm
+schema: olm.channel
+---
+image: https://github.com/argoproj/argo-helm/releases/download/argo-cd-7.6.8/argo-cd-7.6.8.tgz
+name: argocd-helm.v7.6.8
+package: argocd-helm
+properties:
+- type: olm.content-type
+  value: helm
+- type: olm.package
+  value:
+    packageName: argocd-helm
+    version: 7.6.8
+schema: olm.bundle
+---
+image: https://github.com/argoproj/argo-helm/releases/download/argo-cd-7.6.7/argo-cd-7.6.7.tgz
+name: argocd-helm.v7.6.7
+package: argocd-helm
+properties:
+- type: olm.content-type
+  value: helm
+- type: olm.package
+  value:
+    packageName: argocd-helm
+    version: 7.6.7
+schema: olm.bundle
+---
+image: https://github.com/argoproj/argo-helm/releases/download/argo-cd-7.6.6/argo-cd-7.6.6.tgz
+name: argocd-helm.v7.6.6
+package: argocd-helm
+properties:
+- type: olm.content-type
+  value: helm
+- type: olm.package
+  value:
+    packageName: argocd-helm
+    version: 7.6.6
+schema: olm.bundle

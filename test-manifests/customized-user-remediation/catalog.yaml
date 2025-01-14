@@ -1,0 +1,143 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTguNTEgMjU4LjUxIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2QxZDFkMTt9LmNscy0ye2ZpbGw6IzhkOGQ4Zjt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPkFzc2V0IDQ8L3RpdGxlPjxnIGlkPSJMYXllcl8yIiBkYXRhLW5hbWU9IkxheWVyIDIiPjxnIGlkPSJMYXllcl8xLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMSI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTI5LjI1LDIwQTEwOS4xLDEwOS4xLDAsMCwxLDIwNi40LDIwNi40LDEwOS4xLDEwOS4xLDAsMSwxLDUyLjExLDUyLjExLDEwOC40NSwxMDguNDUsMCwwLDEsMTI5LjI1LDIwbTAtMjBoMEM1OC4xNiwwLDAsNTguMTYsMCwxMjkuMjVIMGMwLDcxLjA5LDU4LjE2LDEyOS4yNiwxMjkuMjUsMTI5LjI2aDBjNzEuMDksMCwxMjkuMjYtNTguMTcsMTI5LjI2LTEyOS4yNmgwQzI1OC41MSw1OC4xNiwyMDAuMzQsMCwxMjkuMjUsMFoiLz48cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNzcuNTQsMTAzLjQxSDE0MS42NkwxNTQuOSw2NS43NmMxLjI1LTQuNC0yLjMzLTguNzYtNy4yMS04Ljc2SDEwMi45M2E3LjMyLDcuMzIsMCwwLDAtNy40LDZsLTEwLDY5LjYxYy0uNTksNC4xNywyLjg5LDcuODksNy40LDcuODloMzYuOUwxMTUuNTUsMTk3Yy0xLjEyLDQuNDEsMi40OCw4LjU1LDcuMjQsOC41NWE3LjU4LDcuNTgsMCwwLDAsNi40Ny0zLjQ4TDE4NCwxMTMuODVDMTg2Ljg2LDEwOS4yNCwxODMuMjksMTAzLjQxLDE3Ny41NCwxMDMuNDFaIi8+PC9nPjwvZz48L3N2Zz4=
+  mediatype: image/png
+name: customized-user-remediation
+schema: olm.package
+---
+entries:
+- name: customized-user-remediation.v0.1.0
+name: alpha
+package: customized-user-remediation
+schema: olm.channel
+---
+image: quay.io/operatorhubio/customized-user-remediation@sha256:6a18d8195f20cff24947178a927d1c5ecce34265b78e584a29a5b9c16ce1f1cb
+name: customized-user-remediation.v0.1.0
+package: customized-user-remediation
+properties:
+- type: olm.gvk
+  value:
+    group: customized-user-remediation.medik8s.io
+    kind: CustomizedUserRemediation
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: customized-user-remediation.medik8s.io
+    kind: CustomizedUserRemediationConfig
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: customized-user-remediation.medik8s.io
+    kind: CustomizedUserRemediationTemplate
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: customized-user-remediation
+    version: 0.1.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "customized-user-remediation.medik8s.io/v1alpha1",
+            "kind": "CustomizedUserRemediation",
+            "metadata": {
+              "name": "customizeduserremediation-sample"
+            },
+            "spec": null
+          },
+          {
+            "apiVersion": "customized-user-remediation.medik8s.io/v1alpha1",
+            "kind": "CustomizedUserRemediationConfig",
+            "metadata": {
+              "name": "customizeduserremediationconfig-sample"
+            },
+            "spec": null
+          },
+          {
+            "apiVersion": "customized-user-remediation.medik8s.io/v1alpha1",
+            "kind": "CustomizedUserRemediationTemplate",
+            "metadata": {
+              "name": "customizeduserremediationtemplate-sample",
+              "namespace": "openshift-workload-availability"
+            },
+            "spec": {
+              "template": {
+                "spec": {}
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: OpenShift Optional
+      containerImage: quay.io/medik8s/customized-user-remediation-operator:v0.1.0
+      createdAt: "2024-03-25 16:17:57"
+      operatorframework.io/suggested-namespace: openshift-workload-availability
+      operatorframework.io/suggested-namespace-template: '{"kind":"Namespace","apiVersion":"v1","metadata":{"name":"openshift-workload-availability","annotations":{"openshift.io/node-selector":""}}}'
+      operators.operatorframework.io/builder: operator-sdk-v1.32.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: CustomizedUserRemediationConfig is the Schema for the customizeduserremediationconfigs
+          API
+        displayName: Customized User Remediation Config
+        kind: CustomizedUserRemediationConfig
+        name: customizeduserremediationconfigs.customized-user-remediation.medik8s.io
+        version: v1alpha1
+      - description: CustomizedUserRemediation is the Schema for the customizeduserremediations
+          API
+        displayName: Customized User Remediation
+        kind: CustomizedUserRemediation
+        name: customizeduserremediations.customized-user-remediation.medik8s.io
+        version: v1alpha1
+      - description: CustomizedUserRemediationTemplate is the Schema for the customizeduserremediationtemplates
+          API
+        displayName: Customized User Remediation Template
+        kind: CustomizedUserRemediationTemplate
+        name: customizeduserremediationtemplates.customized-user-remediation.medik8s.io
+        specDescriptors:
+        - description: Template defines the desired state of CustomizedUserRemediationTemplate
+          displayName: Template
+          path: template
+        version: v1alpha1
+    description: TBD
+    displayName: Customized User Remediation Operator - Community Edition
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - remediation
+    - auto-healing
+    - recovery
+    - high-availability
+    - baremetal
+    - script
+    - CUR
+    links:
+    - name: Customized User Remediation
+      url: https://customized-user-remediation.domain
+    maintainers:
+    - email: medik8s@googlegroups.com
+      name: Medik8s Team
+    maturity: alpha
+    minKubeVersion: 1.25.0
+    provider:
+      name: Medik8s
+      url: https://www.medik8s.io/
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/medik8s/customized-user-remediation-operator:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/customized-user-remediation@sha256:6a18d8195f20cff24947178a927d1c5ecce34265b78e584a29a5b9c16ce1f1cb
+  name: ""
+schema: olm.bundle

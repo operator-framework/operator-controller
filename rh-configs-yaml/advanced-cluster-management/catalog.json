@@ -1,0 +1,851 @@
+{
+    "schema": "olm.package",
+    "name": "advanced-cluster-management",
+    "defaultChannel": "release-2.12",
+    "icon": {
+        "base64data": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIGlkPSJ1dWlkLWFiOGQwMDJmLWM2NGYtNDQ3ZC05MzVhLTI0ZDc0YTNiNjUxZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMzggMzgiPjx0aXRsZT5SZWQgSGF0IEFkdmFuY2VkIENsdXN0ZXIgTWFuYWdlbWVudCBmb3IgS3ViZXJuZXRlcyBpY29uPC90aXRsZT4KPGRlc2M+UkhBQ00sIG1hbmFnZW1lbnQsIGVkZ2U8L2Rlc2M+CjxtZXRhZGF0YT48P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/Pgo8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA4LjAtYzAwMSAxLjAwMDAwMCwgMDAwMC8wMC8wMC0wMDowMDowMCAgICAgICAgIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIgogICAgICAgICAgICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iCiAgICAgICAgICAgIHhtbG5zOmNxPSJodHRwOi8vd3d3LmRheS5jb20vamNyL2NxLzEuMCIKICAgICAgICAgICAgeG1sbnM6eG1wUmlnaHRzPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvcmlnaHRzLyI+CiAgICAgICAgIDx4bXA6cmhjYy1lZmZlY3RpdmUtb24+MjAyNC0wMy0wMVQxNToyNjozMC4yMDhaPC94bXA6cmhjYy1lZmZlY3RpdmUtb24+CiAgICAgICAgIDx4bXA6cmhjYy1tZXRhZGF0YS1jb21wbGV0ZS1tb2RlcmF0b3I+cGVuZGluZzwveG1wOnJoY2MtbWV0YWRhdGEtY29tcGxldGUtbW9kZXJhdG9yPgogICAgICAgICA8eG1wOnJoY2MtdHJhbnNsYXRpb24taWQ+VFJBNjZlYzAzNzktYjJmYi00Y2JkLTllMzctYzhhOTk3ZjBmN2QwPC94bXA6cmhjYy10cmFuc2xhdGlvbi1pZD4KICAgICAgICAgPHhtcDpicmFuZC1jb250ZW50LXR5cGU+SWNvbjwveG1wOmJyYW5kLWNvbnRlbnQtdHlwZT4KICAgICAgICAgPHhtcDpDcmVhdGVEYXRlPjIwMjQtMDMtMDFUMTU6MjY6MzAuMjA4WjwveG1wOkNyZWF0ZURhdGU+CiAgICAgICAgIDx4bXA6cmhjYy1lZmZlY3RpdmUtb24tc2V0LW9uLXVwbG9hZD50cnVlPC94bXA6cmhjYy1lZmZlY3RpdmUtb24tc2V0LW9uLXVwbG9hZD4KICAgICAgICAgPHhtcDpyaGNjLW1ldGFkYXRhLWNvbXBsZXRlLXVwbG9hZGVyPnBlbmRpbmc8L3htcDpyaGNjLW1ldGFkYXRhLWNvbXBsZXRlLXVwbG9hZGVyPgogICAgICAgICA8eG1wOnJoY2MtZmlsZS1sYXN0LW1vZGlmaWVkPjIwMjQtMDMtMjFUMDA6NDA6MjkuNjI5WjwveG1wOnJoY2MtZmlsZS1sYXN0LW1vZGlmaWVkPgogICAgICAgICA8eG1wOnJoY2MtYXVkaWVuY2U+cmhjYy1hdWRpZW5jZTppbnRlcm5hbDwveG1wOnJoY2MtYXVkaWVuY2U+CiAgICAgICAgIDx4bXA6cmhjYy1yaWdodHMtcmVzdHJpY3RlZD5ubzwveG1wOnJoY2MtcmlnaHRzLXJlc3RyaWN0ZWQ+CiAgICAgICAgIDx4bXA6YnJhbmQtY29udGVudC1zdWJ0eXBlPlRlY2hub2xvZ3kgaWNvbjwveG1wOmJyYW5kLWNvbnRlbnQtc3VidHlwZT4KICAgICAgICAgPHhtcDpyaGNjLWRlcml2YXRpdmUtaWQ+REVSNjZlYzAzNzktYjJmYi00Y2JkLTllMzctYzhhOTk3ZjBmN2QwPC94bXA6cmhjYy1kZXJpdmF0aXZlLWlkPgogICAgICAgICA8eG1wOmJyYW5kLWxvZ28tY29sb3I+U3RhbmRhcmQ8L3htcDpicmFuZC1sb2dvLWNvbG9yPgogICAgICAgICA8eG1wOnJoY2Mtbm90aWZ5LXBvcnRhbC1zdWJzY3JpYmVycy1vbi1jaGFuZ2U+eWVzPC94bXA6cmhjYy1ub3RpZnktcG9ydGFsLXN1YnNjcmliZXJzLW9uLWNoYW5nZT4KICAgICAgICAgPHhtcDpyaGNjLXByb2R1Y3Q+CiAgICAgICAgICAgIDxyZGY6QmFnPgogICAgICAgICAgICAgICA8cmRmOmxpPnJoY2MtcHJvZHVjdDpyZWQtaGF0LWFkdmFuY2VkLWNsdXN0ZXItbWFuYWdlbWVudC1mb3Ita3ViZXJuZXRlczwvcmRmOmxpPgogICAgICAgICAgICA8L3JkZjpCYWc+CiAgICAgICAgIDwveG1wOnJoY2MtcHJvZHVjdD4KICAgICAgICAgPHhtcDpicmFuZC1zdWJ0eXBlPgogICAgICAgICAgICA8cmRmOkJhZz4KICAgICAgICAgICAgICAgPHJkZjpsaT5UZWNobm9sb2d5IGljb248L3JkZjpsaT4KICAgICAgICAgICAgPC9yZGY6QmFnPgogICAgICAgICA8L3htcDpicmFuZC1zdWJ0eXBlPgogICAgICAgICA8ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD4KICAgICAgICAgPGRjOm1vZGlmaWVkPjIwMjQtMDUtMTBUMTQ6MDE6MTIuNjc3WjwvZGM6bW9kaWZpZWQ+CiAgICAgICAgIDxkYzp0aXRsZT4KICAgICAgICAgICAgPHJkZjpBbHQ+CiAgICAgICAgICAgICAgIDxyZGY6bGkgeG1sOmxhbmc9IngtZGVmYXVsdCI+UmVkIEhhdCBBZHZhbmNlZCBDbHVzdGVyIE1hbmFnZW1lbnQgZm9yIEt1YmVybmV0ZXMgaWNvbjwvcmRmOmxpPgogICAgICAgICAgICA8L3JkZjpBbHQ+CiAgICAgICAgIDwvZGM6dGl0bGU+CiAgICAgICAgIDxkYzpkZXNjcmlwdGlvbj4KICAgICAgICAgICAgPHJkZjpBbHQ+CiAgICAgICAgICAgICAgIDxyZGY6bGkgeG1sOmxhbmc9IngtZGVmYXVsdCI+UkhBQ00sIG1hbmFnZW1lbnQsIGVkZ2U8L3JkZjpsaT4KICAgICAgICAgICAgPC9yZGY6QWx0PgogICAgICAgICA8L2RjOmRlc2NyaXB0aW9uPgogICAgICAgICA8Y3E6bGFzdFJlcGxpY2F0aW9uQWN0aW9uX3NjZW5lNz5BY3RpdmF0ZTwvY3E6bGFzdFJlcGxpY2F0aW9uQWN0aW9uX3NjZW5lNz4KICAgICAgICAgPGNxOmxhc3RSZXBsaWNhdGlvbkFjdGlvbl9wdWJsaXNoPkFjdGl2YXRlPC9jcTpsYXN0UmVwbGljYXRpb25BY3Rpb25fcHVibGlzaD4KICAgICAgICAgPGNxOmxhc3RSZXBsaWNhdGVkX3B1Ymxpc2g+MjAyNC0wNS0xMFQxNDowMToxNC4xMDBaPC9jcTpsYXN0UmVwbGljYXRlZF9wdWJsaXNoPgogICAgICAgICA8Y3E6bGFzdFJlcGxpY2F0ZWRCeT53b3JrZmxvdy1wcm9jZXNzLXNlcnZpY2U8L2NxOmxhc3RSZXBsaWNhdGVkQnk+CiAgICAgICAgIDxjcTpsYXN0UmVwbGljYXRpb25BY3Rpb24+QWN0aXZhdGU8L2NxOmxhc3RSZXBsaWNhdGlvbkFjdGlvbj4KICAgICAgICAgPGNxOmxhc3RSZXBsaWNhdGVkQnlfcHVibGlzaD53b3JrZmxvdy1wcm9jZXNzLXNlcnZpY2U8L2NxOmxhc3RSZXBsaWNhdGVkQnlfcHVibGlzaD4KICAgICAgICAgPGNxOmlzRGVsaXZlcmVkPmZhbHNlPC9jcTppc0RlbGl2ZXJlZD4KICAgICAgICAgPGNxOmxhc3RSZXBsaWNhdGVkPjIwMjQtMDUtMTBUMTQ6MDE6MTQuMTAwWjwvY3E6bGFzdFJlcGxpY2F0ZWQ+CiAgICAgICAgIDxjcTpsYXN0UmVwbGljYXRlZEJ5X3NjZW5lNz53b3JrZmxvdy1wcm9jZXNzLXNlcnZpY2U8L2NxOmxhc3RSZXBsaWNhdGVkQnlfc2NlbmU3PgogICAgICAgICA8Y3E6bGFzdFJlcGxpY2F0ZWRfc2NlbmU3PjIwMjQtMDUtMTBUMTQ6MDE6MTQuMTAwWjwvY3E6bGFzdFJlcGxpY2F0ZWRfc2NlbmU3PgogICAgICAgICA8eG1wUmlnaHRzOlVzYWdlVGVybXM+CiAgICAgICAgICAgIDxyZGY6QWx0PgogICAgICAgICAgICAgICA8cmRmOmxpIHhtbDpsYW5nPSJ4LWRlZmF1bHQiPlVzZSB0ZWNobm9sb2d5IGljb25zIHRvIHJlcHJlc2VudCBSZWQgSGF0IHByb2R1Y3RzIGFuZCBjb21wb25lbnRzLiBEbyBub3QgcmVtb3ZlIHRoZSBpY29uIGZyb20gdGhlIGJvdW5kaW5nIHNoYXBlLjwvcmRmOmxpPgogICAgICAgICAgICA8L3JkZjpBbHQ+CiAgICAgICAgIDwveG1wUmlnaHRzOlVzYWdlVGVybXM+CiAgICAgIDwvcmRmOkRlc2NyaXB0aW9uPgogICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgCjw/eHBhY2tldCBlbmQ9InciPz48L21ldGFkYXRhPgo8ZGVmcz48c3R5bGU+LnV1aWQtZDM1NmQ4ZGItMWE5ZC00MjA1LWEyMmEtYmRkMmRlMGQyMDFke2ZpbGw6I2UwMDt9LnV1aWQtNjVmNTcxZmUtNmJiNC00YTFjLTlkMGEtMGNhNDcyMjI5NDFhe2ZpbGw6I2ZmZjt9LnV1aWQtNDAwMGY4YzctM2NjZS00ZDdhLWEwZTUtYzIyNDExYjliYzQze2ZpbGw6IzRkNGQ0ZDt9PC9zdHlsZT48L2RlZnM+PHJlY3QgeD0iMSIgeT0iMSIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiByeD0iOSIgcnk9IjkiLz48cGF0aCBjbGFzcz0idXVpZC00MDAwZjhjNy0zY2NlLTRkN2EtYTBlNS1jMjI0MTFiOWJjNDMiIGQ9Im0yOCwyLjI1YzQuMjczMzgsMCw3Ljc1LDMuNDc2NjQsNy43NSw3Ljc1djE4YzAsNC4yNzMzNi0zLjQ3NjYyLDcuNzUtNy43NSw3Ljc1SDEwYy00LjI3MzM4LDAtNy43NS0zLjQ3NjY0LTcuNzUtNy43NVYxMGMwLTQuMjczMzYsMy40NzY2Mi03Ljc1LDcuNzUtNy43NWgxOG0wLTEuMjVIMTBDNS4wMjk0MiwxLDEsNS4wMjk0MywxLDEwdjE4YzAsNC45NzA1Niw0LjAyOTQyLDksOSw5aDE4YzQuOTcwNTgsMCw5LTQuMDI5NDQsOS05VjEwYzAtNC45NzA1Ny00LjAyOTQyLTktOS05aDBaIi8+PHBhdGggY2xhc3M9InV1aWQtZDM1NmQ4ZGItMWE5ZC00MjA1LWEyMmEtYmRkMmRlMGQyMDFkIiBkPSJtMjEuMzQ4NjMsMTguMzM2OTFjLTIuNzUyOTMsMC00Ljk5MjE5LTIuMjM5MjYtNC45OTIxOS00Ljk5MjE5LDAtMS41ODQ5Ni43Mjc1NC0zLjA0MDUzLDEuOTk2MDktMy45OTMxNi4xMjMwNS0uMDkzMjYuMjU0ODgtLjE4MjYyLjM5MDYyLS4yNjU2Mi4xMzM3OS0uMDgyNTIuMjczNDQtLjE1OTE4LjQxNjk5LS4yMjkuNjg1NTUtLjMzNDk2LDEuNDIxODgtLjUwNDM5LDIuMTg4NDgtLjUwNDM5LDIuNzUyOTMsMCw0Ljk5MjE5LDIuMjM5MjYsNC45OTIxOSw0Ljk5MjE5cy0yLjIzOTI2LDQuOTkyMTktNC45OTIxOSw0Ljk5MjE5Wm0wLTguNzM0MzhjLS41NzUyLDAtMS4xMjY5NS4xMjY5NS0xLjYzOTY1LjM3NzQ0LS4xMDY0NS4wNTIyNS0uMjEwOTQuMTA5MzgtLjMxMTUyLjE3MTM5LS4xMDI1NC4wNjI1LS4xOTkyMi4xMjc0NC0uMjkxOTkuMTk4MjQtLjk1MzEyLjcxNTgyLTEuNDk5MDIsMS44MDcxMy0xLjQ5OTAyLDIuOTk1MTIsMCwyLjA2MzQ4LDEuNjc4NzEsMy43NDIxOSwzLjc0MjE5LDMuNzQyMTlzMy43NDIxOS0xLjY3ODcxLDMuNzQyMTktMy43NDIxOS0xLjY3ODcxLTMuNzQyMTktMy43NDIxOS0zLjc0MjE5WiIvPjxwYXRoIGNsYXNzPSJ1dWlkLWQzNTZkOGRiLTFhOWQtNDIwNS1hMjJhLWJkZDJkZTBkMjAxZCIgZD0ibTEyLjUxMjcsMjQuNzYwNzRjLTIuNzUyOTMsMC00Ljk5MjE5LTIuMjM5MjYtNC45OTIxOS00Ljk5MjE5LDAtMS41ODQ5Ni43Mjc1NC0zLjA0MDUzLDEuOTk2MDktMy45OTMxNi4xMjU5OC0uMDk0NzMuMjU1ODYtLjE4MjYyLjM5MDYyLS4yNjU2Mi4xMzM3OS0uMDgyNTIuMjczNDQtLjE1OTE4LjQxNjk5LS4yMjkuNjg1NTUtLjMzNDk2LDEuNDIxODgtLjUwNDM5LDIuMTg4NDgtLjUwNDM5LDIuNzUyOTMsMCw0Ljk5MjE5LDIuMjM5MjYsNC45OTIxOSw0Ljk5MjE5cy0yLjIzOTI2LDQuOTkyMTktNC45OTIxOSw0Ljk5MjE5Wm0wLTguNzM0MzhjLS41NzUyMiwwLTEuMTI2OTUuMTI2OTUtMS42Mzk2NS4zNzc0NC0uMTA2NDUuMDUyMjUtLjIxMDk0LjEwOTM4LS4zMTE1Mi4xNzEzOS0uMTAzNTIuMDYyNS0uMjAwMi4xMjg5MS0uMjkzOTUuMTk5NzEtLjk1MTE3LjcxNDM2LTEuNDk3MDcsMS44MDU2Ni0xLjQ5NzA3LDIuOTkzNjUsMCwyLjA2MzQ4LDEuNjc4NzEsMy43NDIxOSwzLjc0MjE5LDMuNzQyMTlzMy43NDIxOS0xLjY3ODcxLDMuNzQyMTktMy43NDIxOS0xLjY3ODcxLTMuNzQyMTktMy43NDIxOS0zLjc0MjE5WiIvPjxwYXRoIGNsYXNzPSJ1dWlkLWQzNTZkOGRiLTFhOWQtNDIwNS1hMjJhLWJkZDJkZTBkMjAxZCIgZD0ibTIyLjQ4NzMsMjkuMjAxNjZjLTIuNzUyOTMsMC00Ljk5MjE5LTIuMjM5MjYtNC45OTIxOS00Ljk5MjE5LDAtMS41ODQ5Ni43Mjc1NC0zLjA0MDUzLDEuOTk2MDktMy45OTMxNi4xMjQwMi0uMDk0MjQuMjU0ODgtLjE4MzExLjM4OTY1LS4yNjU2MnMuMjc1MzktLjE1OTY3LjQxOTkyLS4yMjk5OGMuNjgwNjYtLjMzMzUsMS40MTc5Ny0uNTAzNDIsMi4xODY1Mi0uNTAzNDIsMi43NTI5MywwLDQuOTkyMTksMi4yMzkyNiw0Ljk5MjE5LDQuOTkyMTlzLTIuMjM5MjYsNC45OTIxOS00Ljk5MjE5LDQuOTkyMTlabTAtOC43MzQzOGMtLjU3NzE1LDAtMS4xMjc5My4xMjY5NS0xLjYzODY3LjM3NzQ0LS4xMTAzNS4wNTI3My0uMjEzODcuMTA5MzgtLjMxMzQ4LjE3MTM5LS4xMDE1Ni4wNjIwMS0uMTk5MjIuMTI4NDItLjI5Mjk3LjE5ODczLS45NTExNy43MTUzMy0xLjQ5NzA3LDEuODA2NjQtMS40OTcwNywyLjk5NDYzLDAsMi4wNjM0OCwxLjY3ODcxLDMuNzQyMTksMy43NDIxOSwzLjc0MjE5czMuNzQyMTktMS42Nzg3MSwzLjc0MjE5LTMuNzQyMTktMS42Nzg3MS0zLjc0MjE5LTMuNzQyMTktMy43NDIxOVoiLz48cGF0aCBjbGFzcz0idXVpZC02NWY1NzFmZS02YmI0LTRhMWMtOWQwYS0wY2E0NzIyMjk0MWEiIGQ9Im0xOC4yMjk0OSwyOS45Nzk5OGMwLS4zNTAxLjI4MDI3LS42MzAzNy42MjAxMi0uNjMwMzdoMGMuMzUwNTksMCwuNjI5ODguMjgwMjcuNjI5ODguNjMwMzdoMGMwLC4zMzk4NC0uMjc5My42MTk2My0uNjI5ODguNjE5NjNoMGMtLjMzOTg0LDAtLjYyMDEyLS4yNzk3OS0uNjIwMTItLjYxOTYzWm0tMS40Nzk0OS40Mjk2OWMtLjMzOTg0LS4wNjAwNi0uNTYwNTUtLjM3OTg4LS41LS43MTk3M2gwYy4wNTk1Ny0uMzQwMzMuMzg5NjUtLjU3MDMxLjcyOTQ5LS41MTAyNWgwYy4zMzk4NC4wNzAzMS41NjA1NS4zOTAxNC41LjcyOTk4aDBjLS4wNDk4LjMwMDI5LS4zMTkzNC41MTAyNS0uNjA5MzguNTEwMjVoMGMtLjA0MDA0LDAtLjA4MDA4LDAtLjEyMDEyLS4wMTAyNVptLTIuMDMwMjctLjU2OTgyYy0uMzIwMzEtLjEyMDEyLS40Nzk0OS0uNDc5OTgtLjM2MDM1LS43OTk4aDBjLjEyMDEyLS4zMjAzMS40ODA0Ny0uNDc5OTguODAwNzgtLjM2MDM1aDBjLjMzMDA4LjEyMDEyLjQ4OTI2LjQ3OTk4LjM3MDEyLjgwMDI5aDBjLS4xMDA1OS4yNS0uMzQwODIuNDA5NjctLjU5MDgyLjQwOTY3aDBjLS4wNjkzNCwwLS4xNDk0MS0uMDIwMDItLjIxOTczLS4wNDk4Wm0tMS45MDAzOS0uOTE5OTJjLS4yODkwNi0uMTgwMTgtLjM3OTg4LS41NzAzMS0uMjA5OTYtLjg1OTg2aDBjLjE4MDY2LS4yOTAwNC41NzAzMS0uMzkwMTQuODYwMzUtLjIxMDQ1aDBjLjI5OTguMTgwMTguMzg5NjUuNTYwMDYuMjA5OTYuODYwMzVoMGMtLjEyMDEyLjE4OTk0LS4zMjAzMS4yOTk4LS41MzAyNy4yOTk4aDBjLS4xMDkzOCwwLS4yMjk0OS0uMDI5NzktLjMzMDA4LS4wODk4NFptLTEuNjg5NDUtMS4yNjAyNWgwYy0uMjU5NzctLjIyOTk4LS4yODAyNy0uNjE5NjMtLjA0OTgtLjg3OTg4aDBjLjIyOTQ5LS4yNTk3Ny42MjAxMi0uMjc5NzkuODc5ODgtLjA0OThoMGMuMjU5NzcuMjI5OTguMjgwMjcuNjE5NjMuMDQ5OC44Nzk4OGgwYy0uMTIwMTIuMTQwMTQtLjI5OTguMjA5OTYtLjQ2OTczLjIwOTk2aDBjLS4xNTAzOSwwLS4yOTk4LS4wNDk4LS40MTAxNi0uMTYwMTZaIi8+PHBhdGggY2xhc3M9InV1aWQtNjVmNTcxZmUtNmJiNC00YTFjLTlkMGEtMGNhNDcyMjI5NDFhIiBkPSJtMjkuNjM5NjUsMjEuMjM5NzVjLS4zMzk4NC0uMDQ5OC0uNTgwMDgtLjM3MDEyLS41MzAyNy0uNzA5OTZoLjAxMDc0Yy4wNDk4LS4zMzk4NC4zNTkzOC0uNTY5ODIuNzA5OTYtLjUyMDAyaDBjLjMzOTg0LjA1MDI5LjU2OTM0LjM3MDEyLjUxOTUzLjcwOTk2aDBjLS4wNDk4LjMxMDA2LS4zMDk1Ny41MzAyNy0uNjA5MzguNTMwMjdoMGMtLjA0MDA0LDAtLjA3MDMxLDAtLjEwMDU5LS4wMTAyNVptLS40MTk5Mi0yLjU4OTg0Yy0uMDA5NzctLjM1MDEuMjU5NzctLjYyOTg4LjYxMDM1LS42NDk5aDBjLjM0OTYxLDAsLjYyOTg4LjI3MDAyLjYzOTY1LjYwOTg2aDBjLjAwOTc3LjM1MDEtLjI1OTc3LjY0MDE0LS41OTk2MS42NDAxNGgtLjAyMDUxYy0uMzM5ODQsMC0uNjIwMTItLjI2MDI1LS42Mjk4OC0uNjAwMVptLS4yMTk3My0xLjg3MDEyaDBjLS4wODAwOC0uMzM5ODQuMTM5NjUtLjY2OTkyLjQ3OTQ5LS43Mzk3NWgwYy4zMzAwOC0uMDgwMDguNjY5OTIuMTM5NjUuNzQwMjMuNDc5OThoMGMuMDcwMzEuMzI5NTktLjEzOTY1LjY2OTkyLS40Nzk0OS43Mzk3NWgwYy0uMDUwNzguMDEwMjUtLjA5MDgyLjAxMDI1LS4xMzA4Ni4wMTAyNWgwYy0uMjkwMDQsMC0uNTQ5OC0uMjAwMi0uNjA5MzgtLjQ5MDIzWm0tLjU3MDMxLTEuNzk5OGguMDA5NzdjLS4xMzk2NS0uMzIwMzEuMDEwNzQtLjY4MDE4LjMzMDA4LS44MTAwNmgwYy4zMjAzMS0uMTQwMTQuNjgwNjYuMDA5NzcuODIwMzEuMzMwMDhoMGMuMTI5ODguMzE5ODItLjAyMDUxLjY4OTk0LS4zMzk4NC44MTk4MmgwYy0uMDgwMDguMDI5NzktLjE2MDE2LjA0OTgtLjI0MDIzLjA0OThoMGMtLjI0MDIzLDAtLjQ3OTQ5LS4xNDk5LS41ODAwOC0uMzg5NjVabS0uODc5ODgtMS42NjAxNmMtLjE5MDQzLS4yOTAwNC0uMTEwMzUtLjY4MDE4LjE3OTY5LS44NzAxMmgwYy4yOTAwNC0uMTc5NjkuNjgwNjYtLjEwMDEuODcwMTIuMTg5OTRoMGMuMTkwNDMuMjkwMDQuMTEwMzUuNjcwNDEtLjE3OTY5Ljg2MDM1aDBjLS4xMTAzNS4wNjk4Mi0uMjMwNDcuMDk5NjEtLjMzOTg0LjA5OTYxaDBjLS4yMDk5NiwwLS40MTAxNi0uMDk5NjEtLjUzMDI3LS4yNzk3OVoiLz48cGF0aCBjbGFzcz0idXVpZC02NWY1NzFmZS02YmI0LTRhMWMtOWQwYS0wY2E0NzIyMjk0MWEiIGQ9Im05LjI5MDA0LDEzLjVjLS4yOTAwNC0uMTg5OTQtLjM3MDEyLS41ODAwOC0uMTgwNjYtLjg2MDM1aDBjLjE5MDQzLS4yOTAwNC41NzAzMS0uMzY5NjMuODYwMzUtLjE4OTk0aDBjLjI5MDA0LjE4OTk0LjM3MDEyLjU4MDA4LjE5MDQzLjg3MDEyaDBjLS4xMjAxMi4xODAxOC0uMzIwMzEuMjc5NzktLjUzMDI3LjI3OTc5aDBjLS4xMTAzNSwwLS4yMzA0Ny0uMDI5NzktLjMzOTg0LS4wOTk2MVptMS4xNDk0MS0xLjY0MDE0Yy0uMjUtLjIyOTk4LS4yNTk3Ny0uNjI5ODgtLjAxOTUzLS44Nzk4OGgwYy4yMjk0OS0uMjUuNjI5ODgtLjI2MDI1Ljg3OTg4LS4wMjAwMmgwYy4yNS4yMzk3NS4yNTk3Ny42Mjk4OC4wMTk1My44Nzk4OGguMDEwNzRjLS4xMjk4OC4xMjk4OC0uMjkwMDQuMjAwMi0uNDU5OTYuMjAwMmgwYy0uMTUwMzksMC0uMzEwNTUtLjA2MDA2LS40MzA2Ni0uMTgwMThabTEuNDMwNjYtMS4zOTk5Yy0uMjA5OTYtLjI4MDI3LS4xNTAzOS0uNjY5OTIuMTI5ODgtLjg3MDEyaDBjLjI4MDI3LS4yMDk5Ni42Njk5Mi0uMTQ5OS44Nzk4OC4xMjk4OGgwYy4yMDAyLjI4MDI3LjEzOTY1LjY2OTkyLS4xMzk2NS44Nzk4OHYtLjAwOTc3Yy0uMTEwMzUuMDg5ODQtLjI0MDIzLjEyOTg4LS4zNzAxMi4xMjk4OGgwYy0uMTkwNDMsMC0uMzc5ODgtLjA4OTg0LS41LS4yNTk3N1ptMS42NDk0MS0xLjEyMDEyYy0uMTQ5NDEtLjMxMDA2LS4wMTk1My0uNjg5OTQuMjkwMDQtLjgzOTg0aDBjLjMxMDU1LS4xNTAzOS42OTA0My0uMDIwMDIuODM5ODQuMjkwMDRoMGMuMTQwNjIuMzA5NTcuMDEwNzQuNjg5OTQtLjI5OTguODM5ODRoMGMtLjA4MDA4LjA0MDA0LS4xNzk2OS4wNjAwNi0uMjY5NTMuMDYwMDZoMGMtLjIzMDQ3LDAtLjQ1MDItLjEyOTg4LS41NjA1NS0uMzUwMVptMS44MzAwOC0uODEwMDZjLS4wODk4NC0uMzMwMDguMTAwNTktLjY4MDE4LjQ0MDQzLS43NzAwMmgwYy4zMzAwOC0uMDg5ODQuNjY5OTIuMTA5ODYuNzY5NTMuNDM5OTRoMGMuMDg5ODQuMzMwMDgtLjEwOTM4LjY4MDE4LS40Mzk0NS43NzAwMmgwYy0uMDYwNTUuMDEwMjUtLjExMDM1LjAyMDAyLS4xNjk5Mi4wMjAwMmgwYy0uMjcwNTEsMC0uNTIwNTEtLjE3OTY5LS42MDA1OS0uNDU5OTZaIi8+PC9zdmc+",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "release-2.12",
+    "package": "advanced-cluster-management",
+    "entries": [
+        {
+            "name": "advanced-cluster-management.v2.12.0",
+            "skipRange": ">=2.11.0 <2.12.0"
+        },
+        {
+            "name": "advanced-cluster-management.v2.12.1",
+            "replaces": "advanced-cluster-management.v2.12.0",
+            "skipRange": ">=2.11.0 <2.12.1"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "advanced-cluster-management.v2.12.0",
+    "package": "advanced-cluster-management",
+    "image": "registry.redhat.io/rhacm2/acm-operator-bundle@sha256:9c2bf92d325c70c8ed5e0986c65cdb78369b831067f40dbf53500f052800ee5c",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "operator.open-cluster-management.io",
+                "kind": "MultiClusterHub",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "advanced-cluster-management",
+                "version": "2.12.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[{\"apiVersion\": \"operator.open-cluster-management.io/v1\", \"kind\": \"MultiClusterHub\", \"metadata\": {\"name\": \"multiclusterhub\", \"namespace\": \"open-cluster-management\"}, \"spec\": {}}]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "true",
+                    "createdAt": "2024-11-01T19:58:53Z",
+                    "description": "Advanced provisioning and management of OpenShift and Kubernetes clusters",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "true",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=2.11.0 <2.12.0",
+                    "operatorframework.io/initialization-resource": "{\"apiVersion\":\"operator.open-cluster-management.io/v1\", \"kind\":\"MultiClusterHub\",\"metadata\":{\"name\":\"multiclusterhub\",\"namespace\":\"open-cluster-management\"}, \"spec\": {}}",
+                    "operatorframework.io/suggested-namespace": "open-cluster-management",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"proxy-aware\", \"fips\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\", \"Red Hat Advanced Cluster Management for Kubernetes\"]",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "multiclusterhubs.operator.open-cluster-management.io",
+                            "version": "v1",
+                            "kind": "MultiClusterHub",
+                            "displayName": "MultiClusterHub",
+                            "description": "MulticlusterHub defines the configuration for an instance of a multicluster hub, a central point for managing multiple Kubernetes-based clusters. The deployment of multicluster hub components is determined based on the configuration that is defined in this resource.",
+                            "specDescriptors": [
+                                {
+                                    "path": "availabilityConfig",
+                                    "displayName": "Availability Configuration",
+                                    "description": "Specifies deployment replication for improved availability. Options are: Basic and High (default)",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:High",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:Basic"
+                                    ]
+                                },
+                                {
+                                    "path": "customCAConfigmap",
+                                    "displayName": "Custom CA Configmap",
+                                    "description": "(Deprecated) Provide the customized OpenShift default ingress CA certificate to RHACM",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced",
+                                        "urn:alm:descriptor:io.kubernetes:ConfigMap"
+                                    ]
+                                },
+                                {
+                                    "path": "disableHubSelfManagement",
+                                    "displayName": "Disable Hub Self Management",
+                                    "description": "Disable automatic import of the hub cluster as a managed cluster",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced",
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "disableUpdateClusterImageSets",
+                                    "displayName": "Disable Update ClusterImageSets",
+                                    "description": "Disable automatic update of ClusterImageSets",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced",
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "enableClusterBackup",
+                                    "displayName": "Enable Cluster Backup",
+                                    "description": "(Deprecated) Enable cluster backup",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "enableClusterProxyAddon",
+                                    "displayName": "Enable Cluster Proxy Addon",
+                                    "description": "(Deprecated) Enable cluster proxy addon",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "hive",
+                                    "displayName": "Hive Config",
+                                    "description": "(Deprecated) Overrides for the default HiveConfig spec",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "imagePullSecret",
+                                    "displayName": "Image Pull Secret",
+                                    "description": "Override pull secret for accessing MultiClusterHub operand and endpoint images",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Secret",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "ingress",
+                                    "displayName": "Ingress Management",
+                                    "description": "(Deprecated) Configuration options for ingress management",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "overrides",
+                                    "displayName": "Developer Overrides",
+                                    "description": "Developer Overrides",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "overrides.components",
+                                    "displayName": "Component Configuration",
+                                    "description": "Provides optional configuration for components, the list of which can be found here: https://github.com/stolostron/multiclusterhub-operator/tree/main/docs/available-components.md",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "separateCertificateManagement",
+                                    "displayName": "Separate Certificate Management",
+                                    "description": "(Deprecated) Install cert-manager into its own namespace",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "Red Hat Advanced Cluster Management for Kubernetes provides the multicluster hub, a central management console for managing multiple Kubernetes-based clusters across data centers, public clouds, and private clouds. You can use the hub to create Red Hat OpenShift Container Platform clusters on selected providers, or import existing Kubernetes-based clusters. After the clusters are managed, you can set compliance requirements to ensure that the clusters maintain the specified security requirements. You can also deploy business applications across your clusters.\n\n## How to install\nUse of this Red Hat product requires a licensing and subscription agreement.\n\nInstall the Red Hat Advanced Cluster Management for Kubernetes operator by following instructions presented when you click the `Install` button. After installing the operator, create an instance of the `MultiClusterHub` resource to install the hub.\n\nNote that if you will be using the hub to manage non-OpenShift 4.x clusters, you will need to create a Kubernetes `Secret` resource containing your OpenShift pull secret and specify this `Secret` in the `MultiClusterHub` resource, as described in the install documentation.\n### Special considerations for disconnected network environments\nIf you are installing Red Hat Advanced Cluster Management for Kubernetes in a disconnected network environment, there are some special install and upgrade requirements.\n#### Include multicluster engine for Kubernetes in mirrored catalog\nInstalling an OLM operator in a disconnected network environment involves the use of a local mirrored operator catalog and image registry. Red Hat Advanced Cluster Management for Kubernetes requires (and automatically installs) the multicluster engine for Kuberenetes operator so this operator package is needed in your local mirrored operator catalog in addition to the one for Red Hat Advanced Cluster Management for Kubernetes.\n\nif you are using a full mirror of the Red Hat operators catalog, no special action is needed when creating the mirror catalog.\n\nIf you are using a filtered (rather than full) mirror of the OLM catalog, be sure to include both the `advanced-cluster-management` **and** `multicluster-engine` packages in your mirrored catalog when creating it.\n#### Add annotation to MultiClusterHub resource\nIf you are installing or upgrading to a Red Hat Advanced Cluster Management for Kubernetes release prior to release 2.7, an `mce-subscription-spec` annotation is required in the instance of the `MultiClusterHub` resource you create to set up your hub. This annotation identifies the catalog source for your local mirrored operator catalog and is required when installing releases prior to release 2.7 regardless of whether your local mirrored operator catalog is a full mirror or a filtered one.\n\nThe `mce-subscription-spec` annotation is not usually needed, and thus can usually be omitted, when installing or upgrading to release 2.7 or a later release. Starting with release 2.7, the Red Hat Advanced Cluster Management for Kubernetes operator is able to automatically determine the catalog source to use in typical scenarios.\n\nThe following is an example of the `mce-subscription-spec` annotation:\n\n```\n apiVersion: operator.open-cluster-management.io/v1\n kind: MultiClusterHub\n metadata:\n \tannotations:\n \t\tinstaller.open-cluster-management.io/mce-subscription-spec: '{\"source\": \"my-catalog-source\"}'\n spec: {}\n\n```\n\nReplace `my-catalog-source` with the name of your catalog source.\n\nIf you are creating the `MultiClusterHub` resource using the OperatorHub UI, switch to the YAML view for the resource in order to insert the annotation.\n#### Upgrading from release 2.4\nThe special considerations described above also apply when upgrading from Red Hat Advanced Cluster Management for Kubernetes release 2.4.\n- If you are using a filtered mirror catalog, update your catalog-building procedures to ensure that the `multicluster-engine` package is included in your mirror catalog.\n- Before changing the update channel to trigger the update, edit your existing `MultiClusterHub` resource to add the `mce-subscription-spec` annotation as shown in the example above so that the upgraded version of the Red Hat Advanced Cluster Management for Kubernetes knows the correct catalog source to use to find the `multicluster-engine` package.\n### Where to find more installation information\nYou can find additional installation guidance in the [install documentation](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.12/html/install/installing). ",
+                "displayName": "Advanced Cluster Management for Kubernetes",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "acm",
+                    "advanced-cluster-management",
+                    "install",
+                    "multiclusterhub",
+                    "rhacm"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.12/"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Red Hat",
+                        "email": "acm-contact@redhat.com"
+                    }
+                ],
+                "maturity": "stable",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "configmap_reloader",
+            "image": "registry.redhat.io/openshift4/ose-configmap-reloader-rhel9@sha256:a55cafbf84f7b7cf4c7bfb0091d268f21ec6b41da1f7b5b2718b8842a3136522"
+        },
+        {
+            "name": "oauth_proxy_416_and_up",
+            "image": "registry.redhat.io/openshift4/ose-oauth-proxy-rhel9@sha256:d959ed77bacfbc9d0dbd679053ea95277b7b12638e41762a62350117114d1d14"
+        },
+        {
+            "name": "oauth_proxy_415_and_below",
+            "image": "registry.redhat.io/openshift4/ose-oauth-proxy@sha256:41762eda03298362d3f97e1fd0be4af429d22658b520f94023941655e062d1a1"
+        },
+        {
+            "name": "acm_cli",
+            "image": "registry.redhat.io/rhacm2/acm-cli-rhel9@sha256:f5e9d3b6100ac6d7382297c700f3ef40346f991f9264d8d7cc98b1c33e889b3d"
+        },
+        {
+            "name": "cluster_permission",
+            "image": "registry.redhat.io/rhacm2/acm-cluster-permission-rhel9@sha256:5a312f86aa395f9bded51f7b8b6bcb4de4d87460136815e723ee87e38432a0c9"
+        },
+        {
+            "name": "governance_policy_addon_controller",
+            "image": "registry.redhat.io/rhacm2/acm-governance-policy-addon-controller-rhel9@sha256:7b2f432d7ea6b9eb9c4df6df88ae3d5bfc261a8d24a5146a04d3465a41d99e10"
+        },
+        {
+            "name": "governance_policy_framework_addon",
+            "image": "registry.redhat.io/rhacm2/acm-governance-policy-framework-addon-rhel9@sha256:a5373e3aed5c8e0ac1427599c3801eccd3b4ff4bdc3f9c0cd7083ff3e34433b3"
+        },
+        {
+            "name": "grafana",
+            "image": "registry.redhat.io/rhacm2/acm-grafana-rhel9@sha256:1bdcc4b6941dda7947f37a7e176292a92a120afe9de08090facc001eb4f9b573"
+        },
+        {
+            "name": "multicluster_observability_addon",
+            "image": "registry.redhat.io/rhacm2/acm-multicluster-observability-addon-rhel9@sha256:9261ceb11c555d89969fa0108989bd09895d7c4da1401ff1c95f8cd1f8af3c09"
+        },
+        {
+            "name": "acm_must_gather",
+            "image": "registry.redhat.io/rhacm2/acm-must-gather-rhel9@sha256:60fc602a887f82d8b3acf1f4f56a840d60e1b5f4f6a10c28d4f977d7f68a3e9f"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhacm2/acm-operator-bundle@sha256:9c2bf92d325c70c8ed5e0986c65cdb78369b831067f40dbf53500f052800ee5c"
+        },
+        {
+            "name": "prometheus_config_reloader",
+            "image": "registry.redhat.io/rhacm2/acm-prometheus-config-reloader-rhel9@sha256:5f724f32ba64c6ce57985f46ef5347adaa50c4c3faa8a6d81e66208d95c3a8cb"
+        },
+        {
+            "name": "prometheus_operator",
+            "image": "registry.redhat.io/rhacm2/acm-prometheus-rhel9@sha256:57e6d3e544d062e4ae68341f5b08e74f7711436f35f60c4a6d47d867f5f9327d"
+        },
+        {
+            "name": "search_indexer",
+            "image": "registry.redhat.io/rhacm2/acm-search-indexer-rhel9@sha256:1b42058b1b79faf81e34c5ed7791d1b106e94cd1bbb22102d09be27106dc987e"
+        },
+        {
+            "name": "search_v2_api",
+            "image": "registry.redhat.io/rhacm2/acm-search-v2-api-rhel9@sha256:8c8673f61f684d4dd97da9116ff63c777e66da963b21f1a8e11998c0d0372db5"
+        },
+        {
+            "name": "search_v2_operator",
+            "image": "registry.redhat.io/rhacm2/acm-search-v2-rhel9@sha256:30faa58bf8b06d70397c1196b43eea533c03aeda97d4db6adf3963a903d79bb5"
+        },
+        {
+            "name": "siteconfig_operator",
+            "image": "registry.redhat.io/rhacm2/acm-siteconfig-rhel9@sha256:50d4f83d018669b9d0279a6a882c1d9a4368f7013d004ca4805e977bf1149e33"
+        },
+        {
+            "name": "volsync_addon_controller",
+            "image": "registry.redhat.io/rhacm2/acm-volsync-addon-controller-rhel9@sha256:63a36fc95031b383cd370e68858776baa3c651f1a910e7c1b83e1351f167f573"
+        },
+        {
+            "name": "cert_policy_controller",
+            "image": "registry.redhat.io/rhacm2/cert-policy-controller-rhel9@sha256:d0fb271f1db37c16a81b4104de3d1e92437919ef694c4187654ff7ff2d82b624"
+        },
+        {
+            "name": "cluster_backup_controller",
+            "image": "registry.redhat.io/rhacm2/cluster-backup-rhel9-operator@sha256:6223f18226c871d3a216b0f76a790836e0d4b7aba6b820aebf6d8d01713f7df8"
+        },
+        {
+            "name": "config_policy_controller",
+            "image": "registry.redhat.io/rhacm2/config-policy-controller-rhel9@sha256:bad96b2cd7efd604b3ef8092eb72c5a7d33b39732a1a8fe995aa197ead7a5d31"
+        },
+        {
+            "name": "console",
+            "image": "registry.redhat.io/rhacm2/console-rhel9@sha256:fe14e1d9fb88d254f82526433ed3b2a2b4a8eb7d4184a78e48f3efb0420762e3"
+        },
+        {
+            "name": "endpoint_monitoring_operator",
+            "image": "registry.redhat.io/rhacm2/endpoint-monitoring-rhel9-operator@sha256:e843a6cc5a9778980519924f691264f3cfb2c61c8b12ea4953fe6ea7ddfed681"
+        },
+        {
+            "name": "governance_policy_propagator",
+            "image": "registry.redhat.io/rhacm2/governance-policy-propagator-rhel9@sha256:f2fa1a7c7af6379eda44a691de57eb59dc8068aadb98504df7ef4a5e059a0cfa"
+        },
+        {
+            "name": "grafana_dashboard_loader",
+            "image": "registry.redhat.io/rhacm2/grafana-dashboard-loader-rhel9@sha256:a713421531ad209721152d3764390a7daf83919fe3ce8aa575d864ebd813fc09"
+        },
+        {
+            "name": "insights_client",
+            "image": "registry.redhat.io/rhacm2/insights-client-rhel9@sha256:2c27dbb156495d505faad641088f658a2180e000df11082d8aa32a2d535164bf"
+        },
+        {
+            "name": "insights_metrics",
+            "image": "registry.redhat.io/rhacm2/insights-metrics-rhel9@sha256:498b6f19f079090b93caac84e8eb8595baeadaceca2cc36e7117ee12aafd50f2"
+        },
+        {
+            "name": "klusterlet_addon_controller",
+            "image": "registry.redhat.io/rhacm2/klusterlet-addon-controller-rhel9@sha256:f8188bc955dbc635031e765fb09015926eb350a7484e6c9f2e0af6020e02aa30"
+        },
+        {
+            "name": "kube_rbac_proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel9@sha256:3c09879ac034dfcf6d1ebdf95e69d7ff60b8196872261b7a4b27bd32d28cf9dd"
+        },
+        {
+            "name": "kube_state_metrics",
+            "image": "registry.redhat.io/rhacm2/kube-state-metrics-rhel9@sha256:aa0a42f3628c21cd10cabc5edca8fee7128498b24b0737f043baece460f67eff"
+        },
+        {
+            "name": "memcached_exporter",
+            "image": "registry.redhat.io/rhacm2/memcached-exporter-rhel9@sha256:44f784ab6ce2ec918d050d13b5c5fe01513762708c13cf58c5ad4d471e289f6b"
+        },
+        {
+            "name": "memcached",
+            "image": "registry.redhat.io/rhacm2/memcached-rhel9@sha256:21d8842061dd17b672985a4c2669831651513a1219b1bef0a652abc7edcfdc4d"
+        },
+        {
+            "name": "metrics_collector",
+            "image": "registry.redhat.io/rhacm2/metrics-collector-rhel9@sha256:db28a92d78537ebf228cb74c7d2dca9e27d7d31e93f11c521c1bfb5c9a27d822"
+        },
+        {
+            "name": "multicloud_integrations",
+            "image": "registry.redhat.io/rhacm2/multicloud-integrations-rhel9@sha256:796e6f4b54e96874abe77645ddd373737cc2ae63ffff48251af127f676532213"
+        },
+        {
+            "name": "multicluster_observability_operator",
+            "image": "registry.redhat.io/rhacm2/multicluster-observability-rhel9-operator@sha256:5777c05d2c81aaa07e6bea06c9c9fb325cb74d6a17868568c195eb2d0481d25d"
+        },
+        {
+            "name": "multicluster_operators_application",
+            "image": "registry.redhat.io/rhacm2/multicluster-operators-application-rhel9@sha256:4a9b3268fbab2c64fcd77e37b2e34ef307f46ca7091371bb00633ee0cc622a18"
+        },
+        {
+            "name": "multicluster_operators_channel",
+            "image": "registry.redhat.io/rhacm2/multicluster-operators-channel-rhel9@sha256:d8a5d33d9162b8a7975c40df1603fc2c630089105b5b3dd643bbb280bc7ff127"
+        },
+        {
+            "name": "multicluster_operators_subscription",
+            "image": "registry.redhat.io/rhacm2/multicluster-operators-subscription-rhel9@sha256:8641ac42b30995994932d8443cf3a233251f84d0a0d19139c9ffea8b0dff37d6"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhacm2/multiclusterhub-rhel9@sha256:55a54222f2c1ad4bee154a41fe73f2eac31526b7c1d255592d966fcf6f6b2530"
+        },
+        {
+            "name": "node_exporter",
+            "image": "registry.redhat.io/rhacm2/node-exporter-rhel9@sha256:d7bc79b6787bf6f3befa11167e45139893b0eaecddaf7bb3c9e895a523235ad5"
+        },
+        {
+            "name": "observatorium_operator",
+            "image": "registry.redhat.io/rhacm2/observatorium-rhel9-operator@sha256:5bae54ddc4433bbe5a28d494c077390fb74655960a75b7abe6b00215bcb24d8c"
+        },
+        {
+            "name": "observatorium",
+            "image": "registry.redhat.io/rhacm2/observatorium-rhel9@sha256:672c8811ede7e24cf70680b80304bc61a01669cb9993f50bf5ab59352e031d5b"
+        },
+        {
+            "name": "prometheus_alertmanager",
+            "image": "registry.redhat.io/rhacm2/prometheus-alertmanager-rhel9@sha256:52f209e5e6952926a611d5945ece5b38d9ca39bf9b2e9ada11efc8271b51dc7d"
+        },
+        {
+            "name": "prometheus",
+            "image": "registry.redhat.io/rhacm2/prometheus-rhel9@sha256:3db2cb7cbaffa3828535f45ef00565a7193a3c3d20726035995214080546fd58"
+        },
+        {
+            "name": "rbac_query_proxy",
+            "image": "registry.redhat.io/rhacm2/rbac-query-proxy-rhel9@sha256:2ce09ccd4faf03c12f4b2ef5f9a560958c5b311a8712f4189e1b8a275ba0343b"
+        },
+        {
+            "name": "search_collector",
+            "image": "registry.redhat.io/rhacm2/search-collector-rhel9@sha256:887f4127ba2716b3e41c5b3071b71e10275cc0a789da3bff988c252dacb775f4"
+        },
+        {
+            "name": "submariner_addon",
+            "image": "registry.redhat.io/rhacm2/submariner-addon-rhel9@sha256:04e0e18bd4838513d1f7fe399c55e49aafa8df68ce232fa42056de3a45bc1ed6"
+        },
+        {
+            "name": "thanos_receive_controller",
+            "image": "registry.redhat.io/rhacm2/thanos-receive-controller-rhel9@sha256:5c26d053743b126376d683ca6145c07f0eca146db2fd10cffc91582b54dba3b5"
+        },
+        {
+            "name": "thanos",
+            "image": "registry.redhat.io/rhacm2/thanos-rhel9@sha256:2298b88bff967960bd436e212035fad73c70a250f212842f6502f86c9ab58496"
+        },
+        {
+            "name": "postgresql_13",
+            "image": "registry.redhat.io/rhel8/postgresql-13@sha256:826a1a75f4186f36217b5c1f1aa270838c4b55b1021d33a4876566bfc3b8e629"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "advanced-cluster-management.v2.12.1",
+    "package": "advanced-cluster-management",
+    "image": "registry.redhat.io/rhacm2/acm-operator-bundle@sha256:834b5ba15a3c3f96b2128b11df8a5301465a40bb54f85c13a7a0e7dfba635448",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "operator.open-cluster-management.io",
+                "kind": "MultiClusterHub",
+                "version": "v1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "advanced-cluster-management",
+                "version": "2.12.1"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[{\"apiVersion\": \"operator.open-cluster-management.io/v1\", \"kind\": \"MultiClusterHub\", \"metadata\": {\"name\": \"multiclusterhub\", \"namespace\": \"open-cluster-management\"}, \"spec\": {}}]",
+                    "capabilities": "Seamless Upgrades",
+                    "categories": "Integration & Delivery",
+                    "certified": "true",
+                    "createdAt": "2024-12-02T22:55:56Z",
+                    "description": "Advanced provisioning and management of OpenShift and Kubernetes clusters",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "true",
+                    "features.operators.openshift.io/proxy-aware": "true",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=2.11.0 <2.12.1",
+                    "operatorframework.io/initialization-resource": "{\"apiVersion\":\"operator.open-cluster-management.io/v1\", \"kind\":\"MultiClusterHub\",\"metadata\":{\"name\":\"multiclusterhub\",\"namespace\":\"open-cluster-management\"}, \"spec\": {}}",
+                    "operatorframework.io/suggested-namespace": "open-cluster-management",
+                    "operators.openshift.io/infrastructure-features": "[\"disconnected\", \"proxy-aware\", \"fips\"]",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\", \"Red Hat Advanced Cluster Management for Kubernetes\"]",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "multiclusterhubs.operator.open-cluster-management.io",
+                            "version": "v1",
+                            "kind": "MultiClusterHub",
+                            "displayName": "MultiClusterHub",
+                            "description": "MulticlusterHub defines the configuration for an instance of a multicluster hub, a central point for managing multiple Kubernetes-based clusters. The deployment of multicluster hub components is determined based on the configuration that is defined in this resource.",
+                            "specDescriptors": [
+                                {
+                                    "path": "availabilityConfig",
+                                    "displayName": "Availability Configuration",
+                                    "description": "Specifies deployment replication for improved availability. Options are: Basic and High (default)",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:High",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:Basic"
+                                    ]
+                                },
+                                {
+                                    "path": "customCAConfigmap",
+                                    "displayName": "Custom CA Configmap",
+                                    "description": "(Deprecated) Provide the customized OpenShift default ingress CA certificate to RHACM",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced",
+                                        "urn:alm:descriptor:io.kubernetes:ConfigMap"
+                                    ]
+                                },
+                                {
+                                    "path": "disableHubSelfManagement",
+                                    "displayName": "Disable Hub Self Management",
+                                    "description": "Disable automatic import of the hub cluster as a managed cluster",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced",
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "disableUpdateClusterImageSets",
+                                    "displayName": "Disable Update ClusterImageSets",
+                                    "description": "Disable automatic update of ClusterImageSets",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced",
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "enableClusterBackup",
+                                    "displayName": "Enable Cluster Backup",
+                                    "description": "(Deprecated) Enable cluster backup",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "enableClusterProxyAddon",
+                                    "displayName": "Enable Cluster Proxy Addon",
+                                    "description": "(Deprecated) Enable cluster proxy addon",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "hive",
+                                    "displayName": "Hive Config",
+                                    "description": "(Deprecated) Overrides for the default HiveConfig spec",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "imagePullSecret",
+                                    "displayName": "Image Pull Secret",
+                                    "description": "Override pull secret for accessing MultiClusterHub operand and endpoint images",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:io.kubernetes:Secret",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "ingress",
+                                    "displayName": "Ingress Management",
+                                    "description": "(Deprecated) Configuration options for ingress management",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "overrides",
+                                    "displayName": "Developer Overrides",
+                                    "description": "Developer Overrides",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "overrides.components",
+                                    "displayName": "Component Configuration",
+                                    "description": "Provides optional configuration for components, the list of which can be found here: https://github.com/stolostron/multiclusterhub-operator/tree/main/docs/available-components.md",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "separateCertificateManagement",
+                                    "displayName": "Separate Certificate Management",
+                                    "description": "(Deprecated) Install cert-manager into its own namespace",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "Red Hat Advanced Cluster Management for Kubernetes provides the multicluster hub, a central management console for managing multiple Kubernetes-based clusters across data centers, public clouds, and private clouds. You can use the hub to create Red Hat OpenShift Container Platform clusters on selected providers, or import existing Kubernetes-based clusters. After the clusters are managed, you can set compliance requirements to ensure that the clusters maintain the specified security requirements. You can also deploy business applications across your clusters.\n\n## How to install\nUse of this Red Hat product requires a licensing and subscription agreement.\n\nInstall the Red Hat Advanced Cluster Management for Kubernetes operator by following instructions presented when you click the `Install` button. After installing the operator, create an instance of the `MultiClusterHub` resource to install the hub.\n\nNote that if you will be using the hub to manage non-OpenShift 4.x clusters, you will need to create a Kubernetes `Secret` resource containing your OpenShift pull secret and specify this `Secret` in the `MultiClusterHub` resource, as described in the install documentation.\n### Special considerations for disconnected network environments\nIf you are installing Red Hat Advanced Cluster Management for Kubernetes in a disconnected network environment, there are some special install and upgrade requirements.\n#### Include multicluster engine for Kubernetes in mirrored catalog\nInstalling an OLM operator in a disconnected network environment involves the use of a local mirrored operator catalog and image registry. Red Hat Advanced Cluster Management for Kubernetes requires (and automatically installs) the multicluster engine for Kuberenetes operator so this operator package is needed in your local mirrored operator catalog in addition to the one for Red Hat Advanced Cluster Management for Kubernetes.\n\nif you are using a full mirror of the Red Hat operators catalog, no special action is needed when creating the mirror catalog.\n\nIf you are using a filtered (rather than full) mirror of the OLM catalog, be sure to include both the `advanced-cluster-management` **and** `multicluster-engine` packages in your mirrored catalog when creating it.\n#### Add annotation to MultiClusterHub resource\nIf you are installing or upgrading to a Red Hat Advanced Cluster Management for Kubernetes release prior to release 2.7, an `mce-subscription-spec` annotation is required in the instance of the `MultiClusterHub` resource you create to set up your hub. This annotation identifies the catalog source for your local mirrored operator catalog and is required when installing releases prior to release 2.7 regardless of whether your local mirrored operator catalog is a full mirror or a filtered one.\n\nThe `mce-subscription-spec` annotation is not usually needed, and thus can usually be omitted, when installing or upgrading to release 2.7 or a later release. Starting with release 2.7, the Red Hat Advanced Cluster Management for Kubernetes operator is able to automatically determine the catalog source to use in typical scenarios.\n\nThe following is an example of the `mce-subscription-spec` annotation:\n\n```\n apiVersion: operator.open-cluster-management.io/v1\n kind: MultiClusterHub\n metadata:\n \tannotations:\n \t\tinstaller.open-cluster-management.io/mce-subscription-spec: '{\"source\": \"my-catalog-source\"}'\n spec: {}\n\n```\n\nReplace `my-catalog-source` with the name of your catalog source.\n\nIf you are creating the `MultiClusterHub` resource using the OperatorHub UI, switch to the YAML view for the resource in order to insert the annotation.\n#### Upgrading from release 2.4\nThe special considerations described above also apply when upgrading from Red Hat Advanced Cluster Management for Kubernetes release 2.4.\n- If you are using a filtered mirror catalog, update your catalog-building procedures to ensure that the `multicluster-engine` package is included in your mirror catalog.\n- Before changing the update channel to trigger the update, edit your existing `MultiClusterHub` resource to add the `mce-subscription-spec` annotation as shown in the example above so that the upgraded version of the Red Hat Advanced Cluster Management for Kubernetes knows the correct catalog source to use to find the `multicluster-engine` package.\n### Where to find more installation information\nYou can find additional installation guidance in the [install documentation](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.12/html/install/installing). ",
+                "displayName": "Advanced Cluster Management for Kubernetes",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "acm",
+                    "advanced-cluster-management",
+                    "install",
+                    "multiclusterhub",
+                    "rhacm"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Documentation",
+                        "url": "https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.12/"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Red Hat",
+                        "email": "acm-contact@redhat.com"
+                    }
+                ],
+                "maturity": "stable",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "configmap_reloader",
+            "image": "registry.redhat.io/openshift4/ose-configmap-reloader-rhel9@sha256:c67decf44185c2b536c2e4afd7adaff053157538c154722e6741e0052f4f2b26"
+        },
+        {
+            "name": "acm_cli",
+            "image": "registry.redhat.io/rhacm2/acm-cli-rhel9@sha256:2e8966af7d856bd9274f8ceb04a305cf1ac37417e90c49ceae2651eb25e060c2"
+        },
+        {
+            "name": "cluster_permission",
+            "image": "registry.redhat.io/rhacm2/acm-cluster-permission-rhel9@sha256:0d4b713fbdf69679e5908e2cde9c2424f3f73259272d5edcdb045a3d99486d2e"
+        },
+        {
+            "name": "governance_policy_addon_controller",
+            "image": "registry.redhat.io/rhacm2/acm-governance-policy-addon-controller-rhel9@sha256:1189cf34bbd56c9dc1d28a3b3580b595c195f6a03f801a5a6a162a0118cd9f23"
+        },
+        {
+            "name": "governance_policy_framework_addon",
+            "image": "registry.redhat.io/rhacm2/acm-governance-policy-framework-addon-rhel9@sha256:7f41ed913e6f135e7449141df72be6a168dd36ea4e251b89be6ec1d9a78dcff6"
+        },
+        {
+            "name": "grafana",
+            "image": "registry.redhat.io/rhacm2/acm-grafana-rhel9@sha256:2668ab8e0b48b070d75690e1c4a423f9e47a6cf3435abb700a70b26415029758"
+        },
+        {
+            "name": "multicluster_observability_addon",
+            "image": "registry.redhat.io/rhacm2/acm-multicluster-observability-addon-rhel9@sha256:e8ab2a1a390838213d2f14ec5a1fbcbe0ff5544ee34135aa121589fa43f5bb8c"
+        },
+        {
+            "name": "acm_must_gather",
+            "image": "registry.redhat.io/rhacm2/acm-must-gather-rhel9@sha256:54342719ea3a3068e8d06098f661dcd34f66e9544af779dda2bedf4570a5e5e1"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhacm2/acm-operator-bundle@sha256:834b5ba15a3c3f96b2128b11df8a5301465a40bb54f85c13a7a0e7dfba635448"
+        },
+        {
+            "name": "prometheus_config_reloader",
+            "image": "registry.redhat.io/rhacm2/acm-prometheus-config-reloader-rhel9@sha256:a0228801aed4d0d978f48c88df5986c23b4c7ef91db93a285582aa3b902206cb"
+        },
+        {
+            "name": "prometheus_operator",
+            "image": "registry.redhat.io/rhacm2/acm-prometheus-rhel9@sha256:5a825a887951c4fd4e228d523e89bdc0c8fa1685343702aa7c0f352c541e3c60"
+        },
+        {
+            "name": "search_indexer",
+            "image": "registry.redhat.io/rhacm2/acm-search-indexer-rhel9@sha256:a2c57a461996bbe579e2228ad6d0c06577d32b2bed92530cc35aa2594acab2ce"
+        },
+        {
+            "name": "search_v2_api",
+            "image": "registry.redhat.io/rhacm2/acm-search-v2-api-rhel9@sha256:524851ce2afcda5b099496ba7fe791e7af9ccc3f22982109d268e71e293e8cdb"
+        },
+        {
+            "name": "search_v2_operator",
+            "image": "registry.redhat.io/rhacm2/acm-search-v2-rhel9@sha256:9e3a1154e6497e7e09aa39c7dd54be417c3b3d0a5e456cdbbe31a6256cc8d74f"
+        },
+        {
+            "name": "siteconfig_operator",
+            "image": "registry.redhat.io/rhacm2/acm-siteconfig-rhel9@sha256:f01ef1961b85bb1db80632768837d9320f03b73e8e07afbc836de2c9b572038a"
+        },
+        {
+            "name": "volsync_addon_controller",
+            "image": "registry.redhat.io/rhacm2/acm-volsync-addon-controller-rhel9@sha256:9cd419b1a7f62d4fe0313e167c8c0422e3c620f8e5e166929eca1b6060493a2d"
+        },
+        {
+            "name": "cert_policy_controller",
+            "image": "registry.redhat.io/rhacm2/cert-policy-controller-rhel9@sha256:eeb054e4fa9ca03b878ca8436543fae12abea47eff636311c082e944f9c307f6"
+        },
+        {
+            "name": "cluster_backup_controller",
+            "image": "registry.redhat.io/rhacm2/cluster-backup-rhel9-operator@sha256:616e96739a79e107553f4cd0dba88c2ed5000d4b98cbc25dd7657ac8e8f43d71"
+        },
+        {
+            "name": "config_policy_controller",
+            "image": "registry.redhat.io/rhacm2/config-policy-controller-rhel9@sha256:69ed4b8da78677c4ffde4d8504b6ab0c218c2fbdaa5252e244bb964e580ca6c5"
+        },
+        {
+            "name": "console",
+            "image": "registry.redhat.io/rhacm2/console-rhel9@sha256:4c26669e2e6f784a1279091855254fdf0048c8ac3a27dc5ea03a67af207d4e53"
+        },
+        {
+            "name": "endpoint_monitoring_operator",
+            "image": "registry.redhat.io/rhacm2/endpoint-monitoring-rhel9-operator@sha256:46cc2d7cde87d659b714aff8ad1df1ed50af8f0320e64993752a2290e3d00fa7"
+        },
+        {
+            "name": "governance_policy_propagator",
+            "image": "registry.redhat.io/rhacm2/governance-policy-propagator-rhel9@sha256:4b317e23c80fea506cdefea2d4a07db135c1cda6cb8adf80ad9074b6d5fbfbaa"
+        },
+        {
+            "name": "grafana_dashboard_loader",
+            "image": "registry.redhat.io/rhacm2/grafana-dashboard-loader-rhel9@sha256:09d70bd077005c6c1c3cf9768009baaf1adf6b1e88fcdd4faf46fea3cf47b26b"
+        },
+        {
+            "name": "insights_client",
+            "image": "registry.redhat.io/rhacm2/insights-client-rhel9@sha256:3215bcf6ff0a40dcc247e7f546034db84ce1a884811e610ad1be954549568d00"
+        },
+        {
+            "name": "insights_metrics",
+            "image": "registry.redhat.io/rhacm2/insights-metrics-rhel9@sha256:98f0075288af24a9cf449e45f580e8bac5310842677beb120bd99f24c4bbfae6"
+        },
+        {
+            "name": "klusterlet_addon_controller",
+            "image": "registry.redhat.io/rhacm2/klusterlet-addon-controller-rhel9@sha256:1ce0cc5e120ef01cd90d8f57eec2a99a82824a597a57de0e0b192ef7638bd4ca"
+        },
+        {
+            "name": "kube_rbac_proxy",
+            "image": "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel9@sha256:a43944be9663c6a1772912188423bc24e22d33d46d7217e86a4741ec99b42d97"
+        },
+        {
+            "name": "kube_state_metrics",
+            "image": "registry.redhat.io/rhacm2/kube-state-metrics-rhel9@sha256:4be4f611c70e4f4a0d10996c22c7a658a234f50cde9485042bfa84b106a22cd6"
+        },
+        {
+            "name": "memcached_exporter",
+            "image": "registry.redhat.io/rhacm2/memcached-exporter-rhel9@sha256:232ef4918eb7f183f36835ec21ce956a6dcd5eca21b4f93df8615fb819788fbf"
+        },
+        {
+            "name": "memcached",
+            "image": "registry.redhat.io/rhacm2/memcached-rhel9@sha256:6f8bd8bd2e31976c2877db47470380d5502a1b4d2004a41d7108551aa82e2251"
+        },
+        {
+            "name": "metrics_collector",
+            "image": "registry.redhat.io/rhacm2/metrics-collector-rhel9@sha256:f2a9de77f9199860ca4af677a7e24dee8aec6fa0f69d65537e577bdea84a427f"
+        },
+        {
+            "name": "multicloud_integrations",
+            "image": "registry.redhat.io/rhacm2/multicloud-integrations-rhel9@sha256:e3153bf5b708ced3d7c128d53c65c9727ec3491eee35ced97b0d8c6200caab96"
+        },
+        {
+            "name": "multicluster_observability_operator",
+            "image": "registry.redhat.io/rhacm2/multicluster-observability-rhel9-operator@sha256:ceebf55e078c380941b94c2bb8999a501277f6a286287f7db5ed3ee2e52baad5"
+        },
+        {
+            "name": "multicluster_operators_application",
+            "image": "registry.redhat.io/rhacm2/multicluster-operators-application-rhel9@sha256:465bf4dc1a12e671eb786ec0079d07c11fe7ea5b729c1efac9193a398801b810"
+        },
+        {
+            "name": "multicluster_operators_channel",
+            "image": "registry.redhat.io/rhacm2/multicluster-operators-channel-rhel9@sha256:e8ac83cf7f471e7c7a2f6a08b598cbfa3e684b6c1d257e35b20867edd461a06a"
+        },
+        {
+            "name": "multicluster_operators_subscription",
+            "image": "registry.redhat.io/rhacm2/multicluster-operators-subscription-rhel9@sha256:8e791f520830b6277734742a46f5d89356aef2b2d6816051708d55a8d73b71a6"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhacm2/multiclusterhub-rhel9@sha256:22d42b6f89751eb19d3b91345714eabe143f2db982f3b045951f1578225fae21"
+        },
+        {
+            "name": "node_exporter",
+            "image": "registry.redhat.io/rhacm2/node-exporter-rhel9@sha256:e8c3599425bc281683316904b0980d525006bf9acf05c020e425c1182a9f6629"
+        },
+        {
+            "name": "observatorium_operator",
+            "image": "registry.redhat.io/rhacm2/observatorium-rhel9-operator@sha256:65a2010177877cd9d24a610887f0e766c34a86f5aa41bdd4505e47895157db16"
+        },
+        {
+            "name": "observatorium",
+            "image": "registry.redhat.io/rhacm2/observatorium-rhel9@sha256:3fc0c19866b21b5de772b0a22b48be9ae83ef6007998723fcfde903003ec5606"
+        },
+        {
+            "name": "prometheus_alertmanager",
+            "image": "registry.redhat.io/rhacm2/prometheus-alertmanager-rhel9@sha256:9b74a2c1d569a2f8ab031d2e736d434a6c8d25834b336327563c3d302cab30fb"
+        },
+        {
+            "name": "prometheus",
+            "image": "registry.redhat.io/rhacm2/prometheus-rhel9@sha256:586e9cd316405be591ec0c1e365cc7e30c3873c504a68d9e69f1a35fcd5ccc60"
+        },
+        {
+            "name": "rbac_query_proxy",
+            "image": "registry.redhat.io/rhacm2/rbac-query-proxy-rhel9@sha256:3d13d6a4e3459ee62c9d29b5b1712b2ad1f2aff85d08b1acc36b4c0e679a20f8"
+        },
+        {
+            "name": "search_collector",
+            "image": "registry.redhat.io/rhacm2/search-collector-rhel9@sha256:3add8626d5d7ab3c2de058757a7abc0d41a928362cf458261da3c6ee07dbed0f"
+        },
+        {
+            "name": "submariner_addon",
+            "image": "registry.redhat.io/rhacm2/submariner-addon-rhel9@sha256:e887756ce8f70cf27f04cce633e5677c2e809080261491a58d69fe168c485066"
+        },
+        {
+            "name": "thanos_receive_controller",
+            "image": "registry.redhat.io/rhacm2/thanos-receive-controller-rhel9@sha256:5fce81efc87eb20ada27b0320ddd99c0ed41fabedc8f223b3e9012ba0ad17f62"
+        },
+        {
+            "name": "thanos",
+            "image": "registry.redhat.io/rhacm2/thanos-rhel9@sha256:df16c72be2555e7ed7deef331bfc34bf24e391b6483afe139ae75ec7bbb036fb"
+        },
+        {
+            "name": "postgresql_13",
+            "image": "registry.redhat.io/rhel8/postgresql-13@sha256:826a1a75f4186f36217b5c1f1aa270838c4b55b1021d33a4876566bfc3b8e629"
+        }
+    ]
+}

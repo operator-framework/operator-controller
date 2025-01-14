@@ -1,0 +1,538 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-cloudtrail-controller
+schema: olm.package
+---
+entries:
+- name: ack-cloudtrail-controller.v0.1.1
+- name: ack-cloudtrail-controller.v0.1.2
+  replaces: ack-cloudtrail-controller.v0.1.1
+- name: ack-cloudtrail-controller.v0.1.3
+  replaces: ack-cloudtrail-controller.v0.1.2
+- name: ack-cloudtrail-controller.v1.0.0
+  replaces: ack-cloudtrail-controller.v0.1.3
+- name: ack-cloudtrail-controller.v1.0.1
+  replaces: ack-cloudtrail-controller.v1.0.0
+- name: ack-cloudtrail-controller.v1.0.10
+  replaces: ack-cloudtrail-controller.v1.0.8
+- name: ack-cloudtrail-controller.v1.0.11
+  replaces: ack-cloudtrail-controller.v1.0.10
+- name: ack-cloudtrail-controller.v1.0.12
+  replaces: ack-cloudtrail-controller.v1.0.11
+- name: ack-cloudtrail-controller.v1.0.13
+  replaces: ack-cloudtrail-controller.v1.0.12
+- name: ack-cloudtrail-controller.v1.0.14
+  replaces: ack-cloudtrail-controller.v1.0.13
+- name: ack-cloudtrail-controller.v1.0.2
+  replaces: ack-cloudtrail-controller.v1.0.1
+- name: ack-cloudtrail-controller.v1.0.3
+  replaces: ack-cloudtrail-controller.v1.0.2
+- name: ack-cloudtrail-controller.v1.0.4
+  replaces: ack-cloudtrail-controller.v1.0.3
+- name: ack-cloudtrail-controller.v1.0.5
+  replaces: ack-cloudtrail-controller.v1.0.4
+- name: ack-cloudtrail-controller.v1.0.6
+  replaces: ack-cloudtrail-controller.v1.0.5
+- name: ack-cloudtrail-controller.v1.0.8
+  replaces: ack-cloudtrail-controller.v1.0.6
+name: alpha
+package: ack-cloudtrail-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:499b6433bfa16c57c65c8984099bb780e5af4ed13032381d748cf78ed1c7fdce
+name: ack-cloudtrail-controller.v0.1.1
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:499b6433bfa16c57c65c8984099bb780e5af4ed13032381d748cf78ed1c7fdce
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:acf2da580bd9fda960fa155b2c8b4823e5fef182d47015038c6d64cc862b3f76
+name: ack-cloudtrail-controller.v0.1.2
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:acf2da580bd9fda960fa155b2c8b4823e5fef182d47015038c6d64cc862b3f76
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:606681180b92e44b52f97a1990a985efb2f1c8419ce6ee633915a6f26932e2b3
+name: ack-cloudtrail-controller.v0.1.3
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 0.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:v0.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:606681180b92e44b52f97a1990a985efb2f1c8419ce6ee633915a6f26932e2b3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:626382c5b7a44d780092160fece5bd3f75b0ff13a5b9d1a905681b05d8cb68be
+name: ack-cloudtrail-controller.v1.0.0
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:626382c5b7a44d780092160fece5bd3f75b0ff13a5b9d1a905681b05d8cb68be
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:caeb253101a67d8c1a95643ef1aa0f4b8989e531147afce64c2e9dc4fe4bc2d5
+name: ack-cloudtrail-controller.v1.0.1
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:v1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:caeb253101a67d8c1a95643ef1aa0f4b8989e531147afce64c2e9dc4fe4bc2d5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:5284a01f0ca1cb6de7a1e1f97b9c1a9cc441c59c78d4e22aafdb0cc78513e936
+name: ack-cloudtrail-controller.v1.0.10
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:5284a01f0ca1cb6de7a1e1f97b9c1a9cc441c59c78d4e22aafdb0cc78513e936
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:c8361577ecc2d2010eba56a6ad7cd46d6fccf2770fc0c1b2c74cfde1d52a7ce7
+name: ack-cloudtrail-controller.v1.0.11
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:c8361577ecc2d2010eba56a6ad7cd46d6fccf2770fc0c1b2c74cfde1d52a7ce7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:75ddff07126ac9e2757351cc16606d68b0985624db0ecf331872524f72208cc2
+name: ack-cloudtrail-controller.v1.0.12
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:75ddff07126ac9e2757351cc16606d68b0985624db0ecf331872524f72208cc2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:6d2c0f841dbc461d1a1e8e9f66360accbf2df160f34125ace26c5b6079a4ce51
+name: ack-cloudtrail-controller.v1.0.13
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:6d2c0f841dbc461d1a1e8e9f66360accbf2df160f34125ace26c5b6079a4ce51
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:62c7f90eeaa69df35a9333004a0f39a50a9e61e8996298d9438d98f2a9868fce
+name: ack-cloudtrail-controller.v1.0.14
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.14
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "cloudtrail.services.k8s.aws/v1alpha1",
+            "kind": "EventDataStore",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "cloudtrail.services.k8s.aws/v1alpha1",
+            "kind": "Trail",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.14
+      createdAt: "2024-08-31T01:45:09Z"
+      description: AWS CloudTrail controller is a service controller for managing
+        CloudTrail resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: EventDataStore represents the state of an AWS cloudtrail EventDataStore
+          resource.
+        displayName: EventDataStore
+        kind: EventDataStore
+        name: eventdatastores.cloudtrail.services.k8s.aws
+        version: v1alpha1
+      - description: Trail represents the state of an AWS cloudtrail Trail resource.
+        displayName: Trail
+        kind: Trail
+        name: trails.cloudtrail.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Elastic Compute Cloud (CloudTrail) resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon CloudTrail**
+
+      AWS CloudTrail is an AWS service that helps you enable operational and risk auditing, governance, and compliance of your AWS account. Actions taken by a user, role, or an AWS service are recorded as events in CloudTrail. Events include actions taken in the AWS Management Console, AWS Command Line Interface, and AWS SDKs and APIs.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon CloudTrail
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - cloudtrail
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon CloudTrail Developer Resources
+      url: https://aws.amazon.com/cloudtrail/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: cloudtrail maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:62c7f90eeaa69df35a9333004a0f39a50a9e61e8996298d9438d98f2a9868fce
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:75c03459b9a304ba8e87c49e5cb8d593646e0c3d2b741439c5075515adcc7cf9
+name: ack-cloudtrail-controller.v1.0.2
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:v1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:75c03459b9a304ba8e87c49e5cb8d593646e0c3d2b741439c5075515adcc7cf9
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:07d1ad92ed3fd5350959a794d86bceff129aeb31f438ebc015005e880a6a38b7
+name: ack-cloudtrail-controller.v1.0.3
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:07d1ad92ed3fd5350959a794d86bceff129aeb31f438ebc015005e880a6a38b7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:0993183be9e3eb29b36f669ebb1b6b621c4699ae887649e79d36636e24d94096
+name: ack-cloudtrail-controller.v1.0.4
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:0993183be9e3eb29b36f669ebb1b6b621c4699ae887649e79d36636e24d94096
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:fc21cee294bac36f630e369182b105b998f967cd9851cf5c43666c042f8ae2ac
+name: ack-cloudtrail-controller.v1.0.5
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:fc21cee294bac36f630e369182b105b998f967cd9851cf5c43666c042f8ae2ac
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:3c69f565c74907b7aba4ec2ccf30767c5e552310ac253ec4291651a6e426c91c
+name: ack-cloudtrail-controller.v1.0.6
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:3c69f565c74907b7aba4ec2ccf30767c5e552310ac253ec4291651a6e426c91c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:d0ac1b73a58c332bbbec3ab25b7d3dfc8918a24bfdf0b78ace7029d175b945b8
+name: ack-cloudtrail-controller.v1.0.8
+package: ack-cloudtrail-controller
+properties:
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: EventDataStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: cloudtrail.services.k8s.aws
+    kind: Trail
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-cloudtrail-controller
+    version: 1.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/cloudtrail-controller:1.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-cloudtrail-controller@sha256:d0ac1b73a58c332bbbec3ab25b7d3dfc8918a24bfdf0b78ace7029d175b945b8
+  name: ""
+schema: olm.bundle

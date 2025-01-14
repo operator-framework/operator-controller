@@ -1,0 +1,194 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgdmVyc2lvbj0iMS4xIgogICBpZD0iTGF5ZXJfMSIKICAgeD0iMHB4IgogICB5PSIwcHgiCiAgIHZpZXdCb3g9IjAgMCAxMDAwIDk5OS45OTk5NyIKICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIKICAgc29kaXBvZGk6ZG9jbmFtZT0ibG9nb19pY29uX3NxdWFyZS5zdmciCiAgIGlua3NjYXBlOnZlcnNpb249IjEuMy4yICgwOTFlMjBlZjBmLCAyMDIzLTExLTI1KSIKICAgd2lkdGg9IjEwMDAiCiAgIGhlaWdodD0iMTAwMCIKICAgeG1sbnM6aW5rc2NhcGU9Imh0dHA6Ly93d3cuaW5rc2NhcGUub3JnL25hbWVzcGFjZXMvaW5rc2NhcGUiCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCIKICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOmNjPSJodHRwOi8vY3JlYXRpdmVjb21tb25zLm9yZy9ucyMiCiAgIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyI+PG1ldGFkYXRhCiAgIGlkPSJtZXRhZGF0YTExMyI+PHJkZjpSREY+PGNjOldvcmsKICAgICAgIHJkZjphYm91dD0iIj48ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD48ZGM6dHlwZQogICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPjwvY2M6V29yaz48L3JkZjpSREY+PC9tZXRhZGF0YT48ZGVmcwogICBpZD0iZGVmczExMSIgLz48c29kaXBvZGk6bmFtZWR2aWV3CiAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgYm9yZGVyY29sb3I9IiM2NjY2NjYiCiAgIGJvcmRlcm9wYWNpdHk9IjEiCiAgIG9iamVjdHRvbGVyYW5jZT0iMTAiCiAgIGdyaWR0b2xlcmFuY2U9IjEwIgogICBndWlkZXRvbGVyYW5jZT0iMTAiCiAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwIgogICBpbmtzY2FwZTpwYWdlc2hhZG93PSIyIgogICBpbmtzY2FwZTp3aW5kb3ctd2lkdGg9IjE5MjAiCiAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjExMTUiCiAgIGlkPSJuYW1lZHZpZXcxMDkiCiAgIHNob3dncmlkPSJmYWxzZSIKICAgaW5rc2NhcGU6em9vbT0iMC41MDA4Nzc4NCIKICAgaW5rc2NhcGU6Y3g9IjIyMy42MDc0MiIKICAgaW5rc2NhcGU6Y3k9IjU1OC4wMjAyOSIKICAgaW5rc2NhcGU6d2luZG93LXg9IjAiCiAgIGlua3NjYXBlOndpbmRvdy15PSIwIgogICBpbmtzY2FwZTp3aW5kb3ctbWF4aW1pemVkPSIxIgogICBpbmtzY2FwZTpjdXJyZW50LWxheWVyPSJMYXllcl8xIgogICBpbmtzY2FwZTpzaG93cGFnZXNoYWRvdz0iMiIKICAgaW5rc2NhcGU6cGFnZWNoZWNrZXJib2FyZD0iMCIKICAgaW5rc2NhcGU6ZGVza2NvbG9yPSIjZDFkMWQxIiAvPgo8c3R5bGUKICAgdHlwZT0idGV4dC9jc3MiCiAgIGlkPSJzdHlsZTIiPgoJLnN0MHtlbmFibGUtYmFja2dyb3VuZDpuZXcgICAgO30KCS5zdDF7ZmlsbDojMzczNjRFO30KCS5zdDJ7ZmlsbDojRjI2NzJDO30KPC9zdHlsZT4KCjxnCiAgIGlkPSJnNDQiCiAgIHRyYW5zZm9ybT0ibWF0cml4KDEwLjMyNTAwNiwwLDAsMTAuNzk2Nzg3LC0xMDg2LjEwOTIsLTM2NC4wMjcwOSkiPgoJPGcKICAgaWQ9ImczMCI+CgkJPHBhdGgKICAgY2xhc3M9InN0MiIKICAgZD0ibSAxNjkuNjIsODEuMjMgMTcuNTksMTguNzYgYyAwLjY4LDAuNzIgMC4xNywxLjkxIC0wLjgzLDEuOTEgaCAtMTAuODQgYyAtMC4zMSwwIC0wLjYxLC0wLjEzIC0wLjgyLC0wLjM2IEwgMTU5LjU2LDg1LjQ3IgogICBpZD0icGF0aDI4IiAvPgoJPC9nPgoJPHBhdGgKICAgY2xhc3M9InN0MiIKICAgZD0ibSAxNjIuOTcsNTguNDcgLTcuMDUsNi43OSBjIC0wLjIyLDAuMjEgLTAuMzUsMC41MSAtMC4zNSwwLjgxIHYgMTQuNTkgYyAwLDAuOTkgMS4xNywxLjUgMS45LDAuODMgbCA3LjA1LC02LjQ4IGMgMC4yMywtMC4yMSAwLjM3LC0wLjUyIDAuMzcsLTAuODMgdiAtMTQuOSBjIC0wLjAxLC0wLjk5IC0xLjIsLTEuNSAtMS45MiwtMC44MSB6IgogICBpZD0icGF0aDMyIiAvPgoJPHBhdGgKICAgY2xhc3M9InN0MiIKICAgZD0ibSAxODYuOCw3My45MiAtMjkuMzMsMjYuMzYgYyAtMC43MywwLjY1IC0xLjg5LDAuMTQgLTEuODksLTAuODQgdiAtOS44MiBjIDAsLTAuMzIgMC4xMywtMC42MiAwLjM3LC0wLjg0IGwgMTguMDksLTE2LjU0IGMgMC4yMSwtMC4xOSAwLjQ4LC0wLjMgMC43NiwtMC4zIGggMTEuMjQgYyAxLjA0LDAuMDEgMS41MywxLjI5IDAuNzYsMS45OCB6IgogICBpZD0icGF0aDM0IiAvPgoJPGcKICAgaWQ9ImczOCI+CgkJPHBhdGgKICAgY2xhc3M9InN0MiIKICAgZD0ibSAxNDcuNjcsODUuNDcgLTE1LjE2LDE2LjA3IGMgLTAuMjEsMC4yMyAtMC41MSwwLjM2IC0wLjgyLDAuMzYgaCAtMTAuODQgYyAtMC45OSwwIC0xLjUsLTEuMTggLTAuODMsLTEuOTEgbCAxNy41OSwtMTguNzYiCiAgIGlkPSJwYXRoMzYiIC8+Cgk8L2c+Cgk8cGF0aAogICBjbGFzcz0ic3QyIgogICBkPSJtIDE0NC4yNyw1OC40NyA3LjA1LDYuNzkgYyAwLjIyLDAuMjEgMC4zNSwwLjUxIDAuMzUsMC44MSB2IDE0LjU5IGMgMCwwLjk5IC0xLjE3LDEuNSAtMS45LDAuODMgbCAtNy4wNSwtNi40OCBjIC0wLjIzLC0wLjIxIC0wLjM3LC0wLjUyIC0wLjM3LC0wLjgzIHYgLTE0LjkgYyAwLjAxLC0wLjk5IDEuMjEsLTEuNSAxLjkyLC0wLjgxIHoiCiAgIGlkPSJwYXRoNDAiIC8+Cgk8cGF0aAogICBjbGFzcz0ic3QyIgogICBkPSJtIDEyMC40NSw3My45MiAyOS4zMywyNi4zNiBjIDAuNzMsMC42NSAxLjg5LDAuMTQgMS44OSwtMC44NCB2IC05LjgyIGMgMCwtMC4zMiAtMC4xMywtMC42MiAtMC4zNywtMC44NCBMIDEzMy4yMSw3Mi4yNCBjIC0wLjIxLC0wLjE5IC0wLjQ4LC0wLjMgLTAuNzYsLTAuMyBIIDEyMS4yIGMgLTEuMDQsMC4wMSAtMS41MywxLjI5IC0wLjc1LDEuOTggeiIKICAgaWQ9InBhdGg0MiIgLz4KPC9nPgoKPC9zdmc+Cg==
+  mediatype: image/svg+xml
+name: lms-moodle-operator
+schema: olm.package
+---
+entries:
+- name: lms-moodle-operator.v0.4.5
+name: alpha
+package: lms-moodle-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/lms-moodle-operator@sha256:983a57c2a2ba98cb8689368b1386d76c9565dc9f320d38b22ae997069efd0adb
+name: lms-moodle-operator.v0.4.5
+package: lms-moodle-operator
+properties:
+- type: olm.gvk
+  value:
+    group: lms.krestomat.io
+    kind: LMSMoodle
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: lms.krestomat.io
+    kind: LMSMoodleTemplate
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: lms-moodle-operator
+    version: 0.4.5
+- type: olm.package.required
+  value:
+    packageName: keydb-operator
+    versionRange: 0.3.13
+- type: olm.package.required
+  value:
+    packageName: moodle-operator
+    versionRange: 0.6.17
+- type: olm.package.required
+  value:
+    packageName: nfs-operator
+    versionRange: 0.4.12
+- type: olm.package.required
+  value:
+    packageName: postgres-operator-krestomatio
+    versionRange: 0.3.12
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "lms.krestomat.io/v1alpha1",
+            "kind": "LMSMoodle",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/created-by": "lms-moodle-operator",
+                "app.kubernetes.io/instance": "lmsmoodle-sample",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "lmsmoodle",
+                "app.kubernetes.io/part-of": "lms-moodle-operator"
+              },
+              "name": "lmsmoodle-sample"
+            },
+            "spec": {
+              "lmsMoodleTemplateName": "lmsmoodletemplate-sample",
+              "moodleSpec": {
+                "moodleNewAdminpassHash": "$2b$10$zbRuwPil1wNWQUkvlkchwe3/rOljJvoheydndKH1X0bdIIigy0xim",
+                "moodleNewInstanceAdminmail": "admin@otherexample.com",
+                "moodleNewInstanceAgreeLicense": true,
+                "moodleNewInstanceFullname": "Demo LMS Moodle",
+                "moodleNewInstanceShortname": "demo",
+                "moodleNewInstanceSummary": "A demo LMS Moodle"
+              }
+            }
+          },
+          {
+            "apiVersion": "lms.krestomat.io/v1alpha1",
+            "kind": "LMSMoodleTemplate",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/created-by": "lms-moodle-operator",
+                "app.kubernetes.io/instance": "lmsmoodletemplate-sample",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "lmsmoodletemplate",
+                "app.kubernetes.io/part-of": "lms-moodle-operator"
+              },
+              "name": "lmsmoodletemplate-sample"
+            },
+            "spec": {
+              "keydbSpec": {
+                "keydbExtraConfig": "maxmemory 900mb\nmaxmemory-policy allkeys-lru\n",
+                "keydbMode": "standalone",
+                "keydbPvcDataSize": "1Gi",
+                "keydbResourceLimits": true,
+                "keydbResourceLimitsCpu": "1",
+                "keydbResourceLimitsMemory": "1Gi"
+              },
+              "moodleSpec": {
+                "moodleConfigSessionRedisCompressor": "gzip",
+                "moodleConfigSessionRedisPrefix": "sess_",
+                "moodleConfigSessionRedisSerializerUseIgbinary": true,
+                "moodleNewAdminpassHash": "$2b$10$zbRuwPil1wNWQUkvlkchwe3/rOljJvoheydndKH1X0bdIIigy0xim",
+                "moodleNewInstanceAdminmail": "admin@otherexample.com",
+                "moodleNewInstanceAgreeLicense": true,
+                "moodleNewInstanceFullname": "Demo LMS Moodle",
+                "moodleNewInstanceShortname": "demo",
+                "moodleNewInstanceSummary": "A demo LMS Moodle",
+                "moodleRedisMucStoreCompressor": 1,
+                "moodleRedisMucStorePrefix": "muc_",
+                "moodleRedisMucStoreSerializer": 2
+              },
+              "nfsSpec": {
+                "ganeshaExportGroupid": 0,
+                "ganeshaExportMode": "0755",
+                "ganeshaExportUserid": 48,
+                "ganeshaPvcDataStorageClassName": "standard"
+              },
+              "postgresSpec": {
+                "postgresMode": "standalone",
+                "postgresPvcDataSize": "1Gi",
+                "postgresPvcDataStorageClassName": "standard"
+              }
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Application Runtime
+      containerImage: quay.io/krestomatio/lms-moodle-operator:0.4.5
+      createdAt: "2024-04-18T18:58:18Z"
+      description: Meta operator for the full stack of Moodle™ LMS on Kubernetes
+      operators.operatorframework.io/builder: operator-sdk-v1.33.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+      repository: https://github.com/krestomatio/lms-moodle-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - kind: LMSMoodle
+        name: lmsmoodles.lms.krestomat.io
+        version: v1alpha1
+      - kind: LMSMoodleTemplate
+        name: lmsmoodletemplates.lms.krestomat.io
+        version: v1alpha1
+    description: Meta operator for the full stack of Moodle™ LMS on Kubernetes
+    displayName: LMS Moodle Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - moodle
+    - postgres
+    - keydb
+    - nfs-ganesha
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: LMS Moodle Operator
+      url: https://krestomatio.com/docs/lms-moodle-operator
+    - name: Moodle Operator
+      url: https://krestomatio.com/docs/moodle-operator
+    - name: Postgres Operator
+      url: https://krestomatio.com/docs/postgres-operator
+    - name: NFS Operator
+      url: https://krestomatio.com/docs/nfs-operator
+    - name: Keydb Operator
+      url: https://krestomatio.com/docs/keydb-operator
+    - name: LMS Moodle Image
+      url: https://krestomatio.com/docs/container-builder/moodle
+    maintainers:
+    - email: jobcespedes@krestomatio.com
+      name: Job Cespedes Ortiz
+    maturity: alpha
+    minKubeVersion: 1.26.0
+    provider:
+      name: Krestomatio
+      url: https://krestomatio.com
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/krestomatio/lms-moodle-operator:0.4.5
+  name: ""
+- image: quay.io/operatorhubio/lms-moodle-operator@sha256:983a57c2a2ba98cb8689368b1386d76c9565dc9f320d38b22ae997069efd0adb
+  name: ""
+schema: olm.bundle

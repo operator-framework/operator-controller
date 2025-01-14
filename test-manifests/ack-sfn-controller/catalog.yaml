@@ -1,0 +1,943 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-sfn-controller
+schema: olm.package
+---
+entries:
+- name: ack-sfn-controller.v0.0.10
+  replaces: ack-sfn-controller.v0.0.9
+- name: ack-sfn-controller.v0.0.11
+  replaces: ack-sfn-controller.v0.0.10
+- name: ack-sfn-controller.v0.0.12
+  replaces: ack-sfn-controller.v0.0.11
+- name: ack-sfn-controller.v0.0.13
+  replaces: ack-sfn-controller.v0.0.12
+- name: ack-sfn-controller.v0.0.14
+  replaces: ack-sfn-controller.v0.0.13
+- name: ack-sfn-controller.v0.0.15
+  replaces: ack-sfn-controller.v0.0.14
+- name: ack-sfn-controller.v0.0.16
+  replaces: ack-sfn-controller.v0.0.15
+- name: ack-sfn-controller.v0.0.17
+  replaces: ack-sfn-controller.v0.0.16
+- name: ack-sfn-controller.v0.0.18
+  replaces: ack-sfn-controller.v0.0.17
+- name: ack-sfn-controller.v0.0.19
+  replaces: ack-sfn-controller.v0.0.18
+- name: ack-sfn-controller.v0.0.5
+- name: ack-sfn-controller.v0.0.6
+  replaces: ack-sfn-controller.v0.0.5
+- name: ack-sfn-controller.v0.0.7
+  replaces: ack-sfn-controller.v0.0.6
+- name: ack-sfn-controller.v0.0.8
+  replaces: ack-sfn-controller.v0.0.7
+- name: ack-sfn-controller.v0.0.9
+  replaces: ack-sfn-controller.v0.0.8
+- name: ack-sfn-controller.v0.1.0
+  replaces: ack-sfn-controller.v0.0.19
+- name: ack-sfn-controller.v0.1.1
+  replaces: ack-sfn-controller.v0.1.0
+- name: ack-sfn-controller.v0.1.2
+  replaces: ack-sfn-controller.v0.1.1
+- name: ack-sfn-controller.v0.1.3
+  replaces: ack-sfn-controller.v0.1.2
+- name: ack-sfn-controller.v1.0.0
+  replaces: ack-sfn-controller.v0.1.3
+- name: ack-sfn-controller.v1.0.1
+  replaces: ack-sfn-controller.v1.0.0
+- name: ack-sfn-controller.v1.0.10
+  replaces: ack-sfn-controller.v1.0.9
+- name: ack-sfn-controller.v1.0.11
+  replaces: ack-sfn-controller.v1.0.10
+- name: ack-sfn-controller.v1.0.12
+  replaces: ack-sfn-controller.v1.0.11
+- name: ack-sfn-controller.v1.0.13
+  replaces: ack-sfn-controller.v1.0.12
+- name: ack-sfn-controller.v1.0.14
+  replaces: ack-sfn-controller.v1.0.13
+- name: ack-sfn-controller.v1.0.2
+  replaces: ack-sfn-controller.v1.0.1
+- name: ack-sfn-controller.v1.0.5
+  replaces: ack-sfn-controller.v1.0.2
+- name: ack-sfn-controller.v1.0.6
+  replaces: ack-sfn-controller.v1.0.5
+- name: ack-sfn-controller.v1.0.8
+  replaces: ack-sfn-controller.v1.0.6
+- name: ack-sfn-controller.v1.0.9
+  replaces: ack-sfn-controller.v1.0.8
+name: alpha
+package: ack-sfn-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:3109777451930a3a57637915d642992b04d00201fd56c31b4cff705a9090289b
+name: ack-sfn-controller.v0.0.10
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:3109777451930a3a57637915d642992b04d00201fd56c31b4cff705a9090289b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:b1e740aafd5f4382778c25abc9949e7d84983a96f1f4cb4f924d3f089433b33b
+name: ack-sfn-controller.v0.0.11
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:b1e740aafd5f4382778c25abc9949e7d84983a96f1f4cb4f924d3f089433b33b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:3ceb790c8c1c222b45bcd0f3e0aa1e7dc0391a256f41a632e5737adb559c72a4
+name: ack-sfn-controller.v0.0.12
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:3ceb790c8c1c222b45bcd0f3e0aa1e7dc0391a256f41a632e5737adb559c72a4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:1b930961af460b53ffc030b9b3cc9e376a5c438d77cdd54f2c231233442b16a7
+name: ack-sfn-controller.v0.0.13
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:1b930961af460b53ffc030b9b3cc9e376a5c438d77cdd54f2c231233442b16a7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:933e236a6b8e089ba5c4ec5100c48d9ae017bf2f7ad999f6eab23525290f568c
+name: ack-sfn-controller.v0.0.14
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:933e236a6b8e089ba5c4ec5100c48d9ae017bf2f7ad999f6eab23525290f568c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:2a852fbb595c4824a0a4486c0e7817a09e1c1e0ccbe772b899a2fd6dac59915d
+name: ack-sfn-controller.v0.0.15
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:2a852fbb595c4824a0a4486c0e7817a09e1c1e0ccbe772b899a2fd6dac59915d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:bb41d6f3c91e86d4e6ff91982aceeb59190648dc919666f8b9865c3404f327a7
+name: ack-sfn-controller.v0.0.16
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:bb41d6f3c91e86d4e6ff91982aceeb59190648dc919666f8b9865c3404f327a7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:27cc8d87a32abaf1b90ac816e8e9ed0b71fc928c4fe509a897a48f13784396cb
+name: ack-sfn-controller.v0.0.17
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:27cc8d87a32abaf1b90ac816e8e9ed0b71fc928c4fe509a897a48f13784396cb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:ff71bbf5de4f18a8f53d1d5c176f01635a68e8b0276334ac2e57ec7817d13749
+name: ack-sfn-controller.v0.0.18
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.18
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.18
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:ff71bbf5de4f18a8f53d1d5c176f01635a68e8b0276334ac2e57ec7817d13749
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:8c8bcea53a75f7f8c900817bef5b473255123f5c7056b7c5a93637a9eef83170
+name: ack-sfn-controller.v0.0.19
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:8c8bcea53a75f7f8c900817bef5b473255123f5c7056b7c5a93637a9eef83170
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:e63a529eaf8717f16c47b52ad71559b669707760c254e81ac3135d62159553a8
+name: ack-sfn-controller.v0.0.5
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:e63a529eaf8717f16c47b52ad71559b669707760c254e81ac3135d62159553a8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:c57859fab90dcda43095e8482bae9a84b6e6670afd00269169941b4f163338ee
+name: ack-sfn-controller.v0.0.6
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:c57859fab90dcda43095e8482bae9a84b6e6670afd00269169941b4f163338ee
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:27fd6ea32797b7c69d168eca75139daad74dfe7b1ed57109534232b229beee01
+name: ack-sfn-controller.v0.0.7
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:27fd6ea32797b7c69d168eca75139daad74dfe7b1ed57109534232b229beee01
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:ef2379194f34ee554ae3b8f4820c15a2e3e7533b0501608d83b25e7cd41e675c
+name: ack-sfn-controller.v0.0.8
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:ef2379194f34ee554ae3b8f4820c15a2e3e7533b0501608d83b25e7cd41e675c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:81c29b53462a1673cd8c19fb330842d91270de8ecef4b2ddbb3f2b05bc99c87b
+name: ack-sfn-controller.v0.0.9
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:81c29b53462a1673cd8c19fb330842d91270de8ecef4b2ddbb3f2b05bc99c87b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:35d0f9fad69d02edcaf57c96104b3ef5b334bf5e6ca1d84229b4eb63d1d215f3
+name: ack-sfn-controller.v0.1.0
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:35d0f9fad69d02edcaf57c96104b3ef5b334bf5e6ca1d84229b4eb63d1d215f3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:59867773bc20b9ff9ac237be28168be6d546b3ddf11cbd6fd44e584076cf59db
+name: ack-sfn-controller.v0.1.1
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:59867773bc20b9ff9ac237be28168be6d546b3ddf11cbd6fd44e584076cf59db
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:786db432532813639644a127471c06db5dbfc12494d02901f5a8c1505ca48e8b
+name: ack-sfn-controller.v0.1.2
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:786db432532813639644a127471c06db5dbfc12494d02901f5a8c1505ca48e8b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:59b1c2c3aa66ecb0240764001e088dda3d11ba5e7b83879c7282441cb4ce2ac4
+name: ack-sfn-controller.v0.1.3
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 0.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v0.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:59b1c2c3aa66ecb0240764001e088dda3d11ba5e7b83879c7282441cb4ce2ac4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:2d9a66f589a44ee5f7c48517b75d6e058ea9c9feaabdcf3dc17063d5e5c09055
+name: ack-sfn-controller.v1.0.0
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:2d9a66f589a44ee5f7c48517b75d6e058ea9c9feaabdcf3dc17063d5e5c09055
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:335567550d31f48270e104270127b7cba99330118842ee44daf8e53a681923a8
+name: ack-sfn-controller.v1.0.1
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v1.0.1
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:335567550d31f48270e104270127b7cba99330118842ee44daf8e53a681923a8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:3cc70488947254b11330cd176d8a9a9b52f0471f33d5d0a3888c5c20b3397aa4
+name: ack-sfn-controller.v1.0.10
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:3cc70488947254b11330cd176d8a9a9b52f0471f33d5d0a3888c5c20b3397aa4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:30ff7873425a571407dadd02eddac2c3f79ec0704486bb106f6843cb9e4b1b4b
+name: ack-sfn-controller.v1.0.11
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:30ff7873425a571407dadd02eddac2c3f79ec0704486bb106f6843cb9e4b1b4b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:58ccb3b2f60c5db4343f6129e4fd64f9a1efbe7441ccd2de3bc0b6e4ba6d5983
+name: ack-sfn-controller.v1.0.12
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:58ccb3b2f60c5db4343f6129e4fd64f9a1efbe7441ccd2de3bc0b6e4ba6d5983
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:602e42af242184eeea7b2bccd0e2dd52dc6601d2fdbe50f04c6291d1460d3bd4
+name: ack-sfn-controller.v1.0.13
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:602e42af242184eeea7b2bccd0e2dd52dc6601d2fdbe50f04c6291d1460d3bd4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:e77db62744c936050315aa7eba6903d0824bdea34199f052bf3334aff5807bd7
+name: ack-sfn-controller.v1.0.14
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.14
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "sfn.services.k8s.aws/v1alpha1",
+            "kind": "Activity",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "sfn.services.k8s.aws/v1alpha1",
+            "kind": "StateMachine",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.14
+      createdAt: "2024-08-30T23:29:05Z"
+      description: AWS Step Functions controller is a service controller for managing
+        Step Functions resources in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Activity represents the state of an AWS sfn Activity resource.
+        displayName: Activity
+        kind: Activity
+        name: activities.sfn.services.k8s.aws
+        version: v1alpha1
+      - description: StateMachine represents the state of an AWS sfn StateMachine
+          resource.
+        displayName: StateMachine
+        kind: StateMachine
+        name: statemachines.sfn.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Step Functions resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon Step FUnctions**
+
+      Step Functions is a serverless orchestration service that lets you combine AWS Lambda functions and other AWS services to build business-critical applications. Through Step Functions' graphical console, you see your application’s workflow as a series of event-driven steps.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon Step Functions
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - sfn
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon Step Functions Developer Resources
+      url: https://aws.amazon.com/step-functions/resources
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: step functions maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:e77db62744c936050315aa7eba6903d0824bdea34199f052bf3334aff5807bd7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:f5e0be4ec2b87faa24594a705d39624d6bf976ec31cf9080f74936ea100c1877
+name: ack-sfn-controller.v1.0.2
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:v1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:f5e0be4ec2b87faa24594a705d39624d6bf976ec31cf9080f74936ea100c1877
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:a3ed0e8d6a6a5a5b2612665e188a26e79819b9606c83081cc750d81697823616
+name: ack-sfn-controller.v1.0.5
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:a3ed0e8d6a6a5a5b2612665e188a26e79819b9606c83081cc750d81697823616
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:141065b444d8287dedd2106956eb38181ccb929cbb56825266248201e169b84f
+name: ack-sfn-controller.v1.0.6
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:141065b444d8287dedd2106956eb38181ccb929cbb56825266248201e169b84f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:1296ff853abe40db58d5e2d000b2d81d73026f080c85c5f2ad196ef1647dcc22
+name: ack-sfn-controller.v1.0.8
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:1296ff853abe40db58d5e2d000b2d81d73026f080c85c5f2ad196ef1647dcc22
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-sfn-controller@sha256:09157e74a09847837dd655049d0b757abf5e522cd42774968905c4d03fe0e70b
+name: ack-sfn-controller.v1.0.9
+package: ack-sfn-controller
+properties:
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: Activity
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: sfn.services.k8s.aws
+    kind: StateMachine
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-sfn-controller
+    version: 1.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/sfn-controller:1.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-sfn-controller@sha256:09157e74a09847837dd655049d0b757abf5e522cd42774968905c4d03fe0e70b
+  name: ""
+schema: olm.bundle

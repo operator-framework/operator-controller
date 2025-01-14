@@ -1,0 +1,1355 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMzA0IDE4MiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzA0IDE4MjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyNTJGM0U7fQoJLnN0MXtmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiNGRjk5MDA7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04Ni40LDY2LjRjMCwzLjcsMC40LDYuNywxLjEsOC45YzAuOCwyLjIsMS44LDQuNiwzLjIsNy4yYzAuNSwwLjgsMC43LDEuNiwwLjcsMi4zYzAsMS0wLjYsMi0xLjksM2wtNi4zLDQuMiAgIGMtMC45LDAuNi0xLjgsMC45LTIuNiwwLjljLTEsMC0yLTAuNS0zLTEuNEM3Ni4yLDkwLDc1LDg4LjQsNzQsODYuOGMtMS0xLjctMi0zLjYtMy4xLTUuOWMtNy44LDkuMi0xNy42LDEzLjgtMjkuNCwxMy44ICAgYy04LjQsMC0xNS4xLTIuNC0yMC03LjJjLTQuOS00LjgtNy40LTExLjItNy40LTE5LjJjMC04LjUsMy0xNS40LDkuMS0yMC42YzYuMS01LjIsMTQuMi03LjgsMjQuNS03LjhjMy40LDAsNi45LDAuMywxMC42LDAuOCAgIGMzLjcsMC41LDcuNSwxLjMsMTEuNSwyLjJ2LTcuM2MwLTcuNi0xLjYtMTIuOS00LjctMTZjLTMuMi0zLjEtOC42LTQuNi0xNi4zLTQuNmMtMy41LDAtNy4xLDAuNC0xMC44LDEuM2MtMy43LDAuOS03LjMsMi0xMC44LDMuNCAgIGMtMS42LDAuNy0yLjgsMS4xLTMuNSwxLjNjLTAuNywwLjItMS4yLDAuMy0xLjYsMC4zYy0xLjQsMC0yLjEtMS0yLjEtMy4xdi00LjljMC0xLjYsMC4yLTIuOCwwLjctMy41YzAuNS0wLjcsMS40LTEuNCwyLjgtMi4xICAgYzMuNS0xLjgsNy43LTMuMywxMi42LTQuNWM0LjktMS4zLDEwLjEtMS45LDE1LjYtMS45YzExLjksMCwyMC42LDIuNywyNi4yLDguMWM1LjUsNS40LDguMywxMy42LDguMywyNC42VjY2LjR6IE00NS44LDgxLjYgICBjMy4zLDAsNi43LTAuNiwxMC4zLTEuOGMzLjYtMS4yLDYuOC0zLjQsOS41LTYuNGMxLjYtMS45LDIuOC00LDMuNC02LjRjMC42LTIuNCwxLTUuMywxLTguN3YtNC4yYy0yLjktMC43LTYtMS4zLTkuMi0xLjcgICBjLTMuMi0wLjQtNi4zLTAuNi05LjQtMC42Yy02LjcsMC0xMS42LDEuMy0xNC45LDRjLTMuMywyLjctNC45LDYuNS00LjksMTEuNWMwLDQuNywxLjIsOC4yLDMuNywxMC42ICAgQzM3LjcsODAuNCw0MS4yLDgxLjYsNDUuOCw4MS42eiBNMTI2LjEsOTIuNGMtMS44LDAtMy0wLjMtMy44LTFjLTAuOC0wLjYtMS41LTItMi4xLTMuOUw5Ni43LDEwLjJjLTAuNi0yLTAuOS0zLjMtMC45LTQgICBjMC0xLjYsMC44LTIuNSwyLjQtMi41aDkuOGMxLjksMCwzLjIsMC4zLDMuOSwxYzAuOCwwLjYsMS40LDIsMiwzLjlsMTYuOCw2Ni4ybDE1LjYtNjYuMmMwLjUtMiwxLjEtMy4zLDEuOS0zLjljMC44LTAuNiwyLjItMSw0LTEgICBoOGMxLjksMCwzLjIsMC4zLDQsMWMwLjgsMC42LDEuNSwyLDEuOSwzLjlsMTUuOCw2N2wxNy4zLTY3YzAuNi0yLDEuMy0zLjMsMi0zLjljMC44LTAuNiwyLjEtMSwzLjktMWg5LjNjMS42LDAsMi41LDAuOCwyLjUsMi41ICAgYzAsMC41LTAuMSwxLTAuMiwxLjZjLTAuMSwwLjYtMC4zLDEuNC0wLjcsMi41bC0yNC4xLDc3LjNjLTAuNiwyLTEuMywzLjMtMi4xLDMuOWMtMC44LDAuNi0yLjEsMS0zLjgsMWgtOC42Yy0xLjksMC0zLjItMC4zLTQtMSAgIGMtMC44LTAuNy0xLjUtMi0xLjktNEwxNTYsMjNsLTE1LjQsNjQuNGMtMC41LDItMS4xLDMuMy0xLjksNGMtMC44LDAuNy0yLjIsMS00LDFIMTI2LjF6IE0yNTQuNiw5NS4xYy01LjIsMC0xMC40LTAuNi0xNS40LTEuOCAgIGMtNS0xLjItOC45LTIuNS0xMS41LTRjLTEuNi0wLjktMi43LTEuOS0zLjEtMi44Yy0wLjQtMC45LTAuNi0xLjktMC42LTIuOHYtNS4xYzAtMi4xLDAuOC0zLjEsMi4zLTMuMWMwLjYsMCwxLjIsMC4xLDEuOCwwLjMgICBjMC42LDAuMiwxLjUsMC42LDIuNSwxYzMuNCwxLjUsNy4xLDIuNywxMSwzLjVjNCwwLjgsNy45LDEuMiwxMS45LDEuMmM2LjMsMCwxMS4yLTEuMSwxNC42LTMuM2MzLjQtMi4yLDUuMi01LjQsNS4yLTkuNSAgIGMwLTIuOC0wLjktNS4xLTIuNy03Yy0xLjgtMS45LTUuMi0zLjYtMTAuMS01LjJMMjQ2LDUyYy03LjMtMi4zLTEyLjctNS43LTE2LTEwLjJjLTMuMy00LjQtNS05LjMtNS0xNC41YzAtNC4yLDAuOS03LjksMi43LTExLjEgICBjMS44LTMuMiw0LjItNiw3LjItOC4yYzMtMi4zLDYuNC00LDEwLjQtNS4yYzQtMS4yLDguMi0xLjcsMTIuNi0xLjdjMi4yLDAsNC41LDAuMSw2LjcsMC40YzIuMywwLjMsNC40LDAuNyw2LjUsMS4xICAgYzIsMC41LDMuOSwxLDUuNywxLjZjMS44LDAuNiwzLjIsMS4yLDQuMiwxLjhjMS40LDAuOCwyLjQsMS42LDMsMi41YzAuNiwwLjgsMC45LDEuOSwwLjksMy4zdjQuN2MwLDIuMS0wLjgsMy4yLTIuMywzLjIgICBjLTAuOCwwLTIuMS0wLjQtMy44LTEuMmMtNS43LTIuNi0xMi4xLTMuOS0xOS4yLTMuOWMtNS43LDAtMTAuMiwwLjktMTMuMywyLjhjLTMuMSwxLjktNC43LDQuOC00LjcsOC45YzAsMi44LDEsNS4yLDMsNy4xICAgYzIsMS45LDUuNywzLjgsMTEsNS41bDE0LjIsNC41YzcuMiwyLjMsMTIuNCw1LjUsMTUuNSw5LjZjMy4xLDQuMSw0LjYsOC44LDQuNiwxNGMwLDQuMy0wLjksOC4yLTIuNiwxMS42ICAgYy0xLjgsMy40LTQuMiw2LjQtNy4zLDguOGMtMy4xLDIuNS02LjgsNC4zLTExLjEsNS42QzI2NC40LDk0LjQsMjU5LjcsOTUuMSwyNTQuNiw5NS4xeiIvPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI3My41LDE0My43Yy0zMi45LDI0LjMtODAuNywzNy4yLTEyMS44LDM3LjJjLTU3LjYsMC0xMDkuNS0yMS4zLTE0OC43LTU2LjdjLTMuMS0yLjgtMC4zLTYuNiwzLjQtNC40ICAgIGM0Mi40LDI0LjYsOTQuNywzOS41LDE0OC44LDM5LjVjMzYuNSwwLDc2LjYtNy42LDExMy41LTIzLjJDMjc0LjIsMTMzLjYsMjc4LjksMTM5LjcsMjczLjUsMTQzLjd6Ii8+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTI4Ny4yLDEyOC4xYy00LjItNS40LTI3LjgtMi42LTM4LjUtMS4zYy0zLjIsMC40LTMuNy0yLjQtMC44LTQuNWMxOC44LTEzLjIsNDkuNy05LjQsNTMuMy01ICAgIGMzLjYsNC41LTEsMzUuNC0xOC42LDUwLjJjLTIuNywyLjMtNS4zLDEuMS00LjEtMS45QzI4Mi41LDE1NS43LDI5MS40LDEzMy40LDI4Ny4yLDEyOC4xeiIvPgoJPC9nPgo8L2c+Cjwvc3ZnPg==
+  mediatype: image/svg+xml
+name: ack-kms-controller
+schema: olm.package
+---
+entries:
+- name: ack-kms-controller.v0.0.10
+  replaces: ack-kms-controller.v0.0.9
+- name: ack-kms-controller.v0.0.11
+  replaces: ack-kms-controller.v0.0.10
+- name: ack-kms-controller.v0.0.12
+  replaces: ack-kms-controller.v0.0.11
+- name: ack-kms-controller.v0.0.13
+  replaces: ack-kms-controller.v0.0.12
+- name: ack-kms-controller.v0.0.14
+  replaces: ack-kms-controller.v0.0.13
+- name: ack-kms-controller.v0.0.15
+  replaces: ack-kms-controller.v0.0.14
+- name: ack-kms-controller.v0.0.16
+  replaces: ack-kms-controller.v0.0.15
+- name: ack-kms-controller.v0.0.17
+  replaces: ack-kms-controller.v0.0.16
+- name: ack-kms-controller.v0.0.18
+  replaces: ack-kms-controller.v0.0.17
+- name: ack-kms-controller.v0.0.19
+  replaces: ack-kms-controller.v0.0.18
+- name: ack-kms-controller.v0.0.20
+  replaces: ack-kms-controller.v0.0.19
+- name: ack-kms-controller.v0.0.3
+- name: ack-kms-controller.v0.0.4
+  replaces: ack-kms-controller.v0.0.3
+- name: ack-kms-controller.v0.0.5
+  replaces: ack-kms-controller.v0.0.4
+- name: ack-kms-controller.v0.0.6
+  replaces: ack-kms-controller.v0.0.5
+- name: ack-kms-controller.v0.0.7
+  replaces: ack-kms-controller.v0.0.6
+- name: ack-kms-controller.v0.0.8
+  replaces: ack-kms-controller.v0.0.7
+- name: ack-kms-controller.v0.0.9
+  replaces: ack-kms-controller.v0.0.8
+- name: ack-kms-controller.v0.1.0
+  replaces: ack-kms-controller.v0.0.20
+- name: ack-kms-controller.v0.1.1
+  replaces: ack-kms-controller.v0.1.0
+- name: ack-kms-controller.v0.1.2
+  replaces: ack-kms-controller.v0.1.1
+- name: ack-kms-controller.v0.1.3
+  replaces: ack-kms-controller.v0.1.2
+- name: ack-kms-controller.v0.1.4
+  replaces: ack-kms-controller.v0.1.3
+- name: ack-kms-controller.v0.1.5
+  replaces: ack-kms-controller.v0.1.4
+- name: ack-kms-controller.v1.0.0
+  replaces: ack-kms-controller.v0.1.5
+- name: ack-kms-controller.v1.0.12
+  replaces: ack-kms-controller.v1.0.8
+- name: ack-kms-controller.v1.0.13
+  replaces: ack-kms-controller.v1.0.12
+- name: ack-kms-controller.v1.0.14
+  replaces: ack-kms-controller.v1.0.13
+- name: ack-kms-controller.v1.0.15
+  replaces: ack-kms-controller.v1.0.14
+- name: ack-kms-controller.v1.0.16
+  replaces: ack-kms-controller.v1.0.15
+- name: ack-kms-controller.v1.0.2
+  replaces: ack-kms-controller.v1.0.0
+- name: ack-kms-controller.v1.0.3
+  replaces: ack-kms-controller.v1.0.2
+- name: ack-kms-controller.v1.0.4
+  replaces: ack-kms-controller.v1.0.3
+- name: ack-kms-controller.v1.0.5
+  replaces: ack-kms-controller.v1.0.4
+- name: ack-kms-controller.v1.0.7
+  replaces: ack-kms-controller.v1.0.5
+- name: ack-kms-controller.v1.0.8
+  replaces: ack-kms-controller.v1.0.7
+name: alpha
+package: ack-kms-controller
+schema: olm.channel
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:cbce303386fb3e157aea40949bae5695466956692348f5c18790d1deff5fc423
+name: ack-kms-controller.v0.0.10
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.10
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.10
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:cbce303386fb3e157aea40949bae5695466956692348f5c18790d1deff5fc423
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:54671b9289c1c3a94efad3ea4a20a693a23f41e4a9373be654581ea3c28375b8
+name: ack-kms-controller.v0.0.11
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.11
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.11
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:54671b9289c1c3a94efad3ea4a20a693a23f41e4a9373be654581ea3c28375b8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:8454e0f9a40faf1f90aa13aee6c99cecf21ad5e9934b18a09e0244694509420e
+name: ack-kms-controller.v0.0.12
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:8454e0f9a40faf1f90aa13aee6c99cecf21ad5e9934b18a09e0244694509420e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:99cdf63cb197603edabe2d84fd0e7f61f229a29f22e53c893066507a674d86f0
+name: ack-kms-controller.v0.0.13
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:99cdf63cb197603edabe2d84fd0e7f61f229a29f22e53c893066507a674d86f0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:6e2abdd5029bca574c57a6d6b71ee2d70f9647f5fd3dd6566f099d1ce3bcbab2
+name: ack-kms-controller.v0.0.14
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:6e2abdd5029bca574c57a6d6b71ee2d70f9647f5fd3dd6566f099d1ce3bcbab2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:61897242db9b01c2d94cfd34519e6b9d9898f7e8c9a2b0f1b82b71a3d9dfd4e7
+name: ack-kms-controller.v0.0.15
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:61897242db9b01c2d94cfd34519e6b9d9898f7e8c9a2b0f1b82b71a3d9dfd4e7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:fb93f523567abd66378e974942c45aaa8ee36b752d7846efffa1da0d961d0786
+name: ack-kms-controller.v0.0.16
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.16
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:fb93f523567abd66378e974942c45aaa8ee36b752d7846efffa1da0d961d0786
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:9114aaee319b3566a2101cb15ce7b5133635e1351ffee0e116e1b9ba718ef5bd
+name: ack-kms-controller.v0.0.17
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.17
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.17
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:9114aaee319b3566a2101cb15ce7b5133635e1351ffee0e116e1b9ba718ef5bd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:829ee91c2c6f876bc36cca73bc7a33cb341097db1aadd6f81630483bb6188123
+name: ack-kms-controller.v0.0.18
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.18
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.18
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:829ee91c2c6f876bc36cca73bc7a33cb341097db1aadd6f81630483bb6188123
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:b6b4f3808ce7d20e7888ec77d237902a8c2bb14bd045c6a6ff1ba32fc0861c6d
+name: ack-kms-controller.v0.0.19
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.19
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.19
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:b6b4f3808ce7d20e7888ec77d237902a8c2bb14bd045c6a6ff1ba32fc0861c6d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:a7d24c03872b2eb5b106503494e0e0057a2e5f05927bf6910be9b7d953eac3db
+name: ack-kms-controller.v0.0.20
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.20
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.20
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:a7d24c03872b2eb5b106503494e0e0057a2e5f05927bf6910be9b7d953eac3db
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:f88c738d6e687243fe8d4a6a79bd59033cd169898d1ec6d2bf0574f2898b5430
+name: ack-kms-controller.v0.0.3
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:f88c738d6e687243fe8d4a6a79bd59033cd169898d1ec6d2bf0574f2898b5430
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:03c4cdec426ff1d51e224fa08f64399066c3e3bc27c590a87944cc846c5b9ee3
+name: ack-kms-controller.v0.0.4
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:03c4cdec426ff1d51e224fa08f64399066c3e3bc27c590a87944cc846c5b9ee3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:8ae4048a4585ef012e2e89ecceaf1ade8258adee4f77c0e2c59aee5faaf7851c
+name: ack-kms-controller.v0.0.5
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:8ae4048a4585ef012e2e89ecceaf1ade8258adee4f77c0e2c59aee5faaf7851c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:4b02a31d5c228255594549df231658476d8b479681591f9d345a74695b2972ab
+name: ack-kms-controller.v0.0.6
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.6
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.6
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:4b02a31d5c228255594549df231658476d8b479681591f9d345a74695b2972ab
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:91560e4b1630c1512f8e4bf3b19b87dc9a3072e809af476f194f5cea8947244c
+name: ack-kms-controller.v0.0.7
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:91560e4b1630c1512f8e4bf3b19b87dc9a3072e809af476f194f5cea8947244c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:4a52fe2f5fe4473f62f7139f28417d580f47525d60bccbff82f9485f54e8c986
+name: ack-kms-controller.v0.0.8
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:4a52fe2f5fe4473f62f7139f28417d580f47525d60bccbff82f9485f54e8c986
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:4d1043d5f884988b7a745cc4d8c3df9556209c07329e28b0c4efb18d36f53ee7
+name: ack-kms-controller.v0.0.9
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: CustomKeyStore
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.0.9
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.0.9
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:4d1043d5f884988b7a745cc4d8c3df9556209c07329e28b0c4efb18d36f53ee7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:b737128fe20bd06069140f8ad82d2f74a053cce89ad2370deccbfc477412babc
+name: ack-kms-controller.v0.1.0
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.1.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.1.0
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:b737128fe20bd06069140f8ad82d2f74a053cce89ad2370deccbfc477412babc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:b8ea413c060d81a6613fa024bafaef98a94efea45fc8d46e91412e25f506110a
+name: ack-kms-controller.v0.1.1
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.1.1
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.1.1
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:b8ea413c060d81a6613fa024bafaef98a94efea45fc8d46e91412e25f506110a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:f6cb0e2ee37586addfc83999147b81f75b55883758cc63380061cf57b3713b49
+name: ack-kms-controller.v0.1.2
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.1.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.1.2
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:f6cb0e2ee37586addfc83999147b81f75b55883758cc63380061cf57b3713b49
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:7015cb3b3845113e42545779bb3ddc547f0f5343cfac231717b3d5f1480ab414
+name: ack-kms-controller.v0.1.3
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.1.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.1.3
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:7015cb3b3845113e42545779bb3ddc547f0f5343cfac231717b3d5f1480ab414
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:e421f21f1eeec3ce828c7515dbc5db038c219b7b906ea6e15e3061a5dc01158d
+name: ack-kms-controller.v0.1.4
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.1.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.1.4
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:e421f21f1eeec3ce828c7515dbc5db038c219b7b906ea6e15e3061a5dc01158d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:4f34daf5634b59ef7bef378d457cc6ff5438d533a57c59daf6a41183326bf55d
+name: ack-kms-controller.v0.1.5
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 0.1.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v0.1.5
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:4f34daf5634b59ef7bef378d457cc6ff5438d533a57c59daf6a41183326bf55d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:c0781749c5f6bdbee701479427500e76d393662b60b2251da477f7b50de9d671
+name: ack-kms-controller.v1.0.0
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.0
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:c0781749c5f6bdbee701479427500e76d393662b60b2251da477f7b50de9d671
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:60a3fcbafb40022a67119247fef692008965910c546c08e07d324f43f46ea500
+name: ack-kms-controller.v1.0.12
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.12
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.12
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:60a3fcbafb40022a67119247fef692008965910c546c08e07d324f43f46ea500
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:26f4718c143d7c2d42592cc114d773c2b932baaa4708f9ad30f74d97def83bb8
+name: ack-kms-controller.v1.0.13
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.13
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.13
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:26f4718c143d7c2d42592cc114d773c2b932baaa4708f9ad30f74d97def83bb8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:deccbfe55ef24315ea2cf6f0de32ef0bd3a67c955b0506d3cd611ddf1a5afe9d
+name: ack-kms-controller.v1.0.14
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.14
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.14
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:deccbfe55ef24315ea2cf6f0de32ef0bd3a67c955b0506d3cd611ddf1a5afe9d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:e6a5735f2dacb57f275adbb941f1e3641d59811303d8c62a0ef4543909964aa3
+name: ack-kms-controller.v1.0.15
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.15
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.15
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:e6a5735f2dacb57f275adbb941f1e3641d59811303d8c62a0ef4543909964aa3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:a37d65df10809ef97d1cba1bb60e3d5c5662935c728dfe3a4367ee2cb7cc672b
+name: ack-kms-controller.v1.0.16
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.16
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "kms.services.k8s.aws/v1alpha1",
+            "kind": "Alias",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "kms.services.k8s.aws/v1alpha1",
+            "kind": "Grant",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "kms.services.k8s.aws/v1alpha1",
+            "kind": "Key",
+            "metadata": {
+              "name": "example"
+            },
+            "spec": {}
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      certified: "false"
+      containerImage: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.16
+      createdAt: "2024-08-31T01:43:00Z"
+      description: AWS KMS controller is a service controller for managing KMS resources
+        in Kubernetes
+      operatorframework.io/suggested-namespace: ack-system
+      operators.operatorframework.io/builder: operator-sdk-v1.28.0
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://github.com/aws-controllers-k8s
+      support: Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Alias represents the state of an AWS kms Alias resource.
+        displayName: Alias
+        kind: Alias
+        name: aliases.kms.services.k8s.aws
+        version: v1alpha1
+      - description: Grant represents the state of an AWS kms Grant resource.
+        displayName: Grant
+        kind: Grant
+        name: grants.kms.services.k8s.aws
+        version: v1alpha1
+      - description: Key represents the state of an AWS kms Key resource.
+        displayName: Key
+        kind: Key
+        name: keys.kms.services.k8s.aws
+        version: v1alpha1
+    description: |-
+      Manage Key Management Service (KMS) resources in AWS from within your Kubernetes cluster.
+
+      **About Amazon KMS**
+
+      AWS Key Management Service (AWS KMS) is a managed service that makes it easy for you to create and control the cryptographic keys that are used to protect your data. AWS KMS uses hardware security modules (HSM) to protect and validate your AWS KMS keys under the [FIPS 140-2 Cryptographic Module Validation Program](https://csrc.nist.gov/projects/cryptographic-module-validation-program/Certificate/3139), except in the China (Beijing) and China (Ningxia) Regions.
+
+      **About the AWS Controllers for Kubernetes**
+
+      This controller is a component of the [AWS Controller for Kubernetes](https://github.com/aws/aws-controllers-k8s) project.
+
+      **Pre-Installation Steps**
+
+      Please follow the following link: [Red Hat OpenShift](https://aws-controllers-k8s.github.io/community/docs/user-docs/openshift/)
+    displayName: AWS Controllers for Kubernetes - Amazon KMS
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - kms
+    - aws
+    - amazon
+    - ack
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+      operatorframework.io/os.linux: supported
+    links:
+    - name: AWS Controllers for Kubernetes
+      url: https://github.com/aws-controllers-k8s/community
+    - name: Documentation
+      url: https://aws-controllers-k8s.github.io/community/
+    - name: Amazon KMS Developer Resources
+      url: https://aws.amazon.com/kms/resources/
+    maintainers:
+    - email: ack-maintainers@amazon.com
+      name: kms maintainer team
+    maturity: alpha
+    provider:
+      name: Amazon, Inc.
+      url: https://aws.amazon.com
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.16
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:a37d65df10809ef97d1cba1bb60e3d5c5662935c728dfe3a4367ee2cb7cc672b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:36fccb9acc9b3a743ee826c8ea5786b5863800598144f8dcbe714cec242d08b0
+name: ack-kms-controller.v1.0.2
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.2
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v1.0.2
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:36fccb9acc9b3a743ee826c8ea5786b5863800598144f8dcbe714cec242d08b0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:c6405e3eb3a6c791dbf32ab818755784c0ab164c17a71a7d5a98dc602f9bb383
+name: ack-kms-controller.v1.0.3
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.3
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v1.0.3
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:c6405e3eb3a6c791dbf32ab818755784c0ab164c17a71a7d5a98dc602f9bb383
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:0868518f95c6a77d5478f4bc01831baa1581274900e0340d180f9f8a7fc03561
+name: ack-kms-controller.v1.0.4
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.4
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:v1.0.4
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:0868518f95c6a77d5478f4bc01831baa1581274900e0340d180f9f8a7fc03561
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:28475575529d71b6726b25584901a76c1351bc1c715c70113de57412991d8826
+name: ack-kms-controller.v1.0.5
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.5
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.5
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:28475575529d71b6726b25584901a76c1351bc1c715c70113de57412991d8826
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:6a018dd0c10e73953d060a526a6e118d03d3bf0a8545680795db7d8e2e153442
+name: ack-kms-controller.v1.0.7
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.7
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.7
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:6a018dd0c10e73953d060a526a6e118d03d3bf0a8545680795db7d8e2e153442
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/ack-kms-controller@sha256:d2cf605fd409e073941ccda38f5ceeef23be0cb6af13a4fb09f5c0ca548682fc
+name: ack-kms-controller.v1.0.8
+package: ack-kms-controller
+properties:
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Alias
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Grant
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: kms.services.k8s.aws
+    kind: Key
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: ack-kms-controller
+    version: 1.0.8
+relatedImages:
+- image: public.ecr.aws/aws-controllers-k8s/kms-controller:1.0.8
+  name: ""
+- image: quay.io/operatorhubio/ack-kms-controller@sha256:d2cf605fd409e073941ccda38f5ceeef23be0cb6af13a4fb09f5c0ca548682fc
+  name: ""
+schema: olm.bundle

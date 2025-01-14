@@ -1,0 +1,135 @@
+---
+defaultChannel: alpha
+icon:
+  base64data: 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
+  mediatype: image/png
+name: apch-operator
+schema: olm.package
+---
+entries:
+- name: http-operator.v0.0.1
+- name: http-operator.v0.0.2
+  replaces: http-operator.v0.0.1
+name: alpha
+package: apch-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/apch-operator@sha256:335734ad8329f7f99b31792f82cbb809a264c1cf7d0b7a70bcbd1f4f5e85819f
+name: http-operator.v0.0.1
+package: apch-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apacheweb.arsenal.dev
+    kind: Apacheweb
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apch-operator
+    version: 0.0.1
+relatedImages:
+- image: docker.io/arsenalzp/apch-operator:v0.0.1
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/operatorhubio/apch-operator@sha256:335734ad8329f7f99b31792f82cbb809a264c1cf7d0b7a70bcbd1f4f5e85819f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/apch-operator@sha256:ed7bf841e5f9c93498bb046e088f5ecd6f3a3631c5b19b34c452f0604f1345a7
+name: http-operator.v0.0.2
+package: apch-operator
+properties:
+- type: olm.gvk
+  value:
+    group: apacheweb.arsenal.dev
+    kind: Apacheweb
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: apch-operator
+    version: 0.0.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "apacheweb.arsenal.dev/v1alpha1",
+            "kind": "Apacheweb",
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/created-by": "apch-operator",
+                "app.kubernetes.io/instance": "apacheweb-sample",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "apacheweb",
+                "app.kubernetes.io/part-of": "apch-operator"
+              },
+              "name": "apacheweb-sample"
+            },
+            "spec": {
+              "loadBalancer": {
+                "backEndService": "httpd-test",
+                "path": "/test",
+                "proto": "http"
+              },
+              "serverName": "test.example.com",
+              "size": 2,
+              "type": "lb"
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Cloud Provider
+      containerImage: docker.io/arsenalzp/apch-operator:v0.0.2
+      createdAt: "2023-05-16T22:05:43Z"
+      description: HTTP/HTTPS load balancer and web-server powerd by Apache HTTP server
+      operators.operatorframework.io/builder: operator-sdk-v1.26.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/arsenalzp/apch-operator
+      support: alexander.krutko@gmail.com
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: HTTP/HTTPS load balancer and web-server powerd by Apache HTTP
+          server
+        displayName: Apacheweb
+        kind: Apacheweb
+        name: apachewebs.apacheweb.arsenal.dev
+        version: v1alpha1
+    description: HTTP/HTTPS load balancer and web-server powerd by Apache HTTP server
+    displayName: HTTP/HTTPS load balancer
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - apache
+    - httpd
+    - loadBalancer
+    - web
+    - apacheweb
+    links:
+    - name: HTTP/HTTPS load balancer
+      url: https://github.com/arsenalzp/apch-operator
+    maintainers:
+    - email: alexander.krutko@gmail.com
+      name: Oleksandr Krutko
+    maturity: alpha
+    minKubeVersion: v1.20.0
+    provider:
+      name: arsenalzp
+      url: https://github.com/arsenalzp/apch-operator
+relatedImages:
+- image: docker.io/arsenalzp/apch-operator:v0.0.2
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+  name: ""
+- image: quay.io/operatorhubio/apch-operator@sha256:ed7bf841e5f9c93498bb046e088f5ecd6f3a3631c5b19b34c452f0604f1345a7
+  name: ""
+schema: olm.bundle

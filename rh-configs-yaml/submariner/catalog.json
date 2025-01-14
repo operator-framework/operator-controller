@@ -1,0 +1,709 @@
+{
+    "schema": "olm.package",
+    "name": "submariner",
+    "defaultChannel": "stable-0.19",
+    "icon": {
+        "base64data": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgdmlld0JveD0iMCAwIDE4NS40OTg5NiAxODUuNDk4OTQiCiAgIHZlcnNpb249IjEuMSIKICAgaWQ9InN2ZzQ2NTYiCiAgIHNvZGlwb2RpOmRvY25hbWU9ImxvZ28uc3ZnIgogICB3aWR0aD0iMTg1LjQ5ODk2IgogICBoZWlnaHQ9IjE4NS40OTg5NSIKICAgaW5rc2NhcGU6dmVyc2lvbj0iMC45Mi40ICh1bmtub3duKSI+CiAgPG1ldGFkYXRhCiAgICAgaWQ9Im1ldGFkYXRhNDY2MCI+CiAgICA8cmRmOlJERj4KICAgICAgPGNjOldvcmsKICAgICAgICAgcmRmOmFib3V0PSIiPgogICAgICAgIDxkYzpmb3JtYXQ+aW1hZ2Uvc3ZnK3htbDwvZGM6Zm9ybWF0PgogICAgICAgIDxkYzp0eXBlCiAgICAgICAgICAgcmRmOnJlc291cmNlPSJodHRwOi8vcHVybC5vcmcvZGMvZGNtaXR5cGUvU3RpbGxJbWFnZSIgLz4KICAgICAgICA8ZGM6dGl0bGU+bG9nbzwvZGM6dGl0bGU+CiAgICAgIDwvY2M6V29yaz4KICAgIDwvcmRmOlJERj4KICA8L21ldGFkYXRhPgogIDxzb2RpcG9kaTpuYW1lZHZpZXcKICAgICBwYWdlY29sb3I9IiNmZmZmZmYiCiAgICAgYm9yZGVyY29sb3I9IiM2NjY2NjYiCiAgICAgYm9yZGVyb3BhY2l0eT0iMSIKICAgICBvYmplY3R0b2xlcmFuY2U9IjEwIgogICAgIGdyaWR0b2xlcmFuY2U9IjEwIgogICAgIGd1aWRldG9sZXJhbmNlPSIxMCIKICAgICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMCIKICAgICBpbmtzY2FwZTpwYWdlc2hhZG93PSIyIgogICAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMTkyMCIKICAgICBpbmtzY2FwZTp3aW5kb3ctaGVpZ2h0PSIxMDE2IgogICAgIGlkPSJuYW1lZHZpZXc0NjU4IgogICAgIHNob3dncmlkPSJmYWxzZSIKICAgICBmaXQtbWFyZ2luLXRvcD0iMCIKICAgICBmaXQtbWFyZ2luLWxlZnQ9IjAiCiAgICAgZml0LW1hcmdpbi1yaWdodD0iMCIKICAgICBmaXQtbWFyZ2luLWJvdHRvbT0iMCIKICAgICBpbmtzY2FwZTp6b29tPSIxLjM2OTIwODQiCiAgICAgaW5rc2NhcGU6Y3g9IjQ4Mi43NjA3MSIKICAgICBpbmtzY2FwZTpjeT0iOTIuNzQ5NDY5IgogICAgIGlua3NjYXBlOndpbmRvdy14PSIwIgogICAgIGlua3NjYXBlOndpbmRvdy15PSIyNyIKICAgICBpbmtzY2FwZTp3aW5kb3ctbWF4aW1pemVkPSIxIgogICAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9IkxheWVyXzEiIC8+CiAgPGRlZnMKICAgICBpZD0iZGVmczQ2MTEiPgogICAgPHN0eWxlCiAgICAgICBpZD0ic3R5bGU0NjA5Ij4uY2xzLTF7ZmlsbDojMmFkZmMzO30uY2xzLTJ7ZmlsbDojMjg3ZWZiO30uY2xzLTN7ZmlsbDojMzg0NzQ1O308L3N0eWxlPgogIDwvZGVmcz4KICA8dGl0bGUKICAgICBpZD0idGl0bGU0NjEzIj5sb2dvPC90aXRsZT4KICA8ZwogICAgIGlkPSJMYXllcl8xIgogICAgIGRhdGEtbmFtZT0iTGF5ZXIgMSI+CiAgICA8cGF0aAogICAgICAgY2xhc3M9ImNscy0xIgogICAgICAgZD0iTSAxNzYuNjM0NDQsOC44NjQ1MyBWIDE3Ni42MzQ0MSBIIDguODY0NTMgViA4Ljg2NDUzIGggMTY3Ljc2OTkxIG0gMCwtOC44NjQ1MyBIIDguODY0NTMgQSA4Ljg2NDU2LDguODY0NTYgMCAwIDAgMCw4Ljg2NDUzIHYgMTY3Ljc2OTg4IGEgOC44NjQ1Niw4Ljg2NDU2IDAgMCAwIDguODY0NTMsOC44NjQ1MyBoIDE2Ny43Njk5MSBhIDguODY0NTUsOC44NjQ1NSAwIDAgMCA4Ljg2NDUzLC04Ljg2NDUzIFYgOC44NjQ1MyBBIDguODY0NTUsOC44NjQ1NSAwIDAgMCAxNzYuNjM0NDQsMCBaIgogICAgICAgaWQ9InBhdGg0NjE1IgogICAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIKICAgICAgIHN0eWxlPSJmaWxsOiMyYWRmYzMiIC8+CiAgICA8cGF0aAogICAgICAgY2xhc3M9ImNscy0yIgogICAgICAgZD0ibSAxMDUuNjc1NTcsMTMxLjM0NDUxIGggLTgyLjAzNyBWIDEyMi40OCBoIDgwLjIwNzU0IGwgMjMuMjkzNjMsLTIzLjE3ODIgYSA0LjQzMTgzLDQuNDMxODMgMCAwIDEgMy4xMjYyNSwtMS4yOTA0NCBoIDMxLjU5NDMxIHYgOC44NjQ1MyBoIC0yOS43NjQ4NSBsIC0yMy4yOTM2MywyMy4xNzgyMSBhIDQuNDMyMzcsNC40MzIzNyAwIDAgMSAtMy4xMjYyNSwxLjI5MDQxIHoiCiAgICAgICBpZD0icGF0aDQ2MTciCiAgICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIgogICAgICAgc3R5bGU9ImZpbGw6IzI4N2VmYiIgLz4KICAgIDxwYXRoCiAgICAgICBjbGFzcz0iY2xzLTIiCiAgICAgICBkPSJNIDExNy44NzIzOCwxNjAuODkyOTQgSCAyMy42Mzg1NyB2IC04Ljg2NDUzIGggOTIuNDA0MzUgbCAyMy4yOTM2MywtMjMuMTc4MiBhIDQuNDMxODMsNC40MzE4MyAwIDAgMSAzLjEyNjI0LC0xLjI5MDQ0IGggMTkuMzk3NTEgdiA4Ljg2NDUzIGggLTE3LjU2OCBsIC0yMy4yOTM2MywyMy4xNzgyMSBhIDQuNDMxODcsNC40MzE4NyAwIDAgMSAtMy4xMjYyOSwxLjI5MDQzIHoiCiAgICAgICBpZD0icGF0aDQ2MTkiCiAgICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIgogICAgICAgc3R5bGU9ImZpbGw6IzI4N2VmYiIgLz4KICAgIDxwYXRoCiAgICAgICBjbGFzcz0iY2xzLTIiCiAgICAgICBkPSJNIDQ5LjEzNDE5LDcyLjcxMjggSCAyMy42Mzg1NyB2IC04Ljg2NDUzIGggMjMuNjY2MTUgbCAyMy4yOTQyMSwtMjMuMTc4MiBhIDQuNDMyMzgsNC40MzIzOCAwIDAgMSAzLjEyNjI1LC0xLjI5MDQ0IGggODguMTM1MTIgdiA4Ljg2NDUzIEggNzUuNTU0NjQgTCA1Mi4yNjA0Myw3MS40MjIzNyBhIDQuNDMyMzUsNC40MzIzNSAwIDAgMSAtMy4xMjYyNCwxLjI5MDQzIHoiCiAgICAgICBpZD0icGF0aDQ2MjEiCiAgICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIgogICAgICAgc3R5bGU9ImZpbGw6IzI4N2VmYiIgLz4KICAgIDxwYXRoCiAgICAgICBjbGFzcz0iY2xzLTEiCiAgICAgICBkPSJtIDE2MS44NjAzLDEwNi44NzU4NyBoIC0xOS42NDIyIGEgNC40MzIzNCw0LjQzMjM0IDAgMCAxIC0zLjEyNjI1LC0xLjI5MDQ0IEwgMTE1Ljc5ODIyLDgyLjQwNzIzIEggODAuMDY4MjggQSA0LjQzMjM0LDQuNDMyMzQgMCAwIDEgNzYuOTQyLDgxLjExNjc5IEwgNTMuNjQ3OCw1Ny45Mzg1OSBIIDIzLjYzODU3IHYgLTguODY0NTMgaCAzMS44Mzg3MiBhIDQuNDMyMzksNC40MzIzOSAwIDAgMSAzLjEyNjI1LDEuMjkwNDMgbCAyMy4yOTQyLDIzLjE3ODIxIGggMzUuNzI5OTQgYSA0LjQzMTg3LDQuNDMxODcgMCAwIDEgMy4xMjYyNSwxLjI5MDQzIGwgMjMuMjkzNjMsMjMuMTc4MjEgaCAxNy44MTI3NCB6IgogICAgICAgaWQ9InBhdGg0NjIzIgogICAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIKICAgICAgIHN0eWxlPSJmaWxsOiMyYWRmYzMiIC8+CiAgICA8cGF0aAogICAgICAgY2xhc3M9ImNscy0xIgogICAgICAgZD0ibSAxNjEuODYwMywxMzYuNDI0MyBoIC0zMS44MzkgYSA0LjQzMTg3LDQuNDMxODcgMCAwIDEgLTMuMTI2MjUsLTEuMjkwNDMgTCAxMDMuNjAxNDIsMTExLjk1NTY2IEggNjcuODcyMDUgQSA0LjQzMjM3LDQuNDMyMzcgMCAwIDEgNjQuNzQ1OCwxMTAuNjY1MjMgTCA0MS40NTE1OSw4Ny40ODcgaCAtMTcuODEzIHYgLTguODY0NTEgaCAxOS42NDI0NyBhIDQuNDMyMzYsNC40MzIzNiAwIDAgMSAzLjEyNjI1LDEuMjkwNDQgbCAyMy4yOTQyLDIzLjE3ODIgaCAzNS43MjkzNiBhIDQuNDMyMzQsNC40MzIzNCAwIDAgMSAzLjEyNjI1LDEuMjkwNDQgbCAyMy4yOTM2MywyMy4xNzgyIGggMzAuMDA5NTUgeiIKICAgICAgIGlkPSJwYXRoNDYyNSIKICAgICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgICAgICBzdHlsZT0iZmlsbDojMmFkZmMzIiAvPgogICAgPHBhdGgKICAgICAgIGNsYXNzPSJjbHMtMSIKICAgICAgIGQ9Ik0gMTYxLjg2MDMsMTIxLjY1MDA5IEggMTM2LjEyIGEgNC40MzI0LDQuNDMyNCAwIDAgMSAtMy4xMjYyNSwtMS4yOTA0NCBMIDEwOS42OTk1NSw5Ny4xODE0NCBIIDczLjk2OTg3IEEgNC40MzIzNyw0LjQzMjM3IDAgMCAxIDcwLjg0MzYzLDk1Ljg5MSBMIDQ3LjU0OTQyLDcyLjcxMjggSCAyMy42Mzg1NyB2IC04Ljg2NDUzIGggMjUuNzQwMzEgYSA0LjQzMjM4LDQuNDMyMzggMCAwIDEgMy4xMjYyNSwxLjI5MDQ0IEwgNzUuNzk5MzQsODguMzE2OTIgSCAxMTEuNTI5IGEgNC40MzE4OCw0LjQzMTg4IDAgMCAxIDMuMTI2MjUsMS4yOTA0MyBsIDIzLjI5NDIsMjMuMTc4MjEgaCAyMy45MTA4NSB6IgogICAgICAgaWQ9InBhdGg0NjI3IgogICAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIKICAgICAgIHN0eWxlPSJmaWxsOiMyYWRmYzMiIC8+CiAgICA8cGF0aAogICAgICAgY2xhc3M9ImNscy0yIgogICAgICAgZD0iTSAxMTEuNzczNjksMTQ2LjExODczIEggMjMuNjM4NTcgdiAtOC44NjQ1MyBoIDg2LjMwNTY1IGwgMjMuMjk0MjEsLTIzLjE3ODIgYSA0LjQzMjM3LDQuNDMyMzcgMCAwIDEgMy4xMjYyNSwtMS4yOTA0MyBoIDI1LjQ5NTYyIHYgOC44NjQ1MyBoIC0yMy42NjYxNiBsIC0yMy4yOTQyLDIzLjE3ODIgYSA0LjQzMjQsNC40MzI0IDAgMCAxIC0zLjEyNjI1LDEuMjkwNDMgeiIKICAgICAgIGlkPSJwYXRoNDYyOSIKICAgICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgICAgICBzdHlsZT0iZmlsbDojMjg3ZWZiIiAvPgogICAgPHBhdGgKICAgICAgIGNsYXNzPSJjbHMtMiIKICAgICAgIGQ9Ik0gNDMuMDM2MzYsNTcuOTM4NTkgSCAyMy42Mzg1NyBWIDQ5LjA3NDA2IEggNDEuMjA2OSBMIDY0LjUwMTEsMjUuODk2NDMgQSA0LjQzMjQsNC40MzI0IDAgMCAxIDY3LjYyNzM1LDI0LjYwNiBoIDk0LjIzMjk1IHYgOC44NjQ1MyBIIDY5LjQ1NjgxIGwgLTIzLjI5NDIsMjMuMTc3NjIgYSA0LjQzMjM2LDQuNDMyMzYgMCAwIDEgLTMuMTI2MjUsMS4yOTA0NCB6IgogICAgICAgaWQ9InBhdGg0NjMxIgogICAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIKICAgICAgIHN0eWxlPSJmaWxsOiMyODdlZmIiIC8+CiAgICA8cGF0aAogICAgICAgY2xhc3M9ImNscy0yIgogICAgICAgZD0iTSA1NS4yMzIsODcuNDg3IEggMjMuNjM4NTcgdiAtOC44NjQ1MSBoIDI5Ljc2NCBMIDc2LjY5Njc2LDU1LjQ0NDg2IEEgNC40MzIzNSw0LjQzMjM1IDAgMCAxIDc5LjgyMyw1NC4xNTQ0MyBoIDgyLjAzNzMgViA2My4wMTkgSCA4MS42NTI0NyBMIDU4LjM1ODI2LDg2LjE5NjU4IEEgNC40MzIzNCw0LjQzMjM0IDAgMCAxIDU1LjIzMiw4Ny40ODcgWiIKICAgICAgIGlkPSJwYXRoNDYzMyIKICAgICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgICAgICBzdHlsZT0iZmlsbDojMjg3ZWZiIiAvPgogIDwvZz4KPC9zdmc+Cg==",
+        "mediatype": "image/svg+xml"
+    }
+}
+{
+    "schema": "olm.channel",
+    "name": "stable-0.19",
+    "package": "submariner",
+    "entries": [
+        {
+            "name": "submariner.v0.19.0",
+            "skipRange": ">=0.18.0 <0.19.0"
+        }
+    ]
+}
+{
+    "schema": "olm.bundle",
+    "name": "submariner.v0.19.0",
+    "package": "submariner",
+    "image": "registry.redhat.io/rhacm2/submariner-operator-bundle@sha256:5aad4b10de00bebdebc60aa79aab2f01eba56547165e818d97b374bdc004f30b",
+    "properties": [
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "submariner.io",
+                "kind": "Broker",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "submariner.io",
+                "kind": "ServiceDiscovery",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.gvk",
+            "value": {
+                "group": "submariner.io",
+                "kind": "Submariner",
+                "version": "v1alpha1"
+            }
+        },
+        {
+            "type": "olm.package",
+            "value": {
+                "packageName": "submariner",
+                "version": "0.19.0"
+            }
+        },
+        {
+            "type": "olm.csv.metadata",
+            "value": {
+                "annotations": {
+                    "alm-examples": "[\n  {\n    \"apiVersion\": \"submariner.io/v1alpha1\",\n    \"kind\": \"Broker\",\n    \"metadata\": {\n      \"name\": \"submariner-broker\"\n    },\n    \"spec\": {\n      \"components\": [\n        \"service-discovery\",\n        \"connectivity\"\n      ],\n      \"defaultGlobalnetClusterSize\": 8192,\n      \"globalnetEnabled\": false\n    }\n  },\n  {\n    \"apiVersion\": \"submariner.io/v1alpha1\",\n    \"kind\": \"ServiceDiscovery\",\n    \"metadata\": {\n      \"name\": \"servicediscovery\"\n    },\n    \"spec\": {\n      \"brokerK8sApiServer\": \"192.168.67.110:8443\",\n      \"brokerK8sApiServerToken\": \"$(BROKER_K8S_API_TOKEN)\",\n      \"brokerK8sCA\": \"$(BROKER_K8S_CA)\",\n      \"brokerK8sRemoteNamespace\": \"submariner-k8s-broker\",\n      \"clusterID\": \"cluster1\",\n      \"debug\": false,\n      \"globalnetEnabled\": false,\n      \"namespace\": \"submariner-operator\",\n      \"repository\": \"registry.redhat.io/rhacm2\",\n      \"version\": \"$(VERSION)\"\n    }\n  },\n  {\n    \"apiVersion\": \"submariner.io/v1alpha1\",\n    \"kind\": \"Submariner\",\n    \"metadata\": {\n      \"name\": \"submariner\"\n    },\n    \"spec\": {\n      \"broker\": \"k8s\",\n      \"brokerK8sApiServer\": \"192.168.67.110:8443\",\n      \"brokerK8sApiServerToken\": \"$(BROKER_K8S_API_TOKEN)\",\n      \"brokerK8sCA\": \"$(BROKER_K8S_CA)\",\n      \"brokerK8sRemoteNamespace\": \"submariner-k8s-broker\",\n      \"cableDriver\": \"libreswan\",\n      \"ceIPSecDebug\": false,\n      \"ceIPSecIKEPort\": 500,\n      \"ceIPSecNATTPort\": 4500,\n      \"ceIPSecPSK\": \"$(IPSEC_PSK)\",\n      \"clusterCIDR\": \"192.168.67.0/24\",\n      \"clusterID\": \"cluster1\",\n      \"connectionHealthCheck\": {\n        \"enabled\": false,\n        \"intervalSeconds\": 1,\n        \"maxPacketLossCount\": 5\n      },\n      \"debug\": false,\n      \"globalCIDR\": \"\",\n      \"namespace\": \"submariner-operator\",\n      \"natEnabled\": true,\n      \"repository\": \"registry.redhat.io/rhacm2\",\n      \"serviceCIDR\": \"192.168.66.0/24\",\n      \"serviceDiscoveryEnabled\": true,\n      \"version\": \"v$(VERSION)\"\n    }\n  }\n]",
+                    "capabilities": "Basic Install",
+                    "categories": "Networking",
+                    "certified": "false",
+                    "containerImage": "registry.redhat.io/rhacm2/submariner-rhel9-operator@sha256:71c39dcb8bcef9b711e1f367dd187c2d0472b884814317d13be017d7716d118b",
+                    "createdAt": "2024-10-28 14:24:44",
+                    "description": "Creates and manages Submariner deployments.",
+                    "features.operators.openshift.io/cnf": "false",
+                    "features.operators.openshift.io/cni": "false",
+                    "features.operators.openshift.io/csi": "false",
+                    "features.operators.openshift.io/disconnected": "true",
+                    "features.operators.openshift.io/fips-compliant": "true",
+                    "features.operators.openshift.io/proxy-aware": "false",
+                    "features.operators.openshift.io/tls-profiles": "false",
+                    "features.operators.openshift.io/token-auth-aws": "false",
+                    "features.operators.openshift.io/token-auth-azure": "false",
+                    "features.operators.openshift.io/token-auth-gcp": "false",
+                    "olm.skipRange": ">=0.18.0 <0.19.0",
+                    "operatorframework.io/suggested-namespace": "submariner-operator",
+                    "operators.openshift.io/valid-subscription": "[\"OpenShift Platform Plus\", \"Red Hat Advanced Cluster Management for Kubernetes\"]",
+                    "operators.operatorframework.io/builder": "operator-sdk-v1.35.0",
+                    "operators.operatorframework.io/project_layout": "go.kubebuilder.io/v3",
+                    "repository": "https://github.com/submariner-io/submariner-operator",
+                    "support": "Red Hat"
+                },
+                "apiServiceDefinitions": {},
+                "crdDescriptions": {
+                    "owned": [
+                        {
+                            "name": "brokers.submariner.io",
+                            "version": "v1alpha1",
+                            "kind": "Broker",
+                            "displayName": "Submariner Broker",
+                            "description": "Broker is the Schema for the brokers API.",
+                            "resources": [
+                                {
+                                    "name": "submariner-operator",
+                                    "kind": "Deployment",
+                                    "version": "v1"
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "clustersetIPCIDRRange",
+                                    "displayName": "ClustersetIP CIDR Range",
+                                    "description": "ClustersetIP supernet range for allocating ClustersetIPCIDRs to each cluster.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "clustersetIPEnabled",
+                                    "displayName": "Enable ClustersetIP",
+                                    "description": "Enable ClustersetIP default for connecting clusters.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "components",
+                                    "displayName": "Components",
+                                    "description": "List of the components to be installed - any of [service-discovery, connectivity].",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "defaultCustomDomains",
+                                    "displayName": "Default Custom Domains",
+                                    "description": "List of domains to use for multi-cluster service discovery.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "defaultGlobalnetClusterSize",
+                                    "displayName": "Default Globalnet Cluster Size",
+                                    "description": "Default cluster size for GlobalCIDR allocated to each cluster (amount of global IPs).",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:number",
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldDependency:globalnetEnabled:true",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "globalnetCIDRRange",
+                                    "displayName": "Globalnet CIDR Range",
+                                    "description": "GlobalCIDR supernet range for allocating GlobalCIDRs to each cluster.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text",
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldDependency:globalnetEnabled:true",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "globalnetEnabled",
+                                    "displayName": "Enable Globalnet",
+                                    "description": "Enable support for Overlapping CIDRs in connecting clusters.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "name": "servicediscoveries.submariner.io",
+                            "version": "v1alpha1",
+                            "kind": "ServiceDiscovery",
+                            "displayName": "Service Discovery",
+                            "description": "ServiceDiscovery is the Schema for the servicediscoveries API.",
+                            "specDescriptors": [
+                                {
+                                    "path": "coreDNSCustomConfig.configMapName",
+                                    "displayName": "CoreDNS Custom Config Name",
+                                    "description": "Name of the custom CoreDNS configmap.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "coreDNSCustomConfig.namespace",
+                                    "displayName": "CoreDNS Custom Config Namespace",
+                                    "description": "Namespace of the custom CoreDNS configmap.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "name": "submariners.submariner.io",
+                            "version": "v1alpha1",
+                            "kind": "Submariner",
+                            "displayName": "Submariner",
+                            "description": "Submariner is the Schema for the submariners API.",
+                            "resources": [
+                                {
+                                    "name": "submariner-operator",
+                                    "kind": "Deployment",
+                                    "version": "v1"
+                                }
+                            ],
+                            "statusDescriptors": [
+                                {
+                                    "path": "clusterCIDR",
+                                    "displayName": "Cluster CIDR",
+                                    "description": "The current cluster CIDR.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "clusterID",
+                                    "displayName": "Cluster ID",
+                                    "description": "The current cluster ID.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "clustersetIPCIDR",
+                                    "displayName": "ClustersetIP CIDR",
+                                    "description": "The current clustersetIP CIDR.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "deploymentInfo",
+                                    "displayName": "Deployment Information",
+                                    "description": "Information about the deployment."
+                                },
+                                {
+                                    "path": "gatewayDaemonSetStatus",
+                                    "displayName": "Gateway DaemonSet Status",
+                                    "description": "The status of the gateway DaemonSet."
+                                },
+                                {
+                                    "path": "gateways",
+                                    "displayName": "Gateways",
+                                    "description": "Status of the gateways in the cluster."
+                                },
+                                {
+                                    "path": "globalCIDR",
+                                    "displayName": "Global CIDR",
+                                    "description": "The current global CIDR.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "globalnetDaemonSetStatus",
+                                    "displayName": "Globalnet DaemonSet Status",
+                                    "description": "The status of the Globalnet DaemonSet."
+                                },
+                                {
+                                    "path": "loadBalancerStatus",
+                                    "displayName": "Load Balancer DaemonSet Status",
+                                    "description": "The status of the load balancer DaemonSet."
+                                },
+                                {
+                                    "path": "natEnabled",
+                                    "displayName": "NAT Enabled",
+                                    "description": "The current NAT status.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "networkPlugin",
+                                    "displayName": "Network Plugin",
+                                    "description": "The current network plugin.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "routeAgentDaemonSetStatus",
+                                    "displayName": "Route Agent DaemonSet Status",
+                                    "description": "The status of the route agent DaemonSet."
+                                },
+                                {
+                                    "path": "serviceCIDR",
+                                    "displayName": "Service CIDR",
+                                    "description": "The current service CIDR.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The image version in use by the various Submariner DaemonSets and Deployments."
+                                }
+                            ],
+                            "specDescriptors": [
+                                {
+                                    "path": "broker",
+                                    "displayName": "Broker",
+                                    "description": "Type of broker (must be \"k8s\").",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden"
+                                    ]
+                                },
+                                {
+                                    "path": "brokerK8sApiServer",
+                                    "displayName": "Broker API Server",
+                                    "description": "The broker API URL.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "brokerK8sApiServerToken",
+                                    "displayName": "Broker API Token",
+                                    "description": "The broker API Token.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:password"
+                                    ]
+                                },
+                                {
+                                    "path": "brokerK8sCA",
+                                    "displayName": "Broker API CA",
+                                    "description": "The broker certificate authority.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:password"
+                                    ]
+                                },
+                                {
+                                    "path": "brokerK8sRemoteNamespace",
+                                    "displayName": "Broker Remote Namespace",
+                                    "description": "The Broker namespace.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "cableDriver",
+                                    "displayName": "Cable Driver",
+                                    "description": "Cable driver implementation - any of [libreswan, wireguard, vxlan].",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:select:libreswan",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:vxlan",
+                                        "urn:alm:descriptor:com.tectonic.ui:select:wireguard"
+                                    ]
+                                },
+                                {
+                                    "path": "ceIPSecDebug",
+                                    "displayName": "IPsec Debug",
+                                    "description": "Enable logging IPsec debugging information.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "ceIPSecForceUDPEncaps",
+                                    "displayName": "IPsec Force UDP Encapsulation",
+                                    "description": "Force UDP encapsulation for IPsec.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "ceIPSecIKEPort",
+                                    "displayName": "IPsec IKE Port",
+                                    "description": "The IPsec IKE port (500 usually).",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:number"
+                                    ]
+                                },
+                                {
+                                    "path": "ceIPSecNATTPort",
+                                    "displayName": "IPsec NATT Port",
+                                    "description": "The IPsec NAT traversal port (4500 usually).",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:number",
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldDependency:natEnabled:true"
+                                    ]
+                                },
+                                {
+                                    "path": "ceIPSecPSK",
+                                    "displayName": "IPsec Pre-Shared Key",
+                                    "description": "The IPsec Pre-Shared Key which must be identical in all route agents across the cluster.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:password"
+                                    ]
+                                },
+                                {
+                                    "path": "ceIPSecPreferredServer",
+                                    "displayName": "IPsec Preferred Server",
+                                    "description": "Enable this cluster as a preferred server for data-plane connections.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "clusterCIDR",
+                                    "displayName": "Cluster CIDR",
+                                    "description": "The cluster CIDR.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "clusterID",
+                                    "displayName": "Cluster ID",
+                                    "description": "The cluster ID used to identify the tunnels.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "clustersetIPCIDR",
+                                    "displayName": "ClustersetIP CIDR",
+                                    "description": "ClustersetIP CIDR for allocating ClustersetIPs to exported services.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "clustersetIPEnabled",
+                                    "displayName": "Enable ClustersetIP default",
+                                    "description": "Enable ClustersetIP default for services exported on this cluster.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "connectionHealthCheck",
+                                    "displayName": "Connection Health Check",
+                                    "description": "The gateway connection health check.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "connectionHealthCheck.enabled",
+                                    "displayName": "Enable Connection Health Checks",
+                                    "description": "Enable the connection health check.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "connectionHealthCheck.intervalSeconds",
+                                    "displayName": "Connection Health Check Interval",
+                                    "description": "The interval at which health check pings are sent.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:number",
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldDependency:connectionHealthCheck.enabled:true"
+                                    ]
+                                },
+                                {
+                                    "path": "connectionHealthCheck.maxPacketLossCount",
+                                    "displayName": "Maximum Packet Loss",
+                                    "description": "The maximum number of packets lost at which the health checker will mark the connection as down.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:number",
+                                        "urn:alm:descriptor:com.tectonic.ui:fieldDependency:connectionHealthCheck.enabled:true"
+                                    ]
+                                },
+                                {
+                                    "path": "coreDNSCustomConfig",
+                                    "displayName": "CoreDNS Custom Config",
+                                    "description": "Name of the custom CoreDNS configmap to configure forwarding to Lighthouse. It should be in <namespace>/<name> format where <namespace> is optional and defaults to kube-system.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "coreDNSCustomConfig.configMapName",
+                                    "displayName": "CoreDNS Custom Config Name",
+                                    "description": "Name of the custom CoreDNS configmap.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "coreDNSCustomConfig.namespace",
+                                    "displayName": "CoreDNS Custom Config Namespace",
+                                    "description": "Namespace of the custom CoreDNS configmap.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "customDomains",
+                                    "displayName": "Custom Domains",
+                                    "description": "List of domains to use for multi-cluster service discovery.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "debug",
+                                    "displayName": "Debug",
+                                    "description": "Enable operator debugging.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "globalCIDR",
+                                    "displayName": "Global CIDR",
+                                    "description": "The Global CIDR super-net range for allocating GlobalCIDRs to each cluster.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "haltOnCertificateError",
+                                    "displayName": "Halt (and restart) on certificate error",
+                                    "description": "Halt on certificate error (so the pod gets restarted).",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "imageOverrides",
+                                    "displayName": "Image Overrides",
+                                    "description": "Override component images.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:hidden",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "loadBalancerEnabled",
+                                    "displayName": "Enable Load Balancer",
+                                    "description": "Enable automatic Load Balancer in front of the gateways.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "namespace",
+                                    "displayName": "Namespace",
+                                    "description": "The namespace in which to deploy the submariner operator.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "natEnabled",
+                                    "displayName": "Enable NAT",
+                                    "description": "Enable NAT between clusters.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "repository",
+                                    "displayName": "Repository",
+                                    "description": "The image repository.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                },
+                                {
+                                    "path": "serviceCIDR",
+                                    "displayName": "Service CIDR",
+                                    "description": "The service CIDR.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text"
+                                    ]
+                                },
+                                {
+                                    "path": "serviceDiscoveryEnabled",
+                                    "displayName": "Enable Service Discovery",
+                                    "description": "Enable support for Service Discovery (Lighthouse).",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+                                    ]
+                                },
+                                {
+                                    "path": "version",
+                                    "displayName": "Version",
+                                    "description": "The image tag.",
+                                    "x-descriptors": [
+                                        "urn:alm:descriptor:com.tectonic.ui:text",
+                                        "urn:alm:descriptor:com.tectonic.ui:advanced"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "description": "[Submariner](https://submariner.io) enables direct networking between Pods and Services in different Kubernetes\nclusters. With Submariner, your applications and services can span multiple cloud providers, data centers, and regions.\n\nSubmariner is designed to be cloud provider and network plugin (CNI) agnostic.\n\nSubmariner consists of several main components that work in conjunction to securely connect workloads across\nmultiple Kubernetes clusters, both on-premise and on public clouds:\n* [Gateway Engine](https://submariner.io/getting-started/architecture/gateway-engine/): manages the secure tunnels to other clusters.\n* [Route Agent](https://submariner.io/getting-started/architecture/route-agent/): routes cross-cluster traffic from nodes\nto the active Gateway Engine.\n* [Broker](https://submariner.io/getting-started/architecture/broker/): facilitates the exchange of metadata between Gateway\nEngines enabling them to discover one another.\n\nSubmariner has optional components that provide additional functionality:\n* [Globalnet Controller](https://submariner.io/getting-started/architecture/globalnet/): handles overlapping CIDRs across clusters.\n* [Service Discovery](https://submariner.io/getting-started/architecture/service-discovery/): provides DNS discovery of services\nacross clusters.\n\n### Prerequisites\nSubmariner has a few requirements to get started, all are documented [here](https://submariner.io/getting-started/quickstart/kind/#prerequisites).\n\nIf running on an OpenShift cluster, perform the following steps to bind the Submariner service accounts to the **privileged** SCC.\n\n```shell\noc adm policy add-scc-to-user privileged system:serviceaccount:submariner-operator:submariner-gateway\noc adm policy add-scc-to-user privileged system:serviceaccount:submariner-operator:submariner-routeagent\noc adm policy add-scc-to-user privileged system:serviceaccount:submariner-operator:submariner-globalnet\noc adm policy add-scc-to-user privileged system:serviceaccount:submariner-operator:submariner-lighthouse-coredns\n```\n\n### Deployment\nSubmariner provides an [Operator](https://github.com/submariner-io/submariner-operator) for easy API-based\ninstallation and management.\nA command line utility, [subctl](https://github.com/submariner-io/submariner-operator/releases), wraps the\nOperator to aid users with manual deployments and easy experimentation.\nsubctl greatly simplifies the deployment of Submariner, and is therefore the recommended deployment method.\nFor complete information about subctl, please refer to [this page](https://submariner.io/operations/deployment/subctl).\nIn addition to Operator and subctl, Submariner also provides [Helm Charts](https://submariner.io/operations/deployment/helm).\n\nOn the broker cluster:\n1. Create the broker namespace called `submariner-k8s-broker`.\n2. Apply the broker RBAC definitions:\n\n    ```shell\n    git clone --depth 1 --single-branch --branch release-0.19 https://github.com/submariner-io/submariner-operator\n    kubectl apply -k submariner-operator/config/broker -n submariner-k8s-broker\n    ```\n\n3. Install the Submariner Operator from the catalog.\n4. Create a new `Broker` custom resource named **submariner-broker**.\n\nOn connected clusters:\n1. Install the Submariner Operator from the catalog.\n2. Create a new `Submariner` custom resource named **submariner**.\n\nThe following values can be specified for the **Broker** CR:\n* **defaultCustomDomains**: List of domains to use for multicluster service discovery.\n* **defaultGlobalnetClusterSize**: Default cluster size for GlobalCIDR allocated to each cluster (amount of global IPs).\n* **globalnetEnabled**: Enable support for Overlapping CIDRs in connecting clusters (default disabled).\n* **globalnetCIDRRange**: GlobalCIDR supernet range for allocating GlobalCIDRs to each cluster.\n* **components**: List of components to be installed [service-discovery, connectivity].\n\nThe following values can be specified for the **Submariner** CR:\n* **namespace**: The namespace to install in.\n* **serviceCIDR**: The service CIDR.\n* **clusterCIDR**: The cluster CIDR.\n* **clusterID**: The cluster ID used to identify the tunnels.\n* **colorCodes**: The color code(s) for the cluster.\n* **debug**: *'true'* to enable operator debugging information - verbose logging.\n* **natEnabled**: *'true'* if there is NAT between clusters. Typically *'true'* in public cloud or mixed on-prem/public cloud environments and *'false'* when all clusters are on-prem.\n* **broker**: This must be *k8s* currently.\n* **brokerK8sApiServer**: The broker API server URL.\n    To retrieve it run the following command on the broker cluster:\n\n    `kubectl -n default get endpoints kubernetes -o\n    jsonpath=\"{.subsets[0].addresses[0].ip}:{.subsets[0].ports[?(@.name=='https')].port}\"`\n\n* **brokerK8sApiServerToken**: The broker API server token.\n    To retrieve the token run the following command on the broker cluster, assuming the broker is running in the\n    *submariner-k8s-broker* namespace:\n\n    `kubectl -n submariner-k8s-broker get secrets -o json\n    | jq -r -c '[.items[] | select(.metadata.annotations.\"kubernetes.io/service-account.name\"==\"submariner-k8s-broker-client\")\n    | select(.data.token != null)] | .[0].data.token' | base64 --decode`\n\n* **brokerK8sRemoteNamespace**: The broker namespace.\n* **brokerK8sCA**: The broker certificate authority.\n    To retrieve the broker CA run the following command on the broker cluster, assuming the broker is running in\n    the *submariner-k8s-broker* namespace:\n\n    `kubectl -n submariner-k8s-broker get secrets -o json\n    | jq -r -c '[.items[] | select(.metadata.annotations.\"kubernetes.io/service-account.name\"==\"submariner-k8s-broker-client\")\n    | select(.data.\"ca.crt\" != null)] | .[0].data.\"ca.crt\"' | base64 --decode`\n\n* **ceIPSecPSK**: The IPsec Pre-Shared Key which must be identical in all route agents across the cluster.\n    To generate a unique PSK run the following command on your machine:\n\n    `dd if=/dev/urandom count=64 bs=8 | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1`\n\n* **ceIPSecDebug**: *'true'* to enable logging IPsec debugging information - verbose logging from the IPsec daemon.\n* **ceIPSecIKEPort**: The IPsec IKE port (500 usually).\n* **ceIPSecNATTPort**: The IPsec NAT traversal port (4500 usually).\n* **repository**: The container repository to use.\n* **version**: The container version to use.\n* **imageOverrides**: A string map that overrides the images by defining a path for each component.\n                      This field is meant to be used by CI, development or testing.\n\n  **example:**\n\n  ```yaml\n  imageOverrides:\n    submariner-route-agent=my_repo/my_custom_image:my_tag\n    submariner-globalnet=my_repo/my_custom_image:my_tag\n  ```\n\n## Support & Troubleshooting\n\nFull product support, including Support Cases, Product Pages and Knowledgebase, comes through a\n[Red Hat Advanced Cluster Management](https://www.redhat.com/en/technologies/management/advanced-cluster-management) subscription.",
+                "displayName": "Submariner",
+                "installModes": [
+                    {
+                        "type": "OwnNamespace",
+                        "supported": true
+                    },
+                    {
+                        "type": "SingleNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "MultiNamespace",
+                        "supported": false
+                    },
+                    {
+                        "type": "AllNamespaces",
+                        "supported": false
+                    }
+                ],
+                "keywords": [
+                    "multi-cluster",
+                    "ipsec",
+                    "tunnel",
+                    "submariner-operator"
+                ],
+                "labels": {
+                    "operatorframework.io/arch.amd64": "supported",
+                    "operatorframework.io/arch.arm64": "supported",
+                    "operatorframework.io/arch.ppc64le": "supported",
+                    "operatorframework.io/arch.s390x": "supported",
+                    "operatorframework.io/os.linux": "supported"
+                },
+                "links": [
+                    {
+                        "name": "Website",
+                        "url": "https://submariner.io"
+                    },
+                    {
+                        "name": "GitHub",
+                        "url": "https://github.com/submariner-io"
+                    },
+                    {
+                        "name": "Slack",
+                        "url": "https://kubernetes.slack.com/archives/C010RJV694M"
+                    },
+                    {
+                        "name": "YouTube",
+                        "url": "https://www.youtube.com/channel/UCZ3brSgl2v4boglZoeChClQ/videos"
+                    },
+                    {
+                        "name": "Twitter",
+                        "url": "https://twitter.com/submarinerio"
+                    }
+                ],
+                "maintainers": [
+                    {
+                        "name": "Submariner project",
+                        "email": "submariner-dev@googlegroups.com"
+                    }
+                ],
+                "maturity": "alpha",
+                "minKubeVersion": "1.22.0",
+                "provider": {
+                    "name": "Red Hat"
+                }
+            }
+        }
+    ],
+    "relatedImages": [
+        {
+            "name": "submariner-lighthouse-agent",
+            "image": "registry.redhat.io/rhacm2/lighthouse-agent-rhel9@sha256:e6a81a97c0626e2f1b9e789d66c8d37b548a59a21100fc9ba52d49f9c378cbb2"
+        },
+        {
+            "name": "submariner-lighthouse-coredns",
+            "image": "registry.redhat.io/rhacm2/lighthouse-coredns-rhel9@sha256:e51a1ffb9cb59243e4a5525157f5fd109b4e3485b910e4d7a82f69847afcccf5"
+        },
+        {
+            "name": "submariner-metrics-proxy",
+            "image": "registry.redhat.io/rhacm2/nettest-rhel9@sha256:94de4a3f3df3e0bbbd5657194af597036358c62dc60cfa19a5ee7a49dd4f3b17"
+        },
+        {
+            "name": "submariner-nettest",
+            "image": "registry.redhat.io/rhacm2/nettest-rhel9@sha256:94de4a3f3df3e0bbbd5657194af597036358c62dc60cfa19a5ee7a49dd4f3b17"
+        },
+        {
+            "name": "submariner-gateway",
+            "image": "registry.redhat.io/rhacm2/submariner-gateway-rhel9@sha256:2aed1902352cb7771b01ec3e3e7b052a054e3f1d64ef36e4ab210962b93fb499"
+        },
+        {
+            "name": "submariner-globalnet",
+            "image": "registry.redhat.io/rhacm2/submariner-globalnet-rhel9@sha256:cb5156cfeb9de79f6f2492bb28b0e9ecc4d4091952060fda7a6bcf485f9d7b09"
+        },
+        {
+            "name": "",
+            "image": "registry.redhat.io/rhacm2/submariner-operator-bundle@sha256:5aad4b10de00bebdebc60aa79aab2f01eba56547165e818d97b374bdc004f30b"
+        },
+        {
+            "name": "submariner-rhel9-operator-71c39dcb8bcef9b711e1f367dd187c2d0472b884814317d13be017d7716d118b-annotation",
+            "image": "registry.redhat.io/rhacm2/submariner-rhel9-operator@sha256:71c39dcb8bcef9b711e1f367dd187c2d0472b884814317d13be017d7716d118b"
+        },
+        {
+            "name": "submariner-operator",
+            "image": "registry.redhat.io/rhacm2/submariner-rhel9-operator@sha256:71c39dcb8bcef9b711e1f367dd187c2d0472b884814317d13be017d7716d118b"
+        },
+        {
+            "name": "submariner-routeagent",
+            "image": "registry.redhat.io/rhacm2/submariner-route-agent-rhel9@sha256:b480b19fab9c0c72bce6b517451942189ef193c068ed18c466ed71d185057be1"
+        }
+    ]
+}

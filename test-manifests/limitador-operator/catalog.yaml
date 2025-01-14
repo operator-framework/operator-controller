@@ -1,0 +1,363 @@
+---
+defaultChannel: stable
+icon:
+  base64data: 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
+  mediatype: image/png
+name: limitador-operator
+schema: olm.package
+---
+entries:
+- name: limitador-operator.v0.3.0
+- name: limitador-operator.v0.4.0
+  replaces: limitador-operator.v0.3.0
+- name: limitador-operator.v0.5.0
+  replaces: limitador-operator.v0.4.0
+name: alpha
+package: limitador-operator
+schema: olm.channel
+---
+entries:
+- name: limitador-operator.v0.10.0
+  replaces: limitador-operator.v0.8.0
+- name: limitador-operator.v0.11.0
+  replaces: limitador-operator.v0.10.0
+- name: limitador-operator.v0.6.0
+- name: limitador-operator.v0.7.0
+  replaces: limitador-operator.v0.6.0
+- name: limitador-operator.v0.8.0
+  replaces: limitador-operator.v0.7.0
+name: stable
+package: limitador-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/limitador-operator@sha256:0ce45272bb69ad08e540942351a2b508b18f1c23df373d1c3a8b89c3c63dcc32
+name: limitador-operator.v0.10.0
+package: limitador-operator
+properties:
+- type: olm.gvk
+  value:
+    group: limitador.kuadrant.io
+    kind: Limitador
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: limitador-operator
+    version: 0.10.0
+relatedImages:
+- image: quay.io/kuadrant/limitador-operator:v0.10.0
+  name: ""
+- image: quay.io/kuadrant/limitador:v1.6.0
+  name: ""
+- image: quay.io/operatorhubio/limitador-operator@sha256:0ce45272bb69ad08e540942351a2b508b18f1c23df373d1c3a8b89c3c63dcc32
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/limitador-operator@sha256:c49052b47f62d8159e271cc9da02d7dcd93d3474425de3678568258ad80aaa9a
+name: limitador-operator.v0.11.0
+package: limitador-operator
+properties:
+- type: olm.gvk
+  value:
+    group: limitador.kuadrant.io
+    kind: Limitador
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: limitador-operator
+    version: 0.11.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "limitador.kuadrant.io/v1alpha1",
+            "kind": "Limitador",
+            "metadata": {
+              "name": "limitador-sample"
+            },
+            "spec": {
+              "limits": [
+                {
+                  "conditions": [
+                    "get_toy == 'yes'"
+                  ],
+                  "max_value": 2,
+                  "name": "toy_get_route",
+                  "namespace": "toystore-app",
+                  "seconds": 30,
+                  "variables": []
+                }
+              ],
+              "listener": {
+                "grpc": {
+                  "port": 8081
+                },
+                "http": {
+                  "port": 8080
+                }
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Integration & Delivery
+      containerImage: quay.io/kuadrant/limitador-operator:v0.11.0
+      createdAt: "2024-10-02T10:46:31Z"
+      operators.operatorframework.io/builder: operator-sdk-v1.32.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/Kuadrant/limitador-operator
+      support: kuadrant
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - kind: Limitador
+        name: limitadors.limitador.kuadrant.io
+        version: v1alpha1
+    description: The Limitador operator installs and maintains limitador instances
+    displayName: Limitador
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - api
+    - rate-limit
+    links:
+    - name: Limitador Operator
+      url: https://github.com/Kuadrant/limitador-operator
+    - name: Kuadrant Docs
+      url: https://kuadrant.io
+    maintainers:
+    - email: eastizle@redhat.com
+      name: Eguzki Astiz Lezaun
+    - email: asnaps@redhat.com
+      name: Alex Snaps
+    - email: didier@redhat.com
+      name: Didier Di Cesare
+    maturity: alpha
+    minKubeVersion: 1.25.0
+    provider:
+      name: Red Hat
+      url: https://github.com/Kuadrant/limitador-operator
+relatedImages:
+- image: quay.io/kuadrant/limitador-operator:v0.11.0
+  name: ""
+- image: quay.io/kuadrant/limitador:v1.6.0
+  name: limitador
+- image: quay.io/operatorhubio/limitador-operator@sha256:c49052b47f62d8159e271cc9da02d7dcd93d3474425de3678568258ad80aaa9a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/limitador-operator@sha256:39f869a4a2d966b2cec7cd40999cca518038e58e9f84eeb080c988218b8f4e78
+name: limitador-operator.v0.3.0
+package: limitador-operator
+properties:
+- type: olm.gvk
+  value:
+    group: limitador.kuadrant.io
+    kind: Limitador
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: limitador-operator
+    version: 0.3.0
+relatedImages:
+- image: quay.io/kuadrant/limitador-operator:v0.3.0
+  name: ""
+- image: quay.io/operatorhubio/limitador-operator@sha256:39f869a4a2d966b2cec7cd40999cca518038e58e9f84eeb080c988218b8f4e78
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/limitador-operator@sha256:1f324d99f837ce2ce345c046740db818263686ee7b81fcf2dbf8427481238ed8
+name: limitador-operator.v0.4.0
+package: limitador-operator
+properties:
+- type: olm.gvk
+  value:
+    group: limitador.kuadrant.io
+    kind: Limitador
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: limitador-operator
+    version: 0.4.0
+relatedImages:
+- image: quay.io/kuadrant/limitador-operator:v0.4.0
+  name: ""
+- image: quay.io/kuadrant/limitador:v1.0.0
+  name: ""
+- image: quay.io/operatorhubio/limitador-operator@sha256:1f324d99f837ce2ce345c046740db818263686ee7b81fcf2dbf8427481238ed8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/limitador-operator@sha256:00d6de77fa18e6a615ed7888d9025c89b8dc7d5cd8caaba2e35db6f51c6460e7
+name: limitador-operator.v0.5.0
+package: limitador-operator
+properties:
+- type: olm.gvk
+  value:
+    group: limitador.kuadrant.io
+    kind: Limitador
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: limitador-operator
+    version: 0.5.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "limitador.kuadrant.io/v1alpha1",
+            "kind": "Limitador",
+            "metadata": {
+              "name": "limitador-sample"
+            },
+            "spec": {
+              "limits": [
+                {
+                  "conditions": [
+                    "get_toy == 'yes'"
+                  ],
+                  "max_value": 2,
+                  "namespace": "toystore-app",
+                  "seconds": 30,
+                  "variables": []
+                }
+              ],
+              "listener": {
+                "grpc": {
+                  "port": 8081
+                },
+                "http": {
+                  "port": 8080
+                }
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Integration & Delivery
+      containerImage: quay.io/kuadrant/limitador-operator:v0.5.0
+      operators.operatorframework.io/builder: operator-sdk-v1.22.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/Kuadrant/limitador-operator
+      support: kuadrant
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - kind: Limitador
+        name: limitadors.limitador.kuadrant.io
+        version: v1alpha1
+    description: The Limitador operator installs and maintains limitador instances
+    displayName: Limitador
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - api
+    - rate-limit
+    links:
+    - name: Limitador Operator
+      url: https://github.com/Kuadrant/limitador-operator
+    - name: Kuadrant Docs
+      url: https://kuadrant.io
+    maintainers:
+    - email: eastizle@redhat.com
+      name: Eguzki Astiz Lezaun
+    - email: asnaps@redhat.com
+      name: Alex Snaps
+    - email: didier@redhat.com
+      name: Didier Di Cesare
+    maturity: alpha
+    minKubeVersion: 1.8.0
+    provider:
+      name: Red Hat
+      url: https://github.com/Kuadrant/limitador-operator
+relatedImages:
+- image: quay.io/kuadrant/limitador-operator:v0.5.0
+  name: ""
+- image: quay.io/kuadrant/limitador:v1.2.0
+  name: limitador
+- image: quay.io/operatorhubio/limitador-operator@sha256:00d6de77fa18e6a615ed7888d9025c89b8dc7d5cd8caaba2e35db6f51c6460e7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/limitador-operator@sha256:2c0244c7160261d20563783515723a18a193dccfcf2c7d08618acf15f7c8f11e
+name: limitador-operator.v0.6.0
+package: limitador-operator
+properties:
+- type: olm.gvk
+  value:
+    group: limitador.kuadrant.io
+    kind: Limitador
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: limitador-operator
+    version: 0.6.0
+relatedImages:
+- image: quay.io/kuadrant/limitador-operator:v0.6.0
+  name: ""
+- image: quay.io/kuadrant/limitador:v1.3.0
+  name: ""
+- image: quay.io/operatorhubio/limitador-operator@sha256:2c0244c7160261d20563783515723a18a193dccfcf2c7d08618acf15f7c8f11e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/limitador-operator@sha256:6a87278dc7dcb73b9e2e08a9b589d05dfa10c2be873f368a52cef848e4e6676d
+name: limitador-operator.v0.7.0
+package: limitador-operator
+properties:
+- type: olm.gvk
+  value:
+    group: limitador.kuadrant.io
+    kind: Limitador
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: limitador-operator
+    version: 0.7.0
+relatedImages:
+- image: quay.io/kuadrant/limitador-operator:v0.7.0
+  name: ""
+- image: quay.io/kuadrant/limitador:v1.3.0
+  name: ""
+- image: quay.io/operatorhubio/limitador-operator@sha256:6a87278dc7dcb73b9e2e08a9b589d05dfa10c2be873f368a52cef848e4e6676d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/limitador-operator@sha256:1ee1a51e2f77702015810774f9e5cda92092a7a3220c24eea189169246946fcb
+name: limitador-operator.v0.8.0
+package: limitador-operator
+properties:
+- type: olm.gvk
+  value:
+    group: limitador.kuadrant.io
+    kind: Limitador
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: limitador-operator
+    version: 0.8.0
+relatedImages:
+- image: quay.io/kuadrant/limitador-operator:v0.8.0
+  name: ""
+- image: quay.io/kuadrant/limitador:v1.4.0
+  name: ""
+- image: quay.io/operatorhubio/limitador-operator@sha256:1ee1a51e2f77702015810774f9e5cda92092a7a3220c24eea189169246946fcb
+  name: ""
+schema: olm.bundle

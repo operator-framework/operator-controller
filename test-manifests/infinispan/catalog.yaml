@@ -1,0 +1,4123 @@
+---
+defaultChannel: stable
+icon:
+  base64data: iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAACxAAAAsQHGLUmNAAAEOklEQVR4nO1bTUhUURQ+ZSioGAyNTFAmNBCjUEHSShRaTRs3tWlR61q3KciVC1e1rV3QOjduciUo0iIUpqARYQI1QVGZSHRASYrv8e7wmnz33vfmnjPPZj54zCjv3nfvd8/fO+fMmQdvP/6mJsbZZt480CIgAWtoKFoEJGANDYU1AVdSXTSQ6aHO9nOJ3QzWhjVirbaw3s2j2/2Uy/RU/97dP6S18gEVt/a8C98loQ5EbfhCd0f16ctbezQx89VqNbGPEw/EdasvVSVkrrRD86Vt2tk/ZKEi3d1BI9leGs2m/9pwPXAmz1jQvZuXvGu+tENThe/OiEh7c1+mkWzayXxBsCg0FoprqrBBH4qbVDn6FWse6PTdgYseqVxgtWhYOMT15exKZBsBvX5655ozUQ8DuxvEBibHrkcSX9yLMdybB8TigMfDWc+TmIB7cK8UYr0NKteDT+UFbAED+WahFEpSVEO3tF6uumF8RkUsG6B8PwwcDBX0HMbKRmSxQSwWY2v/b7t5uFyMh9uNa2AVnOYD4KpARGd7m/HeV7MrtLhe9r5Dkl7kB41jKkfH3sbhYl3BqQ3Awp5Pf7ay+BB3FVaDOBMwJ+Z2uXnAuRFE8DMxU/R0XQdIyZPhq94dpk1hLszJEWGyeAHoJQydiQQYUIg/7MlyiAFTRrNeXQ8DqxvEwsM2pqBc3klSgLFhHsMV2OMARIEwXmGA5xjqS/0jBRiDsdxgJ0Cpgw7wHMBcabt6F6fYByESCcLd6VQBeQa88S2u//BOHvcqF8kNsVDYZOmhBjjx5a2fzl2dDmIEmLJGQ35I/b6wESukjQvRpKjOLap0m3RqTZQAk15HSWa6gigBiOR0LrHL4h3CNcTrAjoRz2XOi64FECeAK2McFy0CErCGhiJRBKQFkqC1aBEg/UCdF/jv4wAyGEFkiaSlIFESQIF3AimIEqBEXPdqzFEA1UGMAOT+7vtFTt07gSq4SEGMAKS+VahreimySZO7gggB0Ouc117T5ok4DKEpQyRlC9gJQPEjWOwczfZ6n7WlsVoECyecYCcANf5gqSzn9/VADXYNLhFjTzUBOMXcCQZN6bgpW4yx3KVyFgKU2Ie5NCUFyP0tGQwi5uBUB+cEIJIbzw8Y/bmSgtcL37RZIvJJwJwcUaJTArCpybEbVjG9Sn3bFE7Ijw8wt2sXWXd/QNQGCfJ1vzZDjPEPLVpoKAkNEk3ZIjOeHzzRokfBTHGT3n1aDR2h6oF5v1ZoAxxA7SFEaZUVC4WxOd3mFXAPd0k8CPZQC/oatVESarJWrog0SrISUE+rLAh7Nv3ldLbKumqWBnGYBx3oiW+W5myXx3ywCyAjMe3yjfjBBIgACbh0P5iIAus4AA9B8XK1XBFpXYkDBGX9qU46ODq2PhBrCZCu28cBDiZqMNQqjSVgDQ1Fi4AErKGhaG4CiOgPK6Ej+g5fAyMAAAAASUVORK5CYII=
+  mediatype: image/png
+name: infinispan
+schema: olm.package
+---
+entries:
+- name: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.0
+  replaces: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.1
+  replaces: infinispan-operator.v0.3.0
+- name: infinispan-operator.v0.3.2
+  replaces: infinispan-operator.v0.3.1
+- name: infinispan-operator.v1.0.0
+  replaces: infinispan-operator.v0.3.2
+- name: infinispan-operator.v1.0.1
+  replaces: infinispan-operator.v1.0.0
+- name: infinispan-operator.v1.1.0
+  replaces: infinispan-operator.v1.0.1
+- name: infinispan-operator.v1.1.1
+  replaces: infinispan-operator.v1.1.0
+- name: infinispan-operator.v1.1.2
+  replaces: infinispan-operator.v1.1.1
+name: 1.1.x
+package: infinispan
+schema: olm.channel
+---
+entries:
+- name: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.0
+  replaces: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.1
+  replaces: infinispan-operator.v0.3.0
+- name: infinispan-operator.v0.3.2
+  replaces: infinispan-operator.v0.3.1
+- name: infinispan-operator.v1.0.0
+  replaces: infinispan-operator.v0.3.2
+- name: infinispan-operator.v1.0.1
+  replaces: infinispan-operator.v1.0.0
+- name: infinispan-operator.v1.1.0
+  replaces: infinispan-operator.v1.0.1
+- name: infinispan-operator.v1.1.1
+  replaces: infinispan-operator.v1.1.0
+- name: infinispan-operator.v1.1.2
+  replaces: infinispan-operator.v1.1.1
+- name: infinispan-operator.v2.0.0
+  replaces: infinispan-operator.v1.1.2
+- name: infinispan-operator.v2.0.1
+  replaces: infinispan-operator.v2.0.0
+- name: infinispan-operator.v2.0.2
+  replaces: infinispan-operator.v2.0.1
+- name: infinispan-operator.v2.0.3
+  replaces: infinispan-operator.v2.0.2
+- name: infinispan-operator.v2.0.4
+  replaces: infinispan-operator.v2.0.3
+- name: infinispan-operator.v2.0.5
+  replaces: infinispan-operator.v2.0.4
+- name: infinispan-operator.v2.0.6
+  replaces: infinispan-operator.v2.0.5
+name: 2.0.x
+package: infinispan
+schema: olm.channel
+---
+entries:
+- name: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.0
+  replaces: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.1
+  replaces: infinispan-operator.v0.3.0
+- name: infinispan-operator.v0.3.2
+  replaces: infinispan-operator.v0.3.1
+- name: infinispan-operator.v1.0.0
+  replaces: infinispan-operator.v0.3.2
+- name: infinispan-operator.v1.0.1
+  replaces: infinispan-operator.v1.0.0
+- name: infinispan-operator.v1.1.0
+  replaces: infinispan-operator.v1.0.1
+- name: infinispan-operator.v1.1.1
+  replaces: infinispan-operator.v1.1.0
+- name: infinispan-operator.v1.1.2
+  replaces: infinispan-operator.v1.1.1
+- name: infinispan-operator.v2.0.0
+  replaces: infinispan-operator.v1.1.2
+- name: infinispan-operator.v2.0.1
+  replaces: infinispan-operator.v2.0.0
+- name: infinispan-operator.v2.0.2
+  replaces: infinispan-operator.v2.0.1
+- name: infinispan-operator.v2.0.3
+  replaces: infinispan-operator.v2.0.2
+- name: infinispan-operator.v2.0.4
+  replaces: infinispan-operator.v2.0.3
+- name: infinispan-operator.v2.0.5
+  replaces: infinispan-operator.v2.0.4
+- name: infinispan-operator.v2.1.0
+  replaces: infinispan-operator.v2.0.5
+- name: infinispan-operator.v2.1.1
+  replaces: infinispan-operator.v2.1.0
+- name: infinispan-operator.v2.1.2
+  replaces: infinispan-operator.v2.1.1
+- name: infinispan-operator.v2.1.3
+  replaces: infinispan-operator.v2.1.2
+- name: infinispan-operator.v2.1.4
+  replaces: infinispan-operator.v2.1.3
+- name: infinispan-operator.v2.1.5
+  replaces: infinispan-operator.v2.1.4
+  skipRange: '>=2.1.0 <2.1.5'
+- name: infinispan-operator.v2.1.6
+  replaces: infinispan-operator.v2.1.5
+  skipRange: '>=2.1.0 <2.1.5'
+- name: infinispan-operator.v2.1.7
+  replaces: infinispan-operator.v2.1.6
+  skipRange: '>=2.1.0 <2.1.5'
+name: 2.1.x
+package: infinispan
+schema: olm.channel
+---
+entries:
+- name: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.0
+  replaces: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.1
+  replaces: infinispan-operator.v0.3.0
+- name: infinispan-operator.v0.3.2
+  replaces: infinispan-operator.v0.3.1
+- name: infinispan-operator.v1.0.0
+  replaces: infinispan-operator.v0.3.2
+- name: infinispan-operator.v1.0.1
+  replaces: infinispan-operator.v1.0.0
+- name: infinispan-operator.v1.1.0
+  replaces: infinispan-operator.v1.0.1
+- name: infinispan-operator.v1.1.1
+  replaces: infinispan-operator.v1.1.0
+- name: infinispan-operator.v1.1.2
+  replaces: infinispan-operator.v1.1.1
+- name: infinispan-operator.v2.0.0
+  replaces: infinispan-operator.v1.1.2
+- name: infinispan-operator.v2.0.1
+  replaces: infinispan-operator.v2.0.0
+- name: infinispan-operator.v2.0.2
+  replaces: infinispan-operator.v2.0.1
+- name: infinispan-operator.v2.0.3
+  replaces: infinispan-operator.v2.0.2
+- name: infinispan-operator.v2.0.4
+  replaces: infinispan-operator.v2.0.3
+- name: infinispan-operator.v2.0.5
+  replaces: infinispan-operator.v2.0.4
+- name: infinispan-operator.v2.1.0
+  replaces: infinispan-operator.v2.0.5
+- name: infinispan-operator.v2.1.1
+  replaces: infinispan-operator.v2.1.0
+- name: infinispan-operator.v2.1.2
+  replaces: infinispan-operator.v2.1.1
+- name: infinispan-operator.v2.1.3
+  replaces: infinispan-operator.v2.1.2
+- name: infinispan-operator.v2.1.4
+  replaces: infinispan-operator.v2.1.3
+- name: infinispan-operator.v2.1.5
+  replaces: infinispan-operator.v2.1.4
+  skipRange: '>=2.1.0 <2.1.5'
+- name: infinispan-operator.v2.2.0
+  replaces: infinispan-operator.v2.1.5
+- name: infinispan-operator.v2.2.1
+  replaces: infinispan-operator.v2.2.0
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.2
+  replaces: infinispan-operator.v2.2.1
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.3
+  replaces: infinispan-operator.v2.2.2
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.4
+  replaces: infinispan-operator.v2.2.3
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.5
+  replaces: infinispan-operator.v2.2.4
+  skipRange: '>=2.1.x <2.2.1'
+name: 2.2.x
+package: infinispan
+schema: olm.channel
+---
+entries:
+- name: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.0
+  replaces: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.1
+  replaces: infinispan-operator.v0.3.0
+- name: infinispan-operator.v0.3.2
+  replaces: infinispan-operator.v0.3.1
+- name: infinispan-operator.v1.0.0
+  replaces: infinispan-operator.v0.3.2
+- name: infinispan-operator.v1.0.1
+  replaces: infinispan-operator.v1.0.0
+- name: infinispan-operator.v1.1.0
+  replaces: infinispan-operator.v1.0.1
+- name: infinispan-operator.v1.1.1
+  replaces: infinispan-operator.v1.1.0
+- name: infinispan-operator.v1.1.2
+  replaces: infinispan-operator.v1.1.1
+- name: infinispan-operator.v2.0.0
+  replaces: infinispan-operator.v1.1.2
+- name: infinispan-operator.v2.0.1
+  replaces: infinispan-operator.v2.0.0
+- name: infinispan-operator.v2.0.2
+  replaces: infinispan-operator.v2.0.1
+- name: infinispan-operator.v2.0.3
+  replaces: infinispan-operator.v2.0.2
+- name: infinispan-operator.v2.0.4
+  replaces: infinispan-operator.v2.0.3
+- name: infinispan-operator.v2.0.5
+  replaces: infinispan-operator.v2.0.4
+- name: infinispan-operator.v2.1.0
+  replaces: infinispan-operator.v2.0.5
+- name: infinispan-operator.v2.1.1
+  replaces: infinispan-operator.v2.1.0
+- name: infinispan-operator.v2.1.2
+  replaces: infinispan-operator.v2.1.1
+- name: infinispan-operator.v2.1.3
+  replaces: infinispan-operator.v2.1.2
+- name: infinispan-operator.v2.1.4
+  replaces: infinispan-operator.v2.1.3
+- name: infinispan-operator.v2.1.5
+  replaces: infinispan-operator.v2.1.4
+  skipRange: '>=2.1.0 <2.1.5'
+- name: infinispan-operator.v2.2.0
+  replaces: infinispan-operator.v2.1.5
+- name: infinispan-operator.v2.2.1
+  replaces: infinispan-operator.v2.2.0
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.2
+  replaces: infinispan-operator.v2.2.1
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.3
+  replaces: infinispan-operator.v2.2.2
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.4
+  replaces: infinispan-operator.v2.2.3
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.5
+  replaces: infinispan-operator.v2.2.4
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.3.0
+  replaces: infinispan-operator.v2.2.5
+- name: infinispan-operator.v2.3.1
+  replaces: infinispan-operator.v2.3.0
+- name: infinispan-operator.v2.3.2
+  replaces: infinispan-operator.v2.3.1
+- name: infinispan-operator.v2.3.3
+  replaces: infinispan-operator.v2.3.2
+- name: infinispan-operator.v2.3.4
+  replaces: infinispan-operator.v2.3.3
+- name: infinispan-operator.v2.3.5
+  replaces: infinispan-operator.v2.3.4
+- name: infinispan-operator.v2.3.6
+  replaces: infinispan-operator.v2.3.5
+- name: infinispan-operator.v2.3.7
+  replaces: infinispan-operator.v2.3.6
+name: 2.3.x
+package: infinispan
+schema: olm.channel
+---
+entries:
+- name: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.0
+  replaces: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.1
+  replaces: infinispan-operator.v0.3.0
+- name: infinispan-operator.v0.3.2
+  replaces: infinispan-operator.v0.3.1
+- name: infinispan-operator.v1.0.0
+  replaces: infinispan-operator.v0.3.2
+- name: infinispan-operator.v1.0.1
+  replaces: infinispan-operator.v1.0.0
+- name: infinispan-operator.v1.1.0
+  replaces: infinispan-operator.v1.0.1
+- name: infinispan-operator.v1.1.1
+  replaces: infinispan-operator.v1.1.0
+- name: infinispan-operator.v1.1.2
+  replaces: infinispan-operator.v1.1.1
+- name: infinispan-operator.v2.0.0
+  replaces: infinispan-operator.v1.1.2
+- name: infinispan-operator.v2.0.1
+  replaces: infinispan-operator.v2.0.0
+- name: infinispan-operator.v2.0.2
+  replaces: infinispan-operator.v2.0.1
+- name: infinispan-operator.v2.0.3
+  replaces: infinispan-operator.v2.0.2
+- name: infinispan-operator.v2.0.4
+  replaces: infinispan-operator.v2.0.3
+name: dev-preview
+package: infinispan
+schema: olm.channel
+---
+entries:
+- name: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.0
+  replaces: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.1
+  replaces: infinispan-operator.v0.3.0
+- name: infinispan-operator.v0.3.2
+  replaces: infinispan-operator.v0.3.1
+- name: infinispan-operator.v1.0.0
+  replaces: infinispan-operator.v0.3.2
+- name: infinispan-operator.v1.0.1
+  replaces: infinispan-operator.v1.0.0
+- name: infinispan-operator.v1.1.0
+  replaces: infinispan-operator.v1.0.1
+- name: infinispan-operator.v1.1.1
+  replaces: infinispan-operator.v1.1.0
+- name: infinispan-operator.v1.1.2
+  replaces: infinispan-operator.v1.1.1
+- name: infinispan-operator.v2.0.0
+  replaces: infinispan-operator.v1.1.2
+- name: infinispan-operator.v2.0.1
+  replaces: infinispan-operator.v2.0.0
+- name: infinispan-operator.v2.0.2
+  replaces: infinispan-operator.v2.0.1
+- name: infinispan-operator.v2.0.3
+  replaces: infinispan-operator.v2.0.2
+- name: infinispan-operator.v2.0.4
+  replaces: infinispan-operator.v2.0.3
+- name: infinispan-operator.v2.0.5
+  replaces: infinispan-operator.v2.0.4
+- name: infinispan-operator.v2.1.0
+  replaces: infinispan-operator.v2.0.5
+- name: infinispan-operator.v2.1.1
+  replaces: infinispan-operator.v2.1.0
+- name: infinispan-operator.v2.1.2
+  replaces: infinispan-operator.v2.1.1
+- name: infinispan-operator.v2.1.3
+  replaces: infinispan-operator.v2.1.2
+- name: infinispan-operator.v2.1.4
+  replaces: infinispan-operator.v2.1.3
+name: preview
+package: infinispan
+schema: olm.channel
+---
+entries:
+- name: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.0
+  replaces: infinispan-operator.v0.2.1
+- name: infinispan-operator.v0.3.1
+  replaces: infinispan-operator.v0.3.0
+- name: infinispan-operator.v0.3.2
+  replaces: infinispan-operator.v0.3.1
+- name: infinispan-operator.v1.0.0
+  replaces: infinispan-operator.v0.3.2
+- name: infinispan-operator.v1.0.1
+  replaces: infinispan-operator.v1.0.0
+- name: infinispan-operator.v1.1.0
+  replaces: infinispan-operator.v1.0.1
+- name: infinispan-operator.v1.1.1
+  replaces: infinispan-operator.v1.1.0
+- name: infinispan-operator.v1.1.2
+  replaces: infinispan-operator.v1.1.1
+- name: infinispan-operator.v2.0.0
+  replaces: infinispan-operator.v1.1.2
+- name: infinispan-operator.v2.0.1
+  replaces: infinispan-operator.v2.0.0
+- name: infinispan-operator.v2.0.2
+  replaces: infinispan-operator.v2.0.1
+- name: infinispan-operator.v2.0.3
+  replaces: infinispan-operator.v2.0.2
+- name: infinispan-operator.v2.0.4
+  replaces: infinispan-operator.v2.0.3
+- name: infinispan-operator.v2.0.5
+  replaces: infinispan-operator.v2.0.4
+- name: infinispan-operator.v2.1.0
+  replaces: infinispan-operator.v2.0.5
+- name: infinispan-operator.v2.1.1
+  replaces: infinispan-operator.v2.1.0
+- name: infinispan-operator.v2.1.2
+  replaces: infinispan-operator.v2.1.1
+- name: infinispan-operator.v2.1.3
+  replaces: infinispan-operator.v2.1.2
+- name: infinispan-operator.v2.1.4
+  replaces: infinispan-operator.v2.1.3
+- name: infinispan-operator.v2.1.5
+  replaces: infinispan-operator.v2.1.4
+  skipRange: '>=2.1.0 <2.1.5'
+- name: infinispan-operator.v2.2.0
+  replaces: infinispan-operator.v2.1.5
+- name: infinispan-operator.v2.2.1
+  replaces: infinispan-operator.v2.2.0
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.2
+  replaces: infinispan-operator.v2.2.1
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.3
+  replaces: infinispan-operator.v2.2.2
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.4
+  replaces: infinispan-operator.v2.2.3
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.2.5
+  replaces: infinispan-operator.v2.2.4
+  skipRange: '>=2.1.x <2.2.1'
+- name: infinispan-operator.v2.3.0
+  replaces: infinispan-operator.v2.2.5
+- name: infinispan-operator.v2.3.1
+  replaces: infinispan-operator.v2.3.0
+- name: infinispan-operator.v2.3.2
+  replaces: infinispan-operator.v2.3.1
+- name: infinispan-operator.v2.3.3
+  replaces: infinispan-operator.v2.3.2
+- name: infinispan-operator.v2.3.4
+  replaces: infinispan-operator.v2.3.3
+- name: infinispan-operator.v2.3.5
+  replaces: infinispan-operator.v2.3.4
+- name: infinispan-operator.v2.3.6
+  replaces: infinispan-operator.v2.3.5
+- name: infinispan-operator.v2.3.7
+  replaces: infinispan-operator.v2.3.6
+- name: infinispan-operator.v2.4.0
+  replaces: infinispan-operator.v2.3.7
+- name: infinispan-operator.v2.4.1
+  replaces: infinispan-operator.v2.4.0
+- name: infinispan-operator.v2.4.2
+  replaces: infinispan-operator.v2.4.1
+- name: infinispan-operator.v2.4.3
+  replaces: infinispan-operator.v2.4.2
+- name: infinispan-operator.v2.4.4
+  replaces: infinispan-operator.v2.4.3
+name: stable
+package: infinispan
+schema: olm.channel
+---
+image: quay.io/operatorhubio/infinispan@sha256:61cbb94f8f53feb1049d8538c196d44e667ec3b3e81479d47d0017366e728795
+name: infinispan-operator.v0.2.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 0.2.1
+relatedImages:
+- image: jboss/infinispan-operator:0.2.1
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:61cbb94f8f53feb1049d8538c196d44e667ec3b3e81479d47d0017366e728795
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:ad189ea0f235cb1fd94b9b33d4fc25b145f4a6c84fc645043a638f4ab47e6cfa
+name: infinispan-operator.v0.3.0
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 0.3.0
+relatedImages:
+- image: jboss/infinispan-operator:0.3.0
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:ad189ea0f235cb1fd94b9b33d4fc25b145f4a6c84fc645043a638f4ab47e6cfa
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:5fdb7c2b2bc5e3bf7210f4c4e04f9e555ee287310efaa6e4dadb47a15c105c6f
+name: infinispan-operator.v0.3.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 0.3.1
+relatedImages:
+- image: jboss/infinispan-operator:0.3.1
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:5fdb7c2b2bc5e3bf7210f4c4e04f9e555ee287310efaa6e4dadb47a15c105c6f
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:d7fc40f62951879d2ac8656e76d341c285a85cdce883491307cb4d4435d57cf2
+name: infinispan-operator.v0.3.2
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 0.3.2
+relatedImages:
+- image: jboss/infinispan-operator:0.3.2
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:d7fc40f62951879d2ac8656e76d341c285a85cdce883491307cb4d4435d57cf2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:a6d39885fc8232668afb42df77dfc87e28a2919289c5928a3a63a5fa842e686c
+name: infinispan-operator.v1.0.0
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 1.0.0
+relatedImages:
+- image: jboss/infinispan-operator:1.0.0.Alpha4
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:a6d39885fc8232668afb42df77dfc87e28a2919289c5928a3a63a5fa842e686c
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:2ae39118164e03fe4b6b4f98cbeb9c60dee5a5f1e95adbde0e6bbcb94861a317
+name: infinispan-operator.v1.0.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 1.0.1
+relatedImages:
+- image: jboss/infinispan-operator:1.0.1
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:2ae39118164e03fe4b6b4f98cbeb9c60dee5a5f1e95adbde0e6bbcb94861a317
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:b9f89feb536fdf7e9bcc7b3337025a091f548480a005c2705f9052b7edce74b0
+name: infinispan-operator.v1.1.0
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 1.1.0
+relatedImages:
+- image: infinispan/server:10.1.0.Final-1
+  name: ""
+- image: jboss/infinispan-operator:1.1.0
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:b9f89feb536fdf7e9bcc7b3337025a091f548480a005c2705f9052b7edce74b0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:135592abda83d3ad05533664b2b512dc161717dc9c9406d3e6e3bc765d28cd14
+name: infinispan-operator.v1.1.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 1.1.1
+relatedImages:
+- image: infinispan/server:10.1.2.Final
+  name: ""
+- image: jboss/infinispan-operator:1.1.1.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:135592abda83d3ad05533664b2b512dc161717dc9c9406d3e6e3bc765d28cd14
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:4d0e215a14d411f1f1002b840d58d727a8c66eba28787776d7f14dc7c54ab224
+name: infinispan-operator.v1.1.2
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 1.1.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |
+        [
+          {
+            "apiVersion": "infinispan.org/v1",
+            "kind": "Infinispan",
+            "metadata": {
+              "name": "example-infinispan"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/infinispan/operator:1.1.2.Final
+      createdAt: "2020-05-15T08:42:04Z"
+      description: Create and manage Infinispan clusters.
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/infinispan/infinispan-operator
+      support: Infinispan
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: An Infinispan cluster instance.
+        displayName: Infinispan Cluster
+        kind: Infinispan
+        name: infinispans.infinispan.org
+        resources:
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: Sets the number of nodes in the cluster.
+          displayName: Replicas
+          path: replicas
+        - description: Sets an image to bootstrap the Infinispan nodes.
+          displayName: Image
+          path: image
+        - description: Sets the CPU limits for each Infinispan node.
+          displayName: CPU
+          path: container.cpu
+        - description: Sets the memory limits for each Infinispan node.
+          displayName: Memory
+          path: container.memory
+        - description: Appends JVM options to each Infinispan node.
+          displayName: Extra JVM Options
+          path: container.extraJvmOpts
+        - description: Name of the secrect that contains auth info.
+          displayName: Endpoint Secret Name
+          path: security.endpointSecretName
+        - description: Select how encryption certificates are provided [Secret,Service].
+          displayName: Endpoint Encryption Type
+          path: security.endpointEncryption.type
+        - description: Platform service that serves certificates (openshift.io/service-cert
+            is supported).
+          displayName: Serving Certs Service Name
+          path: security.endpointEncryption.certServiceName
+        - description: Name of the secrect that contains certificates.
+          displayName: Certificates Secret Name
+          path: security.endpointEncryption.certSecretName
+        - description: Select service type provided [Cache,DataGrid].
+          displayName: Service Type
+          path: service.type
+        - description: Local Infinispan node storage capacity (DataGrid service only).
+          displayName: Local Storage Capacity
+          path: service.container.storage
+        - description: Name of local site (DataGrid service only).
+          displayName: Name Of Local Site
+          path: service.sites.local.name
+        - description: Kubernetes service type for cross-site communications [LoadBalancer,NodePort]
+            (DataGrid service only).
+          displayName: Kubernetes Service Type For Cross-Site Network
+          path: service.sites.local.expose.type
+        - description: Name of one of the sites (DataGrid service only)
+          displayName: Name Of Site
+          path: service.sites.locations[0].name
+        - description: Site URL for communicating with site (DataGrid service only).
+            Prefixed with minikube:// for Minikube sites, and openshift:// for OpenShift
+            sites.
+          displayName: Site URL
+          path: service.sites.locations[0].url
+        - description: Secret name containing credentials to talk to site (DataGrid
+            service only).
+          displayName: Secret For Site
+          path: service.sites.locations[0].secretName
+        - description: Defines logging categories and log levels.
+          displayName: Logging Categories
+          path: logging.categories
+        - description: Externally exposed Kubernetes service type.
+          displayName: Exposed Kubernetes Service Type
+          path: expose.type
+        statusDescriptors:
+        - description: Type of condition.
+          displayName: Condition Type
+          path: conditions[0].type
+        - description: Status of condition.
+          displayName: Condition Status
+          path: conditions[0].status
+        - description: Message of condition.
+          displayName: Condition Message
+          path: conditions[0].message
+        version: v1
+    description: |
+      Infinispan is a distributed, in-memory data store that increases application performance and delivers open-source capabilites to handle demanding use cases.
+
+      ### Core Capabilities
+      * **Schemaless data structure:** Store different objects as key-value pairs.
+      * **Grid-based data storage:** Distribute and replicate data across clusters.
+      * **Elastic scaling:** Dynamically adjust the number of nodes to meet demand without service disruption.
+      * **Data interoperability:** Store, retrieve, and query data in the grid from different endpoints.
+      * **High availability:** Always have access to your data.
+
+      ### Infinispan Operator Features
+      * Operational intelligence that simplifies Infinispan cluster deployment.
+      * REST and Hot Rod endpoints available at port `11222`.
+      * Cache service for a high-performance, ephemeral data store.
+      * Data Grid service for a fully configurable Infinispan cluster.
+      * Default application user: `developer`. Infinispan Operator generates credentials in an authentication secret at startup.
+      * Infinispan pods request `0.25` (limit `0.50`) CPUs, 512MiB of memory and 1Gi of ReadWriteOnce persistent storage. Infinispan Operator lets you adjust resource allocation to suit your requirements.
+    displayName: Infinispan
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - infinispan
+    - key value
+    - database
+    - datagrid
+    - open source
+    links:
+    - name: Blog
+      url: https://blog.infinispan.org/
+    - name: Documentation
+      url: https://infinispan.org/
+    - name: Quickstart
+      url: https://github.com/infinispan/infinispan-simple-tutorials/tree/master/operator
+    - name: Operator Source Code
+      url: https://github.com/infinispan/infinispan-operator
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    minKubeVersion: 1.11.0
+    provider:
+      name: Infinispan
+relatedImages:
+- image: quay.io/infinispan/operator:1.1.2.Final
+  name: ""
+- image: quay.io/infinispan/server:10.1.7.Final
+  name: infinispan-server
+- image: quay.io/operatorhubio/infinispan@sha256:4d0e215a14d411f1f1002b840d58d727a8c66eba28787776d7f14dc7c54ab224
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:4b4deaad390829f9ca6ca12fa5d771ec270f102eff90be2282e8d4934fd58666
+name: infinispan-operator.v2.0.0
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.0.0
+relatedImages:
+- image: infinispan/server:11.0.0.Final
+  name: ""
+- image: jboss/infinispan-operator:2.0.0.Alpha2
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:4b4deaad390829f9ca6ca12fa5d771ec270f102eff90be2282e8d4934fd58666
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:4d5008dfab1c72be98676d2f02f8b2f905fe41d48048fe46377a766539cf12b7
+name: infinispan-operator.v2.0.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.0.1
+relatedImages:
+- image: quay.io/infinispan/operator:2.0.0.Final-1
+  name: ""
+- image: quay.io/infinispan/server:11.0.1.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:4d5008dfab1c72be98676d2f02f8b2f905fe41d48048fe46377a766539cf12b7
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:947d6b993bfed0fc4589c082a25b744efa43af60ca16dc33a8a7d139fd65fe6e
+name: infinispan-operator.v2.0.2
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.0.2
+relatedImages:
+- image: quay.io/infinispan/operator:2.0.0.Final-1
+  name: ""
+- image: quay.io/infinispan/server:11.0.1.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:947d6b993bfed0fc4589c082a25b744efa43af60ca16dc33a8a7d139fd65fe6e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:9b436da2e8bdcc4d5c58d0255f99498693a2d370864f3d6287261371e4731e4b
+name: infinispan-operator.v2.0.3
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.0.3
+relatedImages:
+- image: quay.io/infinispan/operator:2.0.1.Final
+  name: ""
+- image: quay.io/infinispan/server:11.0.1.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:9b436da2e8bdcc4d5c58d0255f99498693a2d370864f3d6287261371e4731e4b
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:b739e1e5550f2c4ae3d85da5b6065b8a0c19d165fdfd7cb408f7fe55397ead10
+name: infinispan-operator.v2.0.4
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.0.4
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |
+        [
+          {
+            "apiVersion": "infinispan.org/v1",
+            "kind": "Infinispan",
+            "metadata": {
+              "name": "example-infinispan"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Cache",
+            "metadata": {
+              "name": "example-cache"
+            },
+            "spec": {
+              "adminAuth": {
+                "secretName": "basic-auth"
+              },
+              "clusterName": "example-infinispan",
+              "name": "mycache"
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/infinispan/operator:2.0.4
+      createdAt: "2020-10-09T15:00:00Z"
+      description: Create and manage Infinispan clusters.
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/infinispan/infinispan-operator
+      support: Infinispan
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Cache is the Schema for the caches API
+        displayName: Infinispan Cache
+        kind: Cache
+        name: caches.infinispan.org
+        version: v2alpha1
+      - description: An Infinispan cluster instance.
+        displayName: Infinispan Cluster
+        kind: Infinispan
+        name: infinispans.infinispan.org
+        resources:
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: Sets the number of nodes in the cluster.
+          displayName: Replicas
+          path: replicas
+        - description: Sets an image to bootstrap the Infinispan nodes.
+          displayName: Image
+          path: image
+        - description: Sets the CPU limits for each Infinispan node.
+          displayName: CPU
+          path: container.cpu
+        - description: Sets the memory limits for each Infinispan node.
+          displayName: Memory
+          path: container.memory
+        - description: Appends JVM options to each Infinispan node.
+          displayName: Extra JVM Options
+          path: container.extraJvmOpts
+        - description: Name of the secrect that contains auth info.
+          displayName: Endpoint Secret Name
+          path: security.endpointSecretName
+        - description: Select how encryption certificates are provided [Secret,Service].
+          displayName: Endpoint Encryption Type
+          path: security.endpointEncryption.type
+        - description: Platform service that serves certificates (openshift.io/service-cert
+            is supported).
+          displayName: Serving Certs Service Name
+          path: security.endpointEncryption.certServiceName
+        - description: Name of the secrect that contains certificates.
+          displayName: Certificates Secret Name
+          path: security.endpointEncryption.certSecretName
+        - description: Select service type provided [Cache,DataGrid].
+          displayName: Service Type
+          path: service.type
+        - description: Local Infinispan node storage capacity (DataGrid service only).
+          displayName: Local Storage Capacity
+          path: service.container.storage
+        - description: Name of local site (DataGrid service only).
+          displayName: Name Of Local Site
+          path: service.sites.local.name
+        - description: Kubernetes service type for cross-site communications [LoadBalancer,NodePort]
+            (DataGrid service only).
+          displayName: Kubernetes Service Type For Cross-Site Network
+          path: service.sites.local.expose.type
+        - description: Name of one of the sites (DataGrid service only)
+          displayName: Name Of Site
+          path: service.sites.locations[0].name
+        - description: Site URL for communicating with site (DataGrid service only).
+            Prefixed with minikube:// for Minikube sites, and openshift:// for OpenShift
+            sites.
+          displayName: Site URL
+          path: service.sites.locations[0].url
+        - description: Secret name containing credentials to talk to site (DataGrid
+            service only).
+          displayName: Secret For Site
+          path: service.sites.locations[0].secretName
+        - description: Defines logging categories and log levels.
+          displayName: Logging Categories
+          path: logging.categories
+        - description: Externally exposed Kubernetes service type.
+          displayName: Exposed Kubernetes Service Type
+          path: expose.type
+        statusDescriptors:
+        - description: Type of condition.
+          displayName: Condition Type
+          path: conditions[0].type
+        - description: Status of condition.
+          displayName: Condition Status
+          path: conditions[0].status
+        - description: Message of condition.
+          displayName: Condition Message
+          path: conditions[0].message
+        version: v1
+    description: |
+      Infinispan is a distributed, in-memory data store that increases application performance and delivers open-source capabilites to handle demanding use cases.
+
+      ### Core Capabilities
+      * **Schemaless data structure:** Store different objects as key-value pairs.
+      * **Grid-based data storage:** Distribute and replicate data across clusters.
+      * **Elastic scaling:** Dynamically adjust the number of nodes to meet demand without service disruption.
+      * **Data interoperability:** Store, retrieve, and query data in the grid from different endpoints.
+      * **High availability:** Always have access to your data.
+
+      ### Infinispan Operator Features
+      * Operational intelligence that simplifies Infinispan cluster deployment.
+      * REST and Hot Rod endpoints available at port `11222`.
+      * Cache service for a high-performance, ephemeral data store.
+      * Data Grid service for a fully configurable Infinispan cluster.
+      * Default application user: `developer`. Infinispan Operator generates credentials in an authentication secret at startup.
+      * Infinispan pods request `0.25` (limit `0.50`) CPUs, 512MiB of memory and 1Gi of ReadWriteOnce persistent storage. Infinispan Operator lets you adjust resource allocation to suit your requirements.
+    displayName: Infinispan
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - infinispan
+    - key value
+    - database
+    - datagrid
+    - open source
+    links:
+    - name: Blog
+      url: https://blog.infinispan.org/
+    - name: Documentation
+      url: https://infinispan.org/
+    - name: Quickstart
+      url: https://github.com/infinispan/infinispan-simple-tutorials/tree/master/operator
+    - name: Operator Source Code
+      url: https://github.com/infinispan/infinispan-operator
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    minKubeVersion: 1.11.0
+    provider:
+      name: Infinispan
+relatedImages:
+- image: quay.io/infinispan/operator:2.0.4.Final
+  name: ""
+- image: quay.io/infinispan/server:11.0.4.Final
+  name: infinispan-server
+- image: quay.io/operatorhubio/infinispan@sha256:b739e1e5550f2c4ae3d85da5b6065b8a0c19d165fdfd7cb408f7fe55397ead10
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:5beef4277d6d18c1e763d50725aed30d1bca36c96bf87423b21832487459f3d5
+name: infinispan-operator.v2.0.5
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.0.5
+relatedImages:
+- image: quay.io/infinispan/operator:2.0.5.Final
+  name: ""
+- image: quay.io/infinispan/server:11.0.5.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:5beef4277d6d18c1e763d50725aed30d1bca36c96bf87423b21832487459f3d5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:5f5d89f687e3381f4406209694d41ea3a08cabfc97ff50b94dd0873d8c380cc3
+name: infinispan-operator.v2.0.6
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.0.6
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |
+        [
+          {
+            "apiVersion": "infinispan.org/v1",
+            "kind": "Infinispan",
+            "metadata": {
+              "name": "example-infinispan"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Cache",
+            "metadata": {
+              "name": "example-cache"
+            },
+            "spec": {
+              "adminAuth": {
+                "secretName": "basic-auth"
+              },
+              "clusterName": "example-infinispan",
+              "name": "mycache"
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/infinispan/operator:2.0.6
+      createdAt: "2021-01-08T09:00:00Z"
+      description: Create and manage Infinispan clusters.
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/infinispan/infinispan-operator
+      support: Infinispan
+      tectonic-visibility: ocs
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Cache is the Schema for the caches API
+        displayName: Infinispan Cache
+        kind: Cache
+        name: caches.infinispan.org
+        version: v2alpha1
+      - description: An Infinispan cluster instance.
+        displayName: Infinispan Cluster
+        kind: Infinispan
+        name: infinispans.infinispan.org
+        resources:
+        - kind: ConfigMap
+          name: ""
+          version: v1
+        - kind: Secret
+          name: ""
+          version: v1
+        - kind: Service
+          name: ""
+          version: v1
+        - kind: Pod
+          name: ""
+          version: v1
+        specDescriptors:
+        - description: Sets the number of nodes in the cluster.
+          displayName: Replicas
+          path: replicas
+        - description: Sets an image to bootstrap the Infinispan nodes.
+          displayName: Image
+          path: image
+        - description: Sets the CPU limits for each Infinispan node.
+          displayName: CPU
+          path: container.cpu
+        - description: Sets the memory limits for each Infinispan node.
+          displayName: Memory
+          path: container.memory
+        - description: Appends JVM options to each Infinispan node.
+          displayName: Extra JVM Options
+          path: container.extraJvmOpts
+        - description: Name of the secret that contains auth info.
+          displayName: Endpoint Secret Name
+          path: security.endpointSecretName
+        - description: Select how encryption certificates are provided [Secret,Service].
+          displayName: Endpoint Encryption Type
+          path: security.endpointEncryption.type
+        - description: Platform service that serves certificates (openshift.io/service-cert
+            is supported).
+          displayName: Serving Certs Service Name
+          path: security.endpointEncryption.certServiceName
+        - description: Name of the secret that contains certificates.
+          displayName: Certificates Secret Name
+          path: security.endpointEncryption.certSecretName
+        - description: Select service type provided [Cache,DataGrid].
+          displayName: Service Type
+          path: service.type
+        - description: Local Infinispan node storage capacity (DataGrid service only).
+          displayName: Local Storage Capacity
+          path: service.container.storage
+        - description: Name of local site (DataGrid service only).
+          displayName: Name Of Local Site
+          path: service.sites.local.name
+        - description: Kubernetes service type for cross-site communications [LoadBalancer,NodePort]
+            (DataGrid service only).
+          displayName: Kubernetes Service Type For Cross-Site Network
+          path: service.sites.local.expose.type
+        - description: Name of one of the sites (DataGrid service only)
+          displayName: Name Of Site
+          path: service.sites.locations[0].name
+        - description: Site URL for communicating with site (DataGrid service only).
+            Prefixed with minikube:// for Minikube sites, and openshift:// for OpenShift
+            sites.
+          displayName: Site URL
+          path: service.sites.locations[0].url
+        - description: Secret name containing credentials to talk to site (DataGrid
+            service only).
+          displayName: Secret For Site
+          path: service.sites.locations[0].secretName
+        - description: Defines logging categories and log levels.
+          displayName: Logging Categories
+          path: logging.categories
+        - description: Externally exposed Kubernetes service type.
+          displayName: Exposed Kubernetes Service Type
+          path: expose.type
+        statusDescriptors:
+        - description: Type of condition.
+          displayName: Condition Type
+          path: conditions[0].type
+        - description: Status of condition.
+          displayName: Condition Status
+          path: conditions[0].status
+        - description: Message of condition.
+          displayName: Condition Message
+          path: conditions[0].message
+        version: v1
+    description: |
+      Infinispan is a distributed, in-memory data store that increases application performance and delivers open-source capabilities to handle demanding use cases.
+
+      ### Core Capabilities
+      * **Schemaless data structure:** Store different objects as key-value pairs.
+      * **Grid-based data storage:** Distribute and replicate data across clusters.
+      * **Elastic scaling:** Dynamically adjust the number of nodes to meet demand without service disruption.
+      * **Data interoperability:** Store, retrieve, and query data in the grid from different endpoints.
+      * **High availability:** Always have access to your data.
+
+      ### Infinispan Operator Features
+      * Operational intelligence that simplifies Infinispan cluster deployment.
+      * REST and Hot Rod endpoints available at port `11222`.
+      * Cache service for a high-performance, ephemeral data store.
+      * Data Grid service for a fully configurable Infinispan cluster.
+      * Default application user: `developer`. Infinispan Operator generates credentials in an authentication secret at startup.
+      * Infinispan pods request `0.25` (limit `0.50`) CPUs, 512MiB of memory and 1Gi of ReadWriteOnce persistent storage. Infinispan Operator lets you adjust resource allocation to suit your requirements.
+    displayName: Infinispan
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - infinispan
+    - key value
+    - database
+    - datagrid
+    - open source
+    links:
+    - name: Blog
+      url: https://blog.infinispan.org/
+    - name: Documentation
+      url: https://infinispan.org/
+    - name: Quickstart
+      url: https://github.com/infinispan/infinispan-simple-tutorials/tree/master/operator
+    - name: Operator Source Code
+      url: https://github.com/infinispan/infinispan-operator
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    minKubeVersion: 1.11.0
+    provider:
+      name: Infinispan
+relatedImages:
+- image: quay.io/infinispan/operator:2.0.6
+  name: ""
+- image: quay.io/infinispan/server:11.0.7.Final
+  name: infinispan-server
+- image: quay.io/operatorhubio/infinispan@sha256:5f5d89f687e3381f4406209694d41ea3a08cabfc97ff50b94dd0873d8c380cc3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:6a654c542bccb882ba2660c79b430faf37c9baea073db9f4db004063afff6189
+name: infinispan-operator.v2.1.0
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.1.0
+relatedImages:
+- image: jboss/infinispan-operator:latest
+  name: ""
+- image: quay.io/infinispan/server:12.0.0.Dev06
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:6a654c542bccb882ba2660c79b430faf37c9baea073db9f4db004063afff6189
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:ef64d365cda4ae3cb8f5a4ab366d69f6b7541cebb57eacddd0346e4d40e6bd08
+name: infinispan-operator.v2.1.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.1.1
+relatedImages:
+- image: quay.io/infinispan/operator:2.1.0.Dev06
+  name: ""
+- image: quay.io/infinispan/server:12.0.0.Dev06
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:ef64d365cda4ae3cb8f5a4ab366d69f6b7541cebb57eacddd0346e4d40e6bd08
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:e47567da9fa82fb8310da4ac3760e6d080a0e5f8f4275bfeeea3ee90f16b1a53
+name: infinispan-operator.v2.1.2
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.1.2
+relatedImages:
+- image: quay.io/infinispan/operator:2.1.1.Final
+  name: ""
+- image: quay.io/infinispan/server:12.0.1.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:e47567da9fa82fb8310da4ac3760e6d080a0e5f8f4275bfeeea3ee90f16b1a53
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:025f4935d05b4d4e6ec794a7ff64fc5245ded8a8da7bcf6e7c18d1f5a52cee77
+name: infinispan-operator.v2.1.3
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.1.3
+relatedImages:
+- image: quay.io/infinispan/operator:2.1.2.Final
+  name: ""
+- image: quay.io/infinispan/server:12.0.2.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:025f4935d05b4d4e6ec794a7ff64fc5245ded8a8da7bcf6e7c18d1f5a52cee77
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:c10143d0497cf14edde1cd99a4f483044a48ab0009eed4a61a9bb84f0afb6fbb
+name: infinispan-operator.v2.1.4
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.1.4
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "infinispan.org/v1",
+            "kind": "Infinispan",
+            "metadata": {
+              "name": "example-infinispan"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Backup",
+            "metadata": {
+              "name": "example-backup"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Cache",
+            "metadata": {
+              "name": "example-cache"
+            },
+            "spec": {
+              "adminAuth": {
+                "secretName": "basic-auth"
+              },
+              "clusterName": "example-infinispan",
+              "name": "mycache"
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Restore",
+            "metadata": {
+              "name": "example-restore"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Batch",
+            "metadata": {
+              "name": "example-batch"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "config": "create cache --template=org.infinispan.DIST_SYNC batch-cache"
+            }
+          }
+        ]
+      capabilities: Full Lifecycle
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/infinispan/operator:2.1.3.Final
+      createdAt: "2021-01-26T09:00:00Z"
+      description: Create and manage Infinispan clusters.
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/infinispan/infinispan-operator
+      support: Infinispan
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Backup is the Schema for the backups API
+        displayName: Backup
+        kind: Backup
+        name: backups.infinispan.org
+        specDescriptors:
+        - description: Names your Infinispan cluster.
+          displayName: Cluster name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Names the storage class object for persistent volume claims.
+          displayName: Storage class name
+          path: volume.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+        version: v2alpha1
+      - description: Restore API schema.
+        displayName: Restore
+        kind: Restore
+        name: restores.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Specifies an Infinispan backup to restore.
+          displayName: Backup name
+          path: backup
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v2alpha1:Backup
+        version: v2alpha1
+      - description: Cache is the Schema for the caches API
+        displayName: Cache
+        kind: Cache
+        name: caches.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster name
+          path: clusterName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Names the secret that contains user credentials.
+          displayName: Authentication secret
+          path: adminAuth.secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        version: v2alpha1
+      - description: Batch is the Schema for the batches API
+        displayName: Batch
+        kind: Batch
+        name: batches.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: List of commands to be executed
+          displayName: Config command
+          path: config
+        - description: Name if the ConfigMap containing th List of commands to be
+            executed
+          displayName: ConfigMap name
+          path: configMap
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap
+        statusDescriptors:
+        - description: Current state of the batch operation
+          displayName: Batch Status
+          path: phase
+        - description: The reason for any batch related failures
+          displayName: Batch reason
+          path: reason
+        version: v2alpha1
+      - description: Infinispan is the Schema for the infinispans API
+        displayName: Infinispan Cluster
+        kind: Infinispan
+        name: infinispans.infinispan.org
+        specDescriptors:
+        - description: Controls the number of nodes in your Infinispan cluster.
+          displayName: Replicas
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: Enable or disable user authentication.
+          displayName: Toggle authentication
+          path: security.endpointAuthentication
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Disable or modify endpoint encryption.
+          displayName: Configure encryption
+          path: security.endpointEncryption.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Service
+          - urn:alm:descriptor:com.tectonic.ui:select:Secret
+          - urn:alm:descriptor:com.tectonic.ui:select:None
+        - description: Names the secret that contains TLS certificates.
+          displayName: Encryption secret
+          path: security.endpointEncryption.certSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Secret
+        - description: Names the service that encrypts client traffic.
+          displayName: Encryption service
+          path: security.endpointEncryption.certServiceName
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Service
+        - description: Names the secret that contains user credentials.
+          displayName: Authentication secret
+          path: security.endpointSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointAuthentication:true
+        - description: Configures the service type.
+          displayName: Service type
+          path: service.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Cache
+          - urn:alm:descriptor:com.tectonic.ui:select:DataGrid
+        - description: Names the access secret that allows backups to a remote site.
+          displayName: Backup location secret
+          path: service.sites.locations[].secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Specifies the node port that accepts traffic from a load balancer
+            service.
+          displayName: Node port
+          path: service.sites.local.expose.nodePort
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.sites.local.expose.type:NodePort
+        - description: Controls cache replication factor, or number of copies for
+            each entry.
+          displayName: Number of owners
+          path: service.replicationFactor
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: Enable/disable container ephemeral storage
+          displayName: Container ephemeral storage
+          path: service.container.ephemeralStorage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Sets the amount of storage for the persistent volume claim.
+          displayName: Storage size
+          path: service.container.storage
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: Names the storage class object for persistent volume claims.
+          displayName: Storage class name
+          path: service.container.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.container.ephemeralStorage:false
+        - description: Defines the network hostname for your Infinispan cluster.
+          displayName: Route hostname
+          path: expose.host
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:expose.type:Route
+        - description: Names the PVC that holds custom libraries.
+          displayName: Persistent volume claim (PVC) name
+          path: dependencies.volumeClaimName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        statusDescriptors:
+        - description: The current pods
+          displayName: Pod Status
+          path: podStatus
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podStatuses
+        - description: Infinispan Console location
+          displayName: Infinispan Console URL
+          path: consoleUrl
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+    description: |
+      Infinispan is an in-memory data store and open-source project.
+
+      ### Infinispan
+      * **Schemaless structure:** Store objects in key/value pairs.
+      * **Grid storage:** Distribute and replicate data across clusters.
+      * **Elasticity:** Scale to meet workload demands without service disruption.
+      * **Polyglot access:** Read, write, and query from multiple client languages with different endpoints.
+      * **Continuous availability:** Create a fault-tolerant caching service that guarantees business continuity.
+
+      ### Operator capabilities
+      * Built-in intelligence to automate Infinispan cluster deployment.
+      * Infinispan CR for service configuration.
+      * Cache CR for fully configurable caches.
+      * Batch CR for scripting bulk resource creation.
+      * REST and Hot Rod endpoints available at port `11222`.
+      * Default application user: `developer`. Infinispan Operator generates credentials in an authentication secret at startup.
+      * Infinispan pods request `0.25` (limit `0.50`) CPUs, 512MiB of memory and 1Gi of ReadWriteOnce persistent storage. Infinispan Operator lets you adjust resource allocation to suit your requirements.
+    displayName: Infinispan Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - infinispan
+    - key value
+    - database
+    - datagrid
+    - open source
+    links:
+    - name: Blog
+      url: https://blog.infinispan.org/
+    - name: Documentation
+      url: https://infinispan.org/
+    - name: Chat
+      url: https://infinispan.zulipchat.com/#narrow/stream/185835-infinispan-cloud
+    - name: Quickstart
+      url: https://github.com/infinispan/infinispan-simple-tutorials/tree/master/operator
+    - name: Operator Source Code
+      url: https://github.com/infinispan/infinispan-operator
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    minKubeVersion: 1.11.0
+    provider:
+      name: Infinispan
+relatedImages:
+- image: quay.io/infinispan/operator:2.1.3.Final
+  name: ""
+- image: quay.io/infinispan/server:12.1.3.Final
+  name: infinispan-server
+- image: quay.io/operatorhubio/infinispan@sha256:c10143d0497cf14edde1cd99a4f483044a48ab0009eed4a61a9bb84f0afb6fbb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:c2ed9524732239ff195456c2322238d68ae2c824ac62ecb3a214d3c6f595bd3d
+name: infinispan-operator.v2.1.5
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.8"
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.1.5
+relatedImages:
+- image: quay.io/infinispan/operator:2.1.4.Final
+  name: ""
+- image: quay.io/infinispan/server:12.1.7.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:c2ed9524732239ff195456c2322238d68ae2c824ac62ecb3a214d3c6f595bd3d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:e1aa1b0b2f618baa9c88df29aa37b8df5d9fc1e05aef4359253e42391170963d
+name: infinispan-operator.v2.1.6
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.8"
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.1.6
+relatedImages:
+- image: quay.io/infinispan/operator:2.1.6.Final
+  name: ""
+- image: quay.io/infinispan/server:12.1.8.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:e1aa1b0b2f618baa9c88df29aa37b8df5d9fc1e05aef4359253e42391170963d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:116f703d196828a2be6b10ef7132e288c2716ec2f5a4d7d9c325dae6f7c28028
+name: infinispan-operator.v2.1.7
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.maxOpenShiftVersion
+  value: "4.8"
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.1.7
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "infinispan.org/v1",
+            "kind": "Infinispan",
+            "metadata": {
+              "name": "example-infinispan"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Backup",
+            "metadata": {
+              "name": "example-backup"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Cache",
+            "metadata": {
+              "name": "example-cache"
+            },
+            "spec": {
+              "adminAuth": {
+                "secretName": "basic-auth"
+              },
+              "clusterName": "example-infinispan",
+              "name": "mycache"
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Restore",
+            "metadata": {
+              "name": "example-restore"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Batch",
+            "metadata": {
+              "name": "example-batch"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "config": "create cache --template=org.infinispan.DIST_SYNC batch-cache"
+            }
+          }
+        ]
+      capabilities: Deep Insights
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/infinispan/operator:2.1.7.Final
+      createdAt: "2021-07-29T09:00:00Z"
+      description: Create and manage Infinispan clusters.
+      olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.8"}]'
+      olm.skipRange: '>=2.1.0 <2.1.5'
+      repository: https://github.com/infinispan/infinispan-operator
+      support: Infinispan
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Backup is the Schema for the backups API
+        displayName: Backup
+        kind: Backup
+        name: backups.infinispan.org
+        specDescriptors:
+        - description: Names your Infinispan cluster.
+          displayName: Cluster name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Names the storage class object for persistent volume claims.
+          displayName: Storage class name
+          path: volume.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+        version: v2alpha1
+      - description: Restore API schema.
+        displayName: Restore
+        kind: Restore
+        name: restores.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Specifies an Infinispan backup to restore.
+          displayName: Backup name
+          path: backup
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v2alpha1:Backup
+        version: v2alpha1
+      - description: Cache is the Schema for the caches API
+        displayName: Cache
+        kind: Cache
+        name: caches.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster name
+          path: clusterName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Names the secret that contains user credentials.
+          displayName: Authentication secret
+          path: adminAuth.secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        version: v2alpha1
+      - description: Batch is the Schema for the batches API
+        displayName: Batch
+        kind: Batch
+        name: batches.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: List of commands to be executed
+          displayName: Config command
+          path: config
+        - description: Name if the ConfigMap containing th List of commands to be
+            executed
+          displayName: ConfigMap name
+          path: configMap
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap
+        statusDescriptors:
+        - description: Current state of the batch operation
+          displayName: Batch Status
+          path: phase
+        - description: The reason for any batch related failures
+          displayName: Batch reason
+          path: reason
+        version: v2alpha1
+      - description: Infinispan is the Schema for the infinispans API
+        displayName: Infinispan Cluster
+        kind: Infinispan
+        name: infinispans.infinispan.org
+        specDescriptors:
+        - description: Controls the number of nodes in your Infinispan cluster.
+          displayName: Replicas
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: Enable or disable user authentication.
+          displayName: Toggle authentication
+          path: security.endpointAuthentication
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Disable or modify endpoint encryption.
+          displayName: Configure encryption
+          path: security.endpointEncryption.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Service
+          - urn:alm:descriptor:com.tectonic.ui:select:Secret
+          - urn:alm:descriptor:com.tectonic.ui:select:None
+        - description: Names the secret that contains TLS certificates.
+          displayName: Encryption secret
+          path: security.endpointEncryption.certSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Secret
+        - description: Names the service that encrypts client traffic.
+          displayName: Encryption service
+          path: security.endpointEncryption.certServiceName
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Service
+        - description: Names the secret that contains user credentials.
+          displayName: Authentication secret
+          path: security.endpointSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointAuthentication:true
+        - description: Configures the service type.
+          displayName: Service type
+          path: service.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Cache
+          - urn:alm:descriptor:com.tectonic.ui:select:DataGrid
+        - description: Names the access secret that allows backups to a remote site.
+          displayName: Backup location secret
+          path: service.sites.locations[].secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Specifies the node port that accepts traffic from a load balancer
+            service.
+          displayName: Node port
+          path: service.sites.local.expose.nodePort
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.sites.local.expose.type:NodePort
+        - description: Controls cache replication factor, or number of copies for
+            each entry.
+          displayName: Number of owners
+          path: service.replicationFactor
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: Enable/disable container ephemeral storage
+          displayName: Container ephemeral storage
+          path: service.container.ephemeralStorage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: Sets the amount of storage for the persistent volume claim.
+          displayName: Storage size
+          path: service.container.storage
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: Names the storage class object for persistent volume claims.
+          displayName: Storage class name
+          path: service.container.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.container.ephemeralStorage:false
+        - description: Defines the network hostname for your Infinispan cluster.
+          displayName: Route hostname
+          path: expose.host
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:expose.type:Route
+        - description: Names the PVC that holds custom libraries.
+          displayName: Persistent volume claim (PVC) name
+          path: dependencies.volumeClaimName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        statusDescriptors:
+        - description: The current pods
+          displayName: Pod Status
+          path: podStatus
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podStatuses
+        - description: Infinispan Console location
+          displayName: Infinispan Console URL
+          path: consoleUrl
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        version: v1
+    description: |
+      Infinispan is an in-memory data store and open-source project.
+
+      ### Infinispan
+      * **Schemaless structure:** Store objects in key/value pairs.
+      * **Grid storage:** Distribute and replicate data across clusters.
+      * **Elasticity:** Scale to meet workload demands without service disruption.
+      * **Polyglot access:** Read, write, and query from multiple client languages with different endpoints.
+      * **Continuous availability:** Create a fault-tolerant caching service that guarantees business continuity.
+
+      ### Operator capabilities
+      * Built-in intelligence to automate Infinispan cluster deployment.
+      * Infinispan CR for service configuration.
+      * Cross site configuration and management.
+      * Deployment of Grafana and Prometheus resources.
+      * Cache CR for fully configurable caches.
+      * Batch CR for scripting bulk resource creation.
+      * REST and Hot Rod endpoints available at port `11222`.
+      * Default application user: `developer`. Infinispan Operator generates credentials in an authentication secret at startup.
+      * Infinispan pods request `0.25` (limit `0.50`) CPUs, 512MiB of memory and 1Gi of ReadWriteOnce persistent storage. Infinispan Operator lets you adjust resource allocation to suit your requirements.
+    displayName: Infinispan Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - infinispan
+    - key value
+    - database
+    - datagrid
+    - open source
+    links:
+    - name: Blog
+      url: https://blog.infinispan.org/
+    - name: Documentation
+      url: https://infinispan.org/
+    - name: Chat
+      url: https://infinispan.zulipchat.com/#narrow/stream/185835-infinispan-cloud
+    - name: Quickstart
+      url: https://github.com/infinispan/infinispan-simple-tutorials/tree/main/operator
+    - name: Operator Source Code
+      url: https://github.com/infinispan/infinispan-operator
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    minKubeVersion: 1.11.0
+    provider:
+      name: Infinispan
+relatedImages:
+- image: quay.io/infinispan/operator:2.1.7.Final
+  name: ""
+- image: quay.io/infinispan/server:12.1.10.Final
+  name: infinispan-server
+- image: quay.io/operatorhubio/infinispan@sha256:116f703d196828a2be6b10ef7132e288c2716ec2f5a4d7d9c325dae6f7c28028
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:febf29c0d8bb7a7b498a809c235bb60359fa4e1543eef353a2503d29c99ae978
+name: infinispan-operator.v2.2.0
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.2.0
+relatedImages:
+- image: quay.io/infinispan/operator:2.2.0.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:febf29c0d8bb7a7b498a809c235bb60359fa4e1543eef353a2503d29c99ae978
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:08f994aa32a25871381ed618623d22fd78c4b744f3925e098b45bf0d50d4f7f8
+name: infinispan-operator.v2.2.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.2.1
+relatedImages:
+- image: quay.io/infinispan/operator:2.2.1.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:08f994aa32a25871381ed618623d22fd78c4b744f3925e098b45bf0d50d4f7f8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:8afd880707e9847a3a8f4ddda0e57bbbb2c5fe845b4f349e7c432568a435256e
+name: infinispan-operator.v2.2.2
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.2.2
+relatedImages:
+- image: quay.io/infinispan/operator:2.2.2.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:8afd880707e9847a3a8f4ddda0e57bbbb2c5fe845b4f349e7c432568a435256e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:9047ad5922fa177ddaa9017336f88b9cea5dd4214c3fe5bf4f3ed5b87bb57914
+name: infinispan-operator.v2.2.3
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.2.3
+relatedImages:
+- image: quay.io/infinispan/operator:2.2.3.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:9047ad5922fa177ddaa9017336f88b9cea5dd4214c3fe5bf4f3ed5b87bb57914
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:f6a85957961324f12b1f751a10e159768f5c689397f5e3f2f437e20da685abea
+name: infinispan-operator.v2.2.4
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.2.4
+relatedImages:
+- image: quay.io/infinispan/operator:2.2.4.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:f6a85957961324f12b1f751a10e159768f5c689397f5e3f2f437e20da685abea
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:e7117818b29ed487838548900d60dfee526be08135ea865a3d7acf981d17050a
+name: infinispan-operator.v2.2.5
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.2.5
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "infinispan.org/v1",
+            "kind": "Infinispan",
+            "metadata": {
+              "name": "example-infinispan"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Backup",
+            "metadata": {
+              "name": "example-backup"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Batch",
+            "metadata": {
+              "name": "example-batch-inline"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "config": "create cache --template=org.infinispan.DIST_SYNC mycache\nput --cache=mycache hello world\nput --cache=mycache hola mundo\n"
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Cache",
+            "metadata": {
+              "name": "example-cache"
+            },
+            "spec": {
+              "clusterName": "example-infinispan",
+              "name": "mycache",
+              "templateName": "org.infinispan.DIST_SYNC"
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Restore",
+            "metadata": {
+              "name": "example-restore"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          }
+        ]
+      capabilities: Deep Insights
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/infinispan/operator:2.2.5.Final
+      description: Create and manage Infinispan clusters.
+      olm.skipRange: '>=2.1.x <2.2.1'
+      operators.operatorframework.io/builder: operator-sdk-v1.3.2
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/infinispan/infinispan-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Backup is the Schema for the backups API
+        displayName: Backup
+        kind: Backup
+        name: backups.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Names the storage class object for persistent volume claims.
+          displayName: Storage Class Name
+          path: volume.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+        statusDescriptors:
+        - description: Current phase of the backup operation
+          displayName: Phase
+          path: phase
+        - description: The name of the created PersistentVolumeClaim used to store
+            the backup
+          displayName: Persistent Volume Claim
+          path: pvc
+        - description: Reason indicates the reason for any backup related failures.
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+      - description: Batch is the Schema for the batches API
+        displayName: Batch
+        kind: Batch
+        name: batches.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Batch string to be executed
+          displayName: Config Command
+          path: config
+        - description: Name of the ConfigMap containing the batch and resource files
+            to be executed
+          displayName: ConfigMap Name
+          path: configMap
+        statusDescriptors:
+        - description: The UUID of the Infinispan instance that the Batch is associated
+            with
+          displayName: Cluster UUID
+          path: clusterUID
+        - description: Current phase of the batch operation
+          displayName: Phase
+          path: phase
+        - description: The reason for any batch related failures
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+      - description: Cache is the Schema for the caches API
+        displayName: Cache
+        kind: Cache
+        name: caches.infinispan.org
+        specDescriptors:
+        - description: The secret that contains user credentials.
+          displayName: Authentication Secret
+          path: adminAuth.secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: clusterName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        version: v2alpha1
+      - description: Infinispan is the Schema for the infinispans API
+        displayName: Infinispan Cluster
+        kind: Infinispan
+        name: infinispans.infinispan.org
+        specDescriptors:
+        - description: If true, a dedicated pod is used to ensure that all config
+            resources created on the Infinispan server have a matching CR resource
+          displayName: Toggle Config Listener
+          path: configListener.enabled
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The Persistent Volume Claim that holds custom libraries
+          displayName: Persistent Volume Claim Name
+          path: dependencies.volumeClaimName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        - description: The network hostname for your Infinispan cluster
+          displayName: Route Hostname
+          path: expose.host
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:expose.type:Route
+        - description: The number of nodes in the Infinispan cluster.
+          displayName: Replicas
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: Enable or disable user authentication
+          displayName: Toggle Authentication
+          path: security.endpointAuthentication
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The secret that contains TLS certificates
+          displayName: Encryption Secret
+          path: security.endpointEncryption.certSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Secret
+        - description: A service that provides TLS certificates
+          displayName: Encryption Service
+          path: security.endpointEncryption.certServiceName
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Service
+        - description: Disable or modify endpoint encryption.
+          displayName: Configure Encryption
+          path: security.endpointEncryption.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Service
+          - urn:alm:descriptor:com.tectonic.ui:select:Secret
+          - urn:alm:descriptor:com.tectonic.ui:select:None
+        - description: The secret that contains user credentials.
+          displayName: Authentication Secret
+          path: security.endpointSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointAuthentication:true
+        - description: Enable/disable container ephemeral storage
+          displayName: Container Ephemeral Storage
+          path: service.container.ephemeralStorage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The amount of storage for the persistent volume claim.
+          displayName: Storage Size
+          path: service.container.storage
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: The storage class object for persistent volume claims
+          displayName: Storage Class Name
+          path: service.container.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.container.ephemeralStorage:false
+        - description: Cache replication factor, or number of copies for each entry.
+          displayName: Number of Owners
+          path: service.replicationFactor
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: Deprecated and to be removed on subsequent release. Use .URL
+            with infinispan+xsite schema instead.
+          displayName: Node Port
+          path: service.sites.locations[0].port
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.sites.local.expose.type:NodePort
+        - description: The access secret that allows backups to a remote site
+          displayName: Backup Location Secret
+          path: service.sites.locations[0].secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: The service type
+          displayName: Service Type
+          path: service.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Cache
+          - urn:alm:descriptor:com.tectonic.ui:select:DataGrid
+        statusDescriptors:
+        - description: Infinispan Console URL
+          displayName: Infinispan Console URL
+          path: consoleUrl
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: The Pod's currently in the cluster
+          displayName: Pod Status
+          path: podStatus
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podStatuses
+        version: v1
+      - description: Restore is the Schema for the restores API
+        displayName: Restore
+        kind: Restore
+        name: restores.infinispan.org
+        specDescriptors:
+        - description: The Infinispan Backup to restore
+          displayName: Backup Name
+          path: backup
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v2alpha1:Backup
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        statusDescriptors:
+        - description: Current phase of the restore operation
+          displayName: Phase
+          path: phase
+        - description: Reason indicates the reason for any restore related failures.
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+    description: |
+      Infinispan is an in-memory data store and open-source project.
+
+      ### Infinispan
+      * **Schemaless structure:** Store objects in key/value pairs.
+      * **Grid storage:** Distribute and replicate data across clusters.
+      * **Elasticity:** Scale to meet workload demands without service disruption.
+      * **Polyglot access:** Read, write, and query from multiple client languages with different endpoints.
+      * **Continuous availability:** Create a fault-tolerant caching service that guarantees business continuity.
+
+      ### Operator capabilities
+      * Built-in intelligence to automate Infinispan cluster deployment.
+      * Infinispan CR for service configuration.
+      * Cross site configuration and management.
+      * Deployment of Grafana and Prometheus resources.
+      * Cache CR for fully configurable caches.
+      * Batch CR for scripting bulk resource creation.
+      * REST and Hot Rod endpoints available at port `11222`.
+      * Default application user: `developer`. Infinispan Operator generates credentials in an authentication secret at startup.
+      * Infinispan pods request `0.25` (limit `0.50`) CPUs, 512MiB of memory and 1Gi of ReadWriteOnce persistent storage. Infinispan Operator lets you adjust resource allocation to suit your requirements.
+    displayName: Infinispan Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - infinispan
+    - key value
+    - database
+    - datagrid
+    - open source
+    links:
+    - name: Blog
+      url: https://blog.infinispan.org/
+    - name: Documentation
+      url: https://infinispan.org/documentation
+    - name: Chat
+      url: https://infinispan.zulipchat.com/#narrow/stream/185835-infinispan-cloud
+    - name: Operator Source Code
+      url: https://github.com/infinispan/infinispan-operator
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    provider:
+      name: Infinispan
+relatedImages:
+- image: quay.io/infinispan/operator:2.2.5.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:e7117818b29ed487838548900d60dfee526be08135ea865a3d7acf981d17050a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:c5f46f774c9892695022eb8f75b7bbe760f48d99971cc8d98f88c6bf4de4a0fd
+name: infinispan-operator.v2.3.0
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.3.0
+relatedImages:
+- image: quay.io/infinispan/operator:2.3.0.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:c5f46f774c9892695022eb8f75b7bbe760f48d99971cc8d98f88c6bf4de4a0fd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:f55df507c0d19a39ff8b7e7309ddfa0713892fb1ba757042de962349b8ca6e0d
+name: infinispan-operator.v2.3.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.3.1
+relatedImages:
+- image: quay.io/infinispan/operator:2.3.1.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:f55df507c0d19a39ff8b7e7309ddfa0713892fb1ba757042de962349b8ca6e0d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:8ee37cafd8c2e7eb5d30a2214893225a3d16e0c1289b7bc5d28b10d26db9a63e
+name: infinispan-operator.v2.3.2
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.3.2
+relatedImages:
+- image: quay.io/infinispan/operator:2.3.2.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:8ee37cafd8c2e7eb5d30a2214893225a3d16e0c1289b7bc5d28b10d26db9a63e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:a35cc30a96e28a0a579aabb00861d99ab13f173a0b917fa66f8034915faf22ec
+name: infinispan-operator.v2.3.3
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.3.3
+relatedImages:
+- image: quay.io/infinispan/operator:2.3.3.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:a35cc30a96e28a0a579aabb00861d99ab13f173a0b917fa66f8034915faf22ec
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:7328bba7ef82f47979b296eddf457853761b330d024044bdc2ddce8a1b95e867
+name: infinispan-operator.v2.3.4
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.3.4
+relatedImages:
+- image: quay.io/infinispan/operator:2.3.4.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:7328bba7ef82f47979b296eddf457853761b330d024044bdc2ddce8a1b95e867
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:3d07f16f1f30736fdf8e35210465e40d02f243aab4eb3890a18cfee6d1c35a52
+name: infinispan-operator.v2.3.5
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.3.5
+relatedImages:
+- image: quay.io/infinispan/operator:2.3.5.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:3d07f16f1f30736fdf8e35210465e40d02f243aab4eb3890a18cfee6d1c35a52
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:3291b74e425a7084dcf50668d7417aa9e77e0dc137cfbbb3ca67b4abd1388f90
+name: infinispan-operator.v2.3.6
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.3.6
+relatedImages:
+- image: quay.io/infinispan/operator:2.3.6.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:3291b74e425a7084dcf50668d7417aa9e77e0dc137cfbbb3ca67b4abd1388f90
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:b90fb3e0b779b7d967f9bf1c1ca34d95d92c6561dffc875358e0a90e6f7802e6
+name: infinispan-operator.v2.3.7
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.3.7
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "infinispan.org/v1",
+            "kind": "Infinispan",
+            "metadata": {
+              "name": "example-infinispan"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Backup",
+            "metadata": {
+              "name": "example-backup"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Batch",
+            "metadata": {
+              "name": "example-batch-inline"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "config": "create cache --template=org.infinispan.DIST_SYNC mycache\nput --cache=mycache hello world\nput --cache=mycache hola mundo\n"
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Cache",
+            "metadata": {
+              "name": "example-cache"
+            },
+            "spec": {
+              "clusterName": "example-infinispan",
+              "name": "mycache",
+              "templateName": "org.infinispan.DIST_SYNC"
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Restore",
+            "metadata": {
+              "name": "example-restore"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          }
+        ]
+      capabilities: Deep Insights
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/infinispan/operator:2.3.7.Final
+      description: Create and manage Infinispan clusters.
+      operators.operatorframework.io/builder: operator-sdk-v1.24.1
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/infinispan/infinispan-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Backup is the Schema for the backups API
+        displayName: Backup
+        kind: Backup
+        name: backups.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Names the storage class object for persistent volume claims.
+          displayName: Storage Class Name
+          path: volume.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+        statusDescriptors:
+        - description: Current phase of the backup operation
+          displayName: Phase
+          path: phase
+        - description: The name of the created PersistentVolumeClaim used to store
+            the backup
+          displayName: Persistent Volume Claim
+          path: pvc
+        - description: Reason indicates the reason for any backup related failures.
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+      - description: Batch is the Schema for the batches API
+        displayName: Batch
+        kind: Batch
+        name: batches.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Batch string to be executed
+          displayName: Config Command
+          path: config
+        - description: Name of the ConfigMap containing the batch and resource files
+            to be executed
+          displayName: ConfigMap Name
+          path: configMap
+        statusDescriptors:
+        - description: The UUID of the Infinispan instance that the Batch is associated
+            with
+          displayName: Cluster UUID
+          path: clusterUID
+        - description: Current phase of the batch operation
+          displayName: Phase
+          path: phase
+        - description: The reason for any batch related failures
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+      - description: Cache is the Schema for the caches API
+        displayName: Cache
+        kind: Cache
+        name: caches.infinispan.org
+        specDescriptors:
+        - description: The secret that contains user credentials.
+          displayName: Authentication Secret
+          path: adminAuth.secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: clusterName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: How updates to Cache CR template should be applied on the Infinispan
+            server
+          displayName: Update Strategy
+          path: updates.strategy
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:recreate
+          - urn:alm:descriptor:com.tectonic.ui:select:retain
+        version: v2alpha1
+      - description: Infinispan is the Schema for the infinispans API
+        displayName: Infinispan Cluster
+        kind: Infinispan
+        name: infinispans.infinispan.org
+        specDescriptors:
+        - description: If true, a dedicated pod is used to ensure that all config
+            resources created on the Infinispan server have a matching CR resource
+          displayName: Toggle Config Listener
+          path: configListener.enabled
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The logging level to be used by the ConfigListener pod
+          displayName: Logging Level
+          path: configListener.logging.level
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:debug
+          - urn:alm:descriptor:com.tectonic.ui:select:info
+          - urn:alm:descriptor:com.tectonic.ui:select:error
+        - description: The Persistent Volume Claim that holds custom libraries
+          displayName: Persistent Volume Claim Name
+          path: dependencies.volumeClaimName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        - description: The network hostname for your Infinispan cluster
+          displayName: Route Hostname
+          path: expose.host
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:expose.type:Route
+        - description: If true, a JMX endpoint is exposed on the admin service
+          displayName: Toggle Jmx
+          path: jmx.enabled
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The number of nodes in the Infinispan cluster.
+          displayName: Replicas
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: A secret that contains CredentialStore alias and password combinations
+          displayName: CredentialStore Secret
+          path: security.credentialStoreSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Enable or disable user authentication
+          displayName: Toggle Authentication
+          path: security.endpointAuthentication
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The secret that contains TLS certificates
+          displayName: Encryption Secret
+          path: security.endpointEncryption.certSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Secret
+        - description: A service that provides TLS certificates
+          displayName: Encryption Service
+          path: security.endpointEncryption.certServiceName
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Service
+        - description: Disable or modify endpoint encryption.
+          displayName: Configure Encryption
+          path: security.endpointEncryption.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Service
+          - urn:alm:descriptor:com.tectonic.ui:select:Secret
+          - urn:alm:descriptor:com.tectonic.ui:select:None
+        - description: The secret that contains user credentials.
+          displayName: Authentication Secret
+          path: security.endpointSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointAuthentication:true
+        - description: Enable/disable container ephemeral storage
+          displayName: Container Ephemeral Storage
+          path: service.container.ephemeralStorage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The amount of storage for the persistent volume claim.
+          displayName: Storage Size
+          path: service.container.storage
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: The storage class object for persistent volume claims
+          displayName: Storage Class Name
+          path: service.container.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.container.ephemeralStorage:false
+        - description: Cache replication factor, or number of copies for each entry.
+          displayName: Number of Owners
+          path: service.replicationFactor
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: Deprecated and to be removed on subsequent release. Use .URL
+            with infinispan+xsite schema instead.
+          displayName: Node Port
+          path: service.sites.locations[0].port
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.sites.local.expose.type:NodePort
+        - description: The access secret that allows backups to a remote site
+          displayName: Backup Location Secret
+          path: service.sites.locations[0].secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: The service type
+          displayName: Service Type
+          path: service.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Cache
+          - urn:alm:descriptor:com.tectonic.ui:select:DataGrid
+        statusDescriptors:
+        - description: Infinispan Console URL
+          displayName: Infinispan Console URL
+          path: consoleUrl
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: The Operand status
+          displayName: Operand Status
+          path: operand
+        - description: The Pod's currently in the cluster
+          displayName: Pod Status
+          path: podStatus
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podStatuses
+        version: v1
+      - description: Restore is the Schema for the restores API
+        displayName: Restore
+        kind: Restore
+        name: restores.infinispan.org
+        specDescriptors:
+        - description: The Infinispan Backup to restore
+          displayName: Backup Name
+          path: backup
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v2alpha1:Backup
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        statusDescriptors:
+        - description: Current phase of the restore operation
+          displayName: Phase
+          path: phase
+        - description: Reason indicates the reason for any restore related failures.
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+    description: |
+      Infinispan is an in-memory data store and open-source project.
+
+      ### Infinispan
+      * **Schemaless structure:** Store objects in key/value pairs.
+      * **Grid storage:** Distribute and replicate data across clusters.
+      * **Elasticity:** Scale to meet workload demands without service disruption.
+      * **Polyglot access:** Read, write, and query from multiple client languages with different endpoints.
+      * **Continuous availability:** Create a fault-tolerant caching service that guarantees business continuity.
+
+      ### Operator capabilities
+      * Built-in intelligence to automate Infinispan cluster deployment.
+      * Infinispan CR for service configuration.
+      * Cross site configuration and management.
+      * Deployment of Grafana and Prometheus resources.
+      * Cache CR for fully configurable caches.
+      * Batch CR for scripting bulk resource creation.
+      * REST and Hot Rod endpoints available at port `11222`.
+      * Default application user: `developer`. Infinispan Operator generates credentials in an authentication secret at startup.
+      * Infinispan pods request `0.25` (limit `0.50`) CPUs, 512MiB of memory and 1Gi of ReadWriteOnce persistent storage. Infinispan Operator lets you adjust resource allocation to suit your requirements.
+    displayName: Infinispan Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - infinispan
+    - key value
+    - database
+    - datagrid
+    - open source
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+    links:
+    - name: Blog
+      url: https://blog.infinispan.org/
+    - name: Documentation
+      url: https://infinispan.org/documentation
+    - name: Chat
+      url: https://infinispan.zulipchat.com/#narrow/stream/185835-infinispan-cloud
+    - name: Operator Source Code
+      url: https://github.com/infinispan/infinispan-operator
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    minKubeVersion: 1.24.0
+    provider:
+      name: Infinispan
+relatedImages:
+- image: quay.io/infinispan/operator:2.3.7.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:b90fb3e0b779b7d967f9bf1c1ca34d95d92c6561dffc875358e0a90e6f7802e6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:d1d4cbe9c0c6682c1b8e0cb9dfb952e0a3599907effbdd092a541c93c19885a8
+name: infinispan-operator.v2.4.0
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.4.0
+relatedImages:
+- image: quay.io/infinispan/operator:2.4.0.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:d1d4cbe9c0c6682c1b8e0cb9dfb952e0a3599907effbdd092a541c93c19885a8
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:6afb2a501f71eec8335b8e35c9898145d7f2ef788b253895df9b665285c0ff51
+name: infinispan-operator.v2.4.1
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.4.1
+relatedImages:
+- image: quay.io/infinispan/operator:2.4.1.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:6afb2a501f71eec8335b8e35c9898145d7f2ef788b253895df9b665285c0ff51
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:48d3bc9f09fd20c59d752ae236609e2f9324a3e8a08fd2cfbbee74a7cec46fce
+name: infinispan-operator.v2.4.2
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.4.2
+relatedImages:
+- image: quay.io/infinispan/operator:2.4.2.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:48d3bc9f09fd20c59d752ae236609e2f9324a3e8a08fd2cfbbee74a7cec46fce
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:26f6ddc36dd0f92bdbe06bf392dff16f471a650e9bd832696caf6aa9aeeed2d4
+name: infinispan-operator.v2.4.3
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.4.3
+relatedImages:
+- image: quay.io/infinispan/operator:2.4.3.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:26f6ddc36dd0f92bdbe06bf392dff16f471a650e9bd832696caf6aa9aeeed2d4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/infinispan@sha256:91309359bab501c7514712079eaab8c4e569a77cf35a49ef52d9c510c1da2af9
+name: infinispan-operator.v2.4.4
+package: infinispan
+properties:
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Backup
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Batch
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Cache
+    version: v2alpha1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Infinispan
+    version: v1
+- type: olm.gvk
+  value:
+    group: infinispan.org
+    kind: Restore
+    version: v2alpha1
+- type: olm.package
+  value:
+    packageName: infinispan
+    version: 2.4.4
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "infinispan.org/v1",
+            "kind": "Infinispan",
+            "metadata": {
+              "name": "example-infinispan"
+            },
+            "spec": {
+              "replicas": 1
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Backup",
+            "metadata": {
+              "name": "example-backup"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Batch",
+            "metadata": {
+              "name": "example-batch-inline"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "config": "create cache --template=org.infinispan.DIST_SYNC mycache\nput --cache=mycache hello world\nput --cache=mycache hola mundo\n"
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Cache",
+            "metadata": {
+              "name": "example-cache"
+            },
+            "spec": {
+              "clusterName": "example-infinispan",
+              "name": "mycache",
+              "templateName": "org.infinispan.DIST_SYNC"
+            }
+          },
+          {
+            "apiVersion": "infinispan.org/v2alpha1",
+            "kind": "Restore",
+            "metadata": {
+              "name": "example-restore"
+            },
+            "spec": {
+              "cluster": "example-infinispan",
+              "container": {
+                "cpu": "1000m",
+                "extraJvmOpts": "-Djava.property=me",
+                "memory": "1Gi"
+              }
+            }
+          }
+        ]
+      capabilities: Deep Insights
+      categories: Database
+      certified: "false"
+      containerImage: quay.io/infinispan/operator:2.4.4.Final
+      description: Create and manage Infinispan clusters.
+      operators.operatorframework.io/builder: operator-sdk-v1.24.1
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/infinispan/infinispan-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Backup is the Schema for the backups API
+        displayName: Backup
+        kind: Backup
+        name: backups.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Names the storage class object for persistent volume claims.
+          displayName: Storage Class Name
+          path: volume.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+        statusDescriptors:
+        - description: Current phase of the backup operation
+          displayName: Phase
+          path: phase
+        - description: The name of the created PersistentVolumeClaim used to store
+            the backup
+          displayName: Persistent Volume Claim
+          path: pvc
+        - description: Reason indicates the reason for any backup related failures.
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+      - description: Batch is the Schema for the batches API
+        displayName: Batch
+        kind: Batch
+        name: batches.infinispan.org
+        specDescriptors:
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: Batch string to be executed
+          displayName: Config Command
+          path: config
+        - description: Name of the ConfigMap containing the batch and resource files
+            to be executed
+          displayName: ConfigMap Name
+          path: configMap
+        statusDescriptors:
+        - description: The UUID of the Infinispan instance that the Batch is associated
+            with
+          displayName: Cluster UUID
+          path: clusterUID
+        - description: Current phase of the batch operation
+          displayName: Phase
+          path: phase
+        - description: The reason for any batch related failures
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+      - description: Cache is the Schema for the caches API
+        displayName: Cache
+        kind: Cache
+        name: caches.infinispan.org
+        specDescriptors:
+        - description: The secret that contains user credentials.
+          displayName: Authentication Secret
+          path: adminAuth.secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: clusterName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        - description: How updates to Cache CR template should be applied on the Infinispan
+            server
+          displayName: Update Strategy
+          path: updates.strategy
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:recreate
+          - urn:alm:descriptor:com.tectonic.ui:select:retain
+        version: v2alpha1
+      - description: Infinispan is the Schema for the infinispans API
+        displayName: Infinispan Cluster
+        kind: Infinispan
+        name: infinispans.infinispan.org
+        specDescriptors:
+        - description: If true, a dedicated pod is used to ensure that all config
+            resources created on the Infinispan server have a matching CR resource
+          displayName: Toggle Config Listener
+          path: configListener.enabled
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The logging level to be used by the ConfigListener pod
+          displayName: Logging Level
+          path: configListener.logging.level
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:debug
+          - urn:alm:descriptor:com.tectonic.ui:select:info
+          - urn:alm:descriptor:com.tectonic.ui:select:error
+        - description: The Persistent Volume Claim that holds custom libraries
+          displayName: Persistent Volume Claim Name
+          path: dependencies.volumeClaimName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:PersistentVolumeClaim
+        - description: The network hostname for your Infinispan cluster
+          displayName: Route Hostname
+          path: expose.host
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:expose.type:Route
+        - description: If true, a JMX endpoint is exposed on the admin service
+          displayName: Toggle Jmx
+          path: jmx.enabled
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The number of nodes in the Infinispan cluster.
+          displayName: Replicas
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: A secret that contains CredentialStore alias and password combinations
+          displayName: CredentialStore Secret
+          path: security.credentialStoreSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: Enable or disable user authentication
+          displayName: Toggle Authentication
+          path: security.endpointAuthentication
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The secret that contains TLS certificates
+          displayName: Encryption Secret
+          path: security.endpointEncryption.certSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Secret
+        - description: A service that provides TLS certificates
+          displayName: Encryption Service
+          path: security.endpointEncryption.certServiceName
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointEncryption.type:Service
+        - description: Disable or modify endpoint encryption.
+          displayName: Configure Encryption
+          path: security.endpointEncryption.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Service
+          - urn:alm:descriptor:com.tectonic.ui:select:Secret
+          - urn:alm:descriptor:com.tectonic.ui:select:None
+        - description: The secret that contains user credentials.
+          displayName: Authentication Secret
+          path: security.endpointSecretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:security.endpointAuthentication:true
+        - description: Enable/disable container ephemeral storage
+          displayName: Container Ephemeral Storage
+          path: service.container.ephemeralStorage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: The amount of storage for the persistent volume claim.
+          displayName: Storage Size
+          path: service.container.storage
+          x-descriptors:
+          - urn:alm:descriptor:text
+        - description: The storage class object for persistent volume claims
+          displayName: Storage Class Name
+          path: service.container.storageClassName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:StorageClass
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.container.ephemeralStorage:false
+        - description: Cache replication factor, or number of copies for each entry.
+          displayName: Number of Owners
+          path: service.replicationFactor
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: Deprecated and to be removed on subsequent release. Use .URL
+            with infinispan+xsite schema instead.
+          displayName: Node Port
+          path: service.sites.locations[0].port
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:service.sites.local.expose.type:NodePort
+        - description: The access secret that allows backups to a remote site
+          displayName: Backup Location Secret
+          path: service.sites.locations[0].secretName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:Secret
+        - description: The service type
+          displayName: Service Type
+          path: service.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:select:Cache
+          - urn:alm:descriptor:com.tectonic.ui:select:DataGrid
+        statusDescriptors:
+        - description: Infinispan Console URL
+          displayName: Infinispan Console URL
+          path: consoleUrl
+          x-descriptors:
+          - urn:alm:descriptor:org.w3:link
+        - description: The Operand status
+          displayName: Operand Status
+          path: operand
+        - description: The Operator status
+          displayName: Operator Status
+          path: operator
+        - description: The Pod's currently in the cluster
+          displayName: Pod Status
+          path: podStatus
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podStatuses
+        version: v1
+      - description: Restore is the Schema for the restores API
+        displayName: Restore
+        kind: Restore
+        name: restores.infinispan.org
+        specDescriptors:
+        - description: The Infinispan Backup to restore
+          displayName: Backup Name
+          path: backup
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v2alpha1:Backup
+        - description: Infinispan cluster name
+          displayName: Cluster Name
+          path: cluster
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:infinispan.org:v1:Infinispan
+        statusDescriptors:
+        - description: Current phase of the restore operation
+          displayName: Phase
+          path: phase
+        - description: Reason indicates the reason for any restore related failures.
+          displayName: Reason
+          path: reason
+        version: v2alpha1
+    description: |
+      Infinispan is an in-memory data store and open-source project.
+
+      ### Infinispan
+      * **Schemaless structure:** Store objects in key/value pairs.
+      * **Grid storage:** Distribute and replicate data across clusters.
+      * **Elasticity:** Scale to meet workload demands without service disruption.
+      * **Polyglot access:** Read, write, and query from multiple client languages with different endpoints.
+      * **Continuous availability:** Create a fault-tolerant caching service that guarantees business continuity.
+
+      ### Operator capabilities
+      * Built-in intelligence to automate Infinispan cluster deployment.
+      * Infinispan CR for service configuration.
+      * Cross site configuration and management.
+      * Deployment of Grafana and Prometheus resources.
+      * Cache CR for fully configurable caches.
+      * Batch CR for scripting bulk resource creation.
+      * REST and Hot Rod endpoints available at port `11222`.
+      * Default application user: `developer`. Infinispan Operator generates credentials in an authentication secret at startup.
+      * Infinispan pods request `0.25` (limit `0.50`) CPUs, 512MiB of memory and 1Gi of ReadWriteOnce persistent storage. Infinispan Operator lets you adjust resource allocation to suit your requirements.
+    displayName: Infinispan Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: true
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - infinispan
+    - key value
+    - database
+    - datagrid
+    - open source
+    labels:
+      operatorframework.io/arch.amd64: supported
+      operatorframework.io/arch.arm64: supported
+    links:
+    - name: Blog
+      url: https://blog.infinispan.org/
+    - name: Documentation
+      url: https://infinispan.org/documentation
+    - name: Chat
+      url: https://infinispan.zulipchat.com/#narrow/stream/185835-infinispan-cloud
+    - name: Operator Source Code
+      url: https://github.com/infinispan/infinispan-operator
+    maintainers:
+    - email: infinispan-dev@lists.jboss.org
+      name: Infinispan Community
+    maturity: alpha
+    minKubeVersion: 1.24.0
+    provider:
+      name: Infinispan
+relatedImages:
+- image: quay.io/infinispan/operator:2.4.4.Final
+  name: ""
+- image: quay.io/operatorhubio/infinispan@sha256:91309359bab501c7514712079eaab8c4e569a77cf35a49ef52d9c510c1da2af9
+  name: ""
+schema: olm.bundle

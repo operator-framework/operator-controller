@@ -1,0 +1,2902 @@
+---
+defaultChannel: stable
+icon:
+  base64data: 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
+  mediatype: image/png
+name: gitlab-operator-kubernetes
+schema: olm.package
+---
+entries:
+- name: gitlab-operator-kubernetes.v0.10.2
+  replaces: gitlab-operator-kubernetes.v0.6.3
+- name: gitlab-operator-kubernetes.v0.11.0
+  replaces: gitlab-operator-kubernetes.v0.10.2
+- name: gitlab-operator-kubernetes.v0.11.1
+  replaces: gitlab-operator-kubernetes.v0.11.0
+- name: gitlab-operator-kubernetes.v0.11.2
+  replaces: gitlab-operator-kubernetes.v0.11.1
+- name: gitlab-operator-kubernetes.v0.11.3
+  replaces: gitlab-operator-kubernetes.v0.11.2
+- name: gitlab-operator-kubernetes.v0.11.4
+  replaces: gitlab-operator-kubernetes.v0.11.3
+- name: gitlab-operator-kubernetes.v0.12.0
+  replaces: gitlab-operator-kubernetes.v0.11.4
+- name: gitlab-operator-kubernetes.v0.12.1
+  replaces: gitlab-operator-kubernetes.v0.12.0
+- name: gitlab-operator-kubernetes.v0.12.3
+  replaces: gitlab-operator-kubernetes.v0.12.1
+- name: gitlab-operator-kubernetes.v0.13.0
+  replaces: gitlab-operator-kubernetes.v0.12.3
+- name: gitlab-operator-kubernetes.v0.13.1
+  replaces: gitlab-operator-kubernetes.v0.13.0
+- name: gitlab-operator-kubernetes.v0.13.2
+  replaces: gitlab-operator-kubernetes.v0.13.1
+- name: gitlab-operator-kubernetes.v0.13.3
+  replaces: gitlab-operator-kubernetes.v0.13.2
+- name: gitlab-operator-kubernetes.v0.13.4
+  replaces: gitlab-operator-kubernetes.v0.13.3
+- name: gitlab-operator-kubernetes.v0.14.0
+  replaces: gitlab-operator-kubernetes.v0.13.4
+- name: gitlab-operator-kubernetes.v0.14.1
+  replaces: gitlab-operator-kubernetes.v0.14.0
+- name: gitlab-operator-kubernetes.v0.14.2
+  replaces: gitlab-operator-kubernetes.v0.14.1
+- name: gitlab-operator-kubernetes.v0.15.0
+  replaces: gitlab-operator-kubernetes.v0.14.2
+- name: gitlab-operator-kubernetes.v0.15.1
+  replaces: gitlab-operator-kubernetes.v0.15.0
+- name: gitlab-operator-kubernetes.v0.15.2
+  replaces: gitlab-operator-kubernetes.v0.15.1
+- name: gitlab-operator-kubernetes.v0.15.3
+  replaces: gitlab-operator-kubernetes.v0.15.2
+- name: gitlab-operator-kubernetes.v0.15.5
+  replaces: gitlab-operator-kubernetes.v0.15.3
+- name: gitlab-operator-kubernetes.v0.16.0
+  replaces: gitlab-operator-kubernetes.v0.15.5
+- name: gitlab-operator-kubernetes.v0.16.1
+  replaces: gitlab-operator-kubernetes.v0.16.0
+- name: gitlab-operator-kubernetes.v0.16.2
+  replaces: gitlab-operator-kubernetes.v0.16.1
+- name: gitlab-operator-kubernetes.v0.16.3
+  replaces: gitlab-operator-kubernetes.v0.16.2
+- name: gitlab-operator-kubernetes.v0.17.0
+  replaces: gitlab-operator-kubernetes.v0.16.3
+- name: gitlab-operator-kubernetes.v0.17.1
+  replaces: gitlab-operator-kubernetes.v0.17.0
+- name: gitlab-operator-kubernetes.v0.17.2
+  replaces: gitlab-operator-kubernetes.v0.17.1
+- name: gitlab-operator-kubernetes.v0.17.3
+  replaces: gitlab-operator-kubernetes.v0.17.2
+- name: gitlab-operator-kubernetes.v0.18.0
+  replaces: gitlab-operator-kubernetes.v0.17.3
+- name: gitlab-operator-kubernetes.v0.18.1
+  replaces: gitlab-operator-kubernetes.v0.18.0
+- name: gitlab-operator-kubernetes.v0.18.2
+  replaces: gitlab-operator-kubernetes.v0.18.1
+- name: gitlab-operator-kubernetes.v0.18.3
+  replaces: gitlab-operator-kubernetes.v0.18.2
+- name: gitlab-operator-kubernetes.v0.19.0
+  replaces: gitlab-operator-kubernetes.v0.18.3
+- name: gitlab-operator-kubernetes.v0.19.1
+  replaces: gitlab-operator-kubernetes.v0.19.0
+- name: gitlab-operator-kubernetes.v0.19.2
+  replaces: gitlab-operator-kubernetes.v0.19.1
+- name: gitlab-operator-kubernetes.v0.19.3
+  replaces: gitlab-operator-kubernetes.v0.19.2
+- name: gitlab-operator-kubernetes.v0.19.4
+  replaces: gitlab-operator-kubernetes.v0.19.3
+- name: gitlab-operator-kubernetes.v0.20.0
+  replaces: gitlab-operator-kubernetes.v0.19.4
+- name: gitlab-operator-kubernetes.v0.20.1
+  replaces: gitlab-operator-kubernetes.v0.20.0
+- name: gitlab-operator-kubernetes.v0.20.2
+  replaces: gitlab-operator-kubernetes.v0.20.1
+- name: gitlab-operator-kubernetes.v0.20.3
+  replaces: gitlab-operator-kubernetes.v0.20.2
+- name: gitlab-operator-kubernetes.v0.20.4
+  replaces: gitlab-operator-kubernetes.v0.20.3
+- name: gitlab-operator-kubernetes.v0.20.5
+  replaces: gitlab-operator-kubernetes.v0.20.4
+- name: gitlab-operator-kubernetes.v0.20.6
+  replaces: gitlab-operator-kubernetes.v0.20.5
+- name: gitlab-operator-kubernetes.v0.21.0
+  replaces: gitlab-operator-kubernetes.v0.20.6
+- name: gitlab-operator-kubernetes.v0.21.1
+  replaces: gitlab-operator-kubernetes.v0.21.0
+- name: gitlab-operator-kubernetes.v0.21.2
+  replaces: gitlab-operator-kubernetes.v0.21.1
+- name: gitlab-operator-kubernetes.v0.22.0
+  replaces: gitlab-operator-kubernetes.v0.21.2
+- name: gitlab-operator-kubernetes.v0.22.1
+  replaces: gitlab-operator-kubernetes.v0.22.0
+- name: gitlab-operator-kubernetes.v0.22.2
+  replaces: gitlab-operator-kubernetes.v0.22.1
+- name: gitlab-operator-kubernetes.v0.22.3
+  replaces: gitlab-operator-kubernetes.v0.22.2
+- name: gitlab-operator-kubernetes.v0.22.4
+  replaces: gitlab-operator-kubernetes.v0.22.3
+- name: gitlab-operator-kubernetes.v0.23.0
+  replaces: gitlab-operator-kubernetes.v0.22.4
+- name: gitlab-operator-kubernetes.v0.23.1
+  replaces: gitlab-operator-kubernetes.v0.23.0
+- name: gitlab-operator-kubernetes.v0.23.2
+  replaces: gitlab-operator-kubernetes.v0.23.1
+- name: gitlab-operator-kubernetes.v0.23.3
+  replaces: gitlab-operator-kubernetes.v0.23.2
+- name: gitlab-operator-kubernetes.v0.23.4
+  replaces: gitlab-operator-kubernetes.v0.23.3
+- name: gitlab-operator-kubernetes.v0.24.0
+  replaces: gitlab-operator-kubernetes.v0.23.4
+- name: gitlab-operator-kubernetes.v0.24.1
+  replaces: gitlab-operator-kubernetes.v0.24.0
+- name: gitlab-operator-kubernetes.v0.25.0
+  replaces: gitlab-operator-kubernetes.v0.24.1
+- name: gitlab-operator-kubernetes.v0.25.1
+  replaces: gitlab-operator-kubernetes.v0.25.0
+- name: gitlab-operator-kubernetes.v0.25.2
+  replaces: gitlab-operator-kubernetes.v0.25.1
+- name: gitlab-operator-kubernetes.v0.26.0
+  replaces: gitlab-operator-kubernetes.v0.25.2
+- name: gitlab-operator-kubernetes.v0.26.1
+  replaces: gitlab-operator-kubernetes.v0.26.0
+- name: gitlab-operator-kubernetes.v0.26.2
+  replaces: gitlab-operator-kubernetes.v0.26.1
+- name: gitlab-operator-kubernetes.v0.27.0
+  replaces: gitlab-operator-kubernetes.v0.26.2
+- name: gitlab-operator-kubernetes.v0.27.1
+  replaces: gitlab-operator-kubernetes.v0.27.0
+- name: gitlab-operator-kubernetes.v0.28.0
+  replaces: gitlab-operator-kubernetes.v0.27.1
+- name: gitlab-operator-kubernetes.v0.28.1
+  replaces: gitlab-operator-kubernetes.v0.28.0
+- name: gitlab-operator-kubernetes.v0.28.2
+  replaces: gitlab-operator-kubernetes.v0.28.1
+- name: gitlab-operator-kubernetes.v0.29.0
+  replaces: gitlab-operator-kubernetes.v0.28.2
+- name: gitlab-operator-kubernetes.v0.29.1
+  replaces: gitlab-operator-kubernetes.v0.29.0
+- name: gitlab-operator-kubernetes.v0.29.2
+  replaces: gitlab-operator-kubernetes.v0.29.1
+- name: gitlab-operator-kubernetes.v0.3.1
+- name: gitlab-operator-kubernetes.v0.30.0
+  replaces: gitlab-operator-kubernetes.v0.29.2
+- name: gitlab-operator-kubernetes.v0.30.1
+  replaces: gitlab-operator-kubernetes.v0.30.0
+- name: gitlab-operator-kubernetes.v0.30.2
+  replaces: gitlab-operator-kubernetes.v0.30.1
+- name: gitlab-operator-kubernetes.v0.30.3
+  replaces: gitlab-operator-kubernetes.v0.30.2
+- name: gitlab-operator-kubernetes.v0.31.0
+  replaces: gitlab-operator-kubernetes.v0.30.3
+- name: gitlab-operator-kubernetes.v0.31.1
+  replaces: gitlab-operator-kubernetes.v0.31.0
+- name: gitlab-operator-kubernetes.v0.31.2
+  replaces: gitlab-operator-kubernetes.v0.31.1
+- name: gitlab-operator-kubernetes.v0.6.1
+  replaces: gitlab-operator-kubernetes.v0.3.1
+- name: gitlab-operator-kubernetes.v0.6.2
+  replaces: gitlab-operator-kubernetes.v0.6.1
+- name: gitlab-operator-kubernetes.v0.6.3
+  replaces: gitlab-operator-kubernetes.v0.6.2
+- name: gitlab-operator-kubernetes.v1.0.0
+  replaces: gitlab-operator-kubernetes.v0.31.2
+- name: gitlab-operator-kubernetes.v1.0.1
+  replaces: gitlab-operator-kubernetes.v1.0.0
+- name: gitlab-operator-kubernetes.v1.0.2
+  replaces: gitlab-operator-kubernetes.v1.0.1
+- name: gitlab-operator-kubernetes.v1.1.1
+  replaces: gitlab-operator-kubernetes.v1.0.2
+- name: gitlab-operator-kubernetes.v1.1.2
+  replaces: gitlab-operator-kubernetes.v1.1.1
+- name: gitlab-operator-kubernetes.v1.2.0
+  replaces: gitlab-operator-kubernetes.v1.1.2
+- name: gitlab-operator-kubernetes.v1.2.1
+  replaces: gitlab-operator-kubernetes.v1.2.0
+- name: gitlab-operator-kubernetes.v1.2.2
+  replaces: gitlab-operator-kubernetes.v1.2.1
+- name: gitlab-operator-kubernetes.v1.3.0
+  replaces: gitlab-operator-kubernetes.v1.2.2
+- name: gitlab-operator-kubernetes.v1.3.1
+  replaces: gitlab-operator-kubernetes.v1.3.0
+- name: gitlab-operator-kubernetes.v1.3.2
+  replaces: gitlab-operator-kubernetes.v1.3.1
+- name: gitlab-operator-kubernetes.v1.3.3
+  replaces: gitlab-operator-kubernetes.v1.3.2
+- name: gitlab-operator-kubernetes.v1.4.0
+  replaces: gitlab-operator-kubernetes.v1.3.3
+- name: gitlab-operator-kubernetes.v1.4.1
+  replaces: gitlab-operator-kubernetes.v1.4.0
+name: stable
+package: gitlab-operator-kubernetes
+schema: olm.channel
+---
+entries:
+- name: gitlab-operator-kubernetes.v0.10.2
+  replaces: gitlab-operator-kubernetes.v0.6.3
+- name: gitlab-operator-kubernetes.v0.11.0
+  replaces: gitlab-operator-kubernetes.v0.10.2
+- name: gitlab-operator-kubernetes.v0.11.1
+  replaces: gitlab-operator-kubernetes.v0.11.0
+- name: gitlab-operator-kubernetes.v0.11.2
+  replaces: gitlab-operator-kubernetes.v0.11.1
+- name: gitlab-operator-kubernetes.v0.11.3
+  replaces: gitlab-operator-kubernetes.v0.11.2
+- name: gitlab-operator-kubernetes.v0.11.4
+  replaces: gitlab-operator-kubernetes.v0.11.3
+- name: gitlab-operator-kubernetes.v0.12.0
+  replaces: gitlab-operator-kubernetes.v0.11.4
+- name: gitlab-operator-kubernetes.v0.12.1
+  replaces: gitlab-operator-kubernetes.v0.12.0
+- name: gitlab-operator-kubernetes.v0.12.3
+  replaces: gitlab-operator-kubernetes.v0.12.1
+- name: gitlab-operator-kubernetes.v0.13.0
+  replaces: gitlab-operator-kubernetes.v0.12.3
+- name: gitlab-operator-kubernetes.v0.13.1
+  replaces: gitlab-operator-kubernetes.v0.13.0
+- name: gitlab-operator-kubernetes.v0.13.2
+  replaces: gitlab-operator-kubernetes.v0.13.1
+- name: gitlab-operator-kubernetes.v0.13.3
+  replaces: gitlab-operator-kubernetes.v0.13.2
+- name: gitlab-operator-kubernetes.v0.13.4
+  replaces: gitlab-operator-kubernetes.v0.13.3
+- name: gitlab-operator-kubernetes.v0.14.0
+  replaces: gitlab-operator-kubernetes.v0.13.4
+- name: gitlab-operator-kubernetes.v0.14.1
+  replaces: gitlab-operator-kubernetes.v0.14.0
+- name: gitlab-operator-kubernetes.v0.14.2
+  replaces: gitlab-operator-kubernetes.v0.14.1
+- name: gitlab-operator-kubernetes.v0.15.0
+  replaces: gitlab-operator-kubernetes.v0.14.2
+- name: gitlab-operator-kubernetes.v0.15.1
+  replaces: gitlab-operator-kubernetes.v0.15.0
+- name: gitlab-operator-kubernetes.v0.15.2
+  replaces: gitlab-operator-kubernetes.v0.15.1
+- name: gitlab-operator-kubernetes.v0.15.3
+  replaces: gitlab-operator-kubernetes.v0.15.2
+- name: gitlab-operator-kubernetes.v0.15.5
+  replaces: gitlab-operator-kubernetes.v0.15.3
+- name: gitlab-operator-kubernetes.v0.16.0
+  replaces: gitlab-operator-kubernetes.v0.15.5
+- name: gitlab-operator-kubernetes.v0.16.1
+  replaces: gitlab-operator-kubernetes.v0.16.0
+- name: gitlab-operator-kubernetes.v0.16.2
+  replaces: gitlab-operator-kubernetes.v0.16.1
+- name: gitlab-operator-kubernetes.v0.16.3
+  replaces: gitlab-operator-kubernetes.v0.16.2
+- name: gitlab-operator-kubernetes.v0.17.0
+  replaces: gitlab-operator-kubernetes.v0.16.3
+- name: gitlab-operator-kubernetes.v0.17.1
+  replaces: gitlab-operator-kubernetes.v0.17.0
+- name: gitlab-operator-kubernetes.v0.17.2
+  replaces: gitlab-operator-kubernetes.v0.17.1
+- name: gitlab-operator-kubernetes.v0.17.3
+  replaces: gitlab-operator-kubernetes.v0.17.2
+- name: gitlab-operator-kubernetes.v0.18.0
+  replaces: gitlab-operator-kubernetes.v0.17.3
+- name: gitlab-operator-kubernetes.v0.18.1
+  replaces: gitlab-operator-kubernetes.v0.18.0
+- name: gitlab-operator-kubernetes.v0.18.2
+  replaces: gitlab-operator-kubernetes.v0.18.1
+- name: gitlab-operator-kubernetes.v0.18.3
+  replaces: gitlab-operator-kubernetes.v0.18.2
+- name: gitlab-operator-kubernetes.v0.19.0
+  replaces: gitlab-operator-kubernetes.v0.18.3
+- name: gitlab-operator-kubernetes.v0.19.1
+  replaces: gitlab-operator-kubernetes.v0.19.0
+- name: gitlab-operator-kubernetes.v0.19.2
+  replaces: gitlab-operator-kubernetes.v0.19.1
+- name: gitlab-operator-kubernetes.v0.19.3
+  replaces: gitlab-operator-kubernetes.v0.19.2
+- name: gitlab-operator-kubernetes.v0.19.4
+  replaces: gitlab-operator-kubernetes.v0.19.3
+- name: gitlab-operator-kubernetes.v0.20.0
+  replaces: gitlab-operator-kubernetes.v0.19.4
+- name: gitlab-operator-kubernetes.v0.20.1
+  replaces: gitlab-operator-kubernetes.v0.20.0
+- name: gitlab-operator-kubernetes.v0.20.2
+  replaces: gitlab-operator-kubernetes.v0.20.1
+- name: gitlab-operator-kubernetes.v0.20.3
+  replaces: gitlab-operator-kubernetes.v0.20.2
+- name: gitlab-operator-kubernetes.v0.20.4
+  replaces: gitlab-operator-kubernetes.v0.20.3
+- name: gitlab-operator-kubernetes.v0.20.5
+  replaces: gitlab-operator-kubernetes.v0.20.4
+- name: gitlab-operator-kubernetes.v0.20.6
+  replaces: gitlab-operator-kubernetes.v0.20.5
+- name: gitlab-operator-kubernetes.v0.21.0
+  replaces: gitlab-operator-kubernetes.v0.20.6
+- name: gitlab-operator-kubernetes.v0.21.1
+  replaces: gitlab-operator-kubernetes.v0.21.0
+- name: gitlab-operator-kubernetes.v0.21.2
+  replaces: gitlab-operator-kubernetes.v0.21.1
+- name: gitlab-operator-kubernetes.v0.22.0
+  replaces: gitlab-operator-kubernetes.v0.21.2
+- name: gitlab-operator-kubernetes.v0.22.1
+  replaces: gitlab-operator-kubernetes.v0.22.0
+- name: gitlab-operator-kubernetes.v0.22.2
+  replaces: gitlab-operator-kubernetes.v0.22.1
+- name: gitlab-operator-kubernetes.v0.22.3
+  replaces: gitlab-operator-kubernetes.v0.22.2
+- name: gitlab-operator-kubernetes.v0.22.4
+  replaces: gitlab-operator-kubernetes.v0.22.3
+- name: gitlab-operator-kubernetes.v0.23.0
+  replaces: gitlab-operator-kubernetes.v0.22.4
+- name: gitlab-operator-kubernetes.v0.23.1
+  replaces: gitlab-operator-kubernetes.v0.23.0
+- name: gitlab-operator-kubernetes.v0.23.2
+  replaces: gitlab-operator-kubernetes.v0.23.1
+- name: gitlab-operator-kubernetes.v0.23.3
+  replaces: gitlab-operator-kubernetes.v0.23.2
+- name: gitlab-operator-kubernetes.v0.23.4
+  replaces: gitlab-operator-kubernetes.v0.23.3
+- name: gitlab-operator-kubernetes.v0.24.0
+  replaces: gitlab-operator-kubernetes.v0.23.4
+- name: gitlab-operator-kubernetes.v0.24.1
+  replaces: gitlab-operator-kubernetes.v0.24.0
+- name: gitlab-operator-kubernetes.v0.25.0
+  replaces: gitlab-operator-kubernetes.v0.24.1
+- name: gitlab-operator-kubernetes.v0.25.1
+  replaces: gitlab-operator-kubernetes.v0.25.0
+- name: gitlab-operator-kubernetes.v0.25.2
+  replaces: gitlab-operator-kubernetes.v0.25.1
+- name: gitlab-operator-kubernetes.v0.26.0
+  replaces: gitlab-operator-kubernetes.v0.25.2
+- name: gitlab-operator-kubernetes.v0.26.1
+  replaces: gitlab-operator-kubernetes.v0.26.0
+- name: gitlab-operator-kubernetes.v0.26.2
+  replaces: gitlab-operator-kubernetes.v0.26.1
+- name: gitlab-operator-kubernetes.v0.27.0
+  replaces: gitlab-operator-kubernetes.v0.26.2
+- name: gitlab-operator-kubernetes.v0.27.1
+  replaces: gitlab-operator-kubernetes.v0.27.0
+- name: gitlab-operator-kubernetes.v0.28.0
+  replaces: gitlab-operator-kubernetes.v0.27.1
+- name: gitlab-operator-kubernetes.v0.28.1
+  replaces: gitlab-operator-kubernetes.v0.28.0
+- name: gitlab-operator-kubernetes.v0.28.2
+  replaces: gitlab-operator-kubernetes.v0.28.1
+- name: gitlab-operator-kubernetes.v0.29.0
+  replaces: gitlab-operator-kubernetes.v0.28.2
+- name: gitlab-operator-kubernetes.v0.29.1
+  replaces: gitlab-operator-kubernetes.v0.29.0
+- name: gitlab-operator-kubernetes.v0.29.2
+  replaces: gitlab-operator-kubernetes.v0.29.1
+- name: gitlab-operator-kubernetes.v0.3.1
+- name: gitlab-operator-kubernetes.v0.30.0
+  replaces: gitlab-operator-kubernetes.v0.29.2
+- name: gitlab-operator-kubernetes.v0.30.1
+  replaces: gitlab-operator-kubernetes.v0.30.0
+- name: gitlab-operator-kubernetes.v0.30.2
+  replaces: gitlab-operator-kubernetes.v0.30.1
+- name: gitlab-operator-kubernetes.v0.30.3
+  replaces: gitlab-operator-kubernetes.v0.30.2
+- name: gitlab-operator-kubernetes.v0.31.0
+  replaces: gitlab-operator-kubernetes.v0.30.3
+- name: gitlab-operator-kubernetes.v0.31.1
+  replaces: gitlab-operator-kubernetes.v0.31.0
+- name: gitlab-operator-kubernetes.v0.31.2
+  replaces: gitlab-operator-kubernetes.v0.31.1
+- name: gitlab-operator-kubernetes.v0.6.1
+  replaces: gitlab-operator-kubernetes.v0.3.1
+- name: gitlab-operator-kubernetes.v0.6.2
+  replaces: gitlab-operator-kubernetes.v0.6.1
+- name: gitlab-operator-kubernetes.v0.6.3
+  replaces: gitlab-operator-kubernetes.v0.6.2
+- name: gitlab-operator-kubernetes.v1.0.0
+  replaces: gitlab-operator-kubernetes.v0.31.2
+- name: gitlab-operator-kubernetes.v1.0.1
+  replaces: gitlab-operator-kubernetes.v1.0.0
+- name: gitlab-operator-kubernetes.v1.0.2
+  replaces: gitlab-operator-kubernetes.v1.0.1
+- name: gitlab-operator-kubernetes.v1.1.1
+  replaces: gitlab-operator-kubernetes.v1.0.2
+- name: gitlab-operator-kubernetes.v1.1.2
+  replaces: gitlab-operator-kubernetes.v1.1.1
+- name: gitlab-operator-kubernetes.v1.2.0
+  replaces: gitlab-operator-kubernetes.v1.1.2
+- name: gitlab-operator-kubernetes.v1.2.1
+  replaces: gitlab-operator-kubernetes.v1.2.0
+- name: gitlab-operator-kubernetes.v1.2.2
+  replaces: gitlab-operator-kubernetes.v1.2.1
+- name: gitlab-operator-kubernetes.v1.3.0
+  replaces: gitlab-operator-kubernetes.v1.2.2
+- name: gitlab-operator-kubernetes.v1.3.1
+  replaces: gitlab-operator-kubernetes.v1.3.0
+- name: gitlab-operator-kubernetes.v1.3.2
+  replaces: gitlab-operator-kubernetes.v1.3.1
+- name: gitlab-operator-kubernetes.v1.3.3
+  replaces: gitlab-operator-kubernetes.v1.3.2
+- name: gitlab-operator-kubernetes.v1.4.0
+  replaces: gitlab-operator-kubernetes.v1.3.3
+- name: gitlab-operator-kubernetes.v1.4.1
+  replaces: gitlab-operator-kubernetes.v1.4.0
+name: unstable
+package: gitlab-operator-kubernetes
+schema: olm.channel
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:c657da36a906b604ee200d3c329a7c67eed68afd8bb2b14b0a15f160604d868c
+name: gitlab-operator-kubernetes.v0.10.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: acme.cert-manager.io
+    kind: Challenge
+    version: v1
+- type: olm.gvk
+  value:
+    group: acme.cert-manager.io
+    kind: Challenge
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: acme.cert-manager.io
+    kind: Challenge
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: acme.cert-manager.io
+    kind: Challenge
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: acme.cert-manager.io
+    kind: Order
+    version: v1
+- type: olm.gvk
+  value:
+    group: acme.cert-manager.io
+    kind: Order
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: acme.cert-manager.io
+    kind: Order
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: acme.cert-manager.io
+    kind: Order
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: Certificate
+    version: v1
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: Certificate
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: Certificate
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: Certificate
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: CertificateRequest
+    version: v1
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: CertificateRequest
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: CertificateRequest
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: CertificateRequest
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    version: v1
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: Issuer
+    version: v1
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: Issuer
+    version: v1alpha2
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: Issuer
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: cert-manager.io
+    kind: Issuer
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.10.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:c657da36a906b604ee200d3c329a7c67eed68afd8bb2b14b0a15f160604d868c
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.10.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:c93281fac14d863f86495d545a45f569b171a0360682e7c2dd40ce2f1f543433
+name: gitlab-operator-kubernetes.v0.11.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.11.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:c93281fac14d863f86495d545a45f569b171a0360682e7c2dd40ce2f1f543433
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.11.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:3a0836161b31dcbfdcdf5afd7639a6d8fc87e2e53c376401862c11651200286b
+name: gitlab-operator-kubernetes.v0.11.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.11.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:3a0836161b31dcbfdcdf5afd7639a6d8fc87e2e53c376401862c11651200286b
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.11.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:7b3d1b9d766d84799ed2358f1a6f23dd36269a6d8ab7904d80de3e0314015d2c
+name: gitlab-operator-kubernetes.v0.11.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.11.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:7b3d1b9d766d84799ed2358f1a6f23dd36269a6d8ab7904d80de3e0314015d2c
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.11.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:22873230c4ef494491d93074034b5382618fe2100d8d07d6e552bf7faeaccd6c
+name: gitlab-operator-kubernetes.v0.11.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.11.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:22873230c4ef494491d93074034b5382618fe2100d8d07d6e552bf7faeaccd6c
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.11.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:7bb46f43efd5bdc8b2243d9a7efc971b1065c6b93f6c01cc420b7f55076f35e4
+name: gitlab-operator-kubernetes.v0.11.4
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.11.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:7bb46f43efd5bdc8b2243d9a7efc971b1065c6b93f6c01cc420b7f55076f35e4
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.11.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:149e7089581bf89c258c8bc889938fe23f2ffb7f074d0d484ecfadeebfade5a8
+name: gitlab-operator-kubernetes.v0.12.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.12.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:149e7089581bf89c258c8bc889938fe23f2ffb7f074d0d484ecfadeebfade5a8
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.12.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:503fccd9156aa8935651e7cd352f60d694d9f6f263506077e77b56666a511e15
+name: gitlab-operator-kubernetes.v0.12.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.12.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:503fccd9156aa8935651e7cd352f60d694d9f6f263506077e77b56666a511e15
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.12.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:bcbb497cb186aee45ec8514ce5709728a14a0947b33d8113668befb55c8d0c7c
+name: gitlab-operator-kubernetes.v0.12.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.12.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:bcbb497cb186aee45ec8514ce5709728a14a0947b33d8113668befb55c8d0c7c
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.12.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d86bbce699d7d57199821ce90d06de3d4d635893fed4edb1ab91f78d2956e844
+name: gitlab-operator-kubernetes.v0.13.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.13.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d86bbce699d7d57199821ce90d06de3d4d635893fed4edb1ab91f78d2956e844
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.13.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:3f48f7b62d5427a548951c195ada17a4cffeb0afed7c6730f1d16a8730c439c2
+name: gitlab-operator-kubernetes.v0.13.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.13.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:3f48f7b62d5427a548951c195ada17a4cffeb0afed7c6730f1d16a8730c439c2
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.13.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:2756a159fb485702433c00fd694db97e58bd302b2d1e4e76507820f0a591934e
+name: gitlab-operator-kubernetes.v0.13.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.13.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:2756a159fb485702433c00fd694db97e58bd302b2d1e4e76507820f0a591934e
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.13.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:6bbba1d2bf35ccf4ef357eef4c3db99f3fa5edfe2acd576067d00a779f8b3bc6
+name: gitlab-operator-kubernetes.v0.13.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.13.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:6bbba1d2bf35ccf4ef357eef4c3db99f3fa5edfe2acd576067d00a779f8b3bc6
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.13.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4907b1c076bf56d9eecba4792c5098c4667a2ea5d68b67bf46f8e381a6e46256
+name: gitlab-operator-kubernetes.v0.13.4
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.13.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4907b1c076bf56d9eecba4792c5098c4667a2ea5d68b67bf46f8e381a6e46256
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.13.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:96ec7a86d98c02b4e7a370053cc11cba669c4605f36bbefab9aca590d3898c2b
+name: gitlab-operator-kubernetes.v0.14.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.14.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:96ec7a86d98c02b4e7a370053cc11cba669c4605f36bbefab9aca590d3898c2b
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.14.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:48631484617a3befb9cdba91359a41bc75bd3f9e153a9ddb37e8bcc823c8b6bb
+name: gitlab-operator-kubernetes.v0.14.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.14.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:48631484617a3befb9cdba91359a41bc75bd3f9e153a9ddb37e8bcc823c8b6bb
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.14.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4ab9ec12bb8a58b17ca1d3fc6397c67a65d7980f6a505e6e11a5ec5df440804d
+name: gitlab-operator-kubernetes.v0.14.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.14.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4ab9ec12bb8a58b17ca1d3fc6397c67a65d7980f6a505e6e11a5ec5df440804d
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.14.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:b80339bf2c8cacbf614a063c94ef7444bf3fcf8706239e6d26e9dd8c1a0a3bb2
+name: gitlab-operator-kubernetes.v0.15.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.15.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:b80339bf2c8cacbf614a063c94ef7444bf3fcf8706239e6d26e9dd8c1a0a3bb2
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.15.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:063c7d0f2da77382175fc9d9d4f94ec778fbcd960d021fd9028b9dd0219b5c53
+name: gitlab-operator-kubernetes.v0.15.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.15.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:063c7d0f2da77382175fc9d9d4f94ec778fbcd960d021fd9028b9dd0219b5c53
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.15.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:09ec476f135abaf3ce4872b47844aeecba8e870d60c4d8938c3bd75921abcb35
+name: gitlab-operator-kubernetes.v0.15.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.15.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:09ec476f135abaf3ce4872b47844aeecba8e870d60c4d8938c3bd75921abcb35
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.15.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:68695825c015c6b9b450c8f8c0d5ad266b75967f9436173d0451e17c9f65b3cd
+name: gitlab-operator-kubernetes.v0.15.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.15.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:68695825c015c6b9b450c8f8c0d5ad266b75967f9436173d0451e17c9f65b3cd
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.15.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:1e3318d8c89764a95babbf10e6c100d00789600ca05d08a4e66d4b74d5f22131
+name: gitlab-operator-kubernetes.v0.15.5
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.15.5
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:1e3318d8c89764a95babbf10e6c100d00789600ca05d08a4e66d4b74d5f22131
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.15.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:90ca027b5744586c62dfa2d05a58b18d7e157ff5127b744258877a186ebe4ae7
+name: gitlab-operator-kubernetes.v0.16.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.16.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:90ca027b5744586c62dfa2d05a58b18d7e157ff5127b744258877a186ebe4ae7
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.16.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:b04c16c9c64b34a2ab6d24b0e5cec834dbda00ddc25fd1870dd8ff58a0bf727f
+name: gitlab-operator-kubernetes.v0.16.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.16.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:b04c16c9c64b34a2ab6d24b0e5cec834dbda00ddc25fd1870dd8ff58a0bf727f
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.16.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:29ed77d47155b0282d09f5a1db508f4b887a61b5515bf4d6691d16160ce5c515
+name: gitlab-operator-kubernetes.v0.16.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.16.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:29ed77d47155b0282d09f5a1db508f4b887a61b5515bf4d6691d16160ce5c515
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.16.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:bdebe4e9bfdb9fca57e05aadbffbe576a7d43533da2b0062fb34aa5897741643
+name: gitlab-operator-kubernetes.v0.16.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.16.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:bdebe4e9bfdb9fca57e05aadbffbe576a7d43533da2b0062fb34aa5897741643
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.16.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:b094fe6765722700cfc359a95e3492fdf30e91f77631485d0bb6b00734422b2a
+name: gitlab-operator-kubernetes.v0.17.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.17.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:b094fe6765722700cfc359a95e3492fdf30e91f77631485d0bb6b00734422b2a
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.17.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:90ff742a771b245525e68f3d7c87cb4ff2a755cc89d297297ce7be1c1e8c2691
+name: gitlab-operator-kubernetes.v0.17.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.17.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:90ff742a771b245525e68f3d7c87cb4ff2a755cc89d297297ce7be1c1e8c2691
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.17.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:89af32536ac8a9fbb345af4e0fe39e1fa057e3da4db3d78a969ddecb37616e59
+name: gitlab-operator-kubernetes.v0.17.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.17.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:89af32536ac8a9fbb345af4e0fe39e1fa057e3da4db3d78a969ddecb37616e59
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.17.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:033466e8b4bf619b434e3dc0e877756a594762b62af207146813420b9cb60e48
+name: gitlab-operator-kubernetes.v0.17.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.17.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:033466e8b4bf619b434e3dc0e877756a594762b62af207146813420b9cb60e48
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.17.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:e237b4a9c01ab0ba95648293ed4849180f941b7397df55f0907394a1211e6767
+name: gitlab-operator-kubernetes.v0.18.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.18.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:e237b4a9c01ab0ba95648293ed4849180f941b7397df55f0907394a1211e6767
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.18.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:73920bf24fbd4fb8a3cf0e691d8d882d2699415771f57bad8d35c541207384e5
+name: gitlab-operator-kubernetes.v0.18.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.18.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:73920bf24fbd4fb8a3cf0e691d8d882d2699415771f57bad8d35c541207384e5
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.18.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:033f7148f737a632039ba035479e9f81b4242b3288ec09c58679df424ec63ef3
+name: gitlab-operator-kubernetes.v0.18.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.18.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:033f7148f737a632039ba035479e9f81b4242b3288ec09c58679df424ec63ef3
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.18.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:903b20c60cb7faf62339030b63daf31a2d828c914f249bb45d68d3a703a3db09
+name: gitlab-operator-kubernetes.v0.18.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.18.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:903b20c60cb7faf62339030b63daf31a2d828c914f249bb45d68d3a703a3db09
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.18.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:11ff6391417932b23d8cb8dc09c69098930e7dba4fddef63efe6b5f2b0b19be6
+name: gitlab-operator-kubernetes.v0.19.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.19.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:11ff6391417932b23d8cb8dc09c69098930e7dba4fddef63efe6b5f2b0b19be6
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.19.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:f4679d52be036ded417f7204769d6cc93c2f3e26144f3f0df3747e520f49c473
+name: gitlab-operator-kubernetes.v0.19.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.19.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:f4679d52be036ded417f7204769d6cc93c2f3e26144f3f0df3747e520f49c473
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.19.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:c4449b8dda0b2f6fb42d07c2d66f01a60084a2911c047b2ebd7402d7b74dd12e
+name: gitlab-operator-kubernetes.v0.19.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.19.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:c4449b8dda0b2f6fb42d07c2d66f01a60084a2911c047b2ebd7402d7b74dd12e
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.19.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:95f2e57e18b75596ef846acb481e55074b49c8b09bc2192fa4ab04a277c610d3
+name: gitlab-operator-kubernetes.v0.19.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.19.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:95f2e57e18b75596ef846acb481e55074b49c8b09bc2192fa4ab04a277c610d3
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.19.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:3be17f784352337080a6c6048e1fce235b22f6918d9d2b1591c6f9361c562aac
+name: gitlab-operator-kubernetes.v0.19.4
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.19.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:3be17f784352337080a6c6048e1fce235b22f6918d9d2b1591c6f9361c562aac
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.19.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:b52eaa00402468269522157e66cc7dd083fe9d67f8c48a709ca51653d1f85646
+name: gitlab-operator-kubernetes.v0.20.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.20.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:b52eaa00402468269522157e66cc7dd083fe9d67f8c48a709ca51653d1f85646
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.20.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:6ed12d285362ed9a61b803a621da2851146ef035c262891f66334b95abcfbbd1
+name: gitlab-operator-kubernetes.v0.20.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.20.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:6ed12d285362ed9a61b803a621da2851146ef035c262891f66334b95abcfbbd1
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.20.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:545aa2c49c10cb754f2c7785dcb30b28b405aede52089720ef11916d0dcfc0fb
+name: gitlab-operator-kubernetes.v0.20.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.20.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:545aa2c49c10cb754f2c7785dcb30b28b405aede52089720ef11916d0dcfc0fb
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.20.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:09f0bacf4f249375859821704873b25368434e6e7a737ed284f55c2645359b77
+name: gitlab-operator-kubernetes.v0.20.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.20.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:09f0bacf4f249375859821704873b25368434e6e7a737ed284f55c2645359b77
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.20.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:f1a1a5afad072665d349370e6c184247842818cd1f18bff54b2e83915031537f
+name: gitlab-operator-kubernetes.v0.20.4
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.20.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:f1a1a5afad072665d349370e6c184247842818cd1f18bff54b2e83915031537f
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.20.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:10a5472b80e3f85913dddf40d79966a1735011ca85413801980790ec85003604
+name: gitlab-operator-kubernetes.v0.20.5
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.20.5
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:10a5472b80e3f85913dddf40d79966a1735011ca85413801980790ec85003604
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.20.5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:33d4ce57f9eb1cb8e70acbbf092334ec334ffd08b7cfd7833157cf6a7a7ade81
+name: gitlab-operator-kubernetes.v0.20.6
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.20.6
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:33d4ce57f9eb1cb8e70acbbf092334ec334ffd08b7cfd7833157cf6a7a7ade81
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.20.6
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:dc60b1961c24e02cd6796f331f8df2d448d6a7ad3164aa15511ad085b6fac14c
+name: gitlab-operator-kubernetes.v0.21.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.21.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:dc60b1961c24e02cd6796f331f8df2d448d6a7ad3164aa15511ad085b6fac14c
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.21.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:64802d70125443317757dd355bbc506ef38051b57db91a572e6ad7cec7ff2380
+name: gitlab-operator-kubernetes.v0.21.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.21.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:64802d70125443317757dd355bbc506ef38051b57db91a572e6ad7cec7ff2380
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.21.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:23e8714b33fa809195415b7b322098c2af4393187f90c7da22f93a3b1dc87611
+name: gitlab-operator-kubernetes.v0.21.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.21.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:23e8714b33fa809195415b7b322098c2af4393187f90c7da22f93a3b1dc87611
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.21.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:8130b4cda8e141c665e1837a534df693208b54930962bb0d044fb36dfd37539d
+name: gitlab-operator-kubernetes.v0.22.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.22.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:8130b4cda8e141c665e1837a534df693208b54930962bb0d044fb36dfd37539d
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.22.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:9b92634e1b5aa3ce547e133339ac49662a698f41d44e2da3ab1d2dfa6f2fc952
+name: gitlab-operator-kubernetes.v0.22.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.22.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:9b92634e1b5aa3ce547e133339ac49662a698f41d44e2da3ab1d2dfa6f2fc952
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.22.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:36e20121978b1a3b2592ec76b5d05f69e5c84cddc203595367a8a27c8334683b
+name: gitlab-operator-kubernetes.v0.22.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.22.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:36e20121978b1a3b2592ec76b5d05f69e5c84cddc203595367a8a27c8334683b
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.22.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4a4411b41ca01efe988bf87989bcbd1b658511269cc2313c004d07e83ffc5aba
+name: gitlab-operator-kubernetes.v0.22.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.22.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4a4411b41ca01efe988bf87989bcbd1b658511269cc2313c004d07e83ffc5aba
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.22.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:28f47bca4d56673dfd25ff8b1742bb03a19727e0d009fd0f64d5bc3fcd991f59
+name: gitlab-operator-kubernetes.v0.22.4
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.22.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:28f47bca4d56673dfd25ff8b1742bb03a19727e0d009fd0f64d5bc3fcd991f59
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.22.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:75e11b8cd4324f010f8fe7331844c5932d22f0b5dcbf21b5521184ba04611c29
+name: gitlab-operator-kubernetes.v0.23.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.23.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:75e11b8cd4324f010f8fe7331844c5932d22f0b5dcbf21b5521184ba04611c29
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.23.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:7a185a6fc5e52bc49a12487dc7f45ad673cd55db177eda64c802d486424bab90
+name: gitlab-operator-kubernetes.v0.23.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.23.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:7a185a6fc5e52bc49a12487dc7f45ad673cd55db177eda64c802d486424bab90
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.23.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:cd0d84c8f431cfc22158811d3f81c743c91826e2de045eea9efc6bd2ab900592
+name: gitlab-operator-kubernetes.v0.23.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.23.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:cd0d84c8f431cfc22158811d3f81c743c91826e2de045eea9efc6bd2ab900592
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.23.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:bfaedefced05c2798961dbd0a4b1bdcfd523cacba12d2b78753471edb71520ce
+name: gitlab-operator-kubernetes.v0.23.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.23.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:bfaedefced05c2798961dbd0a4b1bdcfd523cacba12d2b78753471edb71520ce
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.23.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:9be7018f9b59ae5148b20e4c7d7598fa8ce839c27fd2b0e99858c750ac1faf23
+name: gitlab-operator-kubernetes.v0.23.4
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.23.4
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:9be7018f9b59ae5148b20e4c7d7598fa8ce839c27fd2b0e99858c750ac1faf23
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.23.4
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:3f2e6d0e1b775d4d3a160e6f84c737fb888317e7df128176a52583a0c0bddc1b
+name: gitlab-operator-kubernetes.v0.24.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.24.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:3f2e6d0e1b775d4d3a160e6f84c737fb888317e7df128176a52583a0c0bddc1b
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.24.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:15ff5fa3f9fc44e2d0a83e6f3a236a368a8a2c2bc67cf28f01f11d4cfaf47f1a
+name: gitlab-operator-kubernetes.v0.24.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.24.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:15ff5fa3f9fc44e2d0a83e6f3a236a368a8a2c2bc67cf28f01f11d4cfaf47f1a
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.24.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:67f42a511229180da347f6849fafa03d1b79e7646cb435c19df0d87e8c7cffb9
+name: gitlab-operator-kubernetes.v0.25.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.25.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:67f42a511229180da347f6849fafa03d1b79e7646cb435c19df0d87e8c7cffb9
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.25.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d6c787506064aecb69b66755fe6b1c13c7712490018b07dd0993e277db8792ec
+name: gitlab-operator-kubernetes.v0.25.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.25.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d6c787506064aecb69b66755fe6b1c13c7712490018b07dd0993e277db8792ec
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.25.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:f2ae9230c33d2d5cafc6ed326f5390a875f1551bb551728c9471142ba9b878c5
+name: gitlab-operator-kubernetes.v0.25.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.25.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:f2ae9230c33d2d5cafc6ed326f5390a875f1551bb551728c9471142ba9b878c5
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.25.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:be3e53cfac8784c69626b4a4f9ce0581067ff034a426de5f5166bd9cbc6ac79e
+name: gitlab-operator-kubernetes.v0.26.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.26.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:be3e53cfac8784c69626b4a4f9ce0581067ff034a426de5f5166bd9cbc6ac79e
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.26.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:16d57a724940aba31bab5b59b50f8d1c3ea0c439db48925ae5b51e1a62660ddb
+name: gitlab-operator-kubernetes.v0.26.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.26.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:16d57a724940aba31bab5b59b50f8d1c3ea0c439db48925ae5b51e1a62660ddb
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.26.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:5d98ed92a2c98a6218e5884f876bbd63bca7c71735e98aa3ba744e4fad475056
+name: gitlab-operator-kubernetes.v0.26.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.26.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:5d98ed92a2c98a6218e5884f876bbd63bca7c71735e98aa3ba744e4fad475056
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.26.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:74568f4400298333421684610bac4286722cbeac64388020e84af707e74032ed
+name: gitlab-operator-kubernetes.v0.27.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.27.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:74568f4400298333421684610bac4286722cbeac64388020e84af707e74032ed
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.27.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:93869825a77d1ce02cf8135c332d73e38dc2ac41d333ba5f9d99b913739a7d54
+name: gitlab-operator-kubernetes.v0.27.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.27.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:93869825a77d1ce02cf8135c332d73e38dc2ac41d333ba5f9d99b913739a7d54
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.27.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:0a340151456e39c6f00d2d3cd6b429a52736b5acdb6f2bcc9c64a2f23bb514b5
+name: gitlab-operator-kubernetes.v0.28.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.28.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:0a340151456e39c6f00d2d3cd6b429a52736b5acdb6f2bcc9c64a2f23bb514b5
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.28.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:013c3ab82b04f3a23104c7ea78ff69fb213b5760939426685b0a846931dbd92e
+name: gitlab-operator-kubernetes.v0.28.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.28.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:013c3ab82b04f3a23104c7ea78ff69fb213b5760939426685b0a846931dbd92e
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.28.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:aac4e2f274df1fe6366a2f3bb15dfa8380b06680d40b2fd9901c2b724b717f6d
+name: gitlab-operator-kubernetes.v0.28.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.28.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:aac4e2f274df1fe6366a2f3bb15dfa8380b06680d40b2fd9901c2b724b717f6d
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.28.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:0a3ea92cc9b56a5c8b2b5b9eb122e680db1f58453fcc308785a484a38244255b
+name: gitlab-operator-kubernetes.v0.29.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.29.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:0a3ea92cc9b56a5c8b2b5b9eb122e680db1f58453fcc308785a484a38244255b
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.29.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:ed6bc857c1dd7e11805089cf2ae2b070a9f0b45846699ffe08d27e04813f4d5f
+name: gitlab-operator-kubernetes.v0.29.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.29.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:ed6bc857c1dd7e11805089cf2ae2b070a9f0b45846699ffe08d27e04813f4d5f
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.29.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:f397bab168ada9c8b024c82d9acb68c8ba395af68b3f22166042b39d58c93270
+name: gitlab-operator-kubernetes.v0.29.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.29.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:f397bab168ada9c8b024c82d9acb68c8ba395af68b3f22166042b39d58c93270
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.29.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d88bded4fa0dc0caeb87bc0a987583ca0cbef7ff0baa3c8803d4e0a422b4ddea
+name: gitlab-operator-kubernetes.v0.3.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.3.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d88bded4fa0dc0caeb87bc0a987583ca0cbef7ff0baa3c8803d4e0a422b4ddea
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.3.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:27b79e8805603f34cd68235c94a48c33337eac0210526b46d641597cc05d3d70
+name: gitlab-operator-kubernetes.v0.30.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.30.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:27b79e8805603f34cd68235c94a48c33337eac0210526b46d641597cc05d3d70
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.30.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d6e52b4a74a4cce13b34108d4a5965a88495fcf856ff6b3ee5fedf47e7d1c514
+name: gitlab-operator-kubernetes.v0.30.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.30.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d6e52b4a74a4cce13b34108d4a5965a88495fcf856ff6b3ee5fedf47e7d1c514
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.30.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:02da5f681cad81192023039f56b597426497b0caefc23008ee04a4586c173e0f
+name: gitlab-operator-kubernetes.v0.30.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.30.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:02da5f681cad81192023039f56b597426497b0caefc23008ee04a4586c173e0f
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.30.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:33575438ddae37bb3ae96fe0f5a6a5f47457becb9f1b04f72837b56a7f8bb1ba
+name: gitlab-operator-kubernetes.v0.30.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.30.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:33575438ddae37bb3ae96fe0f5a6a5f47457becb9f1b04f72837b56a7f8bb1ba
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.30.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:748270a52fd3668f07c1875ed9f98916b72cf577e6d240a2fa1807e549867600
+name: gitlab-operator-kubernetes.v0.31.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.31.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:748270a52fd3668f07c1875ed9f98916b72cf577e6d240a2fa1807e549867600
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.31.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:e80c6224a03b8c22c4ea32bdc07a07b17d482ab7627c78213d6c3e959fd268f8
+name: gitlab-operator-kubernetes.v0.31.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.31.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:e80c6224a03b8c22c4ea32bdc07a07b17d482ab7627c78213d6c3e959fd268f8
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.31.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d751a0dc2321d287f018a163d394fca3488c41fee5bca724861dd8efda65a388
+name: gitlab-operator-kubernetes.v0.31.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.31.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:d751a0dc2321d287f018a163d394fca3488c41fee5bca724861dd8efda65a388
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.31.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:5b32462a80ab742bf11225483c82106e593b23412d2ef43f32f231466d350df8
+name: gitlab-operator-kubernetes.v0.6.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.6.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:5b32462a80ab742bf11225483c82106e593b23412d2ef43f32f231466d350df8
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.6.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:5a140781a3b4b89434d526ae1507e4a1641e20233295902c53331f728544e555
+name: gitlab-operator-kubernetes.v0.6.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.6.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:5a140781a3b4b89434d526ae1507e4a1641e20233295902c53331f728544e555
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.6.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:0255ff4ca993ee5795f8ecc2f1e482796426aeb7883d1e87f128b241a4e21b30
+name: gitlab-operator-kubernetes.v0.6.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 0.6.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:0255ff4ca993ee5795f8ecc2f1e482796426aeb7883d1e87f128b241a4e21b30
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:0.6.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:35d7b761d2b8c08cb34d4a6b02199374b371ce145019870f9dfb0db978dfa32b
+name: gitlab-operator-kubernetes.v1.0.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.0.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:35d7b761d2b8c08cb34d4a6b02199374b371ce145019870f9dfb0db978dfa32b
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.0.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:cbdef59a7ff180e067ee63315ca2cbda158be8c64d325cc95c2f5ec3be31f959
+name: gitlab-operator-kubernetes.v1.0.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.0.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:cbdef59a7ff180e067ee63315ca2cbda158be8c64d325cc95c2f5ec3be31f959
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.0.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:81e97967dee1079c66e6ebdbd1f193ba4a05f579cedc3747c5d3d8b2d263b768
+name: gitlab-operator-kubernetes.v1.0.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.0.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:81e97967dee1079c66e6ebdbd1f193ba4a05f579cedc3747c5d3d8b2d263b768
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.0.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:2a653a64824fb72c0a75d911770af0ff27d8d099065675f8d100b6a7915aab5d
+name: gitlab-operator-kubernetes.v1.1.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.1.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:2a653a64824fb72c0a75d911770af0ff27d8d099065675f8d100b6a7915aab5d
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.1.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4037393faaf32bcb90fb9f3cd2c0c957a2c0ec8657afe9ac58ff773b5894c3c3
+name: gitlab-operator-kubernetes.v1.1.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.1.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4037393faaf32bcb90fb9f3cd2c0c957a2c0ec8657afe9ac58ff773b5894c3c3
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.1.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:add4dc438a11cb938975d52be9822b7f4af58078d81242ee1856033e6dc1a241
+name: gitlab-operator-kubernetes.v1.2.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.2.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:add4dc438a11cb938975d52be9822b7f4af58078d81242ee1856033e6dc1a241
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.2.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:fd6a064e0a6b59349ed522fff5e9c98ce5fda98fe9e2c036990a6b0838078c7d
+name: gitlab-operator-kubernetes.v1.2.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.2.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:fd6a064e0a6b59349ed522fff5e9c98ce5fda98fe9e2c036990a6b0838078c7d
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.2.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4bc5d32aaee8453947cc208ef5c0052fd4a915c2e08367a055b6e3457c22d438
+name: gitlab-operator-kubernetes.v1.2.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.2.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:4bc5d32aaee8453947cc208ef5c0052fd4a915c2e08367a055b6e3457c22d438
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.2.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:1e3cab1497d7f2f1d0af62f4bac740d6ee92e1fa42b47e9b2e05b9de3c5cf21e
+name: gitlab-operator-kubernetes.v1.3.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.3.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:1e3cab1497d7f2f1d0af62f4bac740d6ee92e1fa42b47e9b2e05b9de3c5cf21e
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.3.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:9d6ade0b4e0aab7a0de7f00a1925c9c0704727166a04b56ed3758f2ede59c206
+name: gitlab-operator-kubernetes.v1.3.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.3.1
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:9d6ade0b4e0aab7a0de7f00a1925c9c0704727166a04b56ed3758f2ede59c206
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.3.1
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:62b297bbe1dfcc738ef292d827d982f5fc9b3e395156ca6e78cb0e66870e0e4e
+name: gitlab-operator-kubernetes.v1.3.2
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.3.2
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:62b297bbe1dfcc738ef292d827d982f5fc9b3e395156ca6e78cb0e66870e0e4e
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.3.2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:2ca027b0798bc4c4aa31c900dada8761bac82a9220e4c3d85a9d44ef45c5b02e
+name: gitlab-operator-kubernetes.v1.3.3
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.3.3
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:2ca027b0798bc4c4aa31c900dada8761bac82a9220e4c3d85a9d44ef45c5b02e
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.3.3
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:ef1933da3ebea61eba8b523b3ec012958a78b5c486197cae3e77e8a40337d26f
+name: gitlab-operator-kubernetes.v1.4.0
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.4.0
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:ef1933da3ebea61eba8b523b3ec012958a78b5c486197cae3e77e8a40337d26f
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.4.0
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:94f2e97d88fe464cbfa10f2038724bcda5c281ed259acd0b3be5e8d8d33cdb79
+name: gitlab-operator-kubernetes.v1.4.1
+package: gitlab-operator-kubernetes
+properties:
+- type: olm.gvk
+  value:
+    group: apps.gitlab.com
+    kind: GitLab
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: gitlab-operator-kubernetes
+    version: 1.4.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "apps.gitlab.com/v1beta1",
+            "kind": "GitLab",
+            "metadata": {
+              "name": "gitlab",
+              "namespace": "gitlab-system"
+            },
+            "spec": {
+              "chart": {
+                "values": {
+                  "certmanager": {
+                    "install": false
+                  },
+                  "global": {
+                    "hosts": {
+                      "domain": "example.com",
+                      "hostSuffix": null
+                    },
+                    "ingress": {
+                      "configureCertmanager": false,
+                      "tls": {
+                        "secretName": null
+                      }
+                    }
+                  },
+                  "postgresql": {
+                    "primary": {
+                      "extendedConfiguration": "max_connections = 200"
+                    }
+                  }
+                },
+                "version": "8.4.1"
+              }
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Integration & Delivery, Developer Tools
+      certified: "true"
+      containerImage: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.4.1
+      createdAt: "2024-09-26T07:08:10Z"
+      description: The GitLab operator is responsible for managing the full lifecycle
+        of GitLab instances in your Kubernetes or Openshift container platforms.
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "false"
+      features.operators.openshift.io/fips-compliant: "false"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      operatorframework.io/suggested-namespace: gitlab-system
+      operators.operatorframework.io/builder: operator-sdk-v1.36.1
+      operators.operatorframework.io/project_layout: unknown
+      repository: https://gitlab.com/gitlab-org/cloud-native/gitlab-operator
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: GitLab is a complete DevOps platform, delivered in a single application
+        displayName: GitLab
+        kind: GitLab
+        name: gitlabs.apps.gitlab.com
+        resources:
+        - kind: ServiceAccount
+          name: gitlab-app-nonroot
+          version: v1
+        - kind: ServiceAccount
+          name: gitlab-manager
+          version: v1
+        - kind: ServiceAccount
+          name: gitlab-nginx-ingress
+          version: v1
+        - kind: Service
+          name: gitlab-controller-manager-metrics-service
+          version: v1
+        - kind: Service
+          name: gitlab-webhook-service
+          version: v1
+        - kind: Deployment
+          name: gitlab-controller-manager
+          version: apps/v1
+        - kind: IngressClass
+          name: gitlab-nginx
+          version: v1
+        version: v1beta1
+    description: |
+      # Overview
+
+      **Installation using OLM is considered experimental.** GitLab does not support any issues related to instances deployed using OLM.
+      For more information on potential issues with OLM, see [issue 241](https://gitlab.com/gitlab-org/cloud-native/gitlab-operator/-/issues/241).
+
+      The GitLab operator is responsible for managing the full lifecycle of GitLab instances in your Kubernetes or Openshift container platforms.
+
+      [Documentation](https://docs.gitlab.com/operator/)
+
+      The operator, while new and still actively being developed, aims to:
+      - ease installation and configuration of GitLab instances
+      - offer seamless upgrades from version to version
+
+      ## GitLab
+
+      GitLab is a complete open-source DevOps platform, delivered as a single application, fundamentally changing the way Development, Security, and Ops teams collaborate and build software. From idea to production, GitLab helps teams improve cycle time from weeks to minutes, reduce development process costs and decrease time to market while increasing developer productivity.
+
+      Built on Open Source, GitLab delivers new innovations and features on the same day of every month by leveraging contributions from a passionate, global community of thousands of developers and millions of users. Over 100,000 of the world’s most demanding organizations trust GitLab to deliver great software at new speeds.
+
+      If you would like to enable advanced DevOps capabilities and activate enterprise features such as security, risk, and compliance capabilities, please contact our sales team to purchase an enterprise license.
+
+      # Prerequisites
+
+      Please visit [Prerequisites](https://docs.gitlab.com/operator/installation.html#prerequisites) section of GitLab Operator Documentation.
+
+      ## IngressClass
+
+      Cluster-wide `IngressClass` should be created prior to Operator setup, as OLM does not currently support this object type:
+
+      ```yaml
+      apiVersion: networking.k8s.io/v1
+      kind: IngressClass
+      metadata:
+        # Ensure this value matches `spec.chart.values.global.ingress.class`
+        # in the GitLab CR on the next step.
+        name: gitlab-nginx
+      spec:
+        controller: k8s.io/ingress-nginx
+      ```
+    displayName: GitLab
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: false
+      type: AllNamespaces
+    keywords:
+    - GitLab
+    - DevOps
+    - CI/CD
+    - DAST
+    - SAST
+    links:
+    - name: GitLab Docs
+      url: https://docs.gitlab.com/
+    - name: GitLab Operator Documentation
+      url: https://docs.gitlab.com/operator/
+    - name: GitLab and Kubernetes
+      url: https://about.gitlab.com/solutions/kubernetes/
+    - name: Gitlab Reference Architecture
+      url: https://docs.gitlab.com/ee/administration/reference_architectures/
+    - name: GitLab Contact Sales
+      url: https://about.gitlab.com/sales/
+    maintainers:
+    - email: distribution@gitlab.com
+      name: GitLab Distribution Team
+    maturity: alpha
+    minKubeVersion: 1.19.0
+    provider:
+      name: GitLab Inc
+      url: https://about.gitlab.com/
+relatedImages:
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+  name: ""
+- image: quay.io/operatorhubio/gitlab-operator-kubernetes@sha256:94f2e97d88fe464cbfa10f2038724bcda5c281ed259acd0b3be5e8d8d33cdb79
+  name: ""
+- image: registry.gitlab.com/gitlab-org/cloud-native/gitlab-operator:1.4.1
+  name: ""
+schema: olm.bundle

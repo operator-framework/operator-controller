@@ -1,0 +1,1283 @@
+---
+defaultChannel: stable
+icon:
+  base64data: PHN2ZyB3aWR0aD0iMzIuODgybW0iIGhlaWdodD0iMjIuNjI3bW0iIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDMyLjg4MiAyMi42MjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgdHJhbnNmb3JtPSJtYXRyaXgoLS4xNzE4OSAwIDAgLS4xNzE4OSAzNC40OSAyNS43NzMpIj48ZyBmaWxsPSIjODhkNjVkIj48cGF0aCB0cmFuc2Zvcm09Im1hdHJpeCgtMS41MzkyIDAgMCAtMS41MzkyIDM3Ny4zOSAzMTEuMykiIGQ9Im0yMDEuNzcgMTA0LjczYy0xMC4wNjQgMC0xOC4xNjYgOC4xMDIyLTE4LjE2NiAxOC4xNjZ2NDguOTUzYzAgMTAuMDY0IDguMTAyMiAxOC4xNjYgMTguMTY2IDE4LjE2NmgxOS4xN2MxMC4wNjQgMCAxOC4xNjYtOC4xMDIyIDE4LjE2Ni0xOC4xNjZ2LTQ4Ljk1M2MwLTEwLjA2NC04LjEwMjItMTguMTY2LTE4LjE2Ni0xOC4xNjZ6bS01LjQzMTYgMTIuOTNjMy44MjAyIDAuMTY0NjcgNi43ODY0IDMuMzkwMyA2LjYzMDkgNy4yMTA5LTAuMTU1MzUgMy44MjA4LTMuMzc0MSA2Ljc5NS03LjE5NTMgNi42NDg0LTMuODIxNS0wLjE0NzAzLTYuODAyOC0zLjM1OTgtNi42NjQxLTcuMTgxNmwyZS0zIC0wLjA2MDVjMC4xNzE4OS0zLjgyMTIgMy40MDUxLTYuNzgxNyA3LjIyNjYtNi42MTcyem0wIDI0LjU1N2MzLjgyMDIgMC4xNjQ2NyA2Ljc4NjQgMy4zOTAzIDYuNjMwOSA3LjIxMDktMC4xNTUzNSAzLjgyMDgtMy4zNzQxIDYuNzk1LTcuMTk1MyA2LjY0ODQtMy44MjE1LTAuMTQ3MDMtNi44MDI4LTMuMzU5OC02LjY2NDEtNy4xODE2bDJlLTMgLTAuMDYwNWMwLjE3MTg5LTMuODIxMiAzLjQwNTEtNi43ODE3IDcuMjI2Ni02LjYxNzJ6bTAgMjQuNTU3YzMuODIwMiAwLjE2NDY3IDYuNzg2NCAzLjM5MDMgNi42MzA5IDcuMjEwOS0wLjE1NTM0IDMuODIwOC0zLjM3NDEgNi43OTUtNy4xOTUzIDYuNjQ4NC0zLjgyMTUtMC4xNDcwMy02LjgwMjgtMy4zNTk4LTYuNjY0MS03LjE4MTZsMmUtMyAtMC4wNjA1YzAuMTcxODktMy44MjEyIDMuNDA1MS02Ljc4MTcgNy4yMjY2LTYuNjE3MnoiLz48cGF0aCB0cmFuc2Zvcm09Im1hdHJpeCgtMS41MzkyIDAgMCAtMS41MzkyIDM3Ny4zOSAzMTEuMykiIGQ9Im0xMTQuODMgMTA1LjIxdjg1LjAzOWg1NS4yNTR2LTg1LjAzOXptNDMuMTE1IDEyLjQ1MWMzLjgyMSAwLjE2MzYzIDYuNzg4MyAzLjM4OTYgNi42MzI4IDcuMjEwOS0wLjE1NTM0IDMuODIxNi0zLjM3NTMgNi43OTYxLTcuMTk3MyA2LjY0ODQtMy44MjE1LTAuMTQ3MDMtNi44MDI4LTMuMzU5OC02LjY2NDEtNy4xODE2bDRlLTMgLTAuMDYwNWMwLjE3MTktMy44MjA0IDMuNDAzOS02Ljc4MDYgNy4yMjQ2LTYuNjE3MnptMCAyNC41NTdjMy44MjEgMC4xNjM2MyA2Ljc4ODMgMy4zODk2IDYuNjMyOCA3LjIxMDktMC4xNTUzNCAzLjgyMTYtMy4zNzUzIDYuNzk2MS03LjE5NzMgNi42NDg0LTMuODIxNS0wLjE0NzAzLTYuODAyOC0zLjM1OTgtNi42NjQxLTcuMTgxNmw0ZS0zIC0wLjA2MDVjMC4xNzE5LTMuODIwNCAzLjQwMzktNi43ODA2IDcuMjI0Ni02LjYxNzJ6bTAgMjQuNTU3YzMuODIxIDAuMTYzNjMgNi43ODgzIDMuMzg5NiA2LjYzMjggNy4yMTA5LTAuMTU1MzMgMy44MjE2LTMuMzc1MyA2Ljc5NjEtNy4xOTczIDYuNjQ4NC0zLjgyMTUtMC4xNDcwMy02LjgwMjgtMy4zNTk4LTYuNjY0MS03LjE4MTZsNGUtMyAtMC4wNjA1YzAuMTcxOS0zLjgyMDQgMy40MDM5LTYuNzgwNiA3LjIyNDYtNi42MTcyeiIvPjwvZz48ZyBmaWxsPSIjNjJiYjJmIj48cmVjdCB4PSI3NS4wMzIiIHk9IjExNS4yMyIgd2lkdGg9IjU5LjkzNSIgaGVpZ2h0PSI4LjU3NDQiLz48cmVjdCB4PSI3NS4wMzIiIHk9Ijc3LjQzNiIgd2lkdGg9IjU5LjkzNSIgaGVpZ2h0PSI4LjU3NDQiLz48cmVjdCB4PSI3NS4wMzIiIHk9IjM5LjYzOCIgd2lkdGg9IjU5LjkzNSIgaGVpZ2h0PSI4LjU3NDQiLz48L2c+PC9nPjwvc3ZnPgo=
+  mediatype: image/svg+xml
+name: service-binding-operator
+schema: olm.package
+---
+entries:
+- name: service-binding-operator.v0.10.0
+  replaces: service-binding-operator.v0.9.1
+- name: service-binding-operator.v0.4.0
+- name: service-binding-operator.v0.5.0
+  replaces: service-binding-operator.v0.4.0
+- name: service-binding-operator.v0.6.0
+  replaces: service-binding-operator.v0.5.0
+- name: service-binding-operator.v0.7.0
+  replaces: service-binding-operator.v0.6.0
+- name: service-binding-operator.v0.7.1
+  replaces: service-binding-operator.v0.7.0
+- name: service-binding-operator.v0.8.0
+  replaces: service-binding-operator.v0.7.1
+- name: service-binding-operator.v0.9.0
+  replaces: service-binding-operator.v0.8.0
+- name: service-binding-operator.v0.9.1
+  replaces: service-binding-operator.v0.9.0
+name: beta
+package: service-binding-operator
+schema: olm.channel
+---
+entries:
+- name: service-binding-operator.v0.10.0
+  replaces: service-binding-operator.v0.9.1
+- name: service-binding-operator.v0.11.0
+  replaces: service-binding-operator.v0.10.0
+- name: service-binding-operator.v0.4.0
+- name: service-binding-operator.v0.5.0
+  replaces: service-binding-operator.v0.4.0
+- name: service-binding-operator.v0.6.0
+  replaces: service-binding-operator.v0.5.0
+- name: service-binding-operator.v0.7.0
+  replaces: service-binding-operator.v0.6.0
+- name: service-binding-operator.v0.7.1
+  replaces: service-binding-operator.v0.7.0
+- name: service-binding-operator.v0.8.0
+  replaces: service-binding-operator.v0.7.1
+- name: service-binding-operator.v0.9.0
+  replaces: service-binding-operator.v0.8.0
+- name: service-binding-operator.v0.9.1
+  replaces: service-binding-operator.v0.9.0
+name: candidate
+package: service-binding-operator
+schema: olm.channel
+---
+entries:
+- name: service-binding-operator.v0.4.0
+- name: service-binding-operator.v0.5.0
+  replaces: service-binding-operator.v0.4.0
+- name: service-binding-operator.v0.6.0
+  replaces: service-binding-operator.v0.5.0
+- name: service-binding-operator.v0.7.0
+  replaces: service-binding-operator.v0.6.0
+- name: service-binding-operator.v0.7.1
+  replaces: service-binding-operator.v0.7.0
+- name: service-binding-operator.v0.8.0
+  replaces: service-binding-operator.v0.7.1
+- name: service-binding-operator.v0.9.0
+  replaces: service-binding-operator.v0.8.0
+- name: service-binding-operator.v0.9.1
+  replaces: service-binding-operator.v0.9.0
+- name: service-binding-operator.v1.0.0
+  replaces: service-binding-operator.v0.9.1
+- name: service-binding-operator.v1.0.1
+  replaces: service-binding-operator.v1.0.0
+- name: service-binding-operator.v1.1.0
+  replaces: service-binding-operator.v1.0.1
+- name: service-binding-operator.v1.1.1
+  replaces: service-binding-operator.v1.1.0
+- name: service-binding-operator.v1.2.0
+  replaces: service-binding-operator.v1.1.1
+- name: service-binding-operator.v1.3.0
+  replaces: service-binding-operator.v1.2.0
+- name: service-binding-operator.v1.3.1
+  replaces: service-binding-operator.v1.3.0
+- name: service-binding-operator.v1.3.2
+  replaces: service-binding-operator.v1.3.1
+- name: service-binding-operator.v1.3.3
+  replaces: service-binding-operator.v1.3.2
+- name: service-binding-operator.v1.3.4
+  replaces: service-binding-operator.v1.3.3
+- name: service-binding-operator.v1.4.0
+  replaces: service-binding-operator.v1.3.4
+- name: service-binding-operator.v1.4.1
+  replaces: service-binding-operator.v1.4.0
+name: stable
+package: service-binding-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:d1b05066d3593f92effab7f773c3a903e4997c4a09cda71baf67916108e679b3
+name: service-binding-operator.v0.10.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: service.binding
+    kind: ServiceBinding
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.10.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "binding.operators.coreos.com/v1alpha1",
+            "kind": "ServiceBinding",
+            "metadata": {
+              "name": "example-servicebinding"
+            },
+            "spec": {
+              "application": {
+                "group": "apps",
+                "name": "nodejs-rest-http-crud",
+                "resource": "deployments",
+                "version": "v1"
+              },
+              "services": [
+                {
+                  "group": "postgresql.example.dev",
+                  "kind": "Database",
+                  "name": "pg-instance",
+                  "version": "v1alpha1"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "service.binding/v1alpha2",
+            "kind": "ServiceBinding",
+            "metadata": {
+              "name": "servicebinding-sample"
+            },
+            "spec": {
+              "application": {
+                "Kind": "Ddeployment",
+                "apiVersion": "apps/v1",
+                "name": "nodejs-rest-http-crud"
+              },
+              "service": {
+                "apiVersion": "postgresql.example.dev/v1alpha1",
+                "kind": "Database",
+                "name": "pg-instance"
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Developer Tools, OpenShift Optional, Integration & Delivery
+      containerImage: quay.io/redhat-developer/servicebinding-operator@sha256:b355d2370926063a3de8c7a09c0ca8c2348a8d158d6a7095d0e5e8381cc95be5
+      description: An operator to support binding capabilities between imported apps
+        and operator backed services
+      operators.openshift.io/infrastructure-features: '["disconnected"]'
+      operators.operatorframework.io/builder: operator-sdk-v1.3.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/redhat-developer/service-binding-operator
+      support: Service Binding Operator Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Service Binding expresses intent to bind a backing service with
+          an application workload.
+        displayName: Service Binding
+        kind: ServiceBinding
+        name: servicebindings.binding.operators.coreos.com
+        version: v1alpha1
+      - description: (Tech Preview) Service Binding implementing community specification
+          (https://github.com/k8s-service-bindings/spec) describing the connection
+          between a backing service and an application workload. Available as tech
+          preview but subjected to change in near future.
+        displayName: Service Binding (Spec API Tech Preview)
+        kind: ServiceBinding
+        name: servicebindings.service.binding
+        version: v1alpha2
+    description: " The Service Binding Operator enables application developers to
+      more easily bind applications together with operator managed backing services
+      such as databases, without having to perform manual configuration of secrets,
+      configmaps, etc. The Service Binding Operator accomplishes this through automatically
+      collecting binding information and sharing with an application to bind it with
+      operator managed backing services. The binding is performed through a new custom
+      resource called a ServiceBindingRequest.\n### Example\nA set of examples, each
+      of which illustrates a usage scenario for the Service Binding Operator, is being
+      developed in parallel with the Operator. Each example includes documentation
+      and can be run either through the OpenShift web console or command line client.
+      The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n###
+      Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###
+      \ Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n###
+      Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) "
+    displayName: Service Binding Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - ""
+    links:
+    - name: Blog post
+      url: https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator
+    maintainers:
+    - email: service-binding-support@redhat.com
+      name: Openshift Application Services
+    maturity: candidate
+    minKubeVersion: 1.16.0
+    provider:
+      name: Red Hat
+      url: redhat.com
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:d1b05066d3593f92effab7f773c3a903e4997c4a09cda71baf67916108e679b3
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:b355d2370926063a3de8c7a09c0ca8c2348a8d158d6a7095d0e5e8381cc95be5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:573e9fb48973722986552a241f58f1335d7b8202adf28fb45651d351ebeb6f4e
+name: service-binding-operator.v0.11.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.11.0
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "binding.operators.coreos.com/v1alpha1",
+            "kind": "BindableKinds",
+            "metadata": {
+              "name": "bindablekinds-sample"
+            }
+          },
+          {
+            "apiVersion": "binding.operators.coreos.com/v1alpha1",
+            "kind": "ServiceBinding",
+            "metadata": {
+              "name": "example-servicebinding"
+            },
+            "spec": {
+              "application": {
+                "group": "apps",
+                "name": "nodejs-rest-http-crud",
+                "resource": "deployments",
+                "version": "v1"
+              },
+              "services": [
+                {
+                  "group": "postgresql.example.dev",
+                  "kind": "Database",
+                  "name": "pg-instance",
+                  "version": "v1alpha1"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "servicebinding.io/v1alpha3",
+            "kind": "ServiceBinding",
+            "metadata": {
+              "name": "servicebinding-sample"
+            },
+            "spec": {
+              "application": {
+                "Kind": "Ddeployment",
+                "apiVersion": "apps/v1",
+                "name": "nodejs-rest-http-crud"
+              },
+              "service": {
+                "apiVersion": "postgresql.example.dev/v1alpha1",
+                "kind": "Database",
+                "name": "pg-instance"
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Developer Tools, OpenShift Optional, Integration & Delivery
+      containerImage: quay.io/redhat-developer/servicebinding-operator@sha256:c9c9e45321db2d4d3cdc2d364337af844f69c9893d0cc74d2fa56c846ffcf3da
+      description: An operator to support binding capabilities between imported apps
+        and operator backed services
+      operators.openshift.io/infrastructure-features: '["disconnected"]'
+      operators.operatorframework.io/builder: operator-sdk-v1.3.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/redhat-developer/service-binding-operator
+      support: Service Binding Operator Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: BindableKinds contains a list of bindable type (group, version,
+          kind) found in the cluster. It is cluster-scoped and there is only single
+          instance named 'bindable-kinds'
+        displayName: Bindable Kinds
+        kind: BindableKinds
+        name: bindablekinds.binding.operators.coreos.com
+        version: v1alpha1
+      - description: Service Binding expresses intent to bind a backing service with
+          an application workload.
+        displayName: Service Binding
+        kind: ServiceBinding
+        name: servicebindings.binding.operators.coreos.com
+        version: v1alpha1
+      - description: (Tech Preview) Service Binding implementing community specification
+          (https://github.com/k8s-service-bindings/spec) describing the connection
+          between a backing service and an application workload. Available as tech
+          preview but subjected to change in near future.
+        displayName: Service Binding (Spec API Tech Preview)
+        kind: ServiceBinding
+        name: servicebindings.servicebinding.io
+        version: v1alpha3
+    description: " The Service Binding Operator enables application developers to
+      more easily bind applications together with operator managed backing services
+      such as databases, without having to perform manual configuration of secrets,
+      configmaps, etc. The Service Binding Operator accomplishes this through automatically
+      collecting binding information and sharing with an application to bind it with
+      operator managed backing services. The binding is performed through a new custom
+      resource called a ServiceBindingRequest.\n### Example\nA set of examples, each
+      of which illustrates a usage scenario for the Service Binding Operator, is being
+      developed in parallel with the Operator. Each example includes documentation
+      and can be run either through the OpenShift web console or command line client.
+      The examples are available [here](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md#example-scenarios)\n###
+      Documentation\nRefer to the [documentation](https://github.com/redhat-developer/service-binding-operator/blob/master/README.md)\n###
+      \ Help\nRaise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)\n###
+      Licence\nService Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE) "
+    displayName: Service Binding Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - ""
+    links:
+    - name: Blog post
+      url: https://developers.redhat.com/blog/2019/12/19/introducing-the-service-binding-operator
+    maintainers:
+    - email: service-binding-support@redhat.com
+      name: Openshift Application Services
+    maturity: candidate
+    minKubeVersion: 1.16.0
+    provider:
+      name: Red Hat
+      url: redhat.com
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:573e9fb48973722986552a241f58f1335d7b8202adf28fb45651d351ebeb6f4e
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:c9c9e45321db2d4d3cdc2d364337af844f69c9893d0cc74d2fa56c846ffcf3da
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:9c61487f75e622f46dbda63879d59e980d162710c84d9f0156e78ccb5fad4697
+name: service-binding-operator.v0.4.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.4.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:9c61487f75e622f46dbda63879d59e980d162710c84d9f0156e78ccb5fad4697
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:0529b7495099726feb92a100964766c881edff6d3c9b95ac8f7612ca863a2d19
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:5ba0f5f2daa9c5924185f55cd5f308eb3e1ed50233f7496dc2018c922eeea3b7
+name: service-binding-operator.v0.5.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.5.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:5ba0f5f2daa9c5924185f55cd5f308eb3e1ed50233f7496dc2018c922eeea3b7
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:c3b0a223ee127175fc866b2d5ee4d5e07625d41da70942abcf756921ea9b298e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:647cda9819f203d048927bd95204de4ab47cffd419e677c0e11ad99f582ac59b
+name: service-binding-operator.v0.6.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.6.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:647cda9819f203d048927bd95204de4ab47cffd419e677c0e11ad99f582ac59b
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:7bb253a2d6236903b91427e25cd451096a439c2510f1bcd6adcab8d4aebc2a5d
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:e337b74d0dc72471e3d74d0b1029105029b74c556e3907f0b37bf0684a64c8bd
+name: service-binding-operator.v0.7.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.7.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:e337b74d0dc72471e3d74d0b1029105029b74c556e3907f0b37bf0684a64c8bd
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:6c77385bd5876db1850f42d3802febccccad767065d396084eb785ecc1a8077e
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:04a4d611c46124e94173f9fa68bb7bf7602da282e855ccdad032e034af1695d2
+name: service-binding-operator.v0.7.1
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.7.1
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:04a4d611c46124e94173f9fa68bb7bf7602da282e855ccdad032e034af1695d2
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:093904869b1c39d75373c1bcea4c1fa4a4b4f300cc7362bf98f10a0d074f1a14
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:a860609f5a2c36288e299ff0322aaa1a413235095fcf3a7e553472fcf65d5de6
+name: service-binding-operator.v0.8.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.8.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:a860609f5a2c36288e299ff0322aaa1a413235095fcf3a7e553472fcf65d5de6
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:d4395e987d0aeffc603696d0630d8ab643e32c0da739296e998a75e9cd8243ac
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:486818edc6e54af20789e3dd1356e760e7874d92e165ee9d371a9bde4776eaa6
+name: service-binding-operator.v0.9.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: service.binding
+    kind: ServiceBinding
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.9.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:486818edc6e54af20789e3dd1356e760e7874d92e165ee9d371a9bde4776eaa6
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:64fc06b514fc37366f2cd7d469d998322abf59ba592ce504a4b2b67dfbb007a2
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:5c0b24698c8bfdc8bfd45944d616b7ea1c0a9b51b795057833b8d0c97be604c5
+name: service-binding-operator.v0.9.1
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: service.binding
+    kind: ServiceBinding
+    version: v1alpha2
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 0.9.1
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:5c0b24698c8bfdc8bfd45944d616b7ea1c0a9b51b795057833b8d0c97be604c5
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:27cb02ecbf68ebe92654c102eb90646598fed1d0c49bf1eb14770f3e7100d3e5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:0f7c895e4e51c0e07219c3a2fcf98691ebe34ef2784eac72ebc6522d47fbe802
+name: service-binding-operator.v1.0.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.0.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:0f7c895e4e51c0e07219c3a2fcf98691ebe34ef2784eac72ebc6522d47fbe802
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:633aa4a9ffad44793d1516de6ec448fa7ddadd81490ca58afb5e707f97285347
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:a531c314e6624fe9586102c5e820c8a95823e33cb89e108b4c5855d49269172f
+name: service-binding-operator.v1.0.1
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.0.1
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:a531c314e6624fe9586102c5e820c8a95823e33cb89e108b4c5855d49269172f
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:de1881753e82c51b31e958fcf383cb35b0f70f6ec99d402d42243e595d00c6dd
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:62a1690ea0e52be40bc9c9ac8bed6a1d27f3fb094fc01c58b7c4b5d70818d481
+name: service-binding-operator.v1.1.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.1.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:62a1690ea0e52be40bc9c9ac8bed6a1d27f3fb094fc01c58b7c4b5d70818d481
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:cc5aab01ddd3744510c480eb4f58b834936a833d36bec5c9c13fb40bbb06c663
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:1b02858c0bb91b2ebb09542baabe4eef27c58f17dd720463e1496433b7feab61
+name: service-binding-operator.v1.1.1
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.1.1
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:1b02858c0bb91b2ebb09542baabe4eef27c58f17dd720463e1496433b7feab61
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:69a95c6216ead931e01e4144ae8f4fb7ab35d1f68a14c18f6860a085ccb950f5
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:58a8074dd707271476fce3f7e4e295d360a7aecd719c01281624fab4b374cf20
+name: service-binding-operator.v1.2.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.2.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:58a8074dd707271476fce3f7e4e295d360a7aecd719c01281624fab4b374cf20
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:f79f6999a15534dbe56e658caf94fc4b7afb5ceeb7b49f32a60ead06fbd7c3fc
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:f23c9f5aafc3c5dd26d282868cb33b04bb58e9b91c368704627857cc611dd0fe
+name: service-binding-operator.v1.3.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.3.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:f23c9f5aafc3c5dd26d282868cb33b04bb58e9b91c368704627857cc611dd0fe
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:e01016cacae84dfb6eaf7a1022130e7d95e2a8489c38d4d46e4f734848e93849
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:d18cc35b6c3305de50aa0b2d869b222ce621ce0cbc1e0dfb8082f8c2b26a881f
+name: service-binding-operator.v1.3.1
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.3.1
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:d18cc35b6c3305de50aa0b2d869b222ce621ce0cbc1e0dfb8082f8c2b26a881f
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:67c2a2502f59fac1e7ded9ed19b59bbd4e50f5559a13978a87ecd2283b81e067
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:973d65ab67800b78d3054f5073bbecc4b25fb5a746c0c56a61e6c1964d1a712f
+name: service-binding-operator.v1.3.2
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.3.2
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:973d65ab67800b78d3054f5073bbecc4b25fb5a746c0c56a61e6c1964d1a712f
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:30bf7f0f21024bb2e1e4db901b1f5e89ab56e0f3197a919d2bbb670f3fe5223a
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:28b6417d58046a547bfb209ebb216f891a654cfcfc533fbc603014906a426d87
+name: service-binding-operator.v1.3.3
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.3.3
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:28b6417d58046a547bfb209ebb216f891a654cfcfc533fbc603014906a426d87
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:e4259939a496f292a31b5e57760196d63a8182b999164d93a446da48c4ea24eb
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:03c5f5f33168348c76d8a4283851e0f59209e9c3fe8a04f7612c41d99447f994
+name: service-binding-operator.v1.3.4
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.3.4
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:03c5f5f33168348c76d8a4283851e0f59209e9c3fe8a04f7612c41d99447f994
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:608247b052b830a4ab70dc3a7cbf1288d6b1d8d4132ef9ee1b56eccb3cc418ba
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:5a9e071fbe945d2148da63aa4028cb680fd8f56e425609b73d24a69cb03f234f
+name: service-binding-operator.v1.4.0
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.4.0
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:5a9e071fbe945d2148da63aa4028cb680fd8f56e425609b73d24a69cb03f234f
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:ac47f496fb7ecdcbc371f8c809fad2687ec0c35bbc8c522a7ab63b3e5ffd90ea
+  name: ""
+schema: olm.bundle
+---
+image: quay.io/operatorhubio/service-binding-operator@sha256:0699f36fb99ba0134a54e1d87f1f93b335b6b93d6d108bce01b35ba3b7bb2842
+name: service-binding-operator.v1.4.1
+package: service-binding-operator
+properties:
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: BindableKinds
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: binding.operators.coreos.com
+    kind: ServiceBinding
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ClusterWorkloadResourceMapping
+    version: v1beta1
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1alpha3
+- type: olm.gvk
+  value:
+    group: servicebinding.io
+    kind: ServiceBinding
+    version: v1beta1
+- type: olm.package
+  value:
+    packageName: service-binding-operator
+    version: 1.4.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "binding.operators.coreos.com/v1alpha1",
+            "kind": "BindableKinds",
+            "metadata": {
+              "name": "bindable-kinds"
+            },
+            "spec": {}
+          },
+          {
+            "apiVersion": "binding.operators.coreos.com/v1alpha1",
+            "kind": "ServiceBinding",
+            "metadata": {
+              "name": "example-servicebinding"
+            },
+            "spec": {
+              "application": {
+                "group": "apps",
+                "name": "nodejs-rest-http-crud",
+                "resource": "deployments",
+                "version": "v1"
+              },
+              "services": [
+                {
+                  "group": "postgresql.example.dev",
+                  "kind": "Database",
+                  "name": "pg-instance",
+                  "version": "v1alpha1"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "servicebinding.io/v1alpha3",
+            "kind": "ClusterWorkloadResourceMapping",
+            "metadata": {
+              "name": "cronjobs.batch"
+            },
+            "spec": {
+              "versions": [
+                {
+                  "containers": [
+                    {
+                      "path": ".spec.jobTemplate.spec.template.spec.containers[*]"
+                    },
+                    {
+                      "path": ".spec.jobTemplate.spec.template.spec.initContainers[*]"
+                    }
+                  ],
+                  "version": "*",
+                  "volumes": ".spec.jobTemplate.spec.template.spec.volumes"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "servicebinding.io/v1alpha3",
+            "kind": "ServiceBinding",
+            "metadata": {
+              "name": "servicebinding-sample"
+            },
+            "spec": {
+              "application": {
+                "apiVersion": "apps/v1",
+                "kind": "Deployment",
+                "name": "nodejs-rest-http-crud"
+              },
+              "service": {
+                "apiVersion": "postgresql.example.dev/v1alpha1",
+                "kind": "Database",
+                "name": "pg-instance"
+              }
+            }
+          },
+          {
+            "apiVersion": "servicebinding.io/v1beta1",
+            "kind": "ClusterWorkloadResourceMapping",
+            "metadata": {
+              "name": "cronjobs.batch"
+            },
+            "spec": {
+              "versions": [
+                {
+                  "containers": [
+                    {
+                      "path": ".spec.jobTemplate.spec.template.spec.containers[*]"
+                    },
+                    {
+                      "path": ".spec.jobTemplate.spec.template.spec.initContainers[*]"
+                    }
+                  ],
+                  "version": "*",
+                  "volumes": ".spec.jobTemplate.spec.template.spec.volumes"
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "servicebinding.io/v1beta1",
+            "kind": "ServiceBinding",
+            "metadata": {
+              "name": "servicebinding-sample"
+            },
+            "spec": {
+              "service": {
+                "apiVersion": "postgresql.example.dev/v1alpha1",
+                "kind": "Database",
+                "name": "pg-instance"
+              },
+              "type": "postgres",
+              "workload": {
+                "apiVersion": "apps/v1",
+                "kind": "Deployment",
+                "name": "nodejs-rest-http-crud"
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      categories: Developer Tools, OpenShift Optional, Integration & Delivery
+      containerImage: quay.io/redhat-developer/servicebinding-operator@sha256:16286ac84ddd521897d92472dae857a4c18479f255b725dfb683bc72df6e0865
+      description: An operator to support binding capabilities between imported apps
+        and operator backed services
+      operators.openshift.io/infrastructure-features: '["disconnected"]'
+      operators.operatorframework.io/builder: operator-sdk-v1.24.0
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+      repository: https://github.com/redhat-developer/service-binding-operator
+      support: Service Binding Operator Community
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: BindableKinds contains a list of bindable type (group, version,
+          kind) found in the cluster. It is cluster-scoped and there is only single
+          instance named 'bindable-kinds'.
+        displayName: Bindable Kinds
+        kind: BindableKinds
+        name: bindablekinds.binding.operators.coreos.com
+        version: v1alpha1
+      - description: Cluster Workload Resource Mapping defines the mapping for a specific
+          version of an workload resource to a logical PodTemplateSpec-like structure.
+          It provides a way to define exactly where binding data needs to be projected.
+          Use this method when you are not able to configure custom path locations
+          correctly by any other methods.
+        displayName: Cluster Workload Resource Mapping
+        kind: ClusterWorkloadResourceMapping
+        name: clusterworkloadresourcemappings.servicebinding.io
+        version: v1alpha3
+      - description: Cluster Workload Resource Mapping defines the mapping for a specific
+          version of an workload resource to a logical PodTemplateSpec-like structure.
+          It provides a way to define exactly where binding data needs to be projected.
+          Use this method when you are not able to configure custom path locations
+          correctly by any other methods.
+        displayName: Cluster Workload Resource Mapping
+        kind: ClusterWorkloadResourceMapping
+        name: clusterworkloadresourcemappings.servicebinding.io
+        version: v1beta1
+      - description: Service Binding expresses intent to bind a backing service with
+          an application workload.
+        displayName: Service Binding
+        kind: ServiceBinding
+        name: servicebindings.binding.operators.coreos.com
+        version: v1alpha1
+      - description: (Tech Preview) Service Binding implementing community specification
+          (https://github.com/k8s-service-bindings/spec) describing the connection
+          between a backing service and an application workload. Available as tech
+          preview but subjected to change in near future.
+        displayName: Service Binding (Spec API Tech Preview)
+        kind: ServiceBinding
+        name: servicebindings.servicebinding.io
+        version: v1alpha3
+      - description: Service Binding implementing community specification (https://github.com/k8s-service-bindings/spec)
+          describing the connection between a backing service and an application workload.
+        displayName: Service Binding (Spec API)
+        kind: ServiceBinding
+        name: servicebindings.servicebinding.io
+        version: v1beta1
+    description: |
+      The Service Binding Operator manages the data plane for applications and backing services. It enables developers to connect their
+      applications to backing services (REST API, databases, event buses and others) with a consistent and predictable
+      experience. The operator reads data made available by the control plane of backing services and projects the bindings
+      data to applications either as accessible files mounted into the application’s container or environment variables.
+
+      In Kubernetes, each service suggests a different way to access their secrets and developers will consume them in their
+      application in a custom way. While this provides a good deal of flexibility, it also creates discrepancies and
+      complexity dealing with each specific services, which leads large development teams to lose overall velocity.
+
+      Service Binding Operator removes the error-prone manual configuration of binding information, provides service operators
+      a low-touch administrative experience to provision and manage access to services and enriches development lifecycle.
+
+      For additional details refer to the project [documentation](https://redhat-developer.github.io/service-binding-operator).
+
+      Get Started with Service Binding Operator
+      * Find out about SBO’s [prerequisites](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/installing-service-binding.html).
+      * Refer to the [Quick Start Guide](https://redhat-developer.github.io/service-binding-operator/userguide/getting-started/quick-start.html) to see SBO in action in a simple scenario.
+
+      Need Help
+      * Raise a ticket for bugs, features and enhancement [here](https://github.com/redhat-developer/service-binding-operator/)
+
+      Licence
+      * Service Binding Operator is licensed under [Apache License 2.0](https://github.com/redhat-developer/service-binding-operator/blob/master/LICENSE)
+
+      Service Binding Operator is providing and supporting two different APIs.
+      * `binding.operators.coreos.com/v1alpha1`: This API is compliant with the Service Binding specification. It is fully supported and considered as the mature API. It’s the API we recommend in production environments.
+      * `servicebinding.io/v1beta1`: This API is the one defined in the Service Binding specification. It is available in Service Binding Operator 1.x.
+
+      We’ll consider supporting only the API from the specification, once the Service Binding specification will be officially GA. Of course, that will be a breaking change and handle in a safe way for you.
+    displayName: Service Binding Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - ""
+    links:
+    - name: Documentation
+      url: https://redhat-developer.github.io/service-binding-operator
+    maintainers:
+    - email: service-binding-support@redhat.com
+      name: Openshift Application Services
+    maturity: candidate
+    minKubeVersion: 1.16.0
+    provider:
+      name: Red Hat
+      url: redhat.com
+relatedImages:
+- image: quay.io/operatorhubio/service-binding-operator@sha256:0699f36fb99ba0134a54e1d87f1f93b335b6b93d6d108bce01b35ba3b7bb2842
+  name: ""
+- image: quay.io/redhat-developer/servicebinding-operator@sha256:16286ac84ddd521897d92472dae857a4c18479f255b725dfb683bc72df6e0865
+  name: ""
+schema: olm.bundle

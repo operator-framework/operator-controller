@@ -1,0 +1,101 @@
+---
+defaultChannel: alpha
+name: postgresql-operator
+schema: olm.package
+---
+entries:
+- name: postgresql-operator.v0.0.1
+name: alpha
+package: postgresql-operator
+schema: olm.channel
+---
+image: quay.io/operatorhubio/postgresql-operator@sha256:9c540c906a38d74ede3fa8b7b68eadb053ddded7fcbdf84aace9b1f8c36c5034
+name: postgresql-operator.v0.0.1
+package: postgresql-operator
+properties:
+- type: olm.gvk
+  value:
+    group: postgresql.example.com
+    kind: Postgresql
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: postgresql-operator
+    version: 0.0.1
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "postgresql.example.com/v1alpha1",
+            "kind": "Postgresql",
+            "metadata": {
+              "name": "example-postgresql"
+            },
+            "spec": {
+              "image": "postgres:10.4",
+              "size": 3
+            }
+          }
+        ]
+      capabilities: Seamless Upgrades
+      categories: Database
+      certified: "true"
+      containerImage: quay.io/deekshah86/postgresql-operator
+      createdAt: "2019-12-13 09:00:00"
+      description: Deploys postgresql based applications
+      operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+      repository: https://github.com/janepelladinesh/postgresql-operator
+      support: postgresql
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Describes application deployment
+        displayName: Postgresql Application
+        kind: Postgresql
+        name: postgresqls.postgresql.example.com
+        version: v1alpha1
+    description: "The Postgres operator manages PostgreSQL clusters on Kubernetes.\n
+      How it works\n\nThe operator watches additions, updates, and deletions of PostgreSQL
+      cluster manifests and changes the running clusters accordingly. For each PostgreSQL
+      custom resource it creates StatefulSets, Services, and also Postgres roles.
+      For some configuration changes, e.g. updating a pod's Docker image, the operator
+      carries out the rolling update.\n\n### Creating a Postgres cluster\n\nAfter
+      installing the Postgres Operator you can use the provided YAML examples to create
+      a minimal cluster setup with onw instances.\n\n```\n# First, make sure the operator
+      is running\nkubectl get pod -l name=postgres-operator -n operators\n\n# Then
+      create a new Postgres cluster with a custom resource file \n\n# check for deployed
+      clusters\nkubectl get postgresql -n <namespace>\n```\n\n\n\nThe operator can
+      be configured by defining an `OperatorConfiguration` custom resource that contains
+      the parameters to be changed. The YAML example shows the default configuration
+      used internally when creating the operator . For a detailed description of each
+      parameter checkout out the [operator reference](https://github.com/janepelladinesh/postgresql-operator)\n
+      for more details about how to use the operator.\n"
+    displayName: Postgresql Operator
+    installModes:
+    - supported: true
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - postgres
+    - database
+    maintainers:
+    - email: janepelladinesh97@gmail.com
+      name: Dinesh
+    - email: anil_bandi@gmail.com
+      name: Anil
+    maturity: alpha
+    provider:
+      name: Openlabs
+relatedImages:
+- image: quay.io/deekshah86/postgresql-operator
+  name: ""
+- image: quay.io/operatorhubio/postgresql-operator@sha256:9c540c906a38d74ede3fa8b7b68eadb053ddded7fcbdf84aace9b1f8c36c5034
+  name: ""
+schema: olm.bundle
