@@ -133,11 +133,11 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
 
 - [Install kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 - Assuming `kind` is installed, create a `kind` cluster with `extraPortMappings` and `node-labels` as shown in the [kind documentation](https://kind.sigs.k8s.io/docs/user/ingress/)
-- Install latest version of `Catalogd` by navigating to the [releases page](https://github.com/operator-framework/catalogd/releases) and following the install instructions included in the release you want to install.
+- Install OLMV1, see the [Getting Started](https://operator-framework.github.io/operator-controller/getting-started/olmv1_getting_started/) documentation.
 - Install the `Ingress NGINX` Controller by running the below command:
 
   ```sh
-    $ kubectl apply -k  https://github.com/operator-framework/catalogd/tree/main/config/nginx-ingress
+    $ kubectl apply -k https://github.com/operator-framework/operator-controller/tree/main/catalogd/config/base/nginx-ingress
   ```
   By running that above command, the `Ingress` Controller is installed. Along with it, the `Ingress` Resource will be applied automatically as well, thereby creating an `Ingress` Object on the cluster.
 
@@ -201,4 +201,4 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
       $ kubectl -n olmv1-system get ingress
     ```
    
-    You can further use the `curl` commands outlined in the [Catalogd README](https://github.com/operator-framework/catalogd/blob/main/README.md) to filter out the JSON content by list of bundles, channels & packages.
+    You can further use the `curl` commands outlined in the [README](https://github.com/operator-framework/operator-controller/blob/main/README.md) to filter out the JSON content by list of bundles, channels & packages.

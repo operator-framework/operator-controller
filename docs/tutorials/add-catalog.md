@@ -18,7 +18,6 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
 
 * Access to a Kubernetes cluster, for example `kind`, using an account with `cluster-admin` permissions
 * [Operator Controller installed](https://github.com/operator-framework/operator-controller/releases) on the cluster
-* [Catalogd installed](https://github.com/operator-framework/catalogd/releases/) on the cluster
 * Kubernetes CLI (`kubectl`) installed on your workstation
 
 ## Procedure
