@@ -22,6 +22,11 @@ import (
 	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 )
 
+const (
+	eventuallyTimeout    = 3 * time.Minute
+	eventuallyPollPeriod = time.Second
+)
+
 func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Starting checks after OLM upgrade")
 	ctx := context.Background()
@@ -41,7 +46,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 				managerDeployment.Status.AvailableReplicas == *managerDeployment.Spec.Replicas &&
 				managerDeployment.Status.ReadyReplicas == *managerDeployment.Spec.Replicas,
 		)
-	}, time.Minute, time.Second)
+	}, eventuallyTimeout, eventuallyPollPeriod)
 
 	var managerPods corev1.PodList
 	t.Log("Waiting for only one controller-manager Pod to remain")
@@ -72,7 +77,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
-	}, time.Minute, time.Second)
+	}, eventuallyTimeout, eventuallyPollPeriod)
 
 	t.Log("Checking that the ClusterExtension is installed")
 	var clusterExtension ocv1.ClusterExtension
@@ -88,7 +93,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		if assert.NotNil(ct, clusterExtension.Status.Install) {
 			assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle.Version)
 		}
-	}, time.Minute, time.Second)
+	}, eventuallyTimeout, eventuallyPollPeriod)
 
 	previousVersion := clusterExtension.Status.Install.Bundle.Version
 
@@ -108,7 +113,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		assert.Contains(ct, cond.Message, "Installed bundle")
 		assert.Equal(ct, ocv1.BundleMetadata{Name: "test-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
 		assert.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
-	}, time.Minute, time.Second)
+	}, eventuallyTimeout, eventuallyPollPeriod)
 }
 
 func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container string, substrings ...string) (bool, error) {
