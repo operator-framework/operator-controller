@@ -89,7 +89,7 @@ Follow Tilt's [instructions](https://docs.tilt.dev/install.html) for installatio
 ### Installing catalogd
 
 operator-controller requires
-[catalogd](https://github.com/operator-framework/operator-controller/tree/main/catalogd). Please make sure it's installed, either normally or via its own Tiltfile., before proceeding. If you want to use Tilt, make sure you specify a unique `--port` flag to each `tilt up` invocation.
+[catalogd](https://github.com/operator-framework/operator-controller/tree/main/catalogd). When you give a `tilt up` invocation, catalogd will be started along with operator-controller.
 
 ### Starting Tilt
 
