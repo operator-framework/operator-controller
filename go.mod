@@ -3,7 +3,7 @@ module github.com/operator-framework/operator-controller
 go 1.23.4
 
 require (
-	carvel.dev/kapp v0.63.3
+	carvel.dev/kapp v0.64.0
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/blang/semver/v4 v4.0.0
