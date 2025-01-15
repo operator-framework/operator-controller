@@ -20,11 +20,17 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	"github.com/operator-framework/operator-controller/test/utils"
+)
+
+const (
+	artifactName = "operator-controller-upgrade-e2e"
 )
 
 func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Starting checks after OLM upgrade")
 	ctx := context.Background()
+	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
 
 	managerLabelSelector := labels.Set{"control-plane": "operator-controller-controller-manager"}
 
