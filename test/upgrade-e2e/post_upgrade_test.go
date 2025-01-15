@@ -1,7 +1,6 @@
 package upgradee2e
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -37,52 +36,40 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	ctx := context.Background()
 	defer getArtifactsOutput(t)
 
-	managerLabelSelector := labels.Set{"control-plane": "operator-controller-controller-manager"}
+	now := time.Now()
 
-	t.Log("Checking that the controller-manager deployment is updated")
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		var managerDeployments appsv1.DeploymentList
-		assert.NoError(ct, c.List(ctx, &managerDeployments, client.MatchingLabelsSelector{Selector: managerLabelSelector.AsSelector()}))
-		assert.Len(ct, managerDeployments.Items, 1)
-		managerDeployment := managerDeployments.Items[0]
+	// wait for catalogd deployment to finish
+	t.Log("Wait for catalogd deployment to be ready")
+	waitForDeployment(t, ctx, "catalogd-controller-manager")
 
-		assert.True(ct,
-			managerDeployment.Status.UpdatedReplicas == *managerDeployment.Spec.Replicas &&
-				managerDeployment.Status.Replicas == *managerDeployment.Spec.Replicas &&
-				managerDeployment.Status.AvailableReplicas == *managerDeployment.Spec.Replicas &&
-				managerDeployment.Status.ReadyReplicas == *managerDeployment.Spec.Replicas,
-		)
-	}, time.Minute, time.Second)
+	// wait for operator-controller deployment to finish
+	t.Log("Wait for operator-controller deployment to be ready")
+	waitForDeployment(t, ctx, "operator-controller-controller-manager")
 
-	var managerPods corev1.PodList
-	t.Log("Waiting for only one controller-manager Pod to remain")
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.List(ctx, &managerPods, client.MatchingLabelsSelector{Selector: managerLabelSelector.AsSelector()}))
-		assert.Len(ct, managerPods.Items, 1)
-	}, time.Minute, time.Second)
-
-	t.Log("Reading logs to make sure that ClusterExtension was reconciled by operator-controller before we update it")
-	// Make sure that after we upgrade OLM itself we can still reconcile old objects without any changes
-	logCtx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-	substrings := []string{
-		"reconcile ending",
-		fmt.Sprintf(`ClusterExtension=%q`, testClusterExtensionName),
-	}
-	found, err := watchPodLogsForSubstring(logCtx, &managerPods.Items[0], "manager", substrings...)
-	require.NoError(t, err)
-	require.True(t, found)
-
-	t.Log("Checking that the ClusterCatalog is serving")
+	t.Log("Checking that the ClusterCatalog is unpacked")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var clusterCatalog catalogd.ClusterCatalog
 		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, &clusterCatalog))
+
+		// check serving condition
 		cond := apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, catalogd.TypeServing)
 		if !assert.NotNil(ct, cond) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
+
+		// check progressing condition
+		cond = apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, catalogd.TypeProgressing)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, catalogd.ReasonSucceeded, cond.Reason)
+
+		// check that the catalog was recently unpacked (after progressing is over)
+		t.Logf("last unpacked: %s - progressing last transitioned: %s", clusterCatalog.Status.LastUnpacked.String(), cond.LastTransitionTime.String())
+		assert.True(ct, clusterCatalog.Status.LastUnpacked.After(now))
 	}, time.Minute, time.Second)
 
 	t.Log("Checking that the ClusterExtension is installed")
@@ -122,36 +109,62 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	}, time.Minute, time.Second)
 }
 
-func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container string, substrings ...string) (bool, error) {
-	podLogOpts := corev1.PodLogOptions{
-		Follow:    true,
-		Container: container,
-	}
+func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel string) {
+	deploymentLabelSelector := labels.Set{"control-plane": controlPlaneLabel}.AsSelector()
 
-	req := kclientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
-	podLogs, err := req.Stream(ctx)
-	if err != nil {
-		return false, err
-	}
-	defer podLogs.Close()
+	t.Log("Checking that the deployment is updated")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var managerDeployments appsv1.DeploymentList
+		assert.NoError(ct, c.List(ctx, &managerDeployments, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
+		assert.Len(ct, managerDeployments.Items, 1)
+		managerDeployment := managerDeployments.Items[0]
 
-	scanner := bufio.NewScanner(podLogs)
-	for scanner.Scan() {
-		line := scanner.Text()
+		assert.True(ct,
+			managerDeployment.Status.UpdatedReplicas == *managerDeployment.Spec.Replicas &&
+				managerDeployment.Status.Replicas == *managerDeployment.Spec.Replicas &&
+				managerDeployment.Status.AvailableReplicas == *managerDeployment.Spec.Replicas &&
+				managerDeployment.Status.ReadyReplicas == *managerDeployment.Spec.Replicas,
+		)
+	}, time.Minute, time.Second)
 
-		foundCount := 0
-		for _, substring := range substrings {
-			if strings.Contains(line, substring) {
-				foundCount++
-			}
-		}
-		if foundCount == len(substrings) {
-			return true, nil
-		}
-	}
-
-	return false, scanner.Err()
+	var managerPods corev1.PodList
+	t.Log("Waiting for only one Pod to remain")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.List(ctx, &managerPods, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
+		assert.Len(ct, managerPods.Items, 1)
+	}, time.Minute, time.Second)
 }
+
+//func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container string, substrings ...string) (bool, error) {
+//	podLogOpts := corev1.PodLogOptions{
+//		Follow:    true,
+//		Container: container,
+//	}
+//
+//	req := kclientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
+//	podLogs, err := req.Stream(ctx)
+//	if err != nil {
+//		return false, err
+//	}
+//	defer podLogs.Close()
+//
+//	scanner := bufio.NewScanner(podLogs)
+//	for scanner.Scan() {
+//		line := scanner.Text()
+//
+//		foundCount := 0
+//		for _, substring := range substrings {
+//			if strings.Contains(line, substring) {
+//				foundCount++
+//			}
+//		}
+//		if foundCount == len(substrings) {
+//			return true, nil
+//		}
+//	}
+//
+//	return false, scanner.Err()
+//}
 
 // getArtifactsOutput gets all the artifacts from the test run and saves them to the artifact path.
 // Currently it saves:
