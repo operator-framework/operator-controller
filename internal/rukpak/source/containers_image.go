@@ -25,6 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+var insecurePolicy = []byte(`{"default":[{"type":"insecureAcceptAnything"}]}`)
+
 type ContainersImageRegistry struct {
 	BaseCachePath     string
 	SourceContextFunc func(logger logr.Logger) (*types.SystemContext, error)
@@ -225,9 +227,11 @@ func resolveCanonicalRef(ctx context.Context, imgRef reference.Named, imageCtx *
 
 func loadPolicyContext(sourceContext *types.SystemContext, l logr.Logger) (*signature.PolicyContext, error) {
 	policy, err := signature.DefaultPolicy(sourceContext)
-	if os.IsNotExist(err) {
+	// TODO: there are security implications to silently moving to an insecure policy
+	// tracking issue: https://github.com/operator-framework/operator-controller/issues/1622
+	if err != nil {
 		l.Info("no default policy found, using insecure policy")
-		policy, err = signature.NewPolicyFromBytes([]byte(`{"default":[{"type":"insecureAcceptAnything"}]}`))
+		policy, err = signature.NewPolicyFromBytes(insecurePolicy)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error loading default policy: %w", err)

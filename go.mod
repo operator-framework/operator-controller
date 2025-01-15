@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/containerd v1.7.25
-	github.com/containers/image/v5 v5.32.2
+	github.com/containers/image/v5 v5.33.0
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
@@ -23,7 +23,7 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
+	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.16.4
 	k8s.io/api v0.32.0
@@ -50,7 +50,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/Microsoft/hcsshim v0.12.5 // indirect
+	github.com/Microsoft/hcsshim v0.12.9 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
@@ -63,15 +63,16 @@ require (
 	github.com/containerd/containerd/api v1.8.0 // indirect
 	github.com/containerd/continuity v0.4.4 // indirect
 	github.com/containerd/errdefs v0.3.0 // indirect
+	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
 	github.com/containerd/ttrpc v1.2.5 // indirect
-	github.com/containerd/typeurl/v2 v2.1.1 // indirect
+	github.com/containerd/typeurl/v2 v2.2.0 // indirect
 	github.com/containers/common v0.60.4 // indirect
 	github.com/containers/libtrust v0.0.0-20230121012942-c1716e8a8d01 // indirect
 	github.com/containers/ocicrypt v1.2.0 // indirect
-	github.com/containers/storage v1.55.0 // indirect
+	github.com/containers/storage v1.56.0 // indirect
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef // indirect
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 // indirect
 	github.com/cppforlife/go-cli-ui v0.0.0-20220425131040-94f26b16bc14 // indirect
@@ -81,7 +82,7 @@ require (
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/cli v27.3.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
-	github.com/docker/docker v27.2.0+incompatible // indirect
+	github.com/docker/docker v27.3.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.2 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -98,7 +99,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.6.1 // indirect
 	github.com/go-git/go-git/v5 v5.13.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
 	github.com/go-openapi/errors v0.22.0 // indirect
@@ -126,7 +127,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/h2non/go-is-svg v0.0.0-20160927212452-35e8c4b0612c // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -144,7 +145,7 @@ require (
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
-	github.com/letsencrypt/boulder v0.0.0-20240418210053-89b07f4543e0 // indirect
+	github.com/letsencrypt/boulder v0.0.0-20240620165639-de9c06129bec // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -160,6 +161,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.5.0 // indirect
+	github.com/moby/sys/capability v0.3.0 // indirect
 	github.com/moby/sys/mountinfo v0.7.2 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
 	github.com/moby/sys/user v0.3.0 // indirect
@@ -181,16 +183,16 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/proglottis/gpgme v0.1.3 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/common v0.57.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rubenv/sql-migrate v1.7.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
-	github.com/sigstore/fulcio v1.4.5 // indirect
+	github.com/sigstore/fulcio v1.6.4 // indirect
 	github.com/sigstore/rekor v1.3.6 // indirect
-	github.com/sigstore/sigstore v1.8.4 // indirect
+	github.com/sigstore/sigstore v1.8.9 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
@@ -200,8 +202,8 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
 	github.com/ulikunitz/xz v0.5.12 // indirect
-	github.com/vbatts/tar-split v0.11.5 // indirect
-	github.com/vbauerster/mpb/v8 v8.7.5 // indirect
+	github.com/vbatts/tar-split v0.11.6 // indirect
+	github.com/vbauerster/mpb/v8 v8.8.3 // indirect
 	github.com/vito/go-interact v1.0.1 // indirect
 	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -231,9 +233,9 @@ require (
 	golang.org/x/time v0.7.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7 // indirect
+	google.golang.org/genproto v0.0.0-20240823204242-4ba0660f739c // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240826202546-f6391c0de4c7 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240826202546-f6391c0de4c7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/grpc v1.67.1 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
