@@ -13,8 +13,8 @@ controllers, and tooling that support the packaging, distribution, and lifecycli
 
 OLM v1 consists of two different components:
 
-* operator-controller (this repository)
-* [catalogd](https://github.com/operator-framework/catalogd)
+* operator-controller
+* catalogd
 
 For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](docs/project/olmv1_design_decisions.md).
 
