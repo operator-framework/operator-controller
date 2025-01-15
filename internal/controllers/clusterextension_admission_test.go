@@ -72,7 +72,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionPackageName(t *testing.T) {
-	tooLongError := "spec.source.catalog.packageName: Too long: may not be longer than 253"
+	tooLongError := "spec.source.catalog.packageName: Too long: may not be more than 253"
 	regexMismatchError := "packageName must be a valid DNS1123 subdomain"
 
 	testCases := []struct {
@@ -129,7 +129,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionVersion(t *testing.T) {
-	tooLongError := "spec.source.catalog.version: Too long: may not be longer than 64"
+	tooLongError := "spec.source.catalog.version: Too long: may not be more than 64"
 	regexMismatchError := "invalid version expression"
 
 	testCases := []struct {
@@ -227,7 +227,7 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionChannel(t *testing.T) {
-	tooLongError := "spec.source.catalog.channels[0]: Too long: may not be longer than 253"
+	tooLongError := "spec.source.catalog.channels[0]: Too long: may not be more than 253"
 	regexMismatchError := "channels entries must be valid DNS1123 subdomains"
 
 	testCases := []struct {
@@ -282,7 +282,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
-	tooLongError := "spec.namespace: Too long: may not be longer than 63"
+	tooLongError := "spec.namespace: Too long: may not be more than 63"
 	regexMismatchError := "namespace must be a valid DNS1123 label"
 
 	testCases := []struct {
@@ -335,7 +335,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
-	tooLongError := "spec.serviceAccount.name: Too long: may not be longer than 253"
+	tooLongError := "spec.serviceAccount.name: Too long: may not be more than 253"
 	regexMismatchError := "name must be a valid DNS1123 subdomain"
 
 	testCases := []struct {
