@@ -11,6 +11,8 @@ on:
 jobs:
   extension-developer-e2e:
     runs-on: ubuntu-latest
+    concurrency:
+      cancel-in-progress: true
     steps:
     - uses: actions/checkout@v4
 
@@ -23,6 +25,8 @@ jobs:
 
   e2e-kind:
     runs-on: ubuntu-latest
+    concurrency:
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,6 +54,8 @@ jobs:
 
   upgrade-e2e:
     runs-on: ubuntu-latest
+    concurrency:
+      cancel-in-progress: true
     steps:
     - uses: actions/checkout@v4
 
