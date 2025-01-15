@@ -18,7 +18,7 @@ require (
 	github.com/onsi/gomega v1.36.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/operator-framework/api v0.29.0
-	github.com/operator-framework/helm-operator-plugins v0.7.0
+	github.com/operator-framework/helm-operator-plugins v0.8.0
 	github.com/operator-framework/operator-registry v1.50.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spf13/pflag v1.0.5
@@ -176,7 +176,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11 // indirect
-	github.com/operator-framework/operator-lib v0.15.0 // indirect
+	github.com/operator-framework/operator-lib v0.17.0 // indirect
 	github.com/otiai10/copy v1.14.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
