@@ -357,6 +357,82 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 	}
 }
 
+func TestClusterExtensionInstallRegistryDynamic(t *testing.T) {
+	// NOTE: Like 'TestClusterExtensionInstallRegistry', this test also requires extra configuration in /etc/containers/registries.conf
+	packageName := "dynamic"
+
+	t.Log("When a cluster extension is installed from a catalog")
+	t.Log("When the extension bundle format is registry+v1")
+
+	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
+	defer getArtifactsOutput(t)
+
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1.CatalogSource{
+				PackageName: packageName,
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
+				},
+			},
+		},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1.ServiceAccountReference{
+			Name: sa.Name,
+		},
+	}
+	t.Log("It updates the registries.conf file contents")
+	cm := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "e2e-registries-conf",
+			Namespace: "olmv1-system",
+		},
+		Data: map[string]string{
+			"registries.conf": `[[registry]]
+prefix = "dynamic-registry.operator-controller-e2e.svc.cluster.local:5000"
+location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"`,
+		},
+	}
+	require.NoError(t, c.Update(context.Background(), &cm))
+
+	t.Log("It resolves the specified package with correct bundle path")
+	t.Log("By creating the ClusterExtension resource")
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+
+	t.Log("By eventually reporting a successful resolution and bundle path")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+	}, 2*time.Minute, pollInterval)
+
+	// Give the check 2 minutes instead of the typical 1 for the pod's
+	// files to update from the configmap change.
+	// The theoretical max time is the kubelet sync period of 1 minute +
+	// ConfigMap cache TTL of 1 minute = 2 minutes
+	t.Log("By eventually reporting progressing as True")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+		if assert.NotNil(ct, cond) {
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		}
+	}, 2*time.Minute, pollInterval)
+
+	t.Log("By eventually installing the package successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+		if assert.NotNil(ct, cond) {
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+			assert.Contains(ct, cond.Message, "Installed bundle")
+			assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
+		}
+	}, pollDuration, pollInterval)
+}
+
 func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 

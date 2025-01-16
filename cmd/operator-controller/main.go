@@ -306,7 +306,8 @@ func main() {
 				return nil, fmt.Errorf("could not stat auth file, error: %w", err)
 			}
 			return srcContext, nil
-		}}
+		},
+	}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
 	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {

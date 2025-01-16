@@ -17,6 +17,7 @@ import (
 	"github.com/containers/image/v5/oci/layout"
 	"github.com/containers/image/v5/pkg/blobinfocache/none"
 	"github.com/containers/image/v5/pkg/compression"
+	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/containers/image/v5/signature"
 	"github.com/containers/image/v5/types"
 	"github.com/go-logr/logr"
@@ -43,10 +44,14 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 		return nil, reconcile.TerminalError(fmt.Errorf("error parsing bundle, bundle %s has a nil image source", bundle.Name))
 	}
 
+	// Reload registries cache in case of configuration update
+	sysregistriesv2.InvalidateCache()
+
 	srcCtx, err := i.SourceContextFunc(l)
 	if err != nil {
 		return nil, err
 	}
+
 	//////////////////////////////////////////////////////
 	//
 	// Resolve a canonical reference for the image.
@@ -254,6 +259,11 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 	if err != nil {
 		return fmt.Errorf("error creating image source: %w", err)
 	}
+	defer func() {
+		if err := layoutSrc.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	if err := os.MkdirAll(unpackPath, 0700); err != nil {
 		return fmt.Errorf("error creating unpack directory: %w", err)
