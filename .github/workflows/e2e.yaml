@@ -35,7 +35,7 @@ jobs:
       - name: Run e2e tests
         run: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 
-      - uses: cytopia/upload-artifact-retry-action@v0.1.7
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2e-artifacts
