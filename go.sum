@@ -1,5 +1,5 @@
-carvel.dev/kapp v0.64.0 h1:WeQ8XkccOonye7sCxOJnukKgRhWtHGDlt4tY4aFIMJM=
-carvel.dev/kapp v0.64.0/go.mod h1:6DoB9+JP27u4ZZbolK7ObmS1vhaVoOVrfqX1pj0Z6MQ=
+carvel.dev/kapp v0.63.3 h1:YKFQa8INOsmdlflHWJGhB4oSvWbOxU0Niybok1/YPaI=
+carvel.dev/kapp v0.63.3/go.mod h1:JJfWYClyhCed6rhwuRqjAbBGvDl0/EGMf1MQ/FKYbWw=
 carvel.dev/vendir v0.40.0 h1:JdhCp/EjAPGI8F5zoAVYwZHf1sPEFee19RpgGb3ciT8=
 carvel.dev/vendir v0.40.0/go.mod h1:XPdluJu7322RZNx05AA4gYnV52aKywBdh7Ma12GuM2Q=
 cel.dev/expr v0.18.0 h1:CJ6drgk+Hf96lkLikr4rFf19WrU0BOWEihyZnI2TAzo=
