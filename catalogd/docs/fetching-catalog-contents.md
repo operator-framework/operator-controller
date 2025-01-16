@@ -133,7 +133,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
 
 - [Install kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 - Assuming `kind` is installed, create a `kind` cluster with `extraPortMappings` and `node-labels` as shown in the [kind documentation](https://kind.sigs.k8s.io/docs/user/ingress/)
-- Install OLMV1, see the [Getting Started](https://operator-framework.github.io/operator-controller/getting-started/olmv1_getting_started/) documentation.
+- Install OLM V1, see the [Getting Started](https://operator-framework.github.io/operator-controller/getting-started/olmv1_getting_started/) documentation.
 - Install the `Ingress NGINX` Controller by running the below command:
 
   ```sh
