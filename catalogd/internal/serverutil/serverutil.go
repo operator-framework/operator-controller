@@ -1,7 +1,6 @@
 package serverutil
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -11,9 +10,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/gorilla/handlers"
+	"github.com/klauspost/compress/gzhttp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	catalogdmetrics "github.com/operator-framework/operator-controller/catalogd/internal/metrics"
@@ -44,20 +43,12 @@ func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig, tlsFil
 	}
 
 	shutdownTimeout := 30 * time.Second
-
-	l := mgr.GetLogger().WithName("catalogd-http-server")
-	handler := catalogdmetrics.AddMetricsToHandler(cfg.LocalStorage.StorageServerHandler())
-	handler = logrLoggingHandler(l, handler)
-
 	catalogServer := manager.Server{
 		Name:                "catalogs",
 		OnlyServeWhenLeader: true,
 		Server: &http.Server{
-			Addr:    cfg.CatalogAddr,
-			Handler: handler,
-			BaseContext: func(_ net.Listener) context.Context {
-				return log.IntoContext(context.Background(), mgr.GetLogger().WithName("http.catalogs"))
-			},
+			Addr:        cfg.CatalogAddr,
+			Handler:     storageServerHandlerWrapped(mgr, cfg),
 			ReadTimeout: 5 * time.Second,
 			// TODO: Revert this to 10 seconds if/when the API
 			// evolves to have significantly smaller responses
@@ -101,4 +92,16 @@ func logrLoggingHandler(l logr.Logger, handler http.Handler) http.Handler {
 
 		l.Info("handled request", "host", host, "username", username, "method", params.Request.Method, "uri", uri, "protocol", params.Request.Proto, "status", params.StatusCode, "size", params.Size)
 	})
+}
+
+func storageServerHandlerWrapped(mgr ctrl.Manager, cfg CatalogServerConfig) http.Handler {
+
+	handler := cfg.LocalStorage.StorageServerHandler()
+	handler = gzhttp.GzipHandler(handler)
+	handler = catalogdmetrics.AddMetricsToHandler(handler)
+
+	l := mgr.GetLogger().WithName("catalogd-http-server")
+	handler = logrLoggingHandler(l, handler)
+	return handler
+
 }

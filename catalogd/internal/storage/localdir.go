@@ -34,6 +34,11 @@ type LocalDirV1 struct {
 	sf singleflight.Group
 }
 
+var (
+	_                Instance = &LocalDirV1{}
+	ErrInvalidParams          = errors.New("invalid parameters")
+)
+
 func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) error {
 	s.m.Lock()
 	defer s.m.Unlock()
@@ -56,9 +61,13 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 		eg, egCtx = errgroup.WithContext(ctx)
 		metaChans []chan *declcfg.Meta
 	)
-	for i, f := range storeMetaFuncs {
+	for range storeMetaFuncs {
 		metaChans = append(metaChans, make(chan *declcfg.Meta, 1))
-		eg.Go(func() error { return f(tmpCatalogDir, metaChans[i]) })
+	}
+	for i, f := range storeMetaFuncs {
+		eg.Go(func() error {
+			return f(tmpCatalogDir, metaChans[i])
+		})
 	}
 	err = declcfg.WalkMetasFS(egCtx, fsys, func(path string, meta *declcfg.Meta, err error) error {
 		if err != nil {
@@ -249,6 +258,8 @@ func httpError(w http.ResponseWriter, err error) {
 		code = http.StatusNotFound
 	case errors.Is(err, fs.ErrPermission):
 		code = http.StatusForbidden
+	case errors.Is(err, ErrInvalidParams):
+		code = http.StatusBadRequest
 	default:
 		code = http.StatusInternalServerError
 	}
