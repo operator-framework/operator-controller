@@ -41,6 +41,12 @@ $(CRD_REF_DOCS): $(BINGO_DIR)/crd-ref-docs.mod
 	@echo "(re)installing $(GOBIN)/crd-ref-docs-v0.1.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-ref-docs.mod -o=$(GOBIN)/crd-ref-docs-v0.1.0 "github.com/elastic/crd-ref-docs"
 
+GINKGO := $(GOBIN)/ginkgo-v2.22.2
+$(GINKGO): $(BINGO_DIR)/ginkgo.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/ginkgo-v2.22.2"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=ginkgo.mod -o=$(GOBIN)/ginkgo-v2.22.2 "github.com/onsi/ginkgo/v2/ginkgo"
+
 GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.63.4
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
