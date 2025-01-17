@@ -3,7 +3,6 @@ package storage
 import (
 	"cmp"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -107,30 +106,28 @@ func (i *index) getSectionSet(schema, packageName, name string) sets.Set[section
 	}
 }
 
-func newIndex(r io.Reader) (*index, error) {
+func newIndex(metasChan <-chan *declcfg.Meta) (*index, error) {
 	idx := &index{
 		BySchema:  make(map[string][]section),
 		ByPackage: make(map[string][]section),
 		ByName:    make(map[string][]section),
 	}
-	var meta declcfg.Meta
-	dec := json.NewDecoder(r)
-	for {
-		i1 := dec.InputOffset()
-		if err := dec.Decode(&meta); err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			return nil, err
-		}
-		i2 := dec.InputOffset()
-		start := i1
-		length := i2 - i1
+	offset := int64(0)
+	for meta := range metasChan {
+		start := offset
+		length := int64(len(meta.Blob))
+		offset += length
 
 		s := section{offset: start, length: length}
-		idx.BySchema[meta.Schema] = append(idx.BySchema[meta.Schema], s)
-		idx.ByPackage[meta.Package] = append(idx.ByPackage[meta.Package], s)
-		idx.ByName[meta.Name] = append(idx.ByName[meta.Name], s)
+		if meta.Schema != "" {
+			idx.BySchema[meta.Schema] = append(idx.BySchema[meta.Schema], s)
+		}
+		if meta.Package != "" {
+			idx.ByPackage[meta.Package] = append(idx.ByPackage[meta.Package], s)
+		}
+		if meta.Name != "" {
+			idx.ByName[meta.Name] = append(idx.ByName[meta.Name], s)
+		}
 	}
 	return idx, nil
 }
