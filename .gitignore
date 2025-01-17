@@ -23,9 +23,8 @@ operator-controller.yaml
 install.sh
 catalogd.yaml
 
-# Kubernetes Generated files - skip generated files, except for vendored files
-
-!vendor/**/zz_generated.*
+# vendored files
+vendor/
 
 # editor and IDE paraphernalia
 .idea/
