@@ -56,7 +56,7 @@ var _ = Describe("LocalDir Storage Test", func() {
 		rootDir = d
 
 		baseURL = &url.URL{Scheme: "http", Host: "test-addr", Path: urlPrefix}
-		store = LocalDirV1{RootDir: rootDir, RootURL: baseURL}
+		store = &LocalDirV1{RootDir: rootDir, RootURL: baseURL}
 		unpackResultFS = &fstest.MapFS{
 			"bundle.yaml":  &fstest.MapFile{Data: []byte(testBundle), Mode: os.ModePerm},
 			"package.yaml": &fstest.MapFile{Data: []byte(testPackage), Mode: os.ModePerm},

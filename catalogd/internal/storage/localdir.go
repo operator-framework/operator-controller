@@ -31,8 +31,9 @@ import (
 // done so that clients accessing the content stored in RootDir/catalogName have
 // atomic view of the content for a catalog.
 type LocalDirV1 struct {
-	RootDir string
-	RootURL *url.URL
+	RootDir            string
+	RootURL            *url.URL
+	EnableQueryHandler bool
 
 	m  sync.RWMutex
 	sf singleflight.Group
@@ -42,7 +43,7 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	if features.CatalogdFeatureGate.Enabled(features.APIV1QueryHandler) {
+	if s.EnableQueryHandler {
 		return s.storeCatalogFileAndIndex(ctx, catalog, fsys)
 	}
 	return s.storeCatalogFile(ctx, catalog, fsys)
@@ -88,30 +89,33 @@ func (s *LocalDirV1) storeCatalogFileAndIndex(ctx context.Context, catalog strin
 	}
 	defer os.Remove(tmpIndexFile.Name())
 
-	pr, pw := io.Pipe()
-	mw := io.MultiWriter(tmpCatalogFile, pw)
+	metasChan := make(chan *declcfg.Meta)
 	eg, egCtx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
+		defer close(metasChan)
 		if err := declcfg.WalkMetasFS(egCtx, fsys, func(path string, meta *declcfg.Meta, err error) error {
 			if err != nil {
 				return err
 			}
-			_, err = mw.Write(meta.Blob)
+			_, err = tmpCatalogFile.Write(meta.Blob)
 			if err != nil {
-				return pw.CloseWithError(err)
+				return err
 			}
+			select {
+			case <-egCtx.Done():
+				return egCtx.Err()
+			case metasChan <- meta:
+			}
+
 			return nil
 		}, declcfg.WithConcurrency(1)); err != nil {
 			return fmt.Errorf("error walking FBC root: %w", err)
 		}
-		return pw.CloseWithError(tmpCatalogFile.Close())
+		return tmpCatalogFile.Close()
 	})
 	eg.Go(func() error {
-		idx, err := newIndex(pr)
+		idx, err := newIndex(metasChan)
 		if err != nil {
-			return pr.CloseWithError(err)
-		}
-		if err := pr.Close(); err != nil {
 			return err
 		}
 		enc := json.NewEncoder(tmpIndexFile)
@@ -142,7 +146,7 @@ func (s *LocalDirV1) Delete(catalog string) error {
 	var errs []error
 	errs = append(errs, os.RemoveAll(filepath.Join(s.RootDir, fmt.Sprintf("%s.jsonl", catalog))))
 
-	if features.CatalogdFeatureGate.Enabled(features.APIV1QueryHandler) {
+	if s.EnableQueryHandler {
 		errs = append(errs, os.RemoveAll(filepath.Join(s.RootDir, fmt.Sprintf("%s.index.json", catalog))))
 	}
 	return errors.Join(errs...)
@@ -158,7 +162,7 @@ func (s *LocalDirV1) StorageServerHandler() http.Handler {
 	v1AllPath := s.RootURL.JoinPath("{catalog}", "api", "v1", "all").Path
 	mux.Handle(v1AllPath, s.v1AllHandler())
 
-	if features.CatalogdFeatureGate.Enabled(features.APIV1QueryHandler) {
+	if s.EnableQueryHandler {
 		v1QueryPath := s.RootURL.JoinPath("{catalog}", "api", "v1", "query").Path
 		mux.Handle(v1QueryPath, s.v1QueryHandler())
 	}
@@ -171,16 +175,11 @@ func (s *LocalDirV1) v1AllHandler() http.Handler {
 		defer s.m.RUnlock()
 
 		catalog := r.PathValue("catalog")
+		w.Header().Add("Content-Type", "application/jsonl")
 		http.ServeFile(w, r, filepath.Join(s.RootDir, fmt.Sprintf("%s.jsonl", catalog)))
 	})
 	gzHandler := gzhttp.GzipHandler(catalogHandler)
-
-	typeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/jsonl")
-		gzHandler.ServeHTTP(w, r)
-	})
-
-	return newLoggingMiddleware(typeHandler)
+	return newLoggingMiddleware(gzHandler)
 }
 
 func (s *LocalDirV1) v1QueryHandler() http.Handler {
@@ -192,6 +191,13 @@ func (s *LocalDirV1) v1QueryHandler() http.Handler {
 		schema := r.URL.Query().Get("schema")
 		pkg := r.URL.Query().Get("package")
 		name := r.URL.Query().Get("name")
+
+		// If no parameters are provided, return the entire catalog (this is the same as /api/v1/all)
+		if schema == "" && pkg == "" && name == "" {
+			w.Header().Add("Content-Type", "application/jsonl")
+			http.ServeFile(w, r, filepath.Join(s.RootDir, fmt.Sprintf("%s.jsonl", catalog)))
+			return
+		}
 
 		catalogFilePath := filepath.Join(s.RootDir, fmt.Sprintf("%s.jsonl", catalog))
 		catalogFileStat, err := os.Stat(catalogFilePath)
