@@ -15,12 +15,10 @@ Thank you for your interest in contributing to the Operator-Controller.
 
 As you may or may not know, the Operator-Controller project aims to deliver the user experience described in the [Operator Lifecycle Manager (OLM) V1 Product Requirements Document (PRD)](https://docs.google.com/document/d/1-vsZ2dAODNfoHb7Nf0fbYeKDF7DUqEzS9HqgeMCvbDs/edit). The design requirements captured in the OLM V1 PRD were born from customer and community feedback based on the experience they had with the released version of [OLM V0](https://github.com/operator-framework/operator-lifecycle-manager).
 
-The user experience captured in the OLM V1 PRD introduces many requirements that are best satisfied by a microservices architecture. The OLM V1 experience currently relies on two projects:
+The user experience captured in the OLM V1 PRD introduces many requirements that are best satisfied by a microservices architecture. The OLM V1 experience currently relies on two components:
 
-- [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
-- [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.
-
-Each of the projects listed above have their own governance, release milestones, and release cadence. However, from a technical perspective, the "OLM V1 experience" matches the experienced offered by the operator-controller project, the top level component which depends on Catalogd.
+- [Operator-Controller](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
+- [Catalogd](https://github.com/operator-framework/operator-controller/tree/main/catalogd), which hosts operator content and helps users discover installable content.
 
 ## How do we collaborate
 
@@ -119,10 +117,7 @@ As discussed earlier, the operator-controller adheres to a microservice architec
 
 Unsure where to submit an issue?
 
-- [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
-- [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.
-
-Don't worry if you accidentally submit an issue against the wrong project, if we notice that an issue would fit better with a separate project we'll move it to the correct repository and mention it in the #olm-dev slack channel.
+- [Operator-Controller](https://github.com/operator-framework/operator-controller/), which contains both components, is the project allowing users to specify operators they'd like to install.
 
 ## Submitting Pull Requests
 

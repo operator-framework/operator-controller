@@ -8,7 +8,7 @@ hide:
 This document provides an overview of the architecture of OLM v1, which consists of two primary components:
 
 1. [operator-controller](https://github.com/operator-framework/operator-controller)
-2. [catalogD](https://github.com/operator-framework/catalogd)
+2. [catalogD](https://github.com/operator-framework/operator-controller/tree/main/catalogd)
 
 The diagram below visually represents the architecture of OLM v1, followed by descriptions of each component and its role within the system.
 

@@ -1,6 +1,6 @@
 # Catalogd web server
 
-[Catalogd](https://github.com/operator-framework/catalogd), the OLM v1 component for making catalog contents available on cluster, includes
+[Catalogd](https://github.com/operator-framework/operator-controller/tree/main/catalogd), the OLM v1 component for making catalog contents available on cluster, includes
 a web server that serves catalog contents to clients via an HTTP(S) endpoint.
 
 The endpoint to retrieve this information can be composed from the `.status.urls.base` of a `ClusterCatalog` resource with the selected access API path.
