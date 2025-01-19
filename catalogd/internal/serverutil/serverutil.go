@@ -14,6 +14,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	catalogdmetrics "github.com/operator-framework/operator-controller/catalogd/internal/metrics"
 	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
@@ -53,7 +54,7 @@ func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig, tlsFil
 		OnlyServeWhenLeader: true,
 		Server: &http.Server{
 			Addr:    cfg.CatalogAddr,
-			Handler: catalogdmetrics.AddMetricsToHandler(cfg.LocalStorage.StorageServerHandler()),
+			Handler: handler,
 			BaseContext: func(_ net.Listener) context.Context {
 				return log.IntoContext(context.Background(), mgr.GetLogger().WithName("http.catalogs"))
 			},
