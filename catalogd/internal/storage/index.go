@@ -51,7 +51,7 @@ func (i index) Size() int64 {
 	return int64(size)
 }
 
-func (i index) Get(r io.ReaderAt, schema, packageName, name string) (io.Reader, bool) {
+func (i index) Get(r io.ReaderAt, schema, packageName, name string) (io.ReadSeeker, bool) {
 	sectionSet := i.getSectionSet(schema, packageName, name)
 
 	sections := sectionSet.UnsortedList()
@@ -59,12 +59,12 @@ func (i index) Get(r io.ReaderAt, schema, packageName, name string) (io.Reader, 
 		return cmp.Compare(a.offset, b.offset)
 	})
 
-	srs := make([]io.Reader, 0, len(sections))
+	srs := make([]io.ReadSeeker, 0, len(sections))
 	for _, s := range sections {
 		sr := io.NewSectionReader(r, s.offset, s.length)
 		srs = append(srs, sr)
 	}
-	return io.MultiReader(srs...), true
+	return newMultiReadSeeker(srs...), true
 }
 
 func (i *index) getSectionSet(schema, packageName, name string) sets.Set[section] {
