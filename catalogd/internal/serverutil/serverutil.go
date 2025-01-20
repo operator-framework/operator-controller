@@ -9,10 +9,10 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	catalogdmetrics "github.com/operator-framework/operator-controller/catalogd/internal/metrics"
 	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
-	"github.com/operator-framework/operator-controller/catalogd/internal/third_party/server"
 )
 
 type CatalogServerConfig struct {
@@ -40,8 +40,9 @@ func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig, tlsFil
 
 	shutdownTimeout := 30 * time.Second
 
-	catalogServer := server.Server{
-		Kind: "catalogs",
+	catalogServer := manager.Server{
+		Name:                "catalogs",
+		OnlyServeWhenLeader: true,
 		Server: &http.Server{
 			Addr:        cfg.CatalogAddr,
 			Handler:     catalogdmetrics.AddMetricsToHandler(cfg.LocalStorage.StorageServerHandler()),
