@@ -12,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/rand"
-	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -21,7 +20,6 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
-	"github.com/operator-framework/operator-controller/internal/features"
 )
 
 func TestInvalidClusterExtensionVersionRange(t *testing.T) {
@@ -426,7 +424,6 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 }
 
 func TestUpgradeFoundLegacy(t *testing.T) {
-	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
@@ -454,7 +451,6 @@ func TestUpgradeFoundLegacy(t *testing.T) {
 }
 
 func TestUpgradeNotFoundLegacy(t *testing.T) {
-	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
@@ -476,62 +472,6 @@ func TestUpgradeNotFoundLegacy(t *testing.T) {
 	// 0.1.0 only upgrades to 1.0.x with its legacy upgrade edges, so this fails.
 	_, _, _, err := r.Resolve(context.Background(), ce, installedBundle)
 	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "0.1.0": no bundles found for package %q matching version "<1.0.0 >=2.0.0"`, pkgName))
-}
-
-func TestUpgradeFoundSemver(t *testing.T) {
-	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)
-	pkgName := randPkg()
-	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return &declcfg.DeclarativeConfig{}, nil, nil
-		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return &declcfg.DeclarativeConfig{}, nil, nil
-		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), nil, nil
-		},
-	}
-	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1.UpgradeConstraintPolicyCatalogProvided)
-	installedBundle := &ocv1.BundleMetadata{
-		Name:    bundleName(pkgName, "1.0.0"),
-		Version: "1.0.0",
-	}
-	// there is a legacy upgrade edge from 1.0.0 to 2.0.0, but we are using semver semantics here.
-	// therefore:
-	// 	 1.0.0 => 1.0.2 is what we expect
-	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, installedBundle)
-	require.NoError(t, err)
-	assert.Equal(t, genBundle(pkgName, "1.0.2"), *gotBundle)
-	assert.Equal(t, bsemver.MustParse("1.0.2"), *gotVersion)
-	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
-}
-
-func TestUpgradeNotFoundSemver(t *testing.T) {
-	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)
-	pkgName := randPkg()
-	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return &declcfg.DeclarativeConfig{}, nil, nil
-		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return &declcfg.DeclarativeConfig{}, nil, nil
-		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), nil, nil
-		},
-	}
-	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, []string{}, "!=0.1.0", ocv1.UpgradeConstraintPolicyCatalogProvided)
-	installedBundle := &ocv1.BundleMetadata{
-		Name:    bundleName(pkgName, "0.1.0"),
-		Version: "0.1.0",
-	}
-	// there are legacy upgrade edges from 0.1.0 to 1.0.x, but we are using semver semantics here.
-	// therefore, we expect to fail because there are no semver-compatible upgrade edges from 0.1.0.
-	_, _, _, err := r.Resolve(context.Background(), ce, installedBundle)
-	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "0.1.0": no bundles found for package %q matching version "!=0.1.0"`, pkgName))
 }
 
 func TestDowngradeFound(t *testing.T) {
@@ -838,7 +778,6 @@ func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 }
 
 func TestClusterExtensionMatchLabel(t *testing.T) {
-	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
@@ -859,7 +798,6 @@ func TestClusterExtensionMatchLabel(t *testing.T) {
 }
 
 func TestClusterExtensionNoMatchLabel(t *testing.T) {
-	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
