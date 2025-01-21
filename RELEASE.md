@@ -54,3 +54,21 @@ git push upstream v1.2.0
 
 ### Post-Steps
 Once the tag has been pushed the release action should run automatically. You can view the progress [here](https://github.com/operator-framework/operator-controller/actions/workflows/release.yaml). When finished, the release should then be available on the [releases page](https://github.com/operator-framework/operator-controller/releases).
+
+
+## Backporting Policy
+
+Mainly critical issue fixes might be backported to the most recent minor release.
+Special backport requests can be discussed during the weekly Community meeting or via Slack channel;
+this does not guarantee an exceptional backport will be created.
+
+Occasionally non-critical issue fixes will be backported, either at an approver’s discretion or by request as noted above.
+If you believe an issue should be backported, please feel free to reach out and raise your concerns or needs.
+For information on contacting maintainers via the [#olm-dev](https://kubernetes.slack.com/archives/C0181L6JYQ2) Slack channel
+and attending meetings. To know more about see [How to Contribute](./CONTRIBUTING.md).
+
+### Process
+
+1. Create a PR with the fix cherry-picked into the release branch
+2. Ask for a review from the maintainers.
+3. Once approved, merge the PR and perform the Patch Release steps above.
