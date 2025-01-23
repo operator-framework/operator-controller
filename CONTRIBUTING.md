@@ -149,6 +149,14 @@ focusing less on style conflicts, and more on the design and implementation deta
 
 Please follow this style to make the operator-controller project easier to review, maintain and develop.
 
+### Go version
+
+Our goal is to minimize disruption by requiring the lowest possible Go language version. This means avoiding updaties to the go version specified in [go.mod](go.mod) (and other locations).
+
+There is a GitHub PR CI job named `go-verdiff` that will inform a PR author if the Go language version has been updated. It is not a required test, but failures should prompt authors and reviewers to have a discussion with the community about the Go language version change. 
+
+There may be ways to avoid a Go language version change by using not-the-most-recent versions of dependencies. We do acknowledge that CVE fixes might require a specific dependency version that may have updated to a newer version of the Go language.
+
 ### Documentation
 
 If the contribution changes the existing APIs or user interface it must include sufficient documentation to explain the
