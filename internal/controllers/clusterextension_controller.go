@@ -209,7 +209,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		setInstallStatus(ext, nil)
 		var saerr *authentication.ServiceAccountNotFoundError
 		if errors.As(err, &saerr) {
-			l.Info("ServiceAccount defined in the ClusterExtension is not found")
 			err = saerr
 		}
 		setInstalledStatusConditionUnknown(ext, err.Error())
