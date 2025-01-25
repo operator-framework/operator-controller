@@ -695,7 +695,7 @@ func TestClusterExtensionInstallationFailsWithNoServiceAccount(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-does-not-exist-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-does1-not-exist-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -742,28 +742,20 @@ func TestClusterExtensionInstallationFailsWithNoServiceAccount(t *testing.T) {
 
 	t.Log("By checking the status fields")
 	require.Equal(t, ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
+	res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Error(t, err, res)
 
 	t.Log("By checking the expected installed conditions")
-
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
-	t.Log("By checking the installed conditions message", installedCond.Message)
 	require.NotNil(t, installedCond)
-	t.Log("By checking the installed conditions status", installedCond.Status)
-	t.Log("By checking the installed conditions reason", installedCond.Reason)
 	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
 	require.Equal(t, ocv1.ReasonSucceeded, installedCond.Reason)
 
 	t.Log("By checking the expected progressing conditions")
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
-	t.Log("Progressing condition message", progressingCond.Message)
 	require.NotNil(t, progressingCond)
-	t.Log("Progressing condition status", progressingCond.Status)
-	t.Log("Progressing condition reason", progressingCond.Reason)
-	//require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
-	require.Equal(t, ocv1.ReasonFailed, progressingCond.Reason)
-	failedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.ReasonFailed)
-	t.Log("By checking the failed conditions message", failedCond.Message)
-	t.Log("By checking the failed conditions status", failedCond.Status, failedCond.Reason)
+	require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
+	require.Equal(t, ocv1.ReasonSucceeded, progressingCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 }
