@@ -2,20 +2,18 @@
 
 ## Choosing version increment
 
-The `operator-controller` project is in its initial development phase and has yet to have a Major release, so users should assume that breaking changes may be seen in Minor releases as defined [here](https://semver.org/#spec-item-4).
+The `operator-controller` following Semantic Versioning guarantees:
 
-In general, the `operator-controller`` will only support Minor releases until it has reached a degree of stability and adoption that the benefits of supporting Patch releases outweighs the costs of supporting this release workflow. If a member of the community strongly desires a patch release addressing a critical bug, they should submit an issue and it will be considered on a case-by-case basis. 
-
-In the future, the `operator-controller` will have a Major release in which we'll adopt the following Semantic Versioning guarantees:
 * Major: API breaking change(s) are made.
 * Minor: Backwards compatible features are added.
 * Patch: Backwards compatible bug fix is made.
 
-When a Major or Minor release being made is associated with one or more milestones, please ensure that all related features have been merged into the `main` branch before continuing.
+When a Major or Minor release being made is associated with one or more milestones,
+please ensure that all related features have been merged into the `main` branch before continuing.
 
 ## Creating the release
-Note that throughout this guide, the `upstream` remote refers to the `operator-framework/operator-controller` repository.
 
+Note that throughout this guide, the `upstream` remote refers to the `operator-framework/operator-controller` repository.
 The release process differs slightly based on whether a patch or major/minor release is being made.
 
 ### Patch Release

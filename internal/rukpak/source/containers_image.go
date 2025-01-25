@@ -17,6 +17,7 @@ import (
 	"github.com/containers/image/v5/oci/layout"
 	"github.com/containers/image/v5/pkg/blobinfocache/none"
 	"github.com/containers/image/v5/pkg/compression"
+	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/containers/image/v5/signature"
 	"github.com/containers/image/v5/types"
 	"github.com/go-logr/logr"
@@ -24,6 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+var insecurePolicy = []byte(`{"default":[{"type":"insecureAcceptAnything"}]}`)
 
 type ContainersImageRegistry struct {
 	BaseCachePath     string
@@ -41,10 +44,14 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 		return nil, reconcile.TerminalError(fmt.Errorf("error parsing bundle, bundle %s has a nil image source", bundle.Name))
 	}
 
+	// Reload registries cache in case of configuration update
+	sysregistriesv2.InvalidateCache()
+
 	srcCtx, err := i.SourceContextFunc(l)
 	if err != nil {
 		return nil, err
 	}
+
 	//////////////////////////////////////////////////////
 	//
 	// Resolve a canonical reference for the image.
@@ -225,9 +232,11 @@ func resolveCanonicalRef(ctx context.Context, imgRef reference.Named, imageCtx *
 
 func loadPolicyContext(sourceContext *types.SystemContext, l logr.Logger) (*signature.PolicyContext, error) {
 	policy, err := signature.DefaultPolicy(sourceContext)
-	if os.IsNotExist(err) {
+	// TODO: there are security implications to silently moving to an insecure policy
+	// tracking issue: https://github.com/operator-framework/operator-controller/issues/1622
+	if err != nil {
 		l.Info("no default policy found, using insecure policy")
-		policy, err = signature.NewPolicyFromBytes([]byte(`{"default":[{"type":"insecureAcceptAnything"}]}`))
+		policy, err = signature.NewPolicyFromBytes(insecurePolicy)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error loading default policy: %w", err)
@@ -250,6 +259,11 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 	if err != nil {
 		return fmt.Errorf("error creating image source: %w", err)
 	}
+	defer func() {
+		if err := layoutSrc.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	if err := os.MkdirAll(unpackPath, 0700); err != nil {
 		return fmt.Errorf("error creating unpack directory: %w", err)

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: e2e-registries-conf
+  namespace: system
+data:
+  registries.conf: |
+    [[registry]]
+    prefix = "docker-registry.catalogd-e2e.svc:5000"
+    insecure = true
+    location = "docker-registry.catalogd-e2e.svc:5000"

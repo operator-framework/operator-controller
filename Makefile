@@ -14,6 +14,11 @@ IMAGE_REPO := quay.io/operator-framework/operator-controller
 endif
 export IMAGE_REPO
 
+ifeq ($(origin CATALOG_IMAGE_REPO), undefined)
+CATALOG_IMAGE_REPO := quay.io/operator-framework/catalogd
+endif
+export CATALOG_IMAGE_REPO
+
 ifeq ($(origin IMAGE_TAG), undefined)
 IMAGE_TAG := devel
 endif
@@ -23,16 +28,15 @@ IMG := $(IMAGE_REPO):$(IMAGE_TAG)
 
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.15.3
-export CATALOGD_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)
 export WAIT_TIMEOUT := 60s
 
 # Install default ClusterCatalogs
 export INSTALL_DEFAULT_CATALOGS := true
 
-# By default setup-envtest will write to $XDG_DATA_HOME, or $HOME/.local/share if that is not defined.
+# By default setup-envtest binary will write to $XDG_DATA_HOME, or $HOME/.local/share if that is not defined.
 # If $HOME is not set, we need to specify a binary directory to prevent an error in setup-envtest.
 # Useful for some CI/CD environments that set neither $XDG_DATA_HOME nor $HOME.
-SETUP_ENVTEST_BIN_DIR_OVERRIDE=
+SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir $(ROOT_DIR)/bin/envtest-binaries
 ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]] && echo true ), true)
 	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
 endif
@@ -99,9 +103,14 @@ tidy: #HELP Update dependencies.
 	# Force tidy to use the version already in go.mod
 	$(Q)go mod tidy -go=$(GOLANG_VERSION)
 
+
 .PHONY: manifests
-manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac
+manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
+	# To generate the manifests used and do not use catalogd directory
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/... output:rbac:artifacts:config=config/base/rbac
+	$(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=config/base/crd/bases
+	# To generate the manifests for catalogd
+	$(MAKE) -C catalogd generate
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -125,10 +134,17 @@ vet: #EXHELP Run go vet against code.
 
 .PHONY: bingo-upgrade
 bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
-	@for pkg in $$($(BINGO) list | awk '{ print $$1 }' | tail -n +3); do \
-		echo "Upgrading $$pkg to latest..."; \
+	@for pkg in $$($(BINGO) list | awk '{ print $$3 }' | tail -n +3 | sed 's/@.*//'); do \
+		echo -e "Upgrading \033[35m$$pkg\033[0m to latest..."; \
 		$(BINGO) get "$$pkg@latest"; \
 	done
+
+.PHONY: verify-crd-compatibility
+CRD_DIFF_ORIGINAL_REF := main
+CRD_DIFF_UPDATED_SOURCE := file://config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml
+CRD_DIFF_CONFIG := crd-diff-config.yaml
+verify-crd-compatibility: $(CRD_DIFF) manifests
+	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml" ${CRD_DIFF_UPDATED_SOURCE}
 
 .PHONY: test
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
@@ -151,19 +167,25 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
-.PHONY: test-unit
 ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
-UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
+UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/ | grep -v /catalogd/test/)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
-test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
+
+.PHONY: envtest-k8s-bins #HELP Uses setup-envtest to download and install the binaries required to run ENVTEST-test based locally at the project/bin directory.
+envtest-k8s-bins: $(SETUP_ENVTEST)
+	mkdir -p $(ROOT_DIR)/bin
+	$(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)
+
+.PHONY: test-unit
+test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
 	rm -rf $(COVERAGE_UNIT_DIR) && mkdir -p $(COVERAGE_UNIT_DIR)
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && \
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use -p path $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE))" \
             CGO_ENABLED=1 go test \
                 -tags '$(GO_BUILD_TAGS)' \
                 -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
                 $(UNIT_TEST_DIRS) \
-                -test.gocoverdir=$(ROOT_DIR)/coverage/unit
+                -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
 .PHONY: image-registry
 E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
@@ -216,14 +238,16 @@ e2e-coverage:
 	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/test/e2e-coverage.sh
 
 .PHONY: kind-load
-kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
+kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND cluster.
 	$(CONTAINER_RUNTIME) save $(IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
+	IMAGE_REPO=$(CATALOG_IMAGE_REPO) KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) $(MAKE) -C catalogd kind-load
 
 .PHONY: kind-deploy
-kind-deploy: export MANIFEST="./operator-controller.yaml"
-kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies onto the kind cluster.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > operator-controller.yaml
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+kind-deploy: export MANIFEST := ./operator-controller.yaml
+kind-deploy: manifests $(KUSTOMIZE)
+	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager | sed "s/cert-git-version/cert-$(VERSION)/g") > $(MANIFEST)
+	envsubst '$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
@@ -256,7 +280,7 @@ export GO_BUILD_FLAGS :=
 export GO_BUILD_LDFLAGS := -s -w \
     -X '$(VERSION_PATH).version=$(VERSION)' \
 
-BINARIES=manager
+BINARIES=operator-controller
 
 $(BINARIES):
 	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$@ ./cmd/$@
@@ -280,8 +304,9 @@ go-build-linux: $(BINARIES)
 run: docker-build kind-cluster kind-load kind-deploy #HELP Build the operator-controller then deploy it into a new kind cluster.
 
 .PHONY: docker-build
-docker-build: build-linux #EXHELP Build docker image for operator-controller with GOOS=linux and local GOARCH.
+docker-build: build-linux  #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
 	$(CONTAINER_RUNTIME) build -t $(IMG) -f Dockerfile ./bin/linux
+	IMAGE_REPO=$(CATALOG_IMAGE_REPO) $(MAKE) -C catalogd build-container
 
 #SECTION Release
 ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)
@@ -296,34 +321,32 @@ export GORELEASER_ARGS
 
 .PHONY: release
 release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
-	$(GORELEASER) $(GORELEASER_ARGS)
+	OPERATOR_CONTROLLER_IMAGE_REPO=$(IMAGE_REPO) CATALOGD_IMAGE_REPO=$(CATALOG_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
-quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
-quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release manifests and scripts.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+quickstart: export MANIFEST := ./operator-controller.yaml
+quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
+	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager | sed "s/cert-git-version/cert-$(VERSION)/g") > $(MANIFEST)
+	envsubst '$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Docs
 
 .PHONY: crd-ref-docs
 OPERATOR_CONTROLLER_API_REFERENCE_FILENAME := operator-controller-api-reference.md
 CATALOGD_API_REFERENCE_FILENAME := catalogd-api-reference.md
-CATALOGD_TMP_DIR := $(ROOT_DIR)/.catalogd-tmp/
 API_REFERENCE_DIR := $(ROOT_DIR)/docs/api-reference
+
 crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
 	rm -f $(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME)
 	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
 	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME);
-	rm -rf $(CATALOGD_TMP_DIR)
-	git clone --depth 1 --branch $(CATALOGD_VERSION) https://github.com/operator-framework/catalogd $(CATALOGD_TMP_DIR)
-	rm -f $(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME)
-	$(CRD_REF_DOCS) --source-path=$(CATALOGD_TMP_DIR)/api \
-	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
-	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME)
-	rm -rf $(CATALOGD_TMP_DIR)/
 
+	rm -f $(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME)
+	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/catalogd/api \
+	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
+	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME);
+	
 VENVDIR := $(abspath docs/.venv)
 
 .PHONY: build-docs

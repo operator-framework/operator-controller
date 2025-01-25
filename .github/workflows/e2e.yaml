@@ -35,7 +35,7 @@ jobs:
       - name: Run e2e tests
         run: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 
-      - uses: cytopia/upload-artifact-retry-action@v0.1.7
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2e-artifacts
@@ -58,4 +58,10 @@ jobs:
         go-version-file: go.mod
 
     - name: Run the upgrade e2e test
-      run: make test-upgrade-e2e
+      run: ARTIFACT_PATH=/tmp/artifacts make test-upgrade-e2e
+
+    - uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: upgrade-e2e-artifacts
+        path: /tmp/artifacts/

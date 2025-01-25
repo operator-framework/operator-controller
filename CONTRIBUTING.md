@@ -15,12 +15,10 @@ Thank you for your interest in contributing to the Operator-Controller.
 
 As you may or may not know, the Operator-Controller project aims to deliver the user experience described in the [Operator Lifecycle Manager (OLM) V1 Product Requirements Document (PRD)](https://docs.google.com/document/d/1-vsZ2dAODNfoHb7Nf0fbYeKDF7DUqEzS9HqgeMCvbDs/edit). The design requirements captured in the OLM V1 PRD were born from customer and community feedback based on the experience they had with the released version of [OLM V0](https://github.com/operator-framework/operator-lifecycle-manager).
 
-The user experience captured in the OLM V1 PRD introduces many requirements that are best satisfied by a microservices architecture. The OLM V1 experience currently relies on two projects:
+The user experience captured in the OLM V1 PRD introduces many requirements that are best satisfied by a microservices architecture. The OLM V1 experience currently relies on two components:
 
-- [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
-- [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.
-
-Each of the projects listed above have their own governance, release milestones, and release cadence. However, from a technical perspective, the "OLM V1 experience" matches the experienced offered by the operator-controller project, the top level component which depends on Catalogd.
+- [Operator-Controller](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
+- [Catalogd](https://github.com/operator-framework/operator-controller/tree/main/catalogd), which hosts operator content and helps users discover installable content.
 
 ## How do we collaborate
 
@@ -59,6 +57,32 @@ you can follow the steps below to test your changes:
     make kind-load kind-deploy
     ```
 
+## How to debug controller tests using ENVTEST
+
+[ENVTEST](https://book.kubebuilder.io/reference/envtest) requires k8s binaries to be downloaded to run the tests.
+To download the necessary binaries, follow the steps below:
+
+```sh
+make envtest-k8s-bins
+```
+
+Note that the binaries are downloaded to the `bin/envtest-binaries` directory.
+
+```sh
+$ tree
+.
+├── envtest-binaries
+│   └── k8s
+│       └── 1.31.0-darwin-arm64
+│           ├── etcd
+│           ├── kube-apiserver
+│           └── kubectl
+```
+
+Now, you can debug them with your IDE:
+
+![Screenshot IDE example](https://github.com/user-attachments/assets/3096d524-0686-48ca-911c-5b843093ad1f)
+
 ### Communication Channels
 
 - Email: [operator-framework-olm-dev](mailto:operator-framework-olm-dev@googlegroups.com)
@@ -93,10 +117,7 @@ As discussed earlier, the operator-controller adheres to a microservice architec
 
 Unsure where to submit an issue?
 
-- [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
-- [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.
-
-Don't worry if you accidentally submit an issue against the wrong project, if we notice that an issue would fit better with a separate project we'll move it to the correct repository and mention it in the #olm-dev slack channel.
+- [Operator-Controller](https://github.com/operator-framework/operator-controller/), which contains both components, is the project allowing users to specify operators they'd like to install.
 
 ## Submitting Pull Requests
 
@@ -127,6 +148,14 @@ submitting a PR, please run `make lint` locally and commit the results. This wil
 focusing less on style conflicts, and more on the design and implementation details.
 
 Please follow this style to make the operator-controller project easier to review, maintain and develop.
+
+### Go version
+
+Our goal is to minimize disruption by requiring the lowest possible Go language version. This means avoiding updaties to the go version specified in [go.mod](go.mod) (and other locations).
+
+There is a GitHub PR CI job named `go-verdiff` that will inform a PR author if the Go language version has been updated. It is not a required test, but failures should prompt authors and reviewers to have a discussion with the community about the Go language version change. 
+
+There may be ways to avoid a Go language version change by using not-the-most-recent versions of dependencies. We do acknowledge that CVE fixes might require a specific dependency version that may have updated to a newer version of the Go language.
 
 ### Documentation
 

@@ -15,10 +15,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	catalogd "github.com/operator-framework/catalogd/api/v1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
@@ -39,6 +39,7 @@ type foundBundle struct {
 
 // Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
 func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+	l := log.FromContext(ctx)
 	packageName := ext.Spec.Source.Catalog.PackageName
 	versionRange := ext.Spec.Source.Catalog.Version
 	channels := ext.Spec.Source.Catalog.Channels
@@ -65,6 +66,15 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		}
 	}
 
+	type catStat struct {
+		CatalogName    string `json:"catalogName"`
+		PackageFound   bool   `json:"packageFound"`
+		TotalBundles   int    `json:"totalBundles"`
+		MatchedBundles int    `json:"matchedBundles"`
+	}
+
+	var catStats []*catStat
+
 	resolvedBundles := []foundBundle{}
 	var priorDeprecation *declcfg.Deprecation
 
@@ -75,6 +85,16 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		if err != nil {
 			return fmt.Errorf("error getting package %q from catalog %q: %w", packageName, cat.Name, err)
 		}
+
+		cs := catStat{CatalogName: cat.Name}
+		catStats = append(catStats, &cs)
+
+		if isFBCEmpty(packageFBC) {
+			return nil
+		}
+
+		cs.PackageFound = true
+		cs.TotalBundles = len(packageFBC.Bundles)
 
 		var predicates []filter.Predicate[declcfg.Bundle]
 		if len(channels) > 0 {
@@ -99,6 +119,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 
 		// Apply the predicates to get the candidate bundles
 		packageFBC.Bundles = filter.Filter(packageFBC.Bundles, filter.And(predicates...))
+		cs.MatchedBundles = len(packageFBC.Bundles)
 		if len(packageFBC.Bundles) == 0 {
 			return nil
 		}
@@ -158,6 +179,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 
 	// Check for ambiguity
 	if len(resolvedBundles) != 1 {
+		l.Info("resolution failed", "stats", catStats)
 		return nil, nil, nil, resolutionError{
 			PackageName:     packageName,
 			Version:         versionRange,
@@ -174,12 +196,15 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 
 	// Run validations against the resolved bundle to ensure only valid resolved bundles are being returned
 	// Open Question: Should we grab the first valid bundle earlier?
+	//        Answer: No, that would be a hidden resolution input, which we should avoid at all costs; the query can be
+	//                constrained in order to eliminate the invalid bundle from the resolution.
 	for _, validation := range r.Validations {
 		if err := validation(resolvedBundle); err != nil {
 			return nil, nil, nil, fmt.Errorf("validating bundle %q: %w", resolvedBundle.Name, err)
 		}
 	}
 
+	l.V(4).Info("resolution succeeded", "stats", catStats)
 	return resolvedBundle, resolvedBundleVersion, priorDeprecation, nil
 }
 
@@ -257,6 +282,9 @@ func CatalogWalker(
 			return false
 		})
 
+		availableCatalogNames := mapSlice(catalogs, func(c catalogd.ClusterCatalog) string { return c.Name })
+		l.Info("using ClusterCatalogs for resolution", "catalogs", availableCatalogNames)
+
 		for i := range catalogs {
 			cat := &catalogs[i]
 
@@ -270,4 +298,19 @@ func CatalogWalker(
 
 		return nil
 	}
+}
+
+func isFBCEmpty(fbc *declcfg.DeclarativeConfig) bool {
+	if fbc == nil {
+		return true
+	}
+	return len(fbc.Packages) == 0 && len(fbc.Channels) == 0 && len(fbc.Bundles) == 0 && len(fbc.Deprecations) == 0 && len(fbc.Others) == 0
+}
+
+func mapSlice[I any, O any](in []I, f func(I) O) []O {
+	out := make([]O, len(in))
+	for i := range in {
+		out[i] = f(in[i])
+	}
+	return out
 }

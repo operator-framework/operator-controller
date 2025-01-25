@@ -17,7 +17,7 @@ assert-container-runtime
 # Check required tools are installed
 assert-commands jq
 
-function usage() {
+usage() {
     print-banner
     echo ""
     echo "Usage:"
