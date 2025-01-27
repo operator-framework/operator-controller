@@ -172,6 +172,92 @@ func (s *SQLiteV1) handleV1All(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	w.Header().Set("Content-Type", "application/jsonl")
+	s.writeRows(w, rows)
+}
+
+func (s *SQLiteV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	catalog := r.PathValue("catalog")
+	if catalog == "" {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	// Get query parameters
+	schema := r.URL.Query().Get("schema")
+	pkg := r.URL.Query().Get("package")
+	name := r.URL.Query().Get("name")
+
+	// If no parameters are provided, return entire catalog
+	if schema == "" && pkg == "" && name == "" {
+		rows, err := s.db.Query(`
+            SELECT schema, package, name, blob 
+            FROM metas 
+            WHERE catalog_name = ? 
+            ORDER BY schema, 
+                     CASE WHEN package IS NULL THEN 1 ELSE 0 END, 
+                     package, 
+                     name
+        `, catalog)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		w.Header().Set("Content-Type", "application/jsonl")
+		s.writeRows(w, rows)
+		return
+	}
+
+	// Build query with provided parameters
+	query := `
+        SELECT schema, package, name, blob 
+        FROM metas 
+        WHERE catalog_name = ?
+    `
+	args := []interface{}{catalog}
+
+	if schema != "" {
+		query += " AND schema = ?"
+		args = append(args, schema)
+	}
+	if pkg != "" {
+		query += " AND package = ?"
+		args = append(args, pkg)
+	}
+	if name != "" {
+		query += " AND name = ?"
+		args = append(args, name)
+	}
+
+	query += ` 
+        ORDER BY schema, 
+        CASE WHEN package IS NULL THEN 1 ELSE 0 END, 
+        package, 
+        name
+    `
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	w.Header().Set("Content-Type", "application/jsonl")
+	s.writeRows(w, rows)
+}
+
+// Helper function to write rows as JSON lines
+func (s *SQLiteV1) writeRows(w http.ResponseWriter, rows *sql.Rows) {
 	encoder := json.NewEncoder(w)
 
 	for rows.Next() {
@@ -184,7 +270,6 @@ func (s *SQLiteV1) handleV1All(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Convert NULL package to empty string
 		if packageVal.Valid {
 			meta.Package = packageVal.String
 		}
@@ -200,6 +285,7 @@ func (s *SQLiteV1) handleV1All(w http.ResponseWriter, r *http.Request) {
 func (s *SQLiteV1) StorageServerHandler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "all").Path, s.handleV1All)
+	mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "query").Path, s.handleV1Query)
 	return mux
 }
 
