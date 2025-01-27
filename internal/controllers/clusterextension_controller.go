@@ -49,8 +49,8 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/authentication"
 	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	"github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
