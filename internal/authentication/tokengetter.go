@@ -24,6 +24,11 @@ type TokenGetter struct {
 type ServiceAccountNotFoundError struct {
 	ServiceAccountName      string // The name of the missing ServiceAccount.
 	ServiceAccountNamespace string // The namespace where the ServiceAccount should exist
+	Err                     error  // The underlying error
+}
+
+func (e *ServiceAccountNotFoundError) Unwrap() error {
+	return e.Err
 }
 
 // Error implements the error interface for ServiceAccountNotFoundError.
