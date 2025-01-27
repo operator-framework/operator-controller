@@ -279,7 +279,7 @@ func main() {
 		},
 	}
 
-	var localStorage storage.Instance
+	var store storage.Instance
 	metrics.Registry.MustRegister(catalogdmetrics.RequestDurationMetric)
 
 	storeDir := filepath.Join(cacheDir, storageDir)
@@ -294,7 +294,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	localStorage = storage.LocalDirV1{RootDir: storeDir, RootURL: baseStorageURL}
+	store, err = storage.NewSQLiteV1(storeDir, baseStorageURL)
+	if err != nil {
+		setupLog.Error(err, "unable to create storage instance")
+		os.Exit(1)
+	}
 
 	// Config for the the catalogd web server
 	catalogServerConfig := serverutil.CatalogServerConfig{
@@ -302,7 +306,7 @@ func main() {
 		CatalogAddr:  catalogServerAddr,
 		CertFile:     certFile,
 		KeyFile:      keyFile,
-		LocalStorage: localStorage,
+		LocalStorage: store,
 	}
 
 	err = serverutil.AddCatalogServerToManager(mgr, catalogServerConfig, cw)
@@ -314,7 +318,7 @@ func main() {
 	if err = (&corecontrollers.ClusterCatalogReconciler{
 		Client:   mgr.GetClient(),
 		Unpacker: unpacker,
-		Storage:  localStorage,
+		Storage:  store,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		os.Exit(1)
