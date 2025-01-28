@@ -115,7 +115,7 @@ pre-upgrade-setup:
 
 .PHONY: run-latest-release
 run-latest-release:
-	curl -L -s https://github.com/operator-framework/catalogd/releases/latest/download/install.sh | bash -s
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
 
 .PHONY: post-upgrade-checks
 post-upgrade-checks: $(GINKGO)
