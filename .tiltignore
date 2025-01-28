@@ -5,3 +5,6 @@ LICENSE
 Makefile
 .github
 .vscode
+*_test.go
+*/test
+.sh
