@@ -217,6 +217,12 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 	}
 	defer catalogFile.Close()
 
+	w.Header().Set("Last-Modified", catalogStat.ModTime().UTC().Format(TimeFormat))
+	if checkPreconditions(w, r, catalogStat.ModTime()) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
 	schema := r.URL.Query().Get("schema")
 	pkg := r.URL.Query().Get("package")
 	name := r.URL.Query().Get("name")
