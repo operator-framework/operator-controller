@@ -58,7 +58,7 @@ Once the tag has been pushed the release action should run automatically. You ca
 
 ## Backporting Policy
 
-Mainly critical issue fixes might be backported to the most recent minor release.
+Significant security and critical bug fixes can be backported to the most recent minor release.
 Special backport requests can be discussed during the weekly Community meeting or via Slack channel;
 this does not guarantee an exceptional backport will be created.
 
