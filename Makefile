@@ -326,7 +326,7 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 .PHONY: quickstart
 quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
 quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
-	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager | sed "s/cert-git-version/cert-$(VERSION)/g") > $(MANIFEST)
+	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
 	envsubst '$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Docs
