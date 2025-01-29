@@ -33,7 +33,7 @@ func (e *ServiceAccountNotFoundError) Unwrap() error {
 
 // Error implements the error interface for ServiceAccountNotFoundError.
 func (e *ServiceAccountNotFoundError) Error() string {
-	return fmt.Sprintf("ServiceAccount \"%s\" not found in namespace \"%s\": Unable to authenticate with the Kubernetes cluster.", e.ServiceAccountName, e.ServiceAccountNamespace)
+	return fmt.Sprintf("service account \"%s\" not found in namespace \"%s\": unable to authenticate with the Kubernetes cluster.", e.ServiceAccountName, e.ServiceAccountNamespace)
 }
 
 type TokenGetterOption func(*TokenGetter)
