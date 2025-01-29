@@ -13,12 +13,14 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	v1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/applier"
+	"github.com/operator-framework/operator-controller/internal/features"
 )
 
 type mockPreflight struct {
@@ -164,6 +166,71 @@ func TestApply_Base(t *testing.T) {
 }
 
 func TestApply_Installation(t *testing.T) {
+	t.Run("fails during dry-run installation", func(t *testing.T) {
+		mockAcg := &mockActionGetter{
+			getClientErr:     driver.ErrReleaseNotFound,
+			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
+		}
+		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "attempting to dry-run install chart")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+
+	t.Run("fails during pre-flight installation", func(t *testing.T) {
+		mockAcg := &mockActionGetter{
+			getClientErr: driver.ErrReleaseNotFound,
+			installErr:   errors.New("failed installing chart"),
+		}
+		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
+		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "install pre-flight check")
+		require.Equal(t, applier.StateNeedsInstall, state)
+		require.Nil(t, objs)
+	})
+
+	t.Run("fails during installation", func(t *testing.T) {
+		mockAcg := &mockActionGetter{
+			getClientErr: driver.ErrReleaseNotFound,
+			installErr:   errors.New("failed installing chart"),
+		}
+		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "installing chart")
+		require.Equal(t, applier.StateNeedsInstall, state)
+		require.Nil(t, objs)
+	})
+
+	t.Run("successful installation", func(t *testing.T) {
+		mockAcg := &mockActionGetter{
+			getClientErr: driver.ErrReleaseNotFound,
+			desiredRel: &release.Release{
+				Info:     &release.Info{Status: release.StatusDeployed},
+				Manifest: validManifest,
+			},
+		}
+		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.NoError(t, err)
+		require.Equal(t, applier.StateNeedsInstall, state)
+		require.NotNil(t, objs)
+		assert.Equal(t, "service-a", objs[0].GetName())
+		assert.Equal(t, "service-b", objs[1].GetName())
+	})
+}
+
+func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
+
 	t.Run("fails during dry-run installation", func(t *testing.T) {
 		mockAcg := &mockActionGetter{
 			getClientErr:     driver.ErrReleaseNotFound,
