@@ -236,7 +236,7 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 		httpError(w, fs.ErrNotExist)
 		return
 	}
-	serveJsonLines(w, r, catalogStat.ModTime(), indexReader)
+	serveJsonLinesQuery(w, indexReader)
 }
 
 func (s *LocalDirV1) catalogData(catalog string) (*os.File, os.FileInfo, error) {
@@ -269,6 +269,15 @@ func httpError(w http.ResponseWriter, err error) {
 func serveJsonLines(w http.ResponseWriter, r *http.Request, modTime time.Time, rs io.ReadSeeker) {
 	w.Header().Add("Content-Type", "application/jsonl")
 	http.ServeContent(w, r, "", modTime, rs)
+}
+
+func serveJsonLinesQuery(w http.ResponseWriter, rs io.Reader) {
+	w.Header().Add("Content-Type", "application/jsonl")
+	_, err := io.Copy(w, rs)
+	if err != nil {
+		httpError(w, err)
+		return
+	}
 }
 
 func (s *LocalDirV1) getIndex(catalog string) (*index, error) {
