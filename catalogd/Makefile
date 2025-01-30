@@ -88,19 +88,6 @@ e2e: run image-registry test-e2e kind-cluster-cleanup ## Run e2e test suite on l
 image-registry: ## Setup in-cluster image registry
 	./test/tools/imageregistry/registry.sh $(ISSUER_KIND) $(ISSUER_NAME)
 
-.PHONY: verify-crd-compatibility
-CRD_DIFF_ORIGINAL_REF := main
-CRD_DIFF_UPDATED_SOURCE := file://config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml
-CRD_DIFF_CONFIG := crd-diff-config.yaml
-verify-crd-compatibility: $(CRD_DIFF)
-	@if git show ${CRD_DIFF_ORIGINAL_REF}:config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml > /dev/null 2>&1; then \
-		echo "Running CRD diff..."; \
-		$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml" ${CRD_DIFF_UPDATED_SOURCE}; \
-	else \
-		echo "Skipping CRD diff: CRD does not exist in ${CRD_DIFF_ORIGINAL_REF}"; \
-	fi
-
-
 ## image-registry target has to come after run-latest-release,
 ## because the image-registry depends on the olm-ca issuer.
 .PHONY: test-upgrade-e2e
