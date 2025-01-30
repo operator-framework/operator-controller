@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -44,8 +46,26 @@ func NewCertPoolWatcher(caDir string, log logr.Logger) (*CertPoolWatcher, error)
 	if err != nil {
 		return nil, err
 	}
-	if err = watcher.Add(caDir); err != nil {
-		return nil, err
+
+	// If the SSL_CERT_DIR or SSL_CERT_FILE environment variables are
+	// specified, this means that we have some control over the system root
+	// location, thus they may change, thus we should watch those locations.
+	watchPaths := strings.Split(os.Getenv("SSL_CERT_DIR"), ":")
+	watchPaths = append(watchPaths, caDir, os.Getenv("SSL_CERT_FILE"))
+	watchPaths = slices.DeleteFunc(watchPaths, func(p string) bool {
+		if p == "" {
+			return true
+		}
+		if _, err := os.Stat(p); err != nil {
+			return true
+		}
+		return false
+	})
+
+	for _, p := range watchPaths {
+		if err := watcher.Add(p); err != nil {
+			return nil, err
+		}
 	}
 
 	cpw := &CertPoolWatcher{
