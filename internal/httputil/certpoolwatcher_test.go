@@ -72,6 +72,10 @@ func TestCertPoolWatcher(t *testing.T) {
 	t.Logf("Create cert file at %q\n", certName)
 	createCert(t, certName)
 
+	// Update environment variables for the watcher - some of these should not exist
+	os.Setenv("SSL_CERT_DIR", tmpDir+":/tmp/does-not-exist.dir")
+	os.Setenv("SSL_CERT_FILE", "/tmp/does-not-exist.file")
+
 	// Create the cert pool watcher
 	cpw, err := httputil.NewCertPoolWatcher(tmpDir, log.FromContext(context.Background()))
 	require.NoError(t, err)
