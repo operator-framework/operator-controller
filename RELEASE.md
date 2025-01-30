@@ -17,16 +17,25 @@ Note that throughout this guide, the `upstream` remote refers to the `operator-f
 The release process differs slightly based on whether a patch or major/minor release is being made.
 
 ### Patch Release
-#### Step 1
-In this example we will be creating a new patch release from version `v1.2.3`, on the branch `release-v1.2`.  
-First ensure that the release branch has been updated on remote with the changes from the patch, then perform the following:
+
+In this example, we will be creating a new patch release from version `v1.2.3` on the branch `release-v1.2`.
+
+#### Step 1 
+First, make sure the `release-v1.2` branch is updated with the latest changes from upstream:
 ```bash
 git fetch upstream release-v1.2
-git pull release-v1.2
 git checkout release-v1.2
+git reset --hard upstream/release-v1.2
 ```
 
 #### Step 2
+Run the following command to confirm that your local branch has the latest expected commit:
+```bash
+git log --oneline -n 5
+```
+Check that the most recent commit matches the latest commit in the upstream `release-v1.2` branch. 
+
+#### Step 3
 Create a new tag, incrementing the patch number from the previous version. In this case, we'll be incrementing from `v1.2.3` to `v1.2.4`:
 ```bash
 ## Previous version was v1.2.3, so we bump the patch number up by one
