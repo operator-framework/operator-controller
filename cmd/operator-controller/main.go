@@ -29,6 +29,7 @@ import (
 
 	"github.com/containers/image/v5/types"
 	"github.com/go-logr/logr"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -121,6 +122,9 @@ func main() {
 	flag.StringVar(&globalPullSecret, "global-pull-secret", "", "The <namespace>/<name> of the global pull secret that is going to be used to pull bundle images.")
 
 	klog.InitFlags(flag.CommandLine)
+	if klog.V(4).Enabled() {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	features.OperatorControllerFeatureGate.AddFlag(pflag.CommandLine)
