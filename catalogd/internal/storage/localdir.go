@@ -241,11 +241,7 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 		httpError(w, err)
 		return
 	}
-	indexReader, ok := idx.Get(catalogFile, schema, pkg, name)
-	if !ok {
-		httpError(w, fs.ErrNotExist)
-		return
-	}
+	indexReader := idx.Get(catalogFile, schema, pkg, name)
 	serveJSONLinesQuery(w, indexReader)
 }
 
