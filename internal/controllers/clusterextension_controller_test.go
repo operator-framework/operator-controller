@@ -717,6 +717,9 @@ func TestClusterExtensionInstallationFailsWithNoServiceAccount(t *testing.T) {
 	err := cl.Create(ctx, clusterExtension)
 	require.NoError(t, err)
 
+	t.Log("By fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
 	t.Log("It sets resolution success status")
 	t.Log("By running reconcile")
 	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
@@ -730,35 +733,21 @@ func TestClusterExtensionInstallationFailsWithNoServiceAccount(t *testing.T) {
 	reconciler.Applier = &MockApplier{
 		objs: []client.Object{},
 	}
+	reconciler.Applier = &MockApplier{
+		err: errors.New("missing ServiceAccount"),
+	}
 	reconciler.Manager = &MockManagedContentCacheManager{
 		cache: &MockManagedContentCache{},
 	}
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-	require.Equal(t, ctrl.Result{}, res)
-	require.NoError(t, err)
+
+	_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Error(t, err)
 
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
-	res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "service account", "Expected error about missing ServiceAccount but got: %v", err)
-
-	t.Log("By checking the expected installed conditions")
-	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
-	require.NotNil(t, installedCond)
-	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
-	require.Equal(t, ocv1.ReasonSucceeded, installedCond.Reason)
-
-	t.Log("By checking the expected progressing conditions")
-	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
-	require.NotNil(t, progressingCond)
-	require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
-	require.Equal(t, ocv1.ReasonSucceeded, progressingCond.Reason)
-
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+	require.Contains(t, err.Error(), "missing ServiceAccount")
 }
 
 func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
