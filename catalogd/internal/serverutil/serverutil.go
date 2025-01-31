@@ -95,7 +95,6 @@ func logrLoggingHandler(l logr.Logger, handler http.Handler) http.Handler {
 }
 
 func storageServerHandlerWrapped(mgr ctrl.Manager, cfg CatalogServerConfig) http.Handler {
-
 	handler := cfg.LocalStorage.StorageServerHandler()
 	handler = gzhttp.GzipHandler(handler)
 	handler = catalogdmetrics.AddMetricsToHandler(handler)

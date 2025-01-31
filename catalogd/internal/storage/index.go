@@ -119,7 +119,7 @@ func (i *index) getSectionSet(schema, packageName, name string) sets.Set[section
 	}
 }
 
-func newIndex(metasChan <-chan *declcfg.Meta) (*index, error) {
+func newIndex(metasChan <-chan *declcfg.Meta) *index {
 	idx := &index{
 		BySchema:  make(map[string][]section),
 		ByPackage: make(map[string][]section),
@@ -142,5 +142,5 @@ func newIndex(metasChan <-chan *declcfg.Meta) (*index, error) {
 			idx.ByName[meta.Name] = append(idx.ByName[meta.Name], s)
 		}
 	}
-	return idx, nil
+	return idx
 }

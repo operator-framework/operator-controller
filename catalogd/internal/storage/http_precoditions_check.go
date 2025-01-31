@@ -24,7 +24,7 @@ const (
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func checkPreconditions(w http.ResponseWriter, r *http.Request, modtime time.Time) (done bool) {
+func checkPreconditions(w http.ResponseWriter, r *http.Request, modtime time.Time) bool {
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(r)
 	if ch == condNone {

@@ -310,24 +310,24 @@ func TestQueryEndpoint(t *testing.T) {
 			expectedStatusCode: http.StatusOK,
 			expectedContent:    `{"image":"quaydock.io/namespace/bundle:0.0.3","name":"bundle.v0.0.1","package":"webhook_operator_test","properties":[{"type":"olm.bundle.object","value":{"data":"dW5pbXBvcnRhbnQK"}},{"type":"some.other","value":{"data":"arbitrary-info"}}],"relatedImages":[{"image":"testimage:latest","name":"test"}],"schema":"olm.bundle"}`,
 		},
-		// {
-		// 	name:               "valid query for package schema for a package that does not exist",
-		// 	queryParams:        "?schema=olm.package&name=not-present",
-		// 	expectedStatusCode: http.StatusOK,
-		// 	expectedContent:    "",
-		// },
+		{
+			name:               "valid query for package schema for a package that does not exist",
+			queryParams:        "?schema=olm.package&name=not-present",
+			expectedStatusCode: http.StatusOK,
+			expectedContent:    "",
+		},
 		{
 			name:               "valid query with package and name",
 			queryParams:        "?package=webhook_operator_test&name=bundle.v0.0.1",
 			expectedStatusCode: http.StatusOK,
 			expectedContent:    `{"image":"quaydock.io/namespace/bundle:0.0.3","name":"bundle.v0.0.1","package":"webhook_operator_test","properties":[{"type":"olm.bundle.object","value":{"data":"dW5pbXBvcnRhbnQK"}},{"type":"some.other","value":{"data":"arbitrary-info"}}],"relatedImages":[{"image":"testimage:latest","name":"test"}],"schema":"olm.bundle"}`,
 		},
-		// {
-		// 	name:               "invalid query with non-existent schema",
-		// 	queryParams:        "?schema=non_existent_schema",
-		// 	expectedStatusCode: http.StatusNotFound,
-		// 	expectedContent:    "400 Bad Request",
-		// },
+		{
+			name:               "query with non-existent schema",
+			queryParams:        "?schema=non_existent_schema",
+			expectedStatusCode: http.StatusOK,
+			expectedContent:    "",
+		},
 		{
 			name:               "cached response with If-Modified-Since",
 			queryParams:        "?schema=olm.package",
@@ -346,6 +346,7 @@ func TestQueryEndpoint(t *testing.T) {
 				// for the actual request
 				resp, err := http.DefaultClient.Do(req)
 				require.NoError(t, err)
+				resp.Body.Close()
 				req.Header.Set("If-Modified-Since", resp.Header.Get("Last-Modified"))
 			}
 			resp, err := http.DefaultClient.Do(req)
@@ -409,7 +410,7 @@ func TestServerLoadHandling(t *testing.T) {
 				}
 				for _, resp := range responses {
 					require.Equal(t, http.StatusOK, resp.StatusCode)
-					require.Equal(t, resp.Header.Get("Content-Type"), "application/jsonl")
+					require.Equal(t, "application/jsonl", resp.Header.Get("Content-Type"))
 					resp.Body.Close()
 				}
 			},

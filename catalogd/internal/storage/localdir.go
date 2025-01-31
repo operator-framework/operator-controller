@@ -42,8 +42,8 @@ type LocalDirV1 struct {
 }
 
 var (
-	_                Instance = &LocalDirV1{}
-	ErrInvalidParams          = errors.New("invalid parameters")
+	_                Instance = (*LocalDirV1)(nil)
+	errInvalidParams          = errors.New("invalid parameters")
 )
 
 func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) error {
@@ -169,10 +169,7 @@ func storeCatalogData(catalogDir string, metas <-chan *declcfg.Meta) error {
 }
 
 func storeIndexData(catalogDir string, metas <-chan *declcfg.Meta) error {
-	idx, err := newIndex(metas)
-	if err != nil {
-		return err
-	}
+	idx := newIndex(metas)
 
 	f, err := os.Create(catalogIndexFilePath(catalogDir))
 	if err != nil {
@@ -209,7 +206,7 @@ func (s *LocalDirV1) handleV1All(w http.ResponseWriter, r *http.Request) {
 		httpError(w, err)
 		return
 	}
-	serveJsonLines(w, r, catalogStat.ModTime(), catalogFile)
+	serveJSONLines(w, r, catalogStat.ModTime(), catalogFile)
 }
 
 func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +233,7 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 
 	if schema == "" && pkg == "" && name == "" {
 		// If no parameters are provided, return the entire catalog (this is the same as /api/v1/all)
-		serveJsonLines(w, r, catalogStat.ModTime(), catalogFile)
+		serveJSONLines(w, r, catalogStat.ModTime(), catalogFile)
 		return
 	}
 	idx, err := s.getIndex(catalog)
@@ -249,7 +246,7 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 		httpError(w, fs.ErrNotExist)
 		return
 	}
-	serveJsonLinesQuery(w, indexReader)
+	serveJSONLinesQuery(w, indexReader)
 }
 
 func (s *LocalDirV1) catalogData(catalog string) (*os.File, os.FileInfo, error) {
@@ -271,7 +268,7 @@ func httpError(w http.ResponseWriter, err error) {
 		code = http.StatusNotFound
 	case errors.Is(err, fs.ErrPermission):
 		code = http.StatusForbidden
-	case errors.Is(err, ErrInvalidParams):
+	case errors.Is(err, errInvalidParams):
 		code = http.StatusBadRequest
 	default:
 		code = http.StatusInternalServerError
@@ -279,12 +276,12 @@ func httpError(w http.ResponseWriter, err error) {
 	http.Error(w, fmt.Sprintf("%d %s", code, http.StatusText(code)), code)
 }
 
-func serveJsonLines(w http.ResponseWriter, r *http.Request, modTime time.Time, rs io.ReadSeeker) {
+func serveJSONLines(w http.ResponseWriter, r *http.Request, modTime time.Time, rs io.ReadSeeker) {
 	w.Header().Add("Content-Type", "application/jsonl")
 	http.ServeContent(w, r, "", modTime, rs)
 }
 
-func serveJsonLinesQuery(w http.ResponseWriter, rs io.Reader) {
+func serveJSONLinesQuery(w http.ResponseWriter, rs io.Reader) {
 	w.Header().Add("Content-Type", "application/jsonl")
 	_, err := io.Copy(w, rs)
 	if err != nil {

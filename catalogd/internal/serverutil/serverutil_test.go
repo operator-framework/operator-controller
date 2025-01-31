@@ -234,7 +234,10 @@ type mockStorageInstance struct {
 
 func (m *mockStorageInstance) StorageServerHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(m.content))
+		_, err := w.Write([]byte(m.content))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	})
 }
 
