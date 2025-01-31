@@ -40,6 +40,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/textlogger"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
@@ -67,6 +68,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/scheme"
+	"github.com/operator-framework/operator-controller/internal/util"
 	"github.com/operator-framework/operator-controller/internal/version"
 )
 
@@ -100,12 +102,14 @@ func main() {
 		cachePath                 string
 		operatorControllerVersion bool
 		systemNamespace           string
-		caCertDir                 string
+		catalogdCasDir            string
+		pullCasDir                string
 		globalPullSecret          string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':8443')")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.StringVar(&caCertDir, "ca-certs-dir", "", "The directory of TLS certificate to use for verifying HTTPS connections to the Catalogd and docker-registry web servers.")
+	flag.StringVar(&catalogdCasDir, "catalogd-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to the Catalogd web service.")
+	flag.StringVar(&pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to image registries.")
 	flag.StringVar(&certFile, "tls-cert", "", "The certificate file used for the metrics server. Required to enable the metrics server. Requires tls-key.")
 	flag.StringVar(&keyFile, "tls-key", "", "The key file used for the metrics server. Required to enable the metrics server. Requires tls-cert")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -229,7 +233,13 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "9c4404e7.operatorframework.io",
-		Cache:                  cacheOptions,
+		// Recommended Leader Election values
+		// https://github.com/openshift/enhancements/blob/61581dcd985130357d6e4b0e72b87ee35394bf6e/CONVENTIONS.md#handling-kube-apiserver-disruption
+		LeaseDuration: ptr.To(137 * time.Second),
+		RenewDeadline: ptr.To(107 * time.Second),
+		RetryPeriod:   ptr.To(26 * time.Second),
+
+		Cache: cacheOptions,
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -276,7 +286,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	certPoolWatcher, err := httputil.NewCertPoolWatcher(caCertDir, ctrl.Log.WithName("cert-pool"))
+	certPoolWatcher, err := httputil.NewCertPoolWatcher(catalogdCasDir, ctrl.Log.WithName("cert-pool"))
 	if err != nil {
 		setupLog.Error(err, "unable to create CA certificate pool")
 		os.Exit(1)
@@ -290,12 +300,17 @@ func main() {
 		}
 	}
 
+	if err := util.EnsureEmptyDirectory(cachePath, 0700); err != nil {
+		setupLog.Error(err, "unable to ensure empty cache directory")
+		os.Exit(1)
+	}
+
 	unpacker := &source.ContainersImageRegistry{
 		BaseCachePath: filepath.Join(cachePath, "unpack"),
 		SourceContextFunc: func(logger logr.Logger) (*types.SystemContext, error) {
 			srcContext := &types.SystemContext{
-				DockerCertPath: caCertDir,
-				OCICertPath:    caCertDir,
+				DockerCertPath: pullCasDir,
+				OCICertPath:    pullCasDir,
 			}
 			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
 				logger.Info("using available authentication information for pulling image")
@@ -355,7 +370,7 @@ func main() {
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
 	}
 
-	applier := &applier.Helm{
+	helmApplier := &applier.Helm{
 		ActionClientGetter: acg,
 		Preflights:         preflights,
 	}
@@ -375,7 +390,7 @@ func main() {
 		Client:                cl,
 		Resolver:              resolver,
 		Unpacker:              unpacker,
-		Applier:               applier,
+		Applier:               helmApplier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
 		Manager:               cm,

@@ -42,6 +42,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/textlogger"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
@@ -62,6 +63,7 @@ import (
 	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
 	"github.com/operator-framework/operator-controller/catalogd/internal/version"
 	"github.com/operator-framework/operator-controller/catalogd/internal/webhook"
+	"github.com/operator-framework/operator-controller/internal/util"
 )
 
 var (
@@ -96,7 +98,7 @@ func main() {
 		certFile             string
 		keyFile              string
 		webhookPort          int
-		caCertDir            string
+		pullCasDir           string
 		globalPullSecret     string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':7443')")
@@ -114,7 +116,7 @@ func main() {
 	flag.StringVar(&certFile, "tls-cert", "", "The certificate file used for serving catalog and metrics. Required to enable the metrics server. Requires tls-key.")
 	flag.StringVar(&keyFile, "tls-key", "", "The key file used for serving catalog contents and metrics. Required to enable the metrics server. Requires tls-cert.")
 	flag.IntVar(&webhookPort, "webhook-server-port", 9443, "The port that the mutating webhook server serves at.")
-	flag.StringVar(&caCertDir, "ca-certs-dir", "", "The directory of CA certificate to use for verifying HTTPS connections to image registries.")
+	flag.StringVar(&pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authoritiess to use for verifying HTTPS connections to image registries.")
 	flag.StringVar(&globalPullSecret, "global-pull-secret", "", "The <namespace>/<name> of the global pull secret that is going to be used to pull bundle images.")
 
 	klog.InitFlags(flag.CommandLine)
@@ -231,8 +233,14 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "catalogd-operator-lock",
-		WebhookServer:          webhookServer,
-		Cache:                  cacheOptions,
+		// Recommended Leader Election values
+		// https://github.com/openshift/enhancements/blob/61581dcd985130357d6e4b0e72b87ee35394bf6e/CONVENTIONS.md#handling-kube-apiserver-disruption
+		LeaseDuration: ptr.To(137 * time.Second),
+		RenewDeadline: ptr.To(107 * time.Second),
+		RetryPeriod:   ptr.To(26 * time.Second),
+
+		WebhookServer: webhookServer,
+		Cache:         cacheOptions,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to create manager")
@@ -250,8 +258,8 @@ func main() {
 		systemNamespace = podNamespace()
 	}
 
-	if err := os.MkdirAll(cacheDir, 0700); err != nil {
-		setupLog.Error(err, "unable to create cache directory")
+	if err := util.EnsureEmptyDirectory(cacheDir, 0700); err != nil {
+		setupLog.Error(err, "unable to ensure empty cache directory")
 		os.Exit(1)
 	}
 
@@ -264,8 +272,8 @@ func main() {
 		BaseCachePath: unpackCacheBasePath,
 		SourceContextFunc: func(logger logr.Logger) (*types.SystemContext, error) {
 			srcContext := &types.SystemContext{
-				DockerCertPath: caCertDir,
-				OCICertPath:    caCertDir,
+				DockerCertPath: pullCasDir,
+				OCICertPath:    pullCasDir,
 			}
 			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
 				logger.Info("using available authentication information for pulling image")
