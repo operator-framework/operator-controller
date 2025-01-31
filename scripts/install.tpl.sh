@@ -76,11 +76,6 @@ kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 kubectl_wait "olmv1-system" "deployment/operator-controller-controller-manager" "60s"
 
 if [[ "${install_default_catalogs}" != "false" ]]; then
-    if [[ ! -f "$default_catalogs_manifest" ]]; then
-        echo "Error: Missing required default catalogs manifest file at $default_catalogs_manifest"
-        exit 1
-    fi
-
     kubectl apply -f "${default_catalogs_manifest}"
     kubectl wait --for=condition=Serving "clustercatalog/operatorhubio" --timeout="60s"
 fi
