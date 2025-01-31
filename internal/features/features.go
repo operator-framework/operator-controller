@@ -13,11 +13,10 @@ const (
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Add new feature gate definitions
-	// if you're adding a feature gate for fellow developers to use in ongoing development, use PreAlpha
 	// Ex: SomeFeature: {...}
 	PreflightPermissions: {
 		Default:       false,
-		PreRelease:    featuregate.PreAlpha, // keep this PreAlpha until done with feature development
+		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
 	},
 }
