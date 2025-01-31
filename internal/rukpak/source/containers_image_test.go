@@ -286,7 +286,7 @@ func TestUnpackUnexpectedFile(t *testing.T) {
 	require.True(t, stat.IsDir())
 
 	// Unset read-only to allow cleanup
-	require.NoError(t, source.UnsetReadOnlyRecursive(unpackPath))
+	require.NoError(t, source.SetWritableRecursive(unpackPath))
 }
 
 func TestUnpackCopySucceedsMountFails(t *testing.T) {
