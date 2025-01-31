@@ -16,6 +16,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
@@ -193,7 +194,17 @@ func (s *LocalDirV1) StorageServerHandler() http.Handler {
 	if s.EnableQueryHandler {
 		mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "query").Path, s.handleV1Query)
 	}
-	return mux
+	allowedMethodsHandler := func(next http.Handler, allowedMethods ...string) http.Handler {
+		allowedMethodSet := sets.New[string](allowedMethods...)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !allowedMethodSet.Has(r.Method) {
+				http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+	return allowedMethodsHandler(mux, http.MethodGet, http.MethodHead)
 }
 
 func (s *LocalDirV1) handleV1All(w http.ResponseWriter, r *http.Request) {
@@ -242,7 +253,7 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	indexReader := idx.Get(catalogFile, schema, pkg, name)
-	serveJSONLinesQuery(w, indexReader)
+	serveJSONLinesQuery(w, r, indexReader)
 }
 
 func (s *LocalDirV1) catalogData(catalog string) (*os.File, os.FileInfo, error) {
@@ -277,8 +288,13 @@ func serveJSONLines(w http.ResponseWriter, r *http.Request, modTime time.Time, r
 	http.ServeContent(w, r, "", modTime, rs)
 }
 
-func serveJSONLinesQuery(w http.ResponseWriter, rs io.Reader) {
+func serveJSONLinesQuery(w http.ResponseWriter, r *http.Request, rs io.Reader) {
 	w.Header().Add("Content-Type", "application/jsonl")
+	// Copy the content of the reader to the response writer
+	// only if it's a Get request
+	if r.Method == http.MethodHead {
+		return
+	}
 	_, err := io.Copy(w, rs)
 	if err != nil {
 		httpError(w, err)
