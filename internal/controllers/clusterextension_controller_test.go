@@ -743,7 +743,8 @@ func TestClusterExtensionInstallationFailsWithNoServiceAccount(t *testing.T) {
 	t.Log("By checking the status fields")
 	require.Equal(t, ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 	res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-	require.Error(t, err, res)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "service account", "Expected error about missing ServiceAccount but got: %v", err)
 
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
