@@ -22,15 +22,22 @@ import (
 
 // LocalDirV1 is a storage Instance. When Storing a new FBC contained in
 // fs.FS, the content is first written to a temporary file, after which
-// it is copied to its final destination in RootDir/catalogName/. This is
-// done so that clients accessing the content stored in RootDir/catalogName have
-// atomic view of the content for a catalog.
+// it is copied to its final destination in RootDir/<catalogName>.jsonl. This is
+// done so that clients accessing the content stored in RootDir/<catalogName>.json1
+// have an atomic view of the content for a catalog.
 type LocalDirV1 struct {
 	RootDir            string
 	RootURL            *url.URL
 	EnableQueryHandler bool
 
-	m  sync.RWMutex
+	m sync.RWMutex
+	// this singleflight Group is used in `getIndex()`` to handle concurrent HTTP requests
+	// optimally. With the use of this slightflight group, the index is loaded from disk
+	// once per concurrent group of HTTP requests being handled by the query handler.
+	// The single flight instance gives us a way to load the index from disk exactly once
+	// per concurrent group of callers, and then let every concurrent caller have access to
+	// the loaded index. This avoids lots of unnecessary open/decode/close cycles when concurrent
+	// requests are being handled, which improves overall performance and decreases response latency.
 	sf singleflight.Group
 }
 

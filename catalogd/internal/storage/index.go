@@ -12,12 +12,25 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 
+// index is an index of sections of an FBC file used to lookup FBC blobs that
+// match any combination of their schema, package, and name fields.
+
+// This index strikes a balance between space and performance. It indexes each field
+// separately, and performs logical set intersections at lookup time in order to implement
+// a multi-parameter query.
+//
+// Note: it is permissible to change the indexing algorithm later if it is necessary to
+// tune the space / performance tradeoff. However care should be taken to ensure
+// that the actual content returned by the index remains identical, as users of the index
+// may be sensitive to differences introduced by index algorithm changes (e.g. if the
+// order of the returned sections changes).
 type index struct {
 	BySchema  map[string][]section `json:"by_schema"`
 	ByPackage map[string][]section `json:"by_package"`
 	ByName    map[string][]section `json:"by_name"`
 }
 
+// A section is the byte offset and length of an FBC blob within the file.
 type section struct {
 	offset int64
 	length int64
