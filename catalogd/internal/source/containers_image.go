@@ -30,8 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	"github.com/operator-framework/operator-controller/internal/fsutil"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/util"
 )
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
@@ -297,7 +297,7 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 		return wrapTerminal(fmt.Errorf("catalog image is missing the required label %q", ConfigDirLabel), specIsCanonical)
 	}
 
-	if err := util.EnsureEmptyDirectory(unpackPath, 0700); err != nil {
+	if err := fsutil.EnsureEmptyDirectory(unpackPath, 0700); err != nil {
 		return fmt.Errorf("error ensuring empty unpack directory: %w", err)
 	}
 	l := log.FromContext(ctx)

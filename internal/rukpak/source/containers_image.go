@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/operator-framework/operator-controller/internal/util"
+	"github.com/operator-framework/operator-controller/internal/fsutil"
 )
 
 var insecurePolicy = []byte(`{"default":[{"type":"insecureAcceptAnything"}]}`)
@@ -266,7 +266,7 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 		}
 	}()
 
-	if err := util.EnsureEmptyDirectory(unpackPath, 0700); err != nil {
+	if err := fsutil.EnsureEmptyDirectory(unpackPath, 0700); err != nil {
 		return fmt.Errorf("error ensuring empty unpack directory: %w", err)
 	}
 	l := log.FromContext(ctx)
