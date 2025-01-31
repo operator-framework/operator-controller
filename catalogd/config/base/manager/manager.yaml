@@ -85,7 +85,7 @@ spec:
         imagePullPolicy: IfNotPresent
         terminationMessagePolicy: FallbackToLogsOnError
       serviceAccountName: controller-manager
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 60
       volumes:
         - name: cache
           emptyDir: {}

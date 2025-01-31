@@ -56,6 +56,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
 	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
+	contextutil "github.com/operator-framework/operator-controller/internal/util/context"
 )
 
 const (
@@ -110,8 +111,11 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	delayedCtx, delayedCancel := contextutil.WithDelay(ctx, time.Minute)
+	defer delayedCancel()
+
 	reconciledExt := existingExt.DeepCopy()
-	res, reconcileErr := r.reconcile(ctx, reconciledExt)
+	res, reconcileErr := r.reconcile(delayedCtx, reconciledExt)
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
@@ -129,14 +133,14 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// reconciledExt before updating the object.
 	finalizers := reconciledExt.Finalizers
 	if updateStatus {
-		if err := r.Client.Status().Update(ctx, reconciledExt); err != nil {
+		if err := r.Client.Status().Update(delayedCtx, reconciledExt); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating status: %v", err))
 		}
 	}
 	reconciledExt.Finalizers = finalizers
 
 	if updateFinalizers {
-		if err := r.Client.Update(ctx, reconciledExt); err != nil {
+		if err := r.Client.Update(delayedCtx, reconciledExt); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
