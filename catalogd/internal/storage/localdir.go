@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
@@ -217,7 +216,8 @@ func (s *LocalDirV1) handleV1All(w http.ResponseWriter, r *http.Request) {
 		httpError(w, err)
 		return
 	}
-	serveJSONLines(w, r, catalogStat.ModTime(), catalogFile)
+	w.Header().Add("Content-Type", "application/jsonl")
+	http.ServeContent(w, r, "", catalogStat.ModTime(), catalogFile)
 }
 
 func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
@@ -244,7 +244,8 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 
 	if schema == "" && pkg == "" && name == "" {
 		// If no parameters are provided, return the entire catalog (this is the same as /api/v1/all)
-		serveJSONLines(w, r, catalogStat.ModTime(), catalogFile)
+		w.Header().Add("Content-Type", "application/jsonl")
+		http.ServeContent(w, r, "", catalogStat.ModTime(), catalogFile)
 		return
 	}
 	idx, err := s.getIndex(catalog)
@@ -253,7 +254,7 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	indexReader := idx.Get(catalogFile, schema, pkg, name)
-	serveJSONLinesQuery(w, r, indexReader)
+	serveJSONLines(w, r, indexReader)
 }
 
 func (s *LocalDirV1) catalogData(catalog string) (*os.File, os.FileInfo, error) {
@@ -283,12 +284,7 @@ func httpError(w http.ResponseWriter, err error) {
 	http.Error(w, fmt.Sprintf("%d %s", code, http.StatusText(code)), code)
 }
 
-func serveJSONLines(w http.ResponseWriter, r *http.Request, modTime time.Time, rs io.ReadSeeker) {
-	w.Header().Add("Content-Type", "application/jsonl")
-	http.ServeContent(w, r, "", modTime, rs)
-}
-
-func serveJSONLinesQuery(w http.ResponseWriter, r *http.Request, rs io.Reader) {
+func serveJSONLines(w http.ResponseWriter, r *http.Request, rs io.Reader) {
 	w.Header().Add("Content-Type", "application/jsonl")
 	// Copy the content of the reader to the response writer
 	// only if it's a Get request
