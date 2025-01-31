@@ -63,7 +63,7 @@ import (
 	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
 	"github.com/operator-framework/operator-controller/catalogd/internal/version"
 	"github.com/operator-framework/operator-controller/catalogd/internal/webhook"
-	"github.com/operator-framework/operator-controller/internal/util"
+	"github.com/operator-framework/operator-controller/internal/fsutil"
 )
 
 var (
@@ -258,7 +258,7 @@ func main() {
 		systemNamespace = podNamespace()
 	}
 
-	if err := util.EnsureEmptyDirectory(cacheDir, 0700); err != nil {
+	if err := fsutil.EnsureEmptyDirectory(cacheDir, 0700); err != nil {
 		setupLog.Error(err, "unable to ensure empty cache directory")
 		os.Exit(1)
 	}
