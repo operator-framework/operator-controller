@@ -63,7 +63,7 @@ import (
 	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
 	"github.com/operator-framework/operator-controller/catalogd/internal/version"
 	"github.com/operator-framework/operator-controller/catalogd/internal/webhook"
-	"github.com/operator-framework/operator-controller/internal/fsutil"
+	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
 )
 
 var (

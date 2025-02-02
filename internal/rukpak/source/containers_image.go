@@ -1,22 +1,17 @@
 package source
 
 import (
-	"archive/tar"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/containerd/containerd/archive"
 	"github.com/containers/image/v5/copy"
 	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/containers/image/v5/manifest"
 	"github.com/containers/image/v5/oci/layout"
-	"github.com/containers/image/v5/pkg/blobinfocache/none"
-	"github.com/containers/image/v5/pkg/compression"
 	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/containers/image/v5/signature"
 	"github.com/containers/image/v5/types"
@@ -25,7 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/operator-framework/operator-controller/internal/fsutil"
+	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
+	imageutil "github.com/operator-framework/operator-controller/internal/util/image"
 )
 
 var insecurePolicy = []byte(`{"default":[{"type":"insecureAcceptAnything"}]}`)
@@ -71,11 +67,15 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 	//
 	//////////////////////////////////////////////////////
 	unpackPath := i.unpackPath(bundle.Name, canonicalRef.Digest())
-	if isUnpacked, _, err := IsImageUnpacked(unpackPath); isUnpacked && err == nil {
+	if _, err := fsutil.GetDirectoryModTime(unpackPath); err == nil {
 		l.Info("image already unpacked", "ref", imgRef.String(), "digest", canonicalRef.Digest().String())
 		return successResult(bundle.Name, unpackPath, canonicalRef), nil
-	} else if err != nil {
-		return nil, fmt.Errorf("error checking bundle already unpacked: %w", err)
+	} else if errors.Is(err, fsutil.ErrNotDirectory) {
+		if err := fsutil.DeleteReadOnlyRecursive(unpackPath); err != nil {
+			return nil, err
+		}
+	} else if err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("error checking image already unpacked: %w", err)
 	}
 
 	//////////////////////////////////////////////////////
@@ -265,53 +265,7 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 			panic(err)
 		}
 	}()
-
-	if err := fsutil.EnsureEmptyDirectory(unpackPath, 0700); err != nil {
-		return fmt.Errorf("error ensuring empty unpack directory: %w", err)
-	}
-	l := log.FromContext(ctx)
-	l.Info("unpacking image", "path", unpackPath)
-	for i, layerInfo := range img.LayerInfos() {
-		if err := func() error {
-			layerReader, _, err := layoutSrc.GetBlob(ctx, layerInfo, none.NoCache)
-			if err != nil {
-				return fmt.Errorf("error getting blob for layer[%d]: %w", i, err)
-			}
-			defer layerReader.Close()
-
-			if err := applyLayer(ctx, unpackPath, layerReader); err != nil {
-				return fmt.Errorf("error applying layer[%d]: %w", i, err)
-			}
-			l.Info("applied layer", "layer", i)
-			return nil
-		}(); err != nil {
-			return errors.Join(err, fsutil.DeleteReadOnlyRecursive(unpackPath))
-		}
-	}
-	if err := fsutil.SetReadOnlyRecursive(unpackPath); err != nil {
-		return fmt.Errorf("error making unpack directory read-only: %w", err)
-	}
-	return nil
-}
-
-func applyLayer(ctx context.Context, unpackPath string, layer io.ReadCloser) error {
-	decompressed, _, err := compression.AutoDecompress(layer)
-	if err != nil {
-		return fmt.Errorf("auto-decompress failed: %w", err)
-	}
-	defer decompressed.Close()
-
-	_, err = archive.Apply(ctx, unpackPath, decompressed, archive.WithFilter(applyLayerFilter()))
-	return err
-}
-
-func applyLayerFilter() archive.Filter {
-	return func(h *tar.Header) (bool, error) {
-		h.Uid = os.Getuid()
-		h.Gid = os.Getgid()
-		h.Mode |= 0700
-		return true, nil
-	}
+	return imageutil.ApplyLayersToDisk(ctx, unpackPath, img, layoutSrc, imageutil.ForceOwnershipRWX())
 }
 
 func (i *ContainersImageRegistry) deleteOtherImages(bundleName string, digestToKeep digest.Digest) error {

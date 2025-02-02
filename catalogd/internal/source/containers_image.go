@@ -1,25 +1,18 @@
 package source
 
 import (
-	"archive/tar"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 	"time"
 
-	"github.com/containerd/containerd/archive"
 	"github.com/containers/image/v5/copy"
 	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/containers/image/v5/manifest"
 	"github.com/containers/image/v5/oci/layout"
-	"github.com/containers/image/v5/pkg/blobinfocache/none"
-	"github.com/containers/image/v5/pkg/compression"
 	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/containers/image/v5/signature"
 	"github.com/containers/image/v5/types"
@@ -30,8 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
-	"github.com/operator-framework/operator-controller/internal/fsutil"
-	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
+	imageutil "github.com/operator-framework/operator-controller/internal/util/image"
 )
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
@@ -78,10 +71,14 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv
 	//
 	//////////////////////////////////////////////////////
 	unpackPath := i.unpackPath(catalog.Name, canonicalRef.Digest())
-	if isUnpacked, unpackTime, err := source.IsImageUnpacked(unpackPath); isUnpacked && err == nil {
+	if unpackTime, err := fsutil.GetDirectoryModTime(unpackPath); err == nil {
 		l.Info("image already unpacked", "ref", imgRef.String(), "digest", canonicalRef.Digest().String())
 		return successResult(unpackPath, canonicalRef, unpackTime), nil
-	} else if err != nil {
+	} else if errors.Is(err, fsutil.ErrNotDirectory) {
+		if err := fsutil.DeleteReadOnlyRecursive(unpackPath); err != nil {
+			return nil, err
+		}
+	} else if err != nil && !os.IsNotExist(err) {
 		return nil, fmt.Errorf("error checking image already unpacked: %w", err)
 	}
 
@@ -297,59 +294,11 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 		return wrapTerminal(fmt.Errorf("catalog image is missing the required label %q", ConfigDirLabel), specIsCanonical)
 	}
 
-	if err := fsutil.EnsureEmptyDirectory(unpackPath, 0700); err != nil {
-		return fmt.Errorf("error ensuring empty unpack directory: %w", err)
-	}
-	l := log.FromContext(ctx)
-	l.Info("unpacking image", "path", unpackPath)
-	for i, layerInfo := range img.LayerInfos() {
-		if err := func() error {
-			layerReader, _, err := layoutSrc.GetBlob(ctx, layerInfo, none.NoCache)
-			if err != nil {
-				return fmt.Errorf("error getting blob for layer[%d]: %w", i, err)
-			}
-			defer layerReader.Close()
-
-			if err := applyLayer(ctx, unpackPath, dirToUnpack, layerReader); err != nil {
-				return fmt.Errorf("error applying layer[%d]: %w", i, err)
-			}
-			l.Info("applied layer", "layer", i)
-			return nil
-		}(); err != nil {
-			return errors.Join(err, fsutil.DeleteReadOnlyRecursive(unpackPath))
-		}
-	}
-	if err := fsutil.SetReadOnlyRecursive(unpackPath); err != nil {
-		return fmt.Errorf("error making unpack directory read-only: %w", err)
-	}
-	return nil
-}
-
-func applyLayer(ctx context.Context, destPath string, srcPath string, layer io.ReadCloser) error {
-	decompressed, _, err := compression.AutoDecompress(layer)
-	if err != nil {
-		return fmt.Errorf("auto-decompress failed: %w", err)
-	}
-	defer decompressed.Close()
-
-	_, err = archive.Apply(ctx, destPath, decompressed, archive.WithFilter(applyLayerFilter(srcPath)))
-	return err
-}
-
-func applyLayerFilter(srcPath string) archive.Filter {
-	cleanSrcPath := path.Clean(strings.TrimPrefix(srcPath, "/"))
-	return func(h *tar.Header) (bool, error) {
-		h.Uid = os.Getuid()
-		h.Gid = os.Getgid()
-		h.Mode |= 0700
-
-		cleanName := path.Clean(strings.TrimPrefix(h.Name, "/"))
-		relPath, err := filepath.Rel(cleanSrcPath, cleanName)
-		if err != nil {
-			return false, fmt.Errorf("error getting relative path: %w", err)
-		}
-		return relPath != ".." && !strings.HasPrefix(relPath, "../"), nil
-	}
+	applyFilter := imageutil.AllFilters(
+		imageutil.OnlyPath(dirToUnpack),
+		imageutil.ForceOwnershipRWX(),
+	)
+	return imageutil.ApplyLayersToDisk(ctx, unpackPath, img, layoutSrc, applyFilter)
 }
 
 func (i *ContainersImageRegistry) deleteOtherImages(catalogName string, digestToKeep digest.Digest) error {

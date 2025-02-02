@@ -22,8 +22,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/operator-framework/operator-controller/internal/fsutil"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
 )
 
 const (
