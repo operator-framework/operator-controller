@@ -228,11 +228,12 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme.Scheme,
-		Metrics:                metricsServerOptions,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "9c4404e7.operatorframework.io",
+		Scheme:                        scheme.Scheme,
+		Metrics:                       metricsServerOptions,
+		HealthProbeBindAddress:        probeAddr,
+		LeaderElection:                enableLeaderElection,
+		LeaderElectionID:              "9c4404e7.operatorframework.io",
+		LeaderElectionReleaseOnCancel: true,
 		// Recommended Leader Election values
 		// https://github.com/openshift/enhancements/blob/61581dcd985130357d6e4b0e72b87ee35394bf6e/CONVENTIONS.md#handling-kube-apiserver-disruption
 		LeaseDuration: ptr.To(137 * time.Second),
