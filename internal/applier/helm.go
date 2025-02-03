@@ -24,6 +24,7 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/features"
 	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/util"
@@ -160,6 +161,10 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterE
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {
+			if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+				_ = struct{}{} // minimal no-op to satisfy linter
+				// probably need to break out this error as it's the one for helm dry-run as opposed to any returned later
+			}
 			return nil, nil, StateError, err
 		}
 		return nil, desiredRelease, StateNeedsInstall, nil
