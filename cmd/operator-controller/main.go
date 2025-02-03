@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/containers/image/v5/types"
-	"github.com/go-logr/logr"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
@@ -49,6 +48,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
@@ -65,12 +65,12 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/httputil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
+	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
+	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
 
@@ -315,13 +315,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: filepath.Join(cachePath, "unpack"),
-		SourceContextFunc: func(logger logr.Logger) (*types.SystemContext, error) {
+	imageCache := imageutil.BundleCache(filepath.Join(cachePath, "unpack"))
+	imagePuller := &imageutil.ContainersImagePuller{
+		SourceCtxFunc: func(ctx context.Context) (*types.SystemContext, error) {
 			srcContext := &types.SystemContext{
 				DockerCertPath: pullCasDir,
 				OCICertPath:    pullCasDir,
 			}
+			logger := log.FromContext(ctx)
 			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
 				logger.Info("using available authentication information for pulling image")
 				srcContext.AuthFilePath = authFilePath
@@ -336,7 +337,7 @@ func main() {
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
 	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		return crfinalizer.Result{}, unpacker.Cleanup(ctx, &source.BundleSource{Name: obj.GetName()})
+		return crfinalizer.Result{}, imageCache.Delete(ctx, obj.GetName())
 	})); err != nil {
 		setupLog.Error(err, "unable to register finalizer", "finalizerKey", controllers.ClusterExtensionCleanupUnpackCacheFinalizer)
 		os.Exit(1)
@@ -399,7 +400,8 @@ func main() {
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
 		Resolver:              resolver,
-		Unpacker:              unpacker,
+		ImageCache:            imageCache,
+		ImagePuller:           imagePuller,
 		Applier:               helmApplier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,

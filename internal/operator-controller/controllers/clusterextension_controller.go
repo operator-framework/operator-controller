@@ -56,7 +56,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
-	rukpaksource "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/source"
+	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const (
@@ -67,8 +67,11 @@ const (
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
-	Resolver              resolve.Resolver
-	Unpacker              rukpaksource.Unpacker
+	Resolver resolve.Resolver
+
+	ImageCache  imageutil.Cache
+	ImagePuller imageutil.Puller
+
 	Applier               Applier
 	Manager               contentmanager.Manager
 	controller            crcontroller.Controller
@@ -185,7 +188,7 @@ func checkForUnexpectedFieldChange(a, b ocv1.ClusterExtension) bool {
 4. Install: The process of installing involves:
 4.1 Converting the CSV in the bundle into a set of plain k8s objects.
 4.2 Generating a chart from k8s objects.
-4.3 Apply the release on cluster.
+4.3 Store the release on cluster.
 */
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.ClusterExtension) (ctrl.Result, error) {
@@ -250,16 +253,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 
 	resolvedBundleMetadata := bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
-	bundleSource := &rukpaksource.BundleSource{
-		Name: ext.GetName(),
-		Type: rukpaksource.SourceTypeImage,
-		Image: &rukpaksource.ImageSource{
-			Ref: resolvedBundle.Image,
-		},
-	}
 
 	l.Info("unpacking resolved bundle")
-	unpackResult, err := r.Unpacker.Unpack(ctx, bundleSource)
+	imageFS, _, _, err := r.ImagePuller.Pull(ctx, ext.GetName(), resolvedBundle.Image, r.ImageCache)
 	if err != nil {
 		// Wrap the error passed to this with the resolution information until we have successfully
 		// installed since we intend for the progressing condition to replace the resolved condition
@@ -267,10 +263,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
 		setInstalledStatusFromBundle(ext, installedBundle)
 		return ctrl.Result{}, err
-	}
-
-	if unpackResult.State != rukpaksource.StateUnpacked {
-		panic(fmt.Sprintf("unexpected unpack state %q", unpackResult.State))
 	}
 
 	objLbls := map[string]string{
@@ -295,7 +287,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	managedObjs, _, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, objLbls, storeLbls)
+	managedObjs, _, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
 	if err != nil {
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
 		// Now that we're actually trying to install, use the error
