@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
@@ -54,13 +54,11 @@ func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
 			mockStorage := &mockStorageInstance{
 				content: tt.responseContent,
 			}
-			mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{})
-			require.NoError(t, err)
 
 			cfg := CatalogServerConfig{
 				LocalStorage: mockStorage,
 			}
-			handler := storageServerHandlerWrapped(mgr, cfg)
+			handler := storageServerHandlerWrapped(logr.Logger{}, cfg)
 
 			// Create test request
 			req := httptest.NewRequest("GET", "/test", nil)

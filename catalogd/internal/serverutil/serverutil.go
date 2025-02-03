@@ -48,7 +48,7 @@ func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig, tlsFil
 		OnlyServeWhenLeader: true,
 		Server: &http.Server{
 			Addr:        cfg.CatalogAddr,
-			Handler:     storageServerHandlerWrapped(mgr, cfg),
+			Handler:     storageServerHandlerWrapped(mgr.GetLogger().WithName("catalogd-http-server"), cfg),
 			ReadTimeout: 5 * time.Second,
 			// TODO: Revert this to 10 seconds if/when the API
 			// evolves to have significantly smaller responses
@@ -94,12 +94,11 @@ func logrLoggingHandler(l logr.Logger, handler http.Handler) http.Handler {
 	})
 }
 
-func storageServerHandlerWrapped(mgr ctrl.Manager, cfg CatalogServerConfig) http.Handler {
+func storageServerHandlerWrapped(l logr.Logger, cfg CatalogServerConfig) http.Handler {
 	handler := cfg.LocalStorage.StorageServerHandler()
 	handler = gzhttp.GzipHandler(handler)
 	handler = catalogdmetrics.AddMetricsToHandler(handler)
 
-	l := mgr.GetLogger().WithName("catalogd-http-server")
 	handler = logrLoggingHandler(l, handler)
 	return handler
 }
