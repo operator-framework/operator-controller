@@ -41,7 +41,7 @@ func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig, tlsFil
 		listener = tls.NewListener(listener, config)
 	}
 
-	shutdownTimeout := 30 * time.Second
+	shutdownTimeout := 60 * time.Second
 
 	l := mgr.GetLogger().WithName("catalogd-http-server")
 	handler := catalogdmetrics.AddMetricsToHandler(cfg.LocalStorage.StorageServerHandler())

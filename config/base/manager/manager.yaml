@@ -85,7 +85,7 @@ spec:
             memory: 64Mi
         terminationMessagePolicy: FallbackToLogsOnError
       serviceAccountName: operator-controller-controller-manager
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 60
       volumes:
         - name: cache
           emptyDir: {}

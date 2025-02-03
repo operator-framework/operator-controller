@@ -40,6 +40,7 @@ import (
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	"github.com/operator-framework/operator-controller/catalogd/internal/source"
 	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
+	contextutil "github.com/operator-framework/operator-controller/internal/util/context"
 )
 
 const (
@@ -91,8 +92,11 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	delayedCtx, delayedCancel := contextutil.WithDelay(ctx, time.Minute)
+	defer delayedCancel()
+
 	reconciledCatsrc := existingCatsrc.DeepCopy()
-	res, reconcileErr := r.reconcile(ctx, reconciledCatsrc)
+	res, reconcileErr := r.reconcile(delayedCtx, reconciledCatsrc)
 
 	// If we encounter an error, we should delete the stored catalog metadata
 	// which represents the state of a successfully unpacked catalog. Deleting
@@ -118,7 +122,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	finalizers := reconciledCatsrc.Finalizers
 
 	if updateStatus {
-		if err := r.Client.Status().Update(ctx, reconciledCatsrc); err != nil {
+		if err := r.Client.Status().Update(delayedCtx, reconciledCatsrc); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating status: %v", err))
 		}
 	}
@@ -126,7 +130,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	reconciledCatsrc.Finalizers = finalizers
 
 	if updateFinalizers {
-		if err := r.Client.Update(ctx, reconciledCatsrc); err != nil {
+		if err := r.Client.Update(delayedCtx, reconciledCatsrc); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
