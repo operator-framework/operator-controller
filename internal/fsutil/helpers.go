@@ -1,6 +1,7 @@
 package fsutil
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -17,9 +18,63 @@ func EnsureEmptyDirectory(path string, perm fs.FileMode) error {
 		return err
 	}
 	for _, entry := range entries {
-		if err := os.RemoveAll(filepath.Join(path, entry.Name())); err != nil {
+		if err := DeleteReadOnlyRecursive(filepath.Join(path, entry.Name())); err != nil {
 			return err
 		}
 	}
 	return os.MkdirAll(path, perm)
+}
+
+const (
+	ownerWritableFileMode os.FileMode = 0700
+	ownerWritableDirMode  os.FileMode = 0700
+	ownerReadOnlyFileMode os.FileMode = 0400
+	ownerReadOnlyDirMode  os.FileMode = 0500
+)
+
+// SetReadOnlyRecursive recursively sets files and directories under the path given by `root` as read-only
+func SetReadOnlyRecursive(root string) error {
+	return setModeRecursive(root, ownerReadOnlyFileMode, ownerReadOnlyDirMode)
+}
+
+// SetWritableRecursive recursively sets files and directories under the path given by `root` as writable
+func SetWritableRecursive(root string) error {
+	return setModeRecursive(root, ownerWritableFileMode, ownerWritableDirMode)
+}
+
+// DeleteReadOnlyRecursive deletes read-only directory with path given by `root`
+func DeleteReadOnlyRecursive(root string) error {
+	if err := SetWritableRecursive(root); err != nil {
+		return fmt.Errorf("error making directory writable for deletion: %w", err)
+	}
+	return os.RemoveAll(root)
+}
+
+func setModeRecursive(path string, fileMode os.FileMode, dirMode os.FileMode) error {
+	return filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		fi, err := d.Info()
+		if err != nil {
+			return err
+		}
+
+		switch typ := fi.Mode().Type(); typ {
+		case os.ModeSymlink:
+			// do not follow symlinks
+			// 1. if they resolve to other locations in the root, we'll find them anyway
+			// 2. if they resolve to other locations outside the root, we don't want to change their permissions
+			return nil
+		case os.ModeDir:
+			return os.Chmod(path, dirMode)
+		case 0: // regular file
+			return os.Chmod(path, fileMode)
+		default:
+			return fmt.Errorf("refusing to change ownership of file %q with type %v", path, typ.String())
+		}
+	})
 }
