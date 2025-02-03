@@ -63,7 +63,7 @@ else
 $(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
-KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
+KUSTOMIZE_BUILD_DIR := config/operator-controller/overlays/cert-manager
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -107,8 +107,8 @@ tidy: #HELP Update dependencies.
 .PHONY: manifests
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	# To generate the manifests used and do not use catalogd directory
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/... output:rbac:artifacts:config=config/base/rbac
-	$(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=config/base/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/... output:rbac:artifacts:config=config/operator-controller/base/rbac
+	$(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=config/operator-controller/base/crd/bases
 	# To generate the manifests for catalogd
 	$(MAKE) -C catalogd generate
 
@@ -141,14 +141,13 @@ bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := main
-CRD_DIFF_UPDATED_SOURCE := file://config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml
+CRD_DIFF_UPDATED_SOURCE := file://config/operator-controller/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml
 CATALOGD_CRD_DIFF_UPDATED_SOURCE := file://catalogd/config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml
 CRD_DIFF_CONFIG := crd-diff-config.yaml
 
 verify-crd-compatibility: $(CRD_DIFF) manifests
-	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml" ${CRD_DIFF_UPDATED_SOURCE}
+	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/operator-controller/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml" ${CRD_DIFF_UPDATED_SOURCE}
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=catalogd/config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml" ${CATALOGD_CRD_DIFF_UPDATED_SOURCE}
-
 
 .PHONY: test
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
@@ -209,12 +208,12 @@ image-registry: ## Build the testdata catalog used for e2e tests and push it to 
 # for example: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 .PHONY: test-e2e
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
-test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
+test-e2e: KUSTOMIZE_BUILD_DIR := config/operator-controller/overlays/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
 test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
-extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
+extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/operator-controller/overlays/cert-manager
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
 extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false  #EXHELP Run extension-developer e2e on local kind cluster
 extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean
