@@ -102,5 +102,4 @@ func storageServerHandlerWrapped(mgr ctrl.Manager, cfg CatalogServerConfig) http
 	l := mgr.GetLogger().WithName("catalogd-http-server")
 	handler = logrLoggingHandler(l, handler)
 	return handler
-
 }
