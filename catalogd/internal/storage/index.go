@@ -81,42 +81,29 @@ func (i index) Get(r io.ReaderAt, schema, packageName, name string) io.Reader {
 }
 
 func (i *index) getSectionSet(schema, packageName, name string) sets.Set[section] {
+	// Initialize with all sections if no schema specified, otherwise use schema sections
+	sectionSet := sets.New[section]()
 	if schema == "" {
-		if packageName == "" {
-			if name == "" {
-				sectionSet := sets.New[section]()
-				for _, s := range i.BySchema {
-					sectionSet.Insert(s...)
-				}
-				return sectionSet
-			} else {
-				return sets.New[section](i.ByName[name]...)
-			}
-		} else {
-			sectionSet := sets.New[section](i.ByPackage[packageName]...)
-			if name == "" {
-				return sectionSet
-			} else {
-				return sectionSet.Intersection(sets.New[section](i.ByName[name]...))
-			}
+		for _, s := range i.BySchema {
+			sectionSet.Insert(s...)
 		}
 	} else {
-		sectionSet := sets.New[section](i.BySchema[schema]...)
-		if packageName == "" {
-			if name == "" {
-				return sectionSet
-			} else {
-				return sectionSet.Intersection(sets.New[section](i.ByName[name]...))
-			}
-		} else {
-			sectionSet = sectionSet.Intersection(sets.New[section](i.ByPackage[packageName]...))
-			if name == "" {
-				return sectionSet
-			} else {
-				return sectionSet.Intersection(sets.New[section](i.ByName[name]...))
-			}
-		}
+		sectionSet = sets.New[section](i.BySchema[schema]...)
 	}
+
+	// Filter by package name if specified
+	if packageName != "" {
+		packageSections := sets.New[section](i.ByPackage[packageName]...)
+		sectionSet = sectionSet.Intersection(packageSections)
+	}
+
+	// Filter by name if specified
+	if name != "" {
+		nameSections := sets.New[section](i.ByName[name]...)
+		sectionSet = sectionSet.Intersection(nameSections)
+	}
+
+	return sectionSet
 }
 
 func newIndex(metasChan <-chan *declcfg.Meta) *index {

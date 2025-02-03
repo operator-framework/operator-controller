@@ -158,6 +158,7 @@ func checkIfNoneMatch(r *http.Request) condResult {
 // ParseTime parses a time header (such as the Date: header),
 // trying each of the three formats allowed by HTTP/1.1:
 // [TimeFormat], [time.RFC850], and [time.ANSIC].
+// nolint:nonamedreturns
 func ParseTime(text string) (t time.Time, err error) {
 	for _, layout := range timeFormats {
 		t, err = time.Parse(layout, text)
@@ -198,6 +199,7 @@ func checkIfMatch(r *http.Request) condResult {
 // scanETag determines if a syntactically valid ETag is present at s. If so,
 // the ETag and remaining text after consuming ETag is returned. Otherwise,
 // it returns "", "".
+// nolint:nonamedreturns
 func scanETag(s string) (etag string, remain string) {
 	s = textproto.TrimString(s)
 	start := 0

@@ -485,6 +485,8 @@ func TestServerLoadHandling(t *testing.T) {
 				wg.Add(1)
 				go func(idx int) {
 					defer wg.Done()
+					// nolint:bodyclose
+					// the response body is closed in the validateFunc
 					resp, err := http.DefaultClient.Do(requests[idx])
 					responses[idx] = resp
 					errs[idx] = err

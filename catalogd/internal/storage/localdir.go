@@ -64,10 +64,9 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 		storeMetaFuncs = append(storeMetaFuncs, storeIndexData)
 	}
 
-	var (
-		eg, egCtx = errgroup.WithContext(ctx)
-		metaChans []chan *declcfg.Meta
-	)
+	eg, egCtx := errgroup.WithContext(ctx)
+	metaChans := []chan *declcfg.Meta{}
+
 	for range storeMetaFuncs {
 		metaChans = append(metaChans, make(chan *declcfg.Meta, 1))
 	}
