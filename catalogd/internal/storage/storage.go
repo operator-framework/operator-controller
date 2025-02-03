@@ -13,7 +13,8 @@ import (
 type Instance interface {
 	Store(ctx context.Context, catalog string, fsys fs.FS) error
 	Delete(catalog string) error
+	ContentExists(catalog string) bool
+
 	BaseURL(catalog string) string
 	StorageServerHandler() http.Handler
-	ContentExists(catalog string) bool
 }

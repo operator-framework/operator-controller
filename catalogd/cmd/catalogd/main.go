@@ -303,9 +303,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	localStorage = storage.LocalDirV1{RootDir: storeDir, RootURL: baseStorageURL}
+	localStorage = &storage.LocalDirV1{
+		RootDir:            storeDir,
+		RootURL:            baseStorageURL,
+		EnableQueryHandler: features.CatalogdFeatureGate.Enabled(features.APIV1QueryHandler),
+	}
 
-	// Config for the the catalogd web server
+	// Config for the catalogd web server
 	catalogServerConfig := serverutil.CatalogServerConfig{
 		ExternalAddr: externalAddr,
 		CatalogAddr:  catalogServerAddr,
