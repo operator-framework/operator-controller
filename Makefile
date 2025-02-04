@@ -110,7 +110,7 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/... output:rbac:artifacts:config=config/operator-controller/base/rbac
 	$(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=config/operator-controller/base/crd/bases
 	# To generate the manifests for catalogd
-	$(MAKE) -C catalogd generate
+	$(MAKE) -f Makefile.catalogd generate
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -147,7 +147,7 @@ CRD_DIFF_CONFIG := crd-diff-config.yaml
 
 verify-crd-compatibility: $(CRD_DIFF) manifests
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/operator-controller/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml" ${CRD_DIFF_UPDATED_SOURCE}
-	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=catalogd/config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml" ${CATALOGD_CRD_DIFF_UPDATED_SOURCE}
+	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/catalogd/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml" ${CATALOGD_CRD_DIFF_UPDATED_SOURCE}
 
 .PHONY: test
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
@@ -243,7 +243,7 @@ e2e-coverage:
 .PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND cluster.
 	$(CONTAINER_RUNTIME) save $(IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
-	IMAGE_REPO=$(CATALOG_IMAGE_REPO) KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) $(MAKE) -C catalogd kind-load
+	IMAGE_REPO=$(CATALOG_IMAGE_REPO) KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) $(MAKE) -f Makefile.catalogd kind-load
 
 .PHONY: kind-deploy
 kind-deploy: export MANIFEST := ./operator-controller.yaml
@@ -310,7 +310,7 @@ run: docker-build kind-cluster kind-load kind-deploy #HELP Build the operator-co
 .PHONY: docker-build
 docker-build: build-linux  #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
 	$(CONTAINER_RUNTIME) build -t $(IMG) -f Dockerfile ./bin/linux
-	IMAGE_REPO=$(CATALOG_IMAGE_REPO) $(MAKE) -C catalogd build-container
+	IMAGE_REPO=$(CATALOG_IMAGE_REPO) $(MAKE) -f Makefile.catalogd build-container
 
 #SECTION Release
 ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)
