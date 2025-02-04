@@ -24,10 +24,10 @@ $(warning Could not find docker or podman in path! This may result in targets re
 endif
 
 # For standard development and release flows, we use the config/overlays/cert-manager overlay.
-KUSTOMIZE_OVERLAY := config/overlays/cert-manager
+KUSTOMIZE_OVERLAY := config/catalogd/overlays/cert-manager
 
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
-include ./../.bingo/Variables.mk
+include ./.bingo/Variables.mk
 
 # Dependencies
 export CERT_MGR_VERSION := v1.15.3
@@ -67,24 +67,24 @@ help: ## Display this help.
 ##@ Development
 
 clean: ## Remove binaries and test artifacts
-	rm -rf bin
+	rm -rf catalogd/bin
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code and manifests.
-	$(CONTROLLER_GEN) object:headerFile="../hack/boilerplate.go.txt" paths="./..."
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac output:webhook:artifacts:config=config/base/manager/webhook/
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./catalogd/..."
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./catalogd/..." output:crd:artifacts:config=config/catalogd/base/crd/bases output:rbac:artifacts:config=config/catalogd/base/rbac output:webhook:artifacts:config=config/catalogd/base/manager/webhook/
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
 E2E_FLAGS :=
 endif
-test-e2e: ## Run the e2e tests on existing cluster
-	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
+test-e2e: $(GINKGO) ## Run the e2e tests on existing cluster
+	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) catalogd/test/e2e
 
 e2e: KIND_CLUSTER_NAME := catalogd-e2e
 e2e: ISSUER_KIND := Issuer
 e2e: ISSUER_NAME := selfsigned-issuer
-e2e: KUSTOMIZE_OVERLAY := config/overlays/e2e
+e2e: KUSTOMIZE_OVERLAY := config/catalogd/overlays/e2e
 e2e: run image-registry test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
 image-registry: ## Setup in-cluster image registry
@@ -138,7 +138,7 @@ export GO_BUILD_LDFLAGS  := -s -w \
 export GO_BUILD_GCFLAGS  := all=-trimpath=${PWD}
 export GO_BUILD_TAGS     := containers_image_openpgp
 
-BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./cmd/$(notdir $@)
+BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./catalogd/cmd/$(notdir $@)
 
 .PHONY: build-deps
 build-deps: generate
@@ -146,14 +146,14 @@ build-deps: generate
 .PHONY: build go-build-local $(BINARIES)
 build: build-deps go-build-local ## Build binaries for current GOOS and GOARCH.
 go-build-local: $(BINARIES)
-$(BINARIES): BUILDBIN = bin
+$(BINARIES): BUILDBIN = catalogd/bin
 $(BINARIES):
 	$(BUILDCMD)
 
 .PHONY: build-linux go-build-linux $(LINUX_BINARIES)
 build-linux: build-deps go-build-linux ## Build binaries for GOOS=linux and local GOARCH.
 go-build-linux: $(LINUX_BINARIES)
-$(LINUX_BINARIES): BUILDBIN = bin/linux
+$(LINUX_BINARIES): BUILDBIN = catalogd/bin/linux
 $(LINUX_BINARIES):
 	GOOS=linux $(BUILDCMD)
 
@@ -163,7 +163,7 @@ run: generate kind-cluster install ## Create a kind cluster and install a local 
 
 .PHONY: build-container
 build-container: build-linux ## Build docker image for catalogd.
-	$(CONTAINER_RUNTIME) build -f Dockerfile -t $(IMAGE) ./bin/linux
+	$(CONTAINER_RUNTIME) build -f catalogd/Dockerfile -t $(IMAGE) ./catalogd/bin/linux
 
 ##@ Deploy
 
@@ -185,15 +185,15 @@ install: check-cluster build-container kind-load deploy wait ## Install local ca
 
 .PHONY: deploy
 deploy: export MANIFEST="./catalogd.yaml"
-deploy: export DEFAULT_CATALOGS="./config/base/default/clustercatalogs/default-catalogs.yaml"
+deploy: export DEFAULT_CATALOGS="./config/catalogd/base/default/clustercatalogs/default-catalogs.yaml"
 deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/config with cert-manager and default clustercatalogs
-	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE) && cd ../../..
+	cd config/catalogd/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE) && cd ../../../../
 	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
-	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh | bash -s
+	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < catalogd/scripts/install.tpl.sh | bash -s
 
 .PHONY: only-deploy-manifest
 only-deploy-manifest: $(KUSTOMIZE) ## Deploy just the Catalogd manifest--used in e2e testing where cert-manager is installed in a separate step
-	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
+	cd config/catalogd/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
 	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | kubectl apply -f -
 
 wait:
@@ -208,7 +208,7 @@ cert-manager:
 
 .PHONY: demo-update
 demo-update:
-	hack/scripts/generate-asciidemo.sh
+	catalogd/hack/scripts/generate-asciidemo.sh
 
 .PHONY: check-cluster
 check-cluster:
