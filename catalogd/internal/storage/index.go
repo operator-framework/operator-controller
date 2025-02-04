@@ -50,20 +50,6 @@ func (s *section) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (i index) Size() int64 {
-	size := 0
-	for k, v := range i.BySchema {
-		size += len(k) + len(v)*16
-	}
-	for k, v := range i.ByPackage {
-		size += len(k) + len(v)*16
-	}
-	for k, v := range i.ByName {
-		size += len(k) + len(v)*16
-	}
-	return int64(size)
-}
-
 func (i index) Get(r io.ReaderAt, schema, packageName, name string) io.Reader {
 	sectionSet := i.getSectionSet(schema, packageName, name)
 
