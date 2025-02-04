@@ -251,26 +251,19 @@ func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *o
 		return errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
 
-	//t.Logf("By deleting ClusterExtension %q", clusterExtension.Name)
-	if clusterExtension != nil {
-		t.Logf("By deleting ClusterExtension %q", clusterExtension.Name)
-		require.NoError(t, c.Delete(context.Background(), clusterExtension))
-		require.Eventually(t, func() bool {
-			err := c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, &ocv1.ClusterExtension{})
-			return errors.IsNotFound(err)
-		}, pollDuration, pollInterval)
-	} else {
-		t.Log(" ClusterExtension is nil", clusterExtension)
-	}
+	t.Logf("By deleting ClusterExtension %q", clusterExtension.Name)
+	require.NoError(t, c.Delete(context.Background(), clusterExtension))
+	require.Eventually(t, func() bool {
+		err := c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, &ocv1.ClusterExtension{})
+		return errors.IsNotFound(err)
+	}, pollDuration, pollInterval)
 
-	if sa != nil {
-		t.Logf("By deleting ServiceAccount %q", sa.Name)
-		require.NoError(t, c.Delete(context.Background(), sa))
-		require.Eventually(t, func() bool {
-			err := c.Get(context.Background(), types.NamespacedName{Name: sa.Name, Namespace: sa.Namespace}, &corev1.ServiceAccount{})
-			return errors.IsNotFound(err)
-		}, pollDuration, pollInterval)
-	}
+	t.Logf("By deleting ServiceAccount %q", sa.Name)
+	require.NoError(t, c.Delete(context.Background(), sa))
+	require.Eventually(t, func() bool {
+		err := c.Get(context.Background(), types.NamespacedName{Name: sa.Name, Namespace: sa.Namespace}, &corev1.ServiceAccount{})
+		return errors.IsNotFound(err)
+	}, pollDuration, pollInterval)
 
 	if clusterExtension != nil {
 		ensureNoExtensionResources(t, clusterExtension.Name)
