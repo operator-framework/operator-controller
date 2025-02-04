@@ -6,7 +6,10 @@
   value: {"name":"olmv1-certificate", "readOnly": true, "mountPath":"/var/certs/"}
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "--ca-certs-dir=/var/certs"
+  value: "--catalogd-cas-dir=/var/certs"
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "--pull-cas-dir=/var/certs"
 - op: add
   path: /spec/template/spec/containers/0/args/-
   value: "--tls-cert=/var/certs/tls.cert"

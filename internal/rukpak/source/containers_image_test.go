@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/operator-framework/operator-controller/internal/fsutil"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
 
@@ -277,7 +278,16 @@ func TestUnpackUnexpectedFile(t *testing.T) {
 	require.NoError(t, os.WriteFile(unpackPath, []byte{}, 0600))
 
 	// Attempt to pull and unpack the image
-	assert.Panics(t, func() { _, _ = unpacker.Unpack(context.Background(), bundleSource) })
+	_, err := unpacker.Unpack(context.Background(), bundleSource)
+	require.NoError(t, err)
+
+	// Ensure unpack path is now a directory
+	stat, err := os.Stat(unpackPath)
+	require.NoError(t, err)
+	require.True(t, stat.IsDir())
+
+	// Unset read-only to allow cleanup
+	require.NoError(t, fsutil.SetWritableRecursive(unpackPath))
 }
 
 func TestUnpackCopySucceedsMountFails(t *testing.T) {

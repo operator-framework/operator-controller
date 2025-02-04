@@ -12,7 +12,7 @@ kubectl cluster-info --context kind-kind
 sleep 10
 
 # use the install script from the latest github release
-curl -L -s https://github.com/operator-framework/catalogd/releases/latest/download/install.sh | bash
+curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash
 
 # inspect crds (clustercatalog)
 kubectl get crds -A

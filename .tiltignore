@@ -1,0 +1,10 @@
+.md
+.txt
+.toml
+LICENSE
+Makefile
+.github
+.vscode
+*_test.go
+*/test
+.sh

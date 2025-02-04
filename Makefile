@@ -142,9 +142,13 @@ bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := main
 CRD_DIFF_UPDATED_SOURCE := file://config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml
+CATALOGD_CRD_DIFF_UPDATED_SOURCE := file://catalogd/config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml
 CRD_DIFF_CONFIG := crd-diff-config.yaml
+
 verify-crd-compatibility: $(CRD_DIFF) manifests
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml" ${CRD_DIFF_UPDATED_SOURCE}
+	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=catalogd/config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml" ${CATALOGD_CRD_DIFF_UPDATED_SOURCE}
+
 
 .PHONY: test
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
@@ -244,9 +248,10 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 
 .PHONY: kind-deploy
 kind-deploy: export MANIFEST := ./operator-controller.yaml
+kind-deploy: export DEFAULT_CATALOG := ./catalogd/config/base/default/clustercatalogs/default-catalogs.yaml
 kind-deploy: manifests $(KUSTOMIZE)
 	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager | sed "s/cert-git-version/cert-$(VERSION)/g") > $(MANIFEST)
-	envsubst '$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 
 .PHONY: kind-cluster
@@ -324,10 +329,11 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 	OPERATOR_CONTROLLER_IMAGE_REPO=$(IMAGE_REPO) CATALOGD_IMAGE_REPO=$(CATALOG_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
-quickstart: export MANIFEST := ./operator-controller.yaml
+quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
+quickstart: export DEFAULT_CATALOG := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/default-catalogs.yaml"
 quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
-	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager | sed "s/cert-git-version/cert-$(VERSION)/g") > $(MANIFEST)
-	envsubst '$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
+	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Docs
 

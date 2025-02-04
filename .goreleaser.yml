@@ -124,6 +124,7 @@ release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
   extra_files:
     - glob: 'operator-controller.yaml'
+    - glob: './catalogd/config/base/default/clustercatalogs/default-catalogs.yaml'
     - glob: 'install.sh'
   header: |
     ## Installation

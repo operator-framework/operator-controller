@@ -40,6 +40,17 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Wait for operator-controller deployment to be ready")
 	managerPod := waitForDeployment(t, ctx, "operator-controller-controller-manager")
 
+	t.Log("Wait for acquired leader election")
+	// Average case is under 1 minute but in the worst case: (previous leader crashed)
+	// we could have LeaseDuration (137s) + RetryPeriod (26s) +/- 163s
+	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
+	defer leaderCancel()
+
+	leaderSubstrings := []string{"successfully acquired lease"}
+	leaderElected, err := watchPodLogsForSubstring(leaderCtx, managerPod, "manager", leaderSubstrings...)
+	require.NoError(t, err)
+	require.True(t, leaderElected)
+
 	t.Log("Reading logs to make sure that ClusterExtension was reconciled by operator-controller before we update it")
 	// Make sure that after we upgrade OLM itself we can still reconcile old objects without any changes
 	logCtx, cancel := context.WithTimeout(ctx, time.Minute)

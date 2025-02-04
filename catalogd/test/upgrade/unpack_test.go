@@ -54,6 +54,17 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 				managerPod = managerPods.Items[0]
 			}).Should(Succeed())
 
+			By("Waiting for acquired leader election")
+			// Average case is under 1 minute but in the worst case: (previous leader crashed)
+			// we could have LeaseDuration (137s) + RetryPeriod (26s) +/- 163s
+			leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
+			defer leaderCancel()
+
+			leaderSubstrings := []string{"successfully acquired lease"}
+			leaderElected, err := watchPodLogsForSubstring(leaderCtx, &managerPod, "manager", leaderSubstrings...)
+			Expect(err).To(Succeed())
+			Expect(leaderElected).To(BeTrue())
+
 			By("Reading logs to make sure that ClusterCatalog was reconciled by catalogdv1")
 			logCtx, cancel := context.WithTimeout(ctx, time.Minute)
 			defer cancel()
