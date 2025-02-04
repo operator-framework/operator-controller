@@ -72,13 +72,15 @@ func TestTokenGetterGet(t *testing.T) {
 			"test-namespace-3", "test-token-3", "failed to get token"},
 		{"Testing error when getting token from fake client", "test-service-account-4",
 			"test-namespace-4", "error when fetching token", "error when fetching token"},
+		{"Testing service account not found", "missing-sa",
+			"test-namespace-5", "", "service account \"missing-sa\" not found in namespace \"test-namespace-5\": unable to authenticate with the Kubernetes cluster."},
 	}
 
 	for _, tc := range tests {
 		got, err := tg.Get(context.Background(), types.NamespacedName{Namespace: tc.namespace, Name: tc.serviceAccountName})
 		if err != nil {
 			t.Logf("%s: expected: %v, got: %v", tc.testName, tc.want, err)
-			assert.EqualError(t, err, tc.errorMsg)
+			assert.EqualError(t, err, tc.errorMsg, "Error message should match expected output")
 		} else {
 			t.Logf("%s: expected: %v, got: %v", tc.testName, tc.want, got)
 			assert.Equal(t, tc.want, got, tc.errorMsg)
