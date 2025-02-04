@@ -338,7 +338,7 @@ func TestQueryEndpoint(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/catalogs/test-catalog/api/v1/query%s", testServer.URL, tc.queryParams), nil)
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas%s", testServer.URL, tc.queryParams), nil)
 			require.NoError(t, err)
 
 			if strings.Contains(tc.name, "If-Modified-Since") {
@@ -397,7 +397,7 @@ func TestServerLoadHandling(t *testing.T) {
 				var reqs []*http.Request
 				for i := 0; i < 100; i++ {
 					req, _ := http.NewRequest(http.MethodGet,
-						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/query?schema=olm.bundle", baseURL),
+						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas?schema=olm.bundle", baseURL),
 						nil)
 					req.Header.Set("Accept", "application/jsonl")
 					reqs = append(reqs, req)
@@ -422,7 +422,7 @@ func TestServerLoadHandling(t *testing.T) {
 				var reqs []*http.Request
 				for i := 0; i < 50; i++ {
 					req, _ := http.NewRequest(http.MethodGet,
-						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/query?package=test-op-%d", baseURL, i),
+						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas?package=test-op-%d", baseURL, i),
 						nil)
 					req.Header.Set("Accept", "application/jsonl")
 					reqs = append(reqs, req)
@@ -452,7 +452,7 @@ func TestServerLoadHandling(t *testing.T) {
 						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/all", baseURL),
 						nil)
 					queryReq, _ := http.NewRequest(http.MethodGet,
-						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/query?schema=olm.bundle", baseURL),
+						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas?schema=olm.bundle", baseURL),
 						nil)
 					allReq.Header.Set("Accept", "application/jsonl")
 					queryReq.Header.Set("Accept", "application/jsonl")
