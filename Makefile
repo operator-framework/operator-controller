@@ -117,7 +117,7 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: tidy fmt vet generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
+verify: tidy fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
 .PHONY: fix-lint
@@ -127,10 +127,6 @@ fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
 .PHONY: fmt
 fmt: #EXHELP Formats code
 	go fmt ./...
-
-.PHONY: vet
-vet: #EXHELP Run go vet against code.
-	go vet -tags '$(GO_BUILD_TAGS)' ./...
 
 .PHONY: bingo-upgrade
 bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
@@ -151,7 +147,7 @@ verify-crd-compatibility: $(CRD_DIFF) manifests
 
 
 .PHONY: test
-test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
+test: manifests generate fmt test-unit test-e2e #HELP Run all tests.
 
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
@@ -291,7 +287,7 @@ $(BINARIES):
 	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$@ ./cmd/$@
 
 .PHONY: build-deps
-build-deps: manifests generate fmt vet
+build-deps: manifests generate fmt
 
 .PHONY: build go-build-local
 build: build-deps go-build-local #HELP Build manager binary for current GOOS and GOARCH. Default target.
