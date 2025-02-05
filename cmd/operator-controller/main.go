@@ -88,7 +88,6 @@ type config struct {
 	enableLeaderElection      bool
 	probeAddr                 string
 	cachePath                 string
-	operatorControllerVersion bool
 	systemNamespace           string
 	catalogdCasDir            string
 	pullCasDir                string
@@ -122,7 +121,7 @@ var operatorControllerCmd = &cobra.Command{
 
 var versionCommand = &cobra.Command{
 	Use:   "version",
-	Short: "Prints version info of operator-controller",
+	Short: "Prints operator-controller version information",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(version.String())
 	},
@@ -142,7 +141,6 @@ func init() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flags.StringVar(&cfg.cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
-	flags.BoolVar(&cfg.operatorControllerVersion, "version", false, "Prints operator-controller version information")
 	flags.StringVar(&cfg.systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
 	flags.StringVar(&cfg.globalPullSecret, "global-pull-secret", "", "The <namespace>/<name> of the global pull secret that is going to be used to pull bundle images.")
 
