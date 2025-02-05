@@ -1,10 +1,12 @@
-package fsutil
+package fs
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // EnsureEmptyDirectory ensures the directory given by `path` is empty.
@@ -42,7 +44,10 @@ func SetWritableRecursive(root string) error {
 	return setModeRecursive(root, ownerWritableFileMode, ownerWritableDirMode)
 }
 
-// DeleteReadOnlyRecursive deletes read-only directory with path given by `root`
+// DeleteReadOnlyRecursive deletes the directory with path given by `root`.
+// Prior to deleting the directory, the directory and all descendant files
+// and directories are set as writable. If any chmod or deletion error occurs
+// it is immediately returned.
 func DeleteReadOnlyRecursive(root string) error {
 	if err := SetWritableRecursive(root); err != nil {
 		return fmt.Errorf("error making directory writable for deletion: %w", err)
@@ -77,4 +82,22 @@ func setModeRecursive(path string, fileMode os.FileMode, dirMode os.FileMode) er
 			return fmt.Errorf("refusing to change ownership of file %q with type %v", path, typ.String())
 		}
 	})
+}
+
+var (
+	ErrNotDirectory = errors.New("not a directory")
+)
+
+// GetDirectoryModTime returns the modification time of the directory at dirPath.
+// If stat(dirPath) fails, an error is returned with a zero-value time.Time.
+// If dirPath is not a directory, an ErrNotDirectory error is returned.
+func GetDirectoryModTime(dirPath string) (time.Time, error) {
+	dirStat, err := os.Stat(dirPath)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if !dirStat.IsDir() {
+		return time.Time{}, ErrNotDirectory
+	}
+	return dirStat.ModTime(), nil
 }

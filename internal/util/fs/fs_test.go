@@ -1,4 +1,4 @@
-package fsutil
+package fs
 
 import (
 	"io/fs"
@@ -22,15 +22,15 @@ func TestEnsureEmptyDirectory(t *testing.T) {
 	require.True(t, stat.IsDir())
 	require.Equal(t, dirPerms, stat.Mode().Perm())
 
-	t.Log("Create a file inside directory")
+	t.Log("Create a read-only file inside directory")
 	file := filepath.Join(dirPath, "file1")
 	// write file as read-only to verify EnsureEmptyDirectory can still delete it.
-	require.NoError(t, os.WriteFile(file, []byte("test"), 0400))
+	require.NoError(t, os.WriteFile(file, []byte("test"), ownerReadOnlyDirMode))
 
-	t.Log("Create a sub-directory inside directory")
+	t.Log("Create a read-only sub-directory inside directory")
 	subDir := filepath.Join(dirPath, "subdir")
 	// write subDir as read-execute-only to verify EnsureEmptyDirectory can still delete it.
-	require.NoError(t, os.Mkdir(subDir, 0500))
+	require.NoError(t, os.Mkdir(subDir, ownerReadOnlyDirMode))
 
 	t.Log("Call EnsureEmptyDirectory against directory with different permissions")
 	require.NoError(t, EnsureEmptyDirectory(dirPath, 0640))
@@ -62,7 +62,7 @@ func TestSetReadOnlyRecursive(t *testing.T) {
 	require.NoError(t, os.WriteFile(filePath, []byte("test"), ownerWritableFileMode))
 	require.NoError(t, os.Symlink(targetFilePath, symlinkPath))
 
-	t.Log("Set directory structure as read-only")
+	t.Log("Set directory structure as read-only via DeleteReadOnlyRecursive")
 	require.NoError(t, SetReadOnlyRecursive(nestedDir))
 
 	t.Log("Check file permissions")
@@ -138,4 +138,37 @@ func TestDeleteReadOnlyRecursive(t *testing.T) {
 	t.Log("Ensure directory was deleted")
 	_, err := os.Stat(nestedDir)
 	require.ErrorIs(t, err, os.ErrNotExist)
+}
+
+func TestGetDirectoryModTime(t *testing.T) {
+	tempDir := t.TempDir()
+	unpackPath := filepath.Join(tempDir, "myimage")
+
+	t.Log("Test case: unpack path does not exist")
+	modTime, err := GetDirectoryModTime(unpackPath)
+	require.ErrorIs(t, err, os.ErrNotExist)
+	require.True(t, modTime.IsZero())
+
+	t.Log("Test case: unpack path points to file")
+	require.NoError(t, os.WriteFile(unpackPath, []byte("test"), ownerWritableFileMode))
+
+	modTime, err = GetDirectoryModTime(filepath.Join(tempDir, "myimage"))
+	require.ErrorIs(t, err, ErrNotDirectory)
+	require.True(t, modTime.IsZero())
+
+	t.Log("Expect file still exists and then clean it up")
+	require.FileExists(t, unpackPath)
+	require.NoError(t, os.Remove(unpackPath))
+
+	t.Log("Test case: unpack path points to directory (happy path)")
+	require.NoError(t, os.Mkdir(unpackPath, ownerWritableDirMode))
+
+	modTime, err = GetDirectoryModTime(unpackPath)
+	require.NoError(t, err)
+	require.False(t, modTime.IsZero())
+
+	t.Log("Expect unpack time to match directory mod time")
+	stat, err := os.Stat(unpackPath)
+	require.NoError(t, err)
+	require.Equal(t, stat.ModTime(), modTime)
 }

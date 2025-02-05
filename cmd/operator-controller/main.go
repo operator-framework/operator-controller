@@ -63,12 +63,12 @@ import (
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/features"
 	"github.com/operator-framework/operator-controller/internal/finalizers"
-	"github.com/operator-framework/operator-controller/internal/fsutil"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/resolve"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/scheme"
+	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
 	"github.com/operator-framework/operator-controller/internal/version"
 )
 

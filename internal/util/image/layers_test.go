@@ -1,4 +1,4 @@
-package source
+package image
 
 import (
 	"archive/tar"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestContainersImage_applyLayerFilter(t *testing.T) {
+func TestOnlyPath(t *testing.T) {
 	type testCase struct {
 		name       string
 		srcPaths   []string
@@ -119,7 +119,7 @@ func TestContainersImage_applyLayerFilter(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, srcPath := range tc.srcPaths {
-				f := applyLayerFilter(srcPath)
+				f := OnlyPath(srcPath)
 				for _, tarHeader := range tc.tarHeaders {
 					keep, err := f(&tarHeader)
 					tc.assertion(&tarHeader, keep, err)
