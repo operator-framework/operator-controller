@@ -82,16 +82,16 @@ var (
 )
 
 type config struct {
-	metricsAddr               string
-	certFile                  string
-	keyFile                   string
-	enableLeaderElection      bool
-	probeAddr                 string
-	cachePath                 string
-	systemNamespace           string
-	catalogdCasDir            string
-	pullCasDir                string
-	globalPullSecret          string
+	metricsAddr          string
+	certFile             string
+	keyFile              string
+	enableLeaderElection bool
+	probeAddr            string
+	cachePath            string
+	systemNamespace      string
+	catalogdCasDir       string
+	pullCasDir           string
+	globalPullSecret     string
 }
 
 const authFilePrefix = "operator-controller-global-pull-secrets"
@@ -113,7 +113,7 @@ var operatorControllerCmd = &cobra.Command{
 	Short: "operator-controller is the central component of Operator Lifecycle Manager (OLM) v1",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := validateMetricsFlags(); err != nil {
-			return fmt.Errorf("Error: %v\n", err)
+			return err
 		}
 		return run()
 	},
@@ -128,7 +128,6 @@ var versionCommand = &cobra.Command{
 }
 
 func init() {
-
 	//create flagset, the collection of flags for this command
 	flags := operatorControllerCmd.Flags()
 	flags.StringVar(&cfg.metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':8443')")
@@ -157,7 +156,6 @@ func init() {
 
 	//add feature gate flags to flagset
 	features.OperatorControllerFeatureGate.AddFlag(flags)
-
 }
 func validateMetricsFlags() error {
 	if (cfg.certFile != "" && cfg.keyFile == "") || (cfg.certFile == "" && cfg.keyFile != "") {
@@ -485,7 +483,8 @@ func run() error {
 }
 
 func main() {
-
-	operatorControllerCmd.Execute()
-
+	if err := operatorControllerCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 }
