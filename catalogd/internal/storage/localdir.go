@@ -231,9 +231,9 @@ func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
 	}
 	defer catalogFile.Close()
 
-	w.Header().Set("Last-Modified", catalogStat.ModTime().UTC().Format(TimeFormat))
-	if checkPreconditions(w, r, catalogStat.ModTime()) {
-		w.WriteHeader(http.StatusNotModified)
+	w.Header().Set("Last-Modified", catalogStat.ModTime().UTC().Format(timeFormat))
+	done := checkPreconditions(w, r, catalogStat.ModTime())
+	if done {
 		return
 	}
 
