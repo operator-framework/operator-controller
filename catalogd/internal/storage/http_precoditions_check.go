@@ -57,7 +57,7 @@ func checkIfModifiedSince(r *http.Request, w http.ResponseWriter, modtime time.T
 	if ims == "" || isZeroTime(modtime) {
 		return condTrue
 	}
-	t, err := ParseTime(ims)
+	t, err := parseTime(ims)
 	if err != nil {
 		httpError(w, err)
 		return condNone
@@ -76,7 +76,7 @@ func checkIfUnmodifiedSince(r *http.Request, modtime time.Time) condResult {
 	if ius == "" || isZeroTime(modtime) {
 		return condNone
 	}
-	t, err := ParseTime(ius)
+	t, err := parseTime(ius)
 	if err != nil {
 		return condNone
 	}
@@ -90,18 +90,18 @@ func checkIfUnmodifiedSince(r *http.Request, modtime time.Time) condResult {
 	return condFalse
 }
 
-// TimeFormat is the time format to use when generating times in HTTP
+// timeFormat is the time format to use when generating times in HTTP
 // headers. It is like [time.RFC1123] but hard-codes GMT as the time
 // zone. The time being formatted must be in UTC for Format to
 // generate the correct format.
 //
 // For parsing this time format, see [ParseTime].
-const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
+const timeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 var (
 	unixEpochTime = time.Unix(0, 0)
 	timeFormats   = []string{
-		TimeFormat,
+		timeFormat,
 		time.RFC850,
 		time.ANSIC,
 	}
@@ -155,11 +155,11 @@ func checkIfNoneMatch(r *http.Request) condResult {
 	return condTrue
 }
 
-// ParseTime parses a time header (such as the Date: header),
+// parseTime parses a time header (such as the Date: header),
 // trying each of the three formats allowed by HTTP/1.1:
 // [TimeFormat], [time.RFC850], and [time.ANSIC].
 // nolint:nonamedreturns
-func ParseTime(text string) (t time.Time, err error) {
+func parseTime(text string) (t time.Time, err error) {
 	for _, layout := range timeFormats {
 		t, err = time.Parse(layout, text)
 		if err == nil {
