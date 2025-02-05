@@ -30,7 +30,7 @@ import (
 
 	"github.com/containers/image/v5/types"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -78,7 +78,22 @@ var (
 	setupLog               = ctrl.Log.WithName("setup")
 	defaultSystemNamespace = "olmv1-system"
 	certWatcher            *certwatcher.CertWatcher
+	cfg                    = &config{}
 )
+
+type config struct {
+	metricsAddr               string
+	certFile                  string
+	keyFile                   string
+	enableLeaderElection      bool
+	probeAddr                 string
+	cachePath                 string
+	operatorControllerVersion bool
+	systemNamespace           string
+	catalogdCasDir            string
+	pullCasDir                string
+	globalPullSecret          string
+}
 
 const authFilePrefix = "operator-controller-global-pull-secrets"
 
@@ -94,83 +109,97 @@ func podNamespace() string {
 	return string(namespace)
 }
 
-func main() {
-	var (
-		metricsAddr               string
-		certFile                  string
-		keyFile                   string
-		enableLeaderElection      bool
-		probeAddr                 string
-		cachePath                 string
-		operatorControllerVersion bool
-		systemNamespace           string
-		catalogdCasDir            string
-		pullCasDir                string
-		globalPullSecret          string
-	)
-	flag.StringVar(&metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':8443')")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.StringVar(&catalogdCasDir, "catalogd-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to the Catalogd web service.")
-	flag.StringVar(&pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to image registries.")
-	flag.StringVar(&certFile, "tls-cert", "", "The certificate file used for the metrics server. Required to enable the metrics server. Requires tls-key.")
-	flag.StringVar(&keyFile, "tls-key", "", "The key file used for the metrics server. Required to enable the metrics server. Requires tls-cert")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+var operatorControllerCmd = &cobra.Command{
+	Use:   "operator-controller",
+	Short: "operator-controller is the central component of Operator Lifecycle Manager (OLM) v1",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := validateMetricsFlags(); err != nil {
+			return fmt.Errorf("Error: %v\n", err)
+		}
+		return run()
+	},
+}
+
+var versionCommand = &cobra.Command{
+	Use:   "version",
+	Short: "Prints version info of operator-controller",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(version.String())
+	},
+}
+
+func init() {
+
+	//create flagset, the collection of flags for this command
+	flags := operatorControllerCmd.Flags()
+	flags.StringVar(&cfg.metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':8443')")
+	flags.StringVar(&cfg.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flags.StringVar(&cfg.catalogdCasDir, "catalogd-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to the Catalogd web service.")
+	flags.StringVar(&cfg.pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to image registries.")
+	flags.StringVar(&cfg.certFile, "tls-cert", "", "The certificate file used for the metrics server. Required to enable the metrics server. Requires tls-key.")
+	flags.StringVar(&cfg.keyFile, "tls-key", "", "The key file used for the metrics server. Required to enable the metrics server. Requires tls-cert")
+	flags.BoolVar(&cfg.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
-	flag.BoolVar(&operatorControllerVersion, "version", false, "Prints operator-controller version information")
-	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
-	flag.StringVar(&globalPullSecret, "global-pull-secret", "", "The <namespace>/<name> of the global pull secret that is going to be used to pull bundle images.")
+	flags.StringVar(&cfg.cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
+	flags.BoolVar(&cfg.operatorControllerVersion, "version", false, "Prints operator-controller version information")
+	flags.StringVar(&cfg.systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
+	flags.StringVar(&cfg.globalPullSecret, "global-pull-secret", "", "The <namespace>/<name> of the global pull secret that is going to be used to pull bundle images.")
+
+	//adds version sub command
+	operatorControllerCmd.AddCommand(versionCommand)
 
 	klog.InitFlags(flag.CommandLine)
 	if klog.V(4).Enabled() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	features.OperatorControllerFeatureGate.AddFlag(pflag.CommandLine)
-	pflag.Parse()
+	//add klog flags to flagset
+	flags.AddGoFlagSet(flag.CommandLine)
 
-	if operatorControllerVersion {
-		fmt.Println(version.String())
-		os.Exit(0)
-	}
+	//add feature gate flags to flagset
+	features.OperatorControllerFeatureGate.AddFlag(flags)
 
-	if (certFile != "" && keyFile == "") || (certFile == "" && keyFile != "") {
+}
+func validateMetricsFlags() error {
+	if (cfg.certFile != "" && cfg.keyFile == "") || (cfg.certFile == "" && cfg.keyFile != "") {
 		setupLog.Error(errors.New("missing TLS configuration"),
 			"tls-cert and tls-key flags must be used together",
-			"certFile", certFile, "keyFile", keyFile)
-		os.Exit(1)
+			"certFile", cfg.certFile, "keyFile", cfg.keyFile)
+		return fmt.Errorf("unable to configure TLS certificates: tls-cert and tls-key flags must be used together")
 	}
 
-	if metricsAddr != "" && certFile == "" && keyFile == "" {
+	if cfg.metricsAddr != "" && cfg.certFile == "" && cfg.keyFile == "" {
 		setupLog.Error(errors.New("invalid metrics configuration"),
 			"metrics-bind-address requires tls-cert and tls-key flags to be set",
-			"metricsAddr", metricsAddr, "certFile", certFile, "keyFile", keyFile)
-		os.Exit(1)
+			"metricsAddr", cfg.metricsAddr, "certFile", cfg.certFile, "keyFile", cfg.keyFile)
+		return fmt.Errorf("metrics-bind-address requires tls-cert and tls-key flags to be set")
 	}
 
-	if certFile != "" && keyFile != "" && metricsAddr == "" {
-		metricsAddr = ":8443"
+	if cfg.certFile != "" && cfg.keyFile != "" && cfg.metricsAddr == "" {
+		cfg.metricsAddr = ":8443"
 	}
-
+	return nil
+}
+func run() error {
 	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
 
 	setupLog.Info("starting up the controller", "version info", version.String())
 
 	authFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s-%s.json", authFilePrefix, apimachineryrand.String(8)))
 	var globalPullSecretKey *k8stypes.NamespacedName
-	if globalPullSecret != "" {
-		secretParts := strings.Split(globalPullSecret, "/")
+	if cfg.globalPullSecret != "" {
+		secretParts := strings.Split(cfg.globalPullSecret, "/")
 		if len(secretParts) != 2 {
-			setupLog.Error(fmt.Errorf("incorrect number of components"), "value of global-pull-secret should be of the format <namespace>/<name>")
-			os.Exit(1)
+			err := fmt.Errorf("incorrect number of components")
+			setupLog.Error(err, "value of global-pull-secret should be of the format <namespace>/<name>")
+			return err
 		}
 		globalPullSecretKey = &k8stypes.NamespacedName{Name: secretParts[1], Namespace: secretParts[0]}
 	}
 
-	if systemNamespace == "" {
-		systemNamespace = podNamespace()
+	if cfg.systemNamespace == "" {
+		cfg.systemNamespace = podNamespace()
 	}
 
 	setupLog.Info("set up manager")
@@ -180,7 +209,7 @@ func main() {
 			&catalogd.ClusterCatalog{}: {Label: k8slabels.Everything()},
 		},
 		DefaultNamespaces: map[string]crcache.Config{
-			systemNamespace: {LabelSelector: k8slabels.Everything()},
+			cfg.systemNamespace: {LabelSelector: k8slabels.Everything()},
 		},
 		DefaultLabelSelector: k8slabels.Nothing(),
 	}
@@ -198,19 +227,19 @@ func main() {
 	}
 
 	metricsServerOptions := server.Options{}
-	if len(certFile) > 0 && len(keyFile) > 0 {
-		setupLog.Info("Starting metrics server with TLS enabled", "addr", metricsAddr, "tls-cert", certFile, "tls-key", keyFile)
+	if len(cfg.certFile) > 0 && len(cfg.keyFile) > 0 {
+		setupLog.Info("Starting metrics server with TLS enabled", "addr", cfg.metricsAddr, "tls-cert", cfg.certFile, "tls-key", cfg.keyFile)
 
-		metricsServerOptions.BindAddress = metricsAddr
+		metricsServerOptions.BindAddress = cfg.metricsAddr
 		metricsServerOptions.SecureServing = true
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 
 		// If the certificate files change, the watcher will reload them.
 		var err error
-		certWatcher, err = certwatcher.New(certFile, keyFile)
+		certWatcher, err = certwatcher.New(cfg.certFile, cfg.keyFile)
 		if err != nil {
 			setupLog.Error(err, "Failed to initialize certificate watcher")
-			os.Exit(1)
+			return err
 		}
 
 		metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, func(config *tls.Config) {
@@ -239,8 +268,8 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                        scheme.Scheme,
 		Metrics:                       metricsServerOptions,
-		HealthProbeBindAddress:        probeAddr,
-		LeaderElection:                enableLeaderElection,
+		HealthProbeBindAddress:        cfg.probeAddr,
+		LeaderElection:                cfg.enableLeaderElection,
 		LeaderElectionID:              "9c4404e7.operatorframework.io",
 		LeaderElectionReleaseOnCancel: true,
 		// Recommended Leader Election values
@@ -264,19 +293,19 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+		return err
 	}
 
 	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		setupLog.Error(err, "unable to create core client")
-		os.Exit(1)
+		return err
 	}
 	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
 	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
-		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), systemNamespace)),
+		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
 		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
 			ext := obj.(*ocv1.ClusterExtension)
 			return ext.Spec.Namespace, nil
@@ -285,7 +314,7 @@ func main() {
 	)
 	if err != nil {
 		setupLog.Error(err, "unable to config for creating helm client")
-		os.Exit(1)
+		return err
 	}
 
 	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
@@ -293,34 +322,34 @@ func main() {
 	)
 	if err != nil {
 		setupLog.Error(err, "unable to create helm client")
-		os.Exit(1)
+		return err
 	}
 
-	certPoolWatcher, err := httputil.NewCertPoolWatcher(catalogdCasDir, ctrl.Log.WithName("cert-pool"))
+	certPoolWatcher, err := httputil.NewCertPoolWatcher(cfg.catalogdCasDir, ctrl.Log.WithName("cert-pool"))
 	if err != nil {
 		setupLog.Error(err, "unable to create CA certificate pool")
-		os.Exit(1)
+		return err
 	}
 
 	if certWatcher != nil {
 		setupLog.Info("Adding certificate watcher to manager")
 		if err := mgr.Add(certWatcher); err != nil {
 			setupLog.Error(err, "unable to add certificate watcher to manager")
-			os.Exit(1)
+			return err
 		}
 	}
 
-	if err := fsutil.EnsureEmptyDirectory(cachePath, 0700); err != nil {
+	if err := fsutil.EnsureEmptyDirectory(cfg.cachePath, 0700); err != nil {
 		setupLog.Error(err, "unable to ensure empty cache directory")
-		os.Exit(1)
+		return err
 	}
 
-	imageCache := imageutil.BundleCache(filepath.Join(cachePath, "unpack"))
+	imageCache := imageutil.BundleCache(filepath.Join(cfg.cachePath, "unpack"))
 	imagePuller := &imageutil.ContainersImagePuller{
 		SourceCtxFunc: func(ctx context.Context) (*types.SystemContext, error) {
 			srcContext := &types.SystemContext{
-				DockerCertPath: pullCasDir,
-				OCICertPath:    pullCasDir,
+				DockerCertPath: cfg.pullCasDir,
+				OCICertPath:    cfg.pullCasDir,
 			}
 			logger := log.FromContext(ctx)
 			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
@@ -340,15 +369,15 @@ func main() {
 		return crfinalizer.Result{}, imageCache.Delete(ctx, obj.GetName())
 	})); err != nil {
 		setupLog.Error(err, "unable to register finalizer", "finalizerKey", controllers.ClusterExtensionCleanupUnpackCacheFinalizer)
-		os.Exit(1)
+		return err
 	}
 
 	cl := mgr.GetClient()
 
-	catalogsCachePath := filepath.Join(cachePath, "catalogs")
+	catalogsCachePath := filepath.Join(cfg.cachePath, "catalogs")
 	if err := os.MkdirAll(catalogsCachePath, 0700); err != nil {
 		setupLog.Error(err, "unable to create catalogs cache directory")
-		os.Exit(1)
+		return err
 	}
 	catalogClientBackend := cache.NewFilesystemCache(catalogsCachePath)
 	catalogClient := catalogclient.New(catalogClientBackend, func() (*http.Client, error) {
@@ -374,7 +403,7 @@ func main() {
 	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		setupLog.Error(err, "unable to create apiextensions client")
-		os.Exit(1)
+		return err
 	}
 
 	preflights := []applier.Preflight{
@@ -394,7 +423,7 @@ func main() {
 	}))
 	if err != nil {
 		setupLog.Error(err, "unable to register content manager cleanup finalizer")
-		os.Exit(1)
+		return err
 	}
 
 	if err = (&controllers.ClusterExtensionReconciler{
@@ -408,7 +437,7 @@ func main() {
 		Manager:               cm,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
-		os.Exit(1)
+		return err
 	}
 
 	if err = (&controllers.ClusterCatalogReconciler{
@@ -417,11 +446,11 @@ func main() {
 		CatalogCachePopulator: catalogClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
-		os.Exit(1)
+		return err
 	}
 
 	if globalPullSecretKey != nil {
-		setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", globalPullSecret)
+		setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", cfg.globalPullSecret)
 		err := (&controllers.PullSecretReconciler{
 			Client:       mgr.GetClient(),
 			AuthFilePath: authFilePath,
@@ -429,7 +458,7 @@ func main() {
 		}).SetupWithManager(mgr)
 		if err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
-			os.Exit(1)
+			return err
 		}
 	}
 
@@ -437,21 +466,28 @@ func main() {
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+		return err
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+		return err
 	}
 
 	setupLog.Info("starting manager")
 	ctx := ctrl.SetupSignalHandler()
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+		return err
 	}
 	if err := os.Remove(authFilePath); err != nil {
 		setupLog.Error(err, "failed to cleanup temporary auth file")
-		os.Exit(1)
+		return err
 	}
+	return nil
+}
+
+func main() {
+
+	operatorControllerCmd.Execute()
+
 }
