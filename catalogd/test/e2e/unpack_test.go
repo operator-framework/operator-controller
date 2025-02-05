@@ -19,11 +19,6 @@ import (
 const (
 	catalogRefEnvVar = "TEST_CATALOG_IMAGE"
 	catalogName      = "test-catalog"
-	pkg              = "prometheus"
-	version          = "0.47.0"
-	channel          = "beta"
-	bundle           = "prometheus-operator.0.47.0"
-	bundleImage      = "localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0"
 )
 
 // catalogImageRef returns the image reference for the test catalog image, defaulting to the value of the environment
