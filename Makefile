@@ -147,7 +147,7 @@ verify-crd-compatibility: $(CRD_DIFF) manifests
 
 
 .PHONY: test
-test: manifests generate fmt test-unit test-e2e #HELP Run all tests.
+test: manifests generate fmt lint test-unit test-e2e #HELP Run all tests.
 
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
