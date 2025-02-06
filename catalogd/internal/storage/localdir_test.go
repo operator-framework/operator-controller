@@ -66,11 +66,11 @@ func TestLocalDirStoraget(t *testing.T) {
 			},
 		},
 		{
-			name: "storing with query handler enabled should create indexes",
+			name: "storing with metas handler enabled should create indices",
 			setup: func(t *testing.T) (*LocalDirV1, fs.FS) {
 				s := &LocalDirV1{
 					RootDir:            t.TempDir(),
-					EnableQueryHandler: true,
+					EnableMetasHandler: true,
 				}
 				return s, createTestFS(t)
 			},
@@ -106,7 +106,7 @@ func TestLocalDirStoraget(t *testing.T) {
 				for i := 0; i < 10; i++ {
 					wg.Add(1)
 					go func() {
-						defer wg.Add(-1)
+						defer wg.Done()
 						for j := 0; j < 100; j++ {
 							s.ContentExists(catalog)
 						}
@@ -266,13 +266,13 @@ func TestLocalDirServerHandler(t *testing.T) {
 	}
 }
 
-// Tests to verify the behavior of the query endpoint, as described in
-// https://docs.google.com/document/d/1s6_9IFEKGQLNh3ueH7SF4Yrx4PW9NSiNFqFIJx0pU-8/edit?usp=sharing
-func TestQueryEndpoint(t *testing.T) {
+// Tests to verify the behavior of the metas endpoint, as described in
+// https://docs.google.com/document/d/1s6_9IFEKGQLNh3ueH7SF4Yrx4PW9NSiNFqFIJx0pU-8/
+func TestMetasEndpoint(t *testing.T) {
 	store := &LocalDirV1{
 		RootDir:            t.TempDir(),
 		RootURL:            &url.URL{Path: urlPrefix},
-		EnableQueryHandler: true,
+		EnableMetasHandler: true,
 	}
 	if store.Store(context.Background(), "test-catalog", createTestFS(t)) != nil {
 		t.Fatal("failed to store test catalog")
@@ -281,7 +281,7 @@ func TestQueryEndpoint(t *testing.T) {
 
 	testCases := []struct {
 		name               string
-		setupStore         func() (*httptest.Server, error)
+		initRequest        func(req *http.Request) error
 		queryParams        string
 		expectedStatusCode int
 		expectedContent    string
@@ -329,27 +329,50 @@ func TestQueryEndpoint(t *testing.T) {
 			expectedContent:    "",
 		},
 		{
-			name:               "cached response with If-Modified-Since",
-			queryParams:        "?schema=olm.package",
+			name:               "valid query with packageName that returns multiple blobs",
+			queryParams:        "?package=webhook_operator_test",
+			expectedStatusCode: http.StatusOK,
+			expectedContent: `{"image":"quaydock.io/namespace/bundle:0.0.3","name":"bundle.v0.0.1","package":"webhook_operator_test","properties":[{"type":"olm.bundle.object","value":{"data":"dW5pbXBvcnRhbnQK"}},{"type":"some.other","value":{"data":"arbitrary-info"}}],"relatedImages":[{"image":"testimage:latest","name":"test"}],"schema":"olm.bundle"}
+{"entries":[{"name":"bundle.v0.0.1"}],"name":"preview_test","package":"webhook_operator_test","schema":"olm.channel"}`,
+		},
+		{
+			name:        "cached response with If-Modified-Since",
+			queryParams: "?schema=olm.package",
+			initRequest: func(req *http.Request) error {
+				resp, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return err
+				}
+				resp.Body.Close()
+				req.Header.Set("If-Modified-Since", resp.Header.Get("Last-Modified"))
+				return nil
+			},
 			expectedStatusCode: http.StatusNotModified,
 			expectedContent:    "",
+		},
+		{
+			name:               "request with unknown parameters",
+			queryParams:        "?non-existent=foo",
+			expectedStatusCode: http.StatusBadRequest,
+			expectedContent:    "400 Bad Request",
+		},
+		{
+			name:               "request with duplicate parameters",
+			queryParams:        "?schema=olm.bundle&&schema=olm.bundle",
+			expectedStatusCode: http.StatusOK,
+			expectedContent:    `{"image":"quaydock.io/namespace/bundle:0.0.3","name":"bundle.v0.0.1","package":"webhook_operator_test","properties":[{"type":"olm.bundle.object","value":{"data":"dW5pbXBvcnRhbnQK"}},{"type":"some.other","value":{"data":"arbitrary-info"}}],"relatedImages":[{"image":"testimage:latest","name":"test"}],"schema":"olm.bundle"}`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas%s", testServer.URL, tc.queryParams), nil)
+			reqGet, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas%s", testServer.URL, tc.queryParams), nil)
 			require.NoError(t, err)
 
-			if strings.Contains(tc.name, "If-Modified-Since") {
-				// Do an initial request to get a Last-Modified timestamp
-				// for the actual request
-				resp, err := http.DefaultClient.Do(req)
-				require.NoError(t, err)
-				resp.Body.Close()
-				req.Header.Set("If-Modified-Since", resp.Header.Get("Last-Modified"))
+			if tc.initRequest != nil {
+				require.NoError(t, tc.initRequest(reqGet))
 			}
-			resp, err := http.DefaultClient.Do(req)
+			resp, err := http.DefaultClient.Do(reqGet)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
@@ -358,6 +381,30 @@ func TestQueryEndpoint(t *testing.T) {
 			actualContent, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedContent, strings.TrimSpace(string(actualContent)))
+
+			// Also do a HEAD request
+			reqHead, err := http.NewRequest(http.MethodHead, fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas%s", testServer.URL, tc.queryParams), nil)
+			require.NoError(t, err)
+			if tc.initRequest != nil {
+				require.NoError(t, tc.initRequest(reqHead))
+			}
+			resp, err = http.DefaultClient.Do(reqHead)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			actualContent, err = io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, "", string(actualContent)) // HEAD should not return a body
+			resp.Body.Close()
+
+			// And make sure any other method is not allowed
+			for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodDelete} {
+				reqPost, err := http.NewRequest(method, fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas%s", testServer.URL, tc.queryParams), nil)
+				require.NoError(t, err)
+				resp, err = http.DefaultClient.Do(reqPost)
+				require.NoError(t, err)
+				require.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
+				resp.Body.Close()
+			}
 		})
 	}
 }
@@ -366,7 +413,7 @@ func TestServerLoadHandling(t *testing.T) {
 	store := &LocalDirV1{
 		RootDir:            t.TempDir(),
 		RootURL:            &url.URL{Path: urlPrefix},
-		EnableQueryHandler: true,
+		EnableMetasHandler: true,
 	}
 
 	// Create large test data
@@ -443,7 +490,7 @@ func TestServerLoadHandling(t *testing.T) {
 			},
 		},
 		{
-			name:       "mixed all and query endpoints",
+			name:       "mixed all and metas endpoints",
 			concurrent: 40,
 			requests: func(baseURL string) []*http.Request {
 				var reqs []*http.Request
@@ -451,12 +498,12 @@ func TestServerLoadHandling(t *testing.T) {
 					allReq, _ := http.NewRequest(http.MethodGet,
 						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/all", baseURL),
 						nil)
-					queryReq, _ := http.NewRequest(http.MethodGet,
+					metasReq, _ := http.NewRequest(http.MethodGet,
 						fmt.Sprintf("%s/catalogs/test-catalog/api/v1/metas?schema=olm.bundle", baseURL),
 						nil)
 					allReq.Header.Set("Accept", "application/jsonl")
-					queryReq.Header.Set("Accept", "application/jsonl")
-					reqs = append(reqs, allReq, queryReq)
+					metasReq.Header.Set("Accept", "application/jsonl")
+					reqs = append(reqs, allReq, metasReq)
 				}
 				return reqs
 			},

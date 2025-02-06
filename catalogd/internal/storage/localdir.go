@@ -28,12 +28,12 @@ import (
 type LocalDirV1 struct {
 	RootDir            string
 	RootURL            *url.URL
-	EnableQueryHandler bool
+	EnableMetasHandler bool
 
 	m sync.RWMutex
 	// this singleflight Group is used in `getIndex()`` to handle concurrent HTTP requests
 	// optimally. With the use of this slightflight group, the index is loaded from disk
-	// once per concurrent group of HTTP requests being handled by the query handler.
+	// once per concurrent group of HTTP requests being handled by the metas handler.
 	// The single flight instance gives us a way to load the index from disk exactly once
 	// per concurrent group of callers, and then let every concurrent caller have access to
 	// the loaded index. This avoids lots of unnecessary open/decode/close cycles when concurrent
@@ -60,7 +60,7 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 	defer os.RemoveAll(tmpCatalogDir)
 
 	storeMetaFuncs := []storeMetasFunc{storeCatalogData}
-	if s.EnableQueryHandler {
+	if s.EnableMetasHandler {
 		storeMetaFuncs = append(storeMetaFuncs, storeIndexData)
 	}
 
@@ -126,7 +126,7 @@ func (s *LocalDirV1) ContentExists(catalog string) bool {
 		return false
 	}
 
-	if s.EnableQueryHandler {
+	if s.EnableMetasHandler {
 		indexFileStat, err := os.Stat(catalogIndexFilePath(s.catalogDir(catalog)))
 		if err != nil {
 			return false
@@ -189,8 +189,8 @@ func (s *LocalDirV1) StorageServerHandler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "all").Path, s.handleV1All)
-	if s.EnableQueryHandler {
-		mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "metas").Path, s.handleV1Query)
+	if s.EnableMetasHandler {
+		mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "metas").Path, s.handleV1Metas)
 	}
 	allowedMethodsHandler := func(next http.Handler, allowedMethods ...string) http.Handler {
 		allowedMethodSet := sets.New[string](allowedMethods...)
@@ -219,9 +219,23 @@ func (s *LocalDirV1) handleV1All(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "", catalogStat.ModTime(), catalogFile)
 }
 
-func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
+func (s *LocalDirV1) handleV1Metas(w http.ResponseWriter, r *http.Request) {
 	s.m.RLock()
 	defer s.m.RUnlock()
+
+	// Check for unexpected query parameters
+	expectedParams := map[string]bool{
+		"schema":  true,
+		"package": true,
+		"name":    true,
+	}
+
+	for param := range r.URL.Query() {
+		if !expectedParams[param] {
+			httpError(w, errInvalidParams)
+			return
+		}
+	}
 
 	catalog := r.PathValue("catalog")
 	catalogFile, catalogStat, err := s.catalogData(catalog)

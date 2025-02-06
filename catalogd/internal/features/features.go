@@ -6,11 +6,11 @@ import (
 )
 
 const (
-	APIV1QueryHandler = featuregate.Feature("APIV1QueryHandler")
+	APIV1MetasHandler = featuregate.Feature("APIV1MetasHandler")
 )
 
 var catalogdFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
-	APIV1QueryHandler: {Default: false, PreRelease: featuregate.Alpha},
+	APIV1MetasHandler: {Default: false, PreRelease: featuregate.Alpha},
 }
 
 var CatalogdFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()
