@@ -738,6 +738,171 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "after catalog availability set to enable, finalizer should be added",
+			source: &MockSource{
+				result: &source.Result{
+					State: source.StateUnpacked,
+					FS:    &fstest.MapFS{},
+				},
+			},
+			store: &MockStore{},
+			catalog: &catalogdv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Finalizers: []string{},
+				},
+				Spec: catalogdv1.ClusterCatalogSpec{
+					Source: catalogdv1.CatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					AvailabilityMode: catalogdv1.AvailabilityModeAvailable,
+				},
+				Status: catalogdv1.ClusterCatalogStatus{
+					URLs: &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+					ResolvedSource: &catalogdv1.ResolvedCatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ResolvedImageSource{
+							Ref: "",
+						},
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1.TypeServing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1.ReasonUnavailable,
+						},
+						{
+							Type:   catalogdv1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1.ReasonUserSpecifiedUnavailable,
+						},
+					},
+				},
+			},
+			expectedCatalog: &catalogdv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: catalogdv1.ClusterCatalogSpec{
+					Source: catalogdv1.CatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					AvailabilityMode: catalogdv1.AvailabilityModeAvailable,
+				},
+				Status: catalogdv1.ClusterCatalogStatus{
+					URLs: &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+					ResolvedSource: &catalogdv1.ResolvedCatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ResolvedImageSource{
+							Ref: "",
+						},
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1.TypeServing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1.ReasonUnavailable,
+						},
+						{
+							Type:   catalogdv1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1.ReasonUserSpecifiedUnavailable,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "after catalog availability set to enable and finalizer added, the status should get updated",
+			source: &MockSource{
+				result: &source.Result{
+					State: source.StateUnpacked,
+					FS:    &fstest.MapFS{},
+				},
+			},
+			store: &MockStore{},
+			catalog: &catalogdv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: catalogdv1.ClusterCatalogSpec{
+					Source: catalogdv1.CatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					AvailabilityMode: catalogdv1.AvailabilityModeAvailable,
+				},
+				Status: catalogdv1.ClusterCatalogStatus{
+					URLs:         &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+					LastUnpacked: &metav1.Time{},
+					ResolvedSource: &catalogdv1.ResolvedCatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ResolvedImageSource{
+							Ref: "",
+						},
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1.TypeServing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1.ReasonUnavailable,
+						},
+						{
+							Type:   catalogdv1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1.ReasonUserSpecifiedUnavailable,
+						},
+					},
+				},
+			},
+			expectedCatalog: &catalogdv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: catalogdv1.ClusterCatalogSpec{
+					Source: catalogdv1.CatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					AvailabilityMode: catalogdv1.AvailabilityModeAvailable,
+				},
+				Status: catalogdv1.ClusterCatalogStatus{
+					URLs: &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+					ResolvedSource: &catalogdv1.ResolvedCatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ResolvedImageSource{
+							Ref: "",
+						},
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1.TypeServing,
+							Status: metav1.ConditionTrue,
+							Reason: catalogdv1.ReasonAvailable,
+						},
+						{
+							Type:   catalogdv1.TypeProgressing,
+							Status: metav1.ConditionTrue,
+							Reason: catalogdv1.ReasonSucceeded,
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			reconciler := &ClusterCatalogReconciler{
