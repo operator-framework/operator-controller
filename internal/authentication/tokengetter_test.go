@@ -71,9 +71,9 @@ func TestTokenGetterGet(t *testing.T) {
 		{"Testing token that expired 10 seconds ago", "test-service-account-3",
 			"test-namespace-3", "test-token-3", "failed to get token"},
 		{"Testing error when getting token from fake client", "test-service-account-4",
-			"test-namespace-4", "error when fetching token", "error when fetching token"},
+			"test-namespace-4", "error when fetching token", "authentication error: error when fetching token"},
 		{"Testing service account not found", "missing-sa",
-			"test-namespace-5", "", "service account \"missing-sa\" not found in namespace \"test-namespace-5\": unable to authenticate with the Kubernetes cluster."},
+			"test-namespace-5", "", "authentication error: service account \"missing-sa\" not found in namespace \"test-namespace-5\""},
 	}
 
 	for _, tc := range tests {

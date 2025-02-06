@@ -21,21 +21,6 @@ type TokenGetter struct {
 	mu                 sync.RWMutex
 }
 
-type ServiceAccountNotFoundError struct {
-	ServiceAccountName      string
-	ServiceAccountNamespace string
-	Err                     error
-}
-
-func (e *ServiceAccountNotFoundError) Unwrap() error {
-	return e.Err
-}
-
-// Error implements the error interface for ServiceAccountNotFoundError.
-func (e *ServiceAccountNotFoundError) Error() string {
-	return fmt.Sprintf("service account \"%s\" not found in namespace \"%s\": unable to authenticate with the Kubernetes cluster. (%s)", e.ServiceAccountName, e.ServiceAccountNamespace, e.Err.Error())
-}
-
 type TokenGetterOption func(*TokenGetter)
 
 const (
@@ -83,7 +68,7 @@ func (t *TokenGetter) Get(ctx context.Context, key types.NamespacedName) (string
 		var err error
 		token, err = t.getToken(ctx, key)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("authentication error: %w", err)
 		}
 		t.mu.Lock()
 		t.tokens[key] = token
@@ -104,7 +89,8 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 		}, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return nil, &ServiceAccountNotFoundError{ServiceAccountName: key.Name, ServiceAccountNamespace: key.Namespace, Err: err}
+			// return nil, &ServiceAccountNotFoundError{ServiceAccountName: key.Name, ServiceAccountNamespace: key.Namespace, Err: err}
+			return nil, fmt.Errorf("service account \"%s\" not found in namespace \"%s\"", key.Name, key.Namespace)
 		}
 		return nil, err
 	}

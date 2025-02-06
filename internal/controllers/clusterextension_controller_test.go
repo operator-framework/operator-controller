@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/finalizers"
@@ -336,11 +335,8 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
 	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		err: &authentication.ServiceAccountNotFoundError{
-			ServiceAccountName:      "missing-sa",
-			ServiceAccountNamespace: "default",
-			Err:                     errors.New("error from k8s api"),
-		}}
+		err: errors.New("authentication error: service account \"missing-sa\" not found in namespace \"default\""),
+	}
 
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
@@ -369,7 +365,6 @@ func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
 
 	require.Equal(t, ctrl.Result{}, res)
 	require.Error(t, err)
-	require.IsType(t, &authentication.ServiceAccountNotFoundError{}, err)
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
@@ -377,14 +372,14 @@ func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 	require.NotNil(t, installedCond)
 	require.Equal(t, metav1.ConditionUnknown, installedCond.Status)
-	require.Contains(t, installedCond.Message, fmt.Sprintf("service account %q not found in namespace %q: unable to authenticate with the Kubernetes cluster. (%s)",
-		"missing-sa", "default", "error from k8s api"))
+	require.Contains(t, installedCond.Message, fmt.Sprintf("service account %q not found in namespace %q",
+		"missing-sa", "default"))
 
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 	require.NotNil(t, progressingCond)
 	require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
 	require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
-	require.Contains(t, progressingCond.Message, "installation cannot proceed due to missing ServiceAccount")
+	require.Contains(t, progressingCond.Message, "error getting installed bundle: authentication error: service account \"missing-sa\" not found in namespace \"default\"")
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 }
 
