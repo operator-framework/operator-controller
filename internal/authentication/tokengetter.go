@@ -2,10 +2,12 @@ package authentication
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -17,6 +19,21 @@ type TokenGetter struct {
 	expirationDuration time.Duration
 	tokens             map[types.NamespacedName]*authenticationv1.TokenRequestStatus
 	mu                 sync.RWMutex
+}
+
+type ServiceAccountNotFoundError struct {
+	ServiceAccountName      string
+	ServiceAccountNamespace string
+	Err                     error
+}
+
+func (e *ServiceAccountNotFoundError) Unwrap() error {
+	return e.Err
+}
+
+// Error implements the error interface for ServiceAccountNotFoundError.
+func (e *ServiceAccountNotFoundError) Error() string {
+	return fmt.Sprintf("service account \"%s\" not found in namespace \"%s\": unable to authenticate with the Kubernetes cluster. (%s)", e.ServiceAccountName, e.ServiceAccountNamespace, e.Err.Error())
 }
 
 type TokenGetterOption func(*TokenGetter)
@@ -86,6 +103,9 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To(int64(t.expirationDuration / time.Second))},
 		}, metav1.CreateOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, &ServiceAccountNotFoundError{ServiceAccountName: key.Name, ServiceAccountNamespace: key.Namespace, Err: err}
+		}
 		return nil, err
 	}
 	return &req.Status, nil
