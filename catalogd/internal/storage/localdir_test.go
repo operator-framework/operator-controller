@@ -238,7 +238,7 @@ func TestLocalDirServerHandler(t *testing.T) {
 		{
 			name:               "Server returns 404 when non-existent catalog is queried",
 			expectedStatusCode: http.StatusNotFound,
-			expectedContent:    "404 Not Found",
+			expectedContent:    "404 page not found",
 			URLPath:            "/catalogs/non-existent-catalog/api/v1/all",
 		},
 		{

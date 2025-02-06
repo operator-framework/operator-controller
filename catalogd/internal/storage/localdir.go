@@ -210,13 +210,8 @@ func (s *LocalDirV1) handleV1All(w http.ResponseWriter, r *http.Request) {
 	defer s.m.RUnlock()
 
 	catalog := r.PathValue("catalog")
-	catalogFile, catalogStat, err := s.catalogData(catalog)
-	if err != nil {
-		httpError(w, err)
-		return
-	}
 	w.Header().Add("Content-Type", "application/jsonl")
-	http.ServeContent(w, r, "", catalogStat.ModTime(), catalogFile)
+	http.ServeFile(w, r, catalogFilePath(s.catalogDir(catalog)))
 }
 
 func (s *LocalDirV1) handleV1Query(w http.ResponseWriter, r *http.Request) {
