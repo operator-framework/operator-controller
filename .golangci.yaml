@@ -23,6 +23,7 @@ linters:
   - errorlint
   - gci
   - gofmt
+  - govet
   - gosec
   - importas
   - misspell
