@@ -257,8 +257,7 @@ func (s *LocalDirV1) handleV1Metas(w http.ResponseWriter, r *http.Request) {
 
 	if schema == "" && pkg == "" && name == "" {
 		// If no parameters are provided, return the entire catalog (this is the same as /api/v1/all)
-		w.Header().Add("Content-Type", "application/jsonl")
-		http.ServeContent(w, r, "", catalogStat.ModTime(), catalogFile)
+		serveJSONLines(w, r, catalogFile)
 		return
 	}
 	idx, err := s.getIndex(catalog)
