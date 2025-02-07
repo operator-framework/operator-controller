@@ -12,7 +12,7 @@ import (
 
 	"golang.org/x/exp/slices" // replace with "slices" in go 1.21
 
-	"github.com/operator-framework/operator-controller/internal/conditionsets"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 )
 
 func TestClusterExtensionTypeRegistration(t *testing.T) {
