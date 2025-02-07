@@ -50,6 +50,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	"github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
@@ -206,6 +207,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
 		setInstallStatus(ext, nil)
+		var saerr *authentication.ServiceAccountNotFoundError
+		if errors.As(err, &saerr) {
+			setInstalledStatusConditionUnknown(ext, saerr.Error())
+			setStatusProgressing(ext, errors.New("installation cannot proceed due to missing ServiceAccount"))
+			return ctrl.Result{}, err
+		}
 		setInstalledStatusConditionUnknown(ext, err.Error())
 		setStatusProgressing(ext, errors.New("retrying to get installed bundle"))
 		return ctrl.Result{}, err
