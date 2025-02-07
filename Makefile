@@ -167,6 +167,11 @@ test: manifests generate fmt lint test-unit test-e2e #HELP Run all tests.
 e2e: #EXHELP Run the e2e tests.
 	go test -count=1 -v ./test/e2e/...
 
+.PHONY: benchmark
+benchmark: #EXHELP Run the benchmark tests.
+	export CATALOG_IMG=registry.redhat.io/redhat/redhat-operator-index:v4.18
+	go test -v -run=^$$ -bench=. -benchmem -count=10 -v ./test/e2e/... | tee /tmp/artifacts/new.txt
+
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
 
@@ -255,6 +260,12 @@ catalogd-pre-upgrade-setup:
 
 catalogd-image-registry: ## Setup in-cluster image registry
 	./test/tools/imageregistry/registry.sh $(ISSUER_KIND) $(ISSUER_NAME)
+
+.PHONY: test-benchmark
+test-benchmark: KIND_CLUSTER_NAME := operator-controller-benchmark
+test-benchmark: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
+test-benchmark: GO_BUILD_FLAGS := -cover
+test-benchmark: run image-registry benchmark kind-clean #HELP Run benchmark test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager

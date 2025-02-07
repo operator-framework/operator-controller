@@ -1,0 +1,16 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/operator-framework/operator-controller/test/e2e
+cpu: Apple M1 Pro
+BenchmarkCreateClusterCatalog-10    	       1	1352852042 ns/op	  404520 B/op	    3914 allocs/op
+BenchmarkCreateClusterCatalog-10    	      13	  86982353 ns/op	   36907 B/op	     394 allocs/op
+BenchmarkCreateClusterCatalog-10    	      12	  84962496 ns/op	   34555 B/op	     393 allocs/op
+BenchmarkCreateClusterCatalog-10    	      18	  70375363 ns/op	   34880 B/op	     388 allocs/op
+BenchmarkCreateClusterCatalog-10    	      15	  71715708 ns/op	   37654 B/op	     399 allocs/op
+BenchmarkCreateClusterCatalog-10    	      13	  85251170 ns/op	   36572 B/op	     396 allocs/op
+BenchmarkCreateClusterCatalog-10    	      13	  83413260 ns/op	   38435 B/op	     393 allocs/op
+BenchmarkCreateClusterCatalog-10    	      13	  93851487 ns/op	   37249 B/op	     395 allocs/op
+BenchmarkCreateClusterCatalog-10    	      13	  78722212 ns/op	   36593 B/op	     393 allocs/op
+BenchmarkCreateClusterCatalog-10    	      13	  86393522 ns/op	   37404 B/op	     395 allocs/op
+PASS
+ok  	github.com/operator-framework/operator-controller/test/e2e	32.699s

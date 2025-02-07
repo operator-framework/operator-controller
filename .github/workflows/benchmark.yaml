@@ -1,0 +1,46 @@
+name: Benchmark Test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install dependencies
+        run: |
+          go mod download
+          go mod tidy
+
+      # - name: Debug via SSH
+      #   uses: mxschmitt/action-tmate@v3
+
+      - name: Run benchmark test
+        # working-directory: test/e2e
+        run: |
+          mkdir -p /tmp/artifacts/
+          ARTIFACT_PATH=/tmp/artifacts make test-benchmark
+
+      - name: Compare with baseline
+        run: |
+          go install golang.org/x/perf/cmd/benchstat@latest
+          benchstat benchmarks/baseline.txt /tmp/artifacts/new.txt | tee /tmp/artifacts/output
+
+      - name: Upload benchmark results      
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-artifacts
+          path: /tmp/artifacts/
+          
