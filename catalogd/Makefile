@@ -78,17 +78,9 @@ FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
 E2E_FLAGS :=
 endif
-test-e2e: ## Run the e2e tests on existing cluster
-	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
-
-e2e: KIND_CLUSTER_NAME := catalogd-e2e
-e2e: ISSUER_KIND := Issuer
-e2e: ISSUER_NAME := selfsigned-issuer
-e2e: KUSTOMIZE_OVERLAY := config/overlays/e2e
-e2e: run image-registry test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
 image-registry: ## Setup in-cluster image registry
-	./test/tools/imageregistry/registry.sh $(ISSUER_KIND) $(ISSUER_NAME)
+	./../test/tools/imageregistry/registry.sh $(ISSUER_KIND) $(ISSUER_NAME)
 
 ## image-registry target has to come after run-latest-release,
 ## because the image-registry depends on the olm-ca issuer.

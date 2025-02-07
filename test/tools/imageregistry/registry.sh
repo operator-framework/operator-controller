@@ -26,8 +26,8 @@ envsubst '${ISSUER_KIND},${ISSUER_NAME}' < test/tools/imageregistry/imgreg.yaml 
 kubectl wait -n catalogd-e2e --for=condition=Available deployment/docker-registry --timeout=60s
 
 # Load the testdata onto the cluster as a configmap so it can be used with kaniko
-kubectl create configmap -n catalogd-e2e --from-file=testdata/catalogs/test-catalog.Dockerfile catalogd-e2e.dockerfile
-kubectl create configmap -n catalogd-e2e --from-file=testdata/catalogs/test-catalog catalogd-e2e.build-contents
+kubectl create configmap -n catalogd-e2e --from-file=catalogd/testdata/catalogs/test-catalog.Dockerfile catalogd-e2e.dockerfile
+kubectl create configmap -n catalogd-e2e --from-file=catalogd/testdata/catalogs/test-catalog catalogd-e2e.build-contents
 
 # Create the kaniko pod to build the test image and push it to the test registry.
 kubectl apply -f test/tools/imageregistry/imagebuilder.yaml

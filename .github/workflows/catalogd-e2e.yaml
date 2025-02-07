@@ -17,8 +17,7 @@ jobs:
         with:
           go-version-file: "go.mod"
       - name: Run E2e
-        working-directory: catalogd
-        run: make e2e
+        run: make test-catalogd-e2e
   upgrade-e2e:
     runs-on: ubuntu-latest
     steps:
