@@ -1,4 +1,4 @@
-package upgradee2e
+package catalogdupgradee2e
 
 import (
 	"os"

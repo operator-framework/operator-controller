@@ -26,5 +26,4 @@ jobs:
         with:
           go-version-file: "go.mod"
       - name: Run the upgrade e2e test
-        working-directory: catalogd
-        run: make test-upgrade-e2e
+        run: make test-catalogd-upgrade-e2e

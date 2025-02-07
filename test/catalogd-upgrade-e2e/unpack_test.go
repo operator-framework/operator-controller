@@ -1,4 +1,4 @@
-package upgradee2e
+package catalogdupgradee2e
 
 import (
 	"bufio"
@@ -87,7 +87,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 				g.Expect(cond.Reason).To(Equal(catalogdv1.ReasonSucceeded))
 			}).Should(Succeed())
 
-			expectedFBC, err := os.ReadFile("../../testdata/catalogs/test-catalog/expected_all.json")
+			expectedFBC, err := os.ReadFile("../../catalogd/testdata/catalogs/test-catalog/expected_all.json")
 			Expect(err).To(Not(HaveOccurred()))
 
 			By("Making sure the catalog content is available via the http server")
