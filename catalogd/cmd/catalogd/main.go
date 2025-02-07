@@ -272,9 +272,10 @@ func main() {
 	unpacker := &source.ContainersImageRegistry{
 		BaseCachePath: unpackCacheBasePath,
 		SourceContextFunc: func(logger logr.Logger) (*types.SystemContext, error) {
-			srcContext := &types.SystemContext{
-				DockerCertPath: pullCasDir,
-				OCICertPath:    pullCasDir,
+			srcContext := &types.SystemContext{}
+			if pullCasDir != "" {
+				srcContext.DockerCertPath = pullCasDir
+				srcContext.OCICertPath = pullCasDir
 			}
 			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
 				logger.Info("using available authentication information for pulling image")
