@@ -1,8 +1,9 @@
-package convert
+package convert_test
 
 import (
 	"context"
 	"fmt"
+	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
 	"os"
 	"strings"
 	"testing"
@@ -49,7 +50,7 @@ func getCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 	var targetNamespaces []string
 
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should set the namespaces of the object correctly")
 	t.Log("It should set the namespace to installnamespace if not available")
 
@@ -57,14 +58,14 @@ func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 	csv, svc := getCsvAndService()
 
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -80,7 +81,7 @@ func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 func TestRegistryV1SuiteNamespaceAvailable(t *testing.T) {
 	var targetNamespaces []string
 
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should set the namespaces of the object correctly")
 	t.Log("It should override namespace if already available")
 
@@ -91,14 +92,14 @@ func TestRegistryV1SuiteNamespaceAvailable(t *testing.T) {
 	unstructuredSvc := convertToUnstructured(t, svc)
 	unstructuredSvc.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"})
 
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -114,7 +115,7 @@ func TestRegistryV1SuiteNamespaceAvailable(t *testing.T) {
 func TestRegistryV1SuiteNamespaceUnsupportedKind(t *testing.T) {
 	var targetNamespaces []string
 
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should set the namespaces of the object correctly")
 	t.Log("It should error when object is not supported")
 	t.Log("It should error when unsupported GVK is passed")
@@ -132,14 +133,14 @@ func TestRegistryV1SuiteNamespaceUnsupportedKind(t *testing.T) {
 	unstructuredEvt := convertToUnstructured(t, event)
 	unstructuredEvt.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Event"})
 
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredEvt},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "bundle contains unsupported resource")
 	require.Nil(t, plainBundle)
@@ -148,7 +149,7 @@ func TestRegistryV1SuiteNamespaceUnsupportedKind(t *testing.T) {
 func TestRegistryV1SuiteNamespaceClusterScoped(t *testing.T) {
 	var targetNamespaces []string
 
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should set the namespaces of the object correctly")
 	t.Log("It should not set ns cluster scoped object is passed")
 	t.Log("It should not error when cluster scoped obj is passed and not set its namespace")
@@ -166,14 +167,14 @@ func TestRegistryV1SuiteNamespaceClusterScoped(t *testing.T) {
 	unstructuredpriorityclass := convertToUnstructured(t, pc)
 	unstructuredpriorityclass.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "PriorityClass"})
 
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredpriorityclass},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -242,7 +243,7 @@ func getBaseCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 }
 
 func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should convert into plain manifests successfully with AllNamespaces")
@@ -253,14 +254,14 @@ func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{""}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -275,7 +276,7 @@ func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should convert into plain manifests successfully with MultiNamespace")
@@ -286,14 +287,14 @@ func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -308,7 +309,7 @@ func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should convert into plain manifests successfully with SingleNamespace")
@@ -319,14 +320,14 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1"}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -341,7 +342,7 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should convert into plain manifests successfully with own namespace")
@@ -352,14 +353,14 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{installNamespace}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -374,7 +375,7 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateErrorMultiNamespaceEmpty(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should error when multinamespace mode is supported with an empty string in target namespaces")
@@ -385,20 +386,20 @@ func TestRegistryV1SuiteGenerateErrorMultiNamespaceEmpty(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1", ""}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.Nil(t, plainBundle)
 }
 
 func TestRegistryV1SuiteGenerateErrorSingleNamespaceDisabled(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should error when single namespace mode is disabled with more than one target namespaces")
@@ -409,20 +410,20 @@ func TestRegistryV1SuiteGenerateErrorSingleNamespaceDisabled(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.Nil(t, plainBundle)
 }
 
 func TestRegistryV1SuiteGenerateErrorAllNamespaceDisabled(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should error when all namespace mode is disabled with target namespace containing an empty string")
@@ -438,50 +439,26 @@ func TestRegistryV1SuiteGenerateErrorAllNamespaceDisabled(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{""}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.Nil(t, plainBundle)
 }
 
-func TestRegistryV1SuiteGeneratePropagateCsvAnnotations(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
-
-	t.Log("It should propagate csv annotations to chart metadata annotation")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true}}
-
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
-	}
-
-	t.Log("By converting to helm")
-	chrt, err := toChart(registryv1Bundle, installNamespace, watchNamespaces)
-	require.NoError(t, err)
-	require.Contains(t, chrt.Metadata.Annotations, olmProperties)
-}
-
 func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should read the registry+v1 bundle filesystem correctly")
 	t.Log("It should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata")
 	fsys := os.DirFS("testdata/combine-properties-bundle")
-	chrt, err := RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+	chrt, err := convert.RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
 	require.NoError(t, err)
 	require.NotNil(t, chrt)
 	require.NotNil(t, chrt.Metadata)
@@ -490,7 +467,7 @@ func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should enforce limitations")
@@ -506,20 +483,20 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 		},
 	}
 	watchNamespaces := []string{metav1.NamespaceAll}
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "webhookDefinitions are not supported")
 	require.Nil(t, plainBundle)
 }
 
 func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
+	t.Log("convert.RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should enforce limitations")
@@ -537,13 +514,13 @@ func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
 		},
 	}
 	watchNamespaces := []string{metav1.NamespaceAll}
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "apiServiceDefintions are not supported")
 	require.Nil(t, plainBundle)
@@ -559,7 +536,7 @@ func convertToUnstructured(t *testing.T, obj interface{}) unstructured.Unstructu
 func findObjectByName(name string, result []client.Object) client.Object {
 	for _, o := range result {
 		// Since this is a controlled env, comparing only the names is sufficient for now.
-		// In future, compare GVKs too by ensuring its set on the unstructuredObj.
+		// In the future, compare GVKs too by ensuring its set on the unstructuredObj.
 		if o.GetName() == name {
 			return o
 		}
