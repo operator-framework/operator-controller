@@ -118,9 +118,3 @@ build-container: build-linux ## Build docker image for catalogd.
 kind-load: $(KIND) ## Load the built images onto the local cluster
 	$(CONTAINER_RUNTIME) save $(IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
-##@ Deploy
-
-# The demo script requires to install asciinema with: brew install asciinema to run on mac os envs.
-.PHONY: demo-update #HELP build demo
-demo-update:
-	hack/scripts/generate-asciidemo.sh
