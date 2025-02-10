@@ -121,7 +121,7 @@ VERSION := $(shell git describe --tags --always --dirty)
 endif
 export VERSION
 
-export VERSION_PKG     := $(shell go list -mod=mod ./internal/version)
+export VERSION_PKG     := $(shell go list -m)/internal/version
 
 export GIT_COMMIT      := $(shell git rev-parse HEAD)
 export GIT_VERSION     := $(shell git describe --tags --always --dirty)
