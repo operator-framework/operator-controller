@@ -7,9 +7,10 @@ import (
 // Predicate returns true if the object should be kept when filtering
 type Predicate[T any] func(entity T) bool
 
-// Filter filters a slice accordingly to
-func Filter[T any](in []T, test Predicate[T]) []T {
-	return slices.DeleteFunc(in, Not(test))
+// RemoveInPlace removes all elements from s for which test returns true.
+// Elements between new length and original length are zeroed out.
+func RemoveInPlace[T any](s []T, test Predicate[T]) []T {
+	return slices.DeleteFunc(s, Not(test))
 }
 
 func And[T any](predicates ...Predicate[T]) Predicate[T] {

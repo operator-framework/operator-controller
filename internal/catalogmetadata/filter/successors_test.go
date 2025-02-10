@@ -161,7 +161,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 			for _, bundle := range bundleSet {
 				allBundles = append(allBundles, bundle)
 			}
-			result := slicesutil.Filter(allBundles, successors)
+			result := slicesutil.RemoveInPlace(allBundles, successors)
 
 			// sort before comparison for stable order
 			slices.SortFunc(result, compare.ByVersion)

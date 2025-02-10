@@ -72,7 +72,7 @@ func TestFilter(t *testing.T) {
 				{Name: "extension2.v1", Package: "extension2", Image: "fake1"},
 			}
 
-			actual := slices.Filter(in, tt.predicate)
+			actual := slices.RemoveInPlace(in, tt.predicate)
 			assert.Equal(t, tt.want, actual)
 		})
 	}
