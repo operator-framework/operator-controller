@@ -23,9 +23,6 @@ else
 $(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
-# For standard development and release flows, we use the config/overlays/cert-manager overlay.
-KUSTOMIZE_OVERLAY := config/overlays/cert-manager
-
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include ./../.bingo/Variables.mk
 
@@ -37,14 +34,6 @@ ENVTEST_SERVER_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | 
 ifeq ($(origin KIND_CLUSTER_NAME), undefined)
 KIND_CLUSTER_NAME := catalogd
 endif
-
-# E2E configuration
-TESTDATA_DIR := testdata
-
-CATALOGD_NAMESPACE := olmv1-system
-KIND_CLUSTER_IMAGE := kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e
-
-GINKGO := go run github.com/onsi/ginkgo/v2/ginkgo
 
 ##@ General
 
@@ -73,42 +62,6 @@ clean: ## Remove binaries and test artifacts
 generate: $(CONTROLLER_GEN) ## Generate code and manifests.
 	$(CONTROLLER_GEN) object:headerFile="../hack/boilerplate.go.txt" paths="./..."
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac output:webhook:artifacts:config=config/base/manager/webhook/
-
-FOCUS := $(if $(TEST),-v -focus "$(TEST)")
-ifeq ($(origin E2E_FLAGS), undefined)
-E2E_FLAGS :=
-endif
-test-e2e: ## Run the e2e tests on existing cluster
-	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
-
-e2e: KIND_CLUSTER_NAME := catalogd-e2e
-e2e: ISSUER_KIND := Issuer
-e2e: ISSUER_NAME := selfsigned-issuer
-e2e: KUSTOMIZE_OVERLAY := config/overlays/e2e
-e2e: run image-registry test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
-
-image-registry: ## Setup in-cluster image registry
-	./test/tools/imageregistry/registry.sh $(ISSUER_KIND) $(ISSUER_NAME)
-
-## image-registry target has to come after run-latest-release,
-## because the image-registry depends on the olm-ca issuer.
-.PHONY: test-upgrade-e2e
-test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
-test-upgrade-e2e: export TEST_CLUSTER_CATALOG_IMAGE := docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e
-test-upgrade-e2e: ISSUER_KIND=ClusterIssuer
-test-upgrade-e2e: ISSUER_NAME=olmv1-ca
-test-upgrade-e2e: kind-cluster cert-manager build-container kind-load run-latest-release image-registry pre-upgrade-setup only-deploy-manifest wait post-upgrade-checks kind-cluster-cleanup ## Run upgrade e2e tests on a local kind cluster
-
-pre-upgrade-setup:
-	./test/tools/imageregistry/pre-upgrade-setup.sh ${TEST_CLUSTER_CATALOG_IMAGE} ${TEST_CLUSTER_CATALOG_NAME}
-
-.PHONY: run-latest-release
-run-latest-release:
-	cd ..; curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
-
-.PHONY: post-upgrade-checks
-post-upgrade-checks:
-	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/upgrade
 
 ##@ Build
 
@@ -157,63 +110,17 @@ $(LINUX_BINARIES): BUILDBIN = bin/linux
 $(LINUX_BINARIES):
 	GOOS=linux $(BUILDCMD)
 
-
-.PHONY: run
-run: generate kind-cluster install ## Create a kind cluster and install a local build of catalogd
-
 .PHONY: build-container
 build-container: build-linux ## Build docker image for catalogd.
 	$(CONTAINER_RUNTIME) build -f Dockerfile -t $(IMAGE) ./bin/linux
 
-##@ Deploy
-
-.PHONY: kind-cluster
-kind-cluster: $(KIND) kind-cluster-cleanup ## Standup a kind cluster
-	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --image $(KIND_CLUSTER_IMAGE)
-	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
-
-.PHONY: kind-cluster-cleanup
-kind-cluster-cleanup: $(KIND) ## Delete the kind cluster
-	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
-
 .PHONY: kind-load
-kind-load: check-cluster $(KIND) ## Load the built images onto the local cluster
+kind-load: $(KIND) ## Load the built images onto the local cluster
 	$(CONTAINER_RUNTIME) save $(IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
-.PHONY: install
-install: check-cluster build-container kind-load deploy wait ## Install local catalogd to an existing cluster
-
-.PHONY: deploy
-deploy: export MANIFEST="./catalogd.yaml"
-deploy: export DEFAULT_CATALOGS="./config/base/default/clustercatalogs/default-catalogs.yaml"
-deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/config with cert-manager and default clustercatalogs
-	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE) && cd ../../..
-	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
-	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh | bash -s
-
-.PHONY: only-deploy-manifest
-only-deploy-manifest: $(KUSTOMIZE) ## Deploy just the Catalogd manifest--used in e2e testing where cert-manager is installed in a separate step
-	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
-	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | kubectl apply -f -
-
-wait:
-	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl wait --for=condition=Ready --namespace=$(CATALOGD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
-
-
-.PHONY: cert-manager
-cert-manager:
-	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MGR_VERSION}/cert-manager.yaml
-	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
+##@ Deploy
 
 # The demo script requires to install asciinema with: brew install asciinema to run on mac os envs.
 .PHONY: demo-update #HELP build demo
 demo-update:
 	hack/scripts/generate-asciidemo.sh
-
-.PHONY: check-cluster
-check-cluster:
-	@kubectl config current-context >/dev/null 2>&1 || ( \
-		echo "Error: Could not get current Kubernetes context. Maybe use 'run' or 'e2e' targets first?"; \
-		exit 1; \
-	)

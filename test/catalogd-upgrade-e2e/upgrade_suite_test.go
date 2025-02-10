@@ -1,7 +1,6 @@
-package e2e
+package catalogdupgradee2e
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -18,23 +17,24 @@ import (
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 )
 
+const (
+	testClusterCatalogNameEnv = "TEST_CLUSTER_CATALOG_NAME"
+)
+
 var (
 	cfg        *rest.Config
 	c          client.Client
 	err        error
 	kubeClient kubernetes.Interface
+
+	testClusterCatalogName string
 )
 
-func TestE2E(t *testing.T) {
-	_, err := ctrl.GetConfig()
-	if err != nil {
-		fmt.Println("Error: Could not get current Kubernetes context. Verify the cluster configuration")
-		os.Exit(0)
-	}
+func TestUpgradeE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
 	SetDefaultEventuallyTimeout(1 * time.Minute)
 	SetDefaultEventuallyPollingInterval(1 * time.Second)
-	RunSpecs(t, "E2E Suite")
+	RunSpecs(t, "Upgrade E2E Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -46,4 +46,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(Not(HaveOccurred()))
 	kubeClient, err = kubernetes.NewForConfig(cfg)
 	Expect(err).ToNot(HaveOccurred())
+
+	var ok bool
+	testClusterCatalogName, ok = os.LookupEnv(testClusterCatalogNameEnv)
+	Expect(ok).To(BeTrue())
 })

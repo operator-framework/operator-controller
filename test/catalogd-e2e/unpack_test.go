@@ -1,4 +1,4 @@
-package e2e
+package catalogde2e
 
 import (
 	"context"
@@ -79,7 +79,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			actualFBC, err := ReadTestCatalogServerContents(ctx, catalog, c, kubeClient)
 			Expect(err).To(Not(HaveOccurred()))
 
-			expectedFBC, err := os.ReadFile("../../testdata/catalogs/test-catalog/expected_all.json")
+			expectedFBC, err := os.ReadFile("../../catalogd/testdata/catalogs/test-catalog/expected_all.json")
 			Expect(err).To(Not(HaveOccurred()))
 			Expect(cmp.Diff(expectedFBC, actualFBC)).To(BeEmpty())
 

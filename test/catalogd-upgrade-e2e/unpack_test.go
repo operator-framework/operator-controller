@@ -1,4 +1,4 @@
-package upgradee2e
+package catalogdupgradee2e
 
 import (
 	"bufio"
@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
-	"github.com/operator-framework/operator-controller/catalogd/test/e2e"
+	catalogde2e "github.com/operator-framework/operator-controller/test/catalogd-e2e"
 )
 
 var _ = Describe("ClusterCatalog Unpacking", func() {
@@ -87,12 +87,12 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 				g.Expect(cond.Reason).To(Equal(catalogdv1.ReasonSucceeded))
 			}).Should(Succeed())
 
-			expectedFBC, err := os.ReadFile("../../testdata/catalogs/test-catalog/expected_all.json")
+			expectedFBC, err := os.ReadFile("../../catalogd/testdata/catalogs/test-catalog/expected_all.json")
 			Expect(err).To(Not(HaveOccurred()))
 
 			By("Making sure the catalog content is available via the http server")
 			Eventually(func(g Gomega) {
-				actualFBC, err := e2e.ReadTestCatalogServerContents(ctx, catalog, c, kubeClient)
+				actualFBC, err := catalogde2e.ReadTestCatalogServerContents(ctx, catalog, c, kubeClient)
 				g.Expect(err).To(Not(HaveOccurred()))
 				g.Expect(cmp.Diff(expectedFBC, actualFBC)).To(BeEmpty())
 			}).Should(Succeed())
