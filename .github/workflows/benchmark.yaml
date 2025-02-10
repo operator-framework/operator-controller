@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  benchmark:
+  run-benchmark:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -33,14 +33,263 @@ jobs:
           mkdir -p /tmp/artifacts/
           ARTIFACT_PATH=/tmp/artifacts make test-benchmark
 
-      - name: Compare with baseline
+      - name: Convert Benchmark Output to Prometheus Metrics
         run: |
-          go install golang.org/x/perf/cmd/benchstat@latest
-          benchstat benchmarks/baseline.txt /tmp/artifacts/new.txt | tee /tmp/artifacts/output
+          mkdir -p /tmp/artifacts/prometheus/
+          echo "RUN_ID=${{ github.run_id }}"
+          export RUN_ID=${{ github.run_id }}
+          cat << 'EOF' > benchmark_to_prometheus.py
+          import sys
+          import re
+          import os
 
-      - name: Upload benchmark results      
+          def parse_benchmark_output(benchmark_output):
+              metrics = []
+              round = 0
+              value = os.getenv('RUN_ID') #get the github action run id so that those metrics cannot be overwritten
+              for line in benchmark_output.split("\n"):
+                  match = re.match(r"Benchmark([\w\d]+)-\d+\s+\d+\s+([\d]+)\s+ns/op\s+([\d]+)\s+B/op\s+([\d]+)\s+allocs/op", line)
+                  if match:
+                      benchmark_name = match.group(1).lower()
+                      time_ns = match.group(2)
+                      memory_bytes = match.group(3)
+                      allocs = match.group(4)
+
+                      metrics.append(f"benchmark_{benchmark_name}_ns {{run_id=\"{value}\", round=\"{round}\"}} {time_ns}")
+                      metrics.append(f"benchmark_{benchmark_name}_allocs {{run_id=\"{value}\", round=\"{round}\"}} {allocs}")
+                      metrics.append(f"benchmark_{benchmark_name}_mem_bytes {{run_id=\"{value}\", round=\"{round}\"}} {memory_bytes}")
+                      round+=1
+
+              return "\n".join(metrics)
+
+          if __name__ == "__main__":
+              benchmark_output = sys.stdin.read()
+              metrics = parse_benchmark_output(benchmark_output)
+              print(metrics)
+          EOF
+
+          cat /tmp/artifacts/new.txt | python3 benchmark_to_prometheus.py | tee /tmp/artifacts/prometheus/metrics.txt
+
+      # - name: Compare with baseline
+      #   run: |
+      #     go install golang.org/x/perf/cmd/benchstat@latest
+      #     benchstat benchmarks/baseline.txt /tmp/artifacts/new.txt | tee /tmp/artifacts/output
+
+      - name: Upload Benchmark Metrics     
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-artifacts
-          path: /tmp/artifacts/
+          name: benchmark-metrics
+          path: /tmp/artifacts/prometheus/
+
+  run-prometheus:
+    needs: run-benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ToDo: use GitHub REST API to download artifact across repos
+      - name: Download Prometheus Snapshot
+        run: |
+          echo "Available Artifacts in this run:"
+          gh run list --repo operator-framework/operator-controller --limit 5
+          gh run download --repo operator-framework/operator-controller --name prometheus-snapshot --dir .
+          ls -lh ./
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # #this step is invalid if download the artifacts in a different job    
+      # - name: Download Prometheus Snapshot2
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: prometheus-snapshot
+      #     path: ./
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download Benchmark Metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-metrics
+          path: ./
+
+      - name: Get Host IP
+        run: | 
+          echo "HOST_IP=$(ip route get 1 | awk '{print $7}')" | tee -a $GITHUB_ENV
+
+      # localhost doesn't work, use host IP directly
+      - name: Set Up Prometheus Config
+        run: |
+          echo "HOST_IP is $HOST_IP"
+          cat << EOF > prometheus.yml
+          global:
+            scrape_interval: 5s
+          scrape_configs:
+            - job_name: 'benchmark_metrics'
+              static_configs:
+                - targets: ['$HOST_IP:9000']
+          EOF
+          mkdir -p ${{ github.workspace }}/prometheus-data
+          sudo chown -R 65534:65534 ${{ github.workspace }}/prometheus-data
+          sudo chmod -R 777 ${{ github.workspace }}/prometheus-data
+
+      - name: Extract and Restore Prometheus Snapshot
+        run: |
+          SNAPSHOT_ZIP="${{ github.workspace }}/prometheus-snapshot.zip"
+          SNAPSHOT_TAR="${{ github.workspace }}/prometheus_snapshot.tar.gz"
+          SNAPSHOT_DIR="${{ github.workspace }}/prometheus-data/snapshots"
+
+          mkdir -p "$SNAPSHOT_DIR"
+
+          if [[ -f "$SNAPSHOT_ZIP" ]]; then
+            echo "📦 Detected ZIP archive: $SNAPSHOT_ZIP"
+            unzip -o "$SNAPSHOT_ZIP" -d "$SNAPSHOT_DIR"
+            echo "✅ Successfully extracted ZIP snapshot."
+          elif [[ -f "$SNAPSHOT_TAR" ]]; then
+            echo "📦 Detected TAR archive: $SNAPSHOT_TAR"
+            tar -xzf "$SNAPSHOT_TAR" -C "$SNAPSHOT_DIR"
+            echo "✅ Successfully extracted TAR snapshot."
+          else
+            echo "⚠️ WARNING: No snapshot file found. Skipping extraction."
+          fi
+
+      - name: Run Prometheus
+        run: |
+          docker run -d --name prometheus -p 9090:9090 \
+            --user=root \
+            -v ${{ github.workspace }}/prometheus.yml:/etc/prometheus/prometheus.yml \
+            -v ${{ github.workspace }}/prometheus-data:/prometheus \
+            prom/prometheus --config.file=/etc/prometheus/prometheus.yml \
+            --storage.tsdb.path=/prometheus \
+            --storage.tsdb.retention.time=1h \
+            --web.enable-admin-api
+
+      - name: Wait for Prometheus to start
+        run: sleep 10
+
+      - name: Check Prometheus is running
+        run: |
+           set -e
+           curl -s http://localhost:9090/-/ready || (docker logs prometheus && exit 1)
+          
+      - name: Start HTTP Server to Expose Metrics
+        run: |
+          cat << 'EOF' > server.py
+          from http.server import SimpleHTTPRequestHandler, HTTPServer
+
+          class MetricsHandler(SimpleHTTPRequestHandler):
+              def do_GET(self):
+                  if self.path == "/metrics":
+                      self.send_response(200)
+                      self.send_header("Content-type", "text/plain")
+                      self.end_headers()
+                      with open("metrics.txt", "r") as f:
+                          self.wfile.write(f.read().encode())
+                  else:
+                      self.send_response(404)
+                      self.end_headers()
+
+          if __name__ == "__main__":
+              server = HTTPServer(('0.0.0.0', 9000), MetricsHandler)
+              print("Serving on port 9000...")
+              server.serve_forever()
+          EOF
+          
+          nohup python3 server.py &
+
+      - name: Wait for Prometheus to Collect Data
+        run: sleep 30
+
+      - name: Check Prometheus targets page
+        run: |
+          http_status=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:9090/targets)
+          if [ "$http_status" -eq 200 ]; then
+            echo "Prometheus targets page is reachable."
+          else
+            echo "Error: Prometheus targets page is not reachable. Status code: $http_status"
+            exit 1
+          fi
+
+          http_status=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:9090/targets)
+          if [ "$http_status" -eq 200 ]; then
+            echo "Prometheus targets page is reachable."
+            
+            # Check for lastError field in the targets API
+            error=$(curl -s http://localhost:9090/api/v1/targets | jq -r '.data.activeTargets[].lastError')
+            if [ "$error" != "null" ] && [ -n "$error" ]; then
+              echo "Error: Prometheus target has an error: $error"
+              exit 1
+            else
+              echo "No errors found in Prometheus targets."
+            fi
+
+          else
+            echo "Error: Prometheus targets page is not reachable. Status code: $http_status"
+            exit 1
+          fi
+
+      # - name: Debug via SSH
+      #   uses: mxschmitt/action-tmate@v3
+
+      - name: Check Benchmark Metrics Against Threshold
+        run: |
+          MAX_TIME_NS=1200000000  # 1.2s
+          MAX_ALLOCS=4000
+          MAX_MEM_BYTES=450000
+
+          # Query Prometheus Metrics, get the max value
+          time_ns=$(curl -s "http://localhost:9090/api/v1/query?query=max(benchmark_createclustercatalog_ns)" | jq -r '.data.result[0].value[1]')
+          allocs=$(curl -s "http://localhost:9090/api/v1/query?query=max(benchmark_createclustercatalog_allocs)" | jq -r '.data.result[0].value[1]')
+          mem_bytes=$(curl -s "http://localhost:9090/api/v1/query?query=max(benchmark_createclustercatalog_mem_bytes)" | jq -r '.data.result[0].value[1]')
+
+          echo "⏳ Benchmark Execution Time: $time_ns ns"
+          echo "🛠️ Memory Allocations: $allocs"
+          echo "💾 Memory Usage: $mem_bytes bytes"
+
+          # threshold checking
+          if (( $(echo "$time_ns > $MAX_TIME_NS" | bc -l) )); then
+            echo "❌ ERROR: Execution time exceeds threshold!"
+            exit 1
+          fi
+
+          if (( $(echo "$allocs > $MAX_ALLOCS" | bc -l) )); then
+            echo "❌ ERROR: Too many memory allocations!"
+            exit 1
+          fi
+
+          if (( $(echo "$mem_bytes > $MAX_MEM_BYTES" | bc -l) )); then
+            echo "❌ ERROR: Memory usage exceeds threshold!"
+            exit 1
+          fi
+
+          echo "✅ All benchmarks passed within threshold!"
+
+      - name: Trigger Prometheus Snapshot
+        run: |
+          set -e
+          curl -X POST http://localhost:9090/api/v1/admin/tsdb/snapshot || (docker logs prometheus && exit 1)
+
+      - name: Find and Upload Prometheus Snapshot
+        run: |
+          SNAPSHOT_PATH=$(ls -td ${{ github.workspace }}/prometheus-data/snapshots/* 2>/dev/null | head -1 || echo "")
+          if [[ -z "$SNAPSHOT_PATH" ]]; then
+            echo "❌ No Prometheus snapshot found!"
+            docker logs prometheus
+            exit 1
+          fi
+
+          echo "✅ Prometheus snapshot stored in: $SNAPSHOT_PATH"
+          tar -czf $GITHUB_WORKSPACE/prometheus_snapshot.tar.gz -C "$SNAPSHOT_PATH" .
+
+
+      - name: Stop Prometheus
+        run: docker stop prometheus
+
+      - name: Upload Prometheus Snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-snapshot
+          path: prometheus_snapshot.tar.gz
           
