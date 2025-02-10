@@ -206,7 +206,8 @@ cert-manager:
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MGR_VERSION}/cert-manager.yaml
 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
 
-.PHONY: demo-update
+# The demo script requires to install asciinema with: brew install asciinema to run on mac os envs.
+.PHONY: demo-update #HELP build demo
 demo-update:
 	hack/scripts/generate-asciidemo.sh
 
