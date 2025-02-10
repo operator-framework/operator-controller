@@ -36,7 +36,7 @@ while getopts 'h' flag; do
 done
 set -u
 
-WKDIR=$(mktemp -td generate-asciidemo.XXXXX)
+WKDIR=$(mktemp -d -t generate-asciidemo.XXXXX)
 if [ ! -d ${WKDIR} ]
 then
     echo "unable to create temporary workspace"
