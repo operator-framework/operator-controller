@@ -1,4 +1,4 @@
-package filter_test
+package slices_test
 
 import (
 	"testing"
@@ -7,13 +7,13 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
+	"github.com/operator-framework/operator-controller/internal/util/slices"
 )
 
 func TestFilter(t *testing.T) {
 	for _, tt := range []struct {
 		name      string
-		predicate filter.Predicate[declcfg.Bundle]
+		predicate slices.Predicate[declcfg.Bundle]
 		want      []declcfg.Bundle
 	}{
 		{
@@ -27,7 +27,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "filter with Not predicate",
-			predicate: filter.Not(func(bundle declcfg.Bundle) bool {
+			predicate: slices.Not(func(bundle declcfg.Bundle) bool {
 				return bundle.Name == "extension1.v1"
 			}),
 			want: []declcfg.Bundle{
@@ -37,7 +37,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "filter with And predicate",
-			predicate: filter.And(
+			predicate: slices.And(
 				func(bundle declcfg.Bundle) bool {
 					return bundle.Name == "extension1.v1"
 				},
@@ -51,7 +51,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "filter with Or predicate",
-			predicate: filter.Or(
+			predicate: slices.Or(
 				func(bundle declcfg.Bundle) bool {
 					return bundle.Name == "extension1.v1"
 				},
@@ -72,7 +72,7 @@ func TestFilter(t *testing.T) {
 				{Name: "extension2.v1", Package: "extension2", Image: "fake1"},
 			}
 
-			actual := filter.Filter(in, tt.predicate)
+			actual := slices.Filter(in, tt.predicate)
 			assert.Equal(t, tt.want, actual)
 		})
 	}
