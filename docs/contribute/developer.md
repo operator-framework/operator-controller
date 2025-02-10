@@ -145,7 +145,7 @@ Some additional setup is necessary on Macintosh computers to install and configu
 Follow the instructions to [install Homebrew](https://docs.brew.sh/Installation), and then execute the following command to install the required tools:
 
 ```sh
-brew install bash gnu-tar gsed
+brew install bash gnu-tar gsed coreutils
 ```
 
 ### Configure your shell
