@@ -3,18 +3,6 @@
 SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
 
-ifeq ($(origin IMAGE_REPO), undefined)
-IMAGE_REPO := quay.io/operator-framework/catalogd
-endif
-export IMAGE_REPO
-
-ifeq ($(origin IMAGE_TAG), undefined)
-IMAGE_TAG := devel
-endif
-export IMAGE_TAG
-
-IMAGE := $(IMAGE_REPO):$(IMAGE_TAG)
-
 ifneq (, $(shell command -v docker 2>/dev/null))
 CONTAINER_RUNTIME := docker
 else ifneq (, $(shell command -v podman 2>/dev/null))
@@ -25,15 +13,6 @@ endif
 
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include ./../.bingo/Variables.mk
-
-# Dependencies
-export CERT_MGR_VERSION := v1.15.3
-ENVTEST_SERVER_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
-
-# Cluster configuration
-ifeq ($(origin KIND_CLUSTER_NAME), undefined)
-KIND_CLUSTER_NAME := catalogd
-endif
 
 ##@ General
 
@@ -109,14 +88,6 @@ go-build-linux: $(LINUX_BINARIES)
 $(LINUX_BINARIES): BUILDBIN = bin/linux
 $(LINUX_BINARIES):
 	GOOS=linux $(BUILDCMD)
-
-.PHONY: build-container
-build-container: build-linux ## Build docker image for catalogd.
-	$(CONTAINER_RUNTIME) build -f Dockerfile -t $(IMAGE) ./bin/linux
-
-.PHONY: kind-load
-kind-load: $(KIND) ## Load the built images onto the local cluster
-	$(CONTAINER_RUNTIME) save $(IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 ##@ Deploy
 
