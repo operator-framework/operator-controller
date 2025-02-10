@@ -46,7 +46,7 @@ For information on determining the ServiceAccount's permission, please see [Deri
         sourceType: Catalog
         catalog:
           packageName: <package_name>
-          channel: <channel>
+          channels: [<channel1>,<channel2]
           version: "<version>"
     ```
 
@@ -56,8 +56,8 @@ For information on determining the ServiceAccount's permission, please see [Deri
      `package_name`
      : Specifies the name of the package you want to install, such as `camel-k`.
 
-     `channel`
-     : Optional: Specifies the extension's channel, such as `stable` or `candidate`.
+     `channels`
+     : Optional: Specifies a set of the extension's channels from which to select, such as `stable` or `fast`.
 
      `version`
      : Optional: Specifies the version or version range you want installed, such as `1.3.1` or `"<2"`.
@@ -89,7 +89,7 @@ For information on determining the ServiceAccount's permission, please see [Deri
 
     !!! success
         ``` text title="Example output"
-        clusterextension.olm.operatorframework.io/my-camel-k created
+        clusterextension.olm.operatorframework.io/argocd created
         ```
 
 ### Verification
