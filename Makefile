@@ -407,4 +407,9 @@ deploy-docs: venv
 	. $(VENV)/activate; \
 	mkdocs gh-deploy --force
 
+# The demo script requires to install asciinema with: brew install asciinema to run on mac os envs.
+.PHONY: demo-update #EXHELP build demo
+demo-update:
+	./hack/demo/generate-asciidemo.sh
+
 include Makefile.venv

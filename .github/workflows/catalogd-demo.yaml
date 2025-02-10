@@ -20,6 +20,5 @@ jobs:
         with:
           go-version-file: "go.mod"
       - name: Run Demo Update
-        working-directory: catalogd
         run: make demo-update
 
