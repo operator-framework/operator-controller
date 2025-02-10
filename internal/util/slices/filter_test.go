@@ -3,77 +3,237 @@ package slices_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-controller/internal/util/slices"
 )
 
-func TestFilter(t *testing.T) {
-	for _, tt := range []struct {
-		name      string
-		predicate slices.Predicate[declcfg.Bundle]
-		want      []declcfg.Bundle
+func TestAnd(t *testing.T) {
+	tests := []struct {
+		name       string
+		predicates []slices.Predicate[int]
+		input      int
+		want       bool
 	}{
 		{
-			name: "simple filter with one predicate",
-			predicate: func(bundle declcfg.Bundle) bool {
-				return bundle.Name == "extension1.v1"
+			name: "all true",
+			predicates: []slices.Predicate[int]{
+				func(i int) bool { return i > 0 },
+				func(i int) bool { return i < 10 },
 			},
-			want: []declcfg.Bundle{
-				{Name: "extension1.v1", Package: "extension1", Image: "fake1"},
-			},
+			input: 5,
+			want:  true,
 		},
 		{
-			name: "filter with Not predicate",
-			predicate: slices.Not(func(bundle declcfg.Bundle) bool {
-				return bundle.Name == "extension1.v1"
-			}),
-			want: []declcfg.Bundle{
-				{Name: "extension1.v2", Package: "extension1", Image: "fake2"},
-				{Name: "extension2.v1", Package: "extension2", Image: "fake1"},
+			name: "one false",
+			predicates: []slices.Predicate[int]{
+				func(i int) bool { return i > 0 },
+				func(i int) bool { return i < 5 },
 			},
+			input: 5,
+			want:  false,
 		},
 		{
-			name: "filter with And predicate",
-			predicate: slices.And(
-				func(bundle declcfg.Bundle) bool {
-					return bundle.Name == "extension1.v1"
-				},
-				func(bundle declcfg.Bundle) bool {
-					return bundle.Image == "fake1"
-				},
-			),
-			want: []declcfg.Bundle{
-				{Name: "extension1.v1", Package: "extension1", Image: "fake1"},
+			name: "all false",
+			predicates: []slices.Predicate[int]{
+				func(i int) bool { return i > 10 },
+				func(i int) bool { return i < 0 },
 			},
+			input: 5,
+			want:  false,
 		},
 		{
-			name: "filter with Or predicate",
-			predicate: slices.Or(
-				func(bundle declcfg.Bundle) bool {
-					return bundle.Name == "extension1.v1"
-				},
-				func(bundle declcfg.Bundle) bool {
-					return bundle.Image == "fake1"
-				},
-			),
-			want: []declcfg.Bundle{
-				{Name: "extension1.v1", Package: "extension1", Image: "fake1"},
-				{Name: "extension2.v1", Package: "extension2", Image: "fake1"},
-			},
+			name:       "no predicates",
+			predicates: []slices.Predicate[int]{},
+			input:      5,
+			want:       true,
 		},
-	} {
+		{
+			name:       "nil predicates",
+			predicates: nil,
+			input:      5,
+			want:       true,
+		},
+	}
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			in := []declcfg.Bundle{
-				{Name: "extension1.v1", Package: "extension1", Image: "fake1"},
-				{Name: "extension1.v2", Package: "extension1", Image: "fake2"},
-				{Name: "extension2.v1", Package: "extension2", Image: "fake1"},
-			}
+			got := slices.And(tt.predicates...)(tt.input)
+			require.Equal(t, tt.want, got, "And() = %v, want %v", got, tt.want)
+		})
+	}
+}
 
-			actual := slices.RemoveInPlace(in, tt.predicate)
-			assert.Equal(t, tt.want, actual)
+func TestOr(t *testing.T) {
+	tests := []struct {
+		name       string
+		predicates []slices.Predicate[int]
+		input      int
+		want       bool
+	}{
+		{
+			name: "all true",
+			predicates: []slices.Predicate[int]{
+				func(i int) bool { return i > 0 },
+				func(i int) bool { return i < 10 },
+			},
+			input: 5,
+			want:  true,
+		},
+		{
+			name: "one false",
+			predicates: []slices.Predicate[int]{
+				func(i int) bool { return i > 0 },
+				func(i int) bool { return i < 5 },
+			},
+			input: 5,
+			want:  true,
+		},
+		{
+			name: "all false",
+			predicates: []slices.Predicate[int]{
+				func(i int) bool { return i > 10 },
+				func(i int) bool { return i < 0 },
+			},
+			input: 5,
+			want:  false,
+		},
+		{
+			name:       "no predicates",
+			predicates: []slices.Predicate[int]{},
+			input:      5,
+			want:       false,
+		},
+		{
+			name:       "nil predicates",
+			predicates: nil,
+			input:      5,
+			want:       false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := slices.Or(tt.predicates...)(tt.input)
+			require.Equal(t, tt.want, got, "Or() = %v, want %v", got, tt.want)
+		})
+	}
+}
+
+func TestNot(t *testing.T) {
+	tests := []struct {
+		name      string
+		predicate slices.Predicate[int]
+		input     int
+		want      bool
+	}{
+		{
+			name:      "predicate is true",
+			predicate: func(i int) bool { return i > 0 },
+			input:     5,
+			want:      false,
+		},
+		{
+			name:      "predicate is false",
+			predicate: func(i int) bool { return i > 3 },
+			input:     2,
+			want:      true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := slices.Not(tt.predicate)(tt.input)
+			require.Equal(t, tt.want, got, "Not() = %v, want %v", got, tt.want)
+		})
+	}
+}
+
+func TestFilter(t *testing.T) {
+	tests := []struct {
+		name      string
+		slice     []int
+		predicate slices.Predicate[int]
+		want      []int
+	}{
+		{
+			name:      "all match",
+			slice:     []int{1, 2, 3, 4, 5},
+			predicate: func(i int) bool { return i > 0 },
+			want:      []int{1, 2, 3, 4, 5},
+		},
+		{
+			name:      "some match",
+			slice:     []int{1, 2, 3, 4, 5},
+			predicate: func(i int) bool { return i > 3 },
+			want:      []int{4, 5},
+		},
+		{
+			name:      "none match",
+			slice:     []int{1, 2, 3, 4, 5},
+			predicate: func(i int) bool { return i > 5 },
+			want:      []int{},
+		},
+		{
+			name:      "empty slice",
+			slice:     []int{},
+			predicate: func(i int) bool { return i > 5 },
+			want:      []int{},
+		},
+		{
+			name:      "nil slice",
+			slice:     nil,
+			predicate: func(i int) bool { return i > 5 },
+			want:      []int{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := slices.Filter(tt.slice, tt.predicate)
+			require.Equal(t, tt.want, got, "Filter() = %v, want %v", got, tt.want)
+		})
+	}
+}
+
+func TestRemoveInPlace(t *testing.T) {
+	tests := []struct {
+		name      string
+		slice     []int
+		predicate slices.Predicate[int]
+		want      []int
+	}{
+		{
+			name:      "all match",
+			slice:     []int{1, 2, 3, 4, 5},
+			predicate: func(i int) bool { return i > 0 },
+			want:      []int{1, 2, 3, 4, 5},
+		},
+		{
+			name:      "some match",
+			slice:     []int{1, 2, 3, 4, 5},
+			predicate: func(i int) bool { return i > 3 },
+			want:      []int{4, 5, 0, 0, 0},
+		},
+		{
+			name:      "none match",
+			slice:     []int{1, 2, 3, 4, 5},
+			predicate: func(i int) bool { return i > 5 },
+			want:      []int{0, 0, 0, 0, 0},
+		},
+		{
+			name:      "empty slice",
+			slice:     []int{},
+			predicate: func(i int) bool { return i > 5 },
+			want:      []int{},
+		},
+		{
+			name:      "nil slice",
+			slice:     nil,
+			predicate: func(i int) bool { return i > 5 },
+			want:      nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_ = slices.RemoveInPlace(tt.slice, tt.predicate)
+			require.Equal(t, tt.want, tt.slice, "Filter() = %v, want %v", tt.slice, tt.want)
 		})
 	}
 }
