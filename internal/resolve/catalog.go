@@ -23,7 +23,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	filterutil "github.com/operator-framework/operator-controller/internal/util/filter"
-	slicesutil "github.com/operator-framework/operator-controller/internal/util/slices"
 )
 
 type ValidationFunc func(*declcfg.Bundle) error
@@ -120,7 +119,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		}
 
 		// Apply the predicates to get the candidate bundles
-		packageFBC.Bundles = slicesutil.RemoveInPlace(packageFBC.Bundles, filterutil.And(predicates...))
+		packageFBC.Bundles = filterutil.InPlace(packageFBC.Bundles, filterutil.And(predicates...))
 		cs.MatchedBundles = len(packageFBC.Bundles)
 		if len(packageFBC.Bundles) == 0 {
 			return nil

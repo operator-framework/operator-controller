@@ -9,10 +9,10 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	filterutil "github.com/operator-framework/operator-controller/internal/util/filter"
+	"github.com/operator-framework/operator-controller/internal/util/filter"
 )
 
-func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filterutil.Predicate[declcfg.Bundle], error) {
+func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
 	installedBundleVersion, err := mmsemver.NewVersion(installedBundle.Version)
 	if err != nil {
 		return nil, fmt.Errorf("parsing installed bundle %q version %q: %w", installedBundle.Name, installedBundle.Version, err)
@@ -29,13 +29,13 @@ func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Chann
 	}
 
 	// We need either successors or current version (no upgrade)
-	return filterutil.Or(
+	return filter.Or(
 		successorsPredicate,
 		InMastermindsSemverRange(installedVersionConstraint),
 	), nil
 }
 
-func legacySuccessor(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filterutil.Predicate[declcfg.Bundle], error) {
+func legacySuccessor(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
 	installedBundleVersion, err := bsemver.Parse(installedBundle.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing installed bundle version: %w", err)
