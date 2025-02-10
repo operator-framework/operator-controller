@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -15,7 +16,10 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 
 const urlPrefix = "/catalogs/"
@@ -170,14 +174,10 @@ func TestLocalDirStoraget(t *testing.T) {
 
 func TestLocalDirServerHandler(t *testing.T) {
 	store := &LocalDirV1{RootDir: t.TempDir(), RootURL: &url.URL{Path: urlPrefix}}
-	testFS := fstest.MapFS{
-		"meta.json": &fstest.MapFile{
-			Data: []byte(`{"foo":"bar"}`),
-		},
-	}
-	if store.Store(context.Background(), "test-catalog", testFS) != nil {
+	if store.Store(context.Background(), "test-catalog", createTestFS(t)) != nil {
 		t.Fatal("failed to store test catalog and start server")
 	}
+
 	testServer := httptest.NewServer(store.StorageServerHandler())
 	defer testServer.Close()
 
@@ -242,10 +242,12 @@ func TestLocalDirServerHandler(t *testing.T) {
 			URLPath:            "/catalogs/non-existent-catalog/api/v1/all",
 		},
 		{
-			name:               "Server returns 200 when path '/catalogs/<catalog>/api/v1/all' is queried, when catalog exists",
+			name:               "Server returns 200 with json-lines payload when path '/catalogs/<catalog>/api/v1/all' is queried, when catalog exists",
 			expectedStatusCode: http.StatusOK,
-			expectedContent:    `{"foo":"bar"}`,
-			URLPath:            "/catalogs/test-catalog/api/v1/all",
+			expectedContent: `{"image":"quaydock.io/namespace/bundle:0.0.3","name":"bundle.v0.0.1","package":"webhook_operator_test","properties":[{"type":"olm.bundle.object","value":{"data":"dW5pbXBvcnRhbnQK"}},{"type":"some.other","value":{"data":"arbitrary-info"}}],"relatedImages":[{"image":"testimage:latest","name":"test"}],"schema":"olm.bundle"}` + "\n" +
+				`{"defaultChannel":"preview_test","name":"webhook_operator_test","schema":"olm.package"}` + "\n" +
+				`{"entries":[{"name":"bundle.v0.0.1"}],"name":"preview_test","package":"webhook_operator_test","schema":"olm.channel"}`,
+			URLPath: "/catalogs/test-catalog/api/v1/all",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -256,11 +258,14 @@ func TestLocalDirServerHandler(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			if resp.StatusCode == http.StatusOK {
+				assert.Equal(t, "application/jsonl", resp.Header.Get("Content-Type"))
+			}
 
-			var actualContent []byte
-			actualContent, err = io.ReadAll(resp.Body)
+			actualContent, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedContent, strings.TrimSpace(string(actualContent)))
+
+			require.Equal(t, strings.TrimSpace(tc.expectedContent), strings.TrimSpace(string(actualContent)))
 			require.NoError(t, resp.Body.Close())
 		})
 	}
@@ -329,7 +334,7 @@ func TestMetasEndpoint(t *testing.T) {
 			expectedContent:    "",
 		},
 		{
-			name:               "valid query with packageName that returns multiple blobs",
+			name:               "valid query with packageName that returns multiple blobs in json-lines format",
 			queryParams:        "?package=webhook_operator_test",
 			expectedStatusCode: http.StatusOK,
 			expectedContent: `{"image":"quaydock.io/namespace/bundle:0.0.3","name":"bundle.v0.0.1","package":"webhook_operator_test","properties":[{"type":"olm.bundle.object","value":{"data":"dW5pbXBvcnRhbnQK"}},{"type":"some.other","value":{"data":"arbitrary-info"}}],"relatedImages":[{"image":"testimage:latest","name":"test"}],"schema":"olm.bundle"}
@@ -377,6 +382,9 @@ func TestMetasEndpoint(t *testing.T) {
 			defer resp.Body.Close()
 
 			require.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			if resp.StatusCode == http.StatusOK {
+				assert.Equal(t, "application/jsonl", resp.Header.Get("Content-Type"))
+			}
 
 			actualContent, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
@@ -591,8 +599,38 @@ entries:
 	testBundle := fmt.Sprintf(testBundleTemplate, testBundleImage, testBundleName, testPackageName, testBundleRelatedImageName, testBundleRelatedImageImage, testBundleObjectData)
 	testChannel := fmt.Sprintf(testChannelTemplate, testPackageName, testChannelName, testBundleName)
 	return &fstest.MapFS{
-		"bundle.yaml":  {Data: []byte(testBundle), Mode: os.ModePerm},
-		"package.yaml": {Data: []byte(testPackage), Mode: os.ModePerm},
-		"channel.yaml": {Data: []byte(testChannel), Mode: os.ModePerm},
+		"test-catalog.yaml": {Data: []byte(
+			generateJSONLinesOrFail(t, []byte(testBundle)) +
+				generateJSONLinesOrFail(t, []byte(testPackage)) +
+				generateJSONLinesOrFail(t, []byte(testChannel))),
+			Mode: os.ModePerm},
 	}
+}
+
+// generateJSONLinesOrFail takes a byte slice of concatenated JSON objects and returns a JSONlines-formatted string
+// or raises a test failure in case of encountering any internal errors
+func generateJSONLinesOrFail(t *testing.T, in []byte) string {
+	var out strings.Builder
+	reader := bytes.NewReader(in)
+
+	err := declcfg.WalkMetasReader(reader, func(meta *declcfg.Meta, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if meta != nil && meta.Blob != nil {
+			if meta.Blob[len(meta.Blob)-1] != '\n' {
+				return fmt.Errorf("blob does not end with newline")
+			}
+		}
+
+		_, err = out.Write(meta.Blob)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	require.NoError(t, err)
+
+	return out.String()
 }
