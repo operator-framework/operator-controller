@@ -11,10 +11,12 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	"github.com/operator-framework/operator-controller/internal/httputil"
 )
 
 const (
@@ -133,6 +135,7 @@ func (c *Client) doRequest(ctx context.Context, catalog *catalogd.ClusterCatalog
 
 	resp, err := client.Do(req)
 	if err != nil {
+		_ = httputil.LogCertificateVerificationError(err, ctrl.Log.WithName("catalog-client"))
 		return nil, fmt.Errorf("error performing request: %v", err)
 	}
 

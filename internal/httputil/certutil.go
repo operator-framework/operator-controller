@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/go-logr/logr"
 )
@@ -24,7 +23,6 @@ func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 		return nil, err
 	}
 	count := 0
-	firstExpiration := time.Time{}
 
 	for _, e := range dirEntries {
 		file := filepath.Join(caDir, e.Name())
@@ -34,10 +32,10 @@ func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 			return nil, err
 		}
 		if fi.IsDir() {
-			log.Info("skip directory", "name", e.Name())
+			log.V(defaultLogLevel+1).Info("skip directory", "name", e.Name())
 			continue
 		}
-		log.Info("load certificate", "name", e.Name())
+		log.V(defaultLogLevel+1).Info("load certificate", "name", e.Name())
 		data, err := os.ReadFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("error reading cert file %q: %w", file, err)
@@ -46,6 +44,7 @@ func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 		if caCertPool.AppendCertsFromPEM(data) {
 			count++
 		}
+		logPem(data, e.Name(), caDir, "loading certificate file", log)
 	}
 
 	// Found no certs!
@@ -53,6 +52,5 @@ func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 		return nil, fmt.Errorf("no certificates found in %q", caDir)
 	}
 
-	log.Info("first expiration", "time", firstExpiration.Format(time.RFC3339))
 	return caCertPool, nil
 }

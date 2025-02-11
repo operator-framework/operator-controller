@@ -50,8 +50,12 @@ func NewCertPoolWatcher(caDir string, log logr.Logger) (*CertPoolWatcher, error)
 	// If the SSL_CERT_DIR or SSL_CERT_FILE environment variables are
 	// specified, this means that we have some control over the system root
 	// location, thus they may change, thus we should watch those locations.
-	watchPaths := strings.Split(os.Getenv("SSL_CERT_DIR"), ":")
-	watchPaths = append(watchPaths, caDir, os.Getenv("SSL_CERT_FILE"))
+	sslCertDir := os.Getenv("SSL_CERT_DIR")
+	sslCertFile := os.Getenv("SSL_CERT_FILE")
+	log.V(defaultLogLevel).Info("SSL environment", "SSL_CERT_DIR", sslCertDir, "SSL_CERT_FILE", sslCertFile)
+
+	watchPaths := strings.Split(sslCertDir, ":")
+	watchPaths = append(watchPaths, caDir, sslCertFile)
 	watchPaths = slices.DeleteFunc(watchPaths, func(p string) bool {
 		if p == "" {
 			return true
@@ -66,6 +70,7 @@ func NewCertPoolWatcher(caDir string, log logr.Logger) (*CertPoolWatcher, error)
 		if err := watcher.Add(p); err != nil {
 			return nil, err
 		}
+		logPath(p, "watching certificate", log)
 	}
 
 	cpw := &CertPoolWatcher{

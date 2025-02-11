@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/operator-framework/operator-controller/internal/httputil"
 	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
 	imageutil "github.com/operator-framework/operator-controller/internal/util/image"
 )
@@ -50,6 +51,17 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 		return nil, err
 	}
 
+	res, err := i.unpack(ctx, bundle, srcCtx, l)
+	if err != nil {
+		// Log any CertificateVerificationErrors, and log Docker Certificates if necessary
+		if httputil.LogCertificateVerificationError(err, l) {
+			httputil.LogDockerCertificates(srcCtx.DockerCertPath, l)
+		}
+	}
+	return res, err
+}
+
+func (i *ContainersImageRegistry) unpack(ctx context.Context, bundle *BundleSource, srcCtx *types.SystemContext, l logr.Logger) (*Result, error) {
 	//////////////////////////////////////////////////////
 	//
 	// Resolve a canonical reference for the image.

@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	"github.com/operator-framework/operator-controller/internal/httputil"
 	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
 	imageutil "github.com/operator-framework/operator-controller/internal/util/image"
 )
@@ -54,6 +55,18 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv
 	if err != nil {
 		return nil, err
 	}
+
+	res, err := i.unpack(ctx, catalog, srcCtx, l)
+	if err != nil {
+		// Log any CertificateVerificationErrors, and log Docker Certificates if necessary
+		if httputil.LogCertificateVerificationError(err, l) {
+			httputil.LogDockerCertificates(srcCtx.DockerCertPath, l)
+		}
+	}
+	return res, err
+}
+
+func (i *ContainersImageRegistry) unpack(ctx context.Context, catalog *catalogdv1.ClusterCatalog, srcCtx *types.SystemContext, l logr.Logger) (*Result, error) {
 	//////////////////////////////////////////////////////
 	//
 	// Resolve a canonical reference for the image.
