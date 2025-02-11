@@ -1,7 +1,6 @@
 package applier_test
 
 import (
-	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,6 +9,7 @@ import (
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 
 	v1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 

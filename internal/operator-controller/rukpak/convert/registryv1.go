@@ -1,7 +1,6 @@
 package convert
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -20,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/cli-runtime/pkg/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -41,13 +39,13 @@ type Plain struct {
 	Objects []client.Object
 }
 
-func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
-	reg, err := ParseFS(ctx, rv1)
+func RegistryV1ToHelmChart(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+	reg, err := ParseFS(rv1)
 	if err != nil {
 		return nil, err
 	}
 
-	plain, err := Convert(reg, installNamespace, watchNamespaces)
+	plain, err := Convert(reg, installNamespace, []string{watchNamespace})
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +75,7 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 //   - ...
 //
 // manifests directory does not contain subdirectories
-func ParseFS(ctx context.Context, rv1 fs.FS) (RegistryV1, error) {
-	l := log.FromContext(ctx)
-
+func ParseFS(rv1 fs.FS) (RegistryV1, error) {
 	reg := RegistryV1{}
 	annotationsFileData, err := fs.ReadFile(rv1, filepath.Join("metadata", "annotations.yaml"))
 	if err != nil {
@@ -107,11 +103,7 @@ func ParseFS(ctx context.Context, rv1 fs.FS) (RegistryV1, error) {
 		if err != nil {
 			return err
 		}
-		defer func() {
-			if err := manifestFile.Close(); err != nil {
-				l.Error(err, "error closing file", "path", path)
-			}
-		}()
+		defer manifestFile.Close()
 
 		result := resource.NewLocalBuilder().Unstructured().Flatten().Stream(manifestFile, path).Do()
 		if err := result.Err(); err != nil {
