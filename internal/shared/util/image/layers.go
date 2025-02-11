@@ -16,7 +16,7 @@ import (
 	"github.com/containers/image/v5/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
+	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 )
 
 // ForceOwnershipRWX is a passthrough archive.Filter that sets a tar header's

@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/source"
-	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
+	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 )
 
 const (

@@ -317,7 +317,7 @@ endif
 export CGO_ENABLED
 
 export GIT_REPO := $(shell go list -m)
-export VERSION_PATH := ${GIT_REPO}/internal/version
+export VERSION_PATH := ${GIT_REPO}/internal/shared/version
 export GO_BUILD_TAGS := containers_image_openpgp
 export GO_BUILD_ASMFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_GCFLAGS := all=-trimpath=$(PWD)

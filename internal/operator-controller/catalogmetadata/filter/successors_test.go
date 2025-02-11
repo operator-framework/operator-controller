@@ -16,7 +16,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
-	"github.com/operator-framework/operator-controller/internal/util/filter"
+	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
 func TestSuccessorsPredicate(t *testing.T) {

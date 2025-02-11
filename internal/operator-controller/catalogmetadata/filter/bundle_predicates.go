@@ -6,7 +6,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
-	"github.com/operator-framework/operator-controller/internal/util/filter"
+	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
 func InMastermindsSemverRange(semverRange *mmsemver.Constraints) filter.Predicate[declcfg.Bundle] {
