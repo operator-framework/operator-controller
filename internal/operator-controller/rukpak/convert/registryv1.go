@@ -69,6 +69,14 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 	return chrt, nil
 }
 
+// ParseFS converts the rv1 filesystem into a RegistryV1.
+// ParseFS expects the filesystem to conform to the registry+v1 format:
+// metadata/annotations.yaml
+// manifests/
+//   - csv.yaml
+//   - ...
+//
+// manifests directory does not contain subdirectories
 func ParseFS(ctx context.Context, rv1 fs.FS) (RegistryV1, error) {
 	l := log.FromContext(ctx)
 
@@ -84,6 +92,7 @@ func ParseFS(ctx context.Context, rv1 fs.FS) (RegistryV1, error) {
 	reg.PackageName = annotationsFile.Annotations.PackageName
 
 	const manifestsDir = "manifests"
+	foundCSV := false
 	if err := fs.WalkDir(rv1, manifestsDir, func(path string, e fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -119,6 +128,7 @@ func ParseFS(ctx context.Context, rv1 fs.FS) (RegistryV1, error) {
 					return err
 				}
 				reg.CSV = csv
+				foundCSV = true
 			default:
 				reg.Others = append(reg.Others, *info.Object.(*unstructured.Unstructured))
 			}
@@ -129,6 +139,10 @@ func ParseFS(ctx context.Context, rv1 fs.FS) (RegistryV1, error) {
 		return nil
 	}); err != nil {
 		return reg, err
+	}
+
+	if !foundCSV {
+		return reg, fmt.Errorf("no ClusterServiceVersion found in %q", manifestsDir)
 	}
 
 	if err := copyMetadataPropertiesToCSV(&reg.CSV, rv1); err != nil {

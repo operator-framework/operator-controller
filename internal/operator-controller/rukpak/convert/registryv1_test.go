@@ -3,10 +3,11 @@ package convert_test
 import (
 	"context"
 	"fmt"
-	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
+	"io/fs"
 	"os"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,12 +22,17 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/property"
+
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 )
 
 const (
 	olmNamespaces    = "olm.targetNamespaces"
 	olmProperties    = "olm.properties"
 	installNamespace = "testInstallNamespace"
+
+	bundlePathAnnotations = "metadata/annotations.yaml"
+	bundlePathCSV         = "manifests/csv.yaml"
 )
 
 func getCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
@@ -50,7 +56,7 @@ func getCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 	var targetNamespaces []string
 
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should set the namespaces of the object correctly")
 	t.Log("It should set the namespace to installnamespace if not available")
 
@@ -81,7 +87,7 @@ func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 func TestRegistryV1SuiteNamespaceAvailable(t *testing.T) {
 	var targetNamespaces []string
 
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should set the namespaces of the object correctly")
 	t.Log("It should override namespace if already available")
 
@@ -115,7 +121,7 @@ func TestRegistryV1SuiteNamespaceAvailable(t *testing.T) {
 func TestRegistryV1SuiteNamespaceUnsupportedKind(t *testing.T) {
 	var targetNamespaces []string
 
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should set the namespaces of the object correctly")
 	t.Log("It should error when object is not supported")
 	t.Log("It should error when unsupported GVK is passed")
@@ -149,7 +155,7 @@ func TestRegistryV1SuiteNamespaceUnsupportedKind(t *testing.T) {
 func TestRegistryV1SuiteNamespaceClusterScoped(t *testing.T) {
 	var targetNamespaces []string
 
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should set the namespaces of the object correctly")
 	t.Log("It should not set ns cluster scoped object is passed")
 	t.Log("It should not error when cluster scoped obj is passed and not set its namespace")
@@ -243,7 +249,7 @@ func getBaseCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 }
 
 func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should convert into plain manifests successfully with AllNamespaces")
@@ -276,7 +282,7 @@ func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should convert into plain manifests successfully with MultiNamespace")
@@ -309,7 +315,7 @@ func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should convert into plain manifests successfully with SingleNamespace")
@@ -342,7 +348,7 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should convert into plain manifests successfully with own namespace")
@@ -375,7 +381,7 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateErrorMultiNamespaceEmpty(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should error when multinamespace mode is supported with an empty string in target namespaces")
@@ -399,7 +405,7 @@ func TestRegistryV1SuiteGenerateErrorMultiNamespaceEmpty(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateErrorSingleNamespaceDisabled(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should error when single namespace mode is disabled with more than one target namespaces")
@@ -423,7 +429,7 @@ func TestRegistryV1SuiteGenerateErrorSingleNamespaceDisabled(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateErrorAllNamespaceDisabled(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should error when all namespace mode is disabled with target namespace containing an empty string")
@@ -452,7 +458,7 @@ func TestRegistryV1SuiteGenerateErrorAllNamespaceDisabled(t *testing.T) {
 }
 
 func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should read the registry+v1 bundle filesystem correctly")
@@ -466,8 +472,50 @@ func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
 	require.JSONEq(t, `[{"type":"from-csv-annotations-key","value":"from-csv-annotations-value"},{"type":"from-file-key","value":"from-file-value"}]`, chrt.Metadata.Annotations[olmProperties])
 }
 
+func TestParseFSFails(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		FS   fs.FS
+	}{
+		{
+			name: "bundle missing ClusterServiceVersion manifest",
+			FS:   removePaths(newBundleFS(), bundlePathCSV),
+		}, {
+			name: "bundle missing metadata/annotations.yaml",
+			FS:   removePaths(newBundleFS(), bundlePathAnnotations),
+		}, {
+			name: "bundle missing metadata/ directory",
+			FS:   removePaths(newBundleFS(), "metadata/"),
+		}, {
+			name: "bundle missing manifests/ directory",
+			FS:   removePaths(newBundleFS(), "manifests/"),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := convert.ParseFS(context.Background(), tt.FS)
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestRegistryV1SuiteReadBundleFileSystemFailsOnNoCSV(t *testing.T) {
+	t.Log("RegistryV1 Suite Convert")
+	t.Log("It should generate objects successfully based on target namespaces")
+
+	t.Log("It should read the registry+v1 bundle filesystem correctly")
+	t.Log("It should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata")
+	fsys := os.DirFS("testdata/combine-properties-bundle")
+
+	chrt, err := convert.RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+	require.NoError(t, err)
+	require.NotNil(t, chrt)
+	require.NotNil(t, chrt.Metadata)
+	require.Contains(t, chrt.Metadata.Annotations, olmProperties)
+	require.JSONEq(t, `[{"type":"from-csv-annotations-key","value":"from-csv-annotations-value"},{"type":"from-file-key","value":"from-file-value"}]`, chrt.Metadata.Annotations[olmProperties])
+}
+
 func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should enforce limitations")
@@ -496,7 +544,7 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
-	t.Log("convert.RegistryV1 Suite Convert")
+	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
 	t.Log("It should enforce limitations")
@@ -542,4 +590,41 @@ func findObjectByName(name string, result []client.Object) client.Object {
 		}
 	}
 	return nil
+}
+
+func newBundleFS() fstest.MapFS {
+	annotationsYml := `
+annotations:
+  operators.operatorframework.io.bundle.mediatype.v1: registry+v1
+  operators.operatorframework.io.bundle.package.v1: test
+`
+
+	csvYml := `
+apiVersion: operators.operatorframework.io/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: test.v1.0.0
+  annotations:
+    olm.properties: '[{"type":"from-csv-annotations-key", "value":"from-csv-annotations-value"}]'
+spec:
+  installModes:
+    - type: AllNamespaces
+      supported: true
+`
+
+	return fstest.MapFS{
+		bundlePathAnnotations: &fstest.MapFile{Data: []byte(strings.Trim(annotationsYml, "\n"))},
+		bundlePathCSV:         &fstest.MapFile{Data: []byte(strings.Trim(csvYml, "\n"))},
+	}
+}
+
+func removePaths(mapFs fstest.MapFS, paths ...string) fstest.MapFS {
+	for k := range mapFs {
+		for _, path := range paths {
+			if strings.HasPrefix(k, path) {
+				delete(mapFs, k)
+			}
+		}
+	}
+	return mapFs
 }
