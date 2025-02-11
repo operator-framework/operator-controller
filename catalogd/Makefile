@@ -59,9 +59,14 @@ clean: ## Remove binaries and test artifacts
 	rm -rf bin
 
 .PHONY: generate
+KUSTOMIZE_CRDS_DIR := config/base/crd/bases
+KUSTOMIZE_RBAC_DIR := config/base/rbac
+KUSTOMIZE_WEBHOOKS_DIR := config/base/manager/webhook
 generate: $(CONTROLLER_GEN) ## Generate code and manifests.
 	$(CONTROLLER_GEN) object:headerFile="../hack/boilerplate.go.txt" paths="./..."
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac output:webhook:artifacts:config=config/base/manager/webhook/
+	rm -rf $(KUSTOMIZE_CRDS_DIR) && $(CONTROLLER_GEN) crd paths="./api/..." output:crd:artifacts:config=$(KUSTOMIZE_CRDS_DIR)
+	rm -f $(KUSTOMIZE_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/..." output:rbac:artifacts:config=$(KUSTOMIZE_RBAC_DIR)
+	rm -f $(KUSTOMIZE_WEBHOOKS_DIR)/manifests.yaml && $(CONTROLLER_GEN) webhook paths="./internal/..." output:webhook:artifacts:config=$(KUSTOMIZE_WEBHOOKS_DIR)
 
 ##@ Build
 
