@@ -22,7 +22,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/filter"
-	filterutil "github.com/operator-framework/operator-controller/internal/util/filter"
+	filterutil "github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
 type ValidationFunc func(*declcfg.Bundle) error

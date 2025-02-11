@@ -24,8 +24,8 @@ import (
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/httputil"
-	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
-	imageutil "github.com/operator-framework/operator-controller/internal/util/image"
+	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
+	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"

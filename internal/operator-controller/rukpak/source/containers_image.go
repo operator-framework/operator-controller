@@ -21,8 +21,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/httputil"
-	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
-	imageutil "github.com/operator-framework/operator-controller/internal/util/image"
+	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
+	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 var insecurePolicy = []byte(`{"default":[{"type":"insecureAcceptAnything"}]}`)

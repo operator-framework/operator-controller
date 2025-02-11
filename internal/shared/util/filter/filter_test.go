@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/operator-framework/operator-controller/internal/util/filter"
+	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
 func TestAnd(t *testing.T) {

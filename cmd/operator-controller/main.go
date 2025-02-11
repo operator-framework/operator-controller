@@ -70,8 +70,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
-	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
-	"github.com/operator-framework/operator-controller/internal/version"
+	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
+	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
 
 var (
