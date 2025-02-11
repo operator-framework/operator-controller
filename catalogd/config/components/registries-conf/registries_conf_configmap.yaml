@@ -6,6 +6,5 @@ metadata:
 data:
   registries.conf: |
     [[registry]]
-    prefix = "docker-registry.catalogd-e2e.svc:5000"
-    insecure = true
-    location = "docker-registry.catalogd-e2e.svc:5000"
+    prefix = "mirrored-registry.operator-controller-e2e.svc.cluster.local:5000"
+    location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"
