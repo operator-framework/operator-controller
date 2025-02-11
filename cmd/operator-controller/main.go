@@ -65,6 +65,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
@@ -407,8 +408,9 @@ func run() error {
 	}
 
 	helmApplier := &applier.Helm{
-		ActionClientGetter: acg,
-		Preflights:         preflights,
+		ActionClientGetter:  acg,
+		Preflights:          preflights,
+		BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())

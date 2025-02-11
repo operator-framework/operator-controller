@@ -3,6 +3,7 @@ package applier_test
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"os"
 	"testing"
 	"testing/fstest"
@@ -13,6 +14,8 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -21,6 +24,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 )
 
 type mockPreflight struct {
@@ -106,6 +110,10 @@ metadata:
     olm.properties: '[{"type":"from-csv-annotations-key", "value":"from-csv-annotations-value"}]'
 spec:
   installModes:
+    - type: SingleNamespace
+      supported: true
+    - type: OwnNamespace
+      supported: true
     - type: AllNamespaces
       supported: true`)},
 	}
@@ -144,7 +152,10 @@ func TestApply_Base(t *testing.T) {
 
 	t.Run("fails trying to obtain an action client", func(t *testing.T) {
 		mockAcg := &mockActionGetter{actionClientForErr: errors.New("failed getting action client")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -155,7 +166,10 @@ func TestApply_Base(t *testing.T) {
 
 	t.Run("fails getting current release and !driver.ErrReleaseNotFound", func(t *testing.T) {
 		mockAcg := &mockActionGetter{getClientErr: errors.New("failed getting current release")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -171,7 +185,10 @@ func TestApply_Installation(t *testing.T) {
 			getClientErr:     driver.ErrReleaseNotFound,
 			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -186,7 +203,11 @@ func TestApply_Installation(t *testing.T) {
 			installErr:   errors.New("failed installing chart"),
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			Preflights:          []applier.Preflight{mockPf},
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -200,7 +221,10 @@ func TestApply_Installation(t *testing.T) {
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -217,7 +241,10 @@ func TestApply_Installation(t *testing.T) {
 				Manifest: validManifest,
 			},
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
@@ -236,7 +263,10 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			getClientErr:     driver.ErrReleaseNotFound,
 			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -251,7 +281,11 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			installErr:   errors.New("failed installing chart"),
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			Preflights:          []applier.Preflight{mockPf},
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -265,7 +299,10 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -282,7 +319,10 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 				Manifest: validManifest,
 			},
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
@@ -302,7 +342,10 @@ func TestApply_Upgrade(t *testing.T) {
 		mockAcg := &mockActionGetter{
 			dryRunUpgradeErr: errors.New("failed attempting to dry-run upgrade chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -321,7 +364,11 @@ func TestApply_Upgrade(t *testing.T) {
 			desiredRel: &testDesiredRelease,
 		}
 		mockPf := &mockPreflight{upgradeErr: errors.New("failed during upgrade pre-flight check")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			Preflights:          []applier.Preflight{mockPf},
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -340,7 +387,10 @@ func TestApply_Upgrade(t *testing.T) {
 			desiredRel: &testDesiredRelease,
 		}
 		mockPf := &mockPreflight{}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier := applier.Helm{
+			ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf},
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -359,7 +409,11 @@ func TestApply_Upgrade(t *testing.T) {
 			desiredRel:   &testDesiredRelease,
 		}
 		mockPf := &mockPreflight{}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			Preflights:          []applier.Preflight{mockPf},
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -376,7 +430,10 @@ func TestApply_Upgrade(t *testing.T) {
 			currentRel: testCurrentRelease,
 			desiredRel: &testDesiredRelease,
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
@@ -384,5 +441,78 @@ func TestApply_Upgrade(t *testing.T) {
 		require.NotNil(t, objs)
 		assert.Equal(t, "service-a", objs[0].GetName())
 		assert.Equal(t, "service-b", objs[1].GetName())
+	})
+}
+
+func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testing.T) {
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
+
+	t.Run("generates bundle resources in SingleNamespace install mode when watch namespace is configured", func(t *testing.T) {
+		var expectedWatchNamespace = "watch-namespace"
+
+		helmApplier := applier.Helm{
+			ActionClientGetter: &mockActionGetter{
+				getClientErr: driver.ErrReleaseNotFound,
+				desiredRel: &release.Release{
+					Info:     &release.Info{Status: release.StatusDeployed},
+					Manifest: validManifest,
+				},
+			},
+			BundleToHelmChartFn: func(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+				require.Equal(t, expectedWatchNamespace, watchNamespace)
+				return convert.RegistryV1ToHelmChart(rv1, installNamespace, watchNamespace)
+			},
+		}
+
+		testExt := &v1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testExt",
+				Annotations: map[string]string{
+					applier.AnnotationClusterExtensionWatchNamespace: expectedWatchNamespace,
+				},
+			},
+		}
+
+		_, _, _ = helmApplier.Apply(context.TODO(), validFS, testExt, testObjectLabels, testStorageLabels)
+	})
+}
+
+func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
+	t.Run("generates bundle resources in AllNamespaces install mode", func(t *testing.T) {
+		var expectedWatchNamespace = corev1.NamespaceAll
+
+		helmApplier := applier.Helm{
+			ActionClientGetter: &mockActionGetter{
+				getClientErr: driver.ErrReleaseNotFound,
+				desiredRel: &release.Release{
+					Info:     &release.Info{Status: release.StatusDeployed},
+					Manifest: validManifest,
+				},
+			},
+			BundleToHelmChartFn: func(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+				require.Equal(t, expectedWatchNamespace, watchNamespace)
+				return convert.RegistryV1ToHelmChart(rv1, installNamespace, watchNamespace)
+			},
+		}
+
+		_, _, _ = helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+	})
+
+	t.Run("surfaces chart generation errors", func(t *testing.T) {
+		helmApplier := applier.Helm{
+			ActionClientGetter: &mockActionGetter{
+				getClientErr: driver.ErrReleaseNotFound,
+				desiredRel: &release.Release{
+					Info:     &release.Info{Status: release.StatusDeployed},
+					Manifest: validManifest,
+				},
+			},
+			BundleToHelmChartFn: func(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+				return nil, errors.New("some error")
+			},
+		}
+
+		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
 	})
 }

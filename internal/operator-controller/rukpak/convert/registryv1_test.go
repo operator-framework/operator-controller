@@ -1,7 +1,6 @@
 package convert_test
 
 import (
-	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -464,7 +463,8 @@ func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
 	t.Log("It should read the registry+v1 bundle filesystem correctly")
 	t.Log("It should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata")
 	fsys := os.DirFS("testdata/combine-properties-bundle")
-	chrt, err := convert.RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+
+	chrt, err := convert.RegistryV1ToHelmChart(fsys, "", "")
 	require.NoError(t, err)
 	require.NotNil(t, chrt)
 	require.NotNil(t, chrt.Metadata)
@@ -492,7 +492,7 @@ func TestParseFSFails(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := convert.ParseFS(context.Background(), tt.FS)
+			_, err := convert.ParseFS(tt.FS)
 			require.Error(t, err)
 		})
 	}
@@ -506,7 +506,8 @@ func TestRegistryV1SuiteReadBundleFileSystemFailsOnNoCSV(t *testing.T) {
 	t.Log("It should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata")
 	fsys := os.DirFS("testdata/combine-properties-bundle")
 
-	chrt, err := convert.RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+	chrt, err := convert.RegistryV1ToHelmChart(fsys, "", "")
+
 	require.NoError(t, err)
 	require.NotNil(t, chrt)
 	require.NotNil(t, chrt.Metadata)
