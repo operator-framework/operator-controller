@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	testutils "github.com/operator-framework/operator-controller/test/utils"
 )
 
 const (
@@ -76,7 +77,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			Expect(catalog.ObjectMeta.Labels).To(HaveKeyWithValue("olm.operatorframework.io/metadata.name", catalogName))
 
 			By("Making sure the catalog content is available via the http server")
-			actualFBC, err := ReadTestCatalogServerContents(ctx, catalog, c, kubeClient)
+			actualFBC, err := testutils.ReadTestCatalogServerContents(ctx, catalog, kubeClient)
 			Expect(err).To(Not(HaveOccurred()))
 
 			expectedFBC, err := os.ReadFile("../../catalogd/testdata/catalogs/test-catalog/expected_all.json")

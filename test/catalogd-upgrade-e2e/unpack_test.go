@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
-	catalogde2e "github.com/operator-framework/operator-controller/test/catalogd-e2e"
+	testutils "github.com/operator-framework/operator-controller/test/utils"
 )
 
 var _ = Describe("ClusterCatalog Unpacking", func() {
@@ -92,7 +92,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 
 			By("Making sure the catalog content is available via the http server")
 			Eventually(func(g Gomega) {
-				actualFBC, err := catalogde2e.ReadTestCatalogServerContents(ctx, catalog, c, kubeClient)
+				actualFBC, err := testutils.ReadTestCatalogServerContents(ctx, catalog, kubeClient)
 				g.Expect(err).To(Not(HaveOccurred()))
 				g.Expect(cmp.Diff(expectedFBC, actualFBC)).To(BeEmpty())
 			}).Should(Succeed())
