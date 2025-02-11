@@ -18,6 +18,7 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -149,12 +150,16 @@ func main() {
 	}
 
 	if (certFile != "" && keyFile == "") || (certFile == "" && keyFile != "") {
-		setupLog.Error(nil, "unable to configure TLS certificates: tls-cert and tls-key flags must be used together")
+		setupLog.Error(errors.New("missing TLS configuration"),
+			"tls-cert and tls-key flags must be used together",
+			"certFile", certFile, "keyFile", keyFile)
 		os.Exit(1)
 	}
 
 	if metricsAddr != "" && certFile == "" && keyFile == "" {
-		setupLog.Error(nil, "metrics-bind-address requires tls-cert and tls-key flags to be set")
+		setupLog.Error(errors.New("invalid metrics configuration"),
+			"metrics-bind-address requires tls-cert and tls-key flags to be set",
+			"metricsAddr", metricsAddr, "certFile", certFile, "keyFile", keyFile)
 		os.Exit(1)
 	}
 
