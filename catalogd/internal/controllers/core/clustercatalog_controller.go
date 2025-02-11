@@ -38,8 +38,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
-	"github.com/operator-framework/operator-controller/catalogd/internal/source"
-	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
+	"github.com/operator-framework/operator-controller/internal/catalogd/source"
+	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 )
 
 const (
