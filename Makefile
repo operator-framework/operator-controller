@@ -117,10 +117,12 @@ tidy: #HELP Update dependencies.
 
 
 .PHONY: manifests
+KUSTOMIZE_CRDS_DIR := config/base/crd/bases
+KUSTOMIZE_RBAC_DIR := config/base/rbac
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	# To generate the manifests used and do not use catalogd directory
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/... output:rbac:artifacts:config=config/base/rbac
-	$(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=config/base/crd/bases
+	rm -rf $(KUSTOMIZE_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=$(KUSTOMIZE_CRDS_DIR)
+	rm -f $(KUSTOMIZE_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/operator-controller/... output:rbac:artifacts:config=$(KUSTOMIZE_RBAC_DIR)
 	# To generate the manifests for catalogd
 	$(MAKE) -C catalogd generate
 
