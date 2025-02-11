@@ -22,6 +22,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
+	filterutil "github.com/operator-framework/operator-controller/internal/util/filter"
 )
 
 type ValidationFunc func(*declcfg.Bundle) error
@@ -75,7 +76,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 
 	var catStats []*catStat
 
-	resolvedBundles := []foundBundle{}
+	var resolvedBundles []foundBundle
 	var priorDeprecation *declcfg.Deprecation
 
 	listOptions := []client.ListOption{
@@ -96,7 +97,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		cs.PackageFound = true
 		cs.TotalBundles = len(packageFBC.Bundles)
 
-		var predicates []filter.Predicate[declcfg.Bundle]
+		var predicates []filterutil.Predicate[declcfg.Bundle]
 		if len(channels) > 0 {
 			channelSet := sets.New(channels...)
 			filteredChannels := slices.DeleteFunc(packageFBC.Channels, func(c declcfg.Channel) bool {
@@ -118,7 +119,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		}
 
 		// Apply the predicates to get the candidate bundles
-		packageFBC.Bundles = filter.Filter(packageFBC.Bundles, filter.And(predicates...))
+		packageFBC.Bundles = filterutil.InPlace(packageFBC.Bundles, filterutil.And(predicates...))
 		cs.MatchedBundles = len(packageFBC.Bundles)
 		if len(packageFBC.Bundles) == 0 {
 			return nil

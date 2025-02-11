@@ -6,9 +6,10 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
+	"github.com/operator-framework/operator-controller/internal/util/filter"
 )
 
-func InMastermindsSemverRange(semverRange *mmsemver.Constraints) Predicate[declcfg.Bundle] {
+func InMastermindsSemverRange(semverRange *mmsemver.Constraints) filter.Predicate[declcfg.Bundle] {
 	return func(b declcfg.Bundle) bool {
 		bVersion, err := bundleutil.GetVersion(b)
 		if err != nil {
@@ -26,7 +27,7 @@ func InMastermindsSemverRange(semverRange *mmsemver.Constraints) Predicate[declc
 	}
 }
 
-func InAnyChannel(channels ...declcfg.Channel) Predicate[declcfg.Bundle] {
+func InAnyChannel(channels ...declcfg.Channel) filter.Predicate[declcfg.Bundle] {
 	return func(bundle declcfg.Bundle) bool {
 		for _, ch := range channels {
 			for _, entry := range ch.Entries {

@@ -16,6 +16,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/compare"
+	"github.com/operator-framework/operator-controller/internal/util/filter"
 )
 
 func TestSuccessorsPredicate(t *testing.T) {
@@ -160,7 +161,7 @@ func TestSuccessorsPredicate(t *testing.T) {
 			for _, bundle := range bundleSet {
 				allBundles = append(allBundles, bundle)
 			}
-			result := Filter(allBundles, successors)
+			result := filter.InPlace(allBundles, successors)
 
 			// sort before comparison for stable order
 			slices.SortFunc(result, compare.ByVersion)
