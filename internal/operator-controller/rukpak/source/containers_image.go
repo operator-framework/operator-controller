@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/containers/image/v5/copy"
 	"github.com/containers/image/v5/docker"
@@ -18,17 +17,13 @@ import (
 	"github.com/containers/image/v5/types"
 	"github.com/go-logr/logr"
 	"github.com/opencontainers/go-digest"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/httputil"
 	fsutil "github.com/operator-framework/operator-controller/internal/util/fs"
 	imageutil "github.com/operator-framework/operator-controller/internal/util/image"
 )
-
-const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
 
 var insecurePolicy = []byte(`{"default":[{"type":"insecureAcceptAnything"}]}`)
 
@@ -37,15 +32,15 @@ type ContainersImageRegistry struct {
 	SourceContextFunc func(logger logr.Logger) (*types.SystemContext, error)
 }
 
-func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1.ClusterCatalog) (*Result, error) {
+func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Result, error) {
 	l := log.FromContext(ctx)
 
-	if catalog.Spec.Source.Type != catalogdv1.SourceTypeImage {
-		panic(fmt.Sprintf("programmer error: source type %q is unable to handle specified catalog source type %q", catalogdv1.SourceTypeImage, catalog.Spec.Source.Type))
+	if bundle.Type != SourceTypeImage {
+		panic(fmt.Sprintf("programmer error: source type %q is unable to handle specified bundle source type %q", SourceTypeImage, bundle.Type))
 	}
 
-	if catalog.Spec.Source.Image == nil {
-		return nil, reconcile.TerminalError(fmt.Errorf("error parsing catalog, catalog %s has a nil image source", catalog.Name))
+	if bundle.Image == nil {
+		return nil, reconcile.TerminalError(fmt.Errorf("error parsing bundle, bundle %s has a nil image source", bundle.Name))
 	}
 
 	// Reload registries cache in case of configuration update
@@ -56,7 +51,7 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv
 		return nil, err
 	}
 
-	res, err := i.unpack(ctx, catalog, srcCtx, l)
+	res, err := i.unpack(ctx, bundle, srcCtx, l)
 	if err != nil {
 		// Log any CertificateVerificationErrors, and log Docker Certificates if necessary
 		if httputil.LogCertificateVerificationError(err, l) {
@@ -66,13 +61,13 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv
 	return res, err
 }
 
-func (i *ContainersImageRegistry) unpack(ctx context.Context, catalog *catalogdv1.ClusterCatalog, srcCtx *types.SystemContext, l logr.Logger) (*Result, error) {
+func (i *ContainersImageRegistry) unpack(ctx context.Context, bundle *BundleSource, srcCtx *types.SystemContext, l logr.Logger) (*Result, error) {
 	//////////////////////////////////////////////////////
 	//
 	// Resolve a canonical reference for the image.
 	//
 	//////////////////////////////////////////////////////
-	imgRef, canonicalRef, specIsCanonical, err := resolveReferences(ctx, catalog.Spec.Source.Image.Ref, srcCtx)
+	imgRef, canonicalRef, _, err := resolveReferences(ctx, bundle.Image.Ref, srcCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +78,10 @@ func (i *ContainersImageRegistry) unpack(ctx context.Context, catalog *catalogdv
 	// return the unpacked directory.
 	//
 	//////////////////////////////////////////////////////
-	unpackPath := i.unpackPath(catalog.Name, canonicalRef.Digest())
-	if unpackTime, err := fsutil.GetDirectoryModTime(unpackPath); err == nil {
+	unpackPath := i.unpackPath(bundle.Name, canonicalRef.Digest())
+	if _, err := fsutil.GetDirectoryModTime(unpackPath); err == nil {
 		l.Info("image already unpacked", "ref", imgRef.String(), "digest", canonicalRef.Digest().String())
-		return successResult(unpackPath, canonicalRef, unpackTime), nil
+		return successResult(bundle.Name, unpackPath, canonicalRef), nil
 	} else if errors.Is(err, fsutil.ErrNotDirectory) {
 		if err := fsutil.DeleteReadOnlyRecursive(unpackPath); err != nil {
 			return nil, err
@@ -110,7 +105,7 @@ func (i *ContainersImageRegistry) unpack(ctx context.Context, catalog *catalogdv
 		return nil, fmt.Errorf("error creating source reference: %w", err)
 	}
 
-	layoutDir, err := os.MkdirTemp("", fmt.Sprintf("oci-layout-%s", catalog.Name))
+	layoutDir, err := os.MkdirTemp("", fmt.Sprintf("oci-layout-%s", bundle.Name))
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporary directory: %w", err)
 	}
@@ -164,7 +159,7 @@ func (i *ContainersImageRegistry) unpack(ctx context.Context, catalog *catalogdv
 	// Mount the image we just pulled
 	//
 	//////////////////////////////////////////////////////
-	if err := i.unpackImage(ctx, unpackPath, layoutRef, specIsCanonical, srcCtx); err != nil {
+	if err := i.unpackImage(ctx, unpackPath, layoutRef, srcCtx); err != nil {
 		if cleanupErr := fsutil.DeleteReadOnlyRecursive(unpackPath); cleanupErr != nil {
 			err = errors.Join(err, cleanupErr)
 		}
@@ -176,48 +171,32 @@ func (i *ContainersImageRegistry) unpack(ctx context.Context, catalog *catalogdv
 	// Delete other images. They are no longer needed.
 	//
 	//////////////////////////////////////////////////////
-	if err := i.deleteOtherImages(catalog.Name, canonicalRef.Digest()); err != nil {
+	if err := i.deleteOtherImages(bundle.Name, canonicalRef.Digest()); err != nil {
 		return nil, fmt.Errorf("error deleting old images: %w", err)
 	}
 
-	return successResult(unpackPath, canonicalRef, time.Now()), nil
+	return successResult(bundle.Name, unpackPath, canonicalRef), nil
 }
 
-func successResult(unpackPath string, canonicalRef reference.Canonical, lastUnpacked time.Time) *Result {
+func successResult(bundleName, unpackPath string, canonicalRef reference.Canonical) *Result {
 	return &Result{
-		FS: os.DirFS(unpackPath),
-		ResolvedSource: &catalogdv1.ResolvedCatalogSource{
-			Type: catalogdv1.SourceTypeImage,
-			Image: &catalogdv1.ResolvedImageSource{
-				Ref: canonicalRef.String(),
-			},
-		},
-		State:   StateUnpacked,
-		Message: fmt.Sprintf("unpacked %q successfully", canonicalRef),
-
-		// We truncate both the unpack time and last successful poll attempt
-		// to the second because metav1.Time is serialized
-		// as RFC 3339 which only has second-level precision. When we
-		// use this result in a comparison with what we deserialized
-		// from the Kubernetes API server, we need it to match.
-		UnpackTime:                lastUnpacked.Truncate(time.Second),
-		LastSuccessfulPollAttempt: metav1.NewTime(time.Now().Truncate(time.Second)),
+		Bundle:         os.DirFS(unpackPath),
+		ResolvedSource: &BundleSource{Type: SourceTypeImage, Name: bundleName, Image: &ImageSource{Ref: canonicalRef.String()}},
+		State:          StateUnpacked,
+		Message:        fmt.Sprintf("unpacked %q successfully", canonicalRef),
 	}
 }
 
-func (i *ContainersImageRegistry) Cleanup(_ context.Context, catalog *catalogdv1.ClusterCatalog) error {
-	if err := fsutil.DeleteReadOnlyRecursive(i.catalogPath(catalog.Name)); err != nil {
-		return fmt.Errorf("error deleting catalog cache: %w", err)
-	}
-	return nil
+func (i *ContainersImageRegistry) Cleanup(_ context.Context, bundle *BundleSource) error {
+	return fsutil.DeleteReadOnlyRecursive(i.bundlePath(bundle.Name))
 }
 
-func (i *ContainersImageRegistry) catalogPath(catalogName string) string {
-	return filepath.Join(i.BaseCachePath, catalogName)
+func (i *ContainersImageRegistry) bundlePath(bundleName string) string {
+	return filepath.Join(i.BaseCachePath, bundleName)
 }
 
-func (i *ContainersImageRegistry) unpackPath(catalogName string, digest digest.Digest) string {
-	return filepath.Join(i.catalogPath(catalogName), digest.String())
+func (i *ContainersImageRegistry) unpackPath(bundleName string, digest digest.Digest) string {
+	return filepath.Join(i.bundlePath(bundleName), digest.String())
 }
 
 func resolveReferences(ctx context.Context, ref string, sourceContext *types.SystemContext) (reference.Named, reference.Canonical, bool, error) {
@@ -278,7 +257,7 @@ func loadPolicyContext(sourceContext *types.SystemContext, l logr.Logger) (*sign
 	return signature.NewPolicyContext(policy)
 }
 
-func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath string, imageReference types.ImageReference, specIsCanonical bool, sourceContext *types.SystemContext) error {
+func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath string, imageReference types.ImageReference, sourceContext *types.SystemContext) error {
 	img, err := imageReference.NewImage(ctx, sourceContext)
 	if err != nil {
 		return fmt.Errorf("error reading image: %w", err)
@@ -293,30 +272,17 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 	if err != nil {
 		return fmt.Errorf("error creating image source: %w", err)
 	}
-
-	cfg, err := img.OCIConfig(ctx)
-	if err != nil {
-		return fmt.Errorf("error parsing image config: %w", err)
-	}
-
-	dirToUnpack, ok := cfg.Config.Labels[ConfigDirLabel]
-	if !ok {
-		// If the spec is a tagged ref, retries could end up resolving a new digest, where the label
-		// might show up. If the spec is canonical, no amount of retries will make the label appear.
-		// Therefore, we treat the error as terminal if the reference from the spec is canonical.
-		return wrapTerminal(fmt.Errorf("catalog image is missing the required label %q", ConfigDirLabel), specIsCanonical)
-	}
-
-	applyFilter := imageutil.AllFilters(
-		imageutil.OnlyPath(dirToUnpack),
-		imageutil.ForceOwnershipRWX(),
-	)
-	return imageutil.ApplyLayersToDisk(ctx, unpackPath, img, layoutSrc, applyFilter)
+	defer func() {
+		if err := layoutSrc.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	return imageutil.ApplyLayersToDisk(ctx, unpackPath, img, layoutSrc, imageutil.ForceOwnershipRWX())
 }
 
-func (i *ContainersImageRegistry) deleteOtherImages(catalogName string, digestToKeep digest.Digest) error {
-	catalogPath := i.catalogPath(catalogName)
-	imgDirs, err := os.ReadDir(catalogPath)
+func (i *ContainersImageRegistry) deleteOtherImages(bundleName string, digestToKeep digest.Digest) error {
+	bundlePath := i.bundlePath(bundleName)
+	imgDirs, err := os.ReadDir(bundlePath)
 	if err != nil {
 		return fmt.Errorf("error reading image directories: %w", err)
 	}
@@ -324,17 +290,10 @@ func (i *ContainersImageRegistry) deleteOtherImages(catalogName string, digestTo
 		if imgDir.Name() == digestToKeep.String() {
 			continue
 		}
-		imgDirPath := filepath.Join(catalogPath, imgDir.Name())
+		imgDirPath := filepath.Join(bundlePath, imgDir.Name())
 		if err := fsutil.DeleteReadOnlyRecursive(imgDirPath); err != nil {
 			return fmt.Errorf("error removing image directory: %w", err)
 		}
 	}
 	return nil
-}
-
-func wrapTerminal(err error, isTerminal bool) error {
-	if !isTerminal {
-		return err
-	}
-	return reconcile.TerminalError(err)
 }

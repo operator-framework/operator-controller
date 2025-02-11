@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
-	"github.com/operator-framework/operator-controller/internal/scheme"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 )
 
 var (
