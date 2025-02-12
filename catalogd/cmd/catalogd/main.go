@@ -56,14 +56,14 @@ import (
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
-	corecontrollers "github.com/operator-framework/operator-controller/catalogd/internal/controllers/core"
-	"github.com/operator-framework/operator-controller/catalogd/internal/webhook"
+	corecontrollers "github.com/operator-framework/operator-controller/internal/catalogd/controllers/core"
 	"github.com/operator-framework/operator-controller/internal/catalogd/features"
 	"github.com/operator-framework/operator-controller/internal/catalogd/garbagecollection"
 	catalogdmetrics "github.com/operator-framework/operator-controller/internal/catalogd/metrics"
 	"github.com/operator-framework/operator-controller/internal/catalogd/serverutil"
 	"github.com/operator-framework/operator-controller/internal/catalogd/source"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
+	"github.com/operator-framework/operator-controller/internal/catalogd/webhook"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )

@@ -115,16 +115,18 @@ tidy: #HELP Update dependencies.
 	# Force tidy to use the version already in go.mod
 	$(Q)go mod tidy -go=$(GOLANG_VERSION)
 
-
 .PHONY: manifests
 KUSTOMIZE_CRDS_DIR := config/base/crd/bases
 KUSTOMIZE_RBAC_DIR := config/base/rbac
+KUSTOMIZE_WEBHOOKS_DIR := config/base/manager/webhook
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
-	# To generate the manifests used and do not use catalogd directory
+	# Generate the operator-controller manifests
 	rm -rf $(KUSTOMIZE_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=$(KUSTOMIZE_CRDS_DIR)
 	rm -f $(KUSTOMIZE_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/operator-controller/... output:rbac:artifacts:config=$(KUSTOMIZE_RBAC_DIR)
-	# To generate the manifests for catalogd
-	$(MAKE) -C catalogd generate
+	# Generate the catalogd manifests
+	rm -rf catalogd/$(KUSTOMIZE_CRDS_DIR) && $(CONTROLLER_GEN) crd paths="./catalogd/api/..." output:crd:artifacts:config=catalogd/$(KUSTOMIZE_CRDS_DIR)
+	rm -f catalogd/$(KUSTOMIZE_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=catalogd/$(KUSTOMIZE_RBAC_DIR)
+	rm -f catalogd/$(KUSTOMIZE_WEBHOOKS_DIR)/manifests.yaml && $(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=catalogd/$(KUSTOMIZE_WEBHOOKS_DIR)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
