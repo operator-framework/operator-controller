@@ -36,4 +36,3 @@ curl -k https://localhost:8081/catalogs/operatorhubio/api/v1/all | jq -s '.[] | 
 curl -k https://localhost:8081/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select(.schema == "olm.channel") | select(.package == "wavefront") | .name'
 # check what bundles are included in the wavefront package
 curl -k https://localhost:8081/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select(.schema == "olm.bundle") | select(.package == "wavefront") | .name'
-
