@@ -42,20 +42,57 @@ type Plain struct {
 }
 
 func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
+	reg, err := ParseFS(ctx, rv1)
+	if err != nil {
+		return nil, err
+	}
+
+	plain, err := Convert(reg, installNamespace, watchNamespaces)
+	if err != nil {
+		return nil, err
+	}
+
+	chrt := &chart.Chart{Metadata: &chart.Metadata{}}
+	chrt.Metadata.Annotations = reg.CSV.GetAnnotations()
+	for _, obj := range plain.Objects {
+		jsonData, err := json.Marshal(obj)
+		if err != nil {
+			return nil, err
+		}
+		hash := sha256.Sum256(jsonData)
+		chrt.Templates = append(chrt.Templates, &chart.File{
+			Name: fmt.Sprintf("object-%x.json", hash[0:8]),
+			Data: jsonData,
+		})
+	}
+
+	return chrt, nil
+}
+
+// ParseFS converts the rv1 filesystem into a RegistryV1.
+// ParseFS expects the filesystem to conform to the registry+v1 format:
+// metadata/annotations.yaml
+// manifests/
+//   - csv.yaml
+//   - ...
+//
+// manifests directory does not contain subdirectories
+func ParseFS(ctx context.Context, rv1 fs.FS) (RegistryV1, error) {
 	l := log.FromContext(ctx)
 
 	reg := RegistryV1{}
 	annotationsFileData, err := fs.ReadFile(rv1, filepath.Join("metadata", "annotations.yaml"))
 	if err != nil {
-		return nil, err
+		return reg, err
 	}
 	annotationsFile := registry.AnnotationsFile{}
 	if err := yaml.Unmarshal(annotationsFileData, &annotationsFile); err != nil {
-		return nil, err
+		return reg, err
 	}
 	reg.PackageName = annotationsFile.Annotations.PackageName
 
 	const manifestsDir = "manifests"
+	foundCSV := false
 	if err := fs.WalkDir(rv1, manifestsDir, func(path string, e fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -91,6 +128,7 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 					return err
 				}
 				reg.CSV = csv
+				foundCSV = true
 			default:
 				reg.Others = append(reg.Others, *info.Object.(*unstructured.Unstructured))
 			}
@@ -100,14 +138,18 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 		}
 		return nil
 	}); err != nil {
-		return nil, err
+		return reg, err
+	}
+
+	if !foundCSV {
+		return reg, fmt.Errorf("no ClusterServiceVersion found in %q", manifestsDir)
 	}
 
 	if err := copyMetadataPropertiesToCSV(&reg.CSV, rv1); err != nil {
-		return nil, err
+		return reg, err
 	}
 
-	return toChart(reg, installNamespace, watchNamespaces)
+	return reg, nil
 }
 
 // copyMetadataPropertiesToCSV copies properties from `metadata/propeties.yaml` (in the filesystem fsys) into
@@ -156,29 +198,6 @@ func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS
 	}
 	csv.Annotations["olm.properties"] = string(allPropertiesJSON)
 	return nil
-}
-
-func toChart(in RegistryV1, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
-	plain, err := Convert(in, installNamespace, watchNamespaces)
-	if err != nil {
-		return nil, err
-	}
-
-	chrt := &chart.Chart{Metadata: &chart.Metadata{}}
-	chrt.Metadata.Annotations = in.CSV.GetAnnotations()
-	for _, obj := range plain.Objects {
-		jsonData, err := json.Marshal(obj)
-		if err != nil {
-			return nil, err
-		}
-		hash := sha256.Sum256(jsonData)
-		chrt.Templates = append(chrt.Templates, &chart.File{
-			Name: fmt.Sprintf("object-%x.json", hash[0:8]),
-			Data: jsonData,
-		})
-	}
-
-	return chrt, nil
 }
 
 func validateTargetNamespaces(supportedInstallModes sets.Set[string], installNamespace string, targetNamespaces []string) error {

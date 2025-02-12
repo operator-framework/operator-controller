@@ -1,11 +1,13 @@
-package convert
+package convert_test
 
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -20,12 +22,17 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/property"
+
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 )
 
 const (
 	olmNamespaces    = "olm.targetNamespaces"
 	olmProperties    = "olm.properties"
 	installNamespace = "testInstallNamespace"
+
+	bundlePathAnnotations = "metadata/annotations.yaml"
+	bundlePathCSV         = "manifests/csv.yaml"
 )
 
 func getCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
@@ -57,14 +64,14 @@ func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 	csv, svc := getCsvAndService()
 
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -91,14 +98,14 @@ func TestRegistryV1SuiteNamespaceAvailable(t *testing.T) {
 	unstructuredSvc := convertToUnstructured(t, svc)
 	unstructuredSvc.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"})
 
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -132,14 +139,14 @@ func TestRegistryV1SuiteNamespaceUnsupportedKind(t *testing.T) {
 	unstructuredEvt := convertToUnstructured(t, event)
 	unstructuredEvt.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Event"})
 
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredEvt},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "bundle contains unsupported resource")
 	require.Nil(t, plainBundle)
@@ -166,14 +173,14 @@ func TestRegistryV1SuiteNamespaceClusterScoped(t *testing.T) {
 	unstructuredpriorityclass := convertToUnstructured(t, pc)
 	unstructuredpriorityclass.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "PriorityClass"})
 
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredpriorityclass},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -253,14 +260,14 @@ func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{""}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -286,14 +293,14 @@ func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -319,14 +326,14 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1"}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -352,14 +359,14 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{installNamespace}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -385,14 +392,14 @@ func TestRegistryV1SuiteGenerateErrorMultiNamespaceEmpty(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1", ""}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.Nil(t, plainBundle)
 }
@@ -409,14 +416,14 @@ func TestRegistryV1SuiteGenerateErrorSingleNamespaceDisabled(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.Nil(t, plainBundle)
 }
@@ -438,40 +445,16 @@ func TestRegistryV1SuiteGenerateErrorAllNamespaceDisabled(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{""}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.Nil(t, plainBundle)
-}
-
-func TestRegistryV1SuiteGeneratePropagateCsvAnnotations(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
-
-	t.Log("It should propagate csv annotations to chart metadata annotation")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true}}
-
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
-	}
-
-	t.Log("By converting to helm")
-	chrt, err := toChart(registryv1Bundle, installNamespace, watchNamespaces)
-	require.NoError(t, err)
-	require.Contains(t, chrt.Metadata.Annotations, olmProperties)
 }
 
 func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
@@ -481,7 +464,49 @@ func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
 	t.Log("It should read the registry+v1 bundle filesystem correctly")
 	t.Log("It should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata")
 	fsys := os.DirFS("testdata/combine-properties-bundle")
-	chrt, err := RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+	chrt, err := convert.RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+	require.NoError(t, err)
+	require.NotNil(t, chrt)
+	require.NotNil(t, chrt.Metadata)
+	require.Contains(t, chrt.Metadata.Annotations, olmProperties)
+	require.JSONEq(t, `[{"type":"from-csv-annotations-key","value":"from-csv-annotations-value"},{"type":"from-file-key","value":"from-file-value"}]`, chrt.Metadata.Annotations[olmProperties])
+}
+
+func TestParseFSFails(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		FS   fs.FS
+	}{
+		{
+			name: "bundle missing ClusterServiceVersion manifest",
+			FS:   removePaths(newBundleFS(), bundlePathCSV),
+		}, {
+			name: "bundle missing metadata/annotations.yaml",
+			FS:   removePaths(newBundleFS(), bundlePathAnnotations),
+		}, {
+			name: "bundle missing metadata/ directory",
+			FS:   removePaths(newBundleFS(), "metadata/"),
+		}, {
+			name: "bundle missing manifests/ directory",
+			FS:   removePaths(newBundleFS(), "manifests/"),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := convert.ParseFS(context.Background(), tt.FS)
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestRegistryV1SuiteReadBundleFileSystemFailsOnNoCSV(t *testing.T) {
+	t.Log("RegistryV1 Suite Convert")
+	t.Log("It should generate objects successfully based on target namespaces")
+
+	t.Log("It should read the registry+v1 bundle filesystem correctly")
+	t.Log("It should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata")
+	fsys := os.DirFS("testdata/combine-properties-bundle")
+
+	chrt, err := convert.RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
 	require.NoError(t, err)
 	require.NotNil(t, chrt)
 	require.NotNil(t, chrt.Metadata)
@@ -506,13 +531,13 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 		},
 	}
 	watchNamespaces := []string{metav1.NamespaceAll}
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "webhookDefinitions are not supported")
 	require.Nil(t, plainBundle)
@@ -537,13 +562,13 @@ func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
 		},
 	}
 	watchNamespaces := []string{metav1.NamespaceAll}
-	registryv1Bundle := RegistryV1{
+	registryv1Bundle := convert.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "apiServiceDefintions are not supported")
 	require.Nil(t, plainBundle)
@@ -559,10 +584,47 @@ func convertToUnstructured(t *testing.T, obj interface{}) unstructured.Unstructu
 func findObjectByName(name string, result []client.Object) client.Object {
 	for _, o := range result {
 		// Since this is a controlled env, comparing only the names is sufficient for now.
-		// In future, compare GVKs too by ensuring its set on the unstructuredObj.
+		// In the future, compare GVKs too by ensuring its set on the unstructuredObj.
 		if o.GetName() == name {
 			return o
 		}
 	}
 	return nil
+}
+
+func newBundleFS() fstest.MapFS {
+	annotationsYml := `
+annotations:
+  operators.operatorframework.io.bundle.mediatype.v1: registry+v1
+  operators.operatorframework.io.bundle.package.v1: test
+`
+
+	csvYml := `
+apiVersion: operators.operatorframework.io/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: test.v1.0.0
+  annotations:
+    olm.properties: '[{"type":"from-csv-annotations-key", "value":"from-csv-annotations-value"}]'
+spec:
+  installModes:
+    - type: AllNamespaces
+      supported: true
+`
+
+	return fstest.MapFS{
+		bundlePathAnnotations: &fstest.MapFile{Data: []byte(strings.Trim(annotationsYml, "\n"))},
+		bundlePathCSV:         &fstest.MapFile{Data: []byte(strings.Trim(csvYml, "\n"))},
+	}
+}
+
+func removePaths(mapFs fstest.MapFS, paths ...string) fstest.MapFS {
+	for k := range mapFs {
+		for _, path := range paths {
+			if strings.HasPrefix(k, path) {
+				delete(mapFs, k)
+			}
+		}
+	}
+	return mapFs
 }

@@ -15,8 +15,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	catalogdmetrics "github.com/operator-framework/operator-controller/catalogd/internal/metrics"
-	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
+	catalogdmetrics "github.com/operator-framework/operator-controller/internal/catalogd/metrics"
+	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 )
 
 type CatalogServerConfig struct {
