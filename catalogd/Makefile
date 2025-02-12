@@ -88,18 +88,15 @@ export GO_BUILD_TAGS     := containers_image_openpgp
 
 BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./cmd/$(notdir $@)
 
-.PHONY: build-deps
-build-deps: generate
-
 .PHONY: build go-build-local $(BINARIES)
-build: build-deps go-build-local ## Build binaries for current GOOS and GOARCH.
+build: go-build-local ## Build binaries for current GOOS and GOARCH.
 go-build-local: $(BINARIES)
 $(BINARIES): BUILDBIN = bin
 $(BINARIES):
 	$(BUILDCMD)
 
 .PHONY: build-linux go-build-linux $(LINUX_BINARIES)
-build-linux: build-deps go-build-linux ## Build binaries for GOOS=linux and local GOARCH.
+build-linux: go-build-linux ## Build binaries for GOOS=linux and local GOARCH.
 go-build-linux: $(LINUX_BINARIES)
 $(LINUX_BINARIES): BUILDBIN = bin/linux
 $(LINUX_BINARIES):
