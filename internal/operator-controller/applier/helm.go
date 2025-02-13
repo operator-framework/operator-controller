@@ -18,12 +18,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
@@ -53,9 +56,38 @@ type Preflight interface {
 	Upgrade(context.Context, *release.Release) error
 }
 
+type RestConfigMapper func(context.Context, client.Object, *rest.Config) (*rest.Config, error)
+
+type AuthClientMapper struct {
+	rcm     RestConfigMapper
+	baseCfg *rest.Config
+}
+
+func (acm *AuthClientMapper) GetAuthenticationClient(ctx context.Context, ext *ocv1.ClusterExtension) (*authorizationv1client.AuthorizationV1Client, error) {
+	authcfg, err := acm.rcm(ctx, ext, acm.baseCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	authclient, err := authorizationv1client.NewForConfig(authcfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return authclient, nil
+}
+
 type Helm struct {
 	ActionClientGetter helmclient.ActionClientGetter
 	Preflights         []Preflight
+	AuthClientMapper   AuthClientMapper
+}
+
+func NewAuthClientMapper(rcm RestConfigMapper, baseCfg *rest.Config) AuthClientMapper {
+	return AuthClientMapper{
+		rcm:     rcm,
+		baseCfg: baseCfg,
+	}
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -79,7 +111,21 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.Clu
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
+
+	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+		authclient, err := h.AuthClientMapper.GetAuthenticationClient(ctx, ext)
+		if err != nil {
+			return nil, "", err
+		}
+
+		err = h.checkContentPermissions(ctx, contentFS, authclient, ext)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
 	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS, ext.Spec.Namespace, []string{corev1.NamespaceAll})
+
 	if err != nil {
 		return nil, "", err
 	}
@@ -152,8 +198,26 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	return relObjects, state, nil
 }
 
+// Check if RBAC allows the installer service account necessary permissions on the objects in the contentFS
+func (h *Helm) checkContentPermissions(ctx context.Context, contentFS fs.FS, authcl *authorizationv1client.AuthorizationV1Client, ext *ocv1.ClusterExtension) error {
+	reg, err := convert.ParseFS(ctx, contentFS)
+	if err != nil {
+		return err
+	}
+
+	plain, err := convert.Convert(reg, ext.Spec.Namespace, []string{corev1.NamespaceAll})
+	if err != nil {
+		return err
+	}
+
+	err = authorization.CheckObjectPermissions(ctx, authcl, plain.Objects, ext)
+
+	return err
+}
+
 func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
+
 	if errors.Is(err, driver.ErrReleaseNotFound) {
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
 			i.DryRun = true
