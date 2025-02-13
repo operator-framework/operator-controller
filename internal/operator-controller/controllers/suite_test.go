@@ -39,27 +39,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/source"
 )
-
-// MockUnpacker is a mock of Unpacker interface
-type MockUnpacker struct {
-	err    error
-	result *source.Result
-}
-
-// Unpack mocks the Unpack method
-func (m *MockUnpacker) Unpack(_ context.Context, _ *source.BundleSource) (*source.Result, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	return m.result, nil
-}
-
-func (m *MockUnpacker) Cleanup(_ context.Context, _ *source.BundleSource) error {
-	// TODO implement me
-	panic("implement me")
-}
 
 func newClient(t *testing.T) client.Client {
 	// TODO: this is a live client, which behaves differently than a cache client.

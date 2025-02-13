@@ -1,4 +1,4 @@
-package httputil_test
+package http_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/httputil"
+	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 )
 
 // The "good" test consists of 3 Amazon Root CAs, along with a "PRIVATE KEY" in one of the files
@@ -17,9 +17,9 @@ func TestNewCertPool(t *testing.T) {
 		dir string
 		msg string
 	}{
-		{"../../../testdata/certs/", `no certificates found in "../../../testdata/certs/"`},
-		{"../../../testdata/certs/good", ""},
-		{"../../../testdata/certs/empty", `no certificates found in "../../../testdata/certs/empty"`},
+		{"../../../../testdata/certs/", `no certificates found in "../../../../testdata/certs/"`},
+		{"../../../../testdata/certs/good", ""},
+		{"../../../../testdata/certs/empty", `no certificates found in "../../../../testdata/certs/empty"`},
 	}
 
 	log, _ := logr.FromContext(context.Background())

@@ -119,7 +119,7 @@ func TestOnlyPath(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, srcPath := range tc.srcPaths {
-				f := OnlyPath(srcPath)
+				f := onlyPath(srcPath)
 				for _, tarHeader := range tc.tarHeaders {
 					keep, err := f(&tarHeader)
 					tc.assertion(&tarHeader, keep, err)

@@ -1,4 +1,4 @@
-package httputil_test
+package http_test
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/httputil"
+	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 )
 
 func createCert(t *testing.T, name string) {

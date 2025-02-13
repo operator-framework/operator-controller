@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containers/image/v5/docker/reference"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,8 +39,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
-	"github.com/operator-framework/operator-controller/internal/catalogd/source"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
+	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const (
@@ -52,8 +53,11 @@ const (
 // ClusterCatalogReconciler reconciles a Catalog object
 type ClusterCatalogReconciler struct {
 	client.Client
-	Unpacker source.Unpacker
-	Storage  storage.Instance
+
+	ImageCache  imageutil.Cache
+	ImagePuller imageutil.Puller
+
+	Storage storage.Instance
 
 	finalizers crfinalizer.Finalizers
 
@@ -66,8 +70,10 @@ type ClusterCatalogReconciler struct {
 }
 
 type storedCatalogData struct {
+	ref                reference.Canonical
+	lastUnpack         time.Time
+	lastSuccessfulPoll time.Time
 	observedGeneration int64
-	unpackResult       source.Result
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
@@ -216,7 +222,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *catal
 	case catalog.Generation != storedCatalog.observedGeneration:
 		l.Info("unpack required: catalog generation differs from observed generation")
 		needsUnpack = true
-	case r.needsPoll(storedCatalog.unpackResult.LastSuccessfulPollAttempt.Time, catalog):
+	case r.needsPoll(storedCatalog.lastSuccessfulPoll, catalog):
 		l.Info("unpack required: poll duration has elapsed")
 		needsUnpack = true
 	}
@@ -224,42 +230,50 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *catal
 	if !needsUnpack {
 		// No need to update the status because we've already checked
 		// that it is set correctly. Otherwise, we'd be unpacking again.
-		return nextPollResult(storedCatalog.unpackResult.LastSuccessfulPollAttempt.Time, catalog), nil
+		return nextPollResult(storedCatalog.lastSuccessfulPoll, catalog), nil
 	}
 
-	unpackResult, err := r.Unpacker.Unpack(ctx, catalog)
+	if catalog.Spec.Source.Type != catalogdv1.SourceTypeImage {
+		err := reconcile.TerminalError(fmt.Errorf("unknown source type %q", catalog.Spec.Source.Type))
+		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), err)
+		return ctrl.Result{}, err
+	}
+	if catalog.Spec.Source.Image == nil {
+		err := reconcile.TerminalError(fmt.Errorf("error parsing ClusterCatalog %q, image source is nil", catalog.Name))
+		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), err)
+		return ctrl.Result{}, err
+	}
+
+	fsys, canonicalRef, unpackTime, err := r.ImagePuller.Pull(ctx, catalog.Name, catalog.Spec.Source.Image.Ref, r.ImageCache)
 	if err != nil {
 		unpackErr := fmt.Errorf("source catalog content: %w", err)
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), unpackErr)
 		return ctrl.Result{}, unpackErr
 	}
 
-	switch unpackResult.State {
-	case source.StateUnpacked:
-		// TODO: We should check to see if the unpacked result has the same content
-		//   as the already unpacked content. If it does, we should skip this rest
-		//   of the unpacking steps.
-		err := r.Storage.Store(ctx, catalog.Name, unpackResult.FS)
-		if err != nil {
-			storageErr := fmt.Errorf("error storing fbc: %v", err)
-			updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), storageErr)
-			return ctrl.Result{}, storageErr
-		}
-		baseURL := r.Storage.BaseURL(catalog.Name)
-
-		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), nil)
-		updateStatusServing(&catalog.Status, *unpackResult, baseURL, catalog.GetGeneration())
-	default:
-		panic(fmt.Sprintf("unknown unpack state %q", unpackResult.State))
+	// TODO: We should check to see if the unpacked result has the same content
+	//   as the already unpacked content. If it does, we should skip this rest
+	//   of the unpacking steps.
+	if err := r.Storage.Store(ctx, catalog.Name, fsys); err != nil {
+		storageErr := fmt.Errorf("error storing fbc: %v", err)
+		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), storageErr)
+		return ctrl.Result{}, storageErr
 	}
+	baseURL := r.Storage.BaseURL(catalog.Name)
 
+	updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), nil)
+	updateStatusServing(&catalog.Status, canonicalRef, unpackTime, baseURL, catalog.GetGeneration())
+
+	lastSuccessfulPoll := time.Now()
 	r.storedCatalogsMu.Lock()
 	r.storedCatalogs[catalog.Name] = storedCatalogData{
-		unpackResult:       *unpackResult,
+		ref:                canonicalRef,
+		lastUnpack:         unpackTime,
+		lastSuccessfulPoll: lastSuccessfulPoll,
 		observedGeneration: catalog.GetGeneration(),
 	}
 	r.storedCatalogsMu.Unlock()
-	return nextPollResult(unpackResult.LastSuccessfulPollAttempt.Time, catalog), nil
+	return nextPollResult(lastSuccessfulPoll, catalog), nil
 }
 
 func (r *ClusterCatalogReconciler) getCurrentState(catalog *catalogdv1.ClusterCatalog) (*catalogdv1.ClusterCatalogStatus, storedCatalogData, bool) {
@@ -272,7 +286,7 @@ func (r *ClusterCatalogReconciler) getCurrentState(catalog *catalogdv1.ClusterCa
 	// Set expected status based on what we see in the stored catalog
 	clearUnknownConditions(expectedStatus)
 	if hasStoredCatalog && r.Storage.ContentExists(catalog.Name) {
-		updateStatusServing(expectedStatus, storedCatalog.unpackResult, r.Storage.BaseURL(catalog.Name), storedCatalog.observedGeneration)
+		updateStatusServing(expectedStatus, storedCatalog.ref, storedCatalog.lastUnpack, r.Storage.BaseURL(catalog.Name), storedCatalog.observedGeneration)
 		updateStatusProgressing(expectedStatus, storedCatalog.observedGeneration, nil)
 	}
 
@@ -325,13 +339,17 @@ func updateStatusProgressing(status *catalogdv1.ClusterCatalogStatus, generation
 	meta.SetStatusCondition(&status.Conditions, progressingCond)
 }
 
-func updateStatusServing(status *catalogdv1.ClusterCatalogStatus, result source.Result, baseURL string, generation int64) {
-	status.ResolvedSource = result.ResolvedSource
-	if status.URLs == nil {
-		status.URLs = &catalogdv1.ClusterCatalogURLs{}
+func updateStatusServing(status *catalogdv1.ClusterCatalogStatus, ref reference.Canonical, modTime time.Time, baseURL string, generation int64) {
+	status.ResolvedSource = &catalogdv1.ResolvedCatalogSource{
+		Type: catalogdv1.SourceTypeImage,
+		Image: &catalogdv1.ResolvedImageSource{
+			Ref: ref.String(),
+		},
 	}
-	status.URLs.Base = baseURL
-	status.LastUnpacked = ptr.To(metav1.NewTime(result.UnpackTime))
+	status.URLs = &catalogdv1.ClusterCatalogURLs{
+		Base: baseURL,
+	}
+	status.LastUnpacked = ptr.To(metav1.NewTime(modTime.Truncate(time.Second)))
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:               catalogdv1.TypeServing,
 		Status:             metav1.ConditionTrue,
@@ -434,7 +452,7 @@ func (r *ClusterCatalogReconciler) deleteCatalogCache(ctx context.Context, catal
 		return err
 	}
 	updateStatusNotServing(&catalog.Status, catalog.GetGeneration())
-	if err := r.Unpacker.Cleanup(ctx, catalog); err != nil {
+	if err := r.ImageCache.Delete(ctx, catalog.Name); err != nil {
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), err)
 		return err
 	}

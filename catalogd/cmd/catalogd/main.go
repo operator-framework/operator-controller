@@ -17,11 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/containers/image/v5/types"
-	"github.com/go-logr/logr"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
@@ -50,6 +49,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -61,10 +61,10 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogd/garbagecollection"
 	catalogdmetrics "github.com/operator-framework/operator-controller/internal/catalogd/metrics"
 	"github.com/operator-framework/operator-controller/internal/catalogd/serverutil"
-	"github.com/operator-framework/operator-controller/internal/catalogd/source"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	"github.com/operator-framework/operator-controller/internal/catalogd/webhook"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
+	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
 
@@ -177,7 +177,8 @@ func main() {
 
 	cw, err := certwatcher.New(certFile, keyFile)
 	if err != nil {
-		log.Fatalf("Failed to initialize certificate watcher: %v", err)
+		setupLog.Error(err, "failed to initialize certificate watcher")
+		os.Exit(1)
 	}
 
 	tlsOpts := func(config *tls.Config) {
@@ -273,14 +274,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	unpackCacheBasePath := filepath.Join(cacheDir, source.UnpackCacheDir)
+	unpackCacheBasePath := filepath.Join(cacheDir, "unpack")
 	if err := os.MkdirAll(unpackCacheBasePath, 0770); err != nil {
 		setupLog.Error(err, "unable to create cache directory for unpacking")
 		os.Exit(1)
 	}
-	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: unpackCacheBasePath,
-		SourceContextFunc: func(logger logr.Logger) (*types.SystemContext, error) {
+
+	imageCache := imageutil.CatalogCache(unpackCacheBasePath)
+	imagePuller := &imageutil.ContainersImagePuller{
+		SourceCtxFunc: func(ctx context.Context) (*types.SystemContext, error) {
+			logger := log.FromContext(ctx)
 			srcContext := &types.SystemContext{
 				DockerCertPath: pullCasDir,
 				OCICertPath:    pullCasDir,
@@ -334,9 +337,10 @@ func main() {
 	}
 
 	if err = (&corecontrollers.ClusterCatalogReconciler{
-		Client:   mgr.GetClient(),
-		Unpacker: unpacker,
-		Storage:  localStorage,
+		Client:      mgr.GetClient(),
+		ImageCache:  imageCache,
+		ImagePuller: imagePuller,
+		Storage:     localStorage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		os.Exit(1)
