@@ -1,0 +1,16 @@
+# kustomization file for secure operator-controller
+# DO NOT ADD A NAMESPACE HERE
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+components:
+- ../../components/tls
+# ca must be last or tls will overwrite the namespaces
+- ../../components/ca
+
+patches:
+ - target:
+      kind: Deployment
+      name: controller-manager
+   path: patches/dev-deployment.yaml
