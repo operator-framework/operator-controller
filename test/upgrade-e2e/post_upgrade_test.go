@@ -25,6 +25,7 @@ import (
 
 const (
 	artifactName = "operator-controller-upgrade-e2e"
+	container    = "manager"
 )
 
 func TestClusterCatalogUnpacking(t *testing.T) {
@@ -59,7 +60,7 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer leaderCancel()
 	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, &managerPod, "manager", leaderSubstrings...)
+	leaderElected, err := watchPodLogsForSubstring(leaderCtx, &managerPod, leaderSubstrings...)
 	require.NoError(t, err)
 	require.True(t, leaderElected)
 
@@ -70,7 +71,7 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 		"reconcile ending",
 		fmt.Sprintf(`ClusterCatalog=%q`, testClusterCatalogName),
 	}
-	found, err := watchPodLogsForSubstring(logCtx, &managerPod, "manager", substrings...)
+	found, err := watchPodLogsForSubstring(logCtx, &managerPod, substrings...)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -116,7 +117,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	defer leaderCancel()
 
 	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, managerPod, "manager", leaderSubstrings...)
+	leaderElected, err := watchPodLogsForSubstring(leaderCtx, managerPod, leaderSubstrings...)
 	require.NoError(t, err)
 	require.True(t, leaderElected)
 
@@ -128,7 +129,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		"reconcile ending",
 		fmt.Sprintf(`ClusterExtension=%q`, testClusterExtensionName),
 	}
-	found, err := watchPodLogsForSubstring(logCtx, managerPod, "manager", substrings...)
+	found, err := watchPodLogsForSubstring(logCtx, managerPod, substrings...)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -222,7 +223,7 @@ func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel stri
 	return &managerPods.Items[0]
 }
 
-func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container string, substrings ...string) (bool, error) {
+func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, substrings ...string) (bool, error) {
 	podLogOpts := corev1.PodLogOptions{
 		Follow:    true,
 		Container: container,
