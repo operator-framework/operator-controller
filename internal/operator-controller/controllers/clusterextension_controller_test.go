@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -1408,6 +1409,10 @@ func (mag *MockActionGetter) Uninstall(name string, opts ...helmclient.Uninstall
 }
 
 func (mag *MockActionGetter) Reconcile(rel *release.Release) error {
+	return nil
+}
+
+func (mag *MockActionGetter) Config() *action.Configuration {
 	return nil
 }
 
