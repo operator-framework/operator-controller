@@ -72,8 +72,6 @@ CATALOGD_KUSTOMIZE_BUILD_DIR := catalogd/config/overlays/cert-manager
 
 .DEFAULT_GOAL := build
 
-GINKGO := go run github.com/onsi/ginkgo/v2/ginkgo
-
 #SECTION General
 
 # The help target prints out all targets with their descriptions organized
