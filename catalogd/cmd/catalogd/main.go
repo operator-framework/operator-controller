@@ -146,6 +146,7 @@ func init() {
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(catalogdv1.AddToScheme(scheme))
+	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
 }
 
 func main() {
@@ -189,7 +190,6 @@ func validateConfig(cfg *config) error {
 }
 
 func run(ctx context.Context) error {
-	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
 	if klog.V(4).Enabled() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
