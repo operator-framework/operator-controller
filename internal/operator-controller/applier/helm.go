@@ -154,6 +154,19 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 
 func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
+	// if release is pending at this point, that should mean we were likely
+	// interruped and would normally enter into reconciliation error loop
+	// try to avoid that by attempting to uninstall the pending release
+	// normal reconciliation should be able to successfully pick up from here next time
+	//
+	// TODO: potentially move this to avoid failing at Upgrade() and having to go
+	// through another reconciliation attempt
+	if err == nil && currentRelease.Info.Status.IsPending() {
+		_, err = cl.Uninstall(ext.GetName())
+		if err != nil {
+			return nil, nil, StateError, fmt.Errorf("failed attempting to uninstall pending release: %w", err)
+		}
+	}
 	if errors.Is(err, driver.ErrReleaseNotFound) {
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
 			i.DryRun = true
