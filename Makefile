@@ -223,21 +223,9 @@ image-registry: ## Build the testdata catalog used for e2e tests and push it to 
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
+test-e2e: CATALOGD_KUSTOMIZE_BUILD_DIR := catalogd/config/overlays/e2e
 test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
-# Catalogd e2e tests
-FOCUS := $(if $(TEST),-v -focus "$(TEST)")
-ifeq ($(origin E2E_FLAGS), undefined)
-E2E_FLAGS :=
-endif
-test-catalogd-e2e: ## Run the e2e tests on existing cluster
-	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/catalogd-e2e
-
-catalogd-e2e: KIND_CLUSTER_NAME := catalogd-e2e
-catalogd-e2e: ISSUER_KIND := Issuer
-catalogd-e2e: ISSUER_NAME := selfsigned-issuer
-catalogd-e2e: CATALOGD_KUSTOMIZE_BUILD_DIR := catalogd/config/overlays/e2e
-catalogd-e2e: run catalogd-image-registry test-catalogd-e2e ##  kind-clean Run e2e test suite on local kind cluster
 
 ## image-registry target has to come after run-latest-release,
 ## because the image-registry depends on the olm-ca issuer.

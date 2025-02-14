@@ -210,7 +210,38 @@ func testInit(t *testing.T) (*ocv1.ClusterExtension, *catalogd.ClusterCatalog, *
 
 	sa, err := createServiceAccount(context.Background(), name, clusterExtensionName)
 	require.NoError(t, err)
+
+	validateCatalogUnpack(t)
+
 	return clusterExtension, extensionCatalog, sa, ns
+}
+
+func validateCatalogUnpack(t *testing.T) {
+	catalog := &catalogd.ClusterCatalog{}
+	t.Log("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == True and reason == Succeeded")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		err := c.Get(context.Background(), types.NamespacedName{Name: testCatalogName}, catalog)
+		assert.NoError(ct, err)
+		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeProgressing)
+		assert.NotNil(ct, cond)
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, catalogd.ReasonSucceeded, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("Checking that catalog has the expected metadata label")
+	assert.NotNil(t, catalog.ObjectMeta.Labels)
+	assert.Contains(t, catalog.ObjectMeta.Labels, "olm.operatorframework.io/metadata.name")
+	assert.Equal(t, testCatalogName, catalog.ObjectMeta.Labels["olm.operatorframework.io/metadata.name"])
+
+	t.Log("Ensuring ClusterCatalog has Status.Condition of Type = Serving with status == True")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		err := c.Get(context.Background(), types.NamespacedName{Name: testCatalogName}, catalog)
+		assert.NoError(ct, err)
+		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeServing)
+		assert.NotNil(ct, cond)
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
+	}, pollDuration, pollInterval)
 }
 
 func ensureNoExtensionResources(t *testing.T, clusterExtensionName string) {
