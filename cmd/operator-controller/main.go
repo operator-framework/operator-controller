@@ -156,6 +156,8 @@ func init() {
 
 	//add feature gate flags to flagset
 	features.OperatorControllerFeatureGate.AddFlag(flags)
+
+	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
 }
 func validateMetricsFlags() error {
 	if (cfg.certFile != "" && cfg.keyFile == "") || (cfg.certFile == "" && cfg.keyFile != "") {
