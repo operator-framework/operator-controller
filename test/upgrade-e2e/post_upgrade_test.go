@@ -25,7 +25,77 @@ import (
 
 const (
 	artifactName = "operator-controller-upgrade-e2e"
+	container    = "manager"
 )
+
+func TestClusterCatalogUnpacking(t *testing.T) {
+	ctx := context.Background()
+
+	t.Log("Checking that the controller-manager deployment is updated")
+	managerLabelSelector := labels.Set{"control-plane": "catalogd-controller-manager"}
+	var managerDeployment appsv1.Deployment
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var managerDeployments appsv1.DeploymentList
+		err := c.List(ctx, &managerDeployments, client.MatchingLabels(managerLabelSelector), client.InNamespace("olmv1-system"))
+		assert.NoError(ct, err)
+		assert.Len(ct, managerDeployments.Items, 1)
+		managerDeployment = managerDeployments.Items[0]
+		assert.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.UpdatedReplicas)
+		assert.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.Replicas)
+		assert.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.AvailableReplicas)
+		assert.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.ReadyReplicas)
+	}, time.Minute, time.Second)
+
+	var managerPod corev1.Pod
+	t.Log("Waiting for only one controller-manager pod to remain")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var managerPods corev1.PodList
+		err := c.List(ctx, &managerPods, client.MatchingLabels(managerLabelSelector))
+		assert.NoError(ct, err)
+		assert.Len(ct, managerPods.Items, 1)
+		managerPod = managerPods.Items[0]
+	}, time.Minute, time.Second)
+
+	t.Log("Waiting for acquired leader election")
+	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
+	defer leaderCancel()
+	leaderSubstrings := []string{"successfully acquired lease"}
+	leaderElected, err := watchPodLogsForSubstring(leaderCtx, &managerPod, leaderSubstrings...)
+	require.NoError(t, err)
+	require.True(t, leaderElected)
+
+	t.Log("Reading logs to make sure that ClusterCatalog was reconciled by catalogdv1")
+	logCtx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	substrings := []string{
+		"reconcile ending",
+		fmt.Sprintf(`ClusterCatalog=%q`, testClusterCatalogName),
+	}
+	found, err := watchPodLogsForSubstring(logCtx, &managerPod, substrings...)
+	require.NoError(t, err)
+	require.True(t, found)
+
+	catalog := &catalogd.ClusterCatalog{}
+	t.Log("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == True, reason == Succeeded")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
+		assert.NoError(ct, err)
+		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeProgressing)
+		assert.NotNil(ct, cond)
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, catalogd.ReasonSucceeded, cond.Reason)
+	}, time.Minute, time.Second)
+
+	t.Log("Ensuring ClusterCatalog has Status.Condition of Serving with a status == True, reason == Available")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
+		assert.NoError(ct, err)
+		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeServing)
+		assert.NotNil(ct, cond)
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
+	}, time.Minute, time.Second)
+}
 
 func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Starting checks after OLM upgrade")
@@ -47,7 +117,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	defer leaderCancel()
 
 	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, managerPod, "manager", leaderSubstrings...)
+	leaderElected, err := watchPodLogsForSubstring(leaderCtx, managerPod, leaderSubstrings...)
 	require.NoError(t, err)
 	require.True(t, leaderElected)
 
@@ -59,7 +129,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		"reconcile ending",
 		fmt.Sprintf(`ClusterExtension=%q`, testClusterExtensionName),
 	}
-	found, err := watchPodLogsForSubstring(logCtx, managerPod, "manager", substrings...)
+	found, err := watchPodLogsForSubstring(logCtx, managerPod, substrings...)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -153,7 +223,7 @@ func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel stri
 	return &managerPods.Items[0]
 }
 
-func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container string, substrings ...string) (bool, error) {
+func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, substrings ...string) (bool, error) {
 	podLogOpts := corev1.PodLogOptions{
 		Follow:    true,
 		Container: container,
