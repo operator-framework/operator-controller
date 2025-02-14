@@ -147,15 +147,14 @@ func init() {
 	operatorControllerCmd.AddCommand(versionCommand)
 
 	klog.InitFlags(flag.CommandLine)
-	if klog.V(4).Enabled() {
-		logrus.SetLevel(logrus.DebugLevel)
-	}
 
 	//add klog flags to flagset
 	flags.AddGoFlagSet(flag.CommandLine)
 
 	//add feature gate flags to flagset
 	features.OperatorControllerFeatureGate.AddFlag(flags)
+
+	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
 }
 func validateMetricsFlags() error {
 	if (cfg.certFile != "" && cfg.keyFile == "") || (cfg.certFile == "" && cfg.keyFile != "") {
@@ -178,7 +177,9 @@ func validateMetricsFlags() error {
 	return nil
 }
 func run() error {
-	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
+	if klog.V(4).Enabled() {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 
 	setupLog.Info("starting up the controller", "version info", version.String())
 
