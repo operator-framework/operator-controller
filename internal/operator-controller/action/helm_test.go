@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -68,6 +69,11 @@ func (m *mockActionClient) Uninstall(name string, opts ...actionclient.Uninstall
 func (m *mockActionClient) Reconcile(rel *release.Release) error {
 	args := m.Called(rel)
 	return args.Error(0)
+}
+
+func (m *mockActionClient) Config() *action.Configuration {
+	args := m.Called()
+	return args.Get(0).(*action.Configuration)
 }
 
 var _ actionclient.ActionClientGetter = &mockActionClientGetter{}

@@ -13,6 +13,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,6 +51,7 @@ type mockActionGetter struct {
 	reconcileErr       error
 	desiredRel         *release.Release
 	currentRel         *release.Release
+	config             *action.Configuration
 }
 
 func (mag *mockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
@@ -96,6 +98,10 @@ func (mag *mockActionGetter) Uninstall(name string, opts ...helmclient.Uninstall
 
 func (mag *mockActionGetter) Reconcile(rel *release.Release) error {
 	return mag.reconcileErr
+}
+
+func (mag *mockActionGetter) Config() *action.Configuration {
+	return mag.config
 }
 
 var (
@@ -174,6 +180,80 @@ func TestApply_Base(t *testing.T) {
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "getting current release")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+}
+
+func TestApply_InterruptedRelease(t *testing.T) {
+	t.Run("fails removing an interrupted install release", func(t *testing.T) {
+		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingInstall}}
+		testStorage := storage.Init(driver.NewMemory())
+
+		mockAcg := &mockActionGetter{currentRel: testRel, config: &action.Configuration{Releases: testStorage}}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "removing interrupted release")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+
+	t.Run("fails removing an interrupted upgrade release", func(t *testing.T) {
+		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingUpgrade}}
+		testStorage := storage.Init(driver.NewMemory())
+
+		mockAcg := &mockActionGetter{currentRel: testRel, config: &action.Configuration{Releases: testStorage}}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "removing interrupted release")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+
+	t.Run("successfully removes an interrupted install release", func(t *testing.T) {
+		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingInstall}}
+		testStorage := storage.Init(driver.NewMemory())
+		err := testStorage.Create(testRel)
+		require.NoError(t, err)
+
+		mockAcg := &mockActionGetter{currentRel: testRel, config: &action.Configuration{Releases: testStorage}}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "removed interrupted release")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+
+	t.Run("successfully removes an interrupted upgrade release", func(t *testing.T) {
+		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingUpgrade}}
+		testStorage := storage.Init(driver.NewMemory())
+		err := testStorage.Create(testRel)
+		require.NoError(t, err)
+
+		mockAcg := &mockActionGetter{currentRel: testRel, config: &action.Configuration{Releases: testStorage}}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "removed interrupted release")
 		require.Nil(t, objs)
 		require.Empty(t, state)
 	})
@@ -340,6 +420,7 @@ func TestApply_Upgrade(t *testing.T) {
 
 	t.Run("fails during dry-run upgrade", func(t *testing.T) {
 		mockAcg := &mockActionGetter{
+			currentRel:       testCurrentRelease,
 			dryRunUpgradeErr: errors.New("failed attempting to dry-run upgrade chart"),
 		}
 		helmApplier := applier.Helm{
