@@ -15,7 +15,6 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,7 +24,6 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
@@ -53,9 +51,12 @@ type Preflight interface {
 	Upgrade(context.Context, *release.Release) error
 }
 
+type BundleToHelmChartFn func(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error)
+
 type Helm struct {
-	ActionClientGetter helmclient.ActionClientGetter
-	Preflights         []Preflight
+	ActionClientGetter  helmclient.ActionClientGetter
+	Preflights          []Preflight
+	BundleToHelmChartFn BundleToHelmChartFn
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -79,7 +80,7 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.Clu
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
-	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS, ext.Spec.Namespace, []string{corev1.NamespaceAll})
+	chrt, err := h.buildHelmChart(contentFS, ext)
 	if err != nil {
 		return nil, "", err
 	}
@@ -150,6 +151,17 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	}
 
 	return relObjects, state, nil
+}
+
+func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
+	if h.BundleToHelmChartFn == nil {
+		return nil, errors.New("BundleToHelmChartFn is nil")
+	}
+	watchNamespace, err := GetWatchNamespace(ext)
+	if err != nil {
+		return nil, err
+	}
+	return h.BundleToHelmChartFn(bundleFS, ext.Spec.Namespace, watchNamespace)
 }
 
 func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {

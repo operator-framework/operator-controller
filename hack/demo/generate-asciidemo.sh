@@ -3,6 +3,7 @@
 trap cleanup SIGINT SIGTERM EXIT
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" > /dev/null 2>&1 ; pwd -P )"
+export DEMO_RESOURCE_DIR="${SCRIPTPATH}/resources"
 
 check_prereq() {
     prog=$1
@@ -79,7 +80,6 @@ fi
 for prereq in "asciinema curl"; do
     check_prereq ${prereq}
 done
-
 
 curl https://raw.githubusercontent.com/zechris/asciinema-rec_script/main/bin/asciinema-rec_script -o ${WKDIR}/asciinema-rec_script
 chmod +x ${WKDIR}/asciinema-rec_script
