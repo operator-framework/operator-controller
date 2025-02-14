@@ -2,7 +2,7 @@ load('.tilt-support', 'deploy_repo')
 
 operator_controller = {
     'image': 'quay.io/operator-framework/operator-controller',
-    'yaml': 'config/overlays/cert-manager',
+    'yaml': 'config/overlays/tilt-local-dev',
     'binaries': {
         './cmd/operator-controller': 'operator-controller-controller-manager',
     },
