@@ -10,7 +10,7 @@ func testLogger() {
 	var value int
 
 	// Case 1: Nil error - Ensures the first argument cannot be nil.
-	logger.Error(nil, "message") // want ".*results in silent failures, making debugging harder.*"
+	logger.Error(nil, "message") // want ".*may hide error details, making debugging harder*"
 
 	// Case 2: Odd number of key-value arguments - Ensures key-value pairs are complete.
 	logger.Error(err, "message", "key1") // want ".*Key-value pairs must be provided after the message, but an odd number of arguments was found.*"

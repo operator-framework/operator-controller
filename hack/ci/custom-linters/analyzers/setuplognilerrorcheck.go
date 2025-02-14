@@ -12,8 +12,9 @@ import (
 
 var SetupLogErrorCheck = &analysis.Analyzer{
 	Name: "setuplogerrorcheck",
-	Doc:  "Detects improper usage of logger.Error() calls, ensuring the first argument is a non-nil error.",
-	Run:  runSetupLogErrorCheck,
+	Doc: "Detects and reports improper usages of logger.Error() calls to enforce good practices " +
+		"and prevent silent failures.",
+	Run: runSetupLogErrorCheck,
 }
 
 func runSetupLogErrorCheck(pass *analysis.Pass) (interface{}, error) {
@@ -72,7 +73,7 @@ func runSetupLogErrorCheck(pass *analysis.Pass) (interface{}, error) {
 
 				pass.Reportf(callExpr.Pos(),
 					"Incorrect usage of 'logger.Error(nil, ...)'. The first argument must be a non-nil 'error'. "+
-						"Passing 'nil' results in silent failures, making debugging harder.\n\n"+
+						"Passing 'nil' may hide error details, making debugging harder.\n\n"+
 						"\U0001F41B **What is wrong?**\n   %s\n\n"+
 						"\U0001F4A1 **How to solve? Return the error, i.e.:**\n   logger.Error(%s, %s, \"key\", value)\n\n",
 					sourceLine, suggestedError, suggestedMessage)
