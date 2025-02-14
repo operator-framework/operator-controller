@@ -102,15 +102,15 @@ help-extended: #HELP Display extended help.
 
 .PHONY: lint
 lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
-	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
+	$(GOLANGCI_LINT) run $(GOLANGCI_LINT_ARGS)
 
 .PHONY: custom-linter-build
 custom-linter-build: #EXHELP Build custom linter
-	go build -tags $(GO_BUILD_TAGS) -o ./bin/custom-linter ./hack/ci/custom-linters/cmd
+	go build -o ./bin/custom-linter ./hack/ci/custom-linters/cmd
 
 .PHONY: lint-custom
 lint-custom: custom-linter-build #EXHELP Call custom linter for the project
-	go vet -tags=$(GO_BUILD_TAGS) -vettool=./bin/custom-linter ./...
+	go vet -vettool=./bin/custom-linter ./...
 
 .PHONY: tidy
 tidy: #HELP Update dependencies.
@@ -148,7 +148,7 @@ verify: tidy fmt generate manifests crd-ref-docs #HELP Verify all generated code
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
-	$(GOLANGCI_LINT) run --fix --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
+	$(GOLANGCI_LINT) run --fix $(GOLANGCI_LINT_ARGS)
 
 .PHONY: fmt
 fmt: #EXHELP Formats code
@@ -208,7 +208,6 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
 	rm -rf $(COVERAGE_UNIT_DIR) && mkdir -p $(COVERAGE_UNIT_DIR)
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use -p path $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE))" \
             CGO_ENABLED=1 go test \
-                -tags '$(GO_BUILD_TAGS)' \
                 -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
                 $(UNIT_TEST_DIRS) \
@@ -219,8 +218,8 @@ E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
 image-registry: export GOOS=linux
 image-registry: export GOARCH=amd64
 image-registry: ## Build the testdata catalog used for e2e tests and push it to the image registry
-	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/registry/bin/registry ./testdata/registry/registry.go
-	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
+	go build $(GO_BUILD_FLAGS) -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/registry/bin/registry ./testdata/registry/registry.go
+	go build $(GO_BUILD_FLAGS) -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
 	$(CONTAINER_RUNTIME) build -f ./testdata/Dockerfile -t $(E2E_REGISTRY_IMAGE) ./testdata
 	$(CONTAINER_RUNTIME) save $(E2E_REGISTRY_IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 	./testdata/build-test-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME) $(E2E_REGISTRY_IMAGE)
@@ -309,11 +308,12 @@ export GO_BUILD_FLAGS :=
 export GO_BUILD_LDFLAGS := -s -w \
     -X '$(VERSION_PATH).version=$(VERSION)' \
 
+export GOFLAGS := "-tags=$(GO_BUILD_TAGS)"
 BINARIES=operator-controller catalogd
 
 .PHONY: $(BINARIES)
 $(BINARIES):
-	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$@ ./cmd/$@
+	go build $(GO_BUILD_FLAGS) -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$@ ./cmd/$@
 
 .PHONY: build-deps
 build-deps: manifests generate fmt
