@@ -30,7 +30,7 @@ import (
 
 	"github.com/containers/image/v5/types"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
@@ -71,6 +71,7 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+	cfg      = &config{}
 )
 
 const (
@@ -78,107 +79,133 @@ const (
 	authFilePrefix = "catalogd-global-pull-secret"
 )
 
-func init() {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+type config struct {
+	metricsAddr          string
+	enableLeaderElection bool
+	probeAddr            string
+	pprofAddr            string
+	systemNamespace      string
+	catalogServerAddr    string
+	externalAddr         string
+	cacheDir             string
+	gcInterval           time.Duration
+	certFile             string
+	keyFile              string
+	webhookPort          int
+	pullCasDir           string
+	globalPullSecret     string
+	// Generated config
+	globalPullSecretKey *k8stypes.NamespacedName
+}
 
+var catalogdCmd = &cobra.Command{
+	Use:   "catalogd",
+	Short: "Catalogd is a Kubernetes operator for managing operator catalogs",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := validateConfig(cfg); err != nil {
+			return err
+		}
+		cmd.SilenceUsage = true
+		return run(ctrl.SetupSignalHandler())
+	},
+}
+
+var versionCommand = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version information",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("%#v\n", version.String())
+	},
+}
+
+func init() {
+	// create flagset, the collection of flags for this command
+	flags := catalogdCmd.Flags()
+	flags.StringVar(&cfg.metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':7443')")
+	flags.StringVar(&cfg.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flags.StringVar(&cfg.pprofAddr, "pprof-bind-address", "0", "The address the pprof endpoint binds to. an empty string or 0 disables pprof")
+	flags.BoolVar(&cfg.enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager")
+	flags.StringVar(&cfg.systemNamespace, "system-namespace", "", "The namespace catalogd uses for internal state")
+	flags.StringVar(&cfg.catalogServerAddr, "catalogs-server-addr", ":8443", "The address where catalogs' content will be accessible")
+	flags.StringVar(&cfg.externalAddr, "external-address", "catalogd-service.olmv1-system.svc", "External address for http(s) server")
+	flags.StringVar(&cfg.cacheDir, "cache-dir", "/var/cache/", "Directory for file based caching")
+	flags.DurationVar(&cfg.gcInterval, "gc-interval", 12*time.Hour, "Garbage collection interval")
+	flags.StringVar(&cfg.certFile, "tls-cert", "", "Certificate file for TLS")
+	flags.StringVar(&cfg.keyFile, "tls-key", "", "Key file for TLS")
+	flags.IntVar(&cfg.webhookPort, "webhook-server-port", 9443, "Webhook server port")
+	flag.StringVar(&cfg.pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authoritiess to use for verifying HTTPS copullCasDirnnections to image registries.")
+	flags.StringVar(&cfg.globalPullSecret, "global-pull-secret", "", "Global pull secret (<namespace>/<name>)")
+
+	// adds version subcommand
+	catalogdCmd.AddCommand(versionCommand)
+
+	// Add other flags
+	klog.InitFlags(flag.CommandLine)
+	flags.AddGoFlagSet(flag.CommandLine)
+	features.CatalogdFeatureGate.AddFlag(flags)
+
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(catalogdv1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
 }
 
 func main() {
-	var (
-		metricsAddr          string
-		enableLeaderElection bool
-		probeAddr            string
-		pprofAddr            string
-		catalogdVersion      bool
-		systemNamespace      string
-		catalogServerAddr    string
-		externalAddr         string
-		cacheDir             string
-		gcInterval           time.Duration
-		certFile             string
-		keyFile              string
-		webhookPort          int
-		pullCasDir           string
-		globalPullSecret     string
-	)
-	flag.StringVar(&metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':7443')")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.StringVar(&pprofAddr, "pprof-bind-address", "0", "The address the pprof endpoint binds to. an empty string or 0 disables pprof")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&systemNamespace, "system-namespace", "", "The namespace catalogd uses for internal state, configuration, and workloads")
-	flag.StringVar(&catalogServerAddr, "catalogs-server-addr", ":8443", "The address where the unpacked catalogs' content will be accessible")
-	flag.StringVar(&externalAddr, "external-address", "catalogd-service.olmv1-system.svc", "The external address at which the http(s) server is reachable.")
-	flag.StringVar(&cacheDir, "cache-dir", "/var/cache/", "The directory in the filesystem that catalogd will use for file based caching")
-	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
-	flag.DurationVar(&gcInterval, "gc-interval", 12*time.Hour, "interval in which garbage collection should be run against the catalog content cache")
-	flag.StringVar(&certFile, "tls-cert", "", "The certificate file used for serving catalog and metrics. Required to enable the metrics server. Requires tls-key.")
-	flag.StringVar(&keyFile, "tls-key", "", "The key file used for serving catalog contents and metrics. Required to enable the metrics server. Requires tls-cert.")
-	flag.IntVar(&webhookPort, "webhook-server-port", 9443, "The port that the mutating webhook server serves at.")
-	flag.StringVar(&pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authoritiess to use for verifying HTTPS connections to image registries.")
-	flag.StringVar(&globalPullSecret, "global-pull-secret", "", "The <namespace>/<name> of the global pull secret that is going to be used to pull bundle images.")
+	if err := catalogdCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
 
-	klog.InitFlags(flag.CommandLine)
+func validateConfig(cfg *config) error {
+	if (cfg.certFile != "" && cfg.keyFile == "") || (cfg.certFile == "" && cfg.keyFile != "") {
+		err := fmt.Errorf("tls-cert and tls-key flags must be used together")
+		setupLog.Error(err, "missing TLS configuration",
+			"certFile", cfg.certFile, "keyFile", cfg.keyFile)
+		return err
+	}
+
+	if cfg.metricsAddr != "" && cfg.certFile == "" && cfg.keyFile == "" {
+		err := fmt.Errorf("metrics-bind-address requires tls-cert and tls-key flags")
+		setupLog.Error(err, "invalid metrics configuration",
+			"metricsAddr", cfg.metricsAddr, "certFile", cfg.certFile, "keyFile", cfg.keyFile)
+		return err
+	}
+
+	if cfg.certFile != "" && cfg.keyFile != "" && cfg.metricsAddr == "" {
+		cfg.metricsAddr = ":7443"
+	}
+
+	if cfg.globalPullSecret != "" {
+		secretParts := strings.Split(cfg.globalPullSecret, "/")
+		if len(secretParts) != 2 {
+			err := errors.New("value of global-pull-secret should be of the format <namespace>/<name>")
+			setupLog.Error(err, "incorrect number of components",
+				"globalPullSecret", cfg.globalPullSecret)
+			return err
+		}
+		cfg.globalPullSecretKey = &k8stypes.NamespacedName{Name: secretParts[1], Namespace: secretParts[0]}
+	}
+
+	return nil
+}
+
+func run(ctx context.Context) error {
+	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
 	if klog.V(4).Enabled() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	// Combine both flagsets and parse them
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	features.CatalogdFeatureGate.AddFlag(pflag.CommandLine)
-	pflag.Parse()
-
-	if catalogdVersion {
-		fmt.Printf("%#v\n", version.String())
-		os.Exit(0)
-	}
-
-	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
-
 	authFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s-%s.json", authFilePrefix, apimachineryrand.String(8)))
-	var globalPullSecretKey *k8stypes.NamespacedName
-	if globalPullSecret != "" {
-		secretParts := strings.Split(globalPullSecret, "/")
-		if len(secretParts) != 2 {
-			setupLog.Error(fmt.Errorf("incorrect number of components"), "value of global-pull-secret should be of the format <namespace>/<name>")
-			os.Exit(1)
-		}
-		globalPullSecretKey = &k8stypes.NamespacedName{Name: secretParts[1], Namespace: secretParts[0]}
-	}
-
-	if (certFile != "" && keyFile == "") || (certFile == "" && keyFile != "") {
-		setupLog.Error(errors.New("missing TLS configuration"),
-			"tls-cert and tls-key flags must be used together",
-			"certFile", certFile, "keyFile", keyFile)
-		os.Exit(1)
-	}
-
-	if metricsAddr != "" && certFile == "" && keyFile == "" {
-		setupLog.Error(errors.New("invalid metrics configuration"),
-			"metrics-bind-address requires tls-cert and tls-key flags to be set",
-			"metricsAddr", metricsAddr, "certFile", certFile, "keyFile", keyFile)
-		os.Exit(1)
-	}
-
-	if certFile != "" && keyFile != "" && metricsAddr == "" {
-		metricsAddr = ":7443"
-	}
 
 	protocol := "http://"
-	if certFile != "" && keyFile != "" {
+	if cfg.certFile != "" && cfg.keyFile != "" {
 		protocol = "https://"
 	}
-	externalAddr = protocol + externalAddr
+	cfg.externalAddr = protocol + cfg.externalAddr
 
-	cfg := ctrl.GetConfigOrDie()
-
-	cw, err := certwatcher.New(certFile, keyFile)
+	cw, err := certwatcher.New(cfg.certFile, cfg.keyFile)
 	if err != nil {
 		setupLog.Error(err, "failed to initialize certificate watcher")
-		os.Exit(1)
+		return err
 	}
 
 	tlsOpts := func(config *tls.Config) {
@@ -194,17 +221,17 @@ func main() {
 
 	// Create webhook server and configure TLS
 	webhookServer := crwebhook.NewServer(crwebhook.Options{
-		Port: webhookPort,
+		Port: cfg.webhookPort,
 		TLSOpts: []func(*tls.Config){
 			tlsOpts,
 		},
 	})
 
 	metricsServerOptions := metricsserver.Options{}
-	if len(certFile) > 0 && len(keyFile) > 0 {
-		setupLog.Info("Starting metrics server with TLS enabled", "addr", metricsAddr, "tls-cert", certFile, "tls-key", keyFile)
+	if len(cfg.certFile) > 0 && len(cfg.keyFile) > 0 {
+		setupLog.Info("Starting metrics server with TLS enabled", "addr", cfg.metricsAddr, "tls-cert", cfg.certFile, "tls-key", cfg.keyFile)
 
-		metricsServerOptions.BindAddress = metricsAddr
+		metricsServerOptions.BindAddress = cfg.metricsAddr
 		metricsServerOptions.SecureServing = true
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 
@@ -222,13 +249,13 @@ func main() {
 	cacheOptions := crcache.Options{
 		ByObject: map[client.Object]crcache.ByObject{},
 	}
-	if globalPullSecretKey != nil {
+	if cfg.globalPullSecretKey != nil {
 		cacheOptions.ByObject[&corev1.Secret{}] = crcache.ByObject{
 			Namespaces: map[string]crcache.Config{
-				globalPullSecretKey.Namespace: {
+				cfg.globalPullSecretKey.Namespace: {
 					LabelSelector: k8slabels.Everything(),
 					FieldSelector: fields.SelectorFromSet(map[string]string{
-						"metadata.name": globalPullSecretKey.Name,
+						"metadata.name": cfg.globalPullSecretKey.Name,
 					}),
 				},
 			},
@@ -236,12 +263,12 @@ func main() {
 	}
 
 	// Create manager
-	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                        scheme,
 		Metrics:                       metricsServerOptions,
-		PprofBindAddress:              pprofAddr,
-		HealthProbeBindAddress:        probeAddr,
-		LeaderElection:                enableLeaderElection,
+		PprofBindAddress:              cfg.pprofAddr,
+		HealthProbeBindAddress:        cfg.probeAddr,
+		LeaderElection:                cfg.enableLeaderElection,
 		LeaderElectionID:              "catalogd-operator-lock",
 		LeaderElectionReleaseOnCancel: true,
 		// Recommended Leader Election values
@@ -255,29 +282,29 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to create manager")
-		os.Exit(1)
+		return err
 	}
 
 	// Add the certificate watcher to the manager
 	err = mgr.Add(cw)
 	if err != nil {
 		setupLog.Error(err, "unable to add certificate watcher to manager")
-		os.Exit(1)
+		return err
 	}
 
-	if systemNamespace == "" {
-		systemNamespace = podNamespace()
+	if cfg.systemNamespace == "" {
+		cfg.systemNamespace = podNamespace()
 	}
 
-	if err := fsutil.EnsureEmptyDirectory(cacheDir, 0700); err != nil {
+	if err := fsutil.EnsureEmptyDirectory(cfg.cacheDir, 0700); err != nil {
 		setupLog.Error(err, "unable to ensure empty cache directory")
-		os.Exit(1)
+		return err
 	}
 
-	unpackCacheBasePath := filepath.Join(cacheDir, "unpack")
+	unpackCacheBasePath := filepath.Join(cfg.cacheDir, "unpack")
 	if err := os.MkdirAll(unpackCacheBasePath, 0770); err != nil {
 		setupLog.Error(err, "unable to create cache directory for unpacking")
-		os.Exit(1)
+		return err
 	}
 
 	imageCache := imageutil.CatalogCache(unpackCacheBasePath)
@@ -285,10 +312,10 @@ func main() {
 		SourceCtxFunc: func(ctx context.Context) (*types.SystemContext, error) {
 			logger := log.FromContext(ctx)
 			srcContext := &types.SystemContext{
-				DockerCertPath: pullCasDir,
-				OCICertPath:    pullCasDir,
+				DockerCertPath: cfg.pullCasDir,
+				OCICertPath:    cfg.pullCasDir,
 			}
-			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
+			if _, err := os.Stat(authFilePath); err == nil && cfg.globalPullSecretKey != nil {
 				logger.Info("using available authentication information for pulling image")
 				srcContext.AuthFilePath = authFilePath
 			} else if os.IsNotExist(err) {
@@ -303,16 +330,16 @@ func main() {
 	var localStorage storage.Instance
 	metrics.Registry.MustRegister(catalogdmetrics.RequestDurationMetric)
 
-	storeDir := filepath.Join(cacheDir, storageDir)
+	storeDir := filepath.Join(cfg.cacheDir, storageDir)
 	if err := os.MkdirAll(storeDir, 0700); err != nil {
 		setupLog.Error(err, "unable to create storage directory for catalogs")
-		os.Exit(1)
+		return err
 	}
 
-	baseStorageURL, err := url.Parse(fmt.Sprintf("%s/catalogs/", externalAddr))
+	baseStorageURL, err := url.Parse(fmt.Sprintf("%s/catalogs/", cfg.externalAddr))
 	if err != nil {
 		setupLog.Error(err, "unable to create base storage URL")
-		os.Exit(1)
+		return err
 	}
 
 	localStorage = &storage.LocalDirV1{
@@ -323,17 +350,17 @@ func main() {
 
 	// Config for the catalogd web server
 	catalogServerConfig := serverutil.CatalogServerConfig{
-		ExternalAddr: externalAddr,
-		CatalogAddr:  catalogServerAddr,
-		CertFile:     certFile,
-		KeyFile:      keyFile,
+		ExternalAddr: cfg.externalAddr,
+		CatalogAddr:  cfg.catalogServerAddr,
+		CertFile:     cfg.certFile,
+		KeyFile:      cfg.keyFile,
 		LocalStorage: localStorage,
 	}
 
 	err = serverutil.AddCatalogServerToManager(mgr, catalogServerConfig, cw)
 	if err != nil {
 		setupLog.Error(err, "unable to configure catalog server")
-		os.Exit(1)
+		return err
 	}
 
 	if err = (&corecontrollers.ClusterCatalogReconciler{
@@ -343,65 +370,65 @@ func main() {
 		Storage:     localStorage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
-		os.Exit(1)
+		return err
 	}
 
-	if globalPullSecretKey != nil {
-		setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", globalPullSecret)
+	if cfg.globalPullSecretKey != nil {
+		setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", cfg.globalPullSecret)
 		err := (&corecontrollers.PullSecretReconciler{
 			Client:       mgr.GetClient(),
 			AuthFilePath: authFilePath,
-			SecretKey:    *globalPullSecretKey,
+			SecretKey:    *cfg.globalPullSecretKey,
 		}).SetupWithManager(mgr)
 		if err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
-			os.Exit(1)
+			return err
 		}
 	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+		return err
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+		return err
 	}
 
-	metaClient, err := metadata.NewForConfig(cfg)
+	metaClient, err := metadata.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		setupLog.Error(err, "unable to setup client for garbage collection")
-		os.Exit(1)
+		return err
 	}
 
-	ctx := ctrl.SetupSignalHandler()
 	gc := &garbagecollection.GarbageCollector{
 		CachePath:      unpackCacheBasePath,
 		Logger:         ctrl.Log.WithName("garbage-collector"),
 		MetadataClient: metaClient,
-		Interval:       gcInterval,
+		Interval:       cfg.gcInterval,
 	}
 	if err := mgr.Add(gc); err != nil {
 		setupLog.Error(err, "unable to add garbage collector to manager")
-		os.Exit(1)
+		return err
 	}
 
 	// mutating webhook that labels ClusterCatalogs with name label
 	if err = (&webhook.ClusterCatalog{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterCatalog")
-		os.Exit(1)
+		return err
 	}
 
 	setupLog.Info("starting mutating webhook manager")
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+		return err
 	}
 	if err := os.Remove(authFilePath); err != nil {
 		setupLog.Error(err, "failed to cleanup temporary auth file")
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
 func podNamespace() string {
