@@ -407,9 +407,10 @@ func run() error {
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
 	}
 
-	helmApplier := &applier.Helm{
-		ActionClientGetter: acg,
-		Preflights:         preflights,
+	helmApplier, err := applier.NewHelm(acg, preflights, cfg.systemNamespace)
+	if err != nil {
+		setupLog.Error(err, "unable to create helm applier")
+		return err
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())

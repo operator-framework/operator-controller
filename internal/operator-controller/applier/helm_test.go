@@ -12,6 +12,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,6 +47,7 @@ type mockActionGetter struct {
 	reconcileErr       error
 	desiredRel         *release.Release
 	currentRel         *release.Release
+	config             *action.Configuration
 }
 
 func (mag *mockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
@@ -92,6 +94,12 @@ func (mag *mockActionGetter) Uninstall(name string, opts ...helmclient.Uninstall
 
 func (mag *mockActionGetter) Reconcile(rel *release.Release) error {
 	return mag.reconcileErr
+}
+
+func (mag *mockActionGetter) Config() *action.Configuration {
+	// TODO
+	// storage.Init(driver.NewMemory()).
+	return mag.config
 }
 
 var (
@@ -144,7 +152,8 @@ func TestApply_Base(t *testing.T) {
 
 	t.Run("fails trying to obtain an action client", func(t *testing.T) {
 		mockAcg := &mockActionGetter{actionClientForErr: errors.New("failed getting action client")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -155,11 +164,78 @@ func TestApply_Base(t *testing.T) {
 
 	t.Run("fails getting current release and !driver.ErrReleaseNotFound", func(t *testing.T) {
 		mockAcg := &mockActionGetter{getClientErr: errors.New("failed getting current release")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "getting current release")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+}
+
+func TestApply_InterruptedRelease(t *testing.T) {
+	t.Run("fails removing an interrupted install release", func(t *testing.T) {
+		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingInstall}}
+		testStorage := storage.Init(driver.NewMemory())
+
+		mockAcg := &mockActionGetter{currentRel: testRel, config: &action.Configuration{Releases: testStorage}}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "removing interrupted release")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+
+	t.Run("fails removing an interrupted upgrade release", func(t *testing.T) {
+		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingUpgrade}}
+		testStorage := storage.Init(driver.NewMemory())
+
+		mockAcg := &mockActionGetter{currentRel: testRel, config: &action.Configuration{Releases: testStorage}}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "removing interrupted release")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+
+	t.Run("successfully removes an interrupted install release", func(t *testing.T) {
+		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingInstall}}
+		testStorage := storage.Init(driver.NewMemory())
+		err := testStorage.Create(testRel)
+		require.NoError(t, err)
+
+		mockAcg := &mockActionGetter{currentRel: testRel, config: &action.Configuration{Releases: testStorage}}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "removed interrupted release")
+		require.Nil(t, objs)
+		require.Empty(t, state)
+	})
+
+	t.Run("successfully removes an interrupted upgrade release", func(t *testing.T) {
+		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingUpgrade}}
+		testStorage := storage.Init(driver.NewMemory())
+		err := testStorage.Create(testRel)
+		require.NoError(t, err)
+
+		mockAcg := &mockActionGetter{currentRel: testRel, config: &action.Configuration{Releases: testStorage}}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "removed interrupted release")
 		require.Nil(t, objs)
 		require.Empty(t, state)
 	})
@@ -171,7 +247,8 @@ func TestApply_Installation(t *testing.T) {
 			getClientErr:     driver.ErrReleaseNotFound,
 			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -186,7 +263,8 @@ func TestApply_Installation(t *testing.T) {
 			installErr:   errors.New("failed installing chart"),
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier, err := applier.NewHelm(mockAcg, []applier.Preflight{mockPf}, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -200,7 +278,8 @@ func TestApply_Installation(t *testing.T) {
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -217,7 +296,8 @@ func TestApply_Installation(t *testing.T) {
 				Manifest: validManifest,
 			},
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
@@ -236,7 +316,8 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			getClientErr:     driver.ErrReleaseNotFound,
 			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -251,7 +332,8 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			installErr:   errors.New("failed installing chart"),
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier, err := applier.NewHelm(mockAcg, []applier.Preflight{mockPf}, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -265,7 +347,8 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -282,7 +365,8 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 				Manifest: validManifest,
 			},
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
@@ -300,9 +384,11 @@ func TestApply_Upgrade(t *testing.T) {
 
 	t.Run("fails during dry-run upgrade", func(t *testing.T) {
 		mockAcg := &mockActionGetter{
+			currentRel:       testCurrentRelease,
 			dryRunUpgradeErr: errors.New("failed attempting to dry-run upgrade chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -321,7 +407,8 @@ func TestApply_Upgrade(t *testing.T) {
 			desiredRel: &testDesiredRelease,
 		}
 		mockPf := &mockPreflight{upgradeErr: errors.New("failed during upgrade pre-flight check")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier, err := applier.NewHelm(mockAcg, []applier.Preflight{mockPf}, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -340,7 +427,8 @@ func TestApply_Upgrade(t *testing.T) {
 			desiredRel: &testDesiredRelease,
 		}
 		mockPf := &mockPreflight{}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier, err := applier.NewHelm(mockAcg, []applier.Preflight{mockPf}, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -359,7 +447,8 @@ func TestApply_Upgrade(t *testing.T) {
 			desiredRel:   &testDesiredRelease,
 		}
 		mockPf := &mockPreflight{}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+		helmApplier, err := applier.NewHelm(mockAcg, []applier.Preflight{mockPf}, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -376,7 +465,8 @@ func TestApply_Upgrade(t *testing.T) {
 			currentRel: testCurrentRelease,
 			desiredRel: &testDesiredRelease,
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier, err := applier.NewHelm(mockAcg, nil, "")
+		require.NoError(t, err)
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
