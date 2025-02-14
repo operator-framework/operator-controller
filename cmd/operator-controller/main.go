@@ -407,9 +407,12 @@ func run() error {
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
 	}
 
+	acm := applier.NewAuthClientMapper(clientRestConfigMapper, mgr.GetConfig())
+
 	helmApplier := &applier.Helm{
 		ActionClientGetter: acg,
 		Preflights:         preflights,
+		AuthClientMapper:   acm,
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
