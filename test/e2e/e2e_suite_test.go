@@ -65,6 +65,10 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 	return catalog, err
 }
 
+func deleteTestCatalog(ctx context.Context, catalog *catalogd.ClusterCatalog) error {
+	return c.Delete(ctx, catalog)
+}
+
 // patchTestCatalog will patch the existing clusterCatalog on the test cluster, provided
 // the context, catalog name, and the image reference. It returns an error
 // if any errors occurred while updating the catalog.
