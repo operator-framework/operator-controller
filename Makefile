@@ -72,8 +72,6 @@ CATALOGD_KUSTOMIZE_BUILD_DIR := catalogd/config/overlays/cert-manager
 
 .DEFAULT_GOAL := build
 
-GINKGO := go run github.com/onsi/ginkgo/v2/ginkgo
-
 #SECTION General
 
 # The help target prints out all targets with their descriptions organized
@@ -225,26 +223,6 @@ test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
 test-e2e: CATALOGD_KUSTOMIZE_BUILD_DIR := catalogd/config/overlays/e2e
 test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
-
-
-## image-registry target has to come after run-latest-release,
-## because the image-registry depends on the olm-ca issuer.
-.PHONY: test-catalogd-upgrade-e2e
-test-catalogd-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
-test-catalogd-upgrade-e2e: export TEST_CLUSTER_CATALOG_IMAGE := docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e
-test-catalogd-upgrade-e2e: ISSUER_KIND=ClusterIssuer
-test-catalogd-upgrade-e2e: ISSUER_NAME=olmv1-ca
-test-catalogd-upgrade-e2e: kind-cluster docker-build kind-load run-latest-release catalogd-image-registry catalogd-pre-upgrade-setup kind-deploy catalogd-post-upgrade-checks kind-clean ## Run upgrade e2e tests on a local kind cluster
-
-.PHONY: catalogd-post-upgrade-checks
-catalogd-post-upgrade-checks:
-	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/catalogd-upgrade-e2e
-
-catalogd-pre-upgrade-setup:
-	./test/tools/imageregistry/pre-upgrade-setup.sh ${TEST_CLUSTER_CATALOG_IMAGE} ${TEST_CLUSTER_CATALOG_NAME}
-
-catalogd-image-registry: ## Setup in-cluster image registry
-	./test/tools/imageregistry/registry.sh $(ISSUER_KIND) $(ISSUER_NAME)
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
