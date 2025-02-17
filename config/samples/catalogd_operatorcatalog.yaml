@@ -3,8 +3,9 @@ kind: ClusterCatalog
 metadata:
   name: operatorhubio
 spec:
+  priority: 0
   source:
     type: Image
     image:
-      ref: quay.io/operatorhubio/catalog:latest
       pollIntervalMinutes: 10
+      ref: quay.io/operatorhubio/catalog:latest

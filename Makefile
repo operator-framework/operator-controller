@@ -65,7 +65,6 @@ $(warning Could not find docker or podman in path! This may result in targets re
 endif
 
 KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
-CATALOGD_KUSTOMIZE_BUILD_DIR := catalogd/config/overlays/cert-manager
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -114,17 +113,19 @@ tidy: #HELP Update dependencies.
 	$(Q)go mod tidy -go=$(GOLANG_VERSION)
 
 .PHONY: manifests
-KUSTOMIZE_CRDS_DIR := config/base/crd/bases
-KUSTOMIZE_RBAC_DIR := config/base/rbac
-KUSTOMIZE_WEBHOOKS_DIR := config/base/manager/webhook
+KUSTOMIZE_CATD_CRDS_DIR := config/base/catalogd/crd/bases
+KUSTOMIZE_CATD_RBAC_DIR := config/base/catalogd/rbac
+KUSTOMIZE_CATD_WEBHOOKS_DIR := config/base/catalogd/manager/webhook
+KUSTOMIZE_OPCON_CRDS_DIR := config/base/operator-controller/crd/bases
+KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	# Generate the operator-controller manifests
-	rm -rf $(KUSTOMIZE_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=$(KUSTOMIZE_CRDS_DIR)
-	rm -f $(KUSTOMIZE_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/operator-controller/... output:rbac:artifacts:config=$(KUSTOMIZE_RBAC_DIR)
+	rm -rf $(KUSTOMIZE_OPCON_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=$(KUSTOMIZE_OPCON_CRDS_DIR)
+	rm -f $(KUSTOMIZE_OPCON_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/operator-controller/... output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the catalogd manifests
-	rm -rf catalogd/$(KUSTOMIZE_CRDS_DIR) && $(CONTROLLER_GEN) crd paths="./catalogd/api/..." output:crd:artifacts:config=catalogd/$(KUSTOMIZE_CRDS_DIR)
-	rm -f catalogd/$(KUSTOMIZE_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=catalogd/$(KUSTOMIZE_RBAC_DIR)
-	rm -f catalogd/$(KUSTOMIZE_WEBHOOKS_DIR)/manifests.yaml && $(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=catalogd/$(KUSTOMIZE_WEBHOOKS_DIR)
+	rm -rf $(KUSTOMIZE_CATD_CRDS_DIR) && $(CONTROLLER_GEN) crd paths="./catalogd/api/..." output:crd:artifacts:config=$(KUSTOMIZE_CATD_CRDS_DIR)
+	rm -f $(KUSTOMIZE_CATD_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
+	rm -f $(KUSTOMIZE_CATD_WEBHOOKS_DIR)/manifests.yaml && $(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -221,7 +222,6 @@ image-registry: ## Build the testdata catalog used for e2e tests and push it to 
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
-test-e2e: CATALOGD_KUSTOMIZE_BUILD_DIR := catalogd/config/overlays/e2e
 test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
@@ -259,9 +259,9 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 
 .PHONY: kind-deploy
 kind-deploy: export MANIFEST := ./operator-controller.yaml
-kind-deploy: export DEFAULT_CATALOG := ./catalogd/config/base/default/clustercatalogs/default-catalogs.yaml
+kind-deploy: export DEFAULT_CATALOG := ./config/catalogs/clustercatalogs/default-catalogs.yaml
 kind-deploy: manifests $(KUSTOMIZE)
-	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build $(CATALOGD_KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g") > $(MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(MANIFEST)
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: kind-cluster
@@ -347,7 +347,7 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
 quickstart: export DEFAULT_CATALOG := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/default-catalogs.yaml"
 quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
-	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Docs
@@ -367,7 +367,7 @@ crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
 	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/catalogd/api \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
 	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME);
-	
+
 VENVDIR := $(abspath docs/.venv)
 
 .PHONY: build-docs

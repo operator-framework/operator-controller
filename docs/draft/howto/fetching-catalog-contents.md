@@ -137,7 +137,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
 - Install the `Ingress NGINX` Controller by running the below command:
 
   ```sh
-    $ kubectl apply -k https://github.com/operator-framework/operator-controller/tree/main/catalogd/config/base/nginx-ingress
+    $ kubectl apply -k https://github.com/operator-framework/operator-controller/tree/main/config/catalogs/nginx-ingress
   ```
   By running that above command, the `Ingress` Controller is installed. Along with it, the `Ingress` Resource will be applied automatically as well, thereby creating an `Ingress` Object on the cluster.
 
