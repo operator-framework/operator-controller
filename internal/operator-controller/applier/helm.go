@@ -18,12 +18,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
+	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
@@ -111,7 +111,6 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.Clu
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
-
 	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
 		authclient, err := h.AuthClientMapper.GetAuthenticationClient(ctx, ext)
 		if err != nil {

@@ -7,12 +7,13 @@ import (
 	"slices"
 	"strings"
 
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	authv1 "k8s.io/api/authorization/v1"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 const (
@@ -21,13 +22,13 @@ const (
 )
 
 func CheckObjectPermissions(ctx context.Context, authcl *authorizationv1client.AuthorizationV1Client, objects []client.Object, ext *ocv1.ClusterExtension) error {
-	ssrr := &authv1.SelfSubjectRulesReview{
-		Spec: authv1.SelfSubjectRulesReviewSpec{
+	ssrr := &authorizationv1.SelfSubjectRulesReview{
+		Spec: authorizationv1.SelfSubjectRulesReviewSpec{
 			Namespace: ext.Spec.Namespace,
 		},
 	}
 
-	ssrr, err := authcl.SelfSubjectRulesReviews().Create(ctx, ssrr, v1.CreateOptions{})
+	ssrr, err := authcl.SelfSubjectRulesReviews().Create(ctx, ssrr, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -49,14 +50,14 @@ func CheckObjectPermissions(ctx context.Context, authcl *authorizationv1client.A
 		})
 	}
 
-	resAttrs := []authv1.ResourceAttributes{}
+	resAttrs := []authorizationv1.ResourceAttributes{}
 	namespacedErrs := []error{}
 	clusterScopedErrs := []error{}
 	requiredVerbs := []string{"get", "create", "update", "list", "watch", "delete", "patch"}
 
 	for _, o := range objects {
 		for _, verb := range requiredVerbs {
-			resAttrs = append(resAttrs, authv1.ResourceAttributes{
+			resAttrs = append(resAttrs, authorizationv1.ResourceAttributes{
 				Namespace: o.GetNamespace(),
 				Verb:      verb,
 				Resource:  sanitizeResourceName(o.GetObjectKind().GroupVersionKind().Kind),
@@ -88,11 +89,10 @@ func CheckObjectPermissions(ctx context.Context, authcl *authorizationv1client.A
 	}
 
 	return errors.Join(errs...)
-
 }
 
 // Checks if the rules allow the verb on the GroupVersionKind in resAttr
-func canI(resAttr authv1.ResourceAttributes, rules []rbacv1.PolicyRule) bool {
+func canI(resAttr authorizationv1.ResourceAttributes, rules []rbacv1.PolicyRule) bool {
 	var canI bool
 	for _, rule := range rules {
 		if (slices.Contains(rule.APIGroups, resAttr.Group) || slices.Contains(rule.APIGroups, "*")) &&
