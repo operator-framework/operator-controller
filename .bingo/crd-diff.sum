@@ -45,6 +45,8 @@ github.com/everettraven/crd-diff v0.0.0-20241112183958-25304aa59cdb h1:I8H7/ZAvo
 github.com/everettraven/crd-diff v0.0.0-20241112183958-25304aa59cdb/go.mod h1:sB0TZKVM9DVyC1zKHfJtb7VOMvst8gr0ETM4KsJ3gPA=
 github.com/everettraven/crd-diff v0.1.0 h1:wlaA+USeSpQSwzjF/cxl5b+vPZygxxmvnbm3NGyn2vs=
 github.com/everettraven/crd-diff v0.1.0/go.mod h1:sB0TZKVM9DVyC1zKHfJtb7VOMvst8gr0ETM4KsJ3gPA=
+github.com/everettraven/crd-diff v0.2.0 h1:72tY1p+eHIYaGORYmrKO8AxcDRowaOn75eQ/lhDMoPQ=
+github.com/everettraven/crd-diff v0.2.0/go.mod h1:sB0TZKVM9DVyC1zKHfJtb7VOMvst8gr0ETM4KsJ3gPA=
 github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fxamacker/cbor/v2 v2.7.0 h1:iM5WgngdRBanHcxugY4JySA0nk1wZorNOpTgCMedv5E=
