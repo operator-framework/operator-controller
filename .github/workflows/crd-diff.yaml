@@ -16,6 +16,5 @@ jobs:
       - name: Run make verify-crd-compatibility
         run: |
           make verify-crd-compatibility \
-            CRD_DIFF_ORIGINAL_REF=${{ github.event.pull_request.base.sha }} \
-            CRD_DIFF_UPDATED_SOURCE="git://${{ github.event.pull_request.head.sha }}?path=config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml" \
-            CATALOGD_CRD_DIFF_UPDATED_SOURCE="git://${{ github.event.pull_request.head.sha }}?path=catalogd/config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml"
+            CRD_DIFF_ORIGINAL_REF="git://${{ github.event.pull_request.base.sha }}?path=" \
+            CRD_DIFF_UPDATED_REF="git://${{ github.event.pull_request.head.sha }}?path="
