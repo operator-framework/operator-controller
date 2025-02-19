@@ -15,10 +15,13 @@ package e2e
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"io"
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -156,11 +159,43 @@ func (c *MetricsTestConfig) validate(token string) {
 	require.Contains(c.t, string(output), "200 OK", "Metrics endpoint did not return 200 OK")
 }
 
-// cleanup created resources
+// cleanup removes the created resources. Uses a context with timeout to prevent hangs.
 func (c *MetricsTestConfig) cleanup() {
 	c.t.Log("Cleaning up resources")
-	_ = exec.Command(c.client, "delete", "clusterrolebinding", c.clusterBinding, "--ignore-not-found=true").Run()
-	_ = exec.Command(c.client, "delete", "pod", c.curlPodName, "-n", c.namespace, "--ignore-not-found=true").Run()
+	_ = exec.Command(c.client, "delete", "clusterrolebinding", c.clusterBinding, "--ignore-not-found=true", "--force").Run()
+	_ = exec.Command(c.client, "delete", "pod", c.curlPodName, "-n", c.namespace, "--ignore-not-found=true", "--force").Run()
+
+	// Create a context with a 60-second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	// Wait for the ClusterRoleBinding to be deleted.
+	if err := waitForDeletion(ctx, c.client, "clusterrolebinding", c.clusterBinding); err != nil {
+		c.t.Logf("Error waiting for clusterrolebinding deletion: %v", err)
+	} else {
+		c.t.Log("ClusterRoleBinding deleted")
+	}
+
+	// Wait for the Pod to be deleted.
+	if err := waitForDeletion(ctx, c.client, "pod", c.curlPodName, "-n", c.namespace); err != nil {
+		c.t.Logf("Error waiting for pod deletion: %v", err)
+	} else {
+		c.t.Log("Pod deleted")
+	}
+}
+
+// waitForDeletion uses "kubectl wait" to block until the specified resource is deleted
+// or until the 60-second timeout is reached.
+func waitForDeletion(ctx context.Context, client, resourceType, resourceName string, extraArgs ...string) error {
+	args := []string{"wait", "--for=delete", resourceType, resourceName}
+	args = append(args, extraArgs...)
+	args = append(args, "--timeout=60s")
+	cmd := exec.CommandContext(ctx, client, args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error waiting for deletion of %s %s: %v, output: %s", resourceType, resourceName, err, string(output))
+	}
+	return nil
 }
 
 // getComponentNamespace returns the namespace where operator-controller or catalogd is running
