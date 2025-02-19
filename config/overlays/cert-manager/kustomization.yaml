@@ -1,10 +1,13 @@
-# kustomization file for secure operator-controller
+# kustomization file for secure OLMv1
 # DO NOT ADD A NAMESPACE HERE
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- ../../base
+- ../../base/catalogd
+- ../../base/operator-controller
+- ../../base/common
 components:
-- ../../components/tls
-# ca must be last or tls will overwrite the namespaces
-- ../../components/ca
+- ../../components/tls/catalogd
+- ../../components/tls/operator-controller
+# ca must be last other components will overwrite the namespaces
+- ../../components/tls/ca

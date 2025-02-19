@@ -2,7 +2,7 @@ load('.tilt-support', 'deploy_repo')
 
 operator_controller = {
     'image': 'quay.io/operator-framework/operator-controller',
-    'yaml': 'config/overlays/tilt-local-dev',
+    'yaml': 'config/overlays/tilt-local-dev/operator-controller',
     'binaries': {
         './cmd/operator-controller': 'operator-controller-controller-manager',
     },
@@ -13,7 +13,7 @@ deploy_repo('operator-controller', operator_controller, '-tags containers_image_
 
 catalogd = {
     'image': 'quay.io/operator-framework/catalogd',
-    'yaml': 'catalogd/config/overlays/cert-manager',
+    'yaml': 'config/overlays/tilt-local-dev/catalogd',
     'binaries': {
         './catalogd/cmd/catalogd': 'catalogd-controller-manager',
     },
