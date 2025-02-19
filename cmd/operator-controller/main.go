@@ -61,6 +61,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
@@ -409,16 +410,16 @@ func run() error {
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
 	}
 
-	acm := applier.NewAuthClientMapper(clientRestConfigMapper, mgr.GetConfig())
+	acm := authorization.NewAuthorizationClientMapper(clientRestConfigMapper, mgr.GetConfig())
 	acm.NewForConfig = func(cfg *rest.Config) (authorizationv1client.AuthorizationV1Interface, error) {
 		// *AuthorizationV1Client implements AuthorizationV1Interface
 		return authorizationv1client.NewForConfig(cfg)
 	}
 
 	helmApplier := &applier.Helm{
-		ActionClientGetter: acg,
-		Preflights:         preflights,
-		AuthClientMapper:   acm,
+		ActionClientGetter:        acg,
+		Preflights:                preflights,
+		AuthorizationClientMapper: acm,
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())

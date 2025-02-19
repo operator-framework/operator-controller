@@ -4,16 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"slices"
 	"strings"
 
-	authorizationv1 "k8s.io/api/authorization/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
+	authv1 "k8s.io/api/authorization/v1"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -21,14 +25,58 @@ const (
 	SelfSubjectAccessReview string = "SelfSubjectAccessReview"
 )
 
-func CheckObjectPermissions(ctx context.Context, authcl authorizationv1client.AuthorizationV1Interface, objects []client.Object, ext *ocv1.ClusterExtension) error {
-	ssrr := &authorizationv1.SelfSubjectRulesReview{
-		Spec: authorizationv1.SelfSubjectRulesReviewSpec{
+type RestConfigMapper func(context.Context, client.Object, *rest.Config) (*rest.Config, error)
+
+type NewForConfigFunc func(*rest.Config) (authorizationv1client.AuthorizationV1Interface, error)
+
+type AuthorizationClientMapper struct {
+	rcm          RestConfigMapper
+	baseCfg      *rest.Config
+	NewForConfig NewForConfigFunc
+}
+
+func NewAuthorizationClientMapper(rcm RestConfigMapper, baseCfg *rest.Config) AuthorizationClientMapper {
+	return AuthorizationClientMapper{
+		rcm:     rcm,
+		baseCfg: baseCfg,
+	}
+}
+
+func (acm *AuthorizationClientMapper) GetAuthorizationClient(ctx context.Context, ext *ocv1.ClusterExtension) (authorizationv1client.AuthorizationV1Interface, error) {
+	authcfg, err := acm.rcm(ctx, ext, acm.baseCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return acm.NewForConfig(authcfg)
+}
+
+// Check if RBAC allows the installer service account necessary permissions on the objects in the contentFS
+func (acm *AuthorizationClientMapper) CheckContentPermissions(ctx context.Context, contentFS fs.FS, authcl authorizationv1client.AuthorizationV1Interface, ext *ocv1.ClusterExtension) error {
+	reg, err := convert.ParseFS(ctx, contentFS)
+	if err != nil {
+		return err
+	}
+
+	plain, err := convert.Convert(reg, ext.Spec.Namespace, []string{corev1.NamespaceAll})
+	if err != nil {
+		return err
+	}
+
+	err = checkObjectPermissions(ctx, authcl, plain.Objects, ext)
+
+	return err
+}
+
+func checkObjectPermissions(ctx context.Context, authcl authorizationv1client.AuthorizationV1Interface, objects []client.Object, ext *ocv1.ClusterExtension) error {
+	ssrr := &authv1.SelfSubjectRulesReview{
+		Spec: authv1.SelfSubjectRulesReviewSpec{
 			Namespace: ext.Spec.Namespace,
 		},
 	}
 
-	ssrr, err := authcl.SelfSubjectRulesReviews().Create(ctx, ssrr, metav1.CreateOptions{})
+	opts := v1.CreateOptions{}
+	ssrr, err := authcl.SelfSubjectRulesReviews().Create(ctx, ssrr, opts)
 	if err != nil {
 		return err
 	}
@@ -50,14 +98,14 @@ func CheckObjectPermissions(ctx context.Context, authcl authorizationv1client.Au
 		})
 	}
 
-	resAttrs := []authorizationv1.ResourceAttributes{}
 	namespacedErrs := []error{}
 	clusterScopedErrs := []error{}
 	requiredVerbs := []string{"get", "create", "update", "list", "watch", "delete", "patch"}
+	resAttrs := make([]authv1.ResourceAttributes, 0, len(requiredVerbs)*len(objects))
 
 	for _, o := range objects {
 		for _, verb := range requiredVerbs {
-			resAttrs = append(resAttrs, authorizationv1.ResourceAttributes{
+			resAttrs = append(resAttrs, authv1.ResourceAttributes{
 				Namespace: o.GetNamespace(),
 				Verb:      verb,
 				Resource:  sanitizeResourceName(o.GetObjectKind().GroupVersionKind().Kind),
@@ -70,7 +118,7 @@ func CheckObjectPermissions(ctx context.Context, authcl authorizationv1client.Au
 	for _, resAttr := range resAttrs {
 		if !canI(resAttr, rules) {
 			if resAttr.Namespace != "" {
-				namespacedErrs = append(namespacedErrs, fmt.Errorf("cannot %s %s %s in namespace %s",
+				namespacedErrs = append(namespacedErrs, fmt.Errorf("cannot %q %q %q in namespace %q",
 					resAttr.Verb,
 					strings.TrimSuffix(resAttr.Resource, "s"),
 					resAttr.Name,
@@ -92,7 +140,7 @@ func CheckObjectPermissions(ctx context.Context, authcl authorizationv1client.Au
 }
 
 // Checks if the rules allow the verb on the GroupVersionKind in resAttr
-func canI(resAttr authorizationv1.ResourceAttributes, rules []rbacv1.PolicyRule) bool {
+func canI(resAttr authv1.ResourceAttributes, rules []rbacv1.PolicyRule) bool {
 	var canI bool
 	for _, rule := range rules {
 		if (slices.Contains(rule.APIGroups, resAttr.Group) || slices.Contains(rule.APIGroups, "*")) &&

@@ -115,13 +115,13 @@ func newPassingSSRRAuthClient() authorizationv1client.AuthorizationV1Interface {
 	}
 }
 
-// Helper builds an AuthClientMapper with the passing SSRR
-func newPassingAuthClientMapper() applier.AuthClientMapper {
+// Helper builds an AuthorizationClientMapper with the passing SSRR
+func newPassingAuthorizationClientMapper() applier.AuthorizationClientMapper {
 	fakeRestConfig := &rest.Config{Host: "fake-server"}
 	mockRCM := func(ctx context.Context, obj client.Object, cfg *rest.Config) (*rest.Config, error) {
 		return cfg, nil
 	}
-	acm := applier.NewAuthClientMapper(mockRCM, fakeRestConfig)
+	acm := applier.NewAuthorizationClientMapper(mockRCM, fakeRestConfig)
 	acm.NewForConfig = func(*rest.Config) (authorizationv1client.AuthorizationV1Interface, error) {
 		return newPassingSSRRAuthClient(), nil
 	}
@@ -131,9 +131,9 @@ func newPassingAuthClientMapper() applier.AuthClientMapper {
 // Helper builds a Helm applier with passing SSRR
 func buildHelmApplier(mockAcg *mockActionGetter, preflights []applier.Preflight) applier.Helm {
 	return applier.Helm{
-		ActionClientGetter: mockAcg,
-		AuthClientMapper:   newPassingAuthClientMapper(),
-		Preflights:         preflights,
+		ActionClientGetter:        mockAcg,
+		AuthorizationClientMapper: newPassingAuthorizationClientMapper(),
+		Preflights:                preflights,
 	}
 }
 

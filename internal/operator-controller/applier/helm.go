@@ -18,8 +18,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
-	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -56,36 +54,10 @@ type Preflight interface {
 	Upgrade(context.Context, *release.Release) error
 }
 
-type RestConfigMapper func(context.Context, client.Object, *rest.Config) (*rest.Config, error)
-
-type NewForConfigFunc func(*rest.Config) (authorizationv1client.AuthorizationV1Interface, error)
-
-type AuthClientMapper struct {
-	rcm          RestConfigMapper
-	baseCfg      *rest.Config
-	NewForConfig NewForConfigFunc
-}
-
-func (acm *AuthClientMapper) GetAuthenticationClient(ctx context.Context, ext *ocv1.ClusterExtension) (authorizationv1client.AuthorizationV1Interface, error) {
-	authcfg, err := acm.rcm(ctx, ext, acm.baseCfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return acm.NewForConfig(authcfg)
-}
-
 type Helm struct {
-	ActionClientGetter helmclient.ActionClientGetter
-	Preflights         []Preflight
-	AuthClientMapper   AuthClientMapper
-}
-
-func NewAuthClientMapper(rcm RestConfigMapper, baseCfg *rest.Config) AuthClientMapper {
-	return AuthClientMapper{
-		rcm:     rcm,
-		baseCfg: baseCfg,
-	}
+	ActionClientGetter        helmclient.ActionClientGetter
+	Preflights                []Preflight
+	AuthorizationClientMapper authorization.AuthorizationClientMapper
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -110,14 +82,14 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.Clu
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
 	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		authclient, err := h.AuthClientMapper.GetAuthenticationClient(ctx, ext)
+		authclient, err := h.AuthorizationClientMapper.GetAuthorizationClient(ctx, ext)
 		if err != nil {
 			return nil, "", err
 		}
 
-		err = h.checkContentPermissions(ctx, contentFS, authclient, ext)
+		err = h.AuthorizationClientMapper.CheckContentPermissions(ctx, contentFS, authclient, ext)
 		if err != nil {
-			return nil, "", err
+			return nil, "", fmt.Errorf("failed checking content permissions: %w", err)
 		}
 	}
 
@@ -193,23 +165,6 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	}
 
 	return relObjects, state, nil
-}
-
-// Check if RBAC allows the installer service account necessary permissions on the objects in the contentFS
-func (h *Helm) checkContentPermissions(ctx context.Context, contentFS fs.FS, authcl authorizationv1client.AuthorizationV1Interface, ext *ocv1.ClusterExtension) error {
-	reg, err := convert.ParseFS(ctx, contentFS)
-	if err != nil {
-		return err
-	}
-
-	plain, err := convert.Convert(reg, ext.Spec.Namespace, []string{corev1.NamespaceAll})
-	if err != nil {
-		return err
-	}
-
-	err = authorization.CheckObjectPermissions(ctx, authcl, plain.Objects, ext)
-
-	return err
 }
 
 func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
