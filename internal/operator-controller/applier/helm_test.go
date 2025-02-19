@@ -13,6 +13,10 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
+	"k8s.io/client-go/rest"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -92,6 +96,83 @@ func (mag *mockActionGetter) Uninstall(name string, opts ...helmclient.Uninstall
 
 func (mag *mockActionGetter) Reconcile(rel *release.Release) error {
 	return mag.reconcileErr
+}
+
+// Helper returns an AuthorizationV1Interface where SSRR always passes.
+func newPassingSSRRAuthClient() authorizationv1client.AuthorizationV1Interface {
+	return &mockAuthorizationV1Client{
+		ssrrInterface: &mockSelfSubjectRulesReviewInterface{
+			retSSRR: &authorizationv1.SelfSubjectRulesReview{
+				Status: authorizationv1.SubjectRulesReviewStatus{
+					ResourceRules: []authorizationv1.ResourceRule{{
+						Verbs:     []string{"*"},
+						APIGroups: []string{"*"},
+						Resources: []string{"*"},
+					}},
+				},
+			},
+		},
+	}
+}
+
+// Helper builds an AuthClientMapper with the passing SSRR
+func newPassingAuthClientMapper() applier.AuthClientMapper {
+	fakeRestConfig := &rest.Config{Host: "fake-server"}
+	mockRCM := func(ctx context.Context, obj client.Object, cfg *rest.Config) (*rest.Config, error) {
+		return cfg, nil
+	}
+	acm := applier.NewAuthClientMapper(mockRCM, fakeRestConfig)
+	acm.NewForConfig = func(*rest.Config) (authorizationv1client.AuthorizationV1Interface, error) {
+		return newPassingSSRRAuthClient(), nil
+	}
+	return acm
+}
+
+// Helper builds a Helm applier with passing SSRR
+func buildHelmApplier(mockAcg *mockActionGetter, preflights []applier.Preflight) applier.Helm {
+	return applier.Helm{
+		ActionClientGetter: mockAcg,
+		AuthClientMapper:   newPassingAuthClientMapper(),
+		Preflights:         preflights,
+	}
+}
+
+type mockAuthorizationV1Client struct {
+	ssrrInterface authorizationv1client.SelfSubjectRulesReviewInterface
+}
+
+func (m *mockAuthorizationV1Client) SelfSubjectRulesReviews() authorizationv1client.SelfSubjectRulesReviewInterface {
+	return m.ssrrInterface
+}
+func (m *mockAuthorizationV1Client) RESTClient() rest.Interface {
+	return nil
+}
+
+// Mock for SelfSubjectRulesReviewInterface
+type mockSelfSubjectRulesReviewInterface struct {
+	retSSRR *authorizationv1.SelfSubjectRulesReview
+	retErr  error
+}
+
+func (m *mockSelfSubjectRulesReviewInterface) Create(
+	ctx context.Context,
+	ssrr *authorizationv1.SelfSubjectRulesReview,
+	opts metav1.CreateOptions,
+) (*authorizationv1.SelfSubjectRulesReview, error) {
+	// Return either a success or an error, depending on what you want in the test.
+	return m.retSSRR, m.retErr
+}
+
+func (m *mockAuthorizationV1Client) LocalSubjectAccessReviews(namespace string) authorizationv1client.LocalSubjectAccessReviewInterface {
+	return nil
+}
+
+func (m *mockAuthorizationV1Client) SelfSubjectAccessReviews() authorizationv1client.SelfSubjectAccessReviewInterface {
+	return nil
+}
+
+func (m *mockAuthorizationV1Client) SubjectAccessReviews() authorizationv1client.SubjectAccessReviewInterface {
+	return nil
 }
 
 var (
@@ -229,6 +310,7 @@ func TestApply_Installation(t *testing.T) {
 }
 
 func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
+	// Set feature gate ONCE at parent level
 	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 
 	t.Run("fails during dry-run installation", func(t *testing.T) {
@@ -236,9 +318,15 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			getClientErr:     driver.ErrReleaseNotFound,
 			dryRunInstallErr: errors.New("failed attempting to dry-run install chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := buildHelmApplier(mockAcg, nil)
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		objs, state, err := helmApplier.Apply(
+			context.TODO(),
+			validFS,
+			testCE,
+			testObjectLabels,
+			testStorageLabels,
+		)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "attempting to dry-run install chart")
 		require.Nil(t, objs)
@@ -251,7 +339,8 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			installErr:   errors.New("failed installing chart"),
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf}}
+
+		helmApplier := buildHelmApplier(mockAcg, []applier.Preflight{mockPf})
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
@@ -265,9 +354,15 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := buildHelmApplier(mockAcg, nil)
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		objs, state, err := helmApplier.Apply(
+			context.TODO(),
+			validFS,
+			testCE,
+			testObjectLabels,
+			testStorageLabels,
+		)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "installing chart")
 		require.Equal(t, applier.StateNeedsInstall, state)
@@ -282,9 +377,15 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 				Manifest: validManifest,
 			},
 		}
-		helmApplier := applier.Helm{ActionClientGetter: mockAcg}
+		helmApplier := buildHelmApplier(mockAcg, nil)
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		objs, state, err := helmApplier.Apply(
+			context.TODO(),
+			validFS,
+			testCE,
+			testObjectLabels,
+			testStorageLabels,
+		)
 		require.NoError(t, err)
 		require.Equal(t, applier.StateNeedsInstall, state)
 		require.NotNil(t, objs)

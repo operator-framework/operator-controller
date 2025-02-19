@@ -58,23 +58,21 @@ type Preflight interface {
 
 type RestConfigMapper func(context.Context, client.Object, *rest.Config) (*rest.Config, error)
 
+type NewForConfigFunc func(*rest.Config) (authorizationv1client.AuthorizationV1Interface, error)
+
 type AuthClientMapper struct {
-	rcm     RestConfigMapper
-	baseCfg *rest.Config
+	rcm          RestConfigMapper
+	baseCfg      *rest.Config
+	NewForConfig NewForConfigFunc
 }
 
-func (acm *AuthClientMapper) GetAuthenticationClient(ctx context.Context, ext *ocv1.ClusterExtension) (*authorizationv1client.AuthorizationV1Client, error) {
+func (acm *AuthClientMapper) GetAuthenticationClient(ctx context.Context, ext *ocv1.ClusterExtension) (authorizationv1client.AuthorizationV1Interface, error) {
 	authcfg, err := acm.rcm(ctx, ext, acm.baseCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	authclient, err := authorizationv1client.NewForConfig(authcfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return authclient, nil
+	return acm.NewForConfig(authcfg)
 }
 
 type Helm struct {
@@ -198,7 +196,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 }
 
 // Check if RBAC allows the installer service account necessary permissions on the objects in the contentFS
-func (h *Helm) checkContentPermissions(ctx context.Context, contentFS fs.FS, authcl *authorizationv1client.AuthorizationV1Client, ext *ocv1.ClusterExtension) error {
+func (h *Helm) checkContentPermissions(ctx context.Context, contentFS fs.FS, authcl authorizationv1client.AuthorizationV1Interface, ext *ocv1.ClusterExtension) error {
 	reg, err := convert.ParseFS(ctx, contentFS)
 	if err != nil {
 		return err

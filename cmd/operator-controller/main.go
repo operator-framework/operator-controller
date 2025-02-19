@@ -37,8 +37,10 @@ import (
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
+	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/textlogger"
 	"k8s.io/utils/ptr"
@@ -408,6 +410,10 @@ func run() error {
 	}
 
 	acm := applier.NewAuthClientMapper(clientRestConfigMapper, mgr.GetConfig())
+	acm.NewForConfig = func(cfg *rest.Config) (authorizationv1client.AuthorizationV1Interface, error) {
+		// *AuthorizationV1Client implements AuthorizationV1Interface
+		return authorizationv1client.NewForConfig(cfg)
+	}
 
 	helmApplier := &applier.Helm{
 		ActionClientGetter: acg,

@@ -21,7 +21,7 @@ const (
 	SelfSubjectAccessReview string = "SelfSubjectAccessReview"
 )
 
-func CheckObjectPermissions(ctx context.Context, authcl *authorizationv1client.AuthorizationV1Client, objects []client.Object, ext *ocv1.ClusterExtension) error {
+func CheckObjectPermissions(ctx context.Context, authcl authorizationv1client.AuthorizationV1Interface, objects []client.Object, ext *ocv1.ClusterExtension) error {
 	ssrr := &authorizationv1.SelfSubjectRulesReview{
 		Spec: authorizationv1.SelfSubjectRulesReviewSpec{
 			Namespace: ext.Spec.Namespace,
