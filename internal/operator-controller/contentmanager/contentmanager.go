@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1 "github.com/operator-framework/operator-controller/api/v1"
+	v1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
 	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	oclabels "github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )

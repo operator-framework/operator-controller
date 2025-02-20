@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/metadata"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	catalogdv1 "github.com/operator-framework/operator-controller/api/catalogd/v1"
 )
 
 var _ manager.Runnable = (*GarbageCollector)(nil)

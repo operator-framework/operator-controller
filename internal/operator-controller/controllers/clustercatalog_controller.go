@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
 )
 
 type CatalogCache interface {

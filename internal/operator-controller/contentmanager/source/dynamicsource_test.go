@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/api/operator-controller/v1"
 )
 
 func TestDynamicInformerSourceCloseBeforeStartErrors(t *testing.T) {
