@@ -447,7 +447,7 @@ func TestApply_Upgrade(t *testing.T) {
 func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testing.T) {
 	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
 
-	t.Run("generates bundle resources in SingleNamespace install mode when watch namespace is configured", func(t *testing.T) {
+	t.Run("generates bundle resources using the configured watch namespace", func(t *testing.T) {
 		var expectedWatchNamespace = "watch-namespace"
 
 		helmApplier := applier.Helm{
@@ -464,7 +464,7 @@ func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testin
 			},
 		}
 
-		testExt := &v1.ClusterExtension{
+		testExt := &ocv1.ClusterExtension{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "testExt",
 				Annotations: map[string]string{

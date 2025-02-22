@@ -13,6 +13,21 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
+func TestGetWatchNamespacesWhenFeatureGateIsDisabled(t *testing.T) {
+	watchNamespace, err := applier.GetWatchNamespace(&v1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "extension",
+			Annotations: map[string]string{
+				"olm.operatorframework.io/watch-namespace": "watch-namespace",
+			},
+		},
+		Spec: v1.ClusterExtensionSpec{},
+	})
+	require.NoError(t, err)
+	t.Log("Check watchNamespace is '' even if the annotation is set")
+	require.Equal(t, corev1.NamespaceAll, watchNamespace)
+}
+
 func TestGetWatchNamespace(t *testing.T) {
 	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
 
