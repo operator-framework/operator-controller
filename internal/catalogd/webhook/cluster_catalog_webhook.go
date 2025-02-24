@@ -8,7 +8,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 // +kubebuilder:webhook:admissionReviewVersions={v1},failurePolicy=Fail,groups=olm.operatorframework.io,mutating=true,name=inject-metadata-name.olm.operatorframework.io,path=/mutate-olm-operatorframework-io-v1-clustercatalog,resources=clustercatalogs,verbs=create;update,versions=v1,sideEffects=None,timeoutSeconds=10
@@ -22,7 +22,7 @@ type ClusterCatalog struct{}
 func (r *ClusterCatalog) Default(ctx context.Context, obj runtime.Object) error {
 	log := log.FromContext(ctx)
 	log.Info("Invoking Default method for ClusterCatalog", "object", obj)
-	catalog, ok := obj.(*catalogdv1.ClusterCatalog)
+	catalog, ok := obj.(*ocv1.ClusterCatalog)
 	if !ok {
 		return fmt.Errorf("expected a ClusterCatalog but got a %T", obj)
 	}
@@ -31,8 +31,8 @@ func (r *ClusterCatalog) Default(ctx context.Context, obj runtime.Object) error 
 	if catalog.Labels == nil {
 		catalog.Labels = map[string]string{}
 	}
-	catalog.Labels[catalogdv1.MetadataNameLabel] = catalog.GetName()
-	log.Info("default", catalogdv1.MetadataNameLabel, catalog.Name, "labels", catalog.Labels)
+	catalog.Labels[ocv1.MetadataNameLabel] = catalog.GetName()
+	log.Info("default", ocv1.MetadataNameLabel, catalog.Name, "labels", catalog.Labels)
 
 	return nil
 }
@@ -40,7 +40,7 @@ func (r *ClusterCatalog) Default(ctx context.Context, obj runtime.Object) error 
 // SetupWebhookWithManager sets up the webhook with the manager
 func (r *ClusterCatalog) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
-		For(&catalogdv1.ClusterCatalog{}).
+		For(&ocv1.ClusterCatalog{}).
 		WithDefaulter(r).
 		Complete()
 }

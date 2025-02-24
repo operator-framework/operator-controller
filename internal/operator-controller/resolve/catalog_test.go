@@ -18,8 +18,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 func TestInvalidClusterExtensionVersionRange(t *testing.T) {
@@ -42,7 +41,7 @@ func TestErrorWalkingCatalogs(t *testing.T) {
 
 func TestErrorGettingPackage(t *testing.T) {
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return nil, nil, fmt.Errorf("fake error")
 		},
 	}
@@ -55,13 +54,13 @@ func TestErrorGettingPackage(t *testing.T) {
 
 func TestPackageDoesNotExist(t *testing.T) {
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
 	}
@@ -75,13 +74,13 @@ func TestPackageDoesNotExist(t *testing.T) {
 func TestPackageExists(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -97,13 +96,13 @@ func TestPackageExists(t *testing.T) {
 func TestValidationFailed(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -123,13 +122,13 @@ func TestValidationFailed(t *testing.T) {
 func TestVersionDoesNotExist(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -142,13 +141,13 @@ func TestVersionDoesNotExist(t *testing.T) {
 func TestVersionExists(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -164,13 +163,13 @@ func TestVersionExists(t *testing.T) {
 func TestChannelDoesNotExist(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -183,13 +182,13 @@ func TestChannelDoesNotExist(t *testing.T) {
 func TestChannelExists(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -205,13 +204,13 @@ func TestChannelExists(t *testing.T) {
 func TestChannelExistsButNotVersion(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -224,13 +223,13 @@ func TestChannelExistsButNotVersion(t *testing.T) {
 func TestVersionExistsButNotChannel(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -243,13 +242,13 @@ func TestVersionExistsButNotChannel(t *testing.T) {
 func TestChannelAndVersionExist(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -265,13 +264,13 @@ func TestChannelAndVersionExist(t *testing.T) {
 func TestPreferNonDeprecated(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -287,13 +286,13 @@ func TestPreferNonDeprecated(t *testing.T) {
 func TestAcceptDeprecated(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -309,10 +308,10 @@ func TestAcceptDeprecated(t *testing.T) {
 func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			fbc := &declcfg.DeclarativeConfig{
 				Packages: []declcfg.Package{{Name: pkgName}},
 				Bundles:  []declcfg.Bundle{genBundle(pkgName, "1.0.0")},
@@ -328,7 +327,7 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 			}
 			return fbc, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			fbc := &declcfg.DeclarativeConfig{
 				Packages: []declcfg.Package{{Name: pkgName}},
 				Bundles:  []declcfg.Bundle{genBundle(pkgName, "1.0.1")},
@@ -344,14 +343,14 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 			}
 			return fbc, nil, nil
 		},
-		"d": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"d": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			fbc := &declcfg.DeclarativeConfig{
 				Packages: []declcfg.Package{{Name: pkgName}},
 				Bundles:  []declcfg.Bundle{genBundle(pkgName, "1.0.2")},
 			}
 			return fbc, nil, nil
 		},
-		"e": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"e": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			fbc := &declcfg.DeclarativeConfig{
 				Packages: []declcfg.Package{{Name: pkgName}},
 				Bundles:  []declcfg.Bundle{genBundle(pkgName, "1.0.3")},
@@ -367,7 +366,7 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 			}
 			return fbc, nil, nil
 		},
-		"f": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"f": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			fbc := &declcfg.DeclarativeConfig{
 				Packages: []declcfg.Package{{Name: pkgName}},
 				Bundles: []declcfg.Bundle{
@@ -426,13 +425,13 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 func TestUpgradeFoundLegacy(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -453,13 +452,13 @@ func TestUpgradeFoundLegacy(t *testing.T) {
 func TestUpgradeNotFoundLegacy(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -477,13 +476,13 @@ func TestUpgradeNotFoundLegacy(t *testing.T) {
 func TestDowngradeFound(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -505,13 +504,13 @@ func TestDowngradeFound(t *testing.T) {
 func TestDowngradeNotFound(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -529,14 +528,14 @@ func TestDowngradeNotFound(t *testing.T) {
 func TestCatalogWalker(t *testing.T) {
 	t.Run("error listing catalogs", func(t *testing.T) {
 		w := CatalogWalker(
-			func(ctx context.Context, option ...client.ListOption) ([]catalogd.ClusterCatalog, error) {
+			func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
 				return nil, fmt.Errorf("fake error")
 			},
-			func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error) {
+			func(context.Context, *ocv1.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error) {
 				return nil, nil
 			},
 		)
-		walkFunc := func(ctx context.Context, cat *catalogd.ClusterCatalog, fbc *declcfg.DeclarativeConfig, err error) error {
+		walkFunc := func(ctx context.Context, cat *ocv1.ClusterCatalog, fbc *declcfg.DeclarativeConfig, err error) error {
 			return nil
 		}
 		assert.EqualError(t, w(context.Background(), "", walkFunc), "error listing catalogs: fake error")
@@ -544,14 +543,14 @@ func TestCatalogWalker(t *testing.T) {
 
 	t.Run("error getting package", func(t *testing.T) {
 		w := CatalogWalker(
-			func(ctx context.Context, option ...client.ListOption) ([]catalogd.ClusterCatalog, error) {
-				return []catalogd.ClusterCatalog{{ObjectMeta: metav1.ObjectMeta{Name: "a"}}}, nil
+			func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
+				return []ocv1.ClusterCatalog{{ObjectMeta: metav1.ObjectMeta{Name: "a"}}}, nil
 			},
-			func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error) {
+			func(context.Context, *ocv1.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error) {
 				return nil, fmt.Errorf("fake error getting package FBC")
 			},
 		)
-		walkFunc := func(ctx context.Context, cat *catalogd.ClusterCatalog, fbc *declcfg.DeclarativeConfig, err error) error {
+		walkFunc := func(ctx context.Context, cat *ocv1.ClusterCatalog, fbc *declcfg.DeclarativeConfig, err error) error {
 			return err
 		}
 		assert.EqualError(t, w(context.Background(), "", walkFunc), "fake error getting package FBC")
@@ -559,19 +558,19 @@ func TestCatalogWalker(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		w := CatalogWalker(
-			func(ctx context.Context, option ...client.ListOption) ([]catalogd.ClusterCatalog, error) {
-				return []catalogd.ClusterCatalog{
+			func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
+				return []ocv1.ClusterCatalog{
 					{ObjectMeta: metav1.ObjectMeta{Name: "a"}},
 					{ObjectMeta: metav1.ObjectMeta{Name: "b"}},
 				}, nil
 			},
-			func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error) {
+			func(context.Context, *ocv1.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error) {
 				return &declcfg.DeclarativeConfig{}, nil
 			},
 		)
 
 		seenCatalogs := []string{}
-		walkFunc := func(ctx context.Context, cat *catalogd.ClusterCatalog, fbc *declcfg.DeclarativeConfig, err error) error {
+		walkFunc := func(ctx context.Context, cat *ocv1.ClusterCatalog, fbc *declcfg.DeclarativeConfig, err error) error {
 			seenCatalogs = append(seenCatalogs, cat.Name)
 			return nil
 		}
@@ -590,7 +589,7 @@ func buildFooClusterExtension(pkg string, channels []string, version string, upg
 			ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogSource{
+				Catalog: &ocv1.CatalogFilter{
 					PackageName:             pkg,
 					Version:                 version,
 					Channels:                channels,
@@ -601,13 +600,13 @@ func buildFooClusterExtension(pkg string, channels []string, version string, upg
 	}
 }
 
-type getPackageFunc func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error)
+type getPackageFunc func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error)
 
 type staticCatalogWalker map[string]getPackageFunc
 
 func (w staticCatalogWalker) WalkCatalogs(ctx context.Context, _ string, f CatalogWalkFunc, opts ...client.ListOption) error {
 	for k, v := range w {
-		cat := &catalogd.ClusterCatalog{
+		cat := &ocv1.ClusterCatalog{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: k,
 				Labels: map[string]string{
@@ -706,7 +705,7 @@ func TestInvalidClusterExtensionCatalogMatchExpressions(t *testing.T) {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
-				Catalog: &ocv1.CatalogSource{
+				Catalog: &ocv1.CatalogFilter{
 					PackageName: "foo",
 					Selector: &metav1.LabelSelector{
 						MatchExpressions: []metav1.LabelSelectorRequirement{
@@ -727,7 +726,7 @@ func TestInvalidClusterExtensionCatalogMatchExpressions(t *testing.T) {
 
 func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage("foo"), nil, nil
 		},
 	}
@@ -738,7 +737,7 @@ func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
-				Catalog: &ocv1.CatalogSource{
+				Catalog: &ocv1.CatalogFilter{
 					PackageName: "foo",
 					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"": "value"},
@@ -753,7 +752,7 @@ func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
 
 func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage("foo"), nil, nil
 		},
 	}
@@ -764,7 +763,7 @@ func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
-				Catalog: &ocv1.CatalogSource{
+				Catalog: &ocv1.CatalogFilter{
 					PackageName: "foo",
 					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"name": "&value"},
@@ -780,10 +779,10 @@ func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 func TestClusterExtensionMatchLabel(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -800,10 +799,10 @@ func TestClusterExtensionMatchLabel(t *testing.T) {
 func TestClusterExtensionNoMatchLabel(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -821,7 +820,7 @@ func TestClusterExtensionNoMatchLabel(t *testing.T) {
 func TestUnequalPriority(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{
 				Packages: []declcfg.Package{{Name: pkgName}},
 				Channels: []declcfg.Channel{
@@ -833,9 +832,9 @@ func TestUnequalPriority(t *testing.T) {
 					genBundle(pkgName, "1.0.0"),
 				},
 				Deprecations: []declcfg.Deprecation{},
-			}, &catalogd.ClusterCatalogSpec{Priority: 1}, nil
+			}, &ocv1.ClusterCatalogSpec{Priority: 1}, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{
 				Packages: []declcfg.Package{{Name: pkgName}},
 				Channels: []declcfg.Channel{
@@ -847,7 +846,7 @@ func TestUnequalPriority(t *testing.T) {
 					genBundle(pkgName, "1.1.0"),
 				},
 				Deprecations: []declcfg.Deprecation{},
-			}, &catalogd.ClusterCatalogSpec{Priority: 0}, nil
+			}, &ocv1.ClusterCatalogSpec{Priority: 0}, nil
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
@@ -861,14 +860,14 @@ func TestUnequalPriority(t *testing.T) {
 func TestMultiplePriority(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), &catalogd.ClusterCatalogSpec{Priority: 1}, nil
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
+			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: 1}, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), &catalogd.ClusterCatalogSpec{Priority: 0}, nil
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
+			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: 0}, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), &catalogd.ClusterCatalogSpec{Priority: 1}, nil
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
+			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: 1}, nil
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
@@ -885,13 +884,13 @@ func TestMultiplePriority(t *testing.T) {
 func TestMultipleChannels(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
-		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{}, nil, nil
 		},
-		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
 		},
 	}
@@ -906,22 +905,22 @@ func TestMultipleChannels(t *testing.T) {
 
 func TestAllCatalogsDisabled(t *testing.T) {
 	pkgName := randPkg()
-	listCatalogs := func(ctx context.Context, options ...client.ListOption) ([]catalogd.ClusterCatalog, error) {
-		return []catalogd.ClusterCatalog{
+	listCatalogs := func(ctx context.Context, options ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
+		return []ocv1.ClusterCatalog{
 			{
-				Spec: catalogd.ClusterCatalogSpec{
-					AvailabilityMode: catalogd.AvailabilityModeUnavailable,
+				Spec: ocv1.ClusterCatalogSpec{
+					AvailabilityMode: ocv1.AvailabilityModeUnavailable,
 				},
 			},
 			{
-				Spec: catalogd.ClusterCatalogSpec{
-					AvailabilityMode: catalogd.AvailabilityModeUnavailable,
+				Spec: ocv1.ClusterCatalogSpec{
+					AvailabilityMode: ocv1.AvailabilityModeUnavailable,
 				},
 			},
 		}, nil
 	}
 
-	getPackage := func(ctx context.Context, cat *catalogd.ClusterCatalog, packageName string) (*declcfg.DeclarativeConfig, error) {
+	getPackage := func(ctx context.Context, cat *ocv1.ClusterCatalog, packageName string) (*declcfg.DeclarativeConfig, error) {
 		panic("getPackage should never be called when all catalogs are disabled")
 	}
 
@@ -937,30 +936,30 @@ func TestAllCatalogsDisabled(t *testing.T) {
 
 func TestSomeCatalogsDisabled(t *testing.T) {
 	pkgName := randPkg()
-	listCatalogs := func(ctx context.Context, options ...client.ListOption) ([]catalogd.ClusterCatalog, error) {
-		return []catalogd.ClusterCatalog{
+	listCatalogs := func(ctx context.Context, options ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
+		return []ocv1.ClusterCatalog{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "enabledCatalog",
 				},
-				Spec: catalogd.ClusterCatalogSpec{
+				Spec: ocv1.ClusterCatalogSpec{
 					Priority:         1, // Higher priority
-					AvailabilityMode: catalogd.AvailabilityModeAvailable,
+					AvailabilityMode: ocv1.AvailabilityModeAvailable,
 				},
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "disabledCatalog",
 				},
-				Spec: catalogd.ClusterCatalogSpec{
+				Spec: ocv1.ClusterCatalogSpec{
 					Priority:         0, // Lower priority (but disabled)
-					AvailabilityMode: catalogd.AvailabilityModeUnavailable,
+					AvailabilityMode: ocv1.AvailabilityModeUnavailable,
 				},
 			},
 		}, nil
 	}
 
-	getPackage := func(ctx context.Context, cat *catalogd.ClusterCatalog, packageName string) (*declcfg.DeclarativeConfig, error) {
+	getPackage := func(ctx context.Context, cat *ocv1.ClusterCatalog, packageName string) (*declcfg.DeclarativeConfig, error) {
 		// Only enabled catalog should be processed
 		return genPackage(pkgName), nil
 	}

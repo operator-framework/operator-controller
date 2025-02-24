@@ -14,7 +14,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 )
@@ -25,7 +25,7 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 
 	for _, tt := range []struct {
 		name                    string
-		catalog                 *catalogd.ClusterCatalog
+		catalog                 *ocv1.ClusterCatalog
 		catalogCache            mockCatalogCache
 		catalogCachePopulator   mockCatalogCachePopulator
 		wantGetCacheCalled      bool
@@ -35,20 +35,20 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 	}{
 		{
 			name: "catalog exists - cache unpopulated",
-			catalog: &catalogd.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogKey.Name,
 				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Image: &catalogd.ResolvedImageSource{
+				Status: ocv1.ClusterCatalogStatus{
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Image: &ocv1.ResolvedImageSource{
 							Ref: fakeResolvedRef,
 						},
 					},
 				},
 			},
 			catalogCachePopulator: mockCatalogCachePopulator{
-				populateCacheFunc: func(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error) {
+				populateCacheFunc: func(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
 					assert.Equal(t, catalogKey.Name, catalog.Name)
 					return nil, nil
 				},
@@ -58,13 +58,13 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 		},
 		{
 			name: "catalog exists - cache already populated",
-			catalog: &catalogd.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogKey.Name,
 				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Image: &catalogd.ResolvedImageSource{
+				Status: ocv1.ClusterCatalogStatus{
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Image: &ocv1.ResolvedImageSource{
 							Ref: fakeResolvedRef,
 						},
 					},
@@ -82,7 +82,7 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 		},
 		{
 			name: "catalog exists - catalog not yet resolved",
-			catalog: &catalogd.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogKey.Name,
 				},
@@ -90,20 +90,20 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 		},
 		{
 			name: "catalog exists - error on cache population",
-			catalog: &catalogd.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogKey.Name,
 				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Image: &catalogd.ResolvedImageSource{
+				Status: ocv1.ClusterCatalogStatus{
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Image: &ocv1.ResolvedImageSource{
 							Ref: fakeResolvedRef,
 						},
 					},
 				},
 			},
 			catalogCachePopulator: mockCatalogCachePopulator{
-				populateCacheFunc: func(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error) {
+				populateCacheFunc: func(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
 					assert.Equal(t, catalogKey.Name, catalog.Name)
 					return nil, errors.New("fake error from populate cache function")
 				},
@@ -114,13 +114,13 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 		},
 		{
 			name: "catalog exists - error on cache get",
-			catalog: &catalogd.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogKey.Name,
 				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Image: &catalogd.ResolvedImageSource{
+				Status: ocv1.ClusterCatalogStatus{
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Image: &ocv1.ResolvedImageSource{
 							Ref: fakeResolvedRef,
 						},
 					},
@@ -215,10 +215,10 @@ func (m *mockCatalogCache) Get(catalogName, resolvedRef string) (fs.FS, error) {
 
 type mockCatalogCachePopulator struct {
 	populateCacheCalled bool
-	populateCacheFunc   func(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error)
+	populateCacheFunc   func(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error)
 }
 
-func (m *mockCatalogCachePopulator) PopulateCache(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error) {
+func (m *mockCatalogCachePopulator) PopulateCache(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
 	m.populateCacheCalled = true
 	if m.populateCacheFunc != nil {
 		return m.populateCacheFunc(ctx, catalog)

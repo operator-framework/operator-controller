@@ -21,8 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/test/utils"
 )
 
@@ -186,7 +185,7 @@ func createClusterRoleAndBindingForSA(ctx context.Context, name string, sa *core
 	return nil
 }
 
-func testInit(t *testing.T) (*ocv1.ClusterExtension, *catalogd.ClusterCatalog, *corev1.ServiceAccount, *corev1.Namespace) {
+func testInit(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog, *corev1.ServiceAccount, *corev1.Namespace) {
 	var err error
 
 	clusterExtensionName := fmt.Sprintf("clusterextension-%s", rand.String(8))
@@ -217,15 +216,15 @@ func testInit(t *testing.T) (*ocv1.ClusterExtension, *catalogd.ClusterCatalog, *
 }
 
 func validateCatalogUnpack(t *testing.T) {
-	catalog := &catalogd.ClusterCatalog{}
+	catalog := &ocv1.ClusterCatalog{}
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == True and reason == Succeeded")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		err := c.Get(context.Background(), types.NamespacedName{Name: testCatalogName}, catalog)
 		assert.NoError(ct, err)
-		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeProgressing)
+		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeProgressing)
 		assert.NotNil(ct, cond)
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogd.ReasonSucceeded, cond.Reason)
+		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 	}, pollDuration, pollInterval)
 
 	t.Log("Checking that catalog has the expected metadata label")
@@ -237,10 +236,10 @@ func validateCatalogUnpack(t *testing.T) {
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		err := c.Get(context.Background(), types.NamespacedName{Name: testCatalogName}, catalog)
 		assert.NoError(ct, err)
-		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeServing)
+		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeServing)
 		assert.NotNil(ct, cond)
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
+		assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
 	}, pollDuration, pollInterval)
 }
 
@@ -274,11 +273,11 @@ func ensureNoExtensionResources(t *testing.T, clusterExtensionName string) {
 	}, 2*pollDuration, pollInterval)
 }
 
-func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1.ClusterExtension, sa *corev1.ServiceAccount, ns *corev1.Namespace) {
+func testCleanup(t *testing.T, cat *ocv1.ClusterCatalog, clusterExtension *ocv1.ClusterExtension, sa *corev1.ServiceAccount, ns *corev1.Namespace) {
 	t.Logf("By deleting ClusterCatalog %q", cat.Name)
 	require.NoError(t, c.Delete(context.Background(), cat))
 	require.Eventually(t, func() bool {
-		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.ClusterCatalog{})
+		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &ocv1.ClusterCatalog{})
 		return errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
 
@@ -336,7 +335,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 			clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogSource{
+					Catalog: &ocv1.CatalogFilter{
 						PackageName: tc.packageName,
 						Selector: &metav1.LabelSelector{
 							MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
@@ -396,7 +395,7 @@ func TestClusterExtensionInstallRegistryDynamic(t *testing.T) {
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: packageName,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
@@ -467,10 +466,10 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
-	defer func(cat *catalogd.ClusterCatalog) {
+	defer func(cat *ocv1.ClusterCatalog) {
 		require.NoError(t, c.Delete(context.Background(), cat))
 		require.Eventually(t, func() bool {
-			err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.ClusterCatalog{})
+			err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &ocv1.ClusterCatalog{})
 			return errors.IsNotFound(err)
 		}, pollDuration, pollInterval)
 	}(extraCatalog)
@@ -478,7 +477,7 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 			},
 		},
@@ -520,7 +519,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 				Version:     "1.0.0",
 				// No Selector since this is an exact version match
@@ -583,7 +582,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 				Version:     "1.0.0",
 			},
@@ -632,7 +631,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 				Version:     "1.0.0",
 			},
@@ -679,7 +678,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 				Selector: &metav1.LabelSelector{
 					MatchExpressions: []metav1.LabelSelectorRequirement{
@@ -718,10 +717,10 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	require.NoError(t, err)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.Name}, extensionCatalog))
-		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, catalogd.TypeServing)
+		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, ocv1.TypeServing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -766,7 +765,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
@@ -799,10 +798,10 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	require.NoError(t, err)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.Name}, extensionCatalog))
-		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, catalogd.TypeServing)
+		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, ocv1.TypeServing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -827,7 +826,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
@@ -890,7 +889,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1.CatalogSource{
+			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},

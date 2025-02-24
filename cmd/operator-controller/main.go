@@ -54,8 +54,7 @@ import (
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
@@ -202,8 +201,8 @@ func run() error {
 	setupLog.Info("set up manager")
 	cacheOptions := crcache.Options{
 		ByObject: map[client.Object]crcache.ByObject{
-			&ocv1.ClusterExtension{}:   {Label: k8slabels.Everything()},
-			&catalogd.ClusterCatalog{}: {Label: k8slabels.Everything()},
+			&ocv1.ClusterExtension{}: {Label: k8slabels.Everything()},
+			&ocv1.ClusterCatalog{}:   {Label: k8slabels.Everything()},
 		},
 		DefaultNamespaces: map[string]crcache.Config{
 			cfg.systemNamespace: {LabelSelector: k8slabels.Everything()},
@@ -383,8 +382,8 @@ func run() error {
 
 	resolver := &resolve.CatalogResolver{
 		WalkCatalogsFunc: resolve.CatalogWalker(
-			func(ctx context.Context, option ...client.ListOption) ([]catalogd.ClusterCatalog, error) {
-				var catalogs catalogd.ClusterCatalogList
+			func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
+				var catalogs ocv1.ClusterCatalogList
 				if err := cl.List(ctx, &catalogs, option...); err != nil {
 					return nil, err
 				}

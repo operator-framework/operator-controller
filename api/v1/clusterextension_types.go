@@ -119,7 +119,7 @@ type SourceConfig struct {
 	// This field is required when sourceType is "Catalog", and forbidden otherwise.
 	//
 	// +optional
-	Catalog *CatalogSource `json:"catalog,omitempty"`
+	Catalog *CatalogFilter `json:"catalog,omitempty"`
 }
 
 // ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
@@ -138,8 +138,8 @@ type ClusterExtensionInstallConfig struct {
 	Preflight *PreflightConfig `json:"preflight,omitempty"`
 }
 
-// CatalogSource defines the attributes used to identify and filter content from a catalog.
-type CatalogSource struct {
+// CatalogFilter defines the attributes used to identify and filter content from a catalog.
+type CatalogFilter struct {
 	// packageName is a reference to the name of the package to be installed
 	// and is used to filter the content from catalogs.
 	//
@@ -391,21 +391,12 @@ type CRDUpgradeSafetyPreflightConfig struct {
 }
 
 const (
-	TypeInstalled   = "Installed"
-	TypeProgressing = "Progressing"
-
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
 	TypeDeprecated        = "Deprecated"
 	TypePackageDeprecated = "PackageDeprecated"
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
-
-	ReasonSucceeded  = "Succeeded"
-	ReasonDeprecated = "Deprecated"
-	ReasonFailed     = "Failed"
-	ReasonBlocked    = "Blocked"
-	ReasonRetrying   = "Retrying"
 
 	// None will not perform CRD upgrade safety checks.
 	CRDUpgradeSafetyEnforcementNone CRDUpgradeSafetyEnforcement = "None"

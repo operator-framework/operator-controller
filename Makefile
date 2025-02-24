@@ -118,14 +118,20 @@ KUSTOMIZE_CATD_RBAC_DIR := config/base/catalogd/rbac
 KUSTOMIZE_CATD_WEBHOOKS_DIR := config/base/catalogd/manager/webhook
 KUSTOMIZE_OPCON_CRDS_DIR := config/base/operator-controller/crd/bases
 KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
+CRD_WORKING_DIR := crd_work_dir
+# Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
+# So we have to generate them together and then move them into place
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
-	# Generate the operator-controller manifests
-	rm -rf $(KUSTOMIZE_OPCON_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/operator-controller/... output:crd:artifacts:config=$(KUSTOMIZE_OPCON_CRDS_DIR)
-	rm -f $(KUSTOMIZE_OPCON_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/operator-controller/... output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
-	# Generate the catalogd manifests
-	rm -rf $(KUSTOMIZE_CATD_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/catalogd/... output:crd:artifacts:config=$(KUSTOMIZE_CATD_CRDS_DIR)
-	rm -f $(KUSTOMIZE_CATD_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
-	rm -f $(KUSTOMIZE_CATD_WEBHOOKS_DIR)/manifests.yaml && $(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
+	mkdir $(CRD_WORKING_DIR)
+	$(CONTROLLER_GEN) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
+	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clusterextensions.yaml $(KUSTOMIZE_OPCON_CRDS_DIR)
+	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clustercatalogs.yaml $(KUSTOMIZE_CATD_CRDS_DIR)
+	rmdir $(CRD_WORKING_DIR)
+	# Generate the remaining operator-controller manifests
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
+	# Generate the remaining catalogd manifests
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
+	$(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -353,19 +359,12 @@ quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation rel
 
 .PHONY: crd-ref-docs
 OPERATOR_CONTROLLER_API_REFERENCE_FILENAME := operator-controller-api-reference.md
-CATALOGD_API_REFERENCE_FILENAME := catalogd-api-reference.md
 API_REFERENCE_DIR := $(ROOT_DIR)/docs/api-reference
-
 crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
 	rm -f $(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME)
-	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/operator-controller \
+	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/ \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
 	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME);
-
-	rm -f $(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME)
-	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/catalogd \
-	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
-	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME);
 
 VENVDIR := $(abspath docs/.venv)
 

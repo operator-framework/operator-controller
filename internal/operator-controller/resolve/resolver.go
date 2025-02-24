@@ -7,7 +7,7 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 type Resolver interface {

@@ -13,7 +13,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 )
 
@@ -45,15 +45,15 @@ func TestMain(m *testing.M) {
 // Note that catalogd will automatically create the label:
 //
 //	"olm.operatorframework.io/metadata.name": name
-func createTestCatalog(ctx context.Context, name string, imageRef string) (*catalogd.ClusterCatalog, error) {
-	catalog := &catalogd.ClusterCatalog{
+func createTestCatalog(ctx context.Context, name string, imageRef string) (*ocv1.ClusterCatalog, error) {
+	catalog := &ocv1.ClusterCatalog{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: catalogd.ClusterCatalogSpec{
-			Source: catalogd.CatalogSource{
-				Type: catalogd.SourceTypeImage,
-				Image: &catalogd.ImageSource{
+		Spec: ocv1.ClusterCatalogSpec{
+			Source: ocv1.CatalogSource{
+				Type: ocv1.SourceTypeImage,
+				Image: &ocv1.ImageSource{
 					Ref:                 imageRef,
 					PollIntervalMinutes: ptr.To(1),
 				},
@@ -70,7 +70,7 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 // if any errors occurred while updating the catalog.
 func patchTestCatalog(ctx context.Context, name string, newImageRef string) error {
 	// Fetch the existing ClusterCatalog
-	catalog := &catalogd.ClusterCatalog{}
+	catalog := &ocv1.ClusterCatalog{}
 	err := c.Get(ctx, client.ObjectKey{Name: name}, catalog)
 	if err != nil {
 		return err

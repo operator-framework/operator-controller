@@ -19,8 +19,7 @@ import (
 	"k8s.io/utils/env"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 // CollectTestArtifacts gets all the artifacts from the test run and saves them to the artifact path.
@@ -71,7 +70,7 @@ func CollectTestArtifacts(t *testing.T, artifactName string, c client.Client, cf
 	}
 
 	// get all catalogsources save them to the artifact path.
-	catalogsources := catalogd.ClusterCatalogList{}
+	catalogsources := ocv1.ClusterCatalogList{}
 	if err := c.List(context.Background(), &catalogsources, client.InNamespace("")); err != nil {
 		fmt.Printf("Failed to list catalogsources: %v", err)
 	}

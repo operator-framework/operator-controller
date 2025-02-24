@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 type CatalogCache interface {
@@ -35,7 +35,7 @@ type CatalogCache interface {
 }
 
 type CatalogCachePopulator interface {
-	PopulateCache(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error)
+	PopulateCache(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error)
 }
 
 // ClusterCatalogReconciler reconciles a ClusterCatalog object
@@ -54,7 +54,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	l.Info("reconcile starting")
 	defer l.Info("reconcile ending")
 
-	existingCatalog := &catalogd.ClusterCatalog{}
+	existingCatalog := &ocv1.ClusterCatalog{}
 	err := r.Client.Get(ctx, req.NamespacedName, existingCatalog)
 	if apierrors.IsNotFound(err) {
 		if err := r.CatalogCache.Remove(req.Name); err != nil {
@@ -93,7 +93,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	_, err := ctrl.NewControllerManagedBy(mgr).
-		For(&catalogd.ClusterCatalog{}).
+		For(&ocv1.ClusterCatalog{}).
 		Build(r)
 
 	return err

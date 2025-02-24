@@ -16,19 +16,19 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	catalogClient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 )
 
-func defaultCatalog() *catalogd.ClusterCatalog {
-	return &catalogd.ClusterCatalog{
+func defaultCatalog() *ocv1.ClusterCatalog {
+	return &ocv1.ClusterCatalog{
 		ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"},
-		Status: catalogd.ClusterCatalogStatus{
-			Conditions: []metav1.Condition{{Type: catalogd.TypeServing, Status: metav1.ConditionTrue}},
-			ResolvedSource: &catalogd.ResolvedCatalogSource{Image: &catalogd.ResolvedImageSource{
+		Status: ocv1.ClusterCatalogStatus{
+			Conditions: []metav1.Condition{{Type: ocv1.TypeServing, Status: metav1.ConditionTrue}},
+			ResolvedSource: &ocv1.ResolvedCatalogSource{Image: &ocv1.ResolvedImageSource{
 				Ref: "fake/catalog@sha256:fakesha",
 			}},
-			URLs: &catalogd.ClusterCatalogURLs{
+			URLs: &ocv1.ClusterCatalogURLs{
 				Base: "https://fake-url.svc.local/catalogs/catalog-1",
 			},
 		},
@@ -42,7 +42,7 @@ func TestClientGetPackage(t *testing.T) {
 
 	type testCase struct {
 		name    string
-		catalog func() *catalogd.ClusterCatalog
+		catalog func() *ocv1.ClusterCatalog
 		pkgName string
 		cache   catalogClient.Cache
 		assert  func(*testing.T, *declcfg.DeclarativeConfig, error)
@@ -50,8 +50,8 @@ func TestClientGetPackage(t *testing.T) {
 	for _, tc := range []testCase{
 		{
 			name: "not served",
-			catalog: func() *catalogd.ClusterCatalog {
-				return &catalogd.ClusterCatalog{ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"}}
+			catalog: func() *ocv1.ClusterCatalog {
+				return &ocv1.ClusterCatalog{ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"}}
 			},
 			assert: func(t *testing.T, dc *declcfg.DeclarativeConfig, err error) {
 				assert.ErrorContains(t, err, `catalog "catalog-1" is not being served`)
@@ -143,7 +143,7 @@ func TestClientPopulateCache(t *testing.T) {
 
 	type testCase struct {
 		name               string
-		catalog            func() *catalogd.ClusterCatalog
+		catalog            func() *ocv1.ClusterCatalog
 		httpClient         func() (*http.Client, error)
 		putFuncConstructor func(t *testing.T) func(source string, errToCache error) (fs.FS, error)
 		assert             func(t *testing.T, fs fs.FS, err error)
@@ -175,8 +175,8 @@ func TestClientPopulateCache(t *testing.T) {
 		},
 		{
 			name: "not served",
-			catalog: func() *catalogd.ClusterCatalog {
-				return &catalogd.ClusterCatalog{ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"}}
+			catalog: func() *ocv1.ClusterCatalog {
+				return &ocv1.ClusterCatalog{ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"}}
 			},
 			assert: func(t *testing.T, fs fs.FS, err error) {
 				assert.Nil(t, fs)

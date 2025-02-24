@@ -1,5 +1,5 @@
 /*
-Copyright 2022.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,9 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//go:generate apiregister-gen --input-dirs ./... -h ../../hack/boilerplate.go.txt
+package v1
 
-//
-// +domain=operatorframework.io
+const (
+	TypeInstalled   = "Installed"
+	TypeProgressing = "Progressing"
+	TypeServing     = "Serving"
 
-package api
+	// Progressing reasons
+	ReasonSucceeded = "Succeeded"
+	ReasonRetrying  = "Retrying"
+	ReasonBlocked   = "Blocked"
+
+	// Terminal reasons
+	ReasonDeprecated = "Deprecated"
+	ReasonFailed     = "Failed"
+
+	// Serving reasons
+	ReasonAvailable                = "Available"
+	ReasonUnavailable              = "Unavailable"
+	ReasonUserSpecifiedUnavailable = "UserSpecifiedUnavailable"
+)

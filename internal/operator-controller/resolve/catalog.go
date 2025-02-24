@@ -17,8 +17,7 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/filter"
@@ -82,7 +81,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 	listOptions := []client.ListOption{
 		client.MatchingLabelsSelector{Selector: selector},
 	}
-	if err := r.WalkCatalogsFunc(ctx, packageName, func(ctx context.Context, cat *catalogd.ClusterCatalog, packageFBC *declcfg.DeclarativeConfig, err error) error {
+	if err := r.WalkCatalogsFunc(ctx, packageName, func(ctx context.Context, cat *ocv1.ClusterCatalog, packageFBC *declcfg.DeclarativeConfig, err error) error {
 		if err != nil {
 			return fmt.Errorf("error getting package %q from catalog %q: %w", packageName, cat.Name, err)
 		}
@@ -261,11 +260,11 @@ func isDeprecated(bundle declcfg.Bundle, deprecation *declcfg.Deprecation) bool 
 	return false
 }
 
-type CatalogWalkFunc func(context.Context, *catalogd.ClusterCatalog, *declcfg.DeclarativeConfig, error) error
+type CatalogWalkFunc func(context.Context, *ocv1.ClusterCatalog, *declcfg.DeclarativeConfig, error) error
 
 func CatalogWalker(
-	listCatalogs func(context.Context, ...client.ListOption) ([]catalogd.ClusterCatalog, error),
-	getPackage func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error),
+	listCatalogs func(context.Context, ...client.ListOption) ([]ocv1.ClusterCatalog, error),
+	getPackage func(context.Context, *ocv1.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error),
 ) func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
 	return func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
 		l := log.FromContext(ctx)
@@ -275,15 +274,15 @@ func CatalogWalker(
 		}
 
 		// Remove disabled catalogs from consideration
-		catalogs = slices.DeleteFunc(catalogs, func(c catalogd.ClusterCatalog) bool {
-			if c.Spec.AvailabilityMode == catalogd.AvailabilityModeUnavailable {
+		catalogs = slices.DeleteFunc(catalogs, func(c ocv1.ClusterCatalog) bool {
+			if c.Spec.AvailabilityMode == ocv1.AvailabilityModeUnavailable {
 				l.Info("excluding ClusterCatalog from resolution process since it is disabled", "catalog", c.Name)
 				return true
 			}
 			return false
 		})
 
-		availableCatalogNames := mapSlice(catalogs, func(c catalogd.ClusterCatalog) string { return c.Name })
+		availableCatalogNames := mapSlice(catalogs, func(c ocv1.ClusterCatalog) string { return c.Name })
 		l.Info("using ClusterCatalogs for resolution", "catalogs", availableCatalogNames)
 
 		for i := range catalogs {

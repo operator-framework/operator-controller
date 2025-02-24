@@ -15,7 +15,7 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 )
 
@@ -61,7 +61,7 @@ type Client struct {
 	httpClient func() (*http.Client, error)
 }
 
-func (c *Client) GetPackage(ctx context.Context, catalog *catalogd.ClusterCatalog, pkgName string) (*declcfg.DeclarativeConfig, error) {
+func (c *Client) GetPackage(ctx context.Context, catalog *ocv1.ClusterCatalog, pkgName string) (*declcfg.DeclarativeConfig, error) {
 	if err := validateCatalog(catalog); err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (c *Client) GetPackage(ctx context.Context, catalog *catalogd.ClusterCatalo
 	return pkgFBC, nil
 }
 
-func (c *Client) PopulateCache(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error) {
+func (c *Client) PopulateCache(ctx context.Context, catalog *ocv1.ClusterCatalog) (fs.FS, error) {
 	if err := validateCatalog(catalog); err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (c *Client) PopulateCache(ctx context.Context, catalog *catalogd.ClusterCat
 	return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.Ref, resp.Body, nil)
 }
 
-func (c *Client) doRequest(ctx context.Context, catalog *catalogd.ClusterCatalog) (*http.Response, error) {
+func (c *Client) doRequest(ctx context.Context, catalog *ocv1.ClusterCatalog) (*http.Response, error) {
 	if catalog.Status.URLs == nil {
 		return nil, fmt.Errorf("error: catalog %q has a nil status.urls value", catalog.Name)
 	}
@@ -142,14 +142,14 @@ func (c *Client) doRequest(ctx context.Context, catalog *catalogd.ClusterCatalog
 	return resp, nil
 }
 
-func validateCatalog(catalog *catalogd.ClusterCatalog) error {
+func validateCatalog(catalog *ocv1.ClusterCatalog) error {
 	if catalog == nil {
 		return fmt.Errorf("error: provided catalog must be non-nil")
 	}
 
 	// if the catalog is not being served, report an error. This ensures that our
 	// reconciles are deterministic and wait for all desired catalogs to be ready.
-	if !meta.IsStatusConditionPresentAndEqual(catalog.Status.Conditions, catalogd.TypeServing, metav1.ConditionTrue) {
+	if !meta.IsStatusConditionPresentAndEqual(catalog.Status.Conditions, ocv1.TypeServing, metav1.ConditionTrue) {
 		return fmt.Errorf("catalog %q is not being served", catalog.Name)
 	}
 

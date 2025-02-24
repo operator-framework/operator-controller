@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 func TestClusterExtensionSourceConfig(t *testing.T) {
@@ -39,7 +39,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 				err = cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 					Source: ocv1.SourceConfig{
 						SourceType: tc.sourceType,
-						Catalog: &ocv1.CatalogSource{
+						Catalog: &ocv1.CatalogFilter{
 							PackageName: "test-package",
 						},
 					},
@@ -109,7 +109,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogSource{
+					Catalog: &ocv1.CatalogFilter{
 						PackageName: tc.pkgName,
 					},
 				},
@@ -206,7 +206,7 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogSource{
+					Catalog: &ocv1.CatalogFilter{
 						PackageName: "package",
 						Version:     tc.version,
 					},
@@ -261,7 +261,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogSource{
+					Catalog: &ocv1.CatalogFilter{
 						PackageName: "package",
 						Channels:    tc.channels,
 					},
@@ -315,7 +315,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogSource{
+					Catalog: &ocv1.CatalogFilter{
 						PackageName: "package",
 					},
 				},
@@ -369,7 +369,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogSource{
+					Catalog: &ocv1.CatalogFilter{
 						PackageName: "package",
 					},
 				},
@@ -428,7 +428,7 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1.CatalogSource{
+					Catalog: &ocv1.CatalogFilter{
 						PackageName: "package",
 					},
 				},

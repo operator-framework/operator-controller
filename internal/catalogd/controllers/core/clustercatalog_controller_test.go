@@ -21,7 +21,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
@@ -61,9 +61,9 @@ func (m MockStore) ContentExists(_ string) bool {
 func TestCatalogdControllerReconcile(t *testing.T) {
 	for _, tt := range []struct {
 		name            string
-		catalog         *catalogdv1.ClusterCatalog
+		catalog         *ocv1.ClusterCatalog
 		expectedError   error
-		expectedCatalog *catalogdv1.ClusterCatalog
+		expectedCatalog *ocv1.ClusterCatalog
 		puller          imageutil.Puller
 		cache           imageutil.Cache
 		store           storage.Instance
@@ -72,34 +72,34 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			name:   "invalid source type, returns error",
 			puller: &imageutil.MockPuller{},
 			store:  &MockStore{},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
 						Type: "invalid",
 					},
 				},
 			},
 			expectedError: reconcile.TerminalError(errors.New(`unknown source type "invalid"`)),
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
 						Type: "invalid",
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonBlocked,
+							Reason: ocv1.ReasonBlocked,
 						},
 					},
 				},
@@ -112,39 +112,39 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Error: errors.New("mockpuller error"),
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonRetrying,
+							Reason: ocv1.ReasonRetrying,
 						},
 					},
 				},
@@ -157,39 +157,39 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Error: reconcile.TerminalError(errors.New("mockpuller terminal error")),
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonBlocked,
+							Reason: ocv1.ReasonBlocked,
 						},
 					},
 				},
@@ -202,50 +202,50 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Ref:     mustRef(t, "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
-					URLs: &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+				Status: ocv1.ClusterCatalogStatus{
+					URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonAvailable,
+							Reason: ocv1.ReasonAvailable,
 						},
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 					},
-					ResolvedSource: &catalogdv1.ResolvedCatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ResolvedImageSource{
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ResolvedImageSource{
 							Ref: "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 						},
 					},
@@ -262,39 +262,39 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			store: &MockStore{
 				shouldError: true,
 			},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonRetrying,
+							Reason: ocv1.ReasonRetrying,
 						},
 					},
 				},
@@ -306,28 +306,28 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				ImageFS: &fstest.MapFS{},
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "catalog",
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
@@ -340,67 +340,67 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				ImageFS: &fstest.MapFS{},
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{fbcDeletionFinalizer},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					LastUnpacked: &metav1.Time{},
-					ResolvedSource: &catalogdv1.ResolvedCatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ResolvedImageSource{
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ResolvedImageSource{
 							Ref: "",
 						},
 					},
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonAvailable,
+							Reason: ocv1.ReasonAvailable,
 						},
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonUnavailable,
+							Reason: ocv1.ReasonUnavailable,
 						},
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 					},
 				},
@@ -415,62 +415,62 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			store: &MockStore{
 				shouldError: true,
 			},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{fbcDeletionFinalizer},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
-					URLs: &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+				Status: ocv1.ClusterCatalogStatus{
+					URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonAvailable,
+							Reason: ocv1.ReasonAvailable,
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{fbcDeletionFinalizer},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
-					URLs: &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+				Status: ocv1.ClusterCatalogStatus{
+					URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonRetrying,
+							Reason: ocv1.ReasonRetrying,
 						},
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonAvailable,
+							Reason: ocv1.ReasonAvailable,
 						},
 					},
 				},
@@ -484,60 +484,60 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			store: &MockStore{
 				shouldError: false,
 			},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{fbcDeletionFinalizer},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonAvailable,
+							Reason: ocv1.ReasonAvailable,
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{fbcDeletionFinalizer},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonRetrying,
+							Reason: ocv1.ReasonRetrying,
 						},
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonUnavailable,
+							Reason: ocv1.ReasonUnavailable,
 						},
 					},
 				},
@@ -549,66 +549,66 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				ImageFS: &fstest.MapFS{},
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "catalog",
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
-					AvailabilityMode: catalogdv1.AvailabilityModeUnavailable,
+					AvailabilityMode: ocv1.AvailabilityModeUnavailable,
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
-					URLs:         &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+				Status: ocv1.ClusterCatalogStatus{
+					URLs:         &ocv1.ClusterCatalogURLs{Base: "URL"},
 					LastUnpacked: &metav1.Time{},
-					ResolvedSource: &catalogdv1.ResolvedCatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ResolvedImageSource{
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ResolvedImageSource{
 							Ref: "",
 						},
 					},
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonAvailable,
+							Reason: ocv1.ReasonAvailable,
 						},
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "catalog",
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
-					AvailabilityMode: catalogdv1.AvailabilityModeUnavailable,
+					AvailabilityMode: ocv1.AvailabilityModeUnavailable,
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonUserSpecifiedUnavailable,
+							Reason: ocv1.ReasonUserSpecifiedUnavailable,
 						},
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 					},
 				},
@@ -620,68 +620,68 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				ImageFS: &fstest.MapFS{},
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
-					AvailabilityMode: catalogdv1.AvailabilityModeUnavailable,
+					AvailabilityMode: ocv1.AvailabilityModeUnavailable,
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
-					URLs:         &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+				Status: ocv1.ClusterCatalogStatus{
+					URLs:         &ocv1.ClusterCatalogURLs{Base: "URL"},
 					LastUnpacked: &metav1.Time{},
-					ResolvedSource: &catalogdv1.ResolvedCatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ResolvedImageSource{
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ResolvedImageSource{
 							Ref: "",
 						},
 					},
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonAvailable,
+							Reason: ocv1.ReasonAvailable,
 						},
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1.ClusterCatalog{
+			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
-					AvailabilityMode: catalogdv1.AvailabilityModeUnavailable,
+					AvailabilityMode: ocv1.AvailabilityModeUnavailable,
 				},
-				Status: catalogdv1.ClusterCatalogStatus{
+				Status: ocv1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1.TypeServing,
+							Type:   ocv1.TypeServing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1.ReasonUserSpecifiedUnavailable,
+							Reason: ocv1.ReasonUserSpecifiedUnavailable,
 						},
 						{
-							Type:   catalogdv1.TypeProgressing,
+							Type:   ocv1.TypeProgressing,
 							Status: metav1.ConditionTrue,
-							Reason: catalogdv1.ReasonSucceeded,
+							Reason: ocv1.ReasonSucceeded,
 						},
 					},
 				},
@@ -721,20 +721,20 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 
 func TestPollingRequeue(t *testing.T) {
 	for name, tc := range map[string]struct {
-		catalog              *catalogdv1.ClusterCatalog
+		catalog              *ocv1.ClusterCatalog
 		expectedRequeueAfter time.Duration
 		lastPollTime         time.Time
 	}{
 		"ClusterCatalog with tag based image ref without any poll interval specified, requeueAfter set to 0, ie polling disabled": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
@@ -744,15 +744,15 @@ func TestPollingRequeue(t *testing.T) {
 			lastPollTime:         time.Now(),
 		},
 		"ClusterCatalog with tag based image ref with poll interval specified, just polled, requeueAfter set to wait.jitter(pollInterval)": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref:                 "my.org/someimage:latest",
 							PollIntervalMinutes: ptr.To(5),
 						},
@@ -763,15 +763,15 @@ func TestPollingRequeue(t *testing.T) {
 			lastPollTime:         time.Now(),
 		},
 		"ClusterCatalog with tag based image ref with poll interval specified, last polled 2m ago, requeueAfter set to wait.jitter(pollInterval-2)": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref:                 "my.org/someimage:latest",
 							PollIntervalMinutes: ptr.To(5),
 						},
@@ -784,16 +784,16 @@ func TestPollingRequeue(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			ref := mustRef(t, "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
-			tc.catalog.Status = catalogdv1.ClusterCatalogStatus{
+			tc.catalog.Status = ocv1.ClusterCatalogStatus{
 				Conditions: []metav1.Condition{
-					{Type: catalogdv1.TypeServing, Status: metav1.ConditionTrue, Reason: catalogdv1.ReasonAvailable, Message: "Serving desired content from resolved source", LastTransitionTime: metav1.Now()},
-					{Type: catalogdv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: catalogdv1.ReasonSucceeded, Message: "Successfully unpacked and stored content from resolved source", LastTransitionTime: metav1.Now()},
+					{Type: ocv1.TypeServing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonAvailable, Message: "Serving desired content from resolved source", LastTransitionTime: metav1.Now()},
+					{Type: ocv1.TypeProgressing, Status: metav1.ConditionTrue, Reason: ocv1.ReasonSucceeded, Message: "Successfully unpacked and stored content from resolved source", LastTransitionTime: metav1.Now()},
 				},
-				ResolvedSource: &catalogdv1.ResolvedCatalogSource{
-					Type:  catalogdv1.SourceTypeImage,
-					Image: &catalogdv1.ResolvedImageSource{Ref: ref.String()},
+				ResolvedSource: &ocv1.ResolvedCatalogSource{
+					Type:  ocv1.SourceTypeImage,
+					Image: &ocv1.ResolvedImageSource{Ref: ref.String()},
 				},
-				URLs:         &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+				URLs:         &ocv1.ClusterCatalogURLs{Base: "URL"},
 				LastUnpacked: ptr.To(metav1.NewTime(time.Now().Truncate(time.Second))),
 			}
 			reconciler := &ClusterCatalogReconciler{
@@ -825,28 +825,28 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 	successfulObservedGeneration := int64(2)
 	successfulRef := mustRef(t, "my.org/someimage@sha256:"+oldDigest)
 	successfulUnpackTime := time.Time{}
-	successfulUnpackStatus := func(mods ...func(status *catalogdv1.ClusterCatalogStatus)) catalogdv1.ClusterCatalogStatus {
-		s := catalogdv1.ClusterCatalogStatus{
-			URLs: &catalogdv1.ClusterCatalogURLs{Base: "URL"},
+	successfulUnpackStatus := func(mods ...func(status *ocv1.ClusterCatalogStatus)) ocv1.ClusterCatalogStatus {
+		s := ocv1.ClusterCatalogStatus{
+			URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
 			Conditions: []metav1.Condition{
 				{
-					Type:               catalogdv1.TypeProgressing,
+					Type:               ocv1.TypeProgressing,
 					Status:             metav1.ConditionTrue,
-					Reason:             catalogdv1.ReasonSucceeded,
+					Reason:             ocv1.ReasonSucceeded,
 					Message:            "Successfully unpacked and stored content from resolved source",
 					ObservedGeneration: successfulObservedGeneration,
 				},
 				{
-					Type:               catalogdv1.TypeServing,
+					Type:               ocv1.TypeServing,
 					Status:             metav1.ConditionTrue,
-					Reason:             catalogdv1.ReasonAvailable,
+					Reason:             ocv1.ReasonAvailable,
 					Message:            "Serving desired content from resolved source",
 					ObservedGeneration: successfulObservedGeneration,
 				},
 			},
-			ResolvedSource: &catalogdv1.ResolvedCatalogSource{
-				Type: catalogdv1.SourceTypeImage,
-				Image: &catalogdv1.ResolvedImageSource{
+			ResolvedSource: &ocv1.ResolvedCatalogSource{
+				Type: ocv1.SourceTypeImage,
+				Image: &ocv1.ResolvedImageSource{
 					Ref: successfulRef.String(),
 				},
 			},
@@ -869,20 +869,20 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 	}
 
 	for name, tc := range map[string]struct {
-		catalog           *catalogdv1.ClusterCatalog
+		catalog           *ocv1.ClusterCatalog
 		storedCatalogData map[string]storedCatalogData
 		expectedUnpackRun bool
 	}{
 		"ClusterCatalog being resolved the first time, unpack should run": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref:                 "my.org/someimage:latest",
 							PollIntervalMinutes: ptr.To(5),
 						},
@@ -892,16 +892,16 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			expectedUnpackRun: true,
 		},
 		"ClusterCatalog not being resolved the first time, no pollInterval mentioned, unpack should not run": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 2,
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref: "my.org/someimage:latest",
 						},
 					},
@@ -912,16 +912,16 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			expectedUnpackRun: false,
 		},
 		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, unpack should not run": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 2,
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref:                 "my.org/someimage:latest",
 							PollIntervalMinutes: ptr.To(7),
 						},
@@ -933,16 +933,16 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			expectedUnpackRun: false,
 		},
 		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is after next expected poll time, unpack should run": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 2,
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref:                 "my.org/someimage:latest",
 							PollIntervalMinutes: ptr.To(3),
 						},
@@ -954,16 +954,16 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			expectedUnpackRun: true,
 		},
 		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, generation changed, unpack should run": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 3,
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref:                 "my.org/someotherimage@sha256:" + newDigest,
 							PollIntervalMinutes: ptr.To(7),
 						},
@@ -975,16 +975,16 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			expectedUnpackRun: true,
 		},
 		"ClusterCatalog not being resolved the first time, no stored catalog in cache, unpack should run": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 3,
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref:                 "my.org/someotherimage@sha256:" + newDigest,
 							PollIntervalMinutes: ptr.To(7),
 						},
@@ -995,23 +995,23 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			expectedUnpackRun: true,
 		},
 		"ClusterCatalog not being resolved the first time, unexpected status, unpack should run": {
-			catalog: &catalogdv1.ClusterCatalog{
+			catalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 3,
 				},
-				Spec: catalogdv1.ClusterCatalogSpec{
-					Source: catalogdv1.CatalogSource{
-						Type: catalogdv1.SourceTypeImage,
-						Image: &catalogdv1.ImageSource{
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
 							Ref:                 "my.org/someotherimage@sha256:" + newDigest,
 							PollIntervalMinutes: ptr.To(7),
 						},
 					},
 				},
-				Status: successfulUnpackStatus(func(status *catalogdv1.ClusterCatalogStatus) {
-					meta.FindStatusCondition(status.Conditions, catalogdv1.TypeProgressing).Status = metav1.ConditionTrue
+				Status: successfulUnpackStatus(func(status *ocv1.ClusterCatalogStatus) {
+					meta.FindStatusCondition(status.Conditions, ocv1.TypeProgressing).Status = metav1.ConditionTrue
 				}),
 			},
 			storedCatalogData: successfulStoredCatalogData(time.Now()),

@@ -11,7 +11,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 // FindK8sClient returns the first available Kubernetes CLI client from the system,
@@ -31,7 +31,7 @@ func FindK8sClient(t *testing.T) string {
 	return ""
 }
 
-func ReadTestCatalogServerContents(ctx context.Context, catalog *catalogdv1.ClusterCatalog, kubeClient kubernetes.Interface) ([]byte, error) {
+func ReadTestCatalogServerContents(ctx context.Context, catalog *ocv1.ClusterCatalog, kubeClient kubernetes.Interface) ([]byte, error) {
 	if catalog == nil {
 		return nil, fmt.Errorf("cannot read nil catalog")
 	}

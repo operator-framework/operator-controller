@@ -55,7 +55,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	corecontrollers "github.com/operator-framework/operator-controller/internal/catalogd/controllers/core"
 	"github.com/operator-framework/operator-controller/internal/catalogd/features"
 	"github.com/operator-framework/operator-controller/internal/catalogd/garbagecollection"
@@ -145,7 +145,7 @@ func init() {
 	features.CatalogdFeatureGate.AddFlag(flags)
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(catalogdv1.AddToScheme(scheme))
+	utilruntime.Must(ocv1.AddToScheme(scheme))
 	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
 }
 
