@@ -20,7 +20,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const crdFilePath = "../../../config/base/catalogd/crd/bases/olm.operatorframework.io_clustercatalogs.yaml"
+const crdFilePath = "../../config/base/catalogd/crd/bases/olm.operatorframework.io_clustercatalogs.yaml"
 
 func TestImageSourceCELValidationRules(t *testing.T) {
 	validators := fieldValidatorsFromFile(t, crdFilePath)

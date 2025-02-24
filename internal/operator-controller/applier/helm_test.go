@@ -18,7 +18,7 @@ import (
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
-	v1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
@@ -127,7 +127,7 @@ metadata:
 spec:
   clusterIP: 0.0.0.0`
 
-	testCE            = &v1.ClusterExtension{}
+	testCE            = &ocv1.ClusterExtension{}
 	testObjectLabels  = map[string]string{"object": "label"}
 	testStorageLabels = map[string]string{"storage": "label"}
 )

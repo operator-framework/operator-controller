@@ -38,7 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
@@ -92,7 +92,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	l.Info("reconcile starting")
 	defer l.Info("reconcile ending")
 
-	existingCatsrc := catalogdv1.ClusterCatalog{}
+	existingCatsrc := ocv1.ClusterCatalog{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -151,7 +151,7 @@ func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&catalogdv1.ClusterCatalog{}).
+		For(&ocv1.ClusterCatalog{}).
 		Complete(r)
 }
 
@@ -163,11 +163,11 @@ func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // to add the ctrl.Result type back as a return value. Adding a comment to ignore
 // linting from the linter that was fussing about this.
 // nolint:unparam
-func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *catalogdv1.ClusterCatalog) (ctrl.Result, error) {
+func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.ClusterCatalog) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 	// Check if the catalog availability is set to disabled, if true then
 	// unset base URL, delete it from the cache and set appropriate status
-	if catalog.Spec.AvailabilityMode == catalogdv1.AvailabilityModeUnavailable {
+	if catalog.Spec.AvailabilityMode == ocv1.AvailabilityModeUnavailable {
 		// Delete the catalog from local cache
 		err := r.deleteCatalogCache(ctx, catalog)
 		if err != nil {
@@ -233,7 +233,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *catal
 		return nextPollResult(storedCatalog.lastSuccessfulPoll, catalog), nil
 	}
 
-	if catalog.Spec.Source.Type != catalogdv1.SourceTypeImage {
+	if catalog.Spec.Source.Type != ocv1.SourceTypeImage {
 		err := reconcile.TerminalError(fmt.Errorf("unknown source type %q", catalog.Spec.Source.Type))
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), err)
 		return ctrl.Result{}, err
@@ -276,7 +276,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *catal
 	return nextPollResult(lastSuccessfulPoll, catalog), nil
 }
 
-func (r *ClusterCatalogReconciler) getCurrentState(catalog *catalogdv1.ClusterCatalog) (*catalogdv1.ClusterCatalogStatus, storedCatalogData, bool) {
+func (r *ClusterCatalogReconciler) getCurrentState(catalog *ocv1.ClusterCatalog) (*ocv1.ClusterCatalogStatus, storedCatalogData, bool) {
 	r.storedCatalogsMu.RLock()
 	storedCatalog, hasStoredCatalog := r.storedCatalogs[catalog.Name]
 	r.storedCatalogsMu.RUnlock()
@@ -293,10 +293,10 @@ func (r *ClusterCatalogReconciler) getCurrentState(catalog *catalogdv1.ClusterCa
 	return expectedStatus, storedCatalog, hasStoredCatalog
 }
 
-func nextPollResult(lastSuccessfulPoll time.Time, catalog *catalogdv1.ClusterCatalog) ctrl.Result {
+func nextPollResult(lastSuccessfulPoll time.Time, catalog *ocv1.ClusterCatalog) ctrl.Result {
 	var requeueAfter time.Duration
 	switch catalog.Spec.Source.Type {
-	case catalogdv1.SourceTypeImage:
+	case ocv1.SourceTypeImage:
 		if catalog.Spec.Source.Image != nil && catalog.Spec.Source.Image.PollIntervalMinutes != nil {
 			pollDuration := time.Duration(*catalog.Spec.Source.Image.PollIntervalMinutes) * time.Minute
 			jitteredDuration := wait.Jitter(pollDuration, requeueJitterMaxFactor)
@@ -306,68 +306,68 @@ func nextPollResult(lastSuccessfulPoll time.Time, catalog *catalogdv1.ClusterCat
 	return ctrl.Result{RequeueAfter: requeueAfter}
 }
 
-func clearUnknownConditions(status *catalogdv1.ClusterCatalogStatus) {
+func clearUnknownConditions(status *ocv1.ClusterCatalogStatus) {
 	knownTypes := sets.New[string](
-		catalogdv1.TypeServing,
-		catalogdv1.TypeProgressing,
+		ocv1.TypeServing,
+		ocv1.TypeProgressing,
 	)
 	status.Conditions = slices.DeleteFunc(status.Conditions, func(cond metav1.Condition) bool {
 		return !knownTypes.Has(cond.Type)
 	})
 }
 
-func updateStatusProgressing(status *catalogdv1.ClusterCatalogStatus, generation int64, err error) {
+func updateStatusProgressing(status *ocv1.ClusterCatalogStatus, generation int64, err error) {
 	progressingCond := metav1.Condition{
-		Type:               catalogdv1.TypeProgressing,
+		Type:               ocv1.TypeProgressing,
 		Status:             metav1.ConditionTrue,
-		Reason:             catalogdv1.ReasonSucceeded,
+		Reason:             ocv1.ReasonSucceeded,
 		Message:            "Successfully unpacked and stored content from resolved source",
 		ObservedGeneration: generation,
 	}
 
 	if err != nil {
 		progressingCond.Status = metav1.ConditionTrue
-		progressingCond.Reason = catalogdv1.ReasonRetrying
+		progressingCond.Reason = ocv1.ReasonRetrying
 		progressingCond.Message = err.Error()
 	}
 
 	if errors.Is(err, reconcile.TerminalError(nil)) {
 		progressingCond.Status = metav1.ConditionFalse
-		progressingCond.Reason = catalogdv1.ReasonBlocked
+		progressingCond.Reason = ocv1.ReasonBlocked
 	}
 
 	meta.SetStatusCondition(&status.Conditions, progressingCond)
 }
 
-func updateStatusServing(status *catalogdv1.ClusterCatalogStatus, ref reference.Canonical, modTime time.Time, baseURL string, generation int64) {
-	status.ResolvedSource = &catalogdv1.ResolvedCatalogSource{
-		Type: catalogdv1.SourceTypeImage,
-		Image: &catalogdv1.ResolvedImageSource{
+func updateStatusServing(status *ocv1.ClusterCatalogStatus, ref reference.Canonical, modTime time.Time, baseURL string, generation int64) {
+	status.ResolvedSource = &ocv1.ResolvedCatalogSource{
+		Type: ocv1.SourceTypeImage,
+		Image: &ocv1.ResolvedImageSource{
 			Ref: ref.String(),
 		},
 	}
-	status.URLs = &catalogdv1.ClusterCatalogURLs{
+	status.URLs = &ocv1.ClusterCatalogURLs{
 		Base: baseURL,
 	}
 	status.LastUnpacked = ptr.To(metav1.NewTime(modTime.Truncate(time.Second)))
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:               catalogdv1.TypeServing,
+		Type:               ocv1.TypeServing,
 		Status:             metav1.ConditionTrue,
-		Reason:             catalogdv1.ReasonAvailable,
+		Reason:             ocv1.ReasonAvailable,
 		Message:            "Serving desired content from resolved source",
 		ObservedGeneration: generation,
 	})
 }
 
-func updateStatusProgressingUserSpecifiedUnavailable(status *catalogdv1.ClusterCatalogStatus, generation int64) {
+func updateStatusProgressingUserSpecifiedUnavailable(status *ocv1.ClusterCatalogStatus, generation int64) {
 	// Set Progressing condition to True with reason Succeeded
 	// since we have successfully progressed to the unavailable
 	// availability mode and are ready to progress to any future
 	// desired state.
 	progressingCond := metav1.Condition{
-		Type:               catalogdv1.TypeProgressing,
+		Type:               ocv1.TypeProgressing,
 		Status:             metav1.ConditionTrue,
-		Reason:             catalogdv1.ReasonSucceeded,
+		Reason:             ocv1.ReasonSucceeded,
 		Message:            "Catalog availability mode is set to Unavailable",
 		ObservedGeneration: generation,
 	}
@@ -376,9 +376,9 @@ func updateStatusProgressingUserSpecifiedUnavailable(status *catalogdv1.ClusterC
 	// so that users of this condition are aware that this catalog is
 	// intentionally not being served
 	servingCond := metav1.Condition{
-		Type:               catalogdv1.TypeServing,
+		Type:               ocv1.TypeServing,
 		Status:             metav1.ConditionFalse,
-		Reason:             catalogdv1.ReasonUserSpecifiedUnavailable,
+		Reason:             ocv1.ReasonUserSpecifiedUnavailable,
 		Message:            "Catalog availability mode is set to Unavailable",
 		ObservedGeneration: generation,
 	}
@@ -387,19 +387,19 @@ func updateStatusProgressingUserSpecifiedUnavailable(status *catalogdv1.ClusterC
 	meta.SetStatusCondition(&status.Conditions, servingCond)
 }
 
-func updateStatusNotServing(status *catalogdv1.ClusterCatalogStatus, generation int64) {
+func updateStatusNotServing(status *ocv1.ClusterCatalogStatus, generation int64) {
 	status.ResolvedSource = nil
 	status.URLs = nil
 	status.LastUnpacked = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:               catalogdv1.TypeServing,
+		Type:               ocv1.TypeServing,
 		Status:             metav1.ConditionFalse,
-		Reason:             catalogdv1.ReasonUnavailable,
+		Reason:             ocv1.ReasonUnavailable,
 		ObservedGeneration: generation,
 	})
 }
 
-func (r *ClusterCatalogReconciler) needsPoll(lastSuccessfulPoll time.Time, catalog *catalogdv1.ClusterCatalog) bool {
+func (r *ClusterCatalogReconciler) needsPoll(lastSuccessfulPoll time.Time, catalog *ocv1.ClusterCatalog) bool {
 	// If polling is disabled, we don't need to poll.
 	if catalog.Spec.Source.Image.PollIntervalMinutes == nil {
 		return false
@@ -411,8 +411,8 @@ func (r *ClusterCatalogReconciler) needsPoll(lastSuccessfulPoll time.Time, catal
 }
 
 // Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedFieldChange(a, b catalogdv1.ClusterCatalog) bool {
-	a.Status, b.Status = catalogdv1.ClusterCatalogStatus{}, catalogdv1.ClusterCatalogStatus{}
+func checkForUnexpectedFieldChange(a, b ocv1.ClusterCatalog) bool {
+	a.Status, b.Status = ocv1.ClusterCatalogStatus{}, ocv1.ClusterCatalogStatus{}
 	a.Finalizers, b.Finalizers = []string{}, []string{}
 	return !equality.Semantic.DeepEqual(a, b)
 }
@@ -426,7 +426,7 @@ func (f finalizerFunc) Finalize(ctx context.Context, obj client.Object) (crfinal
 func (r *ClusterCatalogReconciler) setupFinalizers() error {
 	f := crfinalizer.NewFinalizers()
 	err := f.Register(fbcDeletionFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		catalog, ok := obj.(*catalogdv1.ClusterCatalog)
+		catalog, ok := obj.(*ocv1.ClusterCatalog)
 		if !ok {
 			panic("could not convert object to clusterCatalog")
 		}
@@ -446,7 +446,7 @@ func (r *ClusterCatalogReconciler) deleteStoredCatalog(catalogName string) {
 	delete(r.storedCatalogs, catalogName)
 }
 
-func (r *ClusterCatalogReconciler) deleteCatalogCache(ctx context.Context, catalog *catalogdv1.ClusterCatalog) error {
+func (r *ClusterCatalogReconciler) deleteCatalogCache(ctx context.Context, catalog *ocv1.ClusterCatalog) error {
 	if err := r.Storage.Delete(catalog.Name); err != nil {
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), err)
 		return err

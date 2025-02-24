@@ -17,7 +17,7 @@ limitations under the License.
 package conditionsets
 
 import (
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 // ConditionTypes is the full set of ClusterExtension condition Types.
@@ -31,6 +31,7 @@ var ConditionTypes = []string{
 	ocv1.TypeChannelDeprecated,
 	ocv1.TypeBundleDeprecated,
 	ocv1.TypeProgressing,
+	ocv1.TypeServing,
 }
 
 var ConditionReasons = []string{
@@ -39,4 +40,7 @@ var ConditionReasons = []string{
 	ocv1.ReasonFailed,
 	ocv1.ReasonBlocked,
 	ocv1.ReasonRetrying,
+	ocv1.ReasonAvailable,
+	ocv1.ReasonUnavailable,
+	ocv1.ReasonUserSpecifiedUnavailable,
 }

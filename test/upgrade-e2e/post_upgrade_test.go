@@ -18,8 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/test/utils"
 )
 
@@ -75,25 +74,25 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 
-	catalog := &catalogd.ClusterCatalog{}
+	catalog := &ocv1.ClusterCatalog{}
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == True, reason == Succeeded")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
 		assert.NoError(ct, err)
-		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeProgressing)
+		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeProgressing)
 		assert.NotNil(ct, cond)
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogd.ReasonSucceeded, cond.Reason)
+		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 	}, time.Minute, time.Second)
 
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Serving with a status == True, reason == Available")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
 		assert.NoError(ct, err)
-		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeServing)
+		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeServing)
 		assert.NotNil(ct, cond)
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
+		assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
 	}, time.Minute, time.Second)
 }
 
@@ -135,24 +134,24 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 
 	t.Log("Checking that the ClusterCatalog is unpacked")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		var clusterCatalog catalogd.ClusterCatalog
+		var clusterCatalog ocv1.ClusterCatalog
 		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, &clusterCatalog))
 
 		// check serving condition
-		cond := apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, catalogd.TypeServing)
+		cond := apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, ocv1.TypeServing)
 		assert.NotNil(ct, cond)
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
+		assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
 
 		// mitigation for upgrade-e2e flakiness caused by the following bug
 		// https://github.com/operator-framework/operator-controller/issues/1626
 		// wait until the unpack time > than the catalogd controller pod creation time
-		cond = apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, catalogd.TypeProgressing)
+		cond = apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, ocv1.TypeProgressing)
 		if cond == nil {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogd.ReasonSucceeded, cond.Reason)
+		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 
 		assert.True(ct, clusterCatalog.Status.LastUnpacked.After(catalogdManagerPod.CreationTimestamp.Time))
 	}, time.Minute, time.Second)

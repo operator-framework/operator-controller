@@ -48,8 +48,7 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
@@ -408,12 +407,12 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, bundleName string, depreca
 func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1.ClusterExtension{}).
-		Watches(&catalogd.ClusterCatalog{},
+		Watches(&ocv1.ClusterCatalog{},
 			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger())),
 			builder.WithPredicates(predicate.Funcs{
 				UpdateFunc: func(ue event.UpdateEvent) bool {
-					oldObject, isOldCatalog := ue.ObjectOld.(*catalogd.ClusterCatalog)
-					newObject, isNewCatalog := ue.ObjectNew.(*catalogd.ClusterCatalog)
+					oldObject, isOldCatalog := ue.ObjectOld.(*ocv1.ClusterCatalog)
+					newObject, isNewCatalog := ue.ObjectNew.(*ocv1.ClusterCatalog)
 
 					if !isOldCatalog || !isNewCatalog {
 						return true

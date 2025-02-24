@@ -18,8 +18,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
-	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 func TestExtensionDeveloper(t *testing.T) {
@@ -28,7 +27,7 @@ func TestExtensionDeveloper(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 
-	require.NoError(t, catalogd.AddToScheme(scheme))
+	require.NoError(t, ocv1.AddToScheme(scheme))
 	require.NoError(t, ocv1.AddToScheme(scheme))
 	require.NoError(t, corev1.AddToScheme(scheme))
 	require.NoError(t, rbacv1.AddToScheme(scheme))
@@ -38,14 +37,14 @@ func TestExtensionDeveloper(t *testing.T) {
 
 	ctx := context.Background()
 
-	catalog := &catalogd.ClusterCatalog{
+	catalog := &ocv1.ClusterCatalog{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "catalog",
 		},
-		Spec: catalogd.ClusterCatalogSpec{
-			Source: catalogd.CatalogSource{
-				Type: catalogd.SourceTypeImage,
-				Image: &catalogd.ImageSource{
+		Spec: ocv1.ClusterCatalogSpec{
+			Source: ocv1.CatalogSource{
+				Type: ocv1.SourceTypeImage,
+				Image: &ocv1.ImageSource{
 					Ref: os.Getenv("CATALOG_IMG"),
 				},
 			},
@@ -70,7 +69,7 @@ func TestExtensionDeveloper(t *testing.T) {
 		Spec: ocv1.ClusterExtensionSpec{
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogSource{
+				Catalog: &ocv1.CatalogFilter{
 					PackageName: os.Getenv("REG_PKG_NAME"),
 				},
 			},

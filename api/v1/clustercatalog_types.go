@@ -30,19 +30,6 @@ type AvailabilityMode string
 const (
 	SourceTypeImage SourceType = "Image"
 
-	TypeProgressing = "Progressing"
-	TypeServing     = "Serving"
-
-	// Serving reasons
-	ReasonAvailable                = "Available"
-	ReasonUnavailable              = "Unavailable"
-	ReasonUserSpecifiedUnavailable = "UserSpecifiedUnavailable"
-
-	// Progressing reasons
-	ReasonSucceeded = "Succeeded"
-	ReasonRetrying  = "Retrying"
-	ReasonBlocked   = "Blocked"
-
 	MetadataNameLabel = "olm.operatorframework.io/metadata.name"
 
 	AvailabilityModeAvailable   AvailabilityMode = "Available"
