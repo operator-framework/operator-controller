@@ -17,7 +17,7 @@ limitations under the License.
 package conditionsets
 
 import (
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
 )
 
 // ConditionTypes is the full set of ClusterExtension condition Types.

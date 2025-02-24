@@ -55,7 +55,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	catalogdv1 "github.com/operator-framework/operator-controller/api/catalogd/v1"
 	corecontrollers "github.com/operator-framework/operator-controller/internal/catalogd/controllers/core"
 	"github.com/operator-framework/operator-controller/internal/catalogd/features"
 	"github.com/operator-framework/operator-controller/internal/catalogd/garbagecollection"

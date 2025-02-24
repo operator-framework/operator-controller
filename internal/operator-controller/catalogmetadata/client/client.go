@@ -15,7 +15,7 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 )
 

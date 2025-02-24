@@ -21,8 +21,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	catalogd "github.com/operator-framework/operator-controller/api/catalogd/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/operator-controller/v1"
 	"github.com/operator-framework/operator-controller/test/utils"
 )
 

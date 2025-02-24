@@ -120,10 +120,10 @@ KUSTOMIZE_OPCON_CRDS_DIR := config/base/operator-controller/crd/bases
 KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	# Generate the operator-controller manifests
-	rm -rf $(KUSTOMIZE_OPCON_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=$(KUSTOMIZE_OPCON_CRDS_DIR)
+	rm -rf $(KUSTOMIZE_OPCON_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/operator-controller/... output:crd:artifacts:config=$(KUSTOMIZE_OPCON_CRDS_DIR)
 	rm -f $(KUSTOMIZE_OPCON_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/operator-controller/... output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the catalogd manifests
-	rm -rf $(KUSTOMIZE_CATD_CRDS_DIR) && $(CONTROLLER_GEN) crd paths="./catalogd/api/..." output:crd:artifacts:config=$(KUSTOMIZE_CATD_CRDS_DIR)
+	rm -rf $(KUSTOMIZE_CATD_CRDS_DIR) && $(CONTROLLER_GEN) crd paths=./api/catalogd/... output:crd:artifacts:config=$(KUSTOMIZE_CATD_CRDS_DIR)
 	rm -f $(KUSTOMIZE_CATD_RBAC_DIR)/role.yaml && $(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
 	rm -f $(KUSTOMIZE_CATD_WEBHOOKS_DIR)/manifests.yaml && $(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 
@@ -358,12 +358,12 @@ API_REFERENCE_DIR := $(ROOT_DIR)/docs/api-reference
 
 crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
 	rm -f $(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME)
-	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api \
+	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/operator-controller \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
 	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME);
 
 	rm -f $(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME)
-	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/catalogd/api \
+	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/catalogd \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
 	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(CATALOGD_API_REFERENCE_FILENAME);
 

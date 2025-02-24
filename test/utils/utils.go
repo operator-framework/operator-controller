@@ -11,7 +11,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	catalogdv1 "github.com/operator-framework/operator-controller/api/catalogd/v1"
 )
 
 // FindK8sClient returns the first available Kubernetes CLI client from the system,
