@@ -14,8 +14,6 @@ resources:
 # of APIs provided by this project.
 - clusterextension_editor_role.yaml
 - clusterextension_viewer_role.yaml
-- extension_editor_role.yaml
-- extension_viewer_role.yaml
 
 # The following RBAC configurations are used to protect
 # the metrics endpoint with authn/authz. These configurations
