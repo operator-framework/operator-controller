@@ -687,6 +687,85 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "after catalog availability set to enable, finalizer should be added",
+			puller: &imageutil.MockPuller{
+				ImageFS: &fstest.MapFS{},
+			},
+			store: &MockStore{},
+			catalog: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Finalizers: []string{},
+				},
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					AvailabilityMode: ocv1.AvailabilityModeAvailable,
+				},
+				Status: ocv1.ClusterCatalogStatus{
+					URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ResolvedImageSource{
+							Ref: "",
+						},
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   ocv1.TypeServing,
+							Status: metav1.ConditionFalse,
+							Reason: ocv1.ReasonUnavailable,
+						},
+						{
+							Type:   ocv1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: ocv1.ReasonUserSpecifiedUnavailable,
+						},
+					},
+				},
+			},
+			expectedCatalog: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					AvailabilityMode: ocv1.AvailabilityModeAvailable,
+				},
+				Status: ocv1.ClusterCatalogStatus{
+					URLs: &ocv1.ClusterCatalogURLs{Base: "URL"},
+					ResolvedSource: &ocv1.ResolvedCatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ResolvedImageSource{
+							Ref: "",
+						},
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   ocv1.TypeServing,
+							Status: metav1.ConditionFalse,
+							Reason: ocv1.ReasonUnavailable,
+						},
+						{
+							Type:   ocv1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: ocv1.ReasonUserSpecifiedUnavailable,
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			reconciler := &ClusterCatalogReconciler{
