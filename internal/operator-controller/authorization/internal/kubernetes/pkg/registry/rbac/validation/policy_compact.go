@@ -20,6 +20,7 @@ import (
 	"reflect"
 
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 type simpleResource struct {
@@ -54,6 +55,12 @@ func CompactRules(rules []rbacv1.PolicyRule) ([]rbacv1.PolicyRule, error) {
 
 	// Once we've consolidated the simple resource rules, add them to the compacted list
 	for _, simpleRule := range simpleRules {
+		verbSet := sets.New[string](simpleRule.Verbs...)
+		if verbSet.Has("*") {
+			simpleRule.Verbs = []string{"*"}
+		} else {
+			simpleRule.Verbs = sets.List(verbSet)
+		}
 		compacted = append(compacted, *simpleRule)
 	}
 
