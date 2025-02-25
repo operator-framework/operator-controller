@@ -1,8 +1,0 @@
-# More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
-# Ignore test and tool binaries.
-bin/controller-gen
-bin/goreleaser
-bin/kustomize
-bin/envtest
-testbin/
-.tiltbuild/
