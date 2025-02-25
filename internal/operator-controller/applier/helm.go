@@ -2,6 +2,7 @@ package applier
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -17,7 +18,6 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -104,15 +104,29 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		missingRules, err := h.PreAuthorizer.PreAuthorize(ctx, &ceServiceAccount, strings.NewReader(tmplRel.Manifest))
 
 		var preAuthErrors []error
+		ext.Status.Rules = nil
 		if len(missingRules) > 0 {
-			var missingRuleDescriptions []string
+			var missingRulesItems []ocv1.ClusterExtensionRulesStatusItem
 			for ns, policyRules := range missingRules {
-				for _, rule := range policyRules {
-					missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(ns, rule))
+				item := ocv1.ClusterExtensionRulesStatusItem{
+					Namespace: ns,
+					Rules:     policyRules,
 				}
+				if len(item.Rules) > 1024 {
+					item.Rules = item.Rules[:1024]
+				}
+				missingRulesItems = append(missingRulesItems, item)
 			}
-			slices.Sort(missingRuleDescriptions)
-			preAuthErrors = append(preAuthErrors, fmt.Errorf("service account lacks permission to manage cluster extension:\n  %s", strings.Join(missingRuleDescriptions, "\n  ")))
+			slices.SortFunc(missingRulesItems, func(a, b ocv1.ClusterExtensionRulesStatusItem) int {
+				return cmp.Compare(a.Namespace, b.Namespace)
+			})
+
+			if len(missingRulesItems) > 64 {
+				missingRulesItems = missingRulesItems[:64]
+			}
+
+			ext.Status.Rules = &ocv1.ClusterExtensionRulesStatus{Missing: missingRulesItems}
+			preAuthErrors = append(preAuthErrors, fmt.Errorf("service account lacks permission to manage cluster extension"))
 		}
 		if err != nil {
 			preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", err))
@@ -276,26 +290,4 @@ func (p *postrenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, erro
 		return p.cascade.Run(&buf)
 	}
 	return &buf, nil
-}
-
-func ruleDescription(ns string, rule rbacv1.PolicyRule) string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Namespace:%q", ns))
-
-	if len(rule.APIGroups) > 0 {
-		sb.WriteString(fmt.Sprintf(" APIGroups:[%s]", strings.Join(rule.APIGroups, ",")))
-	}
-	if len(rule.Resources) > 0 {
-		sb.WriteString(fmt.Sprintf(" Resources:[%s]", strings.Join(rule.Resources, ",")))
-	}
-	if len(rule.ResourceNames) > 0 {
-		sb.WriteString(fmt.Sprintf(" ResourceNames:[%s]", strings.Join(rule.ResourceNames, ",")))
-	}
-	if len(rule.Verbs) > 0 {
-		sb.WriteString(fmt.Sprintf(" Verbs:[%s]", strings.Join(rule.Verbs, ",")))
-	}
-	if len(rule.NonResourceURLs) > 0 {
-		sb.WriteString(fmt.Sprintf(" NonResourceURLs:[%s]", strings.Join(rule.NonResourceURLs, ",")))
-	}
-	return sb.String()
 }

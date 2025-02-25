@@ -292,6 +292,39 @@ ClusterExtensionList contains a list of ClusterExtension
 | `items` _[ClusterExtension](#clusterextension) array_ | items is a required list of ClusterExtension objects. |  | Required: \{\} <br /> |
 
 
+#### ClusterExtensionRulesStatus
+
+
+
+
+
+
+
+_Appears in:_
+- [ClusterExtensionStatus](#clusterextensionstatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `missing` _[ClusterExtensionRulesStatusItem](#clusterextensionrulesstatusitem) array_ | missing is the group of rules that the cluster extension's service account is likely lacking,<br />but which are needed to be able to fully manage all resources in the resolved cluster extension manifest. |  | MaxItems: 64 <br /> |
+
+
+#### ClusterExtensionRulesStatusItem
+
+
+
+
+
+
+
+_Appears in:_
+- [ClusterExtensionRulesStatus](#clusterextensionrulesstatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `namespace` _string_ | namespace is a reference to a Kubernetes namespace.<br />This is the namespace where the ClusterExtension's service account is lacking<br />the rules provided in missingRules.<br /><br />When namespace is non-empty, one or more RoleBindings should be created to reference<br />Roles and/or ClusterRoles that provided the missingRules in the namespace.<br /><br />When namespace is the empty string, one or more ClusterRoleBindings should be created<br />to reference ClusterRoles that provide the missingRules cluster-wide.<br /><br />namespace is required and follows the DNS label standard<br />as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),<br />start and end with an alphanumeric character, and be no longer than 63 characters<br /><br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />Required: \{\} <br /> |
+| `rules` _[PolicyRule](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#policyrule-v1-rbac) array_ | rules is a list of RBAC policy rules that are related to the management of the rendered manifest of the<br />ClusterExtension's bundle.<br /><br />rules is optional. If it is empty or nil, the semantic meaning is that there are no rules in this grouping<br />for the named namespace. |  | MaxItems: 1024 <br /> |
+
+
 #### ClusterExtensionSpec
 
 
@@ -326,6 +359,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | The set of condition types which apply to all spec.source variations are Installed and Progressing.<br /><br />The Installed condition represents whether or not the bundle has been installed for this ClusterExtension.<br />When Installed is True and the Reason is Succeeded, the bundle has been successfully installed.<br />When Installed is False and the Reason is Failed, the bundle has failed to install.<br /><br />The Progressing condition represents whether or not the ClusterExtension is advancing towards a new state.<br />When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.<br />When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.<br />When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.<br /><br />When the ClusterExtension is sourced from a catalog, if may also communicate a deprecation condition.<br />These are indications from a package owner to guide users away from a particular package, channel, or bundle.<br />BundleDeprecated is set if the requested bundle version is marked deprecated in the catalog.<br />ChannelDeprecated is set if the requested channel is marked deprecated in the catalog.<br />PackageDeprecated is set if the requested package is marked deprecated in the catalog.<br />Deprecated is a rollup condition that is present when any of the deprecated conditions are present. |  |  |
 | `install` _[ClusterExtensionInstallStatus](#clusterextensioninstallstatus)_ | install is a representation of the current installation status for this ClusterExtension. |  |  |
+| `rules` _[ClusterExtensionRulesStatus](#clusterextensionrulesstatus)_ | rules is a representation of an assessment of permissions related<br />to the cluster extension and its service account. |  |  |
 
 
 #### ImageSource
