@@ -308,6 +308,8 @@ VERSION := $(shell git describe --tags --always --dirty)
 endif
 export VERSION
 
+GIT_COMMIT := $(if $(SOURCE_GIT_COMMIT),$(SOURCE_GIT_COMMIT),$(shell git rev-parse HEAD))
+
 ifeq ($(origin CGO_ENABLED), undefined)
 CGO_ENABLED := 0
 endif
@@ -321,6 +323,7 @@ export GO_BUILD_GCFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_FLAGS :=
 export GO_BUILD_LDFLAGS := -s -w \
     -X '$(VERSION_PATH).version=$(VERSION)' \
+-X "$(VERSION_PATH).gitCommit=$(GIT_COMMIT)" \
 
 BINARIES=operator-controller catalogd
 
