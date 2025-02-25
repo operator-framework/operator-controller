@@ -87,7 +87,7 @@ KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
 
 .PHONY: help
 help: #HELP Display essential help.
-	@awk 'BEGIN {FS = ":[^#]*#HELP"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\n"} /^[a-zA-Z_0-9-]+:.*#HELP / { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":[^#]*#HELP"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\n"} /^[a-zA-Z_0-9-]+:.*#HELP / { printf "  \033[36m%-17s\033[0m %s\n", $$1, $$2 } ' $(MAKEFILE_LIST)
 
 .PHONY: help-extended
 help-extended: #HELP Display extended help.
@@ -100,11 +100,11 @@ lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
 	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: custom-linter-build
-custom-linter-build: #HELP Build custom linter
+custom-linter-build: #EXHELP Build custom linter
 	go build -tags $(GO_BUILD_TAGS) -o ./bin/custom-linter ./hack/ci/custom-linters/cmd
 
 .PHONY: lint-custom
-lint-custom: custom-linter-build #HELP Call custom linter for the project
+lint-custom: custom-linter-build #EXHELP Call custom linter for the project
 	go vet -tags=$(GO_BUILD_TAGS) -vettool=./bin/custom-linter ./...
 
 .PHONY: tidy
@@ -165,6 +165,8 @@ CRD_DIFF_CONFIG := crd-diff-config.yaml
 verify-crd-compatibility: $(CRD_DIFF) manifests
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "${CRD_DIFF_ORIGINAL_REF}${CRD_DIFF_OPCON_SOURCE}" ${CRD_DIFF_UPDATED_REF}${CRD_DIFF_OPCON_SOURCE}
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "${CRD_DIFF_ORIGINAL_REF}${CRD_DIFF_CATD_SOURCE}" ${CRD_DIFF_UPDATED_REF}${CRD_DIFF_CATD_SOURCE}
+
+#SECTION Test
 
 .PHONY: test
 test: manifests generate fmt lint test-unit test-e2e #HELP Run all tests.
@@ -231,9 +233,9 @@ test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suit
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
-extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
-extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false  #EXHELP Run extension-developer e2e on local kind cluster
-extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean
+extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
+extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
+extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP Run extension-developer e2e on local kind cluster
 
 .PHONY: run-latest-release
 run-latest-release:
@@ -256,6 +258,8 @@ test-upgrade-e2e: kind-cluster run-latest-release image-registry pre-upgrade-set
 .PHONY: e2e-coverage
 e2e-coverage:
 	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/test/e2e-coverage.sh
+
+#SECTION KIND Cluster Operations
 
 .PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND cluster.
