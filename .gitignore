@@ -8,6 +8,7 @@ bin/*
 testbin/*
 /hack/tools/bin/*
 Dockerfile.cross
+crd_work_dir/
 
 # Test binary, build with `go test -c`
 *.test
@@ -41,11 +42,3 @@ site
 .tiltbuild/
 .catalogd-tmp/
 .vscode
-
-# Catalogd
-catalogd/bin/
-catalogd/vendor/
-catalogd/dist/
-catalogd/cover.out
-catalogd/catalogd.yaml
-catalogd/install.sh
