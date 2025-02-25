@@ -15,9 +15,9 @@ catalogd = {
     'image': 'quay.io/operator-framework/catalogd',
     'yaml': 'config/overlays/tilt-local-dev/catalogd',
     'binaries': {
-        './catalogd/cmd/catalogd': 'catalogd-controller-manager',
+        './cmd/catalogd': 'catalogd-controller-manager',
     },
-    'deps': ['api', 'catalogd/cmd/catalogd', 'internal/catalogd', 'internal/shared', 'go.mod', 'go.sum'],
+    'deps': ['api', 'cmd/catalogd', 'internal/catalogd', 'internal/shared', 'go.mod', 'go.sum'],
     'starting_debug_port': 20000,
 }
 
