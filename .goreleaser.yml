@@ -20,7 +20,7 @@ builds:
       - ppc64le
       - s390x
   - id: catalogd
-    main: ./catalogd/cmd/catalogd/
+    main: ./cmd/catalogd/
     binary: catalogd
     asmflags: "{{ .Env.GO_BUILD_ASMFLAGS }}"
     gcflags: "{{ .Env.GO_BUILD_GCFLAGS }}"
@@ -38,7 +38,7 @@ builds:
 dockers:
   - image_templates:
       - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.operator-controller
     goos: linux
     goarch: amd64
     use: buildx
@@ -46,7 +46,7 @@ dockers:
       - "--platform=linux/amd64"
   - image_templates:
       - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.operator-controller
     goos: linux
     goarch: arm64
     use: buildx
@@ -54,7 +54,7 @@ dockers:
       - "--platform=linux/arm64"
   - image_templates:
       - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.operator-controller
     goos: linux
     goarch: ppc64le
     use: buildx
@@ -62,7 +62,7 @@ dockers:
       - "--platform=linux/ppc64le"
   - image_templates:
       - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.operator-controller
     goos: linux
     goarch: s390x
     use: buildx
@@ -70,7 +70,7 @@ dockers:
       - "--platform=linux/s390x"
   - image_templates:
       - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-    dockerfile: catalogd/Dockerfile
+    dockerfile: Dockerfile.catalogd
     goos: linux
     goarch: amd64
     use: buildx
@@ -78,7 +78,7 @@ dockers:
       - "--platform=linux/amd64"
   - image_templates:
       - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-    dockerfile: catalogd/Dockerfile
+    dockerfile: Dockerfile.catalogd
     goos: linux
     goarch: arm64
     use: buildx
@@ -86,7 +86,7 @@ dockers:
       - "--platform=linux/arm64"
   - image_templates:
       - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-    dockerfile: catalogd/Dockerfile
+    dockerfile: Dockerfile.catalogd
     goos: linux
     goarch: ppc64le
     use: buildx
@@ -94,7 +94,7 @@ dockers:
       - "--platform=linux/ppc64le"
   - image_templates:
       - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
-    dockerfile: catalogd/Dockerfile
+    dockerfile: Dockerfile.catalogd
     goos: linux
     goarch: s390x
     use: buildx
