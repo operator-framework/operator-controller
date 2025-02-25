@@ -32,6 +32,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
@@ -58,6 +59,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
@@ -204,8 +206,12 @@ func run() error {
 	setupLog.Info("set up manager")
 	cacheOptions := crcache.Options{
 		ByObject: map[client.Object]crcache.ByObject{
-			&ocv1.ClusterExtension{}: {Label: k8slabels.Everything()},
-			&ocv1.ClusterCatalog{}:   {Label: k8slabels.Everything()},
+			&ocv1.ClusterExtension{}:     {Label: k8slabels.Everything()},
+			&ocv1.ClusterCatalog{}:       {Label: k8slabels.Everything()},
+			&rbacv1.ClusterRole{}:        {Label: k8slabels.Everything()},
+			&rbacv1.ClusterRoleBinding{}: {Label: k8slabels.Everything()},
+			&rbacv1.Role{}:               {Namespaces: map[string]crcache.Config{}, Label: k8slabels.Everything()},
+			&rbacv1.RoleBinding{}:        {Namespaces: map[string]crcache.Config{}, Label: k8slabels.Everything()},
 		},
 		DefaultNamespaces: map[string]crcache.Config{
 			cfg.systemNamespace: {LabelSelector: k8slabels.Everything()},
@@ -414,6 +420,7 @@ func run() error {
 		ActionClientGetter:  acg,
 		Preflights:          preflights,
 		BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		PreAuthorizer:      authorization.NewRBACPreAuthorizer(mgr.GetClient()),
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
