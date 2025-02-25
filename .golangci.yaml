@@ -16,6 +16,10 @@ run:
   # Default timeout is 1m, up to give more room
   timeout: 4m
 
+issues:
+  exclude-dirs:
+    - internal/operator-controller/authorization/internal/kubernetes
+
 linters:
   enable:
   - asciicheck
