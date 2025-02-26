@@ -2,13 +2,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: argocd
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: argocd-installer
-  namespace: argocd
+  name: argocd-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -19,9 +13,8 @@ roleRef:
   kind: ClusterRole
   name: argocd-installer-clusterrole
 subjects:
-- kind: ServiceAccount
-  name: argocd-installer
-  namespace: argocd
+- kind: User
+  name: "olmv1:clusterextensions:argocd-operator:admin"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -76,9 +69,8 @@ roleRef:
   kind: ClusterRole
   name: argocd-installer-rbac-clusterrole
 subjects:
-- kind: ServiceAccount
-  name: argocd-installer
-  namespace: argocd
+- kind: User
+  name: "olmv1:clusterextensions:argocd-operator:admin"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -222,7 +214,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: argocd-installer-role
-  namespace: argocd
+  namespace: argocd-system
 rules:
 - apiGroups: [""]
   resources: [serviceaccounts]
@@ -260,24 +252,21 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: argocd-installer-binding
-  namespace: argocd
+  namespace: argocd-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: argocd-installer-role
 subjects:
-- kind: ServiceAccount
-  name: argocd-installer
-  namespace: argocd
+- kind: User
+  name: "olmv1:clusterextensions:argocd-operator:admin"
 ---
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: argocd
+  name: argocd-operator
 spec:
-  namespace: argocd
-  serviceAccount:
-    name: argocd-installer
+  namespace: argocd-system
   source:
     sourceType: Catalog
     catalog:
