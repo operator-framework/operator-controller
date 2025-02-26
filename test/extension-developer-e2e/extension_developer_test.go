@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 )
 
 func TestExtensionDeveloper(t *testing.T) {
@@ -54,14 +55,6 @@ func TestExtensionDeveloper(t *testing.T) {
 
 	installNamespace := "default"
 
-	sa := &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("serviceaccount-%s", rand.String(8)),
-			Namespace: installNamespace,
-		},
-	}
-	require.NoError(t, c.Create(ctx, sa))
-
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "registryv1",
@@ -74,9 +67,6 @@ func TestExtensionDeveloper(t *testing.T) {
 				},
 			},
 			Namespace: installNamespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: sa.Name,
-			},
 		},
 	}
 
@@ -182,9 +172,8 @@ func TestExtensionDeveloper(t *testing.T) {
 		},
 		Subjects: []rbacv1.Subject{
 			{
-				Kind:      "ServiceAccount",
-				Name:      sa.Name,
-				Namespace: sa.Namespace,
+				Kind: "User",
+				Name: authentication.SyntheticUserName(*clusterExtension),
 			},
 		},
 		RoleRef: rbacv1.RoleRef{

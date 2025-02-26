@@ -66,10 +66,19 @@ type ClusterExtensionSpec struct {
 	// with the cluster that are required to manage the extension.
 	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
 	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// serviceAccount is required.
 	//
-	// +kubebuilder:validation:Required
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+	// serviceAccount is optional. If a service account is not defined, requests to the apiserver will instead use
+	// username "olmv1:clusterextensions:<clusterExtension.metadata.name>:admin" and groups
+	// "olmv1:clusterextensions:admin" and "system:authenticated"
+	//
+	// Deprecated: Use of serviceAccount is not recommended. Instead, administrators are encouraged
+	// to use the synthetic user/groups described above. All of the same RBAC setup is still required with these
+	// synthetic user/groups. However, this mode is preferred because it requires administrators to specifically
+	// configure RBAC for extension management, rather than enabling piggybacking on existing highly privileged
+	// service accounts that already exist on the cluster.
+	//
+	// +optional
+	ServiceAccount *ServiceAccountReference `json:"serviceAccount"`
 
 	// source is a required field which selects the installation source of content
 	// for this ClusterExtension. Selection is performed by setting the sourceType.

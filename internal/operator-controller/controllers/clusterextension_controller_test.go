@@ -69,9 +69,6 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 				},
 			},
 			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "default",
-			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -131,7 +128,6 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 			pkgVer := "1.0.0"
 			pkgChan := "beta"
 			namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-			serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 			clusterExtension := &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -145,9 +141,6 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 						},
 					},
 					Namespace: namespace,
-					ServiceAccount: ocv1.ServiceAccountReference{
-						Name: serviceAccount,
-					},
 				},
 			}
 			err := cl.Create(ctx, clusterExtension)
@@ -211,7 +204,6 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -225,9 +217,6 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -295,7 +284,7 @@ func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
 				},
 			},
 			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: "missing-sa",
 			},
 		},
@@ -342,7 +331,6 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -356,9 +344,6 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -438,7 +423,6 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -452,9 +436,6 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -516,7 +497,6 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -531,9 +511,6 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 				},
 			},
 			Namespace: installNamespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -597,7 +574,6 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -611,9 +587,6 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -675,7 +648,6 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -689,9 +661,6 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount,
-			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
