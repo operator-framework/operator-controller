@@ -2,11 +2,13 @@ package applier
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"slices"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -18,12 +20,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/apiserver/pkg/authentication/user"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
@@ -56,6 +60,7 @@ type Preflight interface {
 type Helm struct {
 	ActionClientGetter helmclient.ActionClientGetter
 	Preflights         []Preflight
+	PreAuthorizer      authorization.PreAuthorizer
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -85,18 +90,60 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	}
 	values := chartutil.Values{}
 
+	post := &postrenderer{
+		labels: objectLabels,
+	}
+
+	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+		tmplRel, err := h.template(ctx, ext, chrt, values, post)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
+		}
+
+		ceServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}
+		missingRules, err := h.PreAuthorizer.PreAuthorize(ctx, &ceServiceAccount, strings.NewReader(tmplRel.Manifest))
+
+		var preAuthErrors []error
+		ext.Status.Rules = nil
+		if len(missingRules) > 0 {
+			var missingRulesItems []ocv1.ClusterExtensionRulesStatusItem
+			for ns, policyRules := range missingRules {
+				item := ocv1.ClusterExtensionRulesStatusItem{
+					Namespace: ns,
+					Rules:     policyRules,
+				}
+				if len(item.Rules) > 1024 {
+					item.Rules = item.Rules[:1024]
+				}
+				missingRulesItems = append(missingRulesItems, item)
+			}
+			slices.SortFunc(missingRulesItems, func(a, b ocv1.ClusterExtensionRulesStatusItem) int {
+				return cmp.Compare(a.Namespace, b.Namespace)
+			})
+
+			if len(missingRulesItems) > 64 {
+				missingRulesItems = missingRulesItems[:64]
+			}
+
+			ext.Status.Rules = &ocv1.ClusterExtensionRulesStatus{Missing: missingRulesItems}
+			preAuthErrors = append(preAuthErrors, fmt.Errorf("service account lacks permission to manage cluster extension"))
+		}
+		if err != nil {
+			preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", err))
+		}
+		if len(preAuthErrors) > 0 {
+			return nil, "", fmt.Errorf("pre-authorization failed: %v", preAuthErrors)
+		}
+	}
+
 	ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, "", err
 	}
 
-	post := &postrenderer{
-		labels: objectLabels,
-	}
-
 	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, post)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to get release state using server-side dry-run: %w", err)
 	}
 
 	for _, preflight := range h.Preflights {
@@ -152,6 +199,34 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	return relObjects, state, nil
 }
 
+func (h *Helm) template(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {
+	// We need to get a separate action client because our template call below
+	// permanently modifies the underlying action.Configuration for ClientOnly mode.
+	ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	isUpgrade := false
+	currentRelease, err := ac.Get(ext.GetName())
+	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, err
+	}
+	if currentRelease != nil {
+		isUpgrade = true
+	}
+
+	return ac.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
+		i.DryRun = true
+		i.ReleaseName = ext.GetName()
+		i.Replace = true
+		i.ClientOnly = true
+		i.IncludeCRDs = true
+		i.IsUpgrade = isUpgrade
+		return nil
+	}, helmclient.AppendInstallPostRenderer(post))
+}
+
 func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
 	if errors.Is(err, driver.ErrReleaseNotFound) {
@@ -161,10 +236,6 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterE
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {
-			if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-				_ = struct{}{} // minimal no-op to satisfy linter
-				// probably need to break out this error as it's the one for helm dry-run as opposed to any returned later
-			}
 			return nil, nil, StateError, err
 		}
 		return nil, desiredRelease, StateNeedsInstall, nil

@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -454,6 +455,55 @@ type ClusterExtensionStatus struct {
 	//
 	// +optional
 	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
+
+	// rules is a representation of an assessment of permissions related
+	// to the cluster extension and its service account.
+	//
+	// +optional
+	Rules *ClusterExtensionRulesStatus `json:"rules,omitempty"`
+}
+
+type ClusterExtensionRulesStatus struct {
+	// missing is the group of rules that the cluster extension's service account is likely lacking,
+	// but which are needed to be able to fully manage all resources in the resolved cluster extension manifest.
+	//
+	// +listType=atomic
+	// +optional
+	// +kubebuilder:validation:MaxItems:=64
+	Missing []ClusterExtensionRulesStatusItem `json:"missing,omitempty"`
+}
+
+type ClusterExtensionRulesStatusItem struct {
+	// namespace is a reference to a Kubernetes namespace.
+	// This is the namespace where the ClusterExtension's service account is lacking
+	// the rules provided in missingRules.
+	//
+	// When namespace is non-empty, one or more RoleBindings should be created to reference
+	// Roles and/or ClusterRoles that provided the missingRules in the namespace.
+	//
+	// When namespace is the empty string, one or more ClusterRoleBindings should be created
+	// to reference ClusterRoles that provide the missingRules cluster-wide.
+	//
+	// namespace is required and follows the DNS label standard
+	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),
+	// start and end with an alphanumeric character, and be no longer than 63 characters
+	//
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
+	// +kubebuilder:validation:MaxLength:=63
+	// +kubebuilder:validation:XValidation:rule="self == \"\" || self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be empty string or a valid DNS1123 label"
+	// +kubebuilder:validation:Required
+	Namespace string `json:"namespace"`
+
+	// rules is a list of RBAC policy rules that are related to the management of the rendered manifest of the
+	// ClusterExtension's bundle.
+	//
+	// rules is optional. If it is empty or nil, the semantic meaning is that there are no rules in this grouping
+	// for the named namespace.
+	//
+	// +listType=atomic
+	// +kubebuilder:validation:MaxItems:=1024
+	Rules []rbacv1.PolicyRule `json:"rules,omitempty"`
 }
 
 // ClusterExtensionInstallStatus is a representation of the status of the identified bundle.
