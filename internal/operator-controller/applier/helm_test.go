@@ -24,6 +24,7 @@ import (
 
 	v1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
@@ -121,7 +122,7 @@ func newPassingAuthorizationClientMapper() applier.AuthorizationClientMapper {
 	mockRCM := func(ctx context.Context, obj client.Object, cfg *rest.Config) (*rest.Config, error) {
 		return cfg, nil
 	}
-	acm := applier.NewAuthorizationClientMapper(mockRCM, fakeRestConfig)
+	acm := authorization.NewAuthorizationClientMapper(mockRCM, fakeRestConfig)
 	acm.NewForConfig = func(*rest.Config) (authorizationv1client.AuthorizationV1Interface, error) {
 		return newPassingSSRRAuthClient(), nil
 	}

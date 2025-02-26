@@ -4,14 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"slices"
 	"strings"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	authv1 "k8s.io/api/authorization/v1"
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,14 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	SelfSubjectRulesReview  string = "SelfSubjectRulesReview"
-	SelfSubjectAccessReview string = "SelfSubjectAccessReview"
-)
-
 type RestConfigMapper func(context.Context, client.Object, *rest.Config) (*rest.Config, error)
-
-type NewForConfigFunc func(*rest.Config) (authorizationv1client.AuthorizationV1Interface, error)
 
 type AuthorizationClientMapper struct {
 	rcm          RestConfigMapper
@@ -47,28 +37,11 @@ func (acm *AuthorizationClientMapper) GetAuthorizationClient(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-
 	return acm.NewForConfig(authcfg)
 }
 
-// Check if RBAC allows the installer service account necessary permissions on the objects in the contentFS
-func (acm *AuthorizationClientMapper) CheckContentPermissions(ctx context.Context, contentFS fs.FS, authcl authorizationv1client.AuthorizationV1Interface, ext *ocv1.ClusterExtension) error {
-	reg, err := convert.ParseFS(ctx, contentFS)
-	if err != nil {
-		return err
-	}
-
-	plain, err := convert.Convert(reg, ext.Spec.Namespace, []string{corev1.NamespaceAll})
-	if err != nil {
-		return err
-	}
-
-	err = checkObjectPermissions(ctx, authcl, plain.Objects, ext)
-
-	return err
-}
-
-func checkObjectPermissions(ctx context.Context, authcl authorizationv1client.AuthorizationV1Interface, objects []client.Object, ext *ocv1.ClusterExtension) error {
+// CheckObjectPermissions verifies that the given objects have the required permissions.
+func CheckObjectPermissions(ctx context.Context, authcl authorizationv1client.AuthorizationV1Interface, objects []client.Object, ext *ocv1.ClusterExtension) error {
 	ssrr := &authv1.SelfSubjectRulesReview{
 		Spec: authv1.SelfSubjectRulesReviewSpec{
 			Namespace: ext.Spec.Namespace,
@@ -78,7 +51,7 @@ func checkObjectPermissions(ctx context.Context, authcl authorizationv1client.Au
 	opts := v1.CreateOptions{}
 	ssrr, err := authcl.SelfSubjectRulesReviews().Create(ctx, ssrr, opts)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create SelfSubjectRulesReview: %w", err)
 	}
 
 	rules := []rbacv1.PolicyRule{}
@@ -118,25 +91,26 @@ func checkObjectPermissions(ctx context.Context, authcl authorizationv1client.Au
 	for _, resAttr := range resAttrs {
 		if !canI(resAttr, rules) {
 			if resAttr.Namespace != "" {
-				namespacedErrs = append(namespacedErrs, fmt.Errorf("cannot %q %q %q in namespace %q",
+				namespacedErrs = append(namespacedErrs, fmt.Errorf("cannot %s %q %q in namespace %q",
 					resAttr.Verb,
 					strings.TrimSuffix(resAttr.Resource, "s"),
 					resAttr.Name,
 					resAttr.Namespace))
 				continue
 			}
-			clusterScopedErrs = append(clusterScopedErrs, fmt.Errorf("cannot %s %s %s",
+			clusterScopedErrs = append(clusterScopedErrs, fmt.Errorf("cannot %s %q %q",
 				resAttr.Verb,
 				strings.TrimSuffix(resAttr.Resource, "s"),
 				resAttr.Name))
 		}
 	}
-	errs := append(namespacedErrs, clusterScopedErrs...)
-	if len(errs) > 0 {
-		errs = append([]error{fmt.Errorf("installer service account %s is missing required permissions", ext.Spec.ServiceAccount.Name)}, errs...)
+
+	allErrs := append(namespacedErrs, clusterScopedErrs...)
+	if len(allErrs) > 0 {
+		return fmt.Errorf("installer service account %q is missing required permissions: %w", ext.Spec.ServiceAccount.Name, errors.Join(allErrs...))
 	}
 
-	return errors.Join(errs...)
+	return nil
 }
 
 // Checks if the rules allow the verb on the GroupVersionKind in resAttr
