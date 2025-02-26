@@ -37,8 +37,10 @@ import (
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
+	authorizationv1client "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/textlogger"
 	"k8s.io/utils/ptr"
@@ -58,6 +60,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
@@ -406,9 +409,16 @@ func run() error {
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
 	}
 
+	acm := authorization.NewAuthorizationClientMapper(clientRestConfigMapper, mgr.GetConfig())
+	acm.NewForConfig = func(cfg *rest.Config) (authorizationv1client.AuthorizationV1Interface, error) {
+		// *AuthorizationV1Client implements AuthorizationV1Interface
+		return authorizationv1client.NewForConfig(cfg)
+	}
+
 	helmApplier := &applier.Helm{
-		ActionClientGetter: acg,
-		Preflights:         preflights,
+		ActionClientGetter:        acg,
+		Preflights:                preflights,
+		AuthorizationClientMapper: acm,
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
