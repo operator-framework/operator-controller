@@ -37,7 +37,7 @@ builds:
       - s390x
 dockers:
   - image_templates:
-      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
     dockerfile: Dockerfile.operator-controller
     goos: linux
     goarch: amd64
@@ -45,7 +45,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
   - image_templates:
-      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
     dockerfile: Dockerfile.operator-controller
     goos: linux
     goarch: arm64
@@ -53,7 +53,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/arm64"
   - image_templates:
-      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
     dockerfile: Dockerfile.operator-controller
     goos: linux
     goarch: ppc64le
@@ -61,7 +61,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/ppc64le"
   - image_templates:
-      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+      - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
     dockerfile: Dockerfile.operator-controller
     goos: linux
     goarch: s390x
@@ -69,7 +69,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/s390x"
   - image_templates:
-      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
     dockerfile: Dockerfile.catalogd
     goos: linux
     goarch: amd64
@@ -77,7 +77,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
   - image_templates:
-      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
     dockerfile: Dockerfile.catalogd
     goos: linux
     goarch: arm64
@@ -85,7 +85,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/arm64"
   - image_templates:
-      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
     dockerfile: Dockerfile.catalogd
     goos: linux
     goarch: ppc64le
@@ -93,7 +93,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/ppc64le"
   - image_templates:
-      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+      - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
     dockerfile: Dockerfile.catalogd
     goos: linux
     goarch: s390x
@@ -101,18 +101,18 @@ dockers:
     build_flag_templates:
       - "--platform=linux/s390x"
 docker_manifests:
-  - name_template: "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+  - name_template: "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
     image_templates:
-      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
-  - name_template: "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+      - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+  - name_template: "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
     image_templates:
-      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+      - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
 checksum:
   name_template: 'checksums.txt'
 snapshot:

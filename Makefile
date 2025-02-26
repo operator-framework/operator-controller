@@ -9,28 +9,28 @@ export ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 GOLANG_VERSION := $(shell sed -En 's/^go (.*)$$/\1/p' "go.mod")
 # Image URL to use all building/pushing image targets
-ifeq ($(origin IMG_NAMESPACE), undefined)
-IMG_NAMESPACE := quay.io/operator-framework
+ifeq ($(origin IMAGE_REGISTRY), undefined)
+IMAGE_REGISTRY := quay.io/operator-framework
 endif
-export IMG_NAMESPACE
+export IMAGE_REGISTRY
 
-ifeq ($(origin OPERATOR_CONTROLLER_IMAGE_REPO), undefined)
-OPERATOR_CONTROLLER_IMAGE_REPO := $(IMG_NAMESPACE)/operator-controller
+ifeq ($(origin OPCON_IMAGE_REPO), undefined)
+OPCON_IMAGE_REPO := $(IMAGE_REGISTRY)/operator-controller
 endif
-export OPERATOR_CONTROLLER_IMAGE_REPO
+export OPCON_IMAGE_REPO
 
-ifeq ($(origin CATALOGD_IMAGE_REPO), undefined)
-CATALOGD_IMAGE_REPO := $(IMG_NAMESPACE)/catalogd
+ifeq ($(origin CATD_IMAGE_REPO), undefined)
+CATD_IMAGE_REPO := $(IMAGE_REGISTRY)/catalogd
 endif
-export CATALOGD_IMAGE_REPO
+export CATD_IMAGE_REPO
 
 ifeq ($(origin IMAGE_TAG), undefined)
 IMAGE_TAG := devel
 endif
 export IMAGE_TAG
 
-OPERATOR_CONTROLLER_IMG := $(OPERATOR_CONTROLLER_IMAGE_REPO):$(IMAGE_TAG)
-CATALOGD_IMG := $(CATALOGD_IMAGE_REPO):$(IMAGE_TAG)
+OPCON_IMG := $(OPCON_IMAGE_REPO):$(IMAGE_TAG)
+CATD_IMG := $(CATD_IMAGE_REPO):$(IMAGE_TAG)
 
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.15.3
@@ -268,8 +268,8 @@ e2e-coverage:
 
 .PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND cluster.
-	$(CONTAINER_RUNTIME) save $(OPERATOR_CONTROLLER_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
-	$(CONTAINER_RUNTIME) save $(CATALOGD_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
+	$(CONTAINER_RUNTIME) save $(OPCON_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
+	$(CONTAINER_RUNTIME) save $(CATD_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-deploy
 kind-deploy: export MANIFEST := ./operator-controller.yaml
@@ -333,15 +333,15 @@ go-build-linux: $(BINARIES)
 .PHONY: run
 run: docker-build kind-cluster kind-load kind-deploy wait #HELP Build the operator-controller then deploy it into a new kind cluster.
 
-CATALOGD_NAMESPACE := olmv1-system
+CATD_NAMESPACE := olmv1-system
 wait:
-	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl wait --for=condition=Ready --namespace=$(CATALOGD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
+	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
+	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
-	$(CONTAINER_RUNTIME) build -t $(OPERATOR_CONTROLLER_IMG) -f Dockerfile.operator-controller ./bin/linux
-	$(CONTAINER_RUNTIME) build -t $(CATALOGD_IMG) -f Dockerfile.catalogd ./bin/linux
+	$(CONTAINER_RUNTIME) build -t $(OPCON_IMG) -f Dockerfile.operator-controller ./bin/linux
+	$(CONTAINER_RUNTIME) build -t $(CATD_IMG) -f Dockerfile.catalogd ./bin/linux
 
 #SECTION Release
 ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)
@@ -356,7 +356,7 @@ export GORELEASER_ARGS
 
 .PHONY: release
 release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
-	OPERATOR_CONTROLLER_IMAGE_REPO=$(OPERATOR_CONTROLLER_IMAGE_REPO) CATALOGD_IMAGE_REPO=$(CATALOGD_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
+	OPCON_IMAGE_REPO=$(OPCON_IMAGE_REPO) CATD_IMAGE_REPO=$(CATD_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
 quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
@@ -368,13 +368,13 @@ quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation rel
 ##@ Docs
 
 .PHONY: crd-ref-docs
-OPERATOR_CONTROLLER_API_REFERENCE_FILENAME := operator-controller-api-reference.md
+API_REFERENCE_FILENAME := operator-controller-api-reference.md
 API_REFERENCE_DIR := $(ROOT_DIR)/docs/api-reference
 crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
-	rm -f $(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME)
+	rm -f $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME)
 	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/ \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
-	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME);
+	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME);
 
 VENVDIR := $(abspath docs/.venv)
 
