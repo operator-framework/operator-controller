@@ -14,7 +14,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
-const syntheticServiceAccountName = "olmv1:synthetic"
+const syntheticServiceAccountName = "olm.synthetic-user"
 
 type clusterExtensionRestConfigMapper struct {
 	saRestConfigMapper        func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error)
