@@ -192,7 +192,7 @@ test: manifests generate fmt lint test-unit test-e2e #HELP Run all tests.
 
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
-	go test -count=1 -v ./test/e2e/...
+	go test -count=1 -v -run "$(if $(TEST_FILTER),$(TEST_FILTER),.)" ./test/e2e/...
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
