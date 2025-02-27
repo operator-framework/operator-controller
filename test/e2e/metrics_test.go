@@ -125,6 +125,7 @@ func (c *MetricsTestConfig) createCurlMetricsPod() {
 		"--restart=Never",
 		"--overrides", `{
 			"spec": {
+				"terminationGradePeriodSeconds": 0,
 				"containers": [{
 					"name": "curl",
 					"image": "curlimages/curl",
