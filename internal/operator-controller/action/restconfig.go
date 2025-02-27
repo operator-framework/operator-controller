@@ -11,22 +11,36 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
-func ClusterExtensionUserRestConfigMapper(tokenGetter *authentication.TokenGetter) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-	saRestConfigMapper := serviceAccountRestConfigMapper(tokenGetter)
-	synthRestConfigMapper := sythenticUserRestConfigMapper()
+const syntheticServiceAccountName = "olmv1:synthetic"
 
+type clusterExtensionRestConfigMapper struct {
+	saRestConfigMapper        func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error)
+	synthUserRestConfigMapper func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error)
+}
+
+func (m *clusterExtensionRestConfigMapper) mapper() func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
+	synthAuthFeatureEnabled := features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions)
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 		cExt := o.(*ocv1.ClusterExtension)
-		if cExt.Spec.ServiceAccount != nil { //nolint:staticcheck
-			return saRestConfigMapper(ctx, o, c)
+		if synthAuthFeatureEnabled && cExt.Spec.ServiceAccount.Name == syntheticServiceAccountName {
+			return m.synthUserRestConfigMapper(ctx, o, c)
 		}
-		return synthRestConfigMapper(ctx, o, c)
+		return m.saRestConfigMapper(ctx, o, c)
 	}
 }
 
-func sythenticUserRestConfigMapper() func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
+func ClusterExtensionUserRestConfigMapper(tokenGetter *authentication.TokenGetter) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
+	m := &clusterExtensionRestConfigMapper{
+		saRestConfigMapper:        serviceAccountRestConfigMapper(tokenGetter),
+		synthUserRestConfigMapper: syntheticUserRestConfigMapper(),
+	}
+	return m.mapper()
+}
+
+func syntheticUserRestConfigMapper() func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 		cExt := o.(*ocv1.ClusterExtension)
 		cc := rest.CopyConfig(c)
@@ -41,7 +55,7 @@ func serviceAccountRestConfigMapper(tokenGetter *authentication.TokenGetter) fun
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 		cExt := o.(*ocv1.ClusterExtension)
 		saKey := types.NamespacedName{
-			Name:      cExt.Spec.ServiceAccount.Name, //nolint:staticcheck
+			Name:      cExt.Spec.ServiceAccount.Name,
 			Namespace: cExt.Spec.Namespace,
 		}
 		saConfig := rest.AnonymousClientConfig(c)
