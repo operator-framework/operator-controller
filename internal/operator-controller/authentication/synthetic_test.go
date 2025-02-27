@@ -16,13 +16,13 @@ func TestSyntheticUserName(t *testing.T) {
 			Name: "my-ext",
 		},
 	})
-	require.Equal(t, "olmv1:clusterextensions:my-ext:admin", syntheticUserName)
+	require.Equal(t, "olm:clusterextensions:my-ext", syntheticUserName)
 }
 
 func TestSyntheticGroups(t *testing.T) {
 	syntheticGroups := authentication.SyntheticGroups(ocv1.ClusterExtension{})
 	require.Equal(t, []string{
-		"olmv1:clusterextensions:admin",
+		"olm:clusterextensions",
 		"system:authenticated",
 	}, syntheticGroups)
 }
@@ -33,9 +33,9 @@ func TestSyntheticImpersonationConfig(t *testing.T) {
 			Name: "my-ext",
 		},
 	})
-	require.Equal(t, "olmv1:clusterextensions:my-ext:admin", config.UserName)
+	require.Equal(t, "olm:clusterextensions:my-ext", config.UserName)
 	require.Equal(t, []string{
-		"olmv1:clusterextensions:admin",
+		"olm:clusterextensions",
 		"system:authenticated",
 	}, config.Groups)
 	require.Empty(t, config.UID)
