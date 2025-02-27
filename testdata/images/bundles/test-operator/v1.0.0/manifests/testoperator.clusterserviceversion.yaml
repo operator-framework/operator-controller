@@ -55,6 +55,7 @@ spec:
               labels:
                 app: olme2etest
             spec:
+              terminationGracePeriodSeconds: 0
               containers:
               - name: busybox
                 image: busybox
