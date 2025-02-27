@@ -7,13 +7,6 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - groups
-  - users
-  verbs:
-  - impersonate
-- apiGroups:
-  - ""
-  resources:
   - serviceaccounts/token
   verbs:
   - create
