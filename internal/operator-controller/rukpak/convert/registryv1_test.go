@@ -1,7 +1,6 @@
 package convert_test
 
 import (
-	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -380,81 +379,102 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
 }
 
-func TestRegistryV1SuiteGenerateErrorMultiNamespaceEmpty(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
+func TestConvertInstallModeValidation(t *testing.T) {
+	for _, tc := range []struct {
+		description      string
+		installModes     []v1alpha1.InstallMode
+		installNamespace string
+		watchNamespaces  []string
+	}{
+		{
+			description:      "fails on AllNamespaces install mode when CSV does not support it",
+			installNamespace: "install-namespace",
+			watchNamespaces:  []string{corev1.NamespaceAll},
+			installModes: []v1alpha1.InstallMode{
+				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+				{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true},
+			},
+		}, {
+			description:      "fails on SingleNamespace install mode when CSV does not support it",
+			installNamespace: "install-namespace",
+			watchNamespaces:  []string{"watch-namespace"},
+			installModes: []v1alpha1.InstallMode{
+				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: false},
+				{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true},
+			},
+		}, {
+			description:      "fails on OwnNamespace install mode when CSV does not support it and watch namespace is not install namespace",
+			installNamespace: "install-namespace",
+			watchNamespaces:  []string{"watch-namespace"},
+			installModes: []v1alpha1.InstallMode{
+				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: false},
+				{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true},
+			},
+		}, {
+			description:      "fails on MultiNamespace install mode when CSV does not support it",
+			installNamespace: "install-namespace",
+			watchNamespaces:  []string{"watch-namespace-one", "watch-namespace-two", "watch-namespace-three"},
+			installModes: []v1alpha1.InstallMode{
+				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+				{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+			},
+		}, {
+			description:      "fails on MultiNamespace install mode when CSV supports it but watchNamespaces is empty",
+			installNamespace: "install-namespace",
+			watchNamespaces:  []string{},
+			installModes: []v1alpha1.InstallMode{
+				// because install mode is inferred by the watchNamespaces parameter
+				// force MultiNamespace install by disabling other modes
+				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: false},
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: false},
+				{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true},
+			},
+		}, {
+			description:      "fails on MultiNamespace install mode when CSV supports it but watchNamespaces is nil",
+			installNamespace: "install-namespace",
+			watchNamespaces:  nil,
+			installModes: []v1alpha1.InstallMode{
+				// because install mode is inferred by the watchNamespaces parameter
+				// force MultiNamespace install by disabling other modes
+				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: false},
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: false},
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: false},
+				{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true},
+			},
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			t.Log("RegistryV1 Suite Convert")
+			t.Log("It should generate objects successfully based on target namespaces")
 
-	t.Log("It should error when multinamespace mode is supported with an empty string in target namespaces")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true}}
+			t.Log("It should error when all namespace mode is disabled with target namespace containing an empty string")
+			baseCSV, svc := getBaseCsvAndService()
+			csv := baseCSV.DeepCopy()
+			csv.Spec.InstallModes = tc.installModes
 
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{"testWatchNs1", ""}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := convert.RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
+			t.Log("By creating a registry v1 bundle")
+			unstructuredSvc := convertToUnstructured(t, svc)
+			registryv1Bundle := convert.RegistryV1{
+				PackageName: "testPkg",
+				CSV:         *csv,
+				Others:      []unstructured.Unstructured{unstructuredSvc},
+			}
+
+			t.Log("By converting to plain")
+			plainBundle, err := convert.Convert(registryv1Bundle, tc.installNamespace, tc.watchNamespaces)
+			require.Error(t, err)
+			require.Nil(t, plainBundle)
+		})
 	}
-
-	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
-	require.Error(t, err)
-	require.Nil(t, plainBundle)
-}
-
-func TestRegistryV1SuiteGenerateErrorSingleNamespaceDisabled(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
-
-	t.Log("It should error when single namespace mode is disabled with more than one target namespaces")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: false}}
-
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := convert.RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
-	}
-
-	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
-	require.Error(t, err)
-	require.Nil(t, plainBundle)
-}
-
-func TestRegistryV1SuiteGenerateErrorAllNamespaceDisabled(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
-
-	t.Log("It should error when all namespace mode is disabled with target namespace containing an empty string")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{
-		{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: false},
-		{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-		{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
-		{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true},
-	}
-
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{""}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := convert.RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
-	}
-
-	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
-	require.Error(t, err)
-	require.Nil(t, plainBundle)
 }
 
 func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
@@ -464,7 +484,8 @@ func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
 	t.Log("It should read the registry+v1 bundle filesystem correctly")
 	t.Log("It should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata")
 	fsys := os.DirFS("testdata/combine-properties-bundle")
-	chrt, err := convert.RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+
+	chrt, err := convert.RegistryV1ToHelmChart(fsys, "", "")
 	require.NoError(t, err)
 	require.NotNil(t, chrt)
 	require.NotNil(t, chrt.Metadata)
@@ -492,7 +513,7 @@ func TestParseFSFails(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := convert.ParseFS(context.Background(), tt.FS)
+			_, err := convert.ParseFS(tt.FS)
 			require.Error(t, err)
 		})
 	}
@@ -506,7 +527,8 @@ func TestRegistryV1SuiteReadBundleFileSystemFailsOnNoCSV(t *testing.T) {
 	t.Log("It should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata")
 	fsys := os.DirFS("testdata/combine-properties-bundle")
 
-	chrt, err := convert.RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+	chrt, err := convert.RegistryV1ToHelmChart(fsys, "", "")
+
 	require.NoError(t, err)
 	require.NotNil(t, chrt)
 	require.NotNil(t, chrt.Metadata)
