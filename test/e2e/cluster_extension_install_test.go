@@ -343,7 +343,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 					},
 				},
 				Namespace: ns.Name,
-				ServiceAccount: &ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{
 					Name: sa.Name,
 				},
 			}
@@ -403,7 +403,7 @@ func TestClusterExtensionInstallRegistryDynamic(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -482,7 +482,7 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -526,7 +526,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -588,7 +588,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -637,7 +637,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -692,7 +692,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -773,7 +773,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -834,7 +834,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -897,7 +897,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: &ocv1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
