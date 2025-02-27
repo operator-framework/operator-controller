@@ -44,13 +44,13 @@ func TestMapper_SyntheticPermissionsEnabled(t *testing.T) {
 		fgEnabled          bool
 	}{
 		{
-			description:        "user service account wrapper if extension service account is _not_ called olmv1:synthetic",
-			serviceAccountName: "_not_:olmv1:synthetic",
+			description:        "user service account wrapper if extension service account is _not_ called olm.synthetic-user",
+			serviceAccountName: "not.olm.synthetic-user",
 			expectedMapper:     saAccountWrapper,
 			fgEnabled:          true,
 		}, {
-			description:        "user synthetic user wrapper is extension service account is called olmv1:synthetic",
-			serviceAccountName: "olmv1:synthetic",
+			description:        "user synthetic user wrapper is extension service account is called olm.synthetic-user",
+			serviceAccountName: "olm.synthetic-user",
 			expectedMapper:     synthUserWrapper,
 			fgEnabled:          true,
 		},
@@ -80,7 +80,7 @@ func TestMapper_SyntheticPermissionsDisabled(t *testing.T) {
 	ext := &ocv1.ClusterExtension{
 		Spec: ocv1.ClusterExtensionSpec{
 			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "olmv1:synthetic",
+				Name: "olm.synthetic-user",
 			},
 		},
 	}
