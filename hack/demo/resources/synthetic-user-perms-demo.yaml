@@ -1,0 +1,127 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterextension-installer
+rules:
+  - apiGroups: [ olm.operatorframework.io ]
+    resources: [ clusterextensions/finalizers ]
+    verbs: [ update ]
+  - apiGroups: [ apiextensions.k8s.io ]
+    resources: [ customresourcedefinitions ]
+    verbs: [ create, list, watch, get, update, patch, delete ]
+  - apiGroups: [ rbac.authorization.k8s.io ]
+    resources: [ clusterroles, roles, clusterrolebindings, rolebindings ]
+    verbs: [ create, list, watch, get, update, patch, delete ]
+  - apiGroups: [""]
+    resources: [configmaps, endpoints, events, pods, pod/logs, serviceaccounts, services, services/finalizers, namespaces, persistentvolumeclaims]
+    verbs: ['*']
+  - apiGroups: [apps]
+    resources: [ '*' ]
+    verbs: ['*']
+  - apiGroups: [ batch ]
+    resources: [ '*' ]
+    verbs: [ '*' ]
+  - apiGroups: [ networking.k8s.io ]
+    resources: [ '*' ]
+    verbs: [ '*' ]
+  - apiGroups: [authentication.k8s.io]
+    resources: [tokenreviews, subjectaccessreviews]
+    verbs: [create]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: ['*']
+  - apiGroups: [ apps.openshift.io ]
+    resources: [ '*' ]
+    verbs: [ '*' ]
+  - apiGroups: [config.openshift.io]
+    resources: [clusterversions]
+    verbs: [get, list, watch]
+  - apiGroups: [monitoring.coreos.com]
+    resources: ['*']
+    verbs: ['*']
+  - apiGroups: [oauth.openshift.io]
+    resources: [oauthclients]
+    verbs: [create, delete, get, list, patch, update, watch]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: ['*']
+    verbs: ['*']
+  - apiGroups: [route.openshift.io]
+    resources: ['*']
+    verbs: ['*']
+  - apiGroups: [template.openshift.io]
+    resources: ['*']
+    verbs: ['*']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterextension-privileged
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: ['*']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterextension-installer-crds
+rules:
+  - apiGroups: [argoproj.io]
+    resources: ['*']
+    verbs: ['*']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clusterextension-installer-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: clusterextension-installer
+subjects:
+  - kind: User
+    name: "olm:clusterextensions:argocd-operator"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clusterextension-privileged-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: clusterextension-privileged
+subjects:
+  - kind: User
+    name: "olm:clusterextensions:argocd-operator"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clusterextension-installer-crds-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: clusterextension-installer-crds
+subjects:
+  - kind: User
+    name: "olm:clusterextensions:argocd-operator"
+---
+apiVersion: olm.operatorframework.io/v1
+kind: ClusterExtension
+metadata:
+  name: argocd-operator
+spec:
+  namespace: argocd-system
+  serviceAccount:
+    name: "olm.synthetic-user"
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      version: 0.6.0
