@@ -301,10 +301,15 @@ kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 
 #SECTION Build
 
-ifeq ($(origin VERSION), undefined)
+# attempt to generate the VERSION attribute for certificates
+# fail if it is unset afterwards, since the sideeffects are indirect
+ifeq ($(strip $(VERSION)),)
 VERSION := $(shell git describe --tags --always --dirty)
 endif
 export VERSION
+ifeq ($(strip $(VERSION)),)
+	$(error undefined VERSION; resulting certs will be invalid)
+endif
 
 ifeq ($(origin CGO_ENABLED), undefined)
 CGO_ENABLED := 0
