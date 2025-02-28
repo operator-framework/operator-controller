@@ -23,6 +23,8 @@ func forceOwnershipRWX() archive.Filter {
 		h.Uid = uid
 		h.Gid = gid
 		h.Mode |= 0700
+		h.PAXRecords = nil
+		h.Xattrs = nil //nolint:staticcheck
 		return true, nil
 	}
 }
