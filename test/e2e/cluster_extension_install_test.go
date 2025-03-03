@@ -330,7 +330,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 
 			clusterExtension, extensionCatalog, sa, ns := testInit(t)
 			defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-			defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+			defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 			clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 				Source: ocv1.SourceConfig{
@@ -390,7 +390,7 @@ func TestClusterExtensionInstallRegistryDynamic(t *testing.T) {
 
 	clusterExtension, extensionCatalog, sa, ns := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
@@ -465,7 +465,7 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 	require.NoError(t, err)
 
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 	defer func(cat *ocv1.ClusterCatalog) {
 		require.NoError(t, globalClient.Delete(context.Background(), cat))
 		require.Eventually(t, func() bool {
@@ -513,7 +513,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 
 	clusterExtension, extensionCatalog, sa, ns := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
@@ -576,7 +576,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 
 	clusterExtension, extensionCatalog, sa, ns := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
@@ -625,7 +625,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	t.Log("When resolving upgrade edges")
 	clusterExtension, extensionCatalog, sa, ns := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
@@ -673,7 +673,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	t.Log("It resolves again when a catalog is patched with new ImageRef")
 	clusterExtension, extensionCatalog, sa, ns := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
@@ -760,7 +760,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	sa, err := createServiceAccount(context.Background(), types.NamespacedName{Name: clusterExtensionName, Namespace: ns.Name}, clusterExtensionName)
 	require.NoError(t, err)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
@@ -821,7 +821,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	t.Log("It resolves again when managed content is changed")
 	clusterExtension, extensionCatalog, sa, ns := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
@@ -884,7 +884,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	err := globalClient.Create(context.Background(), sa)
 	require.NoError(t, err)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, globalClient, cfg)
+	defer utils.CollectTestArtifacts(t, artifactName, globalClient, globalConfig)
 
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
