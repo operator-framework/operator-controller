@@ -25,6 +25,7 @@ import (
 	authenticationv1 "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -73,14 +74,10 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 
 func findK8sClient(t *testing.T) (kubernetes.Interface, *rest.Config) {
 	cfg, err := config.GetConfig()
-	if err != nil {
-		t.Fatalf("Failed to get Kubernetes config: %v", err)
-	}
+	require.NoError(t, err, "Failed to get Kubernetes config")
 
 	clientset, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create client from config: %v", err)
-	}
+	require.NoError(t, err, "Failed to create client from config")
 
 	t.Log("Successfully created Kubernetes client via controller-runtime config")
 	return clientset, cfg
@@ -133,13 +130,13 @@ func NewMetricsTestConfig(
 // run executes the entire test flow
 func (c *MetricsTestConfig) run() {
 	ctx := context.Background()
+	defer c.cleanup(ctx)
 	c.createMetricsClusterRoleBinding(ctx)
 	token := c.getServiceAccountToken(ctx)
 	c.createCurlMetricsPod(ctx)
 	c.waitForPodReady(ctx)
 	// Exec `curl` in the Pod to validate the metrics
 	c.validateMetricsEndpoint(ctx, token)
-	defer c.cleanup(ctx)
 }
 
 // createMetricsClusterRoleBinding to bind the cluster role so metrics are accessible
@@ -242,13 +239,10 @@ func (c *MetricsTestConfig) waitForPodReady(ctx context.Context) {
 		}
 		return false, nil
 	})
-	if err != nil {
-		// If the context timed out, the test should fail with a more direct message
-		if errors.Is(err, context.DeadlineExceeded) {
-			c.t.Fatal("Timed out waiting for the curl pod to become Ready")
-		}
-		require.NoError(c.t, err, "Error waiting for curl pod to become Ready")
+	if errors.Is(err, context.DeadlineExceeded) {
+		c.t.Fatal("Timed out waiting for the curl pod to become Ready")
 	}
+	require.NoError(c.t, err, "Error waiting for curl pod to become Ready")
 }
 
 // validateMetricsEndpoint performs `kubectl exec ... curl <metricsURL>` logic
@@ -323,7 +317,7 @@ func waitForClusterRoleBindingDeletion(ctx context.Context, t *testing.T, kubeCl
 	err := wait.PollUntilContextTimeout(ctx, 2*time.Second, 60*time.Second, false, func(ctx context.Context) (bool, error) {
 		_, err := kubeClient.RbacV1().ClusterRoleBindings().Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
+			if apierrors.IsNotFound(err) {
 				return true, nil
 			}
 			return false, err
@@ -345,8 +339,7 @@ func waitForPodDeletion(ctx context.Context, t *testing.T, kubeClient kubernetes
 	err := wait.PollUntilContextTimeout(ctx, 2*time.Second, 90*time.Second, false, func(ctx context.Context) (bool, error) {
 		pod, getErr := kubeClient.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if getErr != nil {
-			// The standard "not found" check
-			if strings.Contains(getErr.Error(), "not found") {
+			if apierrors.IsNotFound(getErr) {
 				return true, nil
 			}
 			return false, getErr
