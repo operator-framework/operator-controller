@@ -17,8 +17,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-      - name: Clear the module cache
-        run: go clean -modcache
+          cache: false
       - name: Run verification checks
         run: make verify GOFLAGS='-tags=containers_image_openpgp'
   lint:
