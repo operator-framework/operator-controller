@@ -224,7 +224,8 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 -tags '$(GO_BUILD_TAGS)' \
                 -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
-                $(UNIT_TEST_DIRS) \
+                -run "$(if $(TEST_FILTER),$(TEST_FILTER),.)" \
+                $(if $(TEST_PKG),$(TEST_PKG),$(UNIT_TEST_DIRS)) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
 .PHONY: image-registry
