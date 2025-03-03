@@ -32,6 +32,20 @@ export IMAGE_TAG
 OPCON_IMG := $(OPCON_IMAGE_REPO):$(IMAGE_TAG)
 CATD_IMG := $(CATD_IMAGE_REPO):$(IMAGE_TAG)
 
+# Extract Kubernetes client-go version used to set the version to the PSA labels, for ENVTEST and KIND
+ifeq ($(origin K8S_VERSION), undefined)
+K8S_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed -E 's/^v0\.([0-9]+)\.[0-9]+$$/1.\1/')
+endif
+
+# Ensure ENVTEST_VERSION follows correct "X.Y.x" format
+ENVTEST_VERSION := $(K8S_VERSION).x
+
+# Not guaranteed to have patch releases available and node image tags are full versions (i.e v1.28.0 - no v1.28, v1.29, etc.)
+# The K8S_VERSION is set by getting the version of the k8s.io/client-go dependency from the go.mod
+# and sets major version to "1" and the patch version to "0". For example, a client-go version of v0.28.5
+# will map to a K8S_VERSION of 1.28.0
+KIND_CLUSTER_IMAGE := kindest/node:v$(K8S_VERSION).0
+
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.15.3
 export WAIT_TIMEOUT := 60s
@@ -54,12 +68,6 @@ ifeq ($(origin KIND_CLUSTER_NAME), undefined)
 KIND_CLUSTER_NAME := operator-controller
 endif
 
-# Not guaranteed to have patch releases available and node image tags are full versions (i.e v1.28.0 - no v1.28, v1.29, etc.)
-# The KIND_NODE_VERSION is set by getting the version of the k8s.io/client-go dependency from the go.mod
-# and sets major version to "1" and the patch version to "0". For example, a client-go version of v0.28.5
-# will map to a KIND_NODE_VERSION of 1.28.0
-KIND_NODE_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.0/')
-KIND_CLUSTER_IMAGE := kindest/node:v$(KIND_NODE_VERSION)
 
 ifneq (, $(shell command -v docker 2>/dev/null))
 CONTAINER_RUNTIME := docker
@@ -143,8 +151,14 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: tidy fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
+verify: tidy fmt generate manifests crd-ref-docs update-k8s-values #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
+
+.PHONY: update-k8s-values # HELP Update PSA labels in config manifests with Kubernetes version
+update-k8s-values:
+	find config -type f -name '*.yaml' -exec \
+	sed -i.bak -E 's/(pod-security.kubernetes.io\/[a-zA-Z-]+-version:).*/\1 "v$(K8S_VERSION)"/g' {} +;
+	find config -type f -name '*.yaml.bak' -delete
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
@@ -194,7 +208,6 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
-ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 
