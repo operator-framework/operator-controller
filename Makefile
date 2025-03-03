@@ -136,7 +136,7 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/operator-controller/rbac/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/rbac/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
-	$(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
+	$(CONTROLLER_GEN) webhook paths="./internal/catalogd/webhook/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
