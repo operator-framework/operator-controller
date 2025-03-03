@@ -42,6 +42,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
+replace github.com/proglottis/gpgme => github.com/proglottis/gpgme v0.1.3
+
 require (
 	carvel.dev/vendir v0.40.0 // indirect
 	cel.dev/expr v0.18.0 // indirect
