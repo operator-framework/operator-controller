@@ -178,7 +178,7 @@ test: manifests generate fmt lint test-unit test-e2e #HELP Run all tests.
 
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
-	go test -count=1 -v ./test/e2e/...
+	go test -count=1 -v -run "$(if $(TEST_FILTER),$(TEST_FILTER),.)" ./test/e2e/...
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
@@ -211,7 +211,8 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 -tags '$(GO_BUILD_TAGS)' \
                 -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
-                $(UNIT_TEST_DIRS) \
+                -run "$(if $(TEST_FILTER),$(TEST_FILTER),.)" \
+                $(if $(TEST_PKG),$(TEST_PKG),$(UNIT_TEST_DIRS)) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
 .PHONY: image-registry
