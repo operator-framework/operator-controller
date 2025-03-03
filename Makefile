@@ -143,8 +143,17 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: tidy fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
+verify: tidy fmt generate manifests crd-ref-docs update-k8s-values #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
+
+# Minor Kubernetes version to build against derived from the client-go dependency version
+KUBE_MINOR ?= $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1/')
+
+.PHONY: update-k8s-values # HELP Update PSA labels in config manifests with Kubernetes version
+update-k8s-values:
+	find config -type f -name '*.yaml' -exec \
+	sed -i.bak -E 's/(pod-security.kubernetes.io\/[a-zA-Z-]+-version:).*/\1 "v$(KUBE_MINOR)"/g' {} +;
+	find config -type f -name '*.yaml.bak' -delete
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
