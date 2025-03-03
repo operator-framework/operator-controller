@@ -133,7 +133,7 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clustercatalogs.yaml $(KUSTOMIZE_CATD_CRDS_DIR)
 	rmdir $(CRD_WORKING_DIR)
 	# Generate the remaining operator-controller manifests
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/operator-controller/controllers/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
 	$(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
@@ -141,7 +141,6 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="internal/..."
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="cmd/..."
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="api/..."
 
 .PHONY: verify
