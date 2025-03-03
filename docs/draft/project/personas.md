@@ -1,16 +1,8 @@
-OLM Personas
+# OLM Personas
 
-# About this doc
 This document attempts to identify essential roles in the OLM lifecycle and associate the duties logically performed by each role. Though some roles can be (and even may typically be) performed by the same actor, they are logically distinct roles with different goals.
 
-# Framework
-OLM roles are broadly categorized here as **Producers** or **Consumers**, depicting whether that role typically is producing content for use in the ecosystem or is using (consuming) content. 
-
-# Terminology
-Some terminology exists outside of this document in different contexts, so where a common term has a specific meaning in the context of OLMv1, it is noted below.  Where possible, generic terms are used instead of, for e.g. specific to registry+v1.
-- **extension**:  a representation of any OLMv1 installable
-- **FBC**: [file-based catalog](https://olm.operatorframework.io/docs/reference/file-based-catalogs/), a composite YAML schema for expressing extensions and their related upgrade graphs
-
+OLM roles are broadly categorized here as **Producers** or **Consumers**, indicating whether that role typically is producing content for use in the ecosystem or is using (consuming) content.
 
 # Consumers
 ## Cluster Admin
@@ -29,6 +21,7 @@ This role encompasses the basic full-permissions-required creation/maintenance o
 *Who is it?*
 
 This role encompasses privileged operations required for OLMv1 and associated operators to deploy workloads to the cluster. This role may exist as a set of activities executed by a cluster admin, but also may operate independently of that role, depending on the necessary privileges.
+Here `extension` represents any individual OLMv1 installable, including (but not limited to) `registry+v1` bundles.
 
 *What does it do?*
 
@@ -65,7 +58,7 @@ This role represents any actor which monitors the status of the cluster and inst
 ## Extension Author
 *Who is it?*
 
-This role encompasses folks who want to create an extension.  It interacts with other **Producer** roles by generating a _catalog contribution_ to make extensions available on-cluster to **Cluster Extension Admins**. For example, a catalog contribution for a registry+v1 bundle is one/more bundle image and the upgrade graph expressed in FBC.
+This role encompasses folks who want to create an extension.  It interacts with other **Producer** roles by generating a _catalog contribution_ to make extensions available on-cluster to **Cluster Extension Admins**. For example, a catalog contribution for a registry+v1 bundle is one/more bundle image and the upgrade graph expressed in [FBC](https://olm.operatorframework.io/docs/reference/file-based-catalogs/).
 
 *What does it do?*
 - Creates extension
