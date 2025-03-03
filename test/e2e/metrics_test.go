@@ -31,6 +31,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -199,19 +200,19 @@ func (c *MetricsTestConfig) createCurlMetricsPod(ctx context.Context) {
 		},
 		Spec: corev1.PodSpec{
 			ServiceAccountName:            c.serviceAccount,
-			TerminationGracePeriodSeconds: int64Ptr(0),
+			TerminationGracePeriodSeconds: ptr.To(int64(0)),
 			Containers: []corev1.Container{
 				{
 					Name:    "curl",
 					Image:   "curlimages/curl",
 					Command: []string{"sh", "-c", "sleep 3600"},
 					SecurityContext: &corev1.SecurityContext{
-						AllowPrivilegeEscalation: boolPtr(false),
+						AllowPrivilegeEscalation: ptr.To(false),
 						Capabilities: &corev1.Capabilities{
 							Drop: []corev1.Capability{"ALL"},
 						},
-						RunAsNonRoot: boolPtr(true),
-						RunAsUser:    int64Ptr(1000),
+						RunAsNonRoot: ptr.To(true),
+						RunAsUser:    ptr.To(int64(1000)),
 						SeccompProfile: &corev1.SeccompProfile{
 							Type: corev1.SeccompProfileTypeRuntimeDefault,
 						},
@@ -381,13 +382,4 @@ func getComponentNamespace(t *testing.T, kubeClient kubernetes.Interface, select
 		t.Fatalf("No namespace found for selector %q", selector)
 	}
 	return namespace
-}
-
-// Helpers for pointers
-func boolPtr(b bool) *bool {
-	return &b
-}
-
-func int64Ptr(i int64) *int64 {
-	return &i
 }
