@@ -17,10 +17,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-      - name: Install lilgpgme-dev
-        run: sudo apt install -y libgpgme-dev
-      - name: Clean go cache
-        run: go clean -modcache
       - name: Run verification checks
         run: make verify
   lint:
