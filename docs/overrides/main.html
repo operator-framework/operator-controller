@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tags">
+  {% if page.meta.tags %}
+    <ul class="tags-list">
+      {% for tag in page.meta.tags %}
+        <li class="tag">{{ tag }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{{ super() }}
+{% endblock %}
