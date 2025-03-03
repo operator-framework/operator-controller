@@ -18,7 +18,7 @@ jobs:
         with:
           go-version-file: "go.mod"
       - name: Run verification checks
-        run: make verify
+        run: make verify GOFLAGS='-tags=containers_image_openpgp'
   lint:
     runs-on: ubuntu-latest
     steps:
