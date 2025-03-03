@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	cfg          *rest.Config
+	globalConfig *rest.Config
 	globalClient client.Client
 )
 
@@ -29,11 +29,11 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	cfg = ctrl.GetConfigOrDie()
+	globalConfig = ctrl.GetConfigOrDie()
 
 	var err error
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
-	globalClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	globalClient, err = client.New(globalConfig, client.Options{Scheme: scheme.Scheme})
 	utilruntime.Must(err)
 
 	os.Exit(m.Run())
