@@ -141,14 +141,17 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clustercatalogs.yaml $(KUSTOMIZE_CATD_CRDS_DIR)
 	rmdir $(CRD_WORKING_DIR)
 	# Generate the remaining operator-controller manifests
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/operator-controller/rbac/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
-	$(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/rbac/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
+	$(CONTROLLER_GEN) webhook paths="./internal/catalogd/webhook/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="api/..."
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="cmd/..."
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="internal/..."
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="test/..."
 
 .PHONY: verify
 verify: tidy fmt generate manifests crd-ref-docs update-k8s-values #HELP Verify all generated code is up-to-date.
