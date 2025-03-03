@@ -6,4 +6,4 @@ toolchain go1.23.4
 
 replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 
-require github.com/operator-framework/operator-registry v1.50.0 // cmd/opm
+require github.com/operator-framework/operator-registry v1.51.0 // cmd/opm
