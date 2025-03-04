@@ -33,7 +33,7 @@ OPCON_IMG := $(OPCON_IMAGE_REPO):$(IMAGE_TAG)
 CATD_IMG := $(CATD_IMAGE_REPO):$(IMAGE_TAG)
 
 # Define dependency versions (use go.mod if we also use Go code from dependency)
-export CERT_MGR_VERSION := v1.15.3
+export CERT_MGR_VERSION := v1.17.1
 export WAIT_TIMEOUT := 60s
 
 # Install default ClusterCatalogs
