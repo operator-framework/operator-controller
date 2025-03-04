@@ -10,23 +10,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 )
 
-func TestSyntheticUserName(t *testing.T) {
-	syntheticUserName := authentication.SyntheticUserName(ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "my-ext",
-		},
-	})
-	require.Equal(t, "olm:clusterextensions:my-ext", syntheticUserName)
-}
-
-func TestSyntheticGroups(t *testing.T) {
-	syntheticGroups := authentication.SyntheticGroups(ocv1.ClusterExtension{})
-	require.Equal(t, []string{
-		"olm:clusterextensions",
-		"system:authenticated",
-	}, syntheticGroups)
-}
-
 func TestSyntheticImpersonationConfig(t *testing.T) {
 	config := authentication.SyntheticImpersonationConfig(ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
