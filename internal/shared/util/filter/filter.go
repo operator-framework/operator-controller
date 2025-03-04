@@ -5,10 +5,6 @@ import "slices"
 // Predicate returns true if the object should be kept when filtering
 type Predicate[T any] func(entity T) bool
 
-type Key[T any, K comparable] func(entity T) K
-
-type MapFn[S any, V any] func(S) V
-
 func And[T any](predicates ...Predicate[T]) Predicate[T] {
 	return func(obj T) bool {
 		for _, predicate := range predicates {
@@ -53,21 +49,4 @@ func Filter[T any](s []T, test Predicate[T]) []T {
 // The returned slice is of the new length.
 func InPlace[T any](s []T, test Predicate[T]) []T {
 	return slices.DeleteFunc(s, Not(test))
-}
-
-func GroupBy[T any, K comparable](s []T, key Key[T, K]) map[K][]T {
-	out := map[K][]T{}
-	for _, value := range s {
-		k := key(value)
-		out[k] = append(out[k], value)
-	}
-	return out
-}
-
-func Map[S, V any](s []S, mapper MapFn[S, V]) []V {
-	out := make([]V, len(s))
-	for i := 0; i < len(s); i++ {
-		out[i] = mapper(s[i])
-	}
-	return out
 }
