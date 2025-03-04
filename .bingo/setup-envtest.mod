@@ -4,4 +4,4 @@ go 1.23.0
 
 toolchain go1.23.4
 
-require sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250226022829-9d8d219840a4
+require sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250304084143-6eb011f4f89e
