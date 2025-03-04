@@ -41,11 +41,11 @@ $(CRD_REF_DOCS): $(BINGO_DIR)/crd-ref-docs.mod
 	@echo "(re)installing $(GOBIN)/crd-ref-docs-v0.1.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-ref-docs.mod -o=$(GOBIN)/crd-ref-docs-v0.1.0 "github.com/elastic/crd-ref-docs"
 
-GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.64.5
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.64.6
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/golangci-lint-v1.64.5"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.64.5 "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	@echo "(re)installing $(GOBIN)/golangci-lint-v1.64.6"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.64.6 "github.com/golangci/golangci-lint/cmd/golangci-lint"
 
 GORELEASER := $(GOBIN)/goreleaser-v1.26.2
 $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
@@ -77,9 +77,9 @@ $(OPM): $(BINGO_DIR)/opm.mod
 	@echo "(re)installing $(GOBIN)/opm-v1.51.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=opm.mod -o=$(GOBIN)/opm-v1.51.0 "github.com/operator-framework/operator-registry/cmd/opm"
 
-SETUP_ENVTEST := $(GOBIN)/setup-envtest-v0.0.0-20250226022829-9d8d219840a4
+SETUP_ENVTEST := $(GOBIN)/setup-envtest-v0.0.0-20250304084143-6eb011f4f89e
 $(SETUP_ENVTEST): $(BINGO_DIR)/setup-envtest.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/setup-envtest-v0.0.0-20250226022829-9d8d219840a4"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=setup-envtest.mod -o=$(GOBIN)/setup-envtest-v0.0.0-20250226022829-9d8d219840a4 "sigs.k8s.io/controller-runtime/tools/setup-envtest"
+	@echo "(re)installing $(GOBIN)/setup-envtest-v0.0.0-20250304084143-6eb011f4f89e"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=setup-envtest.mod -o=$(GOBIN)/setup-envtest-v0.0.0-20250304084143-6eb011f4f89e "sigs.k8s.io/controller-runtime/tools/setup-envtest"
 
