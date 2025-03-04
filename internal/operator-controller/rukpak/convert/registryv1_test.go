@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -346,6 +347,46 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
 }
 
+func TestRegistryV1SuiteConvertAnnotatesGeneratedManifests(t *testing.T) {
+	t.Log("RegistryV1 Suite Convert")
+	t.Log("It should generate objects successfully based on target namespaces")
+
+	t.Log("It should convert into plain manifests successfully with SingleNamespace")
+	baseCSV, svc := getBaseCsvAndService()
+	csv := baseCSV.DeepCopy()
+	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true}}
+
+	t.Log("By creating a registry v1 bundle")
+	watchNamespaces := []string{"testWatchNs1"}
+	unstructuredSvc := convertToUnstructured(t, svc)
+	registryv1Bundle := convert.RegistryV1{
+		PackageName: "testPkg",
+		CSV:         *csv,
+		Others:      []unstructured.Unstructured{unstructuredSvc},
+	}
+
+	t.Log("By converting to plain")
+	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	require.NoError(t, err)
+
+	t.Log("By verifying if plain bundle has required objects")
+	require.NotNil(t, plainBundle)
+	require.Len(t, plainBundle.Objects, 5)
+
+	t.Log("By verifying all manifests not in 'Others' contain 'io.operatorframework.olm.generated-manifest' annotation")
+	for _, obj := range plainBundle.Objects {
+		if reflect.DeepEqual(obj, &unstructuredSvc) {
+			require.NotContains(t, obj.GetAnnotations(), convert.AnnotationRegistryV1GeneratedManifest)
+		} else {
+			require.Contains(t, obj.GetAnnotations(), convert.AnnotationRegistryV1GeneratedManifest)
+		}
+	}
+	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	require.NotNil(t, dep)
+	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
+	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
+}
+
 func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
@@ -565,7 +606,7 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 	require.Nil(t, plainBundle)
 }
 
-func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
+func TestRegistryV1SuiteGenerateNoAPIServiceDefinitions(t *testing.T) {
 	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
