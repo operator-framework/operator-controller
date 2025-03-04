@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	gitCommit  = ""
+	gitCommit  = "unknown"
 	commitDate = "unknown"
 	repoState  = "unknown"
 	version    = "unknown"
@@ -29,7 +29,7 @@ func init() {
 	for _, setting := range info.Settings {
 		switch setting.Key {
 		case "vcs.revision":
-			if gitCommit == "" {
+			if gitCommit == "unknown" {
 				gitCommit = setting.Value
 			}
 		case "vcs.time":
