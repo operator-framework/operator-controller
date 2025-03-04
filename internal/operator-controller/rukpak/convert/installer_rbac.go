@@ -7,10 +7,10 @@ import (
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	slicesutil "github.com/operator-framework/operator-controller/internal/shared/util/filter"
+	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
+	slicesutil "github.com/operator-framework/operator-controller/internal/shared/util/slices"
 )
 
 var (
@@ -45,21 +45,16 @@ var (
 	}
 )
 
-// GenerateResourceManagerClusterRole generates a ClusterRole with permissions to manage objs resources. The
+// GenerateResourceManagerClusterRolePerms generates a ClusterRole permissions to manage objs resources. The
 // permissions also aggregate any permissions from any ClusterRoles in objs allowing the holder to also assign
 // the RBAC therein to another service account. Note: assumes objs have been created by convert.Convert.
-// The returned ClusterRole will not have set .metadata.name
-func GenerateResourceManagerClusterRole(objs []client.Object) *rbacv1.ClusterRole {
-	rules := slices.Concat(
+func GenerateResourceManagerClusterRolePerms(objs []client.Object) []rbacv1.PolicyRule {
+	return slices.Concat(
 		// cluster scoped resource creation and management rules
-		generatePolicyRules(slicesutil.Filter(objs, isClusterScopedResource)),
+		generatePolicyRules(filter.Filter(objs, isClusterScopedResource)),
 		// controller rbac scope
-		collectRBACResourcePolicyRules(slicesutil.Filter(objs, slicesutil.And(isGeneratedResource, isOfKind("ClusterRole")))),
+		collectRBACResourcePolicyRules(filter.Filter(objs, filter.And(isGeneratedResource, isOfKind("ClusterRole")))),
 	)
-	if len(rules) == 0 {
-		return nil
-	}
-	return ptr.To(newClusterRole("", rules))
 }
 
 // GenerateClusterExtensionFinalizerPolicyRule generates a policy rule that allows the holder to update
@@ -73,26 +68,27 @@ func GenerateClusterExtensionFinalizerPolicyRule(clusterExtensionName string) rb
 	}
 }
 
-// GenerateResourceManagerRoles generates one or more Roles with permissions to manage objs resources in their
+// GenerateResourceManagerRolePerms generates role permissions to manage objs resources in their
 // namespaces. The permissions also include any permissions defined in any Roles in objs within the namespace, allowing
 // the holder to also assign the RBAC therein to another service account.
 // Note: currently assumes objs have been created by convert.Convert.
 // The returned Roles will not have set .metadata.name
-func GenerateResourceManagerRoles(objs []client.Object) []*rbacv1.Role {
-	return mapToSlice(slicesutil.GroupBy(slicesutil.Filter(objs, isNamespaceScopedResource), namespaceName), generateRole)
-}
-
-func generateRole(namespace string, namespaceObjs []client.Object) *rbacv1.Role {
-	return ptr.To(newRole(
-		namespace,
-		"",
-		slices.Concat(
-			// namespace scoped resource creation and management rules
-			generatePolicyRules(namespaceObjs),
-			// controller rbac scope
-			collectRBACResourcePolicyRules(slicesutil.Filter(namespaceObjs, slicesutil.And(isOfKind("Role"), isGeneratedResource))),
-		),
-	))
+func GenerateResourceManagerRolePerms(objs []client.Object) map[string][]rbacv1.PolicyRule {
+	out := map[string][]rbacv1.PolicyRule{}
+	namespaceScopedObjs := filter.Filter(objs, isNamespaceScopedResource)
+	for _, obj := range namespaceScopedObjs {
+		namespace := obj.GetNamespace()
+		if _, ok := out[namespace]; !ok {
+			objsInNamespace := filter.Filter(namespaceScopedObjs, isInNamespace(namespace))
+			out[namespace] = slices.Concat(
+				// namespace scoped resource creation and management rules
+				generatePolicyRules(objsInNamespace),
+				// controller rbac scope
+				collectRBACResourcePolicyRules(filter.Filter(objsInNamespace, filter.And(isOfKind("Role"), isGeneratedResource))),
+			)
+		}
+	}
+	return out
 }
 
 func generatePolicyRules(objs []client.Object) []rbacv1.PolicyRule {
@@ -143,7 +139,7 @@ func isNamespaceScopedResource(o client.Object) bool {
 	return slices.Contains(namespaceScopedResources, o.GetObjectKind().GroupVersionKind().Kind)
 }
 
-func isOfKind(kind string) slicesutil.Predicate[client.Object] {
+func isOfKind(kind string) filter.Predicate[client.Object] {
 	return func(o client.Object) bool {
 		return o.GetObjectKind().GroupVersionKind().Kind == kind
 	}
@@ -155,12 +151,14 @@ func isGeneratedResource(o client.Object) bool {
 	return ok
 }
 
-func groupKind(obj client.Object) schema.GroupKind {
-	return obj.GetObjectKind().GroupVersionKind().GroupKind()
+func isInNamespace(namespace string) filter.Predicate[client.Object] {
+	return func(o client.Object) bool {
+		return o.GetNamespace() == namespace
+	}
 }
 
-func namespaceName(obj client.Object) string {
-	return obj.GetNamespace()
+func groupKind(obj client.Object) schema.GroupKind {
+	return obj.GetObjectKind().GroupVersionKind().GroupKind()
 }
 
 func toResourceName(o client.Object) string {
