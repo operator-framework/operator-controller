@@ -29,7 +29,9 @@ func init() {
 	for _, setting := range info.Settings {
 		switch setting.Key {
 		case "vcs.revision":
-			gitCommit = setting.Value
+			if gitCommit == "unknown" {
+				gitCommit = setting.Value
+			}
 		case "vcs.time":
 			commitDate = setting.Value
 		case "vcs.modified":

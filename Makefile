@@ -321,6 +321,7 @@ export GO_BUILD_GCFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_FLAGS :=
 export GO_BUILD_LDFLAGS := -s -w \
     -X '$(VERSION_PATH).version=$(VERSION)' \
+    -X '$(VERSION_PATH).gitCommit=$(GIT_COMMIT)' \
 
 BINARIES=operator-controller catalogd
 
