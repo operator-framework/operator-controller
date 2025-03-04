@@ -122,6 +122,7 @@ changelog:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
 release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
+  mode: replace
   extra_files:
     - glob: 'operator-controller.yaml'
     - glob: './config/catalogs/clustercatalogs/default-catalogs.yaml'
