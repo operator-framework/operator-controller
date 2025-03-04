@@ -134,6 +134,7 @@ KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
 CRD_WORKING_DIR := crd_work_dir
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
+manifests: export CGO_ENABLED=1
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	mkdir $(CRD_WORKING_DIR)
 	$(CONTROLLER_GEN) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
@@ -147,6 +148,7 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	$(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 
 .PHONY: generate
+generate: export CGO_ENABLED=1
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
