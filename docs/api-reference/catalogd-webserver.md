@@ -1,9 +1,14 @@
 # Catalogd web server
 
 [Catalogd](https://github.com/operator-framework/operator-controller/tree/main/catalogd), the OLM v1 component for making catalog contents available on cluster, includes
-a web server that serves catalog contents to clients via an HTTP(S) endpoint.
+a web server that serves catalog contents to clients via HTTP(S) endpoints.
 
-The endpoint to retrieve this information can be composed from the `.status.urls.base` of a `ClusterCatalog` resource with the selected access API path.
+The endpoints to retrieve information about installable clusterextentions can be composed from the `.status.urls.base` of a `ClusterCatalog` resource with the selected access API path.
+
+Currently, there are two API endpoints: 
+
+1. `api/v1/all` endpoint that provides access to the FBC metadata in entirety. 
+
 As an example, to access the full FBC via the v1 API endpoint (indicated by path `api/v1/all`) where `.status.urls.base` is
 
 ```yaml
@@ -12,6 +17,21 @@ As an example, to access the full FBC via the v1 API endpoint (indicated by path
 ```
 
 the URL to access the service would be `https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/api/v1/all`
+
+2. `api/v1/metas` endpoint that allows clients to retrieve filtered portions of the FBC. 
+
+The metas endpoint accepts parameters which are one of the sub-types of the `Meta` [definition](https://github.com/operator-framework/operator-registry/blob/e15668c933c03e229b6c80025fdadb040ab834e0/alpha/declcfg/declcfg.go#L111-L114), following the pattern `/api/v1/metas?<parameter>[&<parameter>...]`.
+
+As an example, to access only the [package schema](https://olm.operatorframework.io/docs/reference/file-based-catalogs/#olmpackage-1) blobs of the FBC via the `api/v1/metas` endpoint where `.status.urls.base` is
+
+```yaml
+    urls:
+        base: https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio
+```
+
+the URL to access the service would be `https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/api/v1/metas?schema=olm.package`
+
+For more examples of valid queries that can be made to the `api/v1/metas` service endpoint, please see [Catalog Queries](../howto/catalog-queries.md).
 
 !!! note
 
