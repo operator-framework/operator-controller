@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	_ "github.com/operator-framework/operator-controller/internal/catalogd/rbac"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
@@ -75,10 +76,6 @@ type storedCatalogData struct {
 	lastSuccessfulPoll time.Time
 	observedGeneration int64
 }
-
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
