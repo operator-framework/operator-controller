@@ -208,7 +208,6 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
-ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 # Define TEST_PKGS to be either user-specified or a default set of packages:
 ifeq ($(origin TEST_PKGS), undefined)
 TEST_PKGS := $(shell go list ./... | grep -v /test/)
