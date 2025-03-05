@@ -23,11 +23,11 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	rbacinternal "github.com/operator-framework/operator-controller/internal/operator-controller/authorization/internal/kubernetes/pkg/apis/rbac"
-	rbacv1helpers "github.com/operator-framework/operator-controller/internal/operator-controller/authorization/internal/kubernetes/pkg/apis/rbac/v1"
-	rbacregistry "github.com/operator-framework/operator-controller/internal/operator-controller/authorization/internal/kubernetes/pkg/registry/rbac"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization/internal/kubernetes/pkg/registry/rbac/validation"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization/internal/kubernetes/plugin/pkg/auth/authorizer/rbac"
+	rbacinternal "k8s.io/kubernetes/pkg/apis/rbac"
+	rbacv1helpers "k8s.io/kubernetes/pkg/apis/rbac/v1"
+	rbacregistry "k8s.io/kubernetes/pkg/registry/rbac"
+	"k8s.io/kubernetes/pkg/registry/rbac/validation"
+	rbac "k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 )
 
 type PreAuthorizer interface {
@@ -75,13 +75,9 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager us
 
 	for _, obj := range dm.rbacObjects() {
 		if err := ec.checkEscalation(ctx, manifestManager, obj); err != nil {
-			var peErr *validation.PrivilegeEscalationError
-			if errors.As(err, &peErr) {
-				missingRules[peErr.Namespace] = append(missingRules[peErr.Namespace], peErr.MissingRules...)
-				preAuthEvaluationErrors = append(preAuthEvaluationErrors, peErr.RuleResolutionErrors...)
-			} else {
-				preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
-			}
+			// In Kubernetes 1.32.2 the specialized PrivilegeEscalationError is gone.
+			// Instead, we simply collect the error.
+			preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
 		}
 	}
 
