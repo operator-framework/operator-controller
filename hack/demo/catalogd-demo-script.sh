@@ -23,7 +23,7 @@ kubectl wait --for=condition=Available -n olmv1-system deploy/catalogd-controlle
 echo "... checking clustercatalog is serving"
 kubectl wait --for=condition=Serving clustercatalog/operatorhubio --timeout=60s
 echo "... checking clustercatalog is finished unpacking"
-kubectl wait --for=condition=Progressing=False clustercatalog/operatorhubio --timeout=60s
+kubectl wait --for=condition=Progressing=True clustercatalog/operatorhubio --timeout=60s
 
 # port forward the catalogd-service service to interact with the HTTP server serving catalog contents
 (kubectl -n olmv1-system port-forward svc/catalogd-service 8081:443)&
