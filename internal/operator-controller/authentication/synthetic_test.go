@@ -16,10 +16,9 @@ func TestSyntheticImpersonationConfig(t *testing.T) {
 			Name: "my-ext",
 		},
 	})
-	require.Equal(t, "olm:clusterextensions:my-ext", config.UserName)
+	require.Equal(t, "olm:clusterextension:my-ext", config.UserName)
 	require.Equal(t, []string{
 		"olm:clusterextensions",
-		"system:authenticated",
 	}, config.Groups)
 	require.Empty(t, config.UID)
 	require.Empty(t, config.Extra)
