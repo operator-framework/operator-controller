@@ -192,7 +192,7 @@ test: manifests generate fmt lint test-unit test-e2e #HELP Run all tests.
 
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
-	go test -count=1 -v ./test/e2e/...
+	go test -count=1 -v -run "$(if $(TEST_FILTER),$(TEST_FILTER),.)" ./test/e2e/...
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
@@ -208,7 +208,10 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
-UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
+# Define TEST_PKGS to be either user-specified or a default set of packages:
+ifeq ($(origin TEST_PKGS), undefined)
+TEST_PKGS := $(shell go list ./... | grep -v /test/)
+endif
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 
 .PHONY: envtest-k8s-bins #HELP Uses setup-envtest to download and install the binaries required to run ENVTEST-test based locally at the project/bin directory.
@@ -224,7 +227,8 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 -tags '$(GO_BUILD_TAGS)' \
                 -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
-                $(UNIT_TEST_DIRS) \
+                -run "$(if $(TEST_FILTER),$(TEST_FILTER),.)" \
+                $(TEST_PKGS) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
 .PHONY: image-registry

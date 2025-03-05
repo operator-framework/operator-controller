@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	cfg *rest.Config
-	c   client.Client
+	globalConfig *rest.Config
+	globalClient client.Client
 )
 
 const (
@@ -29,11 +29,11 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	cfg = ctrl.GetConfigOrDie()
+	globalConfig = ctrl.GetConfigOrDie()
 
 	var err error
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
-	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	globalClient, err = client.New(globalConfig, client.Options{Scheme: scheme.Scheme})
 	utilruntime.Must(err)
 
 	os.Exit(m.Run())
@@ -61,7 +61,7 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*ocv1
 		},
 	}
 
-	err := c.Create(ctx, catalog)
+	err := globalClient.Create(ctx, catalog)
 	return catalog, err
 }
 
@@ -71,7 +71,7 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*ocv1
 func patchTestCatalog(ctx context.Context, name string, newImageRef string) error {
 	// Fetch the existing ClusterCatalog
 	catalog := &ocv1.ClusterCatalog{}
-	err := c.Get(ctx, client.ObjectKey{Name: name}, catalog)
+	err := globalClient.Get(ctx, client.ObjectKey{Name: name}, catalog)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func patchTestCatalog(ctx context.Context, name string, newImageRef string) erro
 	catalog.Spec.Source.Image.Ref = newImageRef
 
 	// Patch the ClusterCatalog
-	err = c.Update(ctx, catalog)
+	err = globalClient.Update(ctx, catalog)
 	if err != nil {
 		return err
 	}
