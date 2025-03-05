@@ -27,7 +27,7 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
 
 2. Return a list of all the extensions in a catalog via the v1 API endpoint:
     ``` terminal
-    curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select(.schema == "olm.package") | .name'
+    curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/metas?schema=olm.package' | jq -s '.[] | .name'
     ```
 
     ??? success
@@ -94,41 +94,36 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
     !!! important
         Currently, OLM 1.0 does not support the installation of extensions that use webhooks or that target a single or specified set of namespaces.
 
-3. Return list of packages that support `AllNamespaces` install mode and do not use webhooks:
+3. Return list of packages where the channel head version use `olm.csv.metadata` format, support `AllNamespaces` install mode and do not use webhooks:
 
     ``` terminal
-    curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/all | jq -cs '[.[] | select(.schema == "olm.bundle" and (.properties[] | select(.type == "olm.csv.metadata").value.installModes[] | select(.type == "AllNamespaces" and .supported == true)) and .spec.webhookdefinitions == null) | .package] | unique[]'
+    curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/metas?schema=olm.bundle | jq -cs '[.[] | select(.properties[] | select(.type == "olm.csv.metadata").value.installModes[] | select(.type == "AllNamespaces" and .supported == true) and .spec.webhookdefinitions == null) | .package] | unique[]'
     ```
 
     ??? success
         ``` text title="Example output"
-        {"package":"ack-acm-controller","version":"0.0.12"}
-        {"package":"ack-acmpca-controller","version":"0.0.5"}
-        {"package":"ack-apigatewayv2-controller","version":"1.0.7"}
-        {"package":"ack-applicationautoscaling-controller","version":"1.0.11"}
-        {"package":"ack-cloudfront-controller","version":"0.0.9"}
-        {"package":"ack-cloudtrail-controller","version":"1.0.8"}
-        {"package":"ack-cloudwatch-controller","version":"0.0.3"}
-        {"package":"ack-cloudwatchlogs-controller","version":"0.0.4"}
-        {"package":"ack-dynamodb-controller","version":"1.2.9"}
-        {"package":"ack-ec2-controller","version":"1.2.4"}
-        {"package":"ack-ecr-controller","version":"1.0.12"}
-        {"package":"ack-ecs-controller","version":"0.0.4"}
-        {"package":"ack-efs-controller","version":"0.0.5"}
-        {"package":"ack-eks-controller","version":"1.3.3"}
-        {"package":"ack-elasticache-controller","version":"0.0.29"}
-        {"package":"ack-emrcontainers-controller","version":"1.0.8"}
-        {"package":"ack-eventbridge-controller","version":"1.0.6"}
-        {"package":"ack-iam-controller","version":"1.3.6"}
-        {"package":"ack-kafka-controller","version":"0.0.4"}
-        {"package":"ack-keyspaces-controller","version":"0.0.11"}
+        "ack-acm-controller"
+        "ack-acmpca-controller"
+        "ack-apigateway-controller"
+        "ack-apigatewayv2-controller"
+        "ack-applicationautoscaling-controller"
+        "ack-athena-controller"
+        "ack-cloudfront-controller"
+        "ack-cloudtrail-controller"
+        "ack-cloudwatch-controller"
+        "ack-cloudwatchlogs-controller"
+        "ack-documentdb-controller"
+        "ack-dynamodb-controller"
+        "ack-ec2-controller"
+        "ack-ecr-controller"
+        "ack-ecs-controller"
         ...
         ```
 
 4. Inspect the contents of an extension's metadata:
 
     ``` terminal
-    curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select( .schema == "olm.package") | select( .name == "<package_name>")'
+    curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/metas?schema=olm.package&name=<package_name>
     ```
 
     `package_name`
