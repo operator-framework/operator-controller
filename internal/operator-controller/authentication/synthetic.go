@@ -9,13 +9,12 @@ import (
 )
 
 func syntheticUserName(ext ocv1.ClusterExtension) string {
-	return fmt.Sprintf("olm:clusterextensions:%s", ext.Name)
+	return fmt.Sprintf("olm:clusterextension:%s", ext.Name)
 }
 
 func syntheticGroups(_ ocv1.ClusterExtension) []string {
 	return []string{
 		"olm:clusterextensions",
-		"system:authenticated",
 	}
 }
 
