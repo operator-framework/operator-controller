@@ -302,7 +302,7 @@ kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 #SECTION Build
 
 # attempt to generate the VERSION attribute for certificates
-# fail if it is unset afterwards, since the sideeffects are indirect
+# fail if it is unset afterwards, since the side effects are indirect
 ifeq ($(strip $(VERSION)),)
 VERSION := $(shell git describe --tags --always --dirty)
 endif
