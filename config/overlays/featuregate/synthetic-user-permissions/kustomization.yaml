@@ -1,0 +1,19 @@
+# kustomization file for secure OLMv1
+# DO NOT ADD A NAMESPACE HERE
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../base/operator-controller
+  - ../../../base/common
+components:
+  - ../../../components/tls/operator-controller
+
+patches:
+ - target:
+      kind: Deployment
+      name: operator-controller-controller-manager
+   path: patches/enable-featuregate.yaml
+ - target:
+     kind: ClusterRole
+     name: operator-controller-manager-role
+   path: patches/impersonate-perms.yaml
