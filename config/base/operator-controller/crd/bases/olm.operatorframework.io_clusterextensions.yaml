@@ -56,6 +56,14 @@ spec:
             description: spec is an optional field that defines the desired state
               of the ClusterExtension.
             properties:
+              config:
+                description: config can be used to pass parameters to the underlying
+                  runtime.
+                items:
+                  type: object
+                  x-kubernetes-embedded-resource: true
+                  x-kubernetes-preserve-unknown-fields: true
+                type: array
               install:
                 description: |-
                   install is an optional field used to configure the installation options

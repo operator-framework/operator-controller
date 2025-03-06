@@ -18,6 +18,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 var ClusterExtensionKind = "ClusterExtension"
@@ -92,6 +93,12 @@ type ClusterExtensionSpec struct {
 	//
 	// +optional
 	Install *ClusterExtensionInstallConfig `json:"install,omitempty"`
+
+	// config can be used to pass parameters to the underlying runtime.
+	// +optional
+	// +kubebuilder:validation:items:XEmbeddedResource
+	// +kubebuilder:validation:items:XPreserveUnknownFields
+	Config []runtime.RawExtension `json:"config,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"
