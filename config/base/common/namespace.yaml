@@ -4,5 +4,5 @@ metadata:
   labels:
     app.kubernetes.io/part-of: olm
     pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: "v1.32"
+    pod-security.kubernetes.io/enforce-version: latest
   name: system
