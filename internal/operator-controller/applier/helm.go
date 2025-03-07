@@ -95,7 +95,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		labels: objectLabels,
 	}
 
-	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, post)
+	rel, desiredRel, state, err := h.getReleaseState(ctx, ac, ext, chrt, values, post)
 	if err != nil {
 		return nil, "", err
 	}
@@ -164,9 +164,30 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 	return h.BundleToHelmChartFn(bundleFS, ext.Spec.Namespace, watchNamespace)
 }
 
-func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+func (h *Helm) getReleaseState(ctx context.Context, cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+	logger := log.FromContext(ctx)
 	currentRelease, err := cl.Get(ext.GetName())
+
+	// if a release is pending at this point, that means that a helm action
+	// (installation/upgrade) we were attempting was likely interrupted in-flight.
+	// Pending release would leave us in reconciliation error loop because helm
+	// wouldn't be able to progress automatically from it.
+	//
+	// one of the workarounds is to try and remove helm metadata relating to
+	// that pending release which should 'reset' its state communicated to helm
+	// and the next reconciliation should be able to successfully pick up from here
+	// for context see: https://github.com/helm/helm/issues/5595 and https://github.com/helm/helm/issues/7476
+	// and the discussion in https://github.com/operator-framework/operator-controller/pull/1776
+	if err == nil && currentRelease.Info.Status.IsPending() {
+		if _, err = cl.Config().Releases.Delete(currentRelease.Name, currentRelease.Version); err != nil {
+			return nil, nil, StateError, fmt.Errorf("failed removing interrupted release %q version %d metadata: %w", currentRelease.Name, currentRelease.Version, err)
+		}
+		// return error to try to detect proper state (installation/upgrade) at next reconciliation
+		return nil, nil, StateError, fmt.Errorf("removed interrupted release %q version %d metadata", currentRelease.Name, currentRelease.Version)
+	}
+
 	if errors.Is(err, driver.ErrReleaseNotFound) {
+		logger.V(4).Info("ClusterExtension dry-run install", "extension", ext.GetName())
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
 			i.DryRun = true
 			i.DryRunOption = "server"
@@ -186,6 +207,7 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterE
 	}
 
 	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
+		logger.V(4).Info("ClusterExtension dry-run upgrade", "extension", ext.GetName())
 		upgrade.MaxHistory = maxHelmReleaseHistory
 		upgrade.DryRun = true
 		upgrade.DryRunOption = "server"
