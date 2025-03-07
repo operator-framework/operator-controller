@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,7 +15,7 @@ import (
 )
 
 // debug controls whether we print extra statements.
-var debug = true
+var debug bool
 
 // moduleInfo is the partial output of `go list -m -json all`.
 type moduleInfo struct {
@@ -23,6 +24,10 @@ type moduleInfo struct {
 }
 
 func main() {
+	// Define the command-line flag
+	flag.BoolVar(&debug, "debug", false, "Enable debug output")
+	flag.Parse()
+
 	if err := fixGoMod("go.mod"); err != nil {
 		fmt.Fprintf(os.Stderr, "fixGoMod failed: %v\n", err)
 		os.Exit(1)
@@ -59,13 +64,17 @@ func fixGoMod(goModPath string) error {
 	if k8sVer == "" {
 		return fmt.Errorf("did not find k8s.io/kubernetes in require block")
 	}
-	fmt.Printf("Found k8s.io/kubernetes version: %s\n", k8sVer)
+	if debug {
+		fmt.Printf("Found k8s.io/kubernetes version: %s\n", k8sVer)
+	}
 
 	published := toPublishedVersion(k8sVer)
 	if published == "" {
 		return fmt.Errorf("cannot derive staging version from %s", k8sVer)
 	}
-	fmt.Printf("Unifying staging modules to: %s (from %s)\n", published, k8sVer)
+	if debug {
+		fmt.Printf("Unifying staging modules to: %s (from %s)\n", published, k8sVer)
+	}
 
 	// forcibly unify the REQUIRE items for all staging modules
 	forceRequireStaging(mf2, published)
@@ -100,7 +109,7 @@ func fixGoMod(goModPath string) error {
 		return fmt.Errorf("running final go list: %w", err)
 	}
 	if bytes.Contains(finalOut, []byte("v0.0.0")) {
-		fmt.Println("Warning: Some modules remain at v0.0.0, possibly no valid tags.")
+		fmt.Println("WARNING: Some modules remain at v0.0.0, possibly no valid tags.")
 	} else {
 		fmt.Println("Success: staging modules pinned to", published)
 	}
@@ -140,8 +149,10 @@ func pruneK8sReplaces(mf *modfile.File) {
 	var keep []*modfile.Replace
 	for _, rep := range mf.Replace {
 		if strings.HasPrefix(rep.Old.Path, "k8s.io/") {
-			fmt.Printf("Dropping old replace for %s => %s %s\n",
-				rep.Old.Path, rep.New.Path, rep.New.Version)
+			if debug {
+				fmt.Printf("Dropping old replace for %s => %s %s\n",
+					rep.Old.Path, rep.New.Path, rep.New.Version)
+			}
 		} else {
 			keep = append(keep, rep)
 		}
@@ -166,13 +177,17 @@ func forceRequireStaging(mf *modfile.File, newVersion string) {
 	}
 	// remove them
 	for _, p := range stagingPaths {
-		fmt.Printf("Removing require line for %s\n", p)
+		if debug {
+			fmt.Printf("Removing require line for %s\n", p)
+		}
 		_ = mf.DropRequire(p) // returns an error if not found, ignore
 	}
 	// re-add them at the new version if we can download that version
 	for _, p := range stagingPaths {
 		if versionExists(p, newVersion) {
-			fmt.Printf("Adding require line for %s at %s\n", p, newVersion)
+			if debug {
+				fmt.Printf("Adding require line for %s at %s\n", p, newVersion)
+			}
 			_ = mf.AddRequire(p, newVersion)
 		} else {
 			fmt.Printf("WARNING: no valid tag for %s at %s, skipping\n", p, newVersion)
@@ -198,13 +213,17 @@ func discoverPinsAlways(listOut, published string) map[string]string {
 			continue
 		}
 		if hasMajorVersionSuffix(mi.Path) {
-			fmt.Printf("Skipping major-version module %s\n", mi.Path)
+			if debug {
+				fmt.Printf("Skipping major-version module %s\n", mi.Path)
+			}
 			continue
 		}
 		// unify everything if a valid tag exists
 		if mi.Version != published {
 			if versionExists(mi.Path, published) {
-				fmt.Printf("Pinning %s from %s to %s\n", mi.Path, mi.Version, published)
+				if debug {
+					fmt.Printf("Pinning %s from %s to %s\n", mi.Path, mi.Version, published)
+				}
 				pins[mi.Path] = published
 			} else {
 				fmt.Printf("WARNING: no valid tag for %s at %s, leaving as %s\n",
@@ -227,7 +246,9 @@ func applyReplacements(mf *modfile.File, pins map[string]string) {
 	sort.Strings(sorted)
 	for _, path := range sorted {
 		ver := pins[path]
-		fmt.Printf("Applying new replace: %s => %s\n", path, ver)
+		if debug {
+			fmt.Printf("Applying new replace: %s => %s\n", path, ver)
+		}
 		if err := mf.AddReplace(path, "", path, ver); err != nil {
 			die("Error adding replace for %s: %v", path, err)
 		}
@@ -242,15 +263,19 @@ func ensureKubernetesReplace(mf *modfile.File, k8sVer string) {
 		if rep.Old.Path == "k8s.io/kubernetes" {
 			found = true
 			if rep.New.Version != k8sVer {
-				fmt.Printf("Updating k8s.io/kubernetes replace from %s to %s\n",
-					rep.New.Version, k8sVer)
+				if debug {
+					fmt.Printf("Updating k8s.io/kubernetes replace from %s to %s\n",
+						rep.New.Version, k8sVer)
+				}
 				rep.New.Version = k8sVer
 			}
 			break
 		}
 	}
 	if !found {
-		fmt.Printf("Inserting k8s.io/kubernetes => %s\n", k8sVer)
+		if debug {
+			fmt.Printf("Inserting k8s.io/kubernetes => %s\n", k8sVer)
+		}
 		if err := mf.AddReplace("k8s.io/kubernetes", "", "k8s.io/kubernetes", k8sVer); err != nil {
 			die("Error adding replace for k8s.io/kubernetes: %v", err)
 		}
