@@ -152,6 +152,7 @@ func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1.ClusterCatalog{}).
+		Named("catalogd-clustercatalog-controller").
 		Complete(r)
 }
 

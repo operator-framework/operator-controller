@@ -17,6 +17,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -36,8 +38,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-// TestOperatorControllerMetricsExportedEndpoint verifies that the metrics endpoint for the operator controller
-func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
+// FetchOperatorControllerMetricsExportedEndpoint verifies that the metrics endpoint for the operator controller
+func FetchOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 	kubeClient, restConfig := findK8sClient(t)
 	mtc := NewMetricsTestConfig(
 		t,
@@ -49,13 +51,14 @@ func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 		"operator-controller-controller-manager",
 		"oper-curl-metrics",
 		"https://operator-controller-service.NAMESPACE.svc.cluster.local:8443/metrics",
+		"oper-con",
 	)
 
 	mtc.run()
 }
 
-// TestCatalogdMetricsExportedEndpoint verifies that the metrics endpoint for catalogd
-func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
+// FetchCatalogdMetricsExportedEndpoint verifies that the metrics endpoint for catalogd
+func FetchCatalogdMetricsExportedEndpoint(t *testing.T) {
 	kubeClient, restConfig := findK8sClient(t)
 	mtc := NewMetricsTestConfig(
 		t,
@@ -67,9 +70,66 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 		"catalogd-controller-manager",
 		"catalogd-curl-metrics",
 		"https://catalogd-service.NAMESPACE.svc.cluster.local:7443/metrics",
+		"catalogd",
 	)
 
 	mtc.run()
+}
+
+// fetchMetrics retrieves Prometheus metrics from the endpoint
+func (c *MetricsTestConfig) fetchMetrics(ctx context.Context, token string) string {
+	c.t.Log("Fetching Prometheus metrics after test execution")
+
+	// Command to execute inside the pod
+	cmd := []string{
+		"curl", "-s", "-k",
+		"-H", "Authorization: Bearer " + token,
+		c.metricsURL,
+	}
+
+	// Execute command in pod
+	req := c.kubeClient.CoreV1().RESTClient().
+		Post().
+		Resource("pods").
+		Namespace(c.namespace).
+		Name(c.curlPodName).
+		SubResource("exec").
+		VersionedParams(&corev1.PodExecOptions{
+			Container: "curl",
+			Command:   cmd,
+			Stdin:     false,
+			Stdout:    true,
+			Stderr:    true,
+			TTY:       false,
+		}, scheme.ParameterCodec)
+
+	executor, err := remotecommand.NewSPDYExecutor(c.restConfig, "POST", req.URL())
+	require.NoError(c.t, err, "Error creating SPDY executor")
+
+	var stdout, stderr bytes.Buffer
+	streamOpts := remotecommand.StreamOptions{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+
+	err = executor.StreamWithContext(ctx, streamOpts)
+	require.NoError(c.t, err, "Error streaming exec request: %v", stderr.String())
+
+	return stdout.String()
+}
+
+// saveMetricsToFile writes the fetched metrics to a text file
+func (c *MetricsTestConfig) saveMetricsToFile(metrics string) {
+	dir := "results"
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		c.t.Fatalf("Failed to create directory %s: %v", dir, err)
+	}
+
+	filePath := fmt.Sprintf("%s/metrics_%s_%s.txt", dir, c.name, c.t.Name())
+	err := os.WriteFile(filePath, []byte(metrics), 0644)
+	require.NoError(c.t, err, "Failed to save metrics to file")
+
+	c.t.Logf("Metrics saved to: %s", filePath)
 }
 
 func findK8sClient(t *testing.T) (kubernetes.Interface, *rest.Config) {
@@ -94,6 +154,7 @@ type MetricsTestConfig struct {
 	serviceAccount string
 	curlPodName    string
 	metricsURL     string
+	name           string
 }
 
 // NewMetricsTestConfig initializes a new MetricsTestConfig.
@@ -107,6 +168,7 @@ func NewMetricsTestConfig(
 	serviceAccount string,
 	curlPodName string,
 	metricsURL string,
+	name string,
 ) *MetricsTestConfig {
 	// Discover which namespace the relevant Pod is running in
 	namespace := getComponentNamespace(t, kubeClient, selector)
@@ -124,24 +186,41 @@ func NewMetricsTestConfig(
 		serviceAccount: serviceAccount,
 		curlPodName:    curlPodName,
 		metricsURL:     metricsURL,
+		name:           name,
 	}
 }
 
 // run executes the entire test flow
 func (c *MetricsTestConfig) run() {
 	ctx := context.Background()
-	defer c.cleanup(ctx)
+	// To speed up
+	// defer c.cleanup(ctx)
 	c.createMetricsClusterRoleBinding(ctx)
 	token := c.getServiceAccountToken(ctx)
 	c.createCurlMetricsPod(ctx)
 	c.waitForPodReady(ctx)
 	// Exec `curl` in the Pod to validate the metrics
 	c.validateMetricsEndpoint(ctx, token)
+
+	// Fetch and save Prometheus metrics after test execution
+	metrics := c.fetchMetrics(ctx, token)
+	c.saveMetricsToFile(metrics)
 }
 
 // createMetricsClusterRoleBinding to bind the cluster role so metrics are accessible
 func (c *MetricsTestConfig) createMetricsClusterRoleBinding(ctx context.Context) {
-	c.t.Logf("Creating ClusterRoleBinding %q in namespace %q", c.clusterBinding, c.namespace)
+	c.t.Logf("Ensuring ClusterRoleBinding %q exists in namespace %q", c.clusterBinding, c.namespace)
+
+	_, err := c.kubeClient.RbacV1().ClusterRoleBindings().Get(ctx, c.clusterBinding, metav1.GetOptions{})
+	if err == nil {
+		c.t.Logf("ClusterRoleBinding %q already exists, skipping creation", c.clusterBinding)
+		return
+	}
+
+	if !apierrors.IsNotFound(err) {
+		require.NoError(c.t, err, "Error checking for existing ClusterRoleBinding")
+		return
+	}
 
 	crb := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
@@ -161,8 +240,9 @@ func (c *MetricsTestConfig) createMetricsClusterRoleBinding(ctx context.Context)
 		},
 	}
 
-	_, err := c.kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, crb, metav1.CreateOptions{})
+	_, err = c.kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, crb, metav1.CreateOptions{})
 	require.NoError(c.t, err, "Error creating ClusterRoleBinding")
+	c.t.Logf("Successfully created ClusterRoleBinding %q", c.clusterBinding)
 }
 
 // getServiceAccountToken creates a TokenRequest for the service account
@@ -188,7 +268,18 @@ func (c *MetricsTestConfig) getServiceAccountToken(ctx context.Context) string {
 
 // createCurlMetricsPod spawns a pod running `curlimages/curl` to check metrics
 func (c *MetricsTestConfig) createCurlMetricsPod(ctx context.Context) {
-	c.t.Logf("Creating curl pod (%s/%s) to validate the metrics endpoint", c.namespace, c.curlPodName)
+	c.t.Logf("Ensuring curl pod (%s/%s) exists to validate the metrics endpoint", c.namespace, c.curlPodName)
+
+	_, err := c.kubeClient.CoreV1().Pods(c.namespace).Get(ctx, c.curlPodName, metav1.GetOptions{})
+	if err == nil {
+		c.t.Logf("Curl pod %q already exists, skipping creation", c.curlPodName)
+		return
+	}
+
+	if !apierrors.IsNotFound(err) {
+		require.NoError(c.t, err, "Error checking for existing curl pod")
+		return
+	}
 
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -220,7 +311,7 @@ func (c *MetricsTestConfig) createCurlMetricsPod(ctx context.Context) {
 		},
 	}
 
-	_, err := c.kubeClient.CoreV1().Pods(c.namespace).Create(ctx, pod, metav1.CreateOptions{})
+	_, err = c.kubeClient.CoreV1().Pods(c.namespace).Create(ctx, pod, metav1.CreateOptions{})
 	require.NoError(c.t, err, "Error creating curl pod")
 }
 

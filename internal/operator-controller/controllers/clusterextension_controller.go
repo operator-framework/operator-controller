@@ -407,6 +407,7 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, bundleName string, depreca
 func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1.ClusterExtension{}).
+		Named("con-oper-cluster-extension-controller").
 		Watches(&ocv1.ClusterCatalog{},
 			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger())),
 			builder.WithPredicates(predicate.Funcs{
