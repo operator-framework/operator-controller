@@ -420,7 +420,7 @@ func run() error {
 		ActionClientGetter:  acg,
 		Preflights:          preflights,
 		BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
-		PreAuthorizer:      authorization.NewRBACPreAuthorizer(mgr.GetClient()),
+		PreAuthorizer:       authorization.NewRBACPreAuthorizer(mgr.GetClient()),
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
