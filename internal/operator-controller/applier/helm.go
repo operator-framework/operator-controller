@@ -60,7 +60,7 @@ type BundleToHelmChartFn func(rv1 fs.FS, installNamespace string, watchNamespace
 type Helm struct {
 	ActionClientGetter  helmclient.ActionClientGetter
 	Preflights          []Preflight
-	PreAuthorizer      authorization.PreAuthorizer
+	PreAuthorizer       authorization.PreAuthorizer
 	BundleToHelmChartFn BundleToHelmChartFn
 }
 
