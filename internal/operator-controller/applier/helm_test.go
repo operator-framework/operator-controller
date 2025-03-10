@@ -185,8 +185,8 @@ func TestApply_Base(t *testing.T) {
 	})
 }
 
-func TestApply_InterruptedRelease(t *testing.T) {
-	t.Run("fails removing an interrupted install release", func(t *testing.T) {
+func TestApply_PendingRelease(t *testing.T) {
+	t.Run("fails removing a pending install release", func(t *testing.T) {
 		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingInstall}}
 		testStorage := storage.Init(driver.NewMemory())
 
@@ -198,12 +198,12 @@ func TestApply_InterruptedRelease(t *testing.T) {
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "removing interrupted release")
+		require.ErrorContains(t, err, "removing pending release")
 		require.Nil(t, objs)
 		require.Empty(t, state)
 	})
 
-	t.Run("fails removing an interrupted upgrade release", func(t *testing.T) {
+	t.Run("fails removing a pending upgrade release", func(t *testing.T) {
 		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingUpgrade}}
 		testStorage := storage.Init(driver.NewMemory())
 
@@ -215,12 +215,12 @@ func TestApply_InterruptedRelease(t *testing.T) {
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "removing interrupted release")
+		require.ErrorContains(t, err, "removing pending release")
 		require.Nil(t, objs)
 		require.Empty(t, state)
 	})
 
-	t.Run("successfully removes an interrupted install release", func(t *testing.T) {
+	t.Run("successfully removes a pending install release", func(t *testing.T) {
 		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingInstall}}
 		testStorage := storage.Init(driver.NewMemory())
 		err := testStorage.Create(testRel)
@@ -234,12 +234,12 @@ func TestApply_InterruptedRelease(t *testing.T) {
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "removed interrupted release")
+		require.ErrorContains(t, err, "removed pending release")
 		require.Nil(t, objs)
 		require.Empty(t, state)
 	})
 
-	t.Run("successfully removes an interrupted upgrade release", func(t *testing.T) {
+	t.Run("successfully removes an pending upgrade release", func(t *testing.T) {
 		testRel := &release.Release{Name: "testrel", Version: 0, Info: &release.Info{Status: release.StatusPendingUpgrade}}
 		testStorage := storage.Init(driver.NewMemory())
 		err := testStorage.Create(testRel)
@@ -253,7 +253,7 @@ func TestApply_InterruptedRelease(t *testing.T) {
 
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "removed interrupted release")
+		require.ErrorContains(t, err, "removed pending release")
 		require.Nil(t, objs)
 		require.Empty(t, state)
 	})
