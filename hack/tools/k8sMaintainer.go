@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"golang.org/x/mod/module"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -258,28 +259,25 @@ func applyReplacements(mf *modfile.File, pins map[string]string) {
 // ensureKubernetesReplace ensures there's a "k8s.io/kubernetes => k8s.io/kubernetes vX.Y.Z" line
 // matching the require(...) version in case something references it directly.
 func ensureKubernetesReplace(mf *modfile.File, k8sVer string) {
-	found := false
+	var newReplaces []*modfile.Replace
+
 	for _, rep := range mf.Replace {
-		if rep.Old.Path == "k8s.io/kubernetes" {
-			found = true
-			if rep.New.Version != k8sVer {
-				if debug {
-					fmt.Printf("Updating k8s.io/kubernetes replace from %s to %s\n",
-						rep.New.Version, k8sVer)
-				}
-				rep.New.Version = k8sVer
+		if rep.Old.Path == "k8s.io/kubernetes" && rep.New.Version != k8sVer {
+			if debug {
+				fmt.Printf("Updating k8s.io/kubernetes replace from %s to %s\n", rep.New.Version, k8sVer)
 			}
-			break
+			continue // Skip adding this entry to newReplaces
 		}
+		newReplaces = append(newReplaces, rep)
 	}
-	if !found {
-		if debug {
-			fmt.Printf("Inserting k8s.io/kubernetes => %s\n", k8sVer)
-		}
-		if err := mf.AddReplace("k8s.io/kubernetes", "", "k8s.io/kubernetes", k8sVer); err != nil {
-			die("Error adding replace for k8s.io/kubernetes: %v", err)
-		}
-	}
+
+	// Add the correct replace directive
+	newReplaces = append(newReplaces, &modfile.Replace{
+		Old: module.Version{Path: "k8s.io/kubernetes"},
+		New: module.Version{Path: "k8s.io/kubernetes", Version: k8sVer},
+	})
+
+	mf.Replace = newReplaces
 }
 
 // findKubernetesVersion returns the version in the require(...) block for k8s.io/kubernetes
