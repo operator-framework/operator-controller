@@ -40,81 +40,72 @@ func main() {
 //	Remove old k8s.io/* replace lines, rewrite + tidy so they’re really gone.
 //	Parse again, unify staging modules in require + replace to the new patch version, rewrite + tidy.
 func fixGoMod(goModPath string) error {
-	// parse & remove old lines, write, go mod tidy
-	mf1, err := parseMod(goModPath)
+	mf, err := parseMod(goModPath)
 	if err != nil {
 		return err
 	}
-	pruneK8sReplaces(mf1)
-	mf1.SortBlocks()
-	mf1.Cleanup()
+	pruneK8sReplaces(mf)
+	mf.SortBlocks()
+	mf.Cleanup()
 
-	if err := writeModFile(mf1, goModPath); err != nil {
+	if err := writeModFile(mf, goModPath); err != nil {
 		return err
 	}
-	if err := runCmd("go", "mod", "tidy"); err != nil {
-		return fmt.Errorf("go mod tidy failed: %w", err)
-	}
-	//parse again, unify everything to derived patch version in both require + replace blocks, write, go mod tidy
-	mf2, err := parseMod(goModPath)
+
+	mf, err = parseMod(goModPath)
 	if err != nil {
 		return err
 	}
 
-	k8sVer := findKubernetesVersion(mf2)
+	k8sVer := findKubernetesVersion(mf)
 	if k8sVer == "" {
 		return fmt.Errorf("did not find k8s.io/kubernetes in require block")
-	}
-	if debug {
-		fmt.Printf("Found k8s.io/kubernetes version: %s\n", k8sVer)
 	}
 
 	published := toPublishedVersion(k8sVer)
 	if published == "" {
 		return fmt.Errorf("cannot derive staging version from %s", k8sVer)
 	}
-	if debug {
-		fmt.Printf("Unifying staging modules to: %s (from %s)\n", published, k8sVer)
-	}
 
-	// forcibly unify the REQUIRE items for all staging modules
-	forceRequireStaging(mf2, published)
+	forceRequireStaging(mf, published)
 
-	// discover all k8s.io/* modules in the graph and unify them with new replace lines
 	listOut, errOut, err := runGoList()
 	if err != nil {
 		return fmt.Errorf("go list: %v\nStderr:\n%s", err, errOut)
 	}
 	stagingPins := discoverPinsAlways(listOut, published)
-	applyReplacements(mf2, stagingPins)
+	applyReplacements(mf, stagingPins)
 
-	// also ensure we have a replace for k8s.io/kubernetes => same version
-	ensureKubernetesReplace(mf2, k8sVer)
+	ensureKubernetesReplace(mf, k8sVer)
 
-	mf2.SortBlocks()
-	mf2.Cleanup()
+	mf.SortBlocks()
+	mf.Cleanup()
 
-	if err := writeModFile(mf2, goModPath); err != nil {
+	if err := writeModFile(mf, goModPath); err != nil {
 		return err
 	}
-	if err := runCmd("go", "mod", "tidy"); err != nil {
-		return fmt.Errorf("final tidy failed: %w", err)
-	}
-	if err := runCmd("go", "mod", "download", "k8s.io/kubernetes"); err != nil {
-		return fmt.Errorf("final: go mod download k8s.io/kubernetes failed: %w", err)
+
+	goVersion, err := getGoVersion(goModPath)
+	if err != nil {
+		return fmt.Errorf("failed to determine Go version: %w", err)
 	}
 
-	// final check
-	finalOut, err := exec.Command("go", "list", "-m", "all").Output()
-	if err != nil {
-		return fmt.Errorf("running final go list: %w", err)
+	if err := runCmd("go", "mod", "tidy", "-go="+goVersion); err != nil {
+		return fmt.Errorf("final tidy failed: %w", err)
 	}
-	if bytes.Contains(finalOut, []byte("v0.0.0")) {
-		fmt.Println("WARNING: Some modules remain at v0.0.0, possibly no valid tags.")
-	} else {
-		fmt.Println("Success: staging modules pinned to", published)
-	}
+
 	return nil
+}
+
+func getGoVersion(goModPath string) (string, error) {
+	mf, err := parseMod(goModPath)
+	if err != nil {
+		return "", err
+	}
+	if mf.Go == nil {
+		return "", fmt.Errorf("go version not found in go.mod")
+	}
+	return mf.Go.Version, nil
 }
 
 // parseMod reads go.mod into memory as a modfile.File
