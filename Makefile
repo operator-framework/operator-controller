@@ -120,10 +120,13 @@ custom-linter-build: #EXHELP Build custom linter
 lint-custom: custom-linter-build #EXHELP Call custom linter for the project
 	go vet -tags=$(GO_BUILD_TAGS) -vettool=./bin/custom-linter ./...
 
+.PHONY: k8s-maintainer #EXHELP this tool also calls `go mod tidy` but also allows us maintain k8s.io/kubernetes` changes bumping related staging modules (e.g., `k8s.io/api`, `k8s.io/apimachinery) as needed
+k8s-maintainer:
+	go run hack/tools/k8sMaintainer.go
+
 .PHONY: tidy
-tidy: #HELP Update dependencies.
-	# Force tidy to use the version already in go.mod
-	$(Q)go mod tidy -go=$(GOLANG_VERSION)
+tidy: k8s-maintainer #HELP Update dependencies.
+	# k8s-maintainer calls go mod tidy
 
 .PHONY: manifests
 KUSTOMIZE_CATD_CRDS_DIR := config/base/catalogd/crd/bases
