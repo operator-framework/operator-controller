@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"golang.org/x/mod/module"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"sort"
 	"strings"
 
 	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/module"
 )
 
 // debug controls whether we print extra statements.
@@ -110,7 +109,7 @@ func getGoVersion(goModPath string) (string, error) {
 
 // parseMod reads go.mod into memory as a modfile.File
 func parseMod(path string) (*modfile.File, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
@@ -127,7 +126,7 @@ func writeModFile(mf *modfile.File, path string) error {
 	if err != nil {
 		return fmt.Errorf("formatting modfile: %w", err)
 	}
-	if err := ioutil.WriteFile(path, formatted, 0644); err != nil {
+	if err := os.WriteFile(path, formatted, 0600); err != nil {
 		return fmt.Errorf("writing %s: %w", path, err)
 	}
 	if debug {
@@ -231,7 +230,7 @@ func applyReplacements(mf *modfile.File, pins map[string]string) {
 	if len(pins) == 0 {
 		return
 	}
-	var sorted []string
+	sorted := make([]string, 0, len(pins))
 	for p := range pins {
 		sorted = append(sorted, p)
 	}
@@ -250,7 +249,7 @@ func applyReplacements(mf *modfile.File, pins map[string]string) {
 // ensureKubernetesReplace ensures there's a "k8s.io/kubernetes => k8s.io/kubernetes vX.Y.Z" line
 // matching the require(...) version in case something references it directly.
 func ensureKubernetesReplace(mf *modfile.File, k8sVer string) {
-	var newReplaces []*modfile.Replace
+	newReplaces := make([]*modfile.Replace, 0, len(mf.Replace)+1)
 
 	for _, rep := range mf.Replace {
 		if rep.Old.Path == "k8s.io/kubernetes" && rep.New.Version != k8sVer {
@@ -313,7 +312,8 @@ func runCmd(name string, args ...string) error {
 
 // versionExists quietly tries `go mod download modPath@ver`. If 0 exit code => true.
 func versionExists(modPath, ver string) bool {
-	cmd := exec.Command("go", "mod", "download", fmt.Sprintf("%s@%s", modPath, ver))
+	safeArg := fmt.Sprintf("%s@%s", modPath, ver)
+	cmd := exec.Command("go", "mod", "download", safeArg)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	return cmd.Run() == nil

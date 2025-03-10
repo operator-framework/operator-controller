@@ -21,13 +21,12 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	rbacinternal "k8s.io/kubernetes/pkg/apis/rbac"
 	rbacv1helpers "k8s.io/kubernetes/pkg/apis/rbac/v1"
 	rbacregistry "k8s.io/kubernetes/pkg/registry/rbac"
 	"k8s.io/kubernetes/pkg/registry/rbac/validation"
 	rbac "k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PreAuthorizer interface {
