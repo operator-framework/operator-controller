@@ -16,9 +16,12 @@ package e2e
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -77,17 +80,15 @@ func FetchCatalogdMetricsExportedEndpoint(t *testing.T) {
 }
 
 // fetchMetrics retrieves Prometheus metrics from the endpoint
-func (c *MetricsTestConfig) fetchMetrics(ctx context.Context, token string) string {
+func (c *MetricsTestConfig) fetchMetrics(ctx context.Context, token string) map[string]float64 {
 	c.t.Log("Fetching Prometheus metrics after test execution")
 
-	// Command to execute inside the pod
 	cmd := []string{
 		"curl", "-s", "-k",
 		"-H", "Authorization: Bearer " + token,
 		c.metricsURL,
 	}
 
-	// Execute command in pod
 	req := c.kubeClient.CoreV1().RESTClient().
 		Post().
 		Resource("pods").
@@ -115,21 +116,60 @@ func (c *MetricsTestConfig) fetchMetrics(ctx context.Context, token string) stri
 	err = executor.StreamWithContext(ctx, streamOpts)
 	require.NoError(c.t, err, "Error streaming exec request: %v", stderr.String())
 
-	return stdout.String()
+	return parseMetrics(stdout.String())
 }
 
-// saveMetricsToFile writes the fetched metrics to a text file
-func (c *MetricsTestConfig) saveMetricsToFile(metrics string) {
+// parseMetrics extracts only the required metrics from Prometheus response
+func parseMetrics(metricsText string) map[string]float64 {
+	relevantMetrics := []string{
+		"controller_runtime_reconcile_time_seconds_sum",
+		"http_request_duration_seconds_sum",
+		"controller_runtime_reconcile_total",
+		"go_cpu_classes_gc_total_cpu_seconds_total",
+		"go_cpu_classes_idle_cpu_seconds_total",
+		"controller_runtime_reconcile_errors_total",
+		"controller_runtime_webhook_latency_seconds",
+	}
+
+	mapMetrics := make(map[string]float64)
+	lines := strings.Split(metricsText, "\n")
+	for _, line := range lines {
+		// Check for partial matches
+		for _, partial := range relevantMetrics {
+			if strings.Contains(line, partial) {
+				re := regexp.MustCompile(`(\S+)\s+([0-9.]+)`)
+				match := re.FindStringSubmatch(line)
+				if len(match) == 3 {
+					metricName := match[1]
+					value, err := strconv.ParseFloat(match[2], 64)
+					if err == nil {
+						mapMetrics[metricName] = value
+					}
+				}
+			}
+		}
+	}
+
+	return mapMetrics
+}
+
+// storeMetricsResult writes only relevant metrics to a JSON file
+func (c *MetricsTestConfig) storeMetricsResult(metrics map[string]float64) {
 	dir := "results"
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		c.t.Fatalf("Failed to create directory %s: %v", dir, err)
 	}
+	
+	filePath := fmt.Sprintf("%s/metrics_%s_%s_%s.txt", dir, c.name, c.t.Name(), time.Now().Format("20060102_150405"))
+	jsonData, err := json.MarshalIndent(metrics, "", "  ")
+	if err != nil {
+		c.t.Fatalf("Failed to encode metrics as JSON: %v", err)
+	}
 
-	filePath := fmt.Sprintf("%s/metrics_%s_%s.txt", dir, c.name, c.t.Name())
-	err := os.WriteFile(filePath, []byte(metrics), 0644)
+	err = os.WriteFile(filePath, jsonData, 0644)
 	require.NoError(c.t, err, "Failed to save metrics to file")
 
-	c.t.Logf("Metrics saved to: %s", filePath)
+	c.t.Logf("Filtered metrics saved to: %s", filePath)
 }
 
 func findK8sClient(t *testing.T) (kubernetes.Interface, *rest.Config) {
@@ -193,8 +233,7 @@ func NewMetricsTestConfig(
 // run executes the entire test flow
 func (c *MetricsTestConfig) run() {
 	ctx := context.Background()
-	// To speed up
-	// defer c.cleanup(ctx)
+	defer c.cleanup(ctx)
 	c.createMetricsClusterRoleBinding(ctx)
 	token := c.getServiceAccountToken(ctx)
 	c.createCurlMetricsPod(ctx)
@@ -204,7 +243,7 @@ func (c *MetricsTestConfig) run() {
 
 	// Fetch and save Prometheus metrics after test execution
 	metrics := c.fetchMetrics(ctx, token)
-	c.saveMetricsToFile(metrics)
+	c.storeMetricsResult(metrics)
 }
 
 // createMetricsClusterRoleBinding to bind the cluster role so metrics are accessible
