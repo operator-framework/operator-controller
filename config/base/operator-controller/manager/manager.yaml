@@ -44,6 +44,7 @@ spec:
         - /operator-controller
         args:
         - "--health-probe-bind-address=:8081"
+        - "--pprof-bind-address=:8082"
         - "--metrics-bind-address=:8443"
         - "--leader-elect"
         image: controller:latest

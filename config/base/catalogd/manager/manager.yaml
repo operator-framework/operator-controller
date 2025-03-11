@@ -45,6 +45,7 @@ spec:
         - ./catalogd
         args:
         - --leader-elect
+        - --pprof-bind-address=:8083
         - --metrics-bind-address=:7443
         - --external-address=catalogd-service.olmv1-system.svc
         image: controller:latest

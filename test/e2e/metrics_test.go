@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -153,13 +154,81 @@ func parseMetrics(metricsText string) map[string]float64 {
 	return mapMetrics
 }
 
+func (c *MetricsTestConfig) fetchPprofAndStore(ctx context.Context, token string, profileType string) {
+	c.t.Logf("fetching pprof profiling data for profile: %s", profileType)
+
+	var url string
+	if strings.Contains(c.metricsURL, "catalogd-service") {
+		url = fmt.Sprintf("http://catalogd-service.olmv1-system.svc.cluster.local:8083/debug/pprof/%s", profileType)
+	} else if strings.Contains(c.metricsURL, "operator-controller-service") {
+		url = fmt.Sprintf("http://operator-controller-service.olmv1-system.svc.cluster.local:8082/debug/pprof/%s", profileType)
+	} else {
+		c.t.Fatalf("unknown service in metricsURL: %s", c.metricsURL)
+	}
+
+	savePath := fmt.Sprintf("/tmp/%s.pprof", profileType)
+	cmd := []string{
+		"sh", "-c",
+		fmt.Sprintf(`curl -s -k -H "Authorization: Bearer %s" %s > %s`, token, url, savePath),
+	}
+
+	req := c.kubeClient.CoreV1().RESTClient().
+		Post().
+		Resource("pods").
+		Namespace(c.namespace).
+		Name(c.curlPodName).
+		SubResource("exec").
+		VersionedParams(&corev1.PodExecOptions{
+			Container: "curl",
+			Command:   cmd,
+			Stdin:     false,
+			Stdout:    true,
+			Stderr:    true,
+			TTY:       false,
+		}, scheme.ParameterCodec)
+
+	executor, err := remotecommand.NewSPDYExecutor(c.restConfig, "POST", req.URL())
+	require.NoError(c.t, err, "rrror creating SPDY executor for pod exec")
+
+	var stdout, stderr bytes.Buffer
+	streamOpts := remotecommand.StreamOptions{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+
+	err = executor.StreamWithContext(ctx, streamOpts)
+	require.NoError(c.t, err, "rrror executing curl in pod: %v", stderr.String())
+
+	tt := strings.ReplaceAll(c.t.Name(), "/", "_")
+	localP := fmt.Sprintf("results/%s_%s_%s.pprof", tt, profileType, time.Now().Format("20060102_150405"))
+	copyCmd := fmt.Sprintf("kubectl cp %s/%s:%s %s", c.namespace, c.curlPodName, savePath, localP)
+
+	output, copyErr := exec.Command("sh", "-c", copyCmd).CombinedOutput()
+	require.NoError(c.t, copyErr, "failed copy pprof: %s", string(output))
+	c.t.Logf("Pprof data successfully saved to: %s", localP)
+
+	textP := strings.Replace(localP, ".pprof", ".txt", 1)
+	textCmd := fmt.Sprintf("go tool pprof -text %s > %s", localP, textP)
+	textOutput, textErr := exec.Command("sh", "-c", textCmd).CombinedOutput()
+	require.NoError(c.t, textErr, "failed to convert pprof: %s", string(textOutput))
+
+	c.t.Logf("Pprof text saved to: %s", textP)
+}
+
+func (c *MetricsTestConfig) fetchAndStorePprof(ctx context.Context, token string) {
+	profiles := []string{"profile", "heap", "goroutine"}
+	for _, profileType := range profiles {
+		c.fetchPprofAndStore(ctx, token, profileType)
+	}
+}
+
 // storeMetricsResult writes only relevant metrics to a JSON file
 func (c *MetricsTestConfig) storeMetricsResult(metrics map[string]float64) {
 	dir := "results"
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		c.t.Fatalf("Failed to create directory %s: %v", dir, err)
 	}
-	
+
 	filePath := fmt.Sprintf("%s/metrics_%s_%s_%s.txt", dir, c.name, c.t.Name(), time.Now().Format("20060102_150405"))
 	jsonData, err := json.MarshalIndent(metrics, "", "  ")
 	if err != nil {
@@ -167,9 +236,9 @@ func (c *MetricsTestConfig) storeMetricsResult(metrics map[string]float64) {
 	}
 
 	err = os.WriteFile(filePath, jsonData, 0644)
-	require.NoError(c.t, err, "Failed to save metrics to file")
+	require.NoError(c.t, err, "failed to save metrics")
 
-	c.t.Logf("Filtered metrics saved to: %s", filePath)
+	c.t.Logf("filtered metrics saved to: %s", filePath)
 }
 
 func findK8sClient(t *testing.T) (kubernetes.Interface, *rest.Config) {
@@ -233,7 +302,7 @@ func NewMetricsTestConfig(
 // run executes the entire test flow
 func (c *MetricsTestConfig) run() {
 	ctx := context.Background()
-	defer c.cleanup(ctx)
+	//defer c.cleanup(ctx)
 	c.createMetricsClusterRoleBinding(ctx)
 	token := c.getServiceAccountToken(ctx)
 	c.createCurlMetricsPod(ctx)
@@ -241,9 +310,10 @@ func (c *MetricsTestConfig) run() {
 	// Exec `curl` in the Pod to validate the metrics
 	c.validateMetricsEndpoint(ctx, token)
 
-	// Fetch and save Prometheus metrics after test execution
 	metrics := c.fetchMetrics(ctx, token)
 	c.storeMetricsResult(metrics)
+
+	c.fetchAndStorePprof(ctx, token)
 }
 
 // createMetricsClusterRoleBinding to bind the cluster role so metrics are accessible

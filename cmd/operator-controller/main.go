@@ -83,6 +83,7 @@ var (
 
 type config struct {
 	metricsAddr          string
+	pprofAddr            string
 	certFile             string
 	keyFile              string
 	enableLeaderElection bool
@@ -131,6 +132,7 @@ func init() {
 	//create flagset, the collection of flags for this command
 	flags := operatorControllerCmd.Flags()
 	flags.StringVar(&cfg.metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':8443')")
+	flags.StringVar(&cfg.pprofAddr, "pprof-bind-address", "0", "The address the pprof endpoint binds to. an empty string or 0 disables pprof")
 	flags.StringVar(&cfg.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flags.StringVar(&cfg.catalogdCasDir, "catalogd-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to the Catalogd web service.")
 	flags.StringVar(&cfg.pullCasDir, "pull-cas-dir", "", "The directory of TLS certificate authorities to use for verifying HTTPS connections to image registries.")
@@ -265,6 +267,7 @@ func run() error {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                        scheme.Scheme,
 		Metrics:                       metricsServerOptions,
+		PprofBindAddress:              cfg.pprofAddr,
 		HealthProbeBindAddress:        cfg.probeAddr,
 		LeaderElection:                cfg.enableLeaderElection,
 		LeaderElectionID:              "9c4404e7.operatorframework.io",

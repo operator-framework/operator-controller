@@ -14,6 +14,9 @@ spec:
     protocol: TCP
     port: 80
     targetPort: 8443
+  - name: pprof
+    port: 8083
+    targetPort: 8083
   - name: webhook
     protocol: TCP
     port: 9443

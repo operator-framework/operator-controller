@@ -34,11 +34,12 @@ jobs:
 
       - name: Run e2e tests
         run: ARTIFACT_PATH=/tmp/artifacts make test-e2e
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: upgrade-e2e-artifacts
-          path: test/e2e/results/**
+        
+# To not store pprof
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: upgrade-e2e-artifacts
+#          path: test/e2e/results/**
 
       - uses: actions/upload-artifact@v4
         if: failure()
