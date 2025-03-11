@@ -414,5 +414,3 @@ deploy-docs: venv
 .PHONY: demo-update #EXHELP build demo
 demo-update:
 	./hack/demo/generate-asciidemo.sh -u -n catalogd-demo catalogd-demo-script.sh
-
-include Makefile.venv
