@@ -3,6 +3,7 @@ package applier_test
 import (
 	"context"
 	"errors"
+	"io"
 	"io/fs"
 	"os"
 	"testing"
@@ -15,7 +16,9 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/authentication/user"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -30,6 +33,17 @@ import (
 type mockPreflight struct {
 	installErr error
 	upgradeErr error
+}
+
+type noOpPreAuthorizer struct{}
+
+func (p *noOpPreAuthorizer) PreAuthorize(
+	ctx context.Context,
+	manifestManager user.Info,
+	manifestReader io.Reader,
+) (map[string][]rbacv1.PolicyRule, error) {
+	// No-op: always return an empty map and no error
+	return nil, nil
 }
 
 func (mp *mockPreflight) Install(context.Context, *release.Release) error {
@@ -280,11 +294,16 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		mockAcg := &mockActionGetter{
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
+			desiredRel: &release.Release{
+				Info:     &release.Info{Status: release.StatusDeployed},
+				Manifest: validManifest,
+			},
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
 		helmApplier := applier.Helm{
 			ActionClientGetter:  mockAcg,
 			Preflights:          []applier.Preflight{mockPf},
+			PreAuthorizer:       &noOpPreAuthorizer{},
 			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
 		}
 
@@ -299,13 +318,26 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		mockAcg := &mockActionGetter{
 			getClientErr: driver.ErrReleaseNotFound,
 			installErr:   errors.New("failed installing chart"),
+			desiredRel: &release.Release{
+				Info:     &release.Info{Status: release.StatusDeployed},
+				Manifest: validManifest,
+			},
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter:  mockAcg,
+			PreAuthorizer:       &noOpPreAuthorizer{},
 			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
 		}
-
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		// Use a ClusterExtension with valid Spec fields.
+		validCE := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
+				},
+			},
+		}
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "installing chart")
 		require.Equal(t, applier.StateNeedsInstall, state)
@@ -322,10 +354,21 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter:  mockAcg,
+			PreAuthorizer:       &noOpPreAuthorizer{},
 			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		// Use a ClusterExtension with valid Spec fields.
+		validCE := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
+				},
+			},
+		}
+
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
 		require.Equal(t, applier.StateNeedsInstall, state)
 		require.NotNil(t, objs)
