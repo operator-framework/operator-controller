@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/fs"
 	"strconv"
 	"strings"
 	"testing"
@@ -52,49 +51,47 @@ func TestClusterExtensionReasonRegistration(t *testing.T) {
 	}
 }
 
-// parseConstants parses the values of the top-level constants in the current
-// directory whose names start with the given prefix. When running as part of a
-// test, the current directory is the directory of the file that contains the
-// test in which this function is called.
+// parseConstants parses the values of the top-level constants that start with the given prefix,
+// in the files clusterextension_types.go and common_types.go.
 func parseConstants(prefix string) ([]string, error) {
 	fset := token.NewFileSet()
-	// ParseDir returns a map of package name to package ASTs. An AST is a representation of the source code
-	// that can be traversed to extract information. The map is keyed by the package name.
-	pkgs, err := parser.ParseDir(fset, ".", func(info fs.FileInfo) bool {
-		return !strings.HasSuffix(info.Name(), "_test.go")
-	}, 0)
-	if err != nil {
-		return nil, err
+	// An AST is a representation of the source code that can be traversed to extract information.
+	// Converting files to AST representation to extract information.
+	parseFiles, astFiles := []string{"clusterextension_types.go", "common_types.go"}, []*ast.File{}
+	for _, file := range parseFiles {
+		p, err := parser.ParseFile(fset, file, nil, 0)
+		if err != nil {
+			return nil, err
+		}
+		astFiles = append(astFiles, p)
 	}
 
 	var constValues []string
 
-	// Iterate all of the top-level declarations in each package's files,
-	// looking for constants that start with the prefix. When we find one,
-	// add its value to the constValues list.
-	for _, pkg := range pkgs {
-		for _, f := range pkg.Files {
-			for _, d := range f.Decls {
-				genDecl, ok := d.(*ast.GenDecl)
-				if !ok {
+	// Iterate all of the top-level declarations in each file, looking
+	// for constants that start with the prefix. When we find one, add
+	// its value to the constValues list.
+	for _, f := range astFiles {
+		for _, d := range f.Decls {
+			genDecl, ok := d.(*ast.GenDecl)
+			if !ok {
+				continue
+			}
+			for _, s := range genDecl.Specs {
+				valueSpec, ok := s.(*ast.ValueSpec)
+				if !ok || len(valueSpec.Names) != 1 || valueSpec.Names[0].Obj.Kind != ast.Con || !strings.HasPrefix(valueSpec.Names[0].String(), prefix) {
 					continue
 				}
-				for _, s := range genDecl.Specs {
-					valueSpec, ok := s.(*ast.ValueSpec)
-					if !ok || len(valueSpec.Names) != 1 || valueSpec.Names[0].Obj.Kind != ast.Con || !strings.HasPrefix(valueSpec.Names[0].String(), prefix) {
+				for _, val := range valueSpec.Values {
+					lit, ok := val.(*ast.BasicLit)
+					if !ok || lit.Kind != token.STRING {
 						continue
 					}
-					for _, val := range valueSpec.Values {
-						lit, ok := val.(*ast.BasicLit)
-						if !ok || lit.Kind != token.STRING {
-							continue
-						}
-						v, err := strconv.Unquote(lit.Value)
-						if err != nil {
-							return nil, fmt.Errorf("unquote literal string %s: %v", lit.Value, err)
-						}
-						constValues = append(constValues, v)
+					v, err := strconv.Unquote(lit.Value)
+					if err != nil {
+						return nil, fmt.Errorf("unquote literal string %s: %v", lit.Value, err)
 					}
+					constValues = append(constValues, v)
 				}
 			}
 		}

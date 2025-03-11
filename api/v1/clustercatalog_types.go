@@ -34,6 +34,14 @@ const (
 
 	AvailabilityModeAvailable   AvailabilityMode = "Available"
 	AvailabilityModeUnavailable AvailabilityMode = "Unavailable"
+
+	// Condition types
+	TypeServing = "Serving"
+
+	// Serving Reasons
+	ReasonAvailable                = "Available"
+	ReasonUnavailable              = "Unavailable"
+	ReasonUserSpecifiedUnavailable = "UserSpecifiedUnavailable"
 )
 
 //+kubebuilder:object:root=true

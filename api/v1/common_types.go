@@ -19,7 +19,6 @@ package v1
 const (
 	TypeInstalled   = "Installed"
 	TypeProgressing = "Progressing"
-	TypeServing     = "Serving"
 
 	// Progressing reasons
 	ReasonSucceeded = "Succeeded"
@@ -29,9 +28,4 @@ const (
 	// Terminal reasons
 	ReasonDeprecated = "Deprecated"
 	ReasonFailed     = "Failed"
-
-	// Serving reasons
-	ReasonAvailable                = "Available"
-	ReasonUnavailable              = "Unavailable"
-	ReasonUserSpecifiedUnavailable = "UserSpecifiedUnavailable"
 )
