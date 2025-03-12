@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 )
@@ -26,42 +26,42 @@ func TestCalculateFlatSchemaDiff(t *testing.T) {
 		{
 			name: "no diff in schemas, empty diff, no error",
 			old: crdupgradesafety.FlatSchema{
-				"foo": &v1.JSONSchemaProps{},
+				"foo": &apiextensionsv1.JSONSchemaProps{},
 			},
 			new: crdupgradesafety.FlatSchema{
-				"foo": &v1.JSONSchemaProps{},
+				"foo": &apiextensionsv1.JSONSchemaProps{},
 			},
 			expectedDiff: map[string]crdupgradesafety.FieldDiff{},
 		},
 		{
 			name: "diff in schemas, diff returned, no error",
 			old: crdupgradesafety.FlatSchema{
-				"foo": &v1.JSONSchemaProps{},
+				"foo": &apiextensionsv1.JSONSchemaProps{},
 			},
 			new: crdupgradesafety.FlatSchema{
-				"foo": &v1.JSONSchemaProps{
+				"foo": &apiextensionsv1.JSONSchemaProps{
 					ID: "bar",
 				},
 			},
 			expectedDiff: map[string]crdupgradesafety.FieldDiff{
 				"foo": {
-					Old: &v1.JSONSchemaProps{},
-					New: &v1.JSONSchemaProps{ID: "bar"},
+					Old: &apiextensionsv1.JSONSchemaProps{},
+					New: &apiextensionsv1.JSONSchemaProps{ID: "bar"},
 				},
 			},
 		},
 		{
 			name: "diff in child properties only, no diff returned, no error",
 			old: crdupgradesafety.FlatSchema{
-				"foo": &v1.JSONSchemaProps{
-					Properties: map[string]v1.JSONSchemaProps{
+				"foo": &apiextensionsv1.JSONSchemaProps{
+					Properties: map[string]apiextensionsv1.JSONSchemaProps{
 						"bar": {ID: "bar"},
 					},
 				},
 			},
 			new: crdupgradesafety.FlatSchema{
-				"foo": &v1.JSONSchemaProps{
-					Properties: map[string]v1.JSONSchemaProps{
+				"foo": &apiextensionsv1.JSONSchemaProps{
+					Properties: map[string]apiextensionsv1.JSONSchemaProps{
 						"bar": {ID: "baz"},
 					},
 				},
@@ -71,10 +71,10 @@ func TestCalculateFlatSchemaDiff(t *testing.T) {
 		{
 			name: "field exists in old but not new, no diff returned, error",
 			old: crdupgradesafety.FlatSchema{
-				"foo": &v1.JSONSchemaProps{},
+				"foo": &apiextensionsv1.JSONSchemaProps{},
 			},
 			new: crdupgradesafety.FlatSchema{
-				"bar": &v1.JSONSchemaProps{},
+				"bar": &apiextensionsv1.JSONSchemaProps{},
 			},
 			expectedDiff: map[string]crdupgradesafety.FieldDiff{},
 			shouldError:  true,
@@ -89,10 +89,10 @@ func TestCalculateFlatSchemaDiff(t *testing.T) {
 }
 
 func TestFlattenSchema(t *testing.T) {
-	schema := &v1.JSONSchemaProps{
-		Properties: map[string]v1.JSONSchemaProps{
+	schema := &apiextensionsv1.JSONSchemaProps{
+		Properties: map[string]apiextensionsv1.JSONSchemaProps{
 			"foo": {
-				Properties: map[string]v1.JSONSchemaProps{
+				Properties: map[string]apiextensionsv1.JSONSchemaProps{
 					"bar": {},
 				},
 			},
@@ -119,8 +119,8 @@ func TestChangeValidator(t *testing.T) {
 	for _, tc := range []struct {
 		name            string
 		changeValidator *crdupgradesafety.ChangeValidator
-		old             v1.CustomResourceDefinition
-		new             v1.CustomResourceDefinition
+		old             apiextensionsv1.CustomResourceDefinition
+		new             apiextensionsv1.CustomResourceDefinition
 		shouldError     bool
 	}{
 		{
@@ -132,25 +132,25 @@ func TestChangeValidator(t *testing.T) {
 					},
 				},
 			},
-			old: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			old: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{},
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{},
 							},
 						},
 					},
 				},
 			},
-			new: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			new: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{},
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{},
 							},
 						},
 					},
@@ -166,25 +166,25 @@ func TestChangeValidator(t *testing.T) {
 					},
 				},
 			},
-			old: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			old: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{},
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{},
 							},
 						},
 					},
 				},
 			},
-			new: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			new: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
 									ID: "foo",
 								},
 							},
@@ -202,25 +202,25 @@ func TestChangeValidator(t *testing.T) {
 					},
 				},
 			},
-			old: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			old: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{},
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{},
 							},
 						},
 					},
 				},
 			},
-			new: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			new: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
 									ID: "foo",
 								},
 							},
@@ -239,25 +239,25 @@ func TestChangeValidator(t *testing.T) {
 					},
 				},
 			},
-			old: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			old: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{},
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{},
 							},
 						},
 					},
 				},
 			},
-			new: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			new: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
 									ID: "foo",
 								},
 							},
@@ -276,25 +276,25 @@ func TestChangeValidator(t *testing.T) {
 					},
 				},
 			},
-			old: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			old: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{},
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{},
 							},
 						},
 					},
 				},
 			},
-			new: v1.CustomResourceDefinition{
-				Spec: v1.CustomResourceDefinitionSpec{
-					Versions: []v1.CustomResourceDefinitionVersion{
+			new: apiextensionsv1.CustomResourceDefinition{
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 						{
 							Name: "v1alpha1",
-							Schema: &v1.CustomResourceValidation{
-								OpenAPIV3Schema: &v1.JSONSchemaProps{
+							Schema: &apiextensionsv1.CustomResourceValidation{
+								OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
 									ID: "foo",
 								},
 							},

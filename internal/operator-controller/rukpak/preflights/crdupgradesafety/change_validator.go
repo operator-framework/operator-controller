@@ -11,7 +11,7 @@ import (
 	"reflect"
 
 	"github.com/openshift/crd-schema-checker/pkg/manifestcomparators"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -46,7 +46,7 @@ func (cv *ChangeValidator) Name() string {
 //
 // Additionally, any changes that are not validated and handled by the known ChangeValidations
 // are deemed as unsafe and returns an error.
-func (cv *ChangeValidator) Validate(old, new v1.CustomResourceDefinition) error {
+func (cv *ChangeValidator) Validate(old, new apiextensionsv1.CustomResourceDefinition) error {
 	errs := []error{}
 	for _, version := range old.Spec.Versions {
 		newVersion := manifestcomparators.GetVersionByName(&new, version.Name)
@@ -89,12 +89,12 @@ func (cv *ChangeValidator) Validate(old, new v1.CustomResourceDefinition) error 
 }
 
 type FieldDiff struct {
-	Old *v1.JSONSchemaProps
-	New *v1.JSONSchemaProps
+	Old *apiextensionsv1.JSONSchemaProps
+	New *apiextensionsv1.JSONSchemaProps
 }
 
 // FlatSchema is a flat representation of a CRD schema.
-type FlatSchema map[string]*v1.JSONSchemaProps
+type FlatSchema map[string]*apiextensionsv1.JSONSchemaProps
 
 // FlattenSchema takes in a CRD version OpenAPIV3Schema and returns
 // a flattened representation of it. For example, a CRD with a schema of:
@@ -113,7 +113,7 @@ type FlatSchema map[string]*v1.JSONSchemaProps
 // ```
 // would be represented as:
 //
-//	map[string]*v1.JSONSchemaProps{
+//	map[string]*apiextensionsv1.JSONSchemaProps{
 //	   "^": {},
 //	   "^.spec": {},
 //	   "^.spec.foo": {},
@@ -121,14 +121,14 @@ type FlatSchema map[string]*v1.JSONSchemaProps
 //	}
 //
 // where "^" represents the "root" schema
-func FlattenSchema(schema *v1.JSONSchemaProps) FlatSchema {
-	fieldMap := map[string]*v1.JSONSchemaProps{}
+func FlattenSchema(schema *apiextensionsv1.JSONSchemaProps) FlatSchema {
+	fieldMap := map[string]*apiextensionsv1.JSONSchemaProps{}
 
 	manifestcomparators.SchemaHas(schema,
 		field.NewPath("^"),
 		field.NewPath("^"),
 		nil,
-		func(s *v1.JSONSchemaProps, _, simpleLocation *field.Path, _ []*v1.JSONSchemaProps) bool {
+		func(s *apiextensionsv1.JSONSchemaProps, _, simpleLocation *field.Path, _ []*apiextensionsv1.JSONSchemaProps) bool {
 			fieldMap[simpleLocation.String()] = s.DeepCopy()
 			return false
 		})
