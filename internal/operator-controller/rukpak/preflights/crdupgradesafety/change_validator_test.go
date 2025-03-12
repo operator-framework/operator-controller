@@ -9,10 +9,11 @@ import (
 	"errors"
 	"testing"
 
-	"carvel.dev/kapp/pkg/kapp/crdupgradesafety"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/utils/pointer"
+
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 )
 
 func TestEnumChangeValidation(t *testing.T) {

@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	kappcus "carvel.dev/kapp/pkg/kapp/crdupgradesafety"
 	"helm.sh/helm/v3/pkg/release"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -21,7 +20,7 @@ import (
 
 type Option func(p *Preflight)
 
-func WithValidator(v *kappcus.Validator) Option {
+func WithValidator(v *Validator) Option {
 	return func(p *Preflight) {
 		p.validator = v
 	}
@@ -29,11 +28,11 @@ func WithValidator(v *kappcus.Validator) Option {
 
 type Preflight struct {
 	crdClient apiextensionsv1client.CustomResourceDefinitionInterface
-	validator *kappcus.Validator
+	validator *Validator
 }
 
 func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface, opts ...Option) *Preflight {
-	changeValidations := []kappcus.ChangeValidation{
+	changeValidations := []ChangeValidation{
 		Enum,
 		Required,
 		Maximum,
@@ -50,13 +49,13 @@ func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface
 	p := &Preflight{
 		crdClient: crdCli,
 		// create a default validator. Can be overridden via the options
-		validator: &kappcus.Validator{
-			Validations: []kappcus.Validation{
-				kappcus.NewValidationFunc("NoScopeChange", kappcus.NoScopeChange),
-				kappcus.NewValidationFunc("NoStoredVersionRemoved", kappcus.NoStoredVersionRemoved),
-				kappcus.NewValidationFunc("NoExistingFieldRemoved", kappcus.NoExistingFieldRemoved),
+		validator: &Validator{
+			Validations: []Validation{
+				NewValidationFunc("NoScopeChange", NoScopeChange),
+				NewValidationFunc("NoStoredVersionRemoved", NoStoredVersionRemoved),
+				NewValidationFunc("NoExistingFieldRemoved", NoExistingFieldRemoved),
 				&ServedVersionValidator{Validations: changeValidations},
-				&kappcus.ChangeValidator{Validations: changeValidations},
+				&ChangeValidator{Validations: changeValidations},
 			},
 		},
 	}
