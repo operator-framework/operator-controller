@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	kappcus "carvel.dev/kapp/pkg/kapp/crdupgradesafety"
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/release"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -31,7 +30,7 @@ func (c *MockCRDGetter) Get(ctx context.Context, name string, options metav1.Get
 	return c.oldCrd, c.getErr
 }
 
-func newMockPreflight(crd *apiextensionsv1.CustomResourceDefinition, err error, customValidator *kappcus.Validator) *crdupgradesafety.Preflight {
+func newMockPreflight(crd *apiextensionsv1.CustomResourceDefinition, err error, customValidator *crdupgradesafety.Validator) *crdupgradesafety.Preflight {
 	var preflightOpts []crdupgradesafety.Option
 	if customValidator != nil {
 		preflightOpts = append(preflightOpts, crdupgradesafety.WithValidator(customValidator))
@@ -76,7 +75,7 @@ func TestInstall(t *testing.T) {
 	tests := []struct {
 		name          string
 		oldCrdPath    string
-		validator     *kappcus.Validator
+		validator     *crdupgradesafety.Validator
 		release       *release.Release
 		wantErrMsgs   []string
 		wantCrdGetErr error
@@ -137,9 +136,9 @@ func TestInstall(t *testing.T) {
 				Name:     "test-release",
 				Manifest: getManifestString(t, "old-crd.json"),
 			},
-			validator: &kappcus.Validator{
-				Validations: []kappcus.Validation{
-					kappcus.NewValidationFunc("test", func(old, new apiextensionsv1.CustomResourceDefinition) error {
+			validator: &crdupgradesafety.Validator{
+				Validations: []crdupgradesafety.Validation{
+					crdupgradesafety.NewValidationFunc("test", func(old, new apiextensionsv1.CustomResourceDefinition) error {
 						return fmt.Errorf("custom validation error!!")
 					}),
 				},
@@ -213,7 +212,7 @@ func TestUpgrade(t *testing.T) {
 	tests := []struct {
 		name          string
 		oldCrdPath    string
-		validator     *kappcus.Validator
+		validator     *crdupgradesafety.Validator
 		release       *release.Release
 		wantErrMsgs   []string
 		wantCrdGetErr error
@@ -274,9 +273,9 @@ func TestUpgrade(t *testing.T) {
 				Name:     "test-release",
 				Manifest: getManifestString(t, "old-crd.json"),
 			},
-			validator: &kappcus.Validator{
-				Validations: []kappcus.Validation{
-					kappcus.NewValidationFunc("test", func(old, new apiextensionsv1.CustomResourceDefinition) error {
+			validator: &crdupgradesafety.Validator{
+				Validations: []crdupgradesafety.Validation{
+					crdupgradesafety.NewValidationFunc("test", func(old, new apiextensionsv1.CustomResourceDefinition) error {
 						return fmt.Errorf("custom validation error!!")
 					}),
 				},
