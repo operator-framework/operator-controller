@@ -1,11 +1,9 @@
 package crdupgradesafety
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/release"
@@ -118,65 +116,4 @@ func (p *Preflight) runPreflight(ctx context.Context, rel *release.Release) erro
 	}
 
 	return errors.Join(validateErrors...)
-}
-
-// orderKappsValidateErr is meant as a temporary solution to the problem
-// of randomly ordered multi-line validation error returned by kapp's validator.Validate()
-//
-// The problem is that kapp's field validations are performed in map iteration order, which is not fixed.
-// Errors from those validations are then error.Join'ed, fmt.Errorf'ed and error.Join'ed again,
-// which means original messages are available at 3rd level of nesting, and this is where we need to
-// sort them to ensure we do not enter into constant reconciliation loop because of random order of
-// failure message we ultimately set in ClusterExtension's status conditions.
-//
-// This helper attempts to do that and falls back to original unchanged error message
-// in case of any unforeseen issues which likely mean that the internals of validator.Validate
-// have changed.
-//
-// For full context see:
-// github.com/operator-framework/operator-controller/issues/1456 (original issue and comments)
-// github.com/carvel-dev/kapp/pull/1047 (PR to ensure order in upstream)
-//
-// TODO: remove this once ordering has been handled by the upstream.
-func orderKappsValidateErr(err error) error {
-	joinedValidationErrs, ok := err.(interface{ Unwrap() []error })
-	if !ok {
-		return err
-	}
-
-	// nolint: prealloc
-	var errs []error
-	for _, validationErr := range joinedValidationErrs.Unwrap() {
-		unwrappedValidationErr := errors.Unwrap(validationErr)
-		// validator.Validate did not error.Join'ed validation errors
-		// kapp's internals changed - fallback to original error
-		if unwrappedValidationErr == nil {
-			return err
-		}
-
-		prefix, _, ok := strings.Cut(validationErr.Error(), ":")
-		// kapp's internal error format changed - fallback to original error
-		if !ok {
-			return err
-		}
-
-		// attempt to unwrap and sort field errors
-		joinedFieldErrs, ok := unwrappedValidationErr.(interface{ Unwrap() []error })
-		// ChangeValidator did not error.Join'ed field validation errors
-		// kapp's internals changed - fallback to original error
-		if !ok {
-			return err
-		}
-
-		// ensure order of the field validation errors
-		unwrappedFieldErrs := joinedFieldErrs.Unwrap()
-		slices.SortFunc(unwrappedFieldErrs, func(a, b error) int {
-			return cmp.Compare(a.Error(), b.Error())
-		})
-
-		// re-join the sorted field errors keeping the original error prefix from kapp
-		errs = append(errs, fmt.Errorf("%s: %w", prefix, errors.Join(unwrappedFieldErrs...)))
-	}
-
-	return errors.Join(errs...)
 }
