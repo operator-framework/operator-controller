@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
 
@@ -45,7 +46,9 @@ func (c *ServedVersionValidator) Validate(old, new apiextensionsv1.CustomResourc
 				continue
 			}
 
-			for field, diff := range diffs {
+			for _, field := range slices.Sorted(maps.Keys(diffs)) {
+				diff := diffs[field]
+
 				handled := false
 				for _, validation := range c.Validations {
 					ok, err := validation(diff)

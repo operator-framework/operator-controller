@@ -113,7 +113,6 @@ func (p *Preflight) runPreflight(ctx context.Context, rel *release.Release) erro
 
 		err = p.validator.Validate(*oldCrd, *newCrd)
 		if err != nil {
-			err = orderKappsValidateErr(err)
 			validateErrors = append(validateErrors, fmt.Errorf("validating upgrade for CRD %q failed: %w", newCrd.Name, err))
 		}
 	}
