@@ -7,6 +7,7 @@ package crdupgradesafety_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -130,12 +131,15 @@ func TestFlattenSchema(t *testing.T) {
 }
 
 func TestChangeValidator(t *testing.T) {
+	validationErr1 := errors.New(`version "v1alpha1", field "^" has unknown change, refusing to determine that change is safe`)
+	validationErr2 := errors.New(`version "v1alpha1", field "^": fail`)
+
 	for _, tc := range []struct {
 		name            string
 		changeValidator *crdupgradesafety.ChangeValidator
 		old             apiextensionsv1.CustomResourceDefinition
 		new             apiextensionsv1.CustomResourceDefinition
-		shouldError     bool
+		expectedError   error
 	}{
 		{
 			name: "no changes, no error",
@@ -242,7 +246,7 @@ func TestChangeValidator(t *testing.T) {
 					},
 				},
 			},
-			shouldError: true,
+			expectedError: validationErr1,
 		},
 		{
 			name: "changes, validation failed, change fully handled, error",
@@ -279,14 +283,17 @@ func TestChangeValidator(t *testing.T) {
 					},
 				},
 			},
-			shouldError: true,
+			expectedError: validationErr2,
 		},
 		{
-			name: "changes, validation failed, change not fully handled, error",
+			name: "changes, validation failed, change not fully handled, ordered error",
 			changeValidator: &crdupgradesafety.ChangeValidator{
 				Validations: []crdupgradesafety.ChangeValidation{
 					func(_ crdupgradesafety.FieldDiff) (bool, error) {
 						return false, errors.New("fail")
+					},
+					func(_ crdupgradesafety.FieldDiff) (bool, error) {
+						return false, errors.New("error")
 					},
 				},
 			},
@@ -316,12 +323,16 @@ func TestChangeValidator(t *testing.T) {
 					},
 				},
 			},
-			shouldError: true,
+			expectedError: fmt.Errorf("%w\n%s\n%w", validationErr2, `version "v1alpha1", field "^": error`, validationErr1),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.changeValidator.Validate(tc.old, tc.new)
-			assert.Equal(t, tc.shouldError, err != nil, "should error? - %v", tc.shouldError)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

@@ -2,7 +2,6 @@ package crdupgradesafety
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -902,84 +901,6 @@ func TestType(t *testing.T) {
 			handled, err := Type(tc.diff)
 			require.Equal(t, tc.err, err)
 			require.Equal(t, tc.handled, handled)
-		})
-	}
-}
-
-func TestOrderKappsValidateErr(t *testing.T) {
-	testErr1 := errors.New("fallback1")
-	testErr2 := errors.New("fallback2")
-
-	generateErrors := func(n int, base string) []error {
-		var result []error
-		for i := n; i >= 0; i-- {
-			result = append(result, fmt.Errorf("%s%d", base, i))
-		}
-		return result
-	}
-
-	joinedAndNested := func(format string, errs ...error) error {
-		return fmt.Errorf(format, errors.Join(errs...))
-	}
-
-	testCases := []struct {
-		name          string
-		inpuError     error
-		expectedError error
-	}{
-		{
-			name:          "fallback: initial error was not error.Join'ed",
-			inpuError:     testErr1,
-			expectedError: testErr1,
-		},
-		{
-			name:          "fallback: nested error was not wrapped",
-			inpuError:     errors.Join(testErr1),
-			expectedError: testErr1,
-		},
-		{
-			name:          "fallback: multiple nested errors, one was not wrapped",
-			inpuError:     errors.Join(testErr2, fmt.Errorf("%w", testErr1)),
-			expectedError: errors.Join(testErr2, fmt.Errorf("%w", testErr1)),
-		},
-		{
-			name:          "fallback: nested error did not contain \":\"",
-			inpuError:     errors.Join(fmt.Errorf("%w", testErr1)),
-			expectedError: testErr1,
-		},
-		{
-			name:          "fallback: multiple nested errors, one did not contain \":\"",
-			inpuError:     errors.Join(joinedAndNested("fail: %w", testErr2), joinedAndNested("%w", testErr1)),
-			expectedError: errors.Join(fmt.Errorf("fail: %w", testErr2), testErr1),
-		},
-		{
-			name:          "fallback: nested error was not error.Join'ed",
-			inpuError:     errors.Join(fmt.Errorf("fail: %w", testErr1)),
-			expectedError: fmt.Errorf("fail: %w", testErr1),
-		},
-		{
-			name:          "fallback: multiple nested errors, one was not error.Join'ed",
-			inpuError:     errors.Join(joinedAndNested("fail: %w", testErr2), fmt.Errorf("fail: %w", testErr1)),
-			expectedError: fmt.Errorf("fail: %w\nfail: %w", testErr2, testErr1),
-		},
-		{
-			name:          "ensures order for a single group of multiple deeply nested errors",
-			inpuError:     errors.Join(joinedAndNested("fail: %w", testErr2, testErr1)),
-			expectedError: fmt.Errorf("fail: %w\n%w", testErr1, testErr2),
-		},
-		{
-			name: "ensures order for multiple groups of deeply nested errors",
-			inpuError: errors.Join(
-				joinedAndNested("fail: %w", testErr2, testErr1),
-				joinedAndNested("validation: %w", generateErrors(5, "err")...),
-			),
-			expectedError: fmt.Errorf("fail: %w\n%w\nvalidation: err0\nerr1\nerr2\nerr3\nerr4\nerr5", testErr1, testErr2),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := orderKappsValidateErr(tc.inpuError)
-			require.EqualError(t, err, tc.expectedError.Error())
 		})
 	}
 }

@@ -8,7 +8,9 @@ package crdupgradesafety
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
+	"slices"
 
 	"github.com/openshift/crd-schema-checker/pkg/manifestcomparators"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -63,7 +65,9 @@ func (cv *ChangeValidator) Validate(old, new apiextensionsv1.CustomResourceDefin
 			continue
 		}
 
-		for field, diff := range diffs {
+		for _, field := range slices.Sorted(maps.Keys(diffs)) {
+			diff := diffs[field]
+
 			handled := false
 			for _, validation := range cv.Validations {
 				ok, err := validation(diff)
