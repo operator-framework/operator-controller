@@ -151,8 +151,15 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: tidy fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
+verify: tidy fmt generate manifests crd-ref-docs update-k8s-replaces #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
+
+.PHONY: update-k8s-replaces
+update-k8s-replaces:
+	@K8S_VER=$$(go mod graph | grep 'sigs.k8s.io/controller-runtime' | grep 'k8s.io/api@' | awk '{print $$2}' | sed -E 's/^k8s.io\/api@//g' | sort -u | head -n 1); \
+	sed -E -i.bak "/replace k8s.io\//s| v[0-9]+\.[0-9]+\.[0-9]+$$| $$K8S_VER|g" go.mod; \
+	rm -f go.mod.bak; \
+	go mod tidy \
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
