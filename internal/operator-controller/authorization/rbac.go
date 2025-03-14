@@ -52,6 +52,14 @@ func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
 	}
 }
 
+// PreAuthorize validates whether the current user/request satisfies the necessary permissions
+// as defined by the RBAC policy. It examines the user’s roles, resource identifiers, and
+// the intended action to determine if the operation is allowed.
+//
+// Return Value:
+//   - nil: indicates that the authorization check passed and the operation is permitted.
+//   - non-nil error: indicates that the authorization failed (either due to insufficient permissions
+//     or an error encountered during the check), the error provides a slice of several failures at once.
 func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) (map[string][]rbacv1.PolicyRule, error) {
 	dm, err := a.decodeManifest(manifestReader)
 	if err != nil {
@@ -81,6 +89,10 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager us
 	}
 
 	for ns, nsMissingRules := range missingRules {
+		// NOTE: Although CompactRules is defined to return an error, its current implementation
+		// never produces a non-nil error. This is because all operations within the function are
+		// designed to succeed under current conditions. In the future, if more complex rule validations
+		// are introduced, this behavior may change and proper error handling will be required.
 		if compactMissingRules, err := validation.CompactRules(nsMissingRules); err == nil {
 			missingRules[ns] = compactMissingRules
 		}
@@ -120,7 +132,15 @@ func (a *rbacPreAuthorizer) decodeManifest(manifestReader io.Reader) (*decodedMa
 		gvk := uObj.GroupVersionKind()
 		restMapping, err := a.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("could not get REST mapping for object %d in manifest with GVK %s: %w", i, gvk, err))
+			var objName string
+			if name := uObj.GetName(); name != "" {
+				objName = fmt.Sprintf(" (name: %s)", name)
+			}
+
+			errs = append(
+				errs,
+				fmt.Errorf("could not get REST mapping for object %d in manifest with GVK %s%s: %w", i, gvk, objName, err),
+			)
 			continue
 		}
 
@@ -183,8 +203,11 @@ func (a *rbacPreAuthorizer) authorizeAttributesRecords(ctx context.Context, attr
 }
 
 func (a *rbacPreAuthorizer) attributesAllowed(ctx context.Context, attributesRecord authorizer.AttributesRecord) (bool, error) {
-	decision, _, err := a.authorizer.Authorize(ctx, attributesRecord)
+	decision, reason, err := a.authorizer.Authorize(ctx, attributesRecord)
 	if err != nil {
+		if reason != "" {
+			return false, fmt.Errorf("%s: %w", reason, err)
+		}
 		return false, err
 	}
 	return decision == authorizer.DecisionAllow, nil
@@ -452,6 +475,9 @@ var fullAuthority = []rbacv1.PolicyRule{
 }
 
 func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {
+	// Currently, an aggregation rule is considered present only if it has one or more selectors.
+	// An empty slice of ClusterRoleSelectors means no selectors were provided,
+	// which does NOT imply "match all."
 	return clusterRole.AggregationRule != nil && len(clusterRole.AggregationRule.ClusterRoleSelectors) > 0
 }
 
