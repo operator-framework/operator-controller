@@ -16,6 +16,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -467,8 +468,12 @@ func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testin
 		testExt := &ocv1.ClusterExtension{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "testExt",
-				Annotations: map[string]string{
-					applier.AnnotationClusterExtensionWatchNamespace: expectedWatchNamespace,
+			},
+			Spec: ocv1.ClusterExtensionSpec{
+				Config: []runtime.RawExtension{
+					{Raw: []byte(
+						`{"apiVersion":"olm.operatorframework.io/v1","kind":"BundleConfig",` +
+							`"spec":{"watchNamespace":"` + expectedWatchNamespace + `"}}`)},
 				},
 			},
 		}
