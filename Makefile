@@ -122,7 +122,7 @@ lint-custom: custom-linter-build #EXHELP Call custom linter for the project
 
 .PHONY: k8s-maintainer #EXHELP this tool also calls `go mod tidy` but also allows us maintain k8s.io/kubernetes` changes bumping related staging modules (e.g., `k8s.io/api`, `k8s.io/apimachinery) as needed
 k8s-maintainer:
-	go run hack/tools/k8sMaintainer.go
+	go run hack/tools/k8smaintainer/main.go
 
 .PHONY: tidy
 tidy: k8s-maintainer #HELP Update dependencies.
