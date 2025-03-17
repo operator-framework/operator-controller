@@ -28,10 +28,35 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug output")
 	flag.Parse()
 
-	if err := fixGoMod("go.mod"); err != nil {
+	mainGoMod := getMainGoModPath()
+
+	if err := fixGoMod(mainGoMod); err != nil {
 		fmt.Fprintf(os.Stderr, "fixGoMod failed: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func getMainGoModPath() string {
+	rootDir := findProjectRoot()
+	return fmt.Sprintf("%s/go.mod", rootDir)
+}
+
+func findProjectRoot() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get working directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	for cwd != "/" {
+		if _, err := os.Stat(fmt.Sprintf("%s/go.mod", cwd)); err == nil {
+			return cwd
+		}
+		cwd = cwd[:strings.LastIndex(cwd, "/")]
+	}
+	fmt.Fprintln(os.Stderr, "Error: Could not find project root with go.mod")
+	os.Exit(1)
+	return ""
 }
 
 // fixGoMod is the main entrypoint. It does a 2‐phase approach:
