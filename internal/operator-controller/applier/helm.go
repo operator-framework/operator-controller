@@ -107,9 +107,9 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		var preAuthErrors []error
 		if len(missingRules) > 0 {
 			var missingRuleDescriptions []string
-			for ns, policyRules := range missingRules {
-				for _, rule := range policyRules {
-					missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(ns, rule))
+			for _, policyRules := range missingRules {
+				for _, rule := range policyRules.MissingRules {
+					missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(policyRules.Namespace, rule))
 				}
 			}
 			slices.Sort(missingRuleDescriptions)

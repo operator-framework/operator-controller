@@ -152,7 +152,7 @@ func TestPreAuthorize_Success(t *testing.T) {
 		testServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
 		require.NoError(t, err)
-		require.Equal(t, map[string][]rbacv1.PolicyRule{}, missingRules)
+		require.Equal(t, []ScopedPolicyRules{}, missingRules)
 	})
 }
 
@@ -164,7 +164,7 @@ func TestPreAuthorize_Failure(t *testing.T) {
 		testServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
 		require.Error(t, err)
-		require.NotEqual(t, map[string][]rbacv1.PolicyRule{}, missingRules)
+		require.NotEqual(t, []ScopedPolicyRules{}, missingRules)
 	})
 }
 
@@ -176,6 +176,6 @@ func TestPreAuthorize_CheckEscalation(t *testing.T) {
 		testServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
 		require.NoError(t, err)
-		require.Equal(t, map[string][]rbacv1.PolicyRule{}, missingRules)
+		require.Equal(t, []ScopedPolicyRules{}, missingRules)
 	})
 }
