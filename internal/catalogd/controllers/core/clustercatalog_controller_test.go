@@ -50,6 +50,10 @@ func (m MockStore) BaseURL(_ string) string {
 	return "URL"
 }
 
+func (m MockStore) ForgetIndex(_ string) {
+	// No-op
+}
+
 func (m MockStore) StorageServerHandler() http.Handler {
 	panic("not needed")
 }

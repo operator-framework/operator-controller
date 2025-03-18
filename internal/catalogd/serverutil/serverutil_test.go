@@ -112,6 +112,7 @@ func (m *mockStorageInstance) StorageServerHandler() http.Handler {
 	})
 }
 
+func (m *mockStorageInstance) ForgetIndex(catalogName string) {}
 func (m *mockStorageInstance) Store(ctx context.Context, catalogName string, fs fs.FS) error {
 	return nil
 }

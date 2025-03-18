@@ -20,6 +20,7 @@ import (
 	"context" // #nosec
 	"errors"
 	"fmt"
+	"runtime"
 	"slices"
 	"sync"
 	"time"
@@ -259,6 +260,16 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), storageErr)
 		return ctrl.Result{}, storageErr
 	}
+
+	if localStorage, ok := r.Storage.(*storage.LocalDirV1); ok {
+		l.Info("Explicitly forgetting index after successful storage", "catalog", catalog.Name)
+		localStorage.ForgetIndex(catalog.Name)
+	}
+
+	fmt.Printf("[MEMLEAK] After Storage.Store for catalog %s\n", catalog.Name)
+	runtime.GC()
+	fmt.Printf("[MEMLEAK] Forcing GC after Store\n")
+
 	baseURL := r.Storage.BaseURL(catalog.Name)
 
 	updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), nil)

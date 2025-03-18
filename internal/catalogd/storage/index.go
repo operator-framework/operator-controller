@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"runtime"
 	"slices"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -93,27 +95,58 @@ func (i *index) getSectionSet(schema, packageName, name string) sets.Set[section
 }
 
 func newIndex(metasChan <-chan *declcfg.Meta) *index {
+	fmt.Printf("[MEMLEAK] Creating new index at %s\n", time.Now().Format(time.RFC3339))
+
+	// Log memory stats before creating the index
+	dumpStackAndMemStats("Before newIndex")
+
+	// Track the number of entries added
+	metaCount := 0
+	schemaCount := make(map[string]int)
+	packageCount := make(map[string]int)
+	nameCount := make(map[string]int)
+
 	idx := &index{
 		BySchema:  make(map[string][]section),
 		ByPackage: make(map[string][]section),
 		ByName:    make(map[string][]section),
 	}
+
 	offset := int64(0)
 	for meta := range metasChan {
+		metaCount++
 		start := offset
 		length := int64(len(meta.Blob))
 		offset += length
-
 		s := section{offset: start, length: length}
+
 		if meta.Schema != "" {
 			idx.BySchema[meta.Schema] = append(idx.BySchema[meta.Schema], s)
+			schemaCount[meta.Schema]++
 		}
 		if meta.Package != "" {
 			idx.ByPackage[meta.Package] = append(idx.ByPackage[meta.Package], s)
+			packageCount[meta.Package]++
 		}
 		if meta.Name != "" {
 			idx.ByName[meta.Name] = append(idx.ByName[meta.Name], s)
+			nameCount[meta.Name]++
 		}
 	}
+
+	// Log index statistics
+	fmt.Printf("[MEMLEAK] Index statistics:\n")
+	fmt.Printf("  Total metas processed: %d\n", metaCount)
+	fmt.Printf("  Unique schemas: %d\n", len(idx.BySchema))
+	fmt.Printf("  Unique packages: %d\n", len(idx.ByPackage))
+	fmt.Printf("  Unique names: %d\n", len(idx.ByName))
+
+	// Log memory stats after creating the index
+	dumpStackAndMemStats("After newIndex")
+
+	// Try to help GC
+	runtime.GC()
+	dumpStackAndMemStats("After GC in newIndex")
+
 	return idx
 }

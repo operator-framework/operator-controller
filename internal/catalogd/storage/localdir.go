@@ -11,7 +11,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
@@ -47,6 +49,9 @@ var (
 )
 
 func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) error {
+	fmt.Printf("[MEMLEAK] Store called for catalog %s\n", catalog)
+	dumpStackAndMemStats("Before Store")
+
 	s.m.Lock()
 	defer s.m.Unlock()
 
@@ -100,6 +105,15 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 	}
 
 	catalogDir := s.catalogDir(catalog)
+
+	s.ForgetIndex(catalog)
+	fmt.Printf("[MEMLEAK] Store completed for catalog %s\n", catalog)
+	dumpStackAndMemStats("After Store")
+
+	// Force GC
+	runtime.GC()
+	dumpStackAndMemStats("After GC in Store")
+
 	return errors.Join(
 		os.RemoveAll(catalogDir),
 		os.Rename(tmpCatalogDir, catalogDir),
@@ -311,20 +325,58 @@ func serveJSONLines(w http.ResponseWriter, r *http.Request, rs io.Reader) {
 }
 
 func (s *LocalDirV1) getIndex(catalog string) (*index, error) {
-	idx, err, _ := s.sf.Do(catalog, func() (interface{}, error) {
+	fmt.Printf("[MEMLEAK] getIndex called for catalog %s\n", catalog)
+	dumpStackAndMemStats("Before getIndex")
+
+	idx, err, shared := s.sf.Do(catalog, func() (interface{}, error) {
+		fmt.Printf("[MEMLEAK] Loading index for catalog %s from disk\n", catalog)
 		indexFile, err := os.Open(catalogIndexFilePath(s.catalogDir(catalog)))
 		if err != nil {
 			return nil, err
 		}
 		defer indexFile.Close()
+
 		var idx index
+		startTime := time.Now()
 		if err := json.NewDecoder(indexFile).Decode(&idx); err != nil {
 			return nil, err
 		}
+		fmt.Printf("[MEMLEAK] Index load time: %v\n", time.Since(startTime))
+
+		// Log detailed index stats
+		var schemaTotal, packageTotal, nameTotal int
+		for schema, sections := range idx.BySchema {
+			fmt.Printf("[MEMLEAK]   Schema %s: %d sections\n", schema, len(sections))
+			schemaTotal += len(sections)
+		}
+		for pkg, sections := range idx.ByPackage {
+			fmt.Printf("[MEMLEAK]   Package %s: %d sections\n", pkg, len(sections))
+			packageTotal += len(sections)
+		}
+		for name, sections := range idx.ByName {
+			fmt.Printf("[MEMLEAK]   Name %s: %d sections\n", name, len(sections))
+			nameTotal += len(sections)
+		}
+
+		fmt.Printf("[MEMLEAK] Total sections - schemas: %d, packages: %d, names: %d\n",
+			schemaTotal, packageTotal, nameTotal)
+
+		dumpStackAndMemStats("After loading index from disk")
 		return &idx, nil
 	})
+
+	fmt.Printf("[MEMLEAK] getIndex result shared: %v\n", shared)
+	dumpStackAndMemStats("After getIndex")
+
 	if err != nil {
 		return nil, err
 	}
 	return idx.(*index), nil
+}
+
+// ForgetIndex explicitly removes a catalog from the singleflight cache
+func (s *LocalDirV1) ForgetIndex(catalog string) {
+	fmt.Printf("[MEMLEAK] Explicitly forgetting index for catalog %s\n", catalog)
+	s.sf.Forget(catalog)
+	dumpStackAndMemStats("After forgetting index")
 }
