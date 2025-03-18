@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -17,6 +16,8 @@ import (
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
 var (
