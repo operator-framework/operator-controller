@@ -27,7 +27,6 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
@@ -58,10 +57,11 @@ type Preflight interface {
 type BundleToHelmChartFn func(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error)
 
 type Helm struct {
-	ActionClientGetter  helmclient.ActionClientGetter
-	Preflights          []Preflight
-	PreAuthorizer       authorization.PreAuthorizer
-	BundleToHelmChartFn BundleToHelmChartFn
+	ActionClientGetter         helmclient.ActionClientGetter
+	Preflights                 []Preflight
+	PreAuthorizer              authorization.PreAuthorizer
+	BundleToHelmChartFn        BundleToHelmChartFn
+	EnablePreflightPermissions bool
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -95,7 +95,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		labels: objectLabels,
 	}
 
-	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+	if h.EnablePreflightPermissions {
 		tmplRel, err := h.template(ctx, ext, chrt, values, post)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to get release state using client-only dry-run: %w", err)

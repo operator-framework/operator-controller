@@ -417,10 +417,11 @@ func run() error {
 	}
 
 	helmApplier := &applier.Helm{
-		ActionClientGetter:  acg,
-		Preflights:          preflights,
-		BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
-		PreAuthorizer:       authorization.NewRBACPreAuthorizer(mgr.GetClient()),
+		ActionClientGetter:         acg,
+		Preflights:                 preflights,
+		BundleToHelmChartFn:        convert.RegistryV1ToHelmChart,
+		PreAuthorizer:              authorization.NewRBACPreAuthorizer(mgr.GetClient()),
+		EnablePreflightPermissions: features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions),
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
