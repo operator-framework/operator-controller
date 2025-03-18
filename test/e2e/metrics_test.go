@@ -16,33 +16,23 @@ package e2e
 import (
 	"bytes"
 	"context"
-	"errors"
+	"fmt"
+	"io"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	authenticationv1 "k8s.io/api/authentication/v1"
-	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/utils/ptr"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+
+	"github.com/operator-framework/operator-controller/test/utils"
 )
 
 // TestOperatorControllerMetricsExportedEndpoint verifies that the metrics endpoint for the operator controller
 func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
-	kubeClient, restConfig := findK8sClient(t)
-	mtc := NewMetricsTestConfig(
-		t,
-		kubeClient,
-		restConfig,
+	client := utils.FindK8sClient(t)
+	config := NewMetricsTestConfig(
+		t, client,
 		"control-plane=operator-controller-controller-manager",
 		"operator-controller-metrics-reader",
 		"operator-controller-metrics-binding",
@@ -51,16 +41,14 @@ func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 		"https://operator-controller-service.NAMESPACE.svc.cluster.local:8443/metrics",
 	)
 
-	mtc.run()
+	config.run()
 }
 
 // TestCatalogdMetricsExportedEndpoint verifies that the metrics endpoint for catalogd
 func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
-	kubeClient, restConfig := findK8sClient(t)
-	mtc := NewMetricsTestConfig(
-		t,
-		kubeClient,
-		restConfig,
+	client := utils.FindK8sClient(t)
+	config := NewMetricsTestConfig(
+		t, client,
 		"control-plane=catalogd-controller-manager",
 		"catalogd-metrics-reader",
 		"catalogd-metrics-binding",
@@ -69,25 +57,13 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 		"https://catalogd-service.NAMESPACE.svc.cluster.local:7443/metrics",
 	)
 
-	mtc.run()
-}
-
-func findK8sClient(t *testing.T) (kubernetes.Interface, *rest.Config) {
-	cfg, err := config.GetConfig()
-	require.NoError(t, err, "Failed to get Kubernetes config")
-
-	clientset, err := kubernetes.NewForConfig(cfg)
-	require.NoError(t, err, "Failed to create client from config")
-
-	t.Log("Successfully created Kubernetes client via controller-runtime config")
-	return clientset, cfg
+	config.run()
 }
 
 // MetricsTestConfig holds the necessary configurations for testing metrics endpoints.
 type MetricsTestConfig struct {
 	t              *testing.T
-	kubeClient     kubernetes.Interface
-	restConfig     *rest.Config
+	client         string
 	namespace      string
 	clusterRole    string
 	clusterBinding string
@@ -97,27 +73,13 @@ type MetricsTestConfig struct {
 }
 
 // NewMetricsTestConfig initializes a new MetricsTestConfig.
-func NewMetricsTestConfig(
-	t *testing.T,
-	kubeClient kubernetes.Interface,
-	restConfig *rest.Config,
-	selector string,
-	clusterRole string,
-	clusterBinding string,
-	serviceAccount string,
-	curlPodName string,
-	metricsURL string,
-) *MetricsTestConfig {
-	// Discover which namespace the relevant Pod is running in
-	namespace := getComponentNamespace(t, kubeClient, selector)
-
-	// Replace the placeholder in the metrics URL
+func NewMetricsTestConfig(t *testing.T, client, selector, clusterRole, clusterBinding, serviceAccount, curlPodName, metricsURL string) *MetricsTestConfig {
+	namespace := getComponentNamespace(t, client, selector)
 	metricsURL = strings.ReplaceAll(metricsURL, "NAMESPACE", namespace)
 
 	return &MetricsTestConfig{
 		t:              t,
-		kubeClient:     kubeClient,
-		restConfig:     restConfig,
+		client:         client,
 		namespace:      namespace,
 		clusterRole:    clusterRole,
 		clusterBinding: clusterBinding,
@@ -127,252 +89,134 @@ func NewMetricsTestConfig(
 	}
 }
 
-// run executes the entire test flow
+// run will execute all steps of those tests
 func (c *MetricsTestConfig) run() {
-	ctx := context.Background()
-	defer c.cleanup(ctx)
-	c.createMetricsClusterRoleBinding(ctx)
-	token := c.getServiceAccountToken(ctx)
-	c.createCurlMetricsPod(ctx)
-	c.waitForPodReady(ctx)
-	// Exec `curl` in the Pod to validate the metrics
-	c.validateMetricsEndpoint(ctx, token)
+	c.createMetricsClusterRoleBinding()
+	token := c.getServiceAccountToken()
+	c.createCurlMetricsPod()
+	c.validate(token)
+	defer c.cleanup()
 }
 
-// createMetricsClusterRoleBinding to bind the cluster role so metrics are accessible
-func (c *MetricsTestConfig) createMetricsClusterRoleBinding(ctx context.Context) {
-	c.t.Logf("Creating ClusterRoleBinding %q in namespace %q", c.clusterBinding, c.namespace)
-
-	crb := &rbacv1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: c.clusterBinding,
-		},
-		Subjects: []rbacv1.Subject{
-			{
-				Kind:      rbacv1.ServiceAccountKind,
-				Name:      c.serviceAccount,
-				Namespace: c.namespace,
-			},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     c.clusterRole,
-		},
-	}
-
-	_, err := c.kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, crb, metav1.CreateOptions{})
-	require.NoError(c.t, err, "Error creating ClusterRoleBinding")
+// createMetricsClusterRoleBinding to binding and expose the metrics
+func (c *MetricsTestConfig) createMetricsClusterRoleBinding() {
+	c.t.Logf("Creating ClusterRoleBinding %s in namespace %s", c.clusterBinding, c.namespace)
+	cmd := exec.Command(c.client, "create", "clusterrolebinding", c.clusterBinding,
+		"--clusterrole="+c.clusterRole,
+		"--serviceaccount="+c.namespace+":"+c.serviceAccount)
+	output, err := cmd.CombinedOutput()
+	require.NoError(c.t, err, "Error creating ClusterRoleBinding: %s", string(output))
 }
 
-// getServiceAccountToken creates a TokenRequest for the service account
-func (c *MetricsTestConfig) getServiceAccountToken(ctx context.Context) string {
-	c.t.Logf("Generating ServiceAccount token in namespace %q", c.namespace)
-
-	tokenRequest := &authenticationv1.TokenRequest{
-		Spec: authenticationv1.TokenRequestSpec{
-			Audiences:         []string{"https://kubernetes.default.svc.cluster.local"},
-			ExpirationSeconds: nil,
-		},
-	}
-
-	tr, err := c.kubeClient.CoreV1().
-		ServiceAccounts(c.namespace).
-		CreateToken(ctx, c.serviceAccount, tokenRequest, metav1.CreateOptions{})
-	require.NoError(c.t, err, "Error requesting token for SA %q", c.serviceAccount)
-
-	token := tr.Status.Token
-	require.NotEmpty(c.t, token, "ServiceAccount token was empty")
-	return token
+// getServiceAccountToken return the token requires to have access to the metrics
+func (c *MetricsTestConfig) getServiceAccountToken() string {
+	c.t.Logf("Generating ServiceAccount token at namespace %s", c.namespace)
+	cmd := exec.Command(c.client, "create", "token", c.serviceAccount, "-n", c.namespace)
+	tokenOutput, tokenCombinedOutput, err := stdoutAndCombined(cmd)
+	require.NoError(c.t, err, "Error creating token: %s", string(tokenCombinedOutput))
+	return string(bytes.TrimSpace(tokenOutput))
 }
 
-// createCurlMetricsPod spawns a pod running `curlimages/curl` to check metrics
-func (c *MetricsTestConfig) createCurlMetricsPod(ctx context.Context) {
+// createCurlMetricsPod creates the Pod with curl image to allow check if the metrics are working
+func (c *MetricsTestConfig) createCurlMetricsPod() {
 	c.t.Logf("Creating curl pod (%s/%s) to validate the metrics endpoint", c.namespace, c.curlPodName)
-
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.curlPodName,
-			Namespace: c.namespace,
-		},
-		Spec: corev1.PodSpec{
-			ServiceAccountName:            c.serviceAccount,
-			TerminationGracePeriodSeconds: ptr.To(int64(0)),
-			Containers: []corev1.Container{
-				{
-					Name:    "curl",
-					Image:   "curlimages/curl",
-					Command: []string{"sh", "-c", "sleep 3600"},
-					SecurityContext: &corev1.SecurityContext{
-						AllowPrivilegeEscalation: ptr.To(false),
-						Capabilities: &corev1.Capabilities{
-							Drop: []corev1.Capability{"ALL"},
-						},
-						RunAsNonRoot: ptr.To(true),
-						RunAsUser:    ptr.To(int64(1000)),
-						SeccompProfile: &corev1.SeccompProfile{
-							Type: corev1.SeccompProfileTypeRuntimeDefault,
-						},
-					},
-				},
-			},
-			RestartPolicy: corev1.RestartPolicyNever,
-		},
-	}
-
-	_, err := c.kubeClient.CoreV1().Pods(c.namespace).Create(ctx, pod, metav1.CreateOptions{})
-	require.NoError(c.t, err, "Error creating curl pod")
+	cmd := exec.Command(c.client, "run", c.curlPodName,
+		"--image=curlimages/curl", "-n", c.namespace,
+		"--restart=Never",
+		"--overrides", `{
+			"spec": {
+				"terminationGradePeriodSeconds": 0,
+				"containers": [{
+					"name": "curl",
+					"image": "curlimages/curl",
+					"command": ["sh", "-c", "sleep 3600"],
+					"securityContext": {
+						"allowPrivilegeEscalation": false,
+						"capabilities": {"drop": ["ALL"]},
+						"runAsNonRoot": true,
+						"runAsUser": 1000,
+						"seccompProfile": {"type": "RuntimeDefault"}
+					}
+				}],
+				"serviceAccountName": "`+c.serviceAccount+`"
+			}
+		}`)
+	output, err := cmd.CombinedOutput()
+	require.NoError(c.t, err, "Error creating curl pod: %s", string(output))
 }
 
-// waitForPodReady polls until the Pod is in Ready condition
-func (c *MetricsTestConfig) waitForPodReady(ctx context.Context) {
+// validate verifies if is possible to access the metrics
+func (c *MetricsTestConfig) validate(token string) {
 	c.t.Log("Waiting for the curl pod to be ready")
-	err := wait.PollUntilContextTimeout(ctx, 2*time.Second, 60*time.Second, false, func(ctx context.Context) (bool, error) {
-		pod, err := c.kubeClient.CoreV1().Pods(c.namespace).Get(ctx, c.curlPodName, metav1.GetOptions{})
-		if err != nil {
-			return false, err
-		}
-		for _, cond := range pod.Status.Conditions {
-			if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
-				return true, nil
-			}
-		}
-		return false, nil
-	})
-	if errors.Is(err, context.DeadlineExceeded) {
-		c.t.Fatal("Timed out waiting for the curl pod to become Ready")
-	}
-	require.NoError(c.t, err, "Error waiting for curl pod to become Ready")
+	waitCmd := exec.Command(c.client, "wait", "--for=condition=Ready", "pod", c.curlPodName, "-n", c.namespace, "--timeout=60s")
+	waitOutput, waitErr := waitCmd.CombinedOutput()
+	require.NoError(c.t, waitErr, "Error waiting for curl pod to be ready: %s", string(waitOutput))
+
+	c.t.Log("Validating the metrics endpoint")
+	curlCmd := exec.Command(c.client, "exec", c.curlPodName, "-n", c.namespace, "--",
+		"curl", "-v", "-k", "-H", "Authorization: Bearer "+token, c.metricsURL)
+	output, err := curlCmd.CombinedOutput()
+	require.NoError(c.t, err, "Error calling metrics endpoint: %s", string(output))
+	require.Contains(c.t, string(output), "200 OK", "Metrics endpoint did not return 200 OK")
 }
 
-// validateMetricsEndpoint performs `kubectl exec ... curl <metricsURL>` logic
-func (c *MetricsTestConfig) validateMetricsEndpoint(ctx context.Context, token string) {
-	c.t.Log("Validating the metrics endpoint via pod exec")
-
-	// The command to run inside the container
-	cmd := []string{
-		"curl", "-v", "-k",
-		"-H", "Authorization: Bearer " + token,
-		c.metricsURL,
-	}
-
-	// Construct the request to exec into the pod
-	req := c.kubeClient.CoreV1().RESTClient().
-		Post().
-		Resource("pods").
-		Namespace(c.namespace).
-		Name(c.curlPodName).
-		SubResource("exec").
-		VersionedParams(&corev1.PodExecOptions{
-			Container: "curl",
-			Command:   cmd,
-			Stdin:     false,
-			Stdout:    true,
-			Stderr:    true,
-			TTY:       false,
-		}, scheme.ParameterCodec)
-
-	// Create an SPDY executor
-	executor, err := remotecommand.NewSPDYExecutor(c.restConfig, "POST", req.URL())
-	require.NoError(c.t, err, "Error creating SPDY executor to exec in pod")
-
-	var stdout, stderr bytes.Buffer
-	streamOpts := remotecommand.StreamOptions{
-		Stdin:  nil,
-		Stdout: &stdout,
-		Stderr: &stderr,
-		Tty:    false,
-	}
-
-	err = executor.StreamWithContext(ctx, streamOpts)
-	require.NoError(c.t, err, "Error streaming exec request: %v", stderr.String())
-
-	// Combine stdout + stderr
-	combined := stdout.String() + stderr.String()
-	require.Contains(c.t, combined, "200 OK", "Metrics endpoint did not return 200 OK")
-}
-
-// cleanup deletes the test resources
-func (c *MetricsTestConfig) cleanup(ctx context.Context) {
+// cleanup removes the created resources. Uses a context with timeout to prevent hangs.
+func (c *MetricsTestConfig) cleanup() {
 	c.t.Log("Cleaning up resources")
-	policy := metav1.DeletePropagationForeground
+	_ = exec.Command(c.client, "delete", "clusterrolebinding", c.clusterBinding, "--ignore-not-found=true", "--force").Run()
+	_ = exec.Command(c.client, "delete", "pod", c.curlPodName, "-n", c.namespace, "--ignore-not-found=true", "--force").Run()
 
-	// Delete the ClusterRoleBinding
-	_ = c.kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, c.clusterBinding, metav1.DeleteOptions{
-		PropagationPolicy: &policy,
-	})
-	waitForClusterRoleBindingDeletion(ctx, c.t, c.kubeClient, c.clusterBinding)
+	// Create a context with a 60-second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
-	// "Force" delete the Pod by setting grace period to 0
-	gracePeriod := int64(0)
-	_ = c.kubeClient.CoreV1().Pods(c.namespace).Delete(ctx, c.curlPodName, metav1.DeleteOptions{
-		GracePeriodSeconds: &gracePeriod,
-		PropagationPolicy:  &policy,
-	})
-	waitForPodDeletion(ctx, c.t, c.kubeClient, c.namespace, c.curlPodName)
-}
-
-// waitForClusterRoleBindingDeletion polls until the named ClusterRoleBinding no longer exists
-func waitForClusterRoleBindingDeletion(ctx context.Context, t *testing.T, kubeClient kubernetes.Interface, name string) {
-	err := wait.PollUntilContextTimeout(ctx, 2*time.Second, 60*time.Second, false, func(ctx context.Context) (bool, error) {
-		_, err := kubeClient.RbacV1().ClusterRoleBindings().Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return true, nil
-			}
-			return false, err
-		}
-		return false, nil
-	})
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			t.Fatalf("Timed out waiting for ClusterRoleBinding %q to be deleted", name)
-		}
-		t.Logf("Error waiting for ClusterRoleBinding %q deletion: %v", name, err)
+	// Wait for the ClusterRoleBinding to be deleted.
+	if err := waitForDeletion(ctx, c.client, "clusterrolebinding", c.clusterBinding); err != nil {
+		c.t.Logf("Error waiting for clusterrolebinding deletion: %v", err)
 	} else {
-		t.Logf("ClusterRoleBinding %q deleted", name)
+		c.t.Log("ClusterRoleBinding deleted")
+	}
+
+	// Wait for the Pod to be deleted.
+	if err := waitForDeletion(ctx, c.client, "pod", c.curlPodName, "-n", c.namespace); err != nil {
+		c.t.Logf("Error waiting for pod deletion: %v", err)
+	} else {
+		c.t.Log("Pod deleted")
 	}
 }
 
-// waitForPodDeletion polls until the named Pod no longer exists
-func waitForPodDeletion(ctx context.Context, t *testing.T, kubeClient kubernetes.Interface, namespace, name string) {
-	err := wait.PollUntilContextTimeout(ctx, 2*time.Second, 90*time.Second, false, func(ctx context.Context) (bool, error) {
-		pod, getErr := kubeClient.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
-		if getErr != nil {
-			if apierrors.IsNotFound(getErr) {
-				return true, nil
-			}
-			return false, getErr
-		}
-		// Some extra log info if the Pod is still around
-		t.Logf("Pod %q still present, phase=%q, deleting... (Timestamp=%v)",
-			name, pod.Status.Phase, pod.DeletionTimestamp)
-		return false, nil
-	})
+// waitForDeletion uses "kubectl wait" to block until the specified resource is deleted
+// or until the 60-second timeout is reached.
+func waitForDeletion(ctx context.Context, client, resourceType, resourceName string, extraArgs ...string) error {
+	args := []string{"wait", "--for=delete", resourceType, resourceName}
+	args = append(args, extraArgs...)
+	args = append(args, "--timeout=60s")
+	cmd := exec.CommandContext(ctx, client, args...)
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			t.Fatalf("Timed out waiting for Pod %q to be deleted", name)
-		}
-		t.Logf("Error waiting for Pod %q deletion: %v", name, err)
-	} else {
-		t.Logf("Pod %q deleted", name)
+		return fmt.Errorf("error waiting for deletion of %s %s: %v, output: %s", resourceType, resourceName, err, string(output))
 	}
+	return nil
 }
 
-// getComponentNamespace identifies which Namespace is running a Pod that matches `selector`
-func getComponentNamespace(t *testing.T, kubeClient kubernetes.Interface, selector string) string {
-	t.Logf("Listing pods for selector %q to discover namespace", selector)
-	ctx := context.Background()
+// getComponentNamespace returns the namespace where operator-controller or catalogd is running
+func getComponentNamespace(t *testing.T, client, selector string) string {
+	cmd := exec.Command(client, "get", "pods", "--all-namespaces", "--selector="+selector, "--output=jsonpath={.items[0].metadata.namespace}")
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Error determining namespace: %s", string(output))
 
-	pods, err := kubeClient.CoreV1().Pods("").List(ctx, metav1.ListOptions{
-		LabelSelector: selector,
-	})
-	require.NoError(t, err, "Error listing pods for selector %q", selector)
-	require.NotEmpty(t, pods.Items, "No pods found for selector %q", selector)
-
-	namespace := pods.Items[0].Namespace
+	namespace := string(bytes.TrimSpace(output))
 	if namespace == "" {
-		t.Fatalf("No namespace found for selector %q", selector)
+		t.Fatal("No namespace found for selector " + selector)
 	}
 	return namespace
+}
+
+func stdoutAndCombined(cmd *exec.Cmd) ([]byte, []byte, error) {
+	var outOnly, outAndErr bytes.Buffer
+	allWriter := io.MultiWriter(&outOnly, &outAndErr)
+	cmd.Stdout = allWriter
+	cmd.Stderr = &outAndErr
+	err := cmd.Run()
+	return outOnly.Bytes(), outAndErr.Bytes(), err
 }
