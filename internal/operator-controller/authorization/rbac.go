@@ -30,7 +30,12 @@ import (
 )
 
 type PreAuthorizer interface {
-	PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) (map[string][]rbacv1.PolicyRule, error)
+	PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) ([]ScopedPolicyRules, error)
+}
+
+type ScopedPolicyRules struct {
+	Namespace    string
+	MissingRules []rbacv1.PolicyRule
 }
 
 var (
@@ -60,7 +65,8 @@ func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
 //   - nil: indicates that the authorization check passed and the operation is permitted.
 //   - non-nil error: indicates that the authorization failed (either due to insufficient permissions
 //     or an error encountered during the check), the error provides a slice of several failures at once.
-func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) (map[string][]rbacv1.PolicyRule, error) {
+func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) ([]ScopedPolicyRules, error) {
+	var allMissingPolicyRules = []ScopedPolicyRules{}
 	dm, err := a.decodeManifest(manifestReader)
 	if err != nil {
 		return nil, err
@@ -98,12 +104,13 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager us
 		}
 		sortableRules := rbacv1helpers.SortableRuleSlice(missingRules[ns])
 		sort.Sort(sortableRules)
+		allMissingPolicyRules = append(allMissingPolicyRules, ScopedPolicyRules{Namespace: ns, MissingRules: sortableRules})
 	}
 
 	if len(preAuthEvaluationErrors) > 0 {
-		return missingRules, fmt.Errorf("authorization evaluation errors: %w", errors.Join(preAuthEvaluationErrors...))
+		return allMissingPolicyRules, fmt.Errorf("authorization evaluation errors: %w", errors.Join(preAuthEvaluationErrors...))
 	}
-	return missingRules, nil
+	return allMissingPolicyRules, nil
 }
 
 func (a *rbacPreAuthorizer) decodeManifest(manifestReader io.Reader) (*decodedManifest, error) {
