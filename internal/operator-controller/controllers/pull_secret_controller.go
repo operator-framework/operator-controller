@@ -63,6 +63,7 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PullSecretReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	_, err := ctrl.NewControllerManagedBy(mgr).
+		Named("controller-operator-pull-secret-controller").
 		For(&corev1.Secret{}).
 		WithEventFilter(newSecretPredicate(r.SecretKey)).
 		Build(r)

@@ -93,6 +93,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	_, err := ctrl.NewControllerManagedBy(mgr).
+		Named("controller-operator-clustercatalog-controller").
 		For(&ocv1.ClusterCatalog{}).
 		Build(r)
 
