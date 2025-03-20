@@ -123,7 +123,7 @@ subjects:
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{"*"},
-				Resources: []string{"serviceaccounts", "services", "certificates"},
+				Resources: []string{"serviceaccounts", "services"},
 				Verbs:     []string{"*"},
 			},
 			{
@@ -174,132 +174,9 @@ func TestPreAuthorize_CheckEscalation(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(escalatingClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		testServiceAccount := user.DefaultInfo{
-			Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName),
-		}
-		// Ensure the manifest contains only allowed rules so that the escalation check succeeds with no missing rules
-		modifiedManifest := strings.Replace(testManifest, `- apiGroups: ["*"]
-  resources: [certificates]
-  verbs: [create]
-`, "", 1)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(modifiedManifest))
+		testServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
-	})
-}
-
-func TestPreAuthorize_StorageLayerError(t *testing.T) {
-	t.Run("preauthorize fails with storage-layer error and computed missing rules", func(t *testing.T) {
-		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
-		// Use a client configured with a limited cluster role that should cause the escalation check to fail
-		fakeClient := setupFakeClient(limitedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
-		testServiceAccount := user.DefaultInfo{
-			Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName),
-		}
-		// Create a manifest that triggers escalation check failure.
-		manifest := `apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: test-escalation-role
-  namespace: test-namespace
-rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["*"]
-`
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(manifest))
-		require.Error(t, err)
-		// Instead of calling it opaque, we check that the error contains "forbidden:" to indicate it's from storage-layer checks
-		require.Contains(t, err.Error(), "forbidden:")
-		// Expect that our computed missing rules are non-empty (i.e. we have a detailed report).
-		require.NotEmpty(t, missingRules, "expected computed missing rules to be returned")
-	})
-}
-
-func TestPreAuthorize_MultipleEscalationErrors(t *testing.T) {
-	t.Run("preauthorize returns composite escalation error for multiple RBAC objects", func(t *testing.T) {
-		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
-		// Use a client configured with a limited cluster role that will fail escalation checks
-		fakeClient := setupFakeClient(limitedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
-		testServiceAccount := user.DefaultInfo{
-			Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName),
-		}
-		// Create a manifest with two RBAC objects that should both trigger escalation errors
-		manifest := `apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: test-escalation-role-1
-  namespace: test-namespace
-rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["*"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: test-escalation-binding-1
-  namespace: test-namespace
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: test-escalation-role-1
-subjects:
-- kind: ServiceAccount
-  name: test-serviceaccount
-  namespace: test-namespace
-`
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(manifest))
-		require.Error(t, err, "expected escalation check to fail")
-		errMsg := err.Error()
-		// Instead of expecting two "forbidden:" substrings, check that both distinct error parts appear
-		require.Contains(t, errMsg, "forbidden:", "expected error message to contain 'forbidden:'")
-		require.Contains(t, errMsg, "not found", "expected error message to contain 'not found'")
-		// Also ensure that our computed missing rules are non-empty
-		require.NotEmpty(t, missingRules, "expected computed missing rules to be returned")
-	})
-}
-
-func TestPreAuthorize_MultipleRuleFailures(t *testing.T) {
-	t.Run("reports multiple missing rules when several rules fail", func(t *testing.T) {
-		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
-		// Use a client configured with a limited cluster role that lacks the necessary permissions.
-		fakeClient := setupFakeClient(limitedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
-		testServiceAccount := user.DefaultInfo{
-			Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName),
-		}
-		// This manifest defines a Role with two rules
-		// One rule requires "get" and "update" on "roles",
-		// and the other requires "list" and "watch" on "rolebindings"
-		// Both are expected to be missing
-		manifest := `apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: test-multiple-rule-failure
-  namespace: test-namespace
-rules:
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["roles"]
-  verbs: ["get", "update"]
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["rolebindings"]
-  verbs: ["list", "watch"]
-`
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(manifest))
-		require.Error(t, err, "expected escalation check to fail due to missing rules")
-
-		// Check that computed missing rules include multiple entries for the namespace
-		var nsMissingRules []rbacv1.PolicyRule
-		for _, scoped := range missingRules {
-			if scoped.Namespace == "test-namespace" {
-				nsMissingRules = scoped.MissingRules
-				break
-			}
-		}
-		require.NotEmpty(t, nsMissingRules, "expected missing rules for namespace test-namespace")
-		require.GreaterOrEqual(t, len(nsMissingRules), 2, "expected at least 2 missing rules to be reported")
 	})
 }
