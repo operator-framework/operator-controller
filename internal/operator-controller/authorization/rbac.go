@@ -9,8 +9,8 @@ import (
 	"sort"
 
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,19 +18,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
 	rbacinternal "k8s.io/kubernetes/pkg/apis/rbac"
 	rbacv1helpers "k8s.io/kubernetes/pkg/apis/rbac/v1"
-	"k8s.io/kubernetes/pkg/registry/rbac/clusterrole/policybased"
-	policybasedClusterRoleBinding "k8s.io/kubernetes/pkg/registry/rbac/clusterrolebinding/policybased"
-	policybasedRole "k8s.io/kubernetes/pkg/registry/rbac/role/policybased"
-	policybasedRoleBinding "k8s.io/kubernetes/pkg/registry/rbac/rolebinding/policybased"
+	rbacregistry "k8s.io/kubernetes/pkg/registry/rbac"
 	"k8s.io/kubernetes/pkg/registry/rbac/validation"
-	"k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
+	rbac "k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -63,61 +58,59 @@ func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
 }
 
 // PreAuthorize validates whether the current user/request satisfies the necessary permissions
-// as defined by the RBAC policy. It decodes the manifest, constructs authorization records,
-// performs attribute checks, and then uses escalationChecker (which delegates to upstream logic)
-// to verify that no privilege escalation is occurring.
+// as defined by the RBAC policy. It examines the user’s roles, resource identifiers, and
+// the intended action to determine if the operation is allowed.
+//
+// Return Value:
+//   - nil: indicates that the authorization check passed and the operation is permitted.
+//   - non-nil error: indicates that the authorization failed (either due to insufficient permissions
+//     or an error encountered during the check), the error provides a slice of several failures at once.
 func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) ([]ScopedPolicyRules, error) {
-	var allMissingPolicyRules []ScopedPolicyRules
+	var allMissingPolicyRules = []ScopedPolicyRules{}
 	dm, err := a.decodeManifest(manifestReader)
 	if err != nil {
 		return nil, err
 	}
 	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(manifestManager)
 
-	// Compute missing rules using your original logic.
+	var preAuthEvaluationErrors []error
 	missingRules, err := a.authorizeAttributesRecords(ctx, attributesRecords)
 	if err != nil {
-		// If there are errors here, you might choose to log them or collect them.
-		// We'll still try to run the upstream escalation check.
+		preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
 	}
 
-	var escalationErrors []error
 	ec := escalationChecker{
 		authorizer:        a.authorizer,
 		ruleResolver:      a.ruleResolver,
 		extraClusterRoles: dm.clusterRoles,
 		extraRoles:        dm.roles,
 	}
+
 	for _, obj := range dm.rbacObjects() {
 		if err := ec.checkEscalation(ctx, manifestManager, obj); err != nil {
-			// If err is a composite error (errors.Join), unwrap it and add each underlying error.
-			var joinErr interface{ Unwrap() []error }
-			if errors.As(err, &joinErr) {
-				for _, singleErr := range joinErr.Unwrap() {
-					escalationErrors = append(escalationErrors, singleErr)
-				}
-			} else {
-				escalationErrors = append(escalationErrors, err)
-			}
+			// In Kubernetes 1.32.2 the specialized PrivilegeEscalationError is gone.
+			// Instead, we simply collect the error.
+			preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
 		}
 	}
 
-	// If escalation check fails, return the detailed missing rules along with the error.
-	if len(escalationErrors) > 0 {
-		// Process the missingRules map into a slice as before.
-		for ns, nsMissingRules := range missingRules {
-			if compactMissingRules, err := validation.CompactRules(nsMissingRules); err == nil {
-				missingRules[ns] = compactMissingRules
-			}
-			sortableRules := rbacv1helpers.SortableRuleSlice(missingRules[ns])
-			sort.Sort(sortableRules)
-			allMissingPolicyRules = append(allMissingPolicyRules, ScopedPolicyRules{Namespace: ns, MissingRules: sortableRules})
+	for ns, nsMissingRules := range missingRules {
+		// NOTE: Although CompactRules is defined to return an error, its current implementation
+		// never produces a non-nil error. This is because all operations within the function are
+		// designed to succeed under current conditions. In the future, if more complex rule validations
+		// are introduced, this behavior may change and proper error handling will be required.
+		if compactMissingRules, err := validation.CompactRules(nsMissingRules); err == nil {
+			missingRules[ns] = compactMissingRules
 		}
-		return allMissingPolicyRules, fmt.Errorf("escalation check failed: %w", errors.Join(escalationErrors...))
+		sortableRules := rbacv1helpers.SortableRuleSlice(missingRules[ns])
+		sort.Sort(sortableRules)
+		allMissingPolicyRules = append(allMissingPolicyRules, ScopedPolicyRules{Namespace: ns, MissingRules: sortableRules})
 	}
 
-	// If the escalation check passed, override any computed missing rules (since the final decision is allowed).
-	return []ScopedPolicyRules{}, nil
+	if len(preAuthEvaluationErrors) > 0 {
+		return allMissingPolicyRules, fmt.Errorf("authorization evaluation errors: %w", errors.Join(preAuthEvaluationErrors...))
+	}
+	return allMissingPolicyRules, nil
 }
 
 func (a *rbacPreAuthorizer) decodeManifest(manifestReader io.Reader) (*decodedManifest, error) {
@@ -150,6 +143,7 @@ func (a *rbacPreAuthorizer) decodeManifest(manifestReader io.Reader) (*decodedMa
 			if name := uObj.GetName(); name != "" {
 				objName = fmt.Sprintf(" (name: %s)", name)
 			}
+
 			errs = append(
 				errs,
 				fmt.Errorf("could not get REST mapping for object %d in manifest with GVK %s%s: %w", i, gvk, objName, err),
@@ -190,7 +184,6 @@ func (a *rbacPreAuthorizer) decodeManifest(manifestReader io.Reader) (*decodedMa
 			}
 			dm.roleBindings[client.ObjectKeyFromObject(obj)] = *obj
 		}
-		i++
 	}
 	if len(errs) > 0 {
 		return nil, errors.Join(errs...)
@@ -199,8 +192,10 @@ func (a *rbacPreAuthorizer) decodeManifest(manifestReader io.Reader) (*decodedMa
 }
 
 func (a *rbacPreAuthorizer) authorizeAttributesRecords(ctx context.Context, attributesRecords []authorizer.AttributesRecord) (map[string][]rbacv1.PolicyRule, error) {
-	missingRules := map[string][]rbacv1.PolicyRule{}
-	var errs []error
+	var (
+		missingRules = map[string][]rbacv1.PolicyRule{}
+		errs         []error
+	)
 	for _, ar := range attributesRecords {
 		allow, err := a.attributesAllowed(ctx, ar)
 		if err != nil {
@@ -234,15 +229,18 @@ func policyRuleFromAttributesRecord(attributesRecord authorizer.AttributesRecord
 		pr.NonResourceURLs = []string{attributesRecord.Path}
 		return pr
 	}
+
 	pr.APIGroups = []string{attributesRecord.APIGroup}
 	if attributesRecord.Name != "" {
 		pr.ResourceNames = []string{attributesRecord.Name}
 	}
+
 	r := attributesRecord.Resource
 	if attributesRecord.Subresource != "" {
 		r += "/" + attributesRecord.Subresource
 	}
 	pr.Resources = []string{r}
+
 	return pr
 }
 
@@ -257,20 +255,16 @@ type decodedManifest struct {
 func (dm *decodedManifest) rbacObjects() []client.Object {
 	objects := make([]client.Object, 0, len(dm.clusterRoles)+len(dm.roles)+len(dm.clusterRoleBindings)+len(dm.roleBindings))
 	for obj := range maps.Values(dm.clusterRoles) {
-		o := obj // avoid aliasing
-		objects = append(objects, &o)
+		objects = append(objects, &obj)
 	}
 	for obj := range maps.Values(dm.roles) {
-		o := obj
-		objects = append(objects, &o)
+		objects = append(objects, &obj)
 	}
 	for obj := range maps.Values(dm.clusterRoleBindings) {
-		o := obj
-		objects = append(objects, &o)
+		objects = append(objects, &obj)
 	}
 	for obj := range maps.Values(dm.roleBindings) {
-		o := obj
-		objects = append(objects, &o)
+		objects = append(objects, &obj)
 	}
 	return objects
 }
@@ -364,116 +358,134 @@ type escalationChecker struct {
 	extraClusterRoles map[types.NamespacedName]rbacv1.ClusterRole
 }
 
-// checkEscalation delegates the escalation check to upstream storage by performing
-// a dry-run Create call on the appropriate storage for the RBAC object type.
 func (ec *escalationChecker) checkEscalation(ctx context.Context, manifestManager user.Info, obj client.Object) error {
-	// Set up the context with user and namespace.
 	ctx = request.WithUser(request.WithNamespace(ctx, obj.GetNamespace()), manifestManager)
-	noOpValidate := func(ctx context.Context, obj runtime.Object) error { return nil }
-	opts := &metav1.CreateOptions{DryRun: []string{metav1.DryRunAll}}
-
 	switch v := obj.(type) {
-	case *rbacv1.ClusterRole:
-		// Merge extra ClusterRole rules if present.
-		key := types.NamespacedName{Name: v.Name}
-		if extra, ok := ec.extraClusterRoles[key]; ok {
-			v.Rules = append(v.Rules, extra.Rules...)
-		}
-		// Convert external ClusterRole to internal representation.
-		var internalClusterRole rbacinternal.ClusterRole
-		if err := rbacv1helpers.Convert_v1_ClusterRole_To_rbac_ClusterRole(v, &internalClusterRole, nil); err != nil {
-			return err
-		}
-		storage := policybased.NewStorage(&FakeStandardStorage{}, ec.authorizer, ec.ruleResolver)
-		_, err := storage.Create(ctx, &internalClusterRole, noOpValidate, opts)
-		return err
-
-	case *rbacv1.ClusterRoleBinding:
-		// Convert external ClusterRoleBinding to internal representation.
-		var internalClusterRoleBinding rbacinternal.ClusterRoleBinding
-		if err := rbacv1helpers.Convert_v1_ClusterRoleBinding_To_rbac_ClusterRoleBinding(v, &internalClusterRoleBinding, nil); err != nil {
-			return err
-		}
-		storage := policybasedClusterRoleBinding.NewStorage(&FakeStandardStorage{}, ec.authorizer, ec.ruleResolver)
-		_, err := storage.Create(ctx, &internalClusterRoleBinding, noOpValidate, opts)
-		return err
-
 	case *rbacv1.Role:
-		// Merge extra Role rules if present.
-		key := types.NamespacedName{Namespace: v.Namespace, Name: v.Name}
-		if extra, ok := ec.extraRoles[key]; ok {
-			v.Rules = append(v.Rules, extra.Rules...)
-		}
-		// Convert external Role to internal representation.
-		var internalRole rbacinternal.Role
-		if err := rbacv1helpers.Convert_v1_Role_To_rbac_Role(v, &internalRole, nil); err != nil {
-			return err
-		}
-		storage := policybasedRole.NewStorage(&FakeStandardStorage{}, ec.authorizer, ec.ruleResolver)
-		_, err := storage.Create(ctx, &internalRole, noOpValidate, opts)
-		return err
-
+		ctx = request.WithRequestInfo(ctx, &request.RequestInfo{APIGroup: rbacv1.GroupName, Resource: "roles", IsResourceRequest: true})
+		return ec.checkRoleEscalation(ctx, v)
 	case *rbacv1.RoleBinding:
-		// Convert external RoleBinding to internal representation.
-		var internalRoleBinding rbacinternal.RoleBinding
-		if err := rbacv1helpers.Convert_v1_RoleBinding_To_rbac_RoleBinding(v, &internalRoleBinding, nil); err != nil {
-			return err
-		}
-		storage := policybasedRoleBinding.NewStorage(&FakeStandardStorage{}, ec.authorizer, ec.ruleResolver)
-		_, err := storage.Create(ctx, &internalRoleBinding, noOpValidate, opts)
-		return err
-
+		ctx = request.WithRequestInfo(ctx, &request.RequestInfo{APIGroup: rbacv1.GroupName, Resource: "rolebindings", IsResourceRequest: true})
+		return ec.checkRoleBindingEscalation(ctx, v)
+	case *rbacv1.ClusterRole:
+		ctx = request.WithRequestInfo(ctx, &request.RequestInfo{APIGroup: rbacv1.GroupName, Resource: "clusterroles", IsResourceRequest: true})
+		return ec.checkClusterRoleEscalation(ctx, v)
+	case *rbacv1.ClusterRoleBinding:
+		ctx = request.WithRequestInfo(ctx, &request.RequestInfo{APIGroup: rbacv1.GroupName, Resource: "clusterrolebindings", IsResourceRequest: true})
+		return ec.checkClusterRoleBindingEscalation(ctx, v)
 	default:
-		return fmt.Errorf("unsupported object type %T", v)
+		return fmt.Errorf("unknown object type %T", v)
 	}
 }
 
-// FakeStandardStorage is a minimal fake implementation of rest.StandardStorage to satisfy required methods for dry-run operations.
-type FakeStandardStorage struct{}
+func (ec *escalationChecker) checkClusterRoleEscalation(ctx context.Context, clusterRole *rbacv1.ClusterRole) error {
+	if rbacregistry.EscalationAllowed(ctx) || rbacregistry.RoleEscalationAuthorized(ctx, ec.authorizer) {
+		return nil
+	}
 
-func (fs *FakeStandardStorage) New() runtime.Object {
+	// to set the aggregation rule, since it can gather anything, requires * on *.*
+	if hasAggregationRule(clusterRole) {
+		if err := validation.ConfirmNoEscalation(ctx, ec.ruleResolver, fullAuthority); err != nil {
+			return fmt.Errorf("must have cluster-admin privileges to use an aggregationRule: %w", err)
+		}
+	}
+
+	if err := validation.ConfirmNoEscalation(ctx, ec.ruleResolver, clusterRole.Rules); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (fs *FakeStandardStorage) NewList() runtime.Object {
+func (ec *escalationChecker) checkClusterRoleBindingEscalation(ctx context.Context, clusterRoleBinding *rbacv1.ClusterRoleBinding) error {
+	if rbacregistry.EscalationAllowed(ctx) {
+		return nil
+	}
+
+	roleRef := rbacinternal.RoleRef{}
+	err := rbacv1helpers.Convert_v1_RoleRef_To_rbac_RoleRef(&clusterRoleBinding.RoleRef, &roleRef, nil)
+	if err != nil {
+		return err
+	}
+
+	if rbacregistry.BindingAuthorized(ctx, roleRef, metav1.NamespaceNone, ec.authorizer) {
+		return nil
+	}
+
+	rules, err := ec.ruleResolver.GetRoleReferenceRules(ctx, clusterRoleBinding.RoleRef, metav1.NamespaceNone)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	if clusterRoleBinding.RoleRef.Kind == "ClusterRole" {
+		if manifestClusterRole, ok := ec.extraClusterRoles[types.NamespacedName{Name: clusterRoleBinding.RoleRef.Name}]; ok {
+			rules = append(rules, manifestClusterRole.Rules...)
+		}
+	}
+
+	if err := validation.ConfirmNoEscalation(ctx, ec.ruleResolver, rules); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (fs *FakeStandardStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return nil, nil
+func (ec *escalationChecker) checkRoleEscalation(ctx context.Context, role *rbacv1.Role) error {
+	if rbacregistry.EscalationAllowed(ctx) || rbacregistry.RoleEscalationAuthorized(ctx, ec.authorizer) {
+		return nil
+	}
+
+	rules := role.Rules
+	if err := validation.ConfirmNoEscalation(ctx, ec.ruleResolver, rules); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (fs *FakeStandardStorage) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	return nil, nil
+func (ec *escalationChecker) checkRoleBindingEscalation(ctx context.Context, roleBinding *rbacv1.RoleBinding) error {
+	if rbacregistry.EscalationAllowed(ctx) {
+		return nil
+	}
+
+	roleRef := rbacinternal.RoleRef{}
+	err := rbacv1helpers.Convert_v1_RoleRef_To_rbac_RoleRef(&roleBinding.RoleRef, &roleRef, nil)
+	if err != nil {
+		return err
+	}
+	if rbacregistry.BindingAuthorized(ctx, roleRef, roleBinding.Namespace, ec.authorizer) {
+		return nil
+	}
+
+	rules, err := ec.ruleResolver.GetRoleReferenceRules(ctx, roleBinding.RoleRef, roleBinding.Namespace)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	switch roleRef.Kind {
+	case "ClusterRole":
+		if manifestClusterRole, ok := ec.extraClusterRoles[types.NamespacedName{Name: roleBinding.RoleRef.Name}]; ok {
+			rules = append(rules, manifestClusterRole.Rules...)
+		}
+	case "Role":
+		if manifestRole, ok := ec.extraRoles[types.NamespacedName{Namespace: roleBinding.Namespace, Name: roleBinding.RoleRef.Name}]; ok {
+			rules = append(rules, manifestRole.Rules...)
+		}
+	}
+
+	if err := validation.ConfirmNoEscalation(ctx, ec.ruleResolver, rules); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (fs *FakeStandardStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	// For dry-run escalation check, simply return the object.
-	return obj, nil
+var fullAuthority = []rbacv1.PolicyRule{
+	{Verbs: []string{"*"}, APIGroups: []string{"*"}, Resources: []string{"*"}},
+	{Verbs: []string{"*"}, NonResourceURLs: []string{"*"}},
 }
 
-func (fs *FakeStandardStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, nil
-}
-
-func (fs *FakeStandardStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, nil
-}
-
-func (fs *FakeStandardStorage) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	return nil, nil
-}
-
-func (fs *FakeStandardStorage) Destroy() {
-	return
-}
-
-func (fs *FakeStandardStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return nil, nil
-}
-
-func (fs *FakeStandardStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	return nil, nil
+func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {
+	// Currently, an aggregation rule is considered present only if it has one or more selectors.
+	// An empty slice of ClusterRoleSelectors means no selectors were provided,
+	// which does NOT imply "match all."
+	return clusterRole.AggregationRule != nil && len(clusterRole.AggregationRule.ClusterRoleSelectors) > 0
 }
 
 func toPtrSlice[V any](in []V) []*V {
