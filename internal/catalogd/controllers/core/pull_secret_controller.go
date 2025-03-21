@@ -64,6 +64,7 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *PullSecretReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	_, err := ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Secret{}).
+		Named("catalogd-pull-secret-controller").
 		WithEventFilter(newSecretPredicate(r.SecretKey)).
 		Build(r)
 
