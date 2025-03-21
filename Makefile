@@ -139,7 +139,7 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	$(CONTROLLER_GEN) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clusterextensions.yaml $(KUSTOMIZE_OPCON_CRDS_DIR)
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clustercatalogs.yaml $(KUSTOMIZE_CATD_CRDS_DIR)
-	rmdir $(CRD_WORKING_DIR)
+	rm -rf $(CRD_WORKING_DIR)
 	# Generate the remaining operator-controller manifests
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
