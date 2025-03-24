@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	helmutils "github.com/operator-framework/operator-controller/internal/shared/util/helm"
 	"github.com/stretchr/testify/assert"
+
+	helmutils "github.com/operator-framework/operator-controller/internal/shared/util/helm"
 )
 
 func TestIsChart(t *testing.T) {
@@ -78,12 +79,12 @@ func TestIsChart(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			chart, oci, err := helmutils.IsChart(context.Background(), tc.url)
-			assert.Equal(t, oci, tc.want.Oci)
-			assert.Equal(t, chart, tc.want.Chart)
+			response, err := helmutils.IsChart(context.Background(), tc.url)
+			assert.Equal(t, response.Oci, tc.want.Oci)
+			assert.Equal(t, response.Chart, tc.want.Chart)
 
 			if testing.Verbose() {
-				t.Logf("IsChart() is verifying if %s is a helm chart.\n The result should be %t but, got %t\n", tc.url, chart, tc.want.Chart)
+				t.Logf("IsChart() is checking if %s is a helm chart.\n", tc.url)
 			}
 
 			if !tc.wantErr {

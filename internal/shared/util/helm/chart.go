@@ -14,56 +14,71 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 )
 
-func IsChart(ctx context.Context, chartUri string) (chart, oci bool, err error) {
-	addr, err := url.Parse(chartUri)
+type HelmCheckResponse struct {
+	// Chart returns true if helm chart
+	Chart bool
+	// Oci returns true if resource is stored
+	// in an OCI registry
+	Oci bool
+}
+
+func IsChart(ctx context.Context, chartURI string) (HelmCheckResponse, error) {
+	addr, err := url.Parse(chartURI)
 	if err != nil {
-		return chart, oci, err
+		return HelmCheckResponse{}, err
 	}
 
 	if addr.Scheme != "" {
 		if !strings.HasPrefix(addr.Scheme, "http") {
-			err = fmt.Errorf("unexpected Url scheme; %s\n", addr.Scheme)
-			return
+			return HelmCheckResponse{}, fmt.Errorf("unexpected scheme; %s", addr.Scheme)
 		}
 
-		oci = false
 		helmchart, err := validateHelmChart(addr.String())
 		if err != nil {
-			chart = false
-			return chart, oci, err
+			return HelmCheckResponse{}, err
 		}
 
 		if helmchart != nil &&
 			helmchart.Metadata != nil &&
 			helmchart.Metadata.Name != "" {
-			chart = true
+			return HelmCheckResponse{
+				Chart: true,
+				Oci:   false,
+			}, err
 		}
-
-		return chart, oci, err
 	}
 
 	ociRe := regexp.MustCompile("^(?P<host>[a-zA-Z0-9-_.:]+)([/]?)(?P<org>[a-zA-Z0-9-_/]+)?([/](?P<chart>[a-zA-Z0-9-_.:@]+))$")
-	if ociRe.MatchString(chartUri) {
-		oci = true
-
-		chart, err = helmOciCheck(ctx, chartUri)
-		if err != nil {
-			return chart, oci, err
-		}
+	if !ociRe.MatchString(chartURI) {
+		return HelmCheckResponse{
+			Chart: false,
+			Oci:   false,
+		}, fmt.Errorf("does not conform to OCI url format")
 	}
 
-	return
+	ociCheck, err := helmOciCheck(ctx, chartURI)
+	if err != nil {
+		return HelmCheckResponse{
+			Chart: false,
+			Oci:   true,
+		}, err
+	}
+
+	return HelmCheckResponse{
+		Chart: ociCheck,
+		Oci:   true,
+	}, nil
 }
 
-// helmOciCheck() pull a helm chart using the provided chartUri from an
+// helmOciCheck() pull a helm chart using the provided chartURI from an
 // OCI registiry and inspects its media type to determine if a Helm chart
-func helmOciCheck(ctx context.Context, chartUri string) (bool, error) {
+func helmOciCheck(_ context.Context, chartURI string) (bool, error) {
 	helmclient, err := registry.NewClient()
 	if err != nil {
 		return false, err
 	}
 
-	summary, err := helmclient.Pull(chartUri,
+	summary, err := helmclient.Pull(chartURI,
 		registry.PullOptWithProv(false),
 		registry.PullOptWithChart(true),
 		registry.PullOptIgnoreMissingProv(true),
@@ -75,9 +90,14 @@ func helmOciCheck(ctx context.Context, chartUri string) (bool, error) {
 	return summary != nil && summary.Ref != "", nil
 }
 
-func validateHelmChart(chartUri string) (*chart.Chart, error) {
+func validateHelmChart(chartURI string) (*chart.Chart, error) {
 	// Download helm chart from HTTP
-	resp, err := http.Get(chartUri)
+	req, err := http.NewRequest(http.MethodGet, chartURI, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request failed; %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("loading URL failed; %w", err)
 	}
