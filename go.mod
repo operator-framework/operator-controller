@@ -18,7 +18,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11
 	github.com/operator-framework/api v0.30.0
-	github.com/operator-framework/helm-operator-plugins v0.8.0
+	github.com/operator-framework/helm-operator-plugins v0.8.1-0.20250222123620-6261f2574b3b
 	github.com/operator-framework/operator-registry v1.50.0
 	github.com/prometheus/client_golang v1.21.1
 	github.com/sirupsen/logrus v1.9.3
