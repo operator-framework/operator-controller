@@ -116,14 +116,14 @@ func (i *managerImpl) Get(ctx context.Context, ce *ocv1.ClusterExtension) (cmcac
 		// related to reusing an informer factory, we return a new informer
 		// factory every time to ensure we are not attempting to configure or
 		// start an already started informer
-		informerFactoryCreateFunc: func() dynamicinformer.DynamicSharedInformerFactory {
-			return dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Hour*10, metav1.NamespaceAll, func(lo *metav1.ListOptions) {
+		informerFactoryCreateFunc: func(namespace string) dynamicinformer.DynamicSharedInformerFactory {
+			return dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Hour*10, namespace, func(lo *metav1.ListOptions) {
 				lo.LabelSelector = tgtLabels.AsSelector().String()
 			})
 		},
 		mapper: i.mapper,
 	}
-	cache = cmcache.NewCache(dynamicSourcerer, ce, i.syncTimeout)
+	cache = cmcache.NewCache(dynamicSourcerer, ce, i.syncTimeout, i.mapper)
 	i.caches[ce.Name] = cache
 	return cache, nil
 }
