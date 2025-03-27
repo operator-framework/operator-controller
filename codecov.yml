@@ -9,3 +9,6 @@ coverage:
     - "api/"
     - "cmd/"
     - "internal/"
+
+ignore:
+  - "internal/operator-controller/authorization/internal/kubernetes"
