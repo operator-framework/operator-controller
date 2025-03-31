@@ -13,6 +13,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +33,7 @@ import (
 type RegistryV1 struct {
 	PackageName string
 	CSV         v1alpha1.ClusterServiceVersion
+	CRDs        []apiextensionsv1.CustomResourceDefinition
 	Others      []unstructured.Unstructured
 }
 
@@ -121,6 +123,12 @@ func ParseFS(rv1 fs.FS) (RegistryV1, error) {
 				}
 				reg.CSV = csv
 				foundCSV = true
+			case "CustomResourceDefinition":
+				crd := apiextensionsv1.CustomResourceDefinition{}
+				if err := runtime.DefaultUnstructuredConverter.FromUnstructured(info.Object.(*unstructured.Unstructured).Object, &crd); err != nil {
+					return err
+				}
+				reg.CRDs = append(reg.CRDs, crd)
 			default:
 				reg.Others = append(reg.Others, *info.Object.(*unstructured.Unstructured))
 			}
@@ -360,6 +368,9 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 	}
 	for _, obj := range clusterRoleBindings {
 		obj := obj
+		objs = append(objs, &obj)
+	}
+	for _, obj := range in.CRDs {
 		objs = append(objs, &obj)
 	}
 	for _, obj := range in.Others {
