@@ -57,8 +57,9 @@ subjects:
   namespace: test-namespace
   `
 
-	saName = "test-serviceaccount"
-	ns     = "test-namespace"
+	saName             = "test-serviceaccount"
+	ns                 = "test-namespace"
+	testServiceAccount = user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
 
 	objects = []client.Object{
 		&corev1.Namespace{
@@ -150,7 +151,6 @@ func TestPreAuthorize_Success(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(privilegedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		testServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
@@ -162,7 +162,6 @@ func TestPreAuthorize_Failure(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(limitedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		testServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
 		require.Error(t, err)
 		require.NotEqual(t, []ScopedPolicyRules{}, missingRules)
@@ -174,7 +173,6 @@ func TestPreAuthorize_CheckEscalation(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(escalatingClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		testServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
