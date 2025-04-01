@@ -136,19 +136,19 @@ CRD_WORKING_DIR := crd_work_dir
 # So we have to generate them together and then move them into place
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	mkdir $(CRD_WORKING_DIR)
-	$(CONTROLLER_GEN) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
+	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clusterextensions.yaml $(KUSTOMIZE_OPCON_CRDS_DIR)
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clustercatalogs.yaml $(KUSTOMIZE_CATD_CRDS_DIR)
 	rmdir $(CRD_WORKING_DIR)
 	# Generate the remaining operator-controller manifests
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
+	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
-	$(CONTROLLER_GEN) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
+	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
+	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
 verify: tidy fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
