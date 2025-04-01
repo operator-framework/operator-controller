@@ -20,7 +20,7 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 		convert.CheckCRDResourceUniqueness,
 		convert.CheckOwnedCRDExistence,
 	}
-	actualValidationFns := convert.NewBundleValidator()
+	actualValidationFns := convert.RegistryV1BundleValidator
 
 	require.Equal(t, len(expectedValidationFns), len(actualValidationFns))
 	for i := range expectedValidationFns {
@@ -40,7 +40,7 @@ func Test_BundleValidatorCallsAllValidationFnsInOrder(t *testing.T) {
 			return nil
 		},
 	}
-	require.Empty(t, validator.Validate(nil))
+	require.NoError(t, validator.Validate(nil))
 	require.Equal(t, "hi", actual)
 }
 
@@ -53,8 +53,8 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 		{
 			name: "accepts bundles with unique deployment strategy spec names",
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithStrategyDeploymentSpecs(
+				CSV: makeCSV(
+					withStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-two"},
 					),
@@ -63,8 +63,8 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 		}, {
 			name: "rejects bundles with duplicate deployment strategy spec names",
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithStrategyDeploymentSpecs(
+				CSV: makeCSV(
+					withStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-two"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
@@ -77,8 +77,8 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 		}, {
 			name: "errors are ordered by deployment strategy spec name",
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithStrategyDeploymentSpecs(
+				CSV: makeCSV(
+					withStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-a"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-b"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-c"},
@@ -157,8 +157,8 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 					{ObjectMeta: metav1.ObjectMeta{Name: "a.crd.something"}},
 					{ObjectMeta: metav1.ObjectMeta{Name: "b.crd.something"}},
 				},
-				CSV: MakeCSV(
-					WithOwnedCRDs(
+				CSV: makeCSV(
+					withOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "a.crd.something"},
 						v1alpha1.CRDDescription{Name: "b.crd.something"},
 					),
@@ -168,8 +168,8 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 			name: "rejects bundles with missing owned custom resource definition resources",
 			bundle: &convert.RegistryV1{
 				CRDs: []apiextensionsv1.CustomResourceDefinition{},
-				CSV: MakeCSV(
-					WithOwnedCRDs(v1alpha1.CRDDescription{Name: "a.crd.something"}),
+				CSV: makeCSV(
+					withOwnedCRDs(v1alpha1.CRDDescription{Name: "a.crd.something"}),
 				),
 			},
 			expectedErrs: []error{
@@ -179,8 +179,8 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 			name: "errors are ordered by owned custom resource definition name",
 			bundle: &convert.RegistryV1{
 				CRDs: []apiextensionsv1.CustomResourceDefinition{},
-				CSV: MakeCSV(
-					WithOwnedCRDs(
+				CSV: makeCSV(
+					withOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "a.crd.something"},
 						v1alpha1.CRDDescription{Name: "c.crd.something"},
 						v1alpha1.CRDDescription{Name: "b.crd.something"},
@@ -201,21 +201,21 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 	}
 }
 
-type CSVOption func(version *v1alpha1.ClusterServiceVersion)
+type csvOption func(version *v1alpha1.ClusterServiceVersion)
 
-func WithStrategyDeploymentSpecs(strategyDeploymentSpecs ...v1alpha1.StrategyDeploymentSpec) CSVOption {
+func withStrategyDeploymentSpecs(strategyDeploymentSpecs ...v1alpha1.StrategyDeploymentSpec) csvOption {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs = strategyDeploymentSpecs
 	}
 }
 
-func WithOwnedCRDs(crdDesc ...v1alpha1.CRDDescription) CSVOption {
+func withOwnedCRDs(crdDesc ...v1alpha1.CRDDescription) csvOption {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		csv.Spec.CustomResourceDefinitions.Owned = crdDesc
 	}
 }
 
-func MakeCSV(opts ...CSVOption) v1alpha1.ClusterServiceVersion {
+func makeCSV(opts ...csvOption) v1alpha1.ClusterServiceVersion {
 	csv := v1alpha1.ClusterServiceVersion{}
 	for _, opt := range opts {
 		opt(&csv)

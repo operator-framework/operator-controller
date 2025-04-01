@@ -67,7 +67,7 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 	}
 
 	// Convert RegistryV1 to plain manifests
-	plain, err := convert.Convert(regv1, installNamespace, []string{watchNamespace})
+	plain, err := convert.PlainConverter.Convert(regv1, installNamespace, []string{watchNamespace})
 	if err != nil {
 		return fmt.Errorf("error converting registry+v1 bundle: %w", err)
 	}
