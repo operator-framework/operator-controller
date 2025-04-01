@@ -96,7 +96,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	}
 
 	if h.EnablePreflightPermissions {
-		tmplRel, err := h.template(ctx, ext, chrt, values, post)
+		tmplRel, err := h.renderClientOnlyRelease(ctx, ext, chrt, values, post)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
 		}
@@ -197,8 +197,8 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 	return h.BundleToHelmChartFn(bundleFS, ext.Spec.Namespace, watchNamespace)
 }
 
-func (h *Helm) template(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {
-	// We need to get a separate action client because our template call below
+func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {
+	// We need to get a separate action client because our work below
 	// permanently modifies the underlying action.Configuration for ClientOnly mode.
 	ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
 	if err != nil {
