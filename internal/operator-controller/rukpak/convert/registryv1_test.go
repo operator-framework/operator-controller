@@ -578,7 +578,7 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.Converter{}.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "webhookDefinitions are not supported")
 	require.Nil(t, plainBundle)

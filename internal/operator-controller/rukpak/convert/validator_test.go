@@ -19,6 +19,9 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 		convert.CheckDeploymentSpecUniqueness,
 		convert.CheckCRDResourceUniqueness,
 		convert.CheckOwnedCRDExistence,
+		convert.CheckWebhookDeploymentReferentialIntegrity,
+		convert.CheckWebhookNameUniqueness,
+		convert.CheckConversionWebhookCRDReferences,
 	}
 	actualValidationFns := convert.RegistryV1BundleValidator
 
@@ -198,6 +201,400 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 			errs := convert.CheckOwnedCRDExistence(tc.bundle)
 			require.Equal(t, tc.expectedErrs, errs)
 		})
+	}
+}
+
+func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *convert.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name: "accepts bundles where webhook definitions reference existing strategy deployment specs",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
+						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-two"},
+					),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							GenerateName:   "test-webhook",
+							DeploymentName: "test-deployment-one",
+						},
+					),
+				),
+			},
+		}, {
+			name: "rejects bundles with webhook definitions that reference non-existing strategy deployment specs",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
+					),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName:   "test-webhook",
+							DeploymentName: "test-deployment-two",
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook 'test-webhook' of type 'ValidatingAdmissionWebhook' references non-existent deployment 'test-deployment-two'"),
+			},
+		}, {
+			name: "errors are ordered by deployment strategy spec name, webhook type, and webhook name",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
+					),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName:   "test-val-webhook-c",
+							DeploymentName: "test-deployment-c",
+						},
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							GenerateName:   "test-mute-webhook-a",
+							DeploymentName: "test-deployment-a",
+						},
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ConversionWebhook,
+							GenerateName:   "test-conv-webhook-b",
+							DeploymentName: "test-deployment-b",
+						}, v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							GenerateName:   "test-mute-webhook-c",
+							DeploymentName: "test-deployment-c",
+						},
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ConversionWebhook,
+							GenerateName:   "test-conv-webhook-c-b",
+							DeploymentName: "test-deployment-c",
+						}, v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ConversionWebhook,
+							GenerateName:   "test-conv-webhook-c-a",
+							DeploymentName: "test-deployment-c",
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook 'test-mute-webhook-a' of type 'MutatingAdmissionWebhook' references non-existent deployment 'test-deployment-a'"),
+				errors.New("webhook 'test-conv-webhook-b' of type 'ConversionWebhook' references non-existent deployment 'test-deployment-b'"),
+				errors.New("webhook 'test-conv-webhook-c-a' of type 'ConversionWebhook' references non-existent deployment 'test-deployment-c'"),
+				errors.New("webhook 'test-conv-webhook-c-b' of type 'ConversionWebhook' references non-existent deployment 'test-deployment-c'"),
+				errors.New("webhook 'test-mute-webhook-c' of type 'MutatingAdmissionWebhook' references non-existent deployment 'test-deployment-c'"),
+				errors.New("webhook 'test-val-webhook-c' of type 'ValidatingAdmissionWebhook' references non-existent deployment 'test-deployment-c'"),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := convert.CheckWebhookDeploymentReferentialIntegrity(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
+
+func Test_CheckWebhookNameUniqueness(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *convert.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name: "accepts bundles without webhook definitions",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(),
+			},
+		}, {
+			name: "accepts bundles with unique webhook names",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-webhook-one",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-webhook-two",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook-three",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-webhook-four",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-webhook-five",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook-six",
+						},
+					),
+				),
+			},
+		}, {
+			name: "accepts bundles with webhooks with the same name but different types",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-webhook",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-webhook",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook",
+						},
+					),
+				),
+			},
+		}, {
+			name: "rejects bundles with duplicate validating webhook definitions",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-webhook",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-webhook",
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("duplicate webhook 'test-webhook' of type 'ValidatingAdmissionWebhook'"),
+			},
+		}, {
+			name: "rejects bundles with duplicate mutating webhook definitions",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-webhook",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-webhook",
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("duplicate webhook 'test-webhook' of type 'MutatingAdmissionWebhook'"),
+			},
+		}, {
+			name: "rejects bundles with duplicate conversion webhook definitions",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook",
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("duplicate webhook 'test-webhook' of type 'ConversionWebhook'"),
+			},
+		}, {
+			name: "orders errors by webhook type and name",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-val-webhook-b",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-val-webhook-a",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-val-webhook-a",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-val-webhook-b",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-conv-webhook-b",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-conv-webhook-a",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-conv-webhook-a",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-conv-webhook-b",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-mute-webhook-b",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-mute-webhook-a",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-mute-webhook-a",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-mute-webhook-b",
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("duplicate webhook 'test-conv-webhook-a' of type 'ConversionWebhook'"),
+				errors.New("duplicate webhook 'test-conv-webhook-b' of type 'ConversionWebhook'"),
+				errors.New("duplicate webhook 'test-mute-webhook-a' of type 'MutatingAdmissionWebhook'"),
+				errors.New("duplicate webhook 'test-mute-webhook-b' of type 'MutatingAdmissionWebhook'"),
+				errors.New("duplicate webhook 'test-val-webhook-a' of type 'ValidatingAdmissionWebhook'"),
+				errors.New("duplicate webhook 'test-val-webhook-b' of type 'ValidatingAdmissionWebhook'"),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := convert.CheckWebhookNameUniqueness(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
+
+func Test_CheckConversionWebhookCRDReferences(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *convert.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name:   "accepts bundles without webhook definitions",
+			bundle: &convert.RegistryV1{},
+		}, {
+			name: "accepts bundles without conversion webhook definitions",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "test-val-webhook",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "test-mute-webhook",
+						},
+					),
+				),
+			},
+		}, {
+			name: "accepts bundles with conversion webhooks that reference owned CRDs",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithOwnedCRDs(
+						v1alpha1.CRDDescription{Name: "some.crd.something"},
+						v1alpha1.CRDDescription{Name: "another.crd.something"},
+					),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook",
+							ConversionCRDs: []string{
+								"some.crd.something",
+								"another.crd.something",
+							},
+						},
+					),
+				),
+			},
+		}, {
+			name: "rejects bundles with conversion webhooks that reference existing CRDs that are not owned",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithOwnedCRDs(
+						v1alpha1.CRDDescription{Name: "some.crd.something"},
+					),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook",
+							ConversionCRDs: []string{
+								"some.crd.something",
+								"another.crd.something",
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("conversion webhook 'test-webhook' references custom resource definition 'another.crd.something' not owned bundle"),
+			},
+		}, {
+			name: "errors are ordered by webhook name and CRD name",
+			bundle: &convert.RegistryV1{
+				CSV: MakeCSV(
+					WithOwnedCRDs(
+						v1alpha1.CRDDescription{Name: "b.crd.something"},
+					),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook-b",
+							ConversionCRDs: []string{
+								"b.crd.something",
+							},
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook-a",
+							ConversionCRDs: []string{
+								"c.crd.something",
+								"a.crd.something",
+							},
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "test-webhook-c",
+							ConversionCRDs: []string{
+								"a.crd.something",
+								"d.crd.something",
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("conversion webhook 'test-webhook-a' references custom resource definition 'a.crd.something' not owned bundle"),
+				errors.New("conversion webhook 'test-webhook-a' references custom resource definition 'c.crd.something' not owned bundle"),
+				errors.New("conversion webhook 'test-webhook-c' references custom resource definition 'a.crd.something' not owned bundle"),
+				errors.New("conversion webhook 'test-webhook-c' references custom resource definition 'd.crd.something' not owned bundle"),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := convert.CheckConversionWebhookCRDReferences(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
+
+func WithWebhookDefinitions(webhookDefinitions ...v1alpha1.WebhookDescription) CSVOption {
+	return func(csv *v1alpha1.ClusterServiceVersion) {
+		csv.Spec.WebhookDefinitions = webhookDefinitions
 	}
 }
 
