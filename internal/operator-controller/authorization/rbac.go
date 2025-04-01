@@ -63,8 +63,11 @@ func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
 //
 // Return Value:
 //   - nil: indicates that the authorization check passed and the operation is permitted.
-//   - non-nil error: indicates that the authorization failed (either due to insufficient permissions
-//     or an error encountered during the check), the error provides a slice of several failures at once.
+//   - non-nil error: indicates that an error occurred during the permission evaluation process
+//     (for example, a failure decoding the manifest or other internal issues). If the evaluation
+//     completes successfully but identifies missing rules, then a nil error is returned along with
+//     the list (or slice) of missing rules. Note that in some cases the error may encapsulate multiple
+//     evaluation failures
 func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) ([]ScopedPolicyRules, error) {
 	var allMissingPolicyRules = []ScopedPolicyRules{}
 	dm, err := a.decodeManifest(manifestReader)
