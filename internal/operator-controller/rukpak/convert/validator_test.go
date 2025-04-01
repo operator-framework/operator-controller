@@ -20,7 +20,7 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 		convert.CheckCRDResourceUniqueness,
 		convert.CheckOwnedCRDExistence,
 	}
-	actualValidationFns := convert.NewBundleValidator()
+	actualValidationFns := convert.RegistryV1BundleValidator
 
 	require.Equal(t, len(expectedValidationFns), len(actualValidationFns))
 	for i := range expectedValidationFns {
@@ -40,7 +40,7 @@ func Test_BundleValidatorCallsAllValidationFnsInOrder(t *testing.T) {
 			return nil
 		},
 	}
-	require.Empty(t, validator.Validate(nil))
+	require.NoError(t, validator.Validate(nil))
 	require.Equal(t, "hi", actual)
 }
 

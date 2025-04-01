@@ -1,6 +1,7 @@
 package convert_test
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -52,6 +53,24 @@ func getCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 	return csv, svc
 }
 
+func TestConverterValidatesBundle(t *testing.T) {
+	converter := convert.Converter{
+		BundleValidator: []func(rv1 *convert.RegistryV1) []error{
+			func(rv1 *convert.RegistryV1) []error {
+				return []error{errors.New("test error")}
+			},
+		},
+	}
+
+	_, err := converter.Convert(convert.RegistryV1{}, "installNamespace", []string{"watchNamespace"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "test error")
+}
+
+func TestPlainConverterUsedRegV1Validator(t *testing.T) {
+	require.Equal(t, convert.RegistryV1BundleValidator, convert.PlainConverter.BundleValidator)
+}
+
 func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 	var targetNamespaces []string
 
@@ -70,7 +89,7 @@ func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -104,7 +123,7 @@ func TestRegistryV1SuiteNamespaceAvailable(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -145,7 +164,7 @@ func TestRegistryV1SuiteNamespaceUnsupportedKind(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "bundle contains unsupported resource")
 	require.Nil(t, plainBundle)
@@ -179,7 +198,7 @@ func TestRegistryV1SuiteNamespaceClusterScoped(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, targetNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, targetNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -266,7 +285,7 @@ func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -299,7 +318,7 @@ func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -332,7 +351,7 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -365,7 +384,7 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.NoError(t, err)
 
 	t.Log("By verifying if plain bundle has required objects")
@@ -470,7 +489,7 @@ func TestConvertInstallModeValidation(t *testing.T) {
 			}
 
 			t.Log("By converting to plain")
-			plainBundle, err := convert.Convert(registryv1Bundle, tc.installNamespace, tc.watchNamespaces)
+			plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, tc.installNamespace, tc.watchNamespaces)
 			require.Error(t, err)
 			require.Nil(t, plainBundle)
 		})
@@ -559,7 +578,7 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "webhookDefinitions are not supported")
 	require.Nil(t, plainBundle)
@@ -590,7 +609,7 @@ func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "apiServiceDefintions are not supported")
 	require.Nil(t, plainBundle)

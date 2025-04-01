@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
@@ -9,23 +10,21 @@ import (
 
 type BundleValidator []func(v1 *RegistryV1) []error
 
-func (v BundleValidator) Validate(rv1 *RegistryV1) []error {
+func (v BundleValidator) Validate(rv1 *RegistryV1) error {
 	var errs []error
 	for _, validator := range v {
 		errs = append(errs, validator(rv1)...)
 	}
-	return errs
+	return errors.Join(errs...)
 }
 
-func NewBundleValidator() BundleValidator {
+var RegistryV1BundleValidator = BundleValidator{
 	// NOTE: if you update this list, Test_BundleValidatorHasAllValidationFns will fail until
 	// you bring the same changes over to that test. This helps ensure all validation rules are executed
 	// while giving us the flexibility to test each validation function individually
-	return BundleValidator{
-		CheckDeploymentSpecUniqueness,
-		CheckCRDResourceUniqueness,
-		CheckOwnedCRDExistence,
-	}
+	CheckDeploymentSpecUniqueness,
+	CheckCRDResourceUniqueness,
+	CheckOwnedCRDExistence,
 }
 
 // CheckDeploymentSpecUniqueness checks that each strategy deployment spec in the csv has a unique name.
