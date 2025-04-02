@@ -8,6 +8,7 @@ import (
 	"maps"
 	"sort"
 
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -38,10 +39,7 @@ type ScopedPolicyRules struct {
 	MissingRules []rbacv1.PolicyRule
 }
 
-var (
-	collectionVerbs = []string{"list", "watch", "create"}
-	objectVerbs     = []string{"get", "patch", "update", "delete"}
-)
+var objectVerbs = []string{"get", "patch", "update", "delete"}
 
 type rbacPreAuthorizer struct {
 	authorizer   authorizer.Authorizer
@@ -274,10 +272,19 @@ func (dm *decodedManifest) rbacObjects() []client.Object {
 
 func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info) []authorizer.AttributesRecord {
 	var attributeRecords []authorizer.AttributesRecord
+
+	// Here we are splitting collection verbs based on required scope
+	// NB: this split is tightly coupled to the requirements of the contentmanager, specifically
+	// its need for cluster-scoped list/watch permissions.
+	// TODO: We are accepting this coupling for now, but plan to decouple
+	namespacedCollectionVerbs := []string{"create"}
+	clusterCollectionVerbs := []string{"list", "watch"}
+
 	for gvr, keys := range dm.gvrs {
 		namespaces := sets.New[string]()
 		for _, k := range keys {
 			namespaces.Insert(k.Namespace)
+			// generate records for object-specific verbs (get, update, patch, delete) in their respective namespaces
 			for _, v := range objectVerbs {
 				attributeRecords = append(attributeRecords, authorizer.AttributesRecord{
 					User:            manifestManager,
@@ -291,8 +298,9 @@ func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManag
 				})
 			}
 		}
+		// generate records for namespaced collection verbs (create) for each relevant namespace
 		for _, ns := range sets.List(namespaces) {
-			for _, v := range collectionVerbs {
+			for _, v := range namespacedCollectionVerbs {
 				attributeRecords = append(attributeRecords, authorizer.AttributesRecord{
 					User:            manifestManager,
 					Namespace:       ns,
@@ -303,6 +311,18 @@ func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManag
 					Verb:            v,
 				})
 			}
+		}
+		// generate records for cluster-scoped collection verbs (list, watch) required by contentmanager
+		for _, v := range clusterCollectionVerbs {
+			attributeRecords = append(attributeRecords, authorizer.AttributesRecord{
+				User:            manifestManager,
+				Namespace:       corev1.NamespaceAll, // check cluster scope
+				APIGroup:        gvr.Group,
+				APIVersion:      gvr.Version,
+				Resource:        gvr.Resource,
+				ResourceRequest: true,
+				Verb:            v,
+			})
 		}
 	}
 	return attributeRecords
