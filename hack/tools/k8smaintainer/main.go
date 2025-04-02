@@ -3,356 +3,315 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
+	"golang.org/x/mod/semver"
 )
 
-// debug controls whether we print extra statements.
-var debug bool
+const k8sRepo = "k8s.io/kubernetes"
 
-// moduleInfo is the partial output of `go list -m -json all`.
-type moduleInfo struct {
-	Path    string `json:"Path"`
-	Version string `json:"Version"`
-}
+//nolint:gochecknoglobals
+var goExe = "go"
 
 func main() {
-	// Define the command-line flag
-	flag.BoolVar(&debug, "debug", false, "Enable debug output")
-	flag.Parse()
-
-	mainGoMod := getMainGoModPath()
-
-	if err := fixGoMod(mainGoMod); err != nil {
-		fmt.Fprintf(os.Stderr, "fixGoMod failed: %v\n", err)
-		os.Exit(1)
+	log.SetFlags(0)
+	if os.Getenv("GOEXE") != "" {
+		goExe = os.Getenv("GOEXE")
 	}
-}
 
-func getMainGoModPath() string {
-	rootDir := findProjectRoot()
-	return fmt.Sprintf("%s/go.mod", rootDir)
-}
-
-func findProjectRoot() string {
-	cwd, err := os.Getwd()
+	wd, err := os.Getwd()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get working directory: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Error getting working directory: %v", err)
+	}
+	modRoot := findModRoot(wd)
+	if modRoot == "" {
+		log.Fatalf("Failed to find go.mod in %s or parent directories", wd)
+	}
+	if err := os.Chdir(modRoot); err != nil {
+		log.Fatalf("Error changing directory to %s: %v", modRoot, err)
+	}
+	log.Printf("Running in module root: %s", modRoot)
+
+	modBytes, err := os.ReadFile("go.mod")
+	if err != nil {
+		log.Fatalf("Error reading go.mod: %v", err)
 	}
 
-	for cwd != "/" {
-		if _, err := os.Stat(fmt.Sprintf("%s/go.mod", cwd)); err == nil {
-			return cwd
+	modF, err := modfile.Parse("go.mod", modBytes, nil)
+	if err != nil {
+		log.Fatalf("Error parsing go.mod: %v", err)
+	}
+
+	// Find k8s.io/kubernetes version
+	k8sVer := ""
+	for _, req := range modF.Require {
+		if req.Mod.Path == k8sRepo {
+			k8sVer = req.Mod.Version
+			break
 		}
-		cwd = cwd[:strings.LastIndex(cwd, "/")]
 	}
-	fmt.Fprintln(os.Stderr, "Error: Could not find project root with go.mod")
-	os.Exit(1)
-	return ""
-}
-
-// fixGoMod is the main entrypoint. It does a 2‐phase approach:
-//
-//	Remove old k8s.io/* replace lines, rewrite + tidy so they’re really gone.
-//	Parse again, unify staging modules in require + replace to the new patch version, rewrite + tidy.
-func fixGoMod(goModPath string) error {
-	mf, err := parseMod(goModPath)
-	if err != nil {
-		return err
-	}
-	pruneK8sReplaces(mf)
-	mf.SortBlocks()
-	mf.Cleanup()
-
-	if err := writeModFile(mf, goModPath); err != nil {
-		return err
-	}
-
-	mf, err = parseMod(goModPath)
-	if err != nil {
-		return err
-	}
-
-	k8sVer := findKubernetesVersion(mf)
 	if k8sVer == "" {
-		return fmt.Errorf("did not find k8s.io/kubernetes in require block")
+		log.Fatalf("Could not find %s in go.mod require block", k8sRepo)
 	}
+	log.Printf("Found %s version: %s", k8sRepo, k8sVer)
 
-	published := toPublishedVersion(k8sVer)
-	if published == "" {
-		return fmt.Errorf("cannot derive staging version from %s", k8sVer)
+	// Calculate target staging version
+	if !semver.IsValid(k8sVer) {
+		log.Fatalf("Invalid semver for %s: %s", k8sRepo, k8sVer)
 	}
+	majorMinor := semver.MajorMinor(k8sVer)             // e.g., "v1.32"
+	patch := strings.TrimPrefix(k8sVer, majorMinor+".") // e.g., "3"
+	if len(strings.Split(majorMinor, ".")) != 2 {
+		log.Fatalf("Unexpected format for MajorMinor: %s", majorMinor)
+	}
+	targetStagingVer := "v0" + strings.TrimPrefix(majorMinor, "v1") + "." + patch // e.g., "v0.32.3"
+	if !semver.IsValid(targetStagingVer) {
+		log.Fatalf("Calculated invalid staging semver: %s", targetStagingVer)
+	}
+	log.Printf("Target staging version calculated: %s", targetStagingVer)
 
-	forceRequireStaging(mf, published)
-
-	listOut, errOut, err := runGoList()
+	// Run `go list -m -json all`
+	type Module struct {
+		Path    string
+		Version string
+		Replace *Module
+		Main    bool
+	}
+	log.Println("Running 'go list -m -json all'...")
+	output, err := runGoCommand("list", "-m", "-json", "all")
 	if err != nil {
-		return fmt.Errorf("go list: %v\nStderr:\n%s", err, errOut)
-	}
-	stagingPins := discoverPinsAlways(listOut, published)
-	applyReplacements(mf, stagingPins)
-
-	ensureKubernetesReplace(mf, k8sVer)
-
-	mf.SortBlocks()
-	mf.Cleanup()
-
-	if err := writeModFile(mf, goModPath); err != nil {
-		return err
+		// Try downloading first if list fails
+		log.Println("go list failed, trying go mod download...")
+		if _, downloadErr := runGoCommand("mod", "download"); downloadErr != nil {
+			log.Fatalf("Error running 'go mod download' after list failed: %v", downloadErr)
+		}
+		output, err = runGoCommand("list", "-m", "-json", "all")
+		if err != nil {
+			log.Fatalf("Error running 'go list -m -json all' even after download: %v", err)
+		}
 	}
 
-	goVersion, err := getGoVersion(goModPath)
+	// Iterate, identify k8s.io/* staging modules, and determine version to pin
+	pins := make(map[string]string) // Module path -> version to pin
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	for decoder.More() {
+		var mod Module
+		if err := decoder.Decode(&mod); err != nil {
+			log.Fatalf("Error decoding go list output: %v", err)
+		}
+
+		// Skip main module, non-k8s modules, k8s.io/kubernetes itself, and versioned modules like k8s.io/client-go/v2
+		_, pathSuffix, _ := module.SplitPathVersion(mod.Path) // Check if path has a version suffix like /v2, /v3 etc.
+		if mod.Main || !strings.HasPrefix(mod.Path, "k8s.io/") || mod.Path == k8sRepo || pathSuffix != "" {
+			continue
+		}
+
+		// Use replacement path if it exists
+		effectivePath := mod.Path
+		if mod.Replace != nil {
+			effectivePath = mod.Replace.Path
+			// Skip local file replacements
+			if !strings.Contains(effectivePath, ".") { // Basic check if it looks like a module path vs local path
+				log.Printf("Skipping local replace: %s => %s", mod.Path, effectivePath)
+				continue
+			}
+		}
+
+		// Check existence of target version, fallback to previous patch if needed
+		determinedVer, err := getLatestExistingVersion(effectivePath, targetStagingVer)
+		if err != nil {
+			log.Printf("WARNING: Error checking versions for %s: %v. Skipping pinning.", effectivePath, err)
+			continue
+		}
+
+		if determinedVer == "" {
+			log.Printf("WARNING: Neither target version %s nor its predecessor found for %s. Skipping pinning.", targetStagingVer, effectivePath)
+			continue
+		}
+
+		if determinedVer != targetStagingVer {
+			log.Printf("WARNING: Target version %s not found for %s. Using existing version %s.", targetStagingVer, effectivePath, determinedVer)
+		}
+
+		// map the original module path (as seen in the dependency graph) to the desired version for the 'replace' directive
+		pins[mod.Path] = determinedVer
+	}
+
+	// Add k8s.io/kubernetes itself to the pins map
+	pins[k8sRepo] = k8sVer
+	log.Printf("Identified %d k8s.io/* modules to manage.", len(pins))
+
+	// 7. Parse go.mod again (to have a fresh modfile object)
+	modBytes, err = os.ReadFile("go.mod")
 	if err != nil {
-		return fmt.Errorf("failed to determine Go version: %w", err)
+		log.Fatalf("Error reading go.mod again: %v", err)
+	}
+	modF, err = modfile.Parse("go.mod", modBytes, nil)
+	if err != nil {
+		log.Fatalf("Error parsing go.mod again: %v", err)
 	}
 
-	if err := runCmd("go", "mod", "tidy", "-go="+goVersion); err != nil {
-		return fmt.Errorf("final tidy failed: %w", err)
+	// Remove all existing k8s.io/* replaces
+	log.Println("Removing existing k8s.io/* replace directives...")
+	var replacesToRemove []string
+	for _, rep := range modF.Replace {
+		if strings.HasPrefix(rep.Old.Path, "k8s.io/") {
+			replacesToRemove = append(replacesToRemove, rep.Old.Path)
+		}
+	}
+	for _, path := range replacesToRemove {
+		if err := modF.DropReplace(path, ""); err != nil {
+			// Tolerate errors if the replace was already somehow removed
+			log.Printf("Note: Error dropping replace for %s (might be benign): %v", path, err)
+		}
 	}
 
-	return nil
+	// Add new replace directives
+	log.Println("Adding determined replace directives...")
+	// Sort for deterministic output
+	sortedPaths := make([]string, 0, len(pins))
+	for path := range pins {
+		sortedPaths = append(sortedPaths, path)
+	}
+	sort.Strings(sortedPaths)
+
+	for _, path := range sortedPaths {
+		version := pins[path]
+		// Add replace for the module path itself (e.g., k8s.io/api => k8s.io/api v0.32.3)
+		// This handles cases where the effective path from `go list` might differ due to other replaces
+		if err := modF.AddReplace(path, "", path, version); err != nil {
+			log.Fatalf("Error adding replace for %s => %s %s: %v", path, path, version, err)
+		}
+		log.Printf("Adding replace: %s => %s %s", path, path, version)
+	}
+
+	// Write go.mod
+	log.Println("Writing updated go.mod...")
+	modF.Cleanup() // Sort blocks, etc.
+	newModBytes, err := modF.Format()
+	if err != nil {
+		log.Fatalf("Error formatting go.mod: %v", err)
+	}
+	if err := os.WriteFile("go.mod", newModBytes, 0600); err != nil {
+		log.Fatalf("Error writing go.mod: %v", err)
+	}
+
+	// Run `go mod tidy`
+	goVer := modF.Go.Version
+	tidyArgs := []string{"mod", "tidy"}
+	if goVer != "" {
+		tidyArgs = append(tidyArgs, fmt.Sprintf("-go=%s", goVer))
+		log.Printf("Running 'go mod tidy -go=%s'...", goVer)
+	} else {
+		log.Println("Running 'go mod tidy'...")
+	}
+	if _, err := runGoCommand(tidyArgs...); err != nil {
+		log.Fatalf("Error running 'go mod tidy': %v", err)
+	}
+
+	// Run `go mod download k8s.io/kubernetes`
+	log.Printf("Running 'go mod download %s'...", k8sRepo)
+	if _, err := runGoCommand("mod", "download", k8sRepo); err != nil {
+		// This might not be fatal, could be network issues, but log it prominently
+		log.Printf("WARNING: Error running 'go mod download %s': %v", k8sRepo, err)
+	}
+
+	log.Println("Successfully updated k8s dependencies.")
 }
 
-func getGoVersion(goModPath string) (string, error) {
-	mf, err := parseMod(goModPath)
+// findModRoot searches for go.mod in dir and parent directories
+func findModRoot(dir string) string {
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "" // Reached root
+		}
+		dir = parent
+	}
+}
+
+// runGoCommand executes a go command and returns its stdout or an error
+func runGoCommand(args ...string) ([]byte, error) {
+	cmd := exec.Command(goExe, args...)
+	cmd.Env = append(os.Environ(), "GO111MODULE=on") // Ensure module mode
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("command '%s %s' failed: %v\nStderr:\n%s", goExe, strings.Join(args, " "), err, stderr.String())
+	}
+	return stdout.Bytes(), nil
+}
+
+// getModuleVersions retrieves the list of available versions for a module
+func getModuleVersions(modulePath string) ([]string, error) {
+	output, err := runGoCommand("list", "-m", "-versions", modulePath)
+	if err != nil {
+		// Check if the error is "no matching versions" - this is not a fatal error for our logic
+		if strings.Contains(string(output)+err.Error(), "no matching versions") {
+			return []string{}, nil // Return empty list, not an error
+		}
+		return nil, fmt.Errorf("error listing versions for %s: %w", modulePath, err)
+	}
+	fields := strings.Fields(string(output))
+	if len(fields) < 2 {
+		return []string{}, nil // No versions listed
+	}
+	return fields[1:], nil // First field is the module path
+}
+
+// getLatestExistingVersion checks for targetVer and its predecessor, returning the latest one that exists
+func getLatestExistingVersion(modulePath, targetVer string) (string, error) {
+	availableVersions, err := getModuleVersions(modulePath)
 	if err != nil {
 		return "", err
 	}
-	if mf.Go == nil {
-		return "", fmt.Errorf("go version not found in go.mod")
-	}
-	return mf.Go.Version, nil
-}
 
-// parseMod reads go.mod into memory as a modfile.File
-func parseMod(path string) (*modfile.File, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("reading %s: %w", path, err)
-	}
-	mf, err := modfile.Parse(path, data, nil)
-	if err != nil {
-		return nil, fmt.Errorf("parsing %s: %w", path, err)
-	}
-	return mf, nil
-}
-
-// writeModFile formats and writes the modfile back to disk
-func writeModFile(mf *modfile.File, path string) error {
-	formatted, err := mf.Format()
-	if err != nil {
-		return fmt.Errorf("formatting modfile: %w", err)
-	}
-	if err := os.WriteFile(path, formatted, 0600); err != nil {
-		return fmt.Errorf("writing %s: %w", path, err)
-	}
-	if debug {
-		fmt.Printf("Wrote %s\n", path)
-	}
-	return nil
-}
-
-// pruneK8sReplaces removes any replace lines with Old.Path prefix "k8s.io/"
-func pruneK8sReplaces(mf *modfile.File) {
-	var keep []*modfile.Replace
-	for _, rep := range mf.Replace {
-		if strings.HasPrefix(rep.Old.Path, "k8s.io/") {
-			if debug {
-				fmt.Printf("Dropping old replace for %s => %s %s\n",
-					rep.Old.Path, rep.New.Path, rep.New.Version)
-			}
-		} else {
-			keep = append(keep, rep)
-		}
-	}
-	mf.Replace = keep
-}
-
-// forceRequireStaging forcibly sets the require lines for all staging modules
-// (k8s.io/*) to the desired patch version if a valid tag is found. We remove
-// the old line first, then AddRequire so the final go.mod show them updated.
-func forceRequireStaging(mf *modfile.File, newVersion string) {
-	var stagingPaths []string
-
-	// gather all relevant require lines we want to unify
-	for _, req := range mf.Require {
-		p := req.Mod.Path
-		if strings.HasPrefix(p, "k8s.io/") &&
-			p != "k8s.io/kubernetes" &&
-			!hasMajorVersionSuffix(p) {
-			stagingPaths = append(stagingPaths, p)
-		}
-	}
-	// remove them
-	for _, p := range stagingPaths {
-		if debug {
-			fmt.Printf("Removing require line for %s\n", p)
-		}
-		_ = mf.DropRequire(p) // returns an error if not found, ignore
-	}
-	// re-add them at the new version if we can download that version
-	for _, p := range stagingPaths {
-		if versionExists(p, newVersion) {
-			if debug {
-				fmt.Printf("Adding require line for %s at %s\n", p, newVersion)
-			}
-			_ = mf.AddRequire(p, newVersion)
-		} else {
-			fmt.Printf("WARNING: no valid tag for %s at %s, skipping\n", p, newVersion)
-		}
-	}
-}
-
-// discoverPinsAlways identifies k8s.io/* modules from the "go list -m -json all"
-// output, and unifies them all to `published` if it’s downloadable. This does
-// not skip forced downgrades. If it's a staging path, we pin it.
-func discoverPinsAlways(listOut, published string) map[string]string {
-	pins := make(map[string]string)
-	dec := json.NewDecoder(strings.NewReader(listOut))
-	for {
-		var mi moduleInfo
-		if err := dec.Decode(&mi); err != nil {
+	foundTarget := false
+	for _, v := range availableVersions {
+		if v == targetVer {
+			foundTarget = true
 			break
 		}
-		if !strings.HasPrefix(mi.Path, "k8s.io/") {
-			continue
-		}
-		if mi.Path == "k8s.io/kubernetes" {
-			continue
-		}
-		if hasMajorVersionSuffix(mi.Path) {
-			if debug {
-				fmt.Printf("Skipping major-version module %s\n", mi.Path)
-			}
-			continue
-		}
-		// unify everything if a valid tag exists
-		if mi.Version != published {
-			if versionExists(mi.Path, published) {
-				if debug {
-					fmt.Printf("Pinning %s from %s to %s\n", mi.Path, mi.Version, published)
-				}
-				pins[mi.Path] = published
-			} else {
-				fmt.Printf("WARNING: no valid tag for %s at %s, leaving as %s\n",
-					mi.Path, published, mi.Version)
-			}
-		}
-	}
-	return pins
-}
-
-// applyReplacements adds replace lines for each pinned staging module
-func applyReplacements(mf *modfile.File, pins map[string]string) {
-	if len(pins) == 0 {
-		return
-	}
-	sorted := make([]string, 0, len(pins))
-	for p := range pins {
-		sorted = append(sorted, p)
-	}
-	sort.Strings(sorted)
-	for _, path := range sorted {
-		ver := pins[path]
-		if debug {
-			fmt.Printf("Applying new replace: %s => %s\n", path, ver)
-		}
-		if err := mf.AddReplace(path, "", path, ver); err != nil {
-			die("Error adding replace for %s: %v", path, err)
-		}
-	}
-}
-
-// ensureKubernetesReplace ensures there's a "k8s.io/kubernetes => k8s.io/kubernetes vX.Y.Z" line
-// matching the require(...) version in case something references it directly.
-func ensureKubernetesReplace(mf *modfile.File, k8sVer string) {
-	newReplaces := make([]*modfile.Replace, 0, len(mf.Replace)+1)
-
-	for _, rep := range mf.Replace {
-		if rep.Old.Path == "k8s.io/kubernetes" && rep.New.Version != k8sVer {
-			if debug {
-				fmt.Printf("Updating k8s.io/kubernetes replace from %s to %s\n", rep.New.Version, k8sVer)
-			}
-			continue // Skip adding this entry to newReplaces
-		}
-		newReplaces = append(newReplaces, rep)
 	}
 
-	// Add the correct replace directive
-	newReplaces = append(newReplaces, &modfile.Replace{
-		Old: module.Version{Path: "k8s.io/kubernetes"},
-		New: module.Version{Path: "k8s.io/kubernetes", Version: k8sVer},
-	})
+	if foundTarget {
+		return targetVer, nil // Target version exists
+	}
 
-	mf.Replace = newReplaces
-}
+	// Target not found, try previous patch version
+	majorMinor := semver.MajorMinor(targetVer)                // e.g., v0.32
+	patchStr := strings.TrimPrefix(targetVer, majorMinor+".") // e.g., 3
+	var patch int
+	if _, err := fmt.Sscan(patchStr, &patch); err != nil || patch < 1 {
+		log.Printf("Could not parse patch version or patch <= 0 for %s, cannot determine predecessor.", targetVer)
+		return "", nil // Cannot determine predecessor
+	}
+	prevPatchVer := fmt.Sprintf("%s.%d", majorMinor, patch-1) // e.g., v0.32.2
 
-// findKubernetesVersion returns the version in the require(...) block for k8s.io/kubernetes
-func findKubernetesVersion(mf *modfile.File) string {
-	for _, req := range mf.Require {
-		if req.Mod.Path == "k8s.io/kubernetes" {
-			return req.Mod.Version
+	foundPrev := false
+	for _, v := range availableVersions {
+		if v == prevPatchVer {
+			foundPrev = true
+			break
 		}
 	}
-	return ""
-}
 
-// toPublishedVersion: e.g. "v1.32.2" => "v0.32.2"
-func toPublishedVersion(k8sVersion string) string {
-	if !strings.HasPrefix(k8sVersion, "v") {
-		return ""
+	if foundPrev {
+		return prevPatchVer, nil // Predecessor version exists
 	}
-	parts := strings.Split(strings.TrimPrefix(k8sVersion, "v"), ".")
-	if len(parts) < 3 {
-		return ""
-	}
-	return fmt.Sprintf("v0.%s.%s", parts[1], parts[2])
-}
 
-// runGoList runs "go list -m -json all" and returns stdout, stderr, error
-func runGoList() (string, string, error) {
-	cmd := exec.Command("go", "list", "-m", "-json", "all")
-	var outBuf, errBuf bytes.Buffer
-	cmd.Stdout = &outBuf
-	cmd.Stderr = &errBuf
-	err := cmd.Run()
-	return outBuf.String(), errBuf.String(), err
-}
-
-// runCmd runs a command with stdout/stderr displayed. Returns an error if it fails.
-func runCmd(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-// versionExists quietly tries `go mod download modPath@ver`. If 0 exit code => true.
-func versionExists(modPath, ver string) bool {
-	safeArg := fmt.Sprintf("%s@%s", modPath, ver)
-	cmd := exec.Command("go", "mod", "download", safeArg)
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	return cmd.Run() == nil
-}
-
-// hasMajorVersionSuffix checks for trailing /v2, /v3, etc. in the module path
-func hasMajorVersionSuffix(path string) bool {
-	segs := strings.Split(path, "/")
-	last := segs[len(segs)-1]
-	return len(last) > 1 && last[0] == 'v' && last[1] >= '2' && last[1] <= '9'
-}
-
-// die prints an error and exits.
-func die(format string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, format+"\n", args...)
-	os.Exit(1)
+	// Neither found
+	return "", nil
 }
