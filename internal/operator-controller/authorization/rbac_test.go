@@ -2,17 +2,16 @@ package authorization
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/meta/testrestmapper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/authentication/user"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -127,9 +126,17 @@ subjects:
   namespace: a-test-namespace
   `
 
-	saName             = "test-serviceaccount"
-	ns                 = "test-namespace"
-	testServiceAccount = user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
+	saName                  = "test-serviceaccount"
+	ns                      = "test-namespace"
+	exampleClusterExtension = ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-cluster-extension"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: ns,
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: saName,
+			},
+		},
+	}
 
 	objects = []client.Object{
 		&corev1.Namespace{
@@ -194,7 +201,7 @@ subjects:
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{"*"},
-				Resources: []string{"serviceaccounts", "services"},
+				Resources: []string{"serviceaccounts", "services", "clusterextensions/finalizers"},
 				Verbs:     []string{"*"},
 			},
 			{
@@ -221,7 +228,7 @@ func TestPreAuthorize_Success(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(privilegedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
 	})
@@ -232,7 +239,7 @@ func TestPreAuthorize_Failure(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(limitedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
 		require.Error(t, err)
 		require.NotEqual(t, []ScopedPolicyRules{}, missingRules)
 	})
@@ -243,7 +250,7 @@ func TestPreAuthorizeMultiNamespace_Failure(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(limitedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifestMultiNamespace))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifestMultiNamespace))
 		require.Error(t, err)
 		require.NotEqual(t, []ScopedPolicyRules{}, missingRules)
 	})
@@ -254,7 +261,7 @@ func TestPreAuthorize_CheckEscalation(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(escalatingClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
 	})

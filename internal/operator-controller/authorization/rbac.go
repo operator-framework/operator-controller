@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io"
 	"maps"
-	"reflect"
 	"regexp"
 	"sort"
 	"strings"
 
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,7 +34,7 @@ import (
 )
 
 type PreAuthorizer interface {
-	PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) ([]ScopedPolicyRules, error)
+	PreAuthorize(ctx context.Context, ext *ocv1.ClusterExtension, manifestReader io.Reader) ([]ScopedPolicyRules, error)
 }
 
 type ScopedPolicyRules struct {
@@ -69,13 +69,14 @@ func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
 //     completes successfully but identifies missing rules, then a nil error is returned along with
 //     the list (or slice) of missing rules. Note that in some cases the error may encapsulate multiple
 //     evaluation failures
-func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader) ([]ScopedPolicyRules, error) {
+func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterExtension, manifestReader io.Reader) ([]ScopedPolicyRules, error) {
 	var allMissingPolicyRules = []ScopedPolicyRules{}
 	dm, err := a.decodeManifest(manifestReader)
 	if err != nil {
 		return nil, err
 	}
-	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(manifestManager)
+	manifestManager := &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}
+	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(manifestManager, ext)
 
 	var preAuthEvaluationErrors []error
 	missingRules, err := a.authorizeAttributesRecords(ctx, attributesRecords)
@@ -92,14 +93,8 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager us
 
 	for _, obj := range dm.rbacObjects() {
 		if err := ec.checkEscalation(ctx, manifestManager, obj); err != nil {
-			missingEscalationRules, namespace := parseEscalationErrorForMissingRules(err)
-			// Check if we already have these escalation PolicyRules, if so don't append
-			for i, rule := range missingEscalationRules {
-				previousRule := missingRules[namespace][len(missingRules[namespace])-len(missingEscalationRules)+i]
-				if !arePolicyRulesEqual(previousRule, rule) {
-					missingRules[namespace] = append(missingRules[namespace], missingEscalationRules...)
-				}
-			}
+			missingEscalationRules, err := parseEscalationErrorForMissingRules(err)
+			missingRules[obj.GetNamespace()] = append(missingRules[obj.GetNamespace()], missingEscalationRules...)
 			preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
 		}
 	}
@@ -112,7 +107,20 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager us
 		if compactMissingRules, err := validation.CompactRules(nsMissingRules); err == nil {
 			missingRules[ns] = compactMissingRules
 		}
-		sortableRules := rbacv1helpers.SortableRuleSlice(missingRules[ns])
+
+		missingRulesWithDeduplicatedVerbs := []rbacv1.PolicyRule{}
+		for _, rule := range missingRules[ns] {
+			verbSet := sets.New[string](rule.Verbs...)
+			if verbSet.Has("*") {
+				rule.Verbs = []string{"*"}
+			} else {
+				rule.Verbs = sets.List(verbSet)
+			}
+			missingRulesWithDeduplicatedVerbs = append(missingRulesWithDeduplicatedVerbs, rule)
+		}
+
+		sortableRules := rbacv1helpers.SortableRuleSlice(missingRulesWithDeduplicatedVerbs)
+
 		sort.Sort(sortableRules)
 		allMissingPolicyRules = append(allMissingPolicyRules, ScopedPolicyRules{Namespace: ns, MissingRules: sortableRules})
 	}
@@ -284,7 +292,7 @@ func (dm *decodedManifest) rbacObjects() []client.Object {
 	return objects
 }
 
-func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info) []authorizer.AttributesRecord {
+func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info, ext *ocv1.ClusterExtension) []authorizer.AttributesRecord {
 	var attributeRecords []authorizer.AttributesRecord
 
 	// Here we are splitting collection verbs based on required scope
@@ -336,6 +344,18 @@ func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManag
 				Resource:        gvr.Resource,
 				ResourceRequest: true,
 				Verb:            v,
+			})
+		}
+
+		for _, verb := range []string{"update", "patch"} {
+			attributeRecords = append(attributeRecords, authorizer.AttributesRecord{
+				User:            manifestManager,
+				Name:            ext.Name,
+				APIGroup:        ext.GroupVersionKind().Group,
+				APIVersion:      ext.GroupVersionKind().Version,
+				Resource:        "clusterextensions/finalizers",
+				ResourceRequest: true,
+				Verb:            verb,
 			})
 		}
 	}
@@ -518,17 +538,14 @@ var fullAuthority = []rbacv1.PolicyRule{
 	{Verbs: []string{"*"}, NonResourceURLs: []string{"*"}},
 }
 
-func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, string) {
-	// Regex to capture namespace and serviceaccount
-	userRegex := regexp.MustCompile(`system:serviceaccount:(?P<Namespace>[^:]+):(?P<ServiceAccount>[^"]+)`)
-	// Regex to capture missing permissions
+func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, error) {
+	errRegex := regexp.MustCompile(`(?s)^(user \".*\" \(groups=.*\) is attempting to grant RBAC permissions not currently held):.*?$`)
 	permRegex := regexp.MustCompile(`{APIGroups:\[("[^"]*")\], Resources:\[("[^"]*")\], Verbs:\[("[^"]*")\]}`)
 
-	userMatches := userRegex.FindStringSubmatch(ecError.Error())
-	namespace := userMatches[1]
+	errMatches := errRegex.FindAllStringSubmatch(ecError.Error(), -1)
 
 	// Extract permissions
-	var permissions []rbacv1.PolicyRule
+	permissions := []rbacv1.PolicyRule{}
 	permMatches := permRegex.FindAllStringSubmatch(ecError.Error(), -1)
 	for _, match := range permMatches {
 		permissions = append(permissions, rbacv1.PolicyRule{
@@ -538,20 +555,7 @@ func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, st
 		})
 	}
 
-	return permissions, namespace
-}
-
-func arePolicyRulesEqual(rule1 rbacv1.PolicyRule, rule2 rbacv1.PolicyRule) bool {
-	sort.Strings(rule1.Verbs)
-	sort.Strings(rule2.Verbs)
-	sort.Strings(rule1.APIGroups)
-	sort.Strings(rule2.APIGroups)
-	sort.Strings(rule1.Resources)
-	sort.Strings(rule2.Resources)
-	sort.Strings(rule1.ResourceNames)
-	sort.Strings(rule2.ResourceNames)
-
-	return reflect.DeepEqual(rule1, rule2)
+	return permissions, errors.New(errMatches[0][1])
 }
 
 func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {

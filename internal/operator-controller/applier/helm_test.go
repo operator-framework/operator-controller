@@ -17,7 +17,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/authentication/user"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -39,7 +38,7 @@ type noOpPreAuthorizer struct{}
 
 func (p *noOpPreAuthorizer) PreAuthorize(
 	ctx context.Context,
-	manifestManager user.Info,
+	ext *ocv1.ClusterExtension,
 	manifestReader io.Reader,
 ) ([]authorization.ScopedPolicyRules, error) {
 	// No-op: always return an empty map and no error
