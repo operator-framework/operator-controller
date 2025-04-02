@@ -57,6 +57,76 @@ subjects:
   namespace: test-namespace
   `
 
+	testManifestMultiNamespace = `apiVersion: v1
+kind: Service
+metadata:
+  name: test-service
+  namespace: test-namespace
+spec:
+  clusterIP: None
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: test-extension-role
+  namespace: test-namespace
+rules:
+- apiGroups: ["*"]
+  resources: [serviceaccounts]
+  verbs: [watch]
+- apiGroups: ["*"]
+  resources: [certificates]
+  verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: test-extension-binding
+  namespace: test-namespace
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: test-extension-role
+subjects:
+- kind: ServiceAccount
+  name: test-serviceaccount
+  namespace: test-namespace
+---
+kind: Service
+metadata:
+  name: test-service
+  namespace: a-test-namespace
+spec:
+  clusterIP: None
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: test-extension-role
+  namespace: a-test-namespace
+rules:
+- apiGroups: ["*"]
+  resources: [serviceaccounts]
+  verbs: [watch]
+- apiGroups: ["*"]
+  resources: [certificates]
+  verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: test-extension-binding
+  namespace: a-test-namespace
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: test-extension-role
+subjects:
+- kind: ServiceAccount
+  name: test-serviceaccount
+  namespace: a-test-namespace
+  `
+
 	saName             = "test-serviceaccount"
 	ns                 = "test-namespace"
 	testServiceAccount = user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
@@ -158,11 +228,22 @@ func TestPreAuthorize_Success(t *testing.T) {
 }
 
 func TestPreAuthorize_Failure(t *testing.T) {
-	t.Run("preauthorize failes with missing rbac rules", func(t *testing.T) {
+	t.Run("preauthorize fails with missing rbac rules", func(t *testing.T) {
 		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
 		fakeClient := setupFakeClient(limitedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifest))
+		require.Error(t, err)
+		require.NotEqual(t, []ScopedPolicyRules{}, missingRules)
+	})
+}
+
+func TestPreAuthorizeMultiNamespace_Failure(t *testing.T) {
+	t.Run("preauthorize fails with missing rbac rules in multiple namespaces", func(t *testing.T) {
+		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.PreflightPermissions, true)
+		fakeClient := setupFakeClient(limitedClusterRole)
+		preAuth := NewRBACPreAuthorizer(fakeClient)
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), &testServiceAccount, strings.NewReader(testManifestMultiNamespace))
 		require.Error(t, err)
 		require.NotEqual(t, []ScopedPolicyRules{}, missingRules)
 	})

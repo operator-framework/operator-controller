@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"reflect"
+	"regexp"
 	"sort"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -89,8 +92,14 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager us
 
 	for _, obj := range dm.rbacObjects() {
 		if err := ec.checkEscalation(ctx, manifestManager, obj); err != nil {
-			// In Kubernetes 1.32.2 the specialized PrivilegeEscalationError is gone.
-			// Instead, we simply collect the error.
+			missingEscalationRules, namespace := parseEscalationErrorForMissingRules(err)
+			// Check if we already have these escalation PolicyRules, if so don't append
+			for i, rule := range missingEscalationRules {
+				previousRule := missingRules[namespace][len(missingRules[namespace])-len(missingEscalationRules)+i]
+				if !arePolicyRulesEqual(previousRule, rule) {
+					missingRules[namespace] = append(missingRules[namespace], missingEscalationRules...)
+				}
+			}
 			preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
 		}
 	}
@@ -107,6 +116,11 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager us
 		sort.Sort(sortableRules)
 		allMissingPolicyRules = append(allMissingPolicyRules, ScopedPolicyRules{Namespace: ns, MissingRules: sortableRules})
 	}
+
+	// sort allMissingPolicyRules alphabetically by namespace
+	sort.Slice(allMissingPolicyRules, func(i, j int) bool {
+		return allMissingPolicyRules[i].Namespace < allMissingPolicyRules[j].Namespace
+	})
 
 	if len(preAuthEvaluationErrors) > 0 {
 		return allMissingPolicyRules, fmt.Errorf("authorization evaluation errors: %w", errors.Join(preAuthEvaluationErrors...))
@@ -502,6 +516,42 @@ func (ec *escalationChecker) checkRoleBindingEscalation(ctx context.Context, rol
 var fullAuthority = []rbacv1.PolicyRule{
 	{Verbs: []string{"*"}, APIGroups: []string{"*"}, Resources: []string{"*"}},
 	{Verbs: []string{"*"}, NonResourceURLs: []string{"*"}},
+}
+
+func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, string) {
+	// Regex to capture namespace and serviceaccount
+	userRegex := regexp.MustCompile(`system:serviceaccount:(?P<Namespace>[^:]+):(?P<ServiceAccount>[^"]+)`)
+	// Regex to capture missing permissions
+	permRegex := regexp.MustCompile(`{APIGroups:\[("[^"]*")\], Resources:\[("[^"]*")\], Verbs:\[("[^"]*")\]}`)
+
+	userMatches := userRegex.FindStringSubmatch(ecError.Error())
+	namespace := userMatches[1]
+
+	// Extract permissions
+	var permissions []rbacv1.PolicyRule
+	permMatches := permRegex.FindAllStringSubmatch(ecError.Error(), -1)
+	for _, match := range permMatches {
+		permissions = append(permissions, rbacv1.PolicyRule{
+			APIGroups: []string{strings.Trim(match[1], `"`)},
+			Resources: []string{strings.Trim(match[2], `"`)},
+			Verbs:     []string{strings.Trim(match[3], `"`)},
+		})
+	}
+
+	return permissions, namespace
+}
+
+func arePolicyRulesEqual(rule1 rbacv1.PolicyRule, rule2 rbacv1.PolicyRule) bool {
+	sort.Strings(rule1.Verbs)
+	sort.Strings(rule2.Verbs)
+	sort.Strings(rule1.APIGroups)
+	sort.Strings(rule2.APIGroups)
+	sort.Strings(rule1.Resources)
+	sort.Strings(rule2.Resources)
+	sort.Strings(rule1.ResourceNames)
+	sort.Strings(rule2.ResourceNames)
+
+	return reflect.DeepEqual(rule1, rule2)
 }
 
 func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {
