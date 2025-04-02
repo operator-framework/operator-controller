@@ -371,7 +371,7 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 		objs = append(objs, &obj)
 	}
 	for _, obj := range in.CRDs {
-		objs = append(objs, &obj)
+		objs = append(objs, obj.DeepCopy())
 	}
 	for _, obj := range in.Others {
 		obj := obj
