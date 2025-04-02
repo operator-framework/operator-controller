@@ -19,7 +19,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/apiserver/pkg/authentication/user"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -100,8 +99,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 			return nil, "", fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
 		}
 
-		ceServiceAccount := user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}
-		missingRules, err := h.PreAuthorizer.PreAuthorize(ctx, &ceServiceAccount, strings.NewReader(tmplRel.Manifest))
+		missingRules, err := h.PreAuthorizer.PreAuthorize(ctx, ext, strings.NewReader(tmplRel.Manifest))
 
 		var preAuthErrors []error
 		if len(missingRules) > 0 {
