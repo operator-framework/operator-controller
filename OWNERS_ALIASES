@@ -1,0 +1,25 @@
+
+aliases:
+   # contributors who can approve any PRs in the repo
+   operator-controller-approvers:
+   - camilamacedo86
+   - grokspawn
+   - joelanford
+   - kevinrizza
+   - perdasilva
+   - thetechnick
+   - tmshort
+
+   # contributors who can review/lgtm any PRs in the repo
+   operator-controller-reviewers:
+   - anik120
+   - ankitathomas
+   - bentito
+   - dtfranz
+   - gallettilance
+   - gavinmbell
+   - LalatenduMohanty
+   - oceanc80
+   - OchiengEd
+   - rashmigottipati
+   - trgeiger

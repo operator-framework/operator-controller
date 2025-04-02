@@ -1,0 +1,5 @@
+approvers:
+   - operator-controller-approvers
+reviewers:
+   - operator-controller-approvers
+   - operator-controller-reviewers
