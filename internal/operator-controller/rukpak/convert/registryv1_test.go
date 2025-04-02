@@ -1,7 +1,6 @@
 package convert_test
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -26,6 +25,8 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 	filterutil "github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
@@ -50,22 +51,8 @@ func getCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 	return csv, svc
 }
 
-func TestConverterValidatesBundle(t *testing.T) {
-	converter := convert.Converter{
-		BundleValidator: []func(rv1 *convert.RegistryV1) []error{
-			func(rv1 *convert.RegistryV1) []error {
-				return []error{errors.New("test error")}
-			},
-		},
-	}
-
-	_, err := converter.Convert(convert.RegistryV1{}, "installNamespace", []string{"watchNamespace"})
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "test error")
-}
-
 func TestPlainConverterUsedRegV1Validator(t *testing.T) {
-	require.Equal(t, convert.RegistryV1BundleValidator, convert.PlainConverter.BundleValidator)
+	require.Equal(t, validators.RegistryV1BundleValidator, convert.PlainConverter.BundleValidator)
 }
 
 func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
@@ -79,7 +66,7 @@ func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {
 	csv, svc := getCsvAndService()
 
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
@@ -113,7 +100,7 @@ func TestRegistryV1SuiteNamespaceAvailable(t *testing.T) {
 	unstructuredSvc := convertToUnstructured(t, svc)
 	unstructuredSvc.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"})
 
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
@@ -154,7 +141,7 @@ func TestRegistryV1SuiteNamespaceUnsupportedKind(t *testing.T) {
 	unstructuredEvt := convertToUnstructured(t, event)
 	unstructuredEvt.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Event"})
 
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredEvt},
@@ -188,7 +175,7 @@ func TestRegistryV1SuiteNamespaceClusterScoped(t *testing.T) {
 	unstructuredpriorityclass := convertToUnstructured(t, pc)
 	unstructuredpriorityclass.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "PriorityClass"})
 
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 		Others:      []unstructured.Unstructured{unstructuredpriorityclass},
@@ -267,7 +254,7 @@ func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{""}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
@@ -300,7 +287,7 @@ func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
@@ -333,7 +320,7 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{"testWatchNs1"}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
@@ -366,7 +353,7 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 	t.Log("By creating a registry v1 bundle")
 	watchNamespaces := []string{installNamespace}
 	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         *csv,
 		Others:      []unstructured.Unstructured{unstructuredSvc},
@@ -471,7 +458,7 @@ func TestConvertInstallModeValidation(t *testing.T) {
 
 			t.Log("By creating a registry v1 bundle")
 			unstructuredSvc := convertToUnstructured(t, svc)
-			registryv1Bundle := convert.RegistryV1{
+			registryv1Bundle := render.RegistryV1{
 				PackageName: "testPkg",
 				CSV:         *csv,
 				Others:      []unstructured.Unstructured{unstructuredSvc},
@@ -561,7 +548,7 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 		},
 	}
 	watchNamespaces := []string{metav1.NamespaceAll}
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 	}
@@ -592,7 +579,7 @@ func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
 		},
 	}
 	watchNamespaces := []string{metav1.NamespaceAll}
-	registryv1Bundle := convert.RegistryV1{
+	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
 		CSV:         csv,
 	}
@@ -607,7 +594,7 @@ func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
 func Test_Convert_DeploymentResourceGeneration(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
-		bundle            convert.RegistryV1
+		bundle            render.RegistryV1
 		installNamespace  string
 		targetNamespaces  []string
 		expectedResources []client.Object
@@ -616,7 +603,7 @@ func Test_Convert_DeploymentResourceGeneration(t *testing.T) {
 			name:             "generates deployment resources",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{""},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 					WithAnnotations(map[string]string{
@@ -702,7 +689,10 @@ func Test_Convert_DeploymentResourceGeneration(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			conv := convert.Converter{}
+			// ignore bundle validation for these unit tests as we only want to test
+			// the specific resource generation logic
+			conv := convert.PlainConverter
+			conv.BundleValidator = nil
 			plain, err := conv.Convert(tc.bundle, tc.installNamespace, tc.targetNamespaces)
 			require.NoError(t, err)
 			for _, expectedObj := range tc.expectedResources {
@@ -720,14 +710,14 @@ func Test_Convert_RoleRoleBindingResourceGeneration(t *testing.T) {
 		name              string
 		installNamespace  string
 		targetNamespaces  []string
-		bundle            convert.RegistryV1
+		bundle            render.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
 			name:             "does not generate any resources when in AllNamespaces mode (target namespace is [''])",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{metav1.NamespaceAll},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 					WithName("csv"),
@@ -751,7 +741,7 @@ func Test_Convert_RoleRoleBindingResourceGeneration(t *testing.T) {
 			name:             "generates role and rolebinding for permission service-account when in Single/OwnNamespace mode (target namespace contains a single namespace)",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{"watch-namespace"},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
@@ -824,7 +814,7 @@ func Test_Convert_RoleRoleBindingResourceGeneration(t *testing.T) {
 			name:             "generates role and rolebinding for permission service-account for each target namespace when in MultiNamespace install mode (target namespace contains multiple namespaces)",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{"watch-namespace", "watch-namespace-two"},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeMultiNamespace),
 					WithName("csv"),
@@ -941,7 +931,7 @@ func Test_Convert_RoleRoleBindingResourceGeneration(t *testing.T) {
 			name:             "generates role and rolebinding for each permission service-account",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{"watch-namespace"},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeAllNamespaces),
 					WithName("csv"),
@@ -1056,7 +1046,7 @@ func Test_Convert_RoleRoleBindingResourceGeneration(t *testing.T) {
 			name:             "treats empty service account as 'default' service account",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{"watch-namespace"},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeAllNamespaces),
 					WithName("csv"),
@@ -1119,7 +1109,10 @@ func Test_Convert_RoleRoleBindingResourceGeneration(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			conv := convert.Converter{}
+			// ignore bundle validation for these unit tests as we only want to test
+			// the specific resource generation logic
+			conv := convert.PlainConverter
+			conv.BundleValidator = nil
 			plain, err := conv.Convert(tc.bundle, tc.installNamespace, tc.targetNamespaces)
 			require.NoError(t, err)
 			for _, expectedObj := range tc.expectedResources {
@@ -1137,14 +1130,14 @@ func Test_Convert_ClusterRoleClusterRoleBindingResourceGeneration(t *testing.T) 
 		name              string
 		installNamespace  string
 		targetNamespaces  []string
-		bundle            convert.RegistryV1
+		bundle            render.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
 			name:             "promotes permissions to clusters permissions and adds namespace policy rule when in AllNamespaces mode (target namespace is [''])",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{""},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 					WithName("csv"),
@@ -1263,7 +1256,7 @@ func Test_Convert_ClusterRoleClusterRoleBindingResourceGeneration(t *testing.T) 
 			name:             "generates clusterroles and clusterrolebindings for clusterpermissions",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{"watch-namespace"},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
 					WithName("csv"),
@@ -1374,7 +1367,7 @@ func Test_Convert_ClusterRoleClusterRoleBindingResourceGeneration(t *testing.T) 
 			name:             "treats empty service accounts as 'default' service account",
 			installNamespace: "install-namespace",
 			targetNamespaces: []string{"watch-namespace"},
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
 					WithName("csv"),
@@ -1435,7 +1428,11 @@ func Test_Convert_ClusterRoleClusterRoleBindingResourceGeneration(t *testing.T) 
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			conv := convert.Converter{}
+			// ignore bundle validation for these unit tests as we only want to test
+			// the specific resource generation logic
+			conv := convert.PlainConverter
+			conv.BundleValidator = nil
+
 			plain, err := conv.Convert(tc.bundle, tc.installNamespace, tc.targetNamespaces)
 			require.NoError(t, err)
 			for _, expectedObj := range tc.expectedResources {
@@ -1453,13 +1450,13 @@ func Test_Convert_ServiceAccountResourceGeneration(t *testing.T) {
 		name              string
 		installNamespace  string
 		targetNamespaces  []string
-		bundle            convert.RegistryV1
+		bundle            render.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
 			name:             "generates unique set of clusterpermissions and permissions service accounts in the install namespace",
 			installNamespace: "install-namespace",
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 					WithName("csv"),
@@ -1545,7 +1542,7 @@ func Test_Convert_ServiceAccountResourceGeneration(t *testing.T) {
 		{
 			name:             "treats empty service accounts as default and doesn't generate them",
 			installNamespace: "install-namespace",
-			bundle: convert.RegistryV1{
+			bundle: render.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 					WithName("csv"),
@@ -1579,7 +1576,10 @@ func Test_Convert_ServiceAccountResourceGeneration(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			conv := convert.Converter{}
+			// ignore bundle validation for these unit tests as we only want to test
+			// the specific resource generation logic
+			conv := convert.PlainConverter
+			conv.BundleValidator = nil
 			plain, err := conv.Convert(tc.bundle, tc.installNamespace, tc.targetNamespaces)
 			require.NoError(t, err)
 			for _, expectedObj := range tc.expectedResources {
@@ -1593,7 +1593,7 @@ func Test_Convert_ServiceAccountResourceGeneration(t *testing.T) {
 }
 
 func Test_Convert_BundleCRDGeneration(t *testing.T) {
-	bundle := convert.RegistryV1{
+	bundle := render.RegistryV1{
 		CRDs: []apiextensionsv1.CustomResourceDefinition{
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
@@ -1601,7 +1601,10 @@ func Test_Convert_BundleCRDGeneration(t *testing.T) {
 		CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
 	}
 
-	conv := convert.Converter{}
+	// ignore bundle validation for these unit tests as we only want to test
+	// the specific resource generation logic
+	conv := convert.PlainConverter
+	conv.BundleValidator = nil
 	plain, err := conv.Convert(bundle, "install-namespace", []string{""})
 	require.NoError(t, err)
 	expectedResources := []client.Object{
@@ -1618,7 +1621,7 @@ func Test_Convert_BundleCRDGeneration(t *testing.T) {
 }
 
 func Test_Convert_AdditionalResourcesGeneration(t *testing.T) {
-	bundle := convert.RegistryV1{
+	bundle := render.RegistryV1{
 		CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
 		Others: []unstructured.Unstructured{
 			convertToUnstructured(t,
@@ -1646,7 +1649,10 @@ func Test_Convert_AdditionalResourcesGeneration(t *testing.T) {
 		},
 	}
 
-	conv := convert.Converter{}
+	// ignore bundle validation for these unit tests as we only want to test
+	// the specific resource generation logic
+	conv := convert.PlainConverter
+	conv.BundleValidator = nil
 	plain, err := conv.Convert(bundle, "install-namespace", []string{""})
 	require.NoError(t, err)
 	expectedResources := []unstructured.Unstructured{
