@@ -57,11 +57,10 @@ type Preflight interface {
 type BundleToHelmChartFn func(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error)
 
 type Helm struct {
-	ActionClientGetter         helmclient.ActionClientGetter
-	Preflights                 []Preflight
-	PreAuthorizer              authorization.PreAuthorizer
-	BundleToHelmChartFn        BundleToHelmChartFn
-	EnablePreflightPermissions bool
+	ActionClientGetter  helmclient.ActionClientGetter
+	Preflights          []Preflight
+	PreAuthorizer       authorization.PreAuthorizer
+	BundleToHelmChartFn BundleToHelmChartFn
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -95,7 +94,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		labels: objectLabels,
 	}
 
-	if h.EnablePreflightPermissions {
+	if h.PreAuthorizer != nil {
 		tmplRel, err := h.renderClientOnlyRelease(ctx, ext, chrt, values, post)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
