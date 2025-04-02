@@ -255,17 +255,17 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // indirect
 )
 
-replace k8s.io/api => k8s.io/api v0.32.2
+replace k8s.io/api => k8s.io/api v0.32.3
 
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.32.3
 
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.2
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.3
 
-replace k8s.io/apiserver => k8s.io/apiserver v0.32.2
+replace k8s.io/apiserver => k8s.io/apiserver v0.32.3
 
-replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.2
+replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.32.3
 
-replace k8s.io/client-go => k8s.io/client-go v0.32.2
+replace k8s.io/client-go => k8s.io/client-go v0.32.3
 
 replace k8s.io/cloud-provider => k8s.io/cloud-provider v0.32.3
 
@@ -273,7 +273,7 @@ replace k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.32.3
 
 replace k8s.io/code-generator => k8s.io/code-generator v0.32.3
 
-replace k8s.io/component-base => k8s.io/component-base v0.32.2
+replace k8s.io/component-base => k8s.io/component-base v0.32.3
 
 replace k8s.io/component-helpers => k8s.io/component-helpers v0.32.3
 
@@ -304,6 +304,8 @@ replace k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.32.3
 replace k8s.io/kubectl => k8s.io/kubectl v0.32.3
 
 replace k8s.io/kubelet => k8s.io/kubelet v0.32.3
+
+replace k8s.io/kubernetes => k8s.io/kubernetes v1.32.3
 
 replace k8s.io/metrics => k8s.io/metrics v0.32.3
 
