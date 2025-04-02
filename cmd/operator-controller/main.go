@@ -416,12 +416,21 @@ func run() error {
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
 	}
 
+	// determine if PreAuthorizer should be enabled based on feature gate
+	var preAuth authorization.PreAuthorizer
+	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+		setupLog.Info("preflight permissions check enabled via feature gate")
+		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
+	} else {
+		setupLog.Info("preflight permissions check disabled via feature gate")
+	}
+
+	// now initialize the helmApplier, assigning the potentially nil preAuth
 	helmApplier := &applier.Helm{
-		ActionClientGetter:         acg,
-		Preflights:                 preflights,
-		BundleToHelmChartFn:        convert.RegistryV1ToHelmChart,
-		PreAuthorizer:              authorization.NewRBACPreAuthorizer(mgr.GetClient()),
-		EnablePreflightPermissions: features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions),
+		ActionClientGetter:  acg,
+		Preflights:          preflights,
+		BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		PreAuthorizer:       preAuth,
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
