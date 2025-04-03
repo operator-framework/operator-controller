@@ -7,6 +7,7 @@ import (
 	"io"
 	"maps"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -127,8 +128,8 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 	}
 
 	// sort allMissingPolicyRules alphabetically by namespace
-	sort.Slice(allMissingPolicyRules, func(i, j int) bool {
-		return allMissingPolicyRules[i].Namespace < allMissingPolicyRules[j].Namespace
+	slices.SortFunc(allMissingPolicyRules, func(a, b ScopedPolicyRules) int {
+		return strings.Compare(a.Namespace, b.Namespace)
 	})
 
 	if len(preAuthEvaluationErrors) > 0 {
