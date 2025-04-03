@@ -16,6 +16,7 @@ type Option func(*options)
 
 type options struct {
 	UniqueNameGenerator UniqueNameGenerator
+	CertificateProvider CertificateProvider
 }
 
 func (o *options) apply(opts ...Option) *options {
@@ -23,6 +24,23 @@ func (o *options) apply(opts ...Option) *options {
 		opt(o)
 	}
 	return o
+}
+
+var PlainBundleRenderer = BundleRenderer{
+	ResourceGenerators: []ResourceGenerator{
+		BundleServiceAccountGenerator,
+		BundlePermissionsGenerator,
+		BundleClusterPermissionsGenerator,
+		BundleCRDGenerator,
+		BundleResourceGenerator,
+		BundleWebhookResourceGenerator,
+		CertProviderResourceGenerator,
+		BundleDeploymentGenerator,
+	},
+	ResourceMutatorFactories: []ResourceMutatorFactory{
+		BundleConversionWebhookResourceMutator,
+		CertificateProviderResourceMutator,
+	},
 }
 
 type BundleRenderer struct {
@@ -33,6 +51,7 @@ type BundleRenderer struct {
 func (r BundleRenderer) Render(rv1 convert.RegistryV1, installNamespace string, watchNamespaces []string, opts ...Option) ([]client.Object, error) {
 	renderOptions := (&options{
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
+		CertificateProvider: CertManagerProvider{},
 	}).apply(opts...)
 
 	// create generation options
@@ -40,10 +59,11 @@ func (r BundleRenderer) Render(rv1 convert.RegistryV1, installNamespace string, 
 		InstallNamespace:    installNamespace,
 		TargetNamespaces:    watchNamespaces,
 		UniqueNameGenerator: renderOptions.UniqueNameGenerator,
+		CertificateProvider: renderOptions.CertificateProvider,
 	}
 
 	// generate object mutators
-	objMutators, err := ChainedResourceMutatorFactory(r.ResourceMutatorFactories).MakeResourceMutators()
+	objMutators, err := ChainedResourceMutatorFactory(r.ResourceMutatorFactories).MakeResourceMutators(&rv1, genOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +90,5 @@ func DefaultUniqueNameGenerator(base string, o interface{}) (string, error) {
 	if len(base)+len(hashStr) > maxNameLength {
 		base = base[:maxNameLength-len(hashStr)-1]
 	}
-
 	return fmt.Sprintf("%s-%s", base, hashStr), nil
 }

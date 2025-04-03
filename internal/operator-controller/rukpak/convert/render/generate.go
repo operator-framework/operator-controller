@@ -22,6 +22,7 @@ type Options struct {
 	InstallNamespace    string
 	TargetNamespaces    []string
 	UniqueNameGenerator UniqueNameGenerator
+	CertificateProvider CertificateProvider
 }
 
 type ResourceGenerator func(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error)

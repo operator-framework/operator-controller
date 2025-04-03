@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,33 +19,6 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 )
-
-func WithServiceSpec(serviceSpec corev1.ServiceSpec) func(client.Object) {
-	return func(obj client.Object) {
-		switch o := obj.(type) {
-		case *corev1.Service:
-			o.Spec = serviceSpec
-		}
-	}
-}
-
-func WithValidatingWebhooks(webhooks ...admissionregistrationv1.ValidatingWebhook) func(client.Object) {
-	return func(obj client.Object) {
-		switch o := obj.(type) {
-		case *admissionregistrationv1.ValidatingWebhookConfiguration:
-			o.Webhooks = webhooks
-		}
-	}
-}
-
-func WithMutatingWebhooks(webhooks ...admissionregistrationv1.MutatingWebhook) func(client.Object) {
-	return func(obj client.Object) {
-		switch o := obj.(type) {
-		case *admissionregistrationv1.MutatingWebhookConfiguration:
-			o.Webhooks = webhooks
-		}
-	}
-}
 
 func BundleWebhookResourceGenerator(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error) {
 	//nolint:prealloc
@@ -203,45 +176,129 @@ func BundleConversionWebhookResourceMutator(rv1 *convert.RegistryV1, opts Option
 	return mutators, nil
 }
 
-func GenerateValidatingWebhookConfigurationResource(name string, opts ...ResourceGenerationOption) *admissionregistrationv1.ValidatingWebhookConfiguration {
-	return ResourceGenerationOptions(opts).ApplyTo(
-		&admissionregistrationv1.ValidatingWebhookConfiguration{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ValidatingWebhookConfiguration",
-				APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-			},
-		},
-	).(*admissionregistrationv1.ValidatingWebhookConfiguration)
+func CertificateProviderResourceMutator(rv1 *convert.RegistryV1, opts Options) (ResourceMutators, error) {
+	resourceMutators := ResourceMutators{}
+	webhookDefnsByDeployment := map[string][]v1alpha1.WebhookDescription{}
+
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		webhookDefnsByDeployment[wh.DeploymentName] = append(webhookDefnsByDeployment[wh.DeploymentName], wh)
+	}
+
+	for depName, webhooks := range webhookDefnsByDeployment {
+		certCfg := getCertCfgForDeployment(depName, opts.InstallNamespace, rv1.CSV.Name)
+
+		resourceMutators.Append(
+			DeploymentResourceMutator(depName, opts.InstallNamespace, func(dep *appsv1.Deployment) error {
+				dep.Spec.Template.Spec.Volumes = slices.DeleteFunc(dep.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
+					return v.Name == "apiservice-cert" || v.Name == "webhook-cert"
+				})
+				dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes,
+					corev1.Volume{
+						Name: "apiservice-cert",
+						VolumeSource: corev1.VolumeSource{
+							Secret: &corev1.SecretVolumeSource{
+								SecretName: certCfg.CertName,
+								Items: []corev1.KeyToPath{
+									{
+										Key:  "tls.crt",
+										Path: "apiserver.crt",
+									},
+									{
+										Key:  "tls.key",
+										Path: "apiserver.key",
+									},
+								},
+							},
+						},
+					},
+					corev1.Volume{
+						Name: "webhook-cert",
+						VolumeSource: corev1.VolumeSource{
+							Secret: &corev1.SecretVolumeSource{
+								SecretName: certCfg.CertName,
+								Items: []corev1.KeyToPath{
+									{
+										Key:  "tls.crt",
+										Path: "tls.crt",
+									},
+									{
+										Key:  "tls.key",
+										Path: "tls.key",
+									},
+								},
+							},
+						},
+					},
+				)
+
+				volumeMounts := []corev1.VolumeMount{
+					{Name: "apiservice-cert", MountPath: "/apiserver.local.config/certificates"},
+					{Name: "webhook-cert", MountPath: "/tmp/k8s-webhook-server/serving-certs"},
+				}
+				for i := range dep.Spec.Template.Spec.Containers {
+					dep.Spec.Template.Spec.Containers[i].VolumeMounts = slices.DeleteFunc(dep.Spec.Template.Spec.Containers[i].VolumeMounts, func(vm corev1.VolumeMount) bool {
+						return vm.Name == "apiservice-cert" || vm.Name == "webhook-cert"
+					})
+					dep.Spec.Template.Spec.Containers[i].VolumeMounts = append(dep.Spec.Template.Spec.Containers[i].VolumeMounts, volumeMounts...)
+				}
+
+				return nil
+			}),
+		)
+
+		resourceMutators.Append(
+			ServiceResourceMutator(getWebhookServiceName(depName), opts.InstallNamespace, func(svc *corev1.Service) error {
+				return opts.CertificateProvider.InjectCABundle(svc, certCfg)
+			}),
+		)
+
+		for _, wh := range webhooks {
+			switch wh.Type {
+			case v1alpha1.ValidatingAdmissionWebhook:
+				resourceMutators.Append(
+					ValidatingWebhookConfigurationMutator(wh.GenerateName, func(whResource *admissionregistrationv1.ValidatingWebhookConfiguration) error {
+						return opts.CertificateProvider.InjectCABundle(whResource, certCfg)
+					}),
+				)
+			case v1alpha1.MutatingAdmissionWebhook:
+				resourceMutators.Append(
+					MutatingWebhookConfigurationMutator(wh.GenerateName, func(whResource *admissionregistrationv1.MutatingWebhookConfiguration) error {
+						return opts.CertificateProvider.InjectCABundle(whResource, certCfg)
+					}),
+				)
+			case v1alpha1.ConversionWebhook:
+				for _, crdName := range wh.ConversionCRDs {
+					resourceMutators.Append(
+						CustomResourceDefinitionMutator(crdName, func(crd *apiextensionsv1.CustomResourceDefinition) error {
+							return opts.CertificateProvider.InjectCABundle(crd, certCfg)
+						}),
+					)
+				}
+			}
+		}
+	}
+	return resourceMutators, nil
 }
 
-func GenerateMutatingWebhookConfigurationResource(name string, opts ...ResourceGenerationOption) *admissionregistrationv1.MutatingWebhookConfiguration {
-	return ResourceGenerationOptions(opts).ApplyTo(
-		&admissionregistrationv1.MutatingWebhookConfiguration{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "MutatingWebhookConfiguration",
-				APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-			},
-		},
-	).(*admissionregistrationv1.MutatingWebhookConfiguration)
-}
+func CertProviderResourceGenerator(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error) {
+	var objs []client.Object
+	deploymentsWithWebhooks := sets.Set[string]{}
 
-func GenerateServiceResource(name string, namespace string, opts ...ResourceGenerationOption) *corev1.Service {
-	return ResourceGenerationOptions(opts).ApplyTo(&corev1.Service{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: corev1.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      name,
-		},
-	}).(*corev1.Service)
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		deploymentsWithWebhooks.Insert(wh.DeploymentName)
+	}
+
+	for _, depName := range deploymentsWithWebhooks.UnsortedList() {
+		certCfg := getCertCfgForDeployment(depName, opts.InstallNamespace, rv1.CSV.Name)
+		certObjs, err := opts.CertificateProvider.AdditionalObjects(certCfg)
+		if err != nil {
+			return nil, err
+		}
+		for _, certObj := range certObjs {
+			objs = append(objs, &certObj)
+		}
+	}
+	return objs, nil
 }
 
 func getWebhookServicePort(wh v1alpha1.WebhookDescription) corev1.ServicePort {
@@ -264,4 +321,12 @@ func getWebhookServicePort(wh v1alpha1.WebhookDescription) corev1.ServicePort {
 
 func getWebhookServiceName(deploymentName string) string {
 	return fmt.Sprintf("%s-service", strings.ReplaceAll(deploymentName, ".", "-"))
+}
+
+func getCertCfgForDeployment(deploymentName string, deploymentNamespace string, csvName string) CertificateProvisioningConfig {
+	return CertificateProvisioningConfig{
+		WebhookServiceName: getWebhookServiceName(deploymentName),
+		Namespace:          deploymentNamespace,
+		CertName:           fmt.Sprintf("%s-%s-crt", csvName, deploymentName),
+	}
 }
