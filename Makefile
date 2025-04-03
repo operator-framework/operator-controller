@@ -154,6 +154,11 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 verify: tidy fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
+.PHONY: verify-convert
+verify-convert:
+	go run test/convert/generate-manifests.go
+	git diff --exit-code
+
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
 	$(GOLANGCI_LINT) run --fix --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
