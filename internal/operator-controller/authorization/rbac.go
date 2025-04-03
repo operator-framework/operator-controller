@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +30,8 @@ import (
 	"k8s.io/kubernetes/pkg/registry/rbac/validation"
 	rbac "k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 type PreAuthorizer interface {
