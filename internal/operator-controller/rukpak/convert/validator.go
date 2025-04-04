@@ -25,6 +25,7 @@ var RegistryV1BundleValidator = BundleValidator{
 	CheckDeploymentSpecUniqueness,
 	CheckCRDResourceUniqueness,
 	CheckOwnedCRDExistence,
+	CheckPackageNameNotEmpty,
 }
 
 // CheckDeploymentSpecUniqueness checks that each strategy deployment spec in the csv has a unique name.
@@ -39,8 +40,7 @@ func CheckDeploymentSpecUniqueness(rv1 *RegistryV1) []error {
 		deploymentNameSet.Insert(dep.Name)
 	}
 
-	//nolint:prealloc
-	var errs []error
+	errs := make([]error, 0, len(duplicateDeploymentNames))
 	for _, d := range slices.Sorted(slices.Values(duplicateDeploymentNames.UnsortedList())) {
 		errs = append(errs, fmt.Errorf("cluster service version contains duplicate strategy deployment spec '%s'", d))
 	}
@@ -54,8 +54,6 @@ func CheckOwnedCRDExistence(rv1 *RegistryV1) []error {
 		crdsNames.Insert(crd.Name)
 	}
 
-	//nolint:prealloc
-	var errs []error
 	missingCRDNames := sets.Set[string]{}
 	for _, crd := range rv1.CSV.Spec.CustomResourceDefinitions.Owned {
 		if !crdsNames.Has(crd.Name) {
@@ -63,6 +61,7 @@ func CheckOwnedCRDExistence(rv1 *RegistryV1) []error {
 		}
 	}
 
+	errs := make([]error, 0, len(missingCRDNames))
 	for _, crdName := range slices.Sorted(slices.Values(missingCRDNames.UnsortedList())) {
 		errs = append(errs, fmt.Errorf("cluster service definition references owned custom resource definition '%s' not found in bundle", crdName))
 	}
@@ -80,10 +79,17 @@ func CheckCRDResourceUniqueness(rv1 *RegistryV1) []error {
 		crdsNames.Insert(crd.Name)
 	}
 
-	//nolint:prealloc
-	var errs []error
+	errs := make([]error, 0, len(duplicateCRDNames))
 	for _, crdName := range slices.Sorted(slices.Values(duplicateCRDNames.UnsortedList())) {
 		errs = append(errs, fmt.Errorf("bundle contains duplicate custom resource definition '%s'", crdName))
 	}
 	return errs
+}
+
+// CheckPackageNameNotEmpty checks that PackageName is not empty
+func CheckPackageNameNotEmpty(rv1 *RegistryV1) []error {
+	if rv1.PackageName == "" {
+		return []error{errors.New("package name is empty")}
+	}
+	return nil
 }
