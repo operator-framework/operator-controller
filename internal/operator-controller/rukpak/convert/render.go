@@ -1,4 +1,4 @@
-package render
+package convert
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
@@ -26,12 +25,12 @@ func (o *options) apply(opts ...Option) *options {
 }
 
 type BundleRenderer struct {
-	BundleValidator          convert.BundleValidator
+	BundleValidator          BundleValidator
 	ResourceGenerators       []ResourceGenerator
 	ResourceMutatorFactories []ResourceMutatorFactory
 }
 
-func (r BundleRenderer) Render(rv1 convert.RegistryV1, installNamespace string, watchNamespaces []string, opts ...Option) ([]client.Object, error) {
+func (r BundleRenderer) Render(rv1 RegistryV1, installNamespace string, watchNamespaces []string, opts ...Option) ([]client.Object, error) {
 	// validate bundle
 	if err := r.BundleValidator.Validate(&rv1); err != nil {
 		return nil, err

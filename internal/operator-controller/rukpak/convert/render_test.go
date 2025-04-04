@@ -1,4 +1,4 @@
-package render_test
+package convert_test
 
 import (
 	"errors"
@@ -12,18 +12,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert/render"
 )
 
 func Test_BundleRenderer_NoConfig(t *testing.T) {
-	renderer := render.BundleRenderer{}
+	renderer := convert.BundleRenderer{}
 	objs, err := renderer.Render(convert.RegistryV1{}, "", nil)
 	require.NoError(t, err)
 	require.Empty(t, objs)
 }
 
 func Test_BundleRenderer_ValidatesBundle(t *testing.T) {
-	renderer := render.BundleRenderer{
+	renderer := convert.BundleRenderer{
 		BundleValidator: convert.BundleValidator{
 			func(v1 *convert.RegistryV1) []error {
 				return []error{errors.New("this bundle is invalid")}
@@ -37,12 +36,12 @@ func Test_BundleRenderer_ValidatesBundle(t *testing.T) {
 }
 
 func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
-	renderer := render.BundleRenderer{
-		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *convert.RegistryV1, opts render.Options) ([]client.Object, error) {
+	renderer := convert.BundleRenderer{
+		ResourceGenerators: []convert.ResourceGenerator{
+			func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
 				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
 			},
-			func(rv1 *convert.RegistryV1, opts render.Options) ([]client.Object, error) {
+			func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
 				return []client.Object{&appsv1.Deployment{}}, nil
 			},
 		},
@@ -53,15 +52,15 @@ func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 }
 
 func Test_BundleRenderer_CallsResourceMutators(t *testing.T) {
-	renderer := render.BundleRenderer{
-		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *convert.RegistryV1, opts render.Options) ([]client.Object, error) {
+	renderer := convert.BundleRenderer{
+		ResourceGenerators: []convert.ResourceGenerator{
+			func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
 				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
 			},
 		},
-		ResourceMutatorFactories: []render.ResourceMutatorFactory{
-			func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
-				return []render.ResourceMutator{
+		ResourceMutatorFactories: []convert.ResourceMutatorFactory{
+			func(rv1 *convert.RegistryV1, opts convert.Options) (convert.ResourceMutators, error) {
+				return []convert.ResourceMutator{
 					func(object client.Object) error {
 						switch object.(type) {
 						case *corev1.Namespace:
@@ -79,8 +78,8 @@ func Test_BundleRenderer_CallsResourceMutators(t *testing.T) {
 					},
 				}, nil
 			},
-			func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
-				return []render.ResourceMutator{
+			func(rv1 *convert.RegistryV1, opts convert.Options) (convert.ResourceMutators, error) {
+				return []convert.ResourceMutator{
 					func(object client.Object) error {
 						object.SetAnnotations(map[string]string{
 							"some": "annotation",
@@ -120,12 +119,12 @@ func Test_BundleRenderer_CallsResourceMutators(t *testing.T) {
 }
 
 func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
-	renderer := render.BundleRenderer{
-		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *convert.RegistryV1, opts render.Options) ([]client.Object, error) {
+	renderer := convert.BundleRenderer{
+		ResourceGenerators: []convert.ResourceGenerator{
+			func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
 				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
 			},
-			func(rv1 *convert.RegistryV1, opts render.Options) ([]client.Object, error) {
+			func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
 				return nil, fmt.Errorf("generator error")
 			},
 		},
@@ -137,14 +136,14 @@ func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
 }
 
 func Test_BundleRenderer_ReturnsResourceMutatorFactoryErrors(t *testing.T) {
-	renderer := render.BundleRenderer{
-		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *convert.RegistryV1, opts render.Options) ([]client.Object, error) {
+	renderer := convert.BundleRenderer{
+		ResourceGenerators: []convert.ResourceGenerator{
+			func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
 				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
 			},
 		},
-		ResourceMutatorFactories: []render.ResourceMutatorFactory{
-			func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
+		ResourceMutatorFactories: []convert.ResourceMutatorFactory{
+			func(rv1 *convert.RegistryV1, opts convert.Options) (convert.ResourceMutators, error) {
 				return nil, errors.New("mutator factory error")
 			},
 		},
@@ -156,15 +155,15 @@ func Test_BundleRenderer_ReturnsResourceMutatorFactoryErrors(t *testing.T) {
 }
 
 func Test_BundleRenderer_ReturnsResourceMutatorErrors(t *testing.T) {
-	renderer := render.BundleRenderer{
-		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *convert.RegistryV1, opts render.Options) ([]client.Object, error) {
+	renderer := convert.BundleRenderer{
+		ResourceGenerators: []convert.ResourceGenerator{
+			func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
 				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
 			},
 		},
-		ResourceMutatorFactories: []render.ResourceMutatorFactory{
-			func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
-				return []render.ResourceMutator{
+		ResourceMutatorFactories: []convert.ResourceMutatorFactory{
+			func(rv1 *convert.RegistryV1, opts convert.Options) (convert.ResourceMutators, error) {
+				return []convert.ResourceMutator{
 					func(object client.Object) error {
 						return errors.New("mutator error")
 					},

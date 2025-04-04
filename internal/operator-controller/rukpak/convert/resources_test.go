@@ -1,4 +1,4 @@
-package render_test
+package convert_test
 
 import (
 	"maps"
@@ -11,12 +11,12 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
 func Test_OptionsApplyToExecutesIgnoresNil(t *testing.T) {
-	opts := []render.ResourceGenerationOption{
+	opts := []convert.ResourceGenerationOption{
 		func(object client.Object) {
 			object.SetAnnotations(util.MergeMaps(object.GetAnnotations(), map[string]string{"h": ""}))
 		},
@@ -27,48 +27,48 @@ func Test_OptionsApplyToExecutesIgnoresNil(t *testing.T) {
 		nil,
 	}
 
-	require.Nil(t, render.ResourceGenerationOptions(nil).ApplyTo(nil))
-	require.Nil(t, render.ResourceGenerationOptions([]render.ResourceGenerationOption{}).ApplyTo(nil))
+	require.Nil(t, convert.ResourceGenerationOptions(nil).ApplyTo(nil))
+	require.Nil(t, convert.ResourceGenerationOptions([]convert.ResourceGenerationOption{}).ApplyTo(nil))
 
-	obj := render.ResourceGenerationOptions(opts).ApplyTo(&corev1.ConfigMap{})
+	obj := convert.ResourceGenerationOptions(opts).ApplyTo(&corev1.ConfigMap{})
 	require.Equal(t, "hi", strings.Join(slices.Sorted(maps.Keys(obj.GetAnnotations())), ""))
 }
 
 func Test_GenerateServiceAccount(t *testing.T) {
-	svc := render.GenerateServiceAccountResource("my-sa", "my-namespace")
+	svc := convert.GenerateServiceAccountResource("my-sa", "my-namespace")
 	require.NotNil(t, svc)
 	require.Equal(t, "my-sa", svc.Name)
 	require.Equal(t, "my-namespace", svc.Namespace)
 }
 
 func Test_GenerateRole(t *testing.T) {
-	role := render.GenerateRoleResource("my-role", "my-namespace")
+	role := convert.GenerateRoleResource("my-role", "my-namespace")
 	require.NotNil(t, role)
 	require.Equal(t, "my-role", role.Name)
 	require.Equal(t, "my-namespace", role.Namespace)
 }
 
 func Test_GenerateRoleBinding(t *testing.T) {
-	roleBinding := render.GenerateRoleBindingResource("my-role-binding", "my-namespace")
+	roleBinding := convert.GenerateRoleBindingResource("my-role-binding", "my-namespace")
 	require.NotNil(t, roleBinding)
 	require.Equal(t, "my-role-binding", roleBinding.Name)
 	require.Equal(t, "my-namespace", roleBinding.Namespace)
 }
 
 func Test_GenerateClusterRole(t *testing.T) {
-	clusterRole := render.GenerateClusterRoleResource("my-cluster-role")
+	clusterRole := convert.GenerateClusterRoleResource("my-cluster-role")
 	require.NotNil(t, clusterRole)
 	require.Equal(t, "my-cluster-role", clusterRole.Name)
 }
 
 func Test_GenerateClusterRoleBinding(t *testing.T) {
-	clusterRoleBinding := render.GenerateClusterRoleBindingResource("my-cluster-role-binding")
+	clusterRoleBinding := convert.GenerateClusterRoleBindingResource("my-cluster-role-binding")
 	require.NotNil(t, clusterRoleBinding)
 	require.Equal(t, "my-cluster-role-binding", clusterRoleBinding.Name)
 }
 
 func Test_GenerateDeployment(t *testing.T) {
-	deployment := render.GenerateDeploymentResource("my-deployment", "my-namespace")
+	deployment := convert.GenerateDeploymentResource("my-deployment", "my-namespace")
 	require.NotNil(t, deployment)
 	require.Equal(t, "my-deployment", deployment.Name)
 	require.Equal(t, "my-namespace", deployment.Namespace)
@@ -108,11 +108,11 @@ func Test_WithSubjects(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			roleBinding := render.GenerateRoleBindingResource("my-role", "my-namespace", render.WithSubjects(tc.subjects...))
+			roleBinding := convert.GenerateRoleBindingResource("my-role", "my-namespace", convert.WithSubjects(tc.subjects...))
 			require.NotNil(t, roleBinding)
 			require.Equal(t, roleBinding.Subjects, tc.subjects)
 
-			clusterRoleBinding := render.GenerateClusterRoleBindingResource("my-role", render.WithSubjects(tc.subjects...))
+			clusterRoleBinding := convert.GenerateClusterRoleBindingResource("my-role", convert.WithSubjects(tc.subjects...))
 			require.NotNil(t, clusterRoleBinding)
 			require.Equal(t, clusterRoleBinding.Subjects, tc.subjects)
 		})
@@ -156,11 +156,11 @@ func Test_WithRules(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			role := render.GenerateRoleResource("my-role", "my-namespace", render.WithRules(tc.rules...))
+			role := convert.GenerateRoleResource("my-role", "my-namespace", convert.WithRules(tc.rules...))
 			require.NotNil(t, role)
 			require.Equal(t, role.Rules, tc.rules)
 
-			clusterRole := render.GenerateClusterRoleResource("my-role", render.WithRules(tc.rules...))
+			clusterRole := convert.GenerateClusterRoleResource("my-role", convert.WithRules(tc.rules...))
 			require.NotNil(t, clusterRole)
 			require.Equal(t, clusterRole.Rules, tc.rules)
 		})
@@ -174,11 +174,11 @@ func Test_WithRoleRef(t *testing.T) {
 		Name:     "my-role",
 	}
 
-	roleBinding := render.GenerateRoleBindingResource("my-role-binding", "my-namespace", render.WithRoleRef(roleRef))
+	roleBinding := convert.GenerateRoleBindingResource("my-role-binding", "my-namespace", convert.WithRoleRef(roleRef))
 	require.NotNil(t, roleBinding)
 	require.Equal(t, roleRef, roleBinding.RoleRef)
 
-	clusterRoleBinding := render.GenerateClusterRoleBindingResource("my-cluster-role-binding", render.WithRoleRef(roleRef))
+	clusterRoleBinding := convert.GenerateClusterRoleBindingResource("my-cluster-role-binding", convert.WithRoleRef(roleRef))
 	require.NotNil(t, clusterRoleBinding)
 	require.Equal(t, roleRef, clusterRoleBinding.RoleRef)
 }
@@ -202,7 +202,7 @@ func Test_WithLabels(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			dep := render.GenerateDeploymentResource("my-deployment", "my-namespace", render.WithLabels(tc.labels))
+			dep := convert.GenerateDeploymentResource("my-deployment", "my-namespace", convert.WithLabels(tc.labels))
 			require.NotNil(t, dep)
 			require.Equal(t, tc.labels, dep.Labels)
 		})

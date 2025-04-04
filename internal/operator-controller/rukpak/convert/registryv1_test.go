@@ -1,7 +1,6 @@
 package convert_test
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -51,20 +50,6 @@ func getCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 	}
 	svc.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Service"})
 	return csv, svc
-}
-
-func TestConverterValidatesBundle(t *testing.T) {
-	converter := convert.Converter{
-		BundleValidator: []func(rv1 *convert.RegistryV1) []error{
-			func(rv1 *convert.RegistryV1) []error {
-				return []error{errors.New("test error")}
-			},
-		},
-	}
-
-	_, err := converter.Convert(convert.RegistryV1{}, "installNamespace", []string{"watchNamespace"})
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "test error")
 }
 
 func TestPlainConverterUsedRegV1Validator(t *testing.T) {

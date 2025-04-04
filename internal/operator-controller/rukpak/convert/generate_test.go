@@ -1,4 +1,4 @@
-package render_test
+package convert_test
 
 import (
 	"cmp"
@@ -19,14 +19,13 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert/render"
 )
 
 func Test_BundleDeploymentGenerator(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		bundle            *convert.RegistryV1
-		opts              render.Options
+		opts              convert.Options
 		expectedResources []client.Object
 	}{
 		{
@@ -59,7 +58,7 @@ func Test_BundleDeploymentGenerator(t *testing.T) {
 					),
 				),
 			},
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace: "install-namespace",
 				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
 			},
@@ -114,7 +113,7 @@ func Test_BundleDeploymentGenerator(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			objs, err := render.BundleDeploymentGenerator(tc.bundle, tc.opts)
+			objs, err := convert.BundleDeploymentGenerator(tc.bundle, tc.opts)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedResources, objs)
 		})
@@ -128,13 +127,13 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 
 	for _, tc := range []struct {
 		name              string
-		opts              render.Options
+		opts              convert.Options
 		bundle            *convert.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
 			name: "does not generate any resources when in AllNamespaces mode (target namespace is [''])",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace:    "install-namespace",
 				TargetNamespaces:    []string{""},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
@@ -160,7 +159,7 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 		},
 		{
 			name: "generates role and rolebinding for permission service-account when in Single/OwnNamespace mode (target namespace contains a single namespace)",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace:    "install-namespace",
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
@@ -235,7 +234,7 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 		},
 		{
 			name: "generates role and rolebinding for permission service-account for each target namespace when in MultiNamespace install mode (target namespace contains multiple namespaces)",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace:    "install-namespace",
 				TargetNamespaces:    []string{"watch-namespace", "watch-namespace-two"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
@@ -354,7 +353,7 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 		},
 		{
 			name: "generates role and rolebinding for each permission service-account",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace:    "install-namespace",
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
@@ -471,7 +470,7 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 		},
 		{
 			name: "treats empty service account as 'default' service account",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace:    "install-namespace",
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
@@ -538,7 +537,7 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			objs, err := render.BundlePermissionsGenerator(tc.bundle, tc.opts)
+			objs, err := convert.BundlePermissionsGenerator(tc.bundle, tc.opts)
 			require.NoError(t, err)
 			for i := range objs {
 				require.Equal(t, tc.expectedResources[i], objs[i], "failed to find expected resource at index %d", i)
@@ -555,13 +554,13 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 
 	for _, tc := range []struct {
 		name              string
-		opts              render.Options
+		opts              convert.Options
 		bundle            *convert.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
 			name: "promotes permissions to clusters permissions and adds namespace policy rule when in AllNamespaces mode (target namespace is [''])",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace:    "install-namespace",
 				TargetNamespaces:    []string{""},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
@@ -682,7 +681,7 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 		},
 		{
 			name: "generates clusterroles and clusterrolebindings for clusterpermissions",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace:    "install-namespace",
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
@@ -795,7 +794,7 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 		},
 		{
 			name: "treats empty service accounts as 'default' service account",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace:    "install-namespace",
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
@@ -860,7 +859,7 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			objs, err := render.BundleClusterPermissionsGenerator(tc.bundle, tc.opts)
+			objs, err := convert.BundleClusterPermissionsGenerator(tc.bundle, tc.opts)
 			require.NoError(t, err)
 			for i := range objs {
 				require.Equal(t, tc.expectedResources[i], objs[i], "failed to find expected resource at index %d", i)
@@ -873,13 +872,13 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 func Test_BundleServiceAccountGenerator(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
-		opts              render.Options
+		opts              convert.Options
 		bundle            *convert.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
 			name: "generates unique set of clusterpermissions and permissions service accounts in the install namespace",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace: "install-namespace",
 			},
 			bundle: &convert.RegistryV1{
@@ -966,7 +965,7 @@ func Test_BundleServiceAccountGenerator(t *testing.T) {
 		},
 		{
 			name: "treats empty service accounts as default and doesn't generate them",
-			opts: render.Options{
+			opts: convert.Options{
 				InstallNamespace: "install-namespace",
 			},
 			bundle: &convert.RegistryV1{
@@ -1002,7 +1001,7 @@ func Test_BundleServiceAccountGenerator(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			objs, err := render.BundleServiceAccountGenerator(tc.bundle, tc.opts)
+			objs, err := convert.BundleServiceAccountGenerator(tc.bundle, tc.opts)
 			require.NoError(t, err)
 			slices.SortFunc(objs, func(a, b client.Object) int {
 				return cmp.Compare(a.GetName(), b.GetName())
@@ -1016,7 +1015,7 @@ func Test_BundleServiceAccountGenerator(t *testing.T) {
 }
 
 func Test_BundleCRDGenerator_Succeeds(t *testing.T) {
-	opts := render.Options{
+	opts := convert.Options{
 		InstallNamespace: "install-namespace",
 		TargetNamespaces: []string{""},
 	}
@@ -1028,7 +1027,7 @@ func Test_BundleCRDGenerator_Succeeds(t *testing.T) {
 		},
 	}
 
-	objs, err := render.BundleCRDGenerator(bundle, opts)
+	objs, err := convert.BundleCRDGenerator(bundle, opts)
 	require.NoError(t, err)
 	require.Equal(t, []client.Object{
 		&apiextensionsv1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
@@ -1037,7 +1036,7 @@ func Test_BundleCRDGenerator_Succeeds(t *testing.T) {
 }
 
 func Test_BundleResourceGenerator_Succeeds(t *testing.T) {
-	opts := render.Options{
+	opts := convert.Options{
 		InstallNamespace: "install-namespace",
 	}
 
@@ -1068,7 +1067,7 @@ func Test_BundleResourceGenerator_Succeeds(t *testing.T) {
 		},
 	}
 
-	objs, err := render.BundleResourceGenerator(bundle, opts)
+	objs, err := convert.BundleAdditionalResourcesGenerator(bundle, opts)
 	require.NoError(t, err)
 	require.Len(t, objs, 2)
 }

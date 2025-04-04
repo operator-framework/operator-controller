@@ -1,6 +1,7 @@
-package render
+package convert
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 
@@ -12,7 +13,6 @@ import (
 
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
@@ -24,14 +24,14 @@ type Options struct {
 	UniqueNameGenerator UniqueNameGenerator
 }
 
-type ResourceGenerator func(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error)
+type ResourceGenerator func(rv1 *RegistryV1, opts Options) ([]client.Object, error)
 
-func (g ResourceGenerator) GenerateResources(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error) {
+func (g ResourceGenerator) GenerateResources(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
 	return g(rv1, opts)
 }
 
 func ChainedResourceGenerator(resourceGenerators ...ResourceGenerator) ResourceGenerator {
-	return func(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error) {
+	return func(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
 		//nolint:prealloc
 		var renderedObjects []client.Object
 		for _, generator := range resourceGenerators {
@@ -45,9 +45,8 @@ func ChainedResourceGenerator(resourceGenerators ...ResourceGenerator) ResourceG
 	}
 }
 
-func BundleDeploymentGenerator(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error) {
-	//nolint:prealloc
-	var objs []client.Object
+func BundleDeploymentGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
+	objs := make([]client.Object, 0, len(rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs))
 	for _, depSpec := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 		annotations := util.MergeMaps(rv1.CSV.Annotations, depSpec.Spec.Template.Annotations)
 		annotations["olm.targetNamespaces"] = strings.Join(opts.TargetNamespaces, ",")
@@ -68,7 +67,7 @@ func BundleDeploymentGenerator(rv1 *convert.RegistryV1, opts Options) ([]client.
 	return objs, nil
 }
 
-func BundlePermissionsGenerator(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error) {
+func BundlePermissionsGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
 	permissions := rv1.CSV.Spec.InstallStrategy.StrategySpec.Permissions
 
 	// If we're in AllNamespaces mode permissions will be treated as clusterPermissions
@@ -76,7 +75,7 @@ func BundlePermissionsGenerator(rv1 *convert.RegistryV1, opts Options) ([]client
 		return nil, nil
 	}
 
-	var objs []client.Object
+	objs := make([]client.Object, 0, 2*len(opts.TargetNamespaces)*len(permissions))
 	for _, ns := range opts.TargetNamespaces {
 		for _, permission := range permissions {
 			saName := saNameOrDefault(permission.ServiceAccountName)
@@ -99,7 +98,7 @@ func BundlePermissionsGenerator(rv1 *convert.RegistryV1, opts Options) ([]client
 	return objs, nil
 }
 
-func BundleClusterPermissionsGenerator(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error) {
+func BundleClusterPermissionsGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
 	clusterPermissions := rv1.CSV.Spec.InstallStrategy.StrategySpec.ClusterPermissions
 
 	// If we're in AllNamespaces mode, promote the permissions to clusterPermissions
@@ -114,8 +113,7 @@ func BundleClusterPermissionsGenerator(rv1 *convert.RegistryV1, opts Options) ([
 		}
 	}
 
-	//nolint:prealloc
-	var objs []client.Object
+	objs := make([]client.Object, 0, 2*len(clusterPermissions))
 	for _, permission := range clusterPermissions {
 		saName := saNameOrDefault(permission.ServiceAccountName)
 		name, err := opts.UniqueNameGenerator(fmt.Sprintf("%s-%s", rv1.CSV.Name, saName), permission)
@@ -134,18 +132,18 @@ func BundleClusterPermissionsGenerator(rv1 *convert.RegistryV1, opts Options) ([
 	return objs, nil
 }
 
-func BundleServiceAccountGenerator(rv1 *convert.RegistryV1, opts Options) ([]client.Object, error) {
+func BundleServiceAccountGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
 	allPermissions := append(
 		rv1.CSV.Spec.InstallStrategy.StrategySpec.Permissions,
 		rv1.CSV.Spec.InstallStrategy.StrategySpec.ClusterPermissions...,
 	)
 
-	var objs []client.Object
 	serviceAccountNames := sets.Set[string]{}
 	for _, permission := range allPermissions {
 		serviceAccountNames.Insert(saNameOrDefault(permission.ServiceAccountName))
 	}
 
+	objs := make([]client.Object, 0, len(serviceAccountNames))
 	for _, serviceAccountName := range serviceAccountNames.UnsortedList() {
 		// no need to generate the default service account
 		if serviceAccountName != "default" {
@@ -155,18 +153,16 @@ func BundleServiceAccountGenerator(rv1 *convert.RegistryV1, opts Options) ([]cli
 	return objs, nil
 }
 
-func BundleCRDGenerator(rv1 *convert.RegistryV1, _ Options) ([]client.Object, error) {
-	//nolint:prealloc
-	var objs []client.Object
+func BundleCRDGenerator(rv1 *RegistryV1, _ Options) ([]client.Object, error) {
+	objs := make([]client.Object, 0, len(rv1.CRDs))
 	for _, crd := range rv1.CRDs {
 		objs = append(objs, crd.DeepCopy())
 	}
 	return objs, nil
 }
 
-func BundleResourceGenerator(rv1 *convert.RegistryV1, _ Options) ([]client.Object, error) {
-	//nolint:prealloc
-	var objs []client.Object
+func BundleAdditionalResourcesGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
+	objs := make([]client.Object, 0, len(rv1.Others))
 	for _, res := range rv1.Others {
 		supported, namespaced := registrybundle.IsSupported(res.GetKind())
 		if !supported {
@@ -175,7 +171,7 @@ func BundleResourceGenerator(rv1 *convert.RegistryV1, _ Options) ([]client.Objec
 
 		obj := res.DeepCopy()
 		if namespaced {
-			obj.SetNamespace(res.GetNamespace())
+			obj.SetNamespace(opts.InstallNamespace)
 		}
 
 		objs = append(objs, obj)
@@ -184,8 +180,5 @@ func BundleResourceGenerator(rv1 *convert.RegistryV1, _ Options) ([]client.Objec
 }
 
 func saNameOrDefault(saName string) string {
-	if saName == "" {
-		return "default"
-	}
-	return saName
+	return cmp.Or(saName, "default")
 }

@@ -1,4 +1,4 @@
-package render_test
+package convert_test
 
 import (
 	"fmt"
@@ -11,11 +11,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert/render"
 )
 
 func Test_ResourceMutator_Mutate(t *testing.T) {
-	var m render.ResourceMutator = func(obj client.Object) error {
+	var m convert.ResourceMutator = func(obj client.Object) error {
 		obj.SetName("some-name")
 		return nil
 	}
@@ -26,7 +25,7 @@ func Test_ResourceMutator_Mutate(t *testing.T) {
 }
 
 func Test_ResourceMutator_MutateObjects(t *testing.T) {
-	var m render.ResourceMutator = func(obj client.Object) error {
+	var m convert.ResourceMutator = func(obj client.Object) error {
 		obj.SetName("some-name")
 		return nil
 	}
@@ -40,7 +39,7 @@ func Test_ResourceMutator_MutateObjects(t *testing.T) {
 }
 
 func Test_ResourceMutator_MutateObjects_Errors(t *testing.T) {
-	var m render.ResourceMutator = func(obj client.Object) error {
+	var m convert.ResourceMutator = func(obj client.Object) error {
 		return fmt.Errorf("some error")
 	}
 
@@ -51,7 +50,7 @@ func Test_ResourceMutator_MutateObjects_Errors(t *testing.T) {
 }
 
 func Test_ResourceMutators_Mutate(t *testing.T) {
-	ms := render.ResourceMutators{
+	ms := convert.ResourceMutators{
 		func(obj client.Object) error {
 			obj.SetName("some-name")
 			return nil
@@ -69,7 +68,7 @@ func Test_ResourceMutators_Mutate(t *testing.T) {
 }
 
 func Test_ResourceMutators_MutateObjects(t *testing.T) {
-	ms := render.ResourceMutators{
+	ms := convert.ResourceMutators{
 		func(obj client.Object) error {
 			obj.SetName("some-name")
 			return nil
@@ -89,7 +88,7 @@ func Test_ResourceMutators_MutateObjects(t *testing.T) {
 }
 
 func Test_ResourceMutators_MutateObjects_Errors(t *testing.T) {
-	ms := render.ResourceMutators{
+	ms := convert.ResourceMutators{
 		func(obj client.Object) error {
 			obj.SetName("some-name")
 			return nil
@@ -105,8 +104,8 @@ func Test_ResourceMutators_MutateObjects_Errors(t *testing.T) {
 }
 
 func Test_ResourceMutatorFactory_MakeResourceMutators(t *testing.T) {
-	var f render.ResourceMutatorFactory = func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
-		return render.ResourceMutators{
+	var f convert.ResourceMutatorFactory = func(rv1 *convert.RegistryV1, opts convert.Options) (convert.ResourceMutators, error) {
+		return convert.ResourceMutators{
 			func(obj client.Object) error {
 				obj.SetName("some-name")
 				return nil
@@ -114,7 +113,7 @@ func Test_ResourceMutatorFactory_MakeResourceMutators(t *testing.T) {
 		}, nil
 	}
 
-	ms, err := f.MakeResourceMutators(&convert.RegistryV1{}, render.Options{})
+	ms, err := f.MakeResourceMutators(&convert.RegistryV1{}, convert.Options{})
 	require.NoError(t, err)
 	require.NotNil(t, ms)
 	require.Len(t, ms, 1)
@@ -125,17 +124,17 @@ func Test_ResourceMutatorFactory_MakeResourceMutators(t *testing.T) {
 }
 
 func Test_ChainedResourceMutatorFactory(t *testing.T) {
-	cf := render.ChainedResourceMutatorFactory{
-		func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
-			return render.ResourceMutators{
+	cf := convert.ChainedResourceMutatorFactory{
+		func(rv1 *convert.RegistryV1, opts convert.Options) (convert.ResourceMutators, error) {
+			return convert.ResourceMutators{
 				func(object client.Object) error {
 					object.SetName("some-name")
 					return nil
 				},
 			}, nil
 		},
-		func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
-			return render.ResourceMutators{
+		func(rv1 *convert.RegistryV1, opts convert.Options) (convert.ResourceMutators, error) {
+			return convert.ResourceMutators{
 				func(object client.Object) error {
 					object.SetNamespace("some-namespace")
 					return nil
@@ -144,7 +143,7 @@ func Test_ChainedResourceMutatorFactory(t *testing.T) {
 		},
 	}
 
-	ms, err := cf.MakeResourceMutators(&convert.RegistryV1{}, render.Options{})
+	ms, err := cf.MakeResourceMutators(&convert.RegistryV1{}, convert.Options{})
 	require.NoError(t, err)
 	require.NotNil(t, ms)
 	require.Len(t, ms, 2)
@@ -156,7 +155,7 @@ func Test_ChainedResourceMutatorFactory(t *testing.T) {
 }
 
 func Test_CustomResourceDefinitionMutator(t *testing.T) {
-	m := render.CustomResourceDefinitionMutator("my-crd", func(crd *apiextensionsv1.CustomResourceDefinition) error {
+	m := convert.CustomResourceDefinitionMutator("my-crd", func(crd *apiextensionsv1.CustomResourceDefinition) error {
 		crd.SetAnnotations(map[string]string{
 			"foo": "bar",
 		})
