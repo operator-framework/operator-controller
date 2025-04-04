@@ -82,6 +82,38 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.Clu
 	return false
 }
 
+// runPreAuthorizationChecks performs pre-authorization checks for a Helm release
+// it renders a client-only release, checks permissions using the PreAuthorizer
+// and returns an error if authorization fails or required permissions are missing
+func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterExtension, chart *chart.Chart, values chartutil.Values, post postrender.PostRenderer) error {
+	tmplRel, err := h.renderClientOnlyRelease(ctx, ext, chart, values, post)
+	if err != nil {
+		return fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
+	}
+
+	missingRules, authErr := h.PreAuthorizer.PreAuthorize(ctx, ext, strings.NewReader(tmplRel.Manifest))
+
+	var preAuthErrors []error
+
+	if len(missingRules) > 0 {
+		var missingRuleDescriptions []string
+		for _, policyRules := range missingRules {
+			for _, rule := range policyRules.MissingRules {
+				missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(policyRules.Namespace, rule))
+			}
+		}
+		slices.Sort(missingRuleDescriptions)
+		preAuthErrors = append(preAuthErrors, fmt.Errorf("service account lacks permission to manage cluster extension:\n  %s", strings.Join(missingRuleDescriptions, "\n  ")))
+	}
+	if authErr != nil {
+		preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", authErr))
+	}
+	if len(preAuthErrors) > 0 {
+		return fmt.Errorf("pre-authorization failed: %v", preAuthErrors)
+	}
+	return nil
+}
+
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
 	chrt, err := h.buildHelmChart(contentFS, ext)
 	if err != nil {
@@ -94,29 +126,10 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	}
 
 	if h.PreAuthorizer != nil {
-		tmplRel, err := h.renderClientOnlyRelease(ctx, ext, chrt, values, post)
+		err := h.runPreAuthorizationChecks(ctx, ext, chrt, values, post)
 		if err != nil {
-			return nil, "", fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
-		}
-
-		missingRules, err := h.PreAuthorizer.PreAuthorize(ctx, ext, strings.NewReader(tmplRel.Manifest))
-
-		var preAuthErrors []error
-		if len(missingRules) > 0 {
-			var missingRuleDescriptions []string
-			for _, policyRules := range missingRules {
-				for _, rule := range policyRules.MissingRules {
-					missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(policyRules.Namespace, rule))
-				}
-			}
-			slices.Sort(missingRuleDescriptions)
-			preAuthErrors = append(preAuthErrors, fmt.Errorf("service account lacks permission to manage cluster extension:\n  %s", strings.Join(missingRuleDescriptions, "\n  ")))
-		}
-		if err != nil {
-			preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", err))
-		}
-		if len(preAuthErrors) > 0 {
-			return nil, "", fmt.Errorf("pre-authorization failed: %v", preAuthErrors)
+			// Return the pre-authorization error directly
+			return nil, "", err
 		}
 	}
 
