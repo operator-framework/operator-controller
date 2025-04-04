@@ -2,6 +2,7 @@ package convert_test
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -21,7 +22,38 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 )
 
-func Test_BundleDeploymentGenerator(t *testing.T) {
+func Test_ChainedResourceGenerator(t *testing.T) {
+	g := convert.ChainedResourceGenerator(
+		func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
+			return []client.Object{&corev1.Service{}}, nil
+		},
+		func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
+			return []client.Object{&corev1.ConfigMap{}}, nil
+		},
+	)
+
+	objs, err := g.GenerateResources(&convert.RegistryV1{}, convert.Options{})
+	require.NoError(t, err)
+	require.Equal(t, []client.Object{&corev1.Service{}, &corev1.ConfigMap{}}, objs)
+}
+
+func Test_ChainedResourceGenerator_Errors(t *testing.T) {
+	g := convert.ChainedResourceGenerator(
+		func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
+			return []client.Object{&corev1.Service{}}, nil
+		},
+		func(rv1 *convert.RegistryV1, opts convert.Options) ([]client.Object, error) {
+			return nil, fmt.Errorf("generator error")
+		},
+	)
+
+	objs, err := g.GenerateResources(&convert.RegistryV1{}, convert.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "generator error")
+}
+
+func Test_BundleDeploymentGenerator_Succeeds(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		bundle            *convert.RegistryV1
@@ -31,11 +63,11 @@ func Test_BundleDeploymentGenerator(t *testing.T) {
 		{
 			name: "generates deployment resources",
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithAnnotations(map[string]string{
+				CSV: makeCSV(
+					withAnnotations(map[string]string{
 						"csv": "annotation",
 					}),
-					WithStrategyDeploymentSpecs(
+					withStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "deployment-one",
 							Label: map[string]string{
@@ -120,7 +152,14 @@ func Test_BundleDeploymentGenerator(t *testing.T) {
 	}
 }
 
-func Test_BundlePermissionsGenerator(t *testing.T) {
+func Test_BundleDeploymentGenerator_FailsOnNil(t *testing.T) {
+	objs, err := convert.BundleDeploymentGenerator(nil, convert.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
+func Test_BundlePermissionsGenerator_Succeeds(t *testing.T) {
 	fakeUniqueNameGenerator := func(base string, _ interface{}) (string, error) {
 		return base, nil
 	}
@@ -139,9 +178,9 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
 							Rules: []rbacv1.PolicyRule{
@@ -165,9 +204,9 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
 							Rules: []rbacv1.PolicyRule{
@@ -240,9 +279,9 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
 							Rules: []rbacv1.PolicyRule{
@@ -359,9 +398,9 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
 							Rules: []rbacv1.PolicyRule{
@@ -476,9 +515,9 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "",
 							Rules: []rbacv1.PolicyRule{
@@ -547,7 +586,14 @@ func Test_BundlePermissionsGenerator(t *testing.T) {
 	}
 }
 
-func Test_BundleClusterPermissionsGenerator(t *testing.T) {
+func Test_BundlePermissionGenerator_FailsOnNil(t *testing.T) {
+	objs, err := convert.BundlePermissionsGenerator(nil, convert.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
+func Test_BundleClusterPermissionsGenerator_Succeeds(t *testing.T) {
 	fakeUniqueNameGenerator := func(base string, _ interface{}) (string, error) {
 		return base, nil
 	}
@@ -566,9 +612,9 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
 							Rules: []rbacv1.PolicyRule{
@@ -687,9 +733,9 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithClusterPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
 							Rules: []rbacv1.PolicyRule{
@@ -800,9 +846,9 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithClusterPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "",
 							Rules: []rbacv1.PolicyRule{
@@ -869,7 +915,14 @@ func Test_BundleClusterPermissionsGenerator(t *testing.T) {
 	}
 }
 
-func Test_BundleServiceAccountGenerator(t *testing.T) {
+func Test_BundleClusterPermissionGenerator_FailsOnNil(t *testing.T) {
+	objs, err := convert.BundleClusterPermissionsGenerator(nil, convert.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
+func Test_BundleServiceAccountGenerator_Succeeds(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		opts              convert.Options
@@ -882,9 +935,9 @@ func Test_BundleServiceAccountGenerator(t *testing.T) {
 				InstallNamespace: "install-namespace",
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-1",
 							Rules: []rbacv1.PolicyRule{
@@ -906,7 +959,7 @@ func Test_BundleServiceAccountGenerator(t *testing.T) {
 							},
 						},
 					),
-					WithClusterPermissions(
+					withClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-2",
 							Rules: []rbacv1.PolicyRule{
@@ -969,9 +1022,9 @@ func Test_BundleServiceAccountGenerator(t *testing.T) {
 				InstallNamespace: "install-namespace",
 			},
 			bundle: &convert.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
-					WithPermissions(
+				CSV: makeCSV(
+					withName("csv"),
+					withPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "",
 							Rules: []rbacv1.PolicyRule{
@@ -983,7 +1036,7 @@ func Test_BundleServiceAccountGenerator(t *testing.T) {
 							},
 						},
 					),
-					WithClusterPermissions(
+					withClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "",
 							Rules: []rbacv1.PolicyRule{
@@ -1014,6 +1067,13 @@ func Test_BundleServiceAccountGenerator(t *testing.T) {
 	}
 }
 
+func Test_BundleServiceAccountGenerator_FailsOnNil(t *testing.T) {
+	objs, err := convert.BundleServiceAccountGenerator(nil, convert.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
 func Test_BundleCRDGenerator_Succeeds(t *testing.T) {
 	opts := convert.Options{
 		InstallNamespace: "install-namespace",
@@ -1035,14 +1095,21 @@ func Test_BundleCRDGenerator_Succeeds(t *testing.T) {
 	}, objs)
 }
 
-func Test_BundleResourceGenerator_Succeeds(t *testing.T) {
+func Test_BundleCRDGenerator_FailsOnNil(t *testing.T) {
+	objs, err := convert.BundleCRDGenerator(nil, convert.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
+func Test_BundleAdditionalResourcesGenerator_Succeeds(t *testing.T) {
 	opts := convert.Options{
 		InstallNamespace: "install-namespace",
 	}
 
 	bundle := &convert.RegistryV1{
 		Others: []unstructured.Unstructured{
-			toUnstructured(
+			toUnstructured(t,
 				&corev1.Service{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Service",
@@ -1053,7 +1120,7 @@ func Test_BundleResourceGenerator_Succeeds(t *testing.T) {
 					},
 				},
 			),
-			toUnstructured(
+			toUnstructured(t,
 				&rbacv1.ClusterRole{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ClusterRole",
@@ -1072,60 +1139,69 @@ func Test_BundleResourceGenerator_Succeeds(t *testing.T) {
 	require.Len(t, objs, 2)
 }
 
-type CSVOption func(version *v1alpha1.ClusterServiceVersion)
+func Test_BundleAdditionalResourcesGenerator_FailsOnNil(t *testing.T) {
+	objs, err := convert.BundleAdditionalResourcesGenerator(nil, convert.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
 
-func WithName(name string) CSVOption {
+type csvOption func(version *v1alpha1.ClusterServiceVersion)
+
+//nolint:unparam
+func withName(name string) csvOption {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		csv.Name = name
 	}
 }
 
-func WithStrategyDeploymentSpecs(strategyDeploymentSpecs ...v1alpha1.StrategyDeploymentSpec) CSVOption {
+func withStrategyDeploymentSpecs(strategyDeploymentSpecs ...v1alpha1.StrategyDeploymentSpec) csvOption {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs = strategyDeploymentSpecs
 	}
 }
 
-func WithOwnedCRDs(crdDesc ...v1alpha1.CRDDescription) CSVOption {
+func withOwnedCRDs(crdDesc ...v1alpha1.CRDDescription) csvOption {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		csv.Spec.CustomResourceDefinitions.Owned = crdDesc
 	}
 }
 
-func WithAnnotations(annotations map[string]string) CSVOption {
+func withAnnotations(annotations map[string]string) csvOption {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		csv.Annotations = annotations
 	}
 }
 
-func WithPermissions(permissions ...v1alpha1.StrategyDeploymentPermissions) CSVOption {
+func withPermissions(permissions ...v1alpha1.StrategyDeploymentPermissions) csvOption {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		csv.Spec.InstallStrategy.StrategySpec.Permissions = permissions
 	}
 }
 
-func WithClusterPermissions(permissions ...v1alpha1.StrategyDeploymentPermissions) CSVOption {
+func withClusterPermissions(permissions ...v1alpha1.StrategyDeploymentPermissions) csvOption {
 	return func(csv *v1alpha1.ClusterServiceVersion) {
 		csv.Spec.InstallStrategy.StrategySpec.ClusterPermissions = permissions
 	}
 }
 
-func toUnstructured(obj client.Object) unstructured.Unstructured {
-	gvk := obj.GetObjectKind().GroupVersionKind()
-
-	var u unstructured.Unstructured
-	uObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	unstructured.RemoveNestedField(uObj, "metadata", "creationTimestamp")
-	unstructured.RemoveNestedField(uObj, "status")
-	u.Object = uObj
-	u.SetGroupVersionKind(gvk)
-	return u
-}
-
-func MakeCSV(opts ...CSVOption) v1alpha1.ClusterServiceVersion {
+func makeCSV(opts ...csvOption) v1alpha1.ClusterServiceVersion {
 	csv := v1alpha1.ClusterServiceVersion{}
 	for _, opt := range opts {
 		opt(&csv)
 	}
 	return csv
+}
+
+func toUnstructured(t *testing.T, obj client.Object) unstructured.Unstructured {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+
+	var u unstructured.Unstructured
+	uObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	require.NoError(t, err)
+	unstructured.RemoveNestedField(uObj, "metadata", "creationTimestamp")
+	unstructured.RemoveNestedField(uObj, "status")
+	u.Object = uObj
+	u.SetGroupVersionKind(gvk)
+	return u
 }

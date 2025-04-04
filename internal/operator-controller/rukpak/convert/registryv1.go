@@ -216,6 +216,20 @@ func validateTargetNamespaces(supportedInstallModes sets.Set[string], installNam
 	return fmt.Errorf("supported install modes %v do not support target namespaces %v", sets.List[string](supportedInstallModes), targetNamespaces)
 }
 
+var PlainConverter = Converter{
+	BundleRenderer: BundleRenderer{
+		BundleValidator: RegistryV1BundleValidator,
+		ResourceGenerators: []ResourceGenerator{
+			BundleServiceAccountGenerator,
+			BundlePermissionsGenerator,
+			BundleClusterPermissionsGenerator,
+			BundleCRDGenerator,
+			BundleAdditionalResourcesGenerator,
+			BundleDeploymentGenerator,
+		},
+	},
+}
+
 type Converter struct {
 	BundleRenderer
 }
@@ -258,18 +272,4 @@ func (c Converter) Convert(rv1 RegistryV1, installNamespace string, targetNamesp
 		return nil, err
 	}
 	return &Plain{Objects: objs}, nil
-}
-
-var PlainConverter = Converter{
-	BundleRenderer: BundleRenderer{
-		BundleValidator: RegistryV1BundleValidator,
-		ResourceGenerators: []ResourceGenerator{
-			BundleServiceAccountGenerator,
-			BundlePermissionsGenerator,
-			BundleClusterPermissionsGenerator,
-			BundleCRDGenerator,
-			BundleAdditionalResourcesGenerator,
-			BundleDeploymentGenerator,
-		},
-	},
 }

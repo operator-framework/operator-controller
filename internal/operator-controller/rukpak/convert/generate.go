@@ -46,6 +46,9 @@ func ChainedResourceGenerator(resourceGenerators ...ResourceGenerator) ResourceG
 }
 
 func BundleDeploymentGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
+	if rv1 == nil {
+		return nil, fmt.Errorf("bundle cannot be nil")
+	}
 	objs := make([]client.Object, 0, len(rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs))
 	for _, depSpec := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 		annotations := util.MergeMaps(rv1.CSV.Annotations, depSpec.Spec.Template.Annotations)
@@ -68,12 +71,16 @@ func BundleDeploymentGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, 
 }
 
 func BundlePermissionsGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
-	permissions := rv1.CSV.Spec.InstallStrategy.StrategySpec.Permissions
+	if rv1 == nil {
+		return nil, fmt.Errorf("bundle cannot be nil")
+	}
 
 	// If we're in AllNamespaces mode permissions will be treated as clusterPermissions
 	if len(opts.TargetNamespaces) == 1 && opts.TargetNamespaces[0] == "" {
 		return nil, nil
 	}
+
+	permissions := rv1.CSV.Spec.InstallStrategy.StrategySpec.Permissions
 
 	objs := make([]client.Object, 0, 2*len(opts.TargetNamespaces)*len(permissions))
 	for _, ns := range opts.TargetNamespaces {
@@ -99,6 +106,9 @@ func BundlePermissionsGenerator(rv1 *RegistryV1, opts Options) ([]client.Object,
 }
 
 func BundleClusterPermissionsGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
+	if rv1 == nil {
+		return nil, fmt.Errorf("bundle cannot be nil")
+	}
 	clusterPermissions := rv1.CSV.Spec.InstallStrategy.StrategySpec.ClusterPermissions
 
 	// If we're in AllNamespaces mode, promote the permissions to clusterPermissions
@@ -133,6 +143,9 @@ func BundleClusterPermissionsGenerator(rv1 *RegistryV1, opts Options) ([]client.
 }
 
 func BundleServiceAccountGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
+	if rv1 == nil {
+		return nil, fmt.Errorf("bundle cannot be nil")
+	}
 	allPermissions := append(
 		rv1.CSV.Spec.InstallStrategy.StrategySpec.Permissions,
 		rv1.CSV.Spec.InstallStrategy.StrategySpec.ClusterPermissions...,
@@ -154,6 +167,9 @@ func BundleServiceAccountGenerator(rv1 *RegistryV1, opts Options) ([]client.Obje
 }
 
 func BundleCRDGenerator(rv1 *RegistryV1, _ Options) ([]client.Object, error) {
+	if rv1 == nil {
+		return nil, fmt.Errorf("bundle cannot be nil")
+	}
 	objs := make([]client.Object, 0, len(rv1.CRDs))
 	for _, crd := range rv1.CRDs {
 		objs = append(objs, crd.DeepCopy())
@@ -162,6 +178,9 @@ func BundleCRDGenerator(rv1 *RegistryV1, _ Options) ([]client.Object, error) {
 }
 
 func BundleAdditionalResourcesGenerator(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
+	if rv1 == nil {
+		return nil, fmt.Errorf("bundle cannot be nil")
+	}
 	objs := make([]client.Object, 0, len(rv1.Others))
 	for _, res := range rv1.Others {
 		supported, namespaced := registrybundle.IsSupported(res.GetKind())
