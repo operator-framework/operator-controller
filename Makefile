@@ -151,13 +151,14 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: tidy fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
+verify: tidy fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
-.PHONY: verify-convert
-verify-convert:
+# Renders registry+v1 bundles in test/convert
+# Used by CI in verify to catch regressions in the registry+v1 -> plain conversion code
+.PHONY: generate-test-data
+generate-test-data:
 	go run test/convert/generate-manifests.go
-	git diff --exit-code
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
