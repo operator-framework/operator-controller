@@ -26,11 +26,17 @@ func (o *options) apply(opts ...Option) *options {
 }
 
 type BundleRenderer struct {
+	BundleValidator          convert.BundleValidator
 	ResourceGenerators       []ResourceGenerator
 	ResourceMutatorFactories []ResourceMutatorFactory
 }
 
 func (r BundleRenderer) Render(rv1 convert.RegistryV1, installNamespace string, watchNamespaces []string, opts ...Option) ([]client.Object, error) {
+	// validate bundle
+	if err := r.BundleValidator.Validate(&rv1); err != nil {
+		return nil, err
+	}
+
 	renderOptions := (&options{
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
 	}).apply(opts...)
@@ -43,7 +49,7 @@ func (r BundleRenderer) Render(rv1 convert.RegistryV1, installNamespace string, 
 	}
 
 	// generate object mutators
-	objMutators, err := ChainedResourceMutatorFactory(r.ResourceMutatorFactories).MakeResourceMutators()
+	objMutators, err := ChainedResourceMutatorFactory(r.ResourceMutatorFactories).MakeResourceMutators(&rv1, genOpts)
 	if err != nil {
 		return nil, err
 	}

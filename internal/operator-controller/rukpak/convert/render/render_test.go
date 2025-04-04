@@ -22,6 +22,20 @@ func Test_BundleRenderer_NoConfig(t *testing.T) {
 	require.Empty(t, objs)
 }
 
+func Test_BundleRenderer_ValidatesBundle(t *testing.T) {
+	renderer := render.BundleRenderer{
+		BundleValidator: convert.BundleValidator{
+			func(v1 *convert.RegistryV1) []error {
+				return []error{errors.New("this bundle is invalid")}
+			},
+		},
+	}
+	objs, err := renderer.Render(convert.RegistryV1{}, "", nil)
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "this bundle is invalid")
+}
+
 func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 	renderer := render.BundleRenderer{
 		ResourceGenerators: []render.ResourceGenerator{
@@ -46,7 +60,7 @@ func Test_BundleRenderer_CallsResourceMutators(t *testing.T) {
 			},
 		},
 		ResourceMutatorFactories: []render.ResourceMutatorFactory{
-			func() (render.ResourceMutators, error) {
+			func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
 				return []render.ResourceMutator{
 					func(object client.Object) error {
 						switch object.(type) {
@@ -65,7 +79,7 @@ func Test_BundleRenderer_CallsResourceMutators(t *testing.T) {
 					},
 				}, nil
 			},
-			func() (render.ResourceMutators, error) {
+			func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
 				return []render.ResourceMutator{
 					func(object client.Object) error {
 						object.SetAnnotations(map[string]string{
@@ -130,7 +144,7 @@ func Test_BundleRenderer_ReturnsResourceMutatorFactoryErrors(t *testing.T) {
 			},
 		},
 		ResourceMutatorFactories: []render.ResourceMutatorFactory{
-			func() (render.ResourceMutators, error) {
+			func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
 				return nil, errors.New("mutator factory error")
 			},
 		},
@@ -149,7 +163,7 @@ func Test_BundleRenderer_ReturnsResourceMutatorErrors(t *testing.T) {
 			},
 		},
 		ResourceMutatorFactories: []render.ResourceMutatorFactory{
-			func() (render.ResourceMutators, error) {
+			func(rv1 *convert.RegistryV1, opts render.Options) (render.ResourceMutators, error) {
 				return []render.ResourceMutator{
 					func(object client.Object) error {
 						return errors.New("mutator error")

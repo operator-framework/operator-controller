@@ -5,6 +5,8 @@ import (
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 )
 
 type ResourceMutator func(client.Object) error
@@ -46,18 +48,18 @@ func (g *ResourceMutators) MutateObjects(objs iter.Seq[client.Object]) error {
 	return nil
 }
 
-type ResourceMutatorFactory func() (ResourceMutators, error)
+type ResourceMutatorFactory func(rv1 *convert.RegistryV1, opts Options) (ResourceMutators, error)
 
-func (m ResourceMutatorFactory) MakeResourceMutators() (ResourceMutators, error) {
-	return m()
+func (m ResourceMutatorFactory) MakeResourceMutators(rv1 *convert.RegistryV1, opts Options) (ResourceMutators, error) {
+	return m(rv1, opts)
 }
 
 type ChainedResourceMutatorFactory []ResourceMutatorFactory
 
-func (c ChainedResourceMutatorFactory) MakeResourceMutators() (ResourceMutators, error) {
+func (c ChainedResourceMutatorFactory) MakeResourceMutators(rv1 *convert.RegistryV1, opts Options) (ResourceMutators, error) {
 	var resourceMutators []ResourceMutator
 	for _, mutatorFactory := range c {
-		mutators, err := mutatorFactory.MakeResourceMutators()
+		mutators, err := mutatorFactory.MakeResourceMutators(rv1, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +71,7 @@ func (c ChainedResourceMutatorFactory) MakeResourceMutators() (ResourceMutators,
 func CustomResourceDefinitionMutator(name string, mutator func(crd *apiextensionsv1.CustomResourceDefinition) error) ResourceMutator {
 	return func(obj client.Object) error {
 		crd, ok := obj.(*apiextensionsv1.CustomResourceDefinition)
-		if obj.GetName() != name || !ok {
+		if !ok || obj.GetName() != name {
 			return nil
 		}
 		return mutator(crd)
