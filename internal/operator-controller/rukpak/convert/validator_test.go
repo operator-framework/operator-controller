@@ -19,6 +19,7 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 		convert.CheckDeploymentSpecUniqueness,
 		convert.CheckCRDResourceUniqueness,
 		convert.CheckOwnedCRDExistence,
+		convert.CheckPackageNameNotEmpty,
 	}
 	actualValidationFns := convert.RegistryV1BundleValidator
 
@@ -60,6 +61,7 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 					),
 				),
 			},
+			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with duplicate deployment strategy spec names",
 			bundle: &convert.RegistryV1{
@@ -114,6 +116,7 @@ func Test_CRDResourceUniqueness(t *testing.T) {
 					{ObjectMeta: metav1.ObjectMeta{Name: "b.crd.something"}},
 				},
 			},
+			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with duplicate custom resource definition resources",
 			bundle: &convert.RegistryV1{CRDs: []apiextensionsv1.CustomResourceDefinition{
@@ -164,6 +167,7 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 					),
 				),
 			},
+			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with missing owned custom resource definition resources",
 			bundle: &convert.RegistryV1{
@@ -196,6 +200,32 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := convert.CheckOwnedCRDExistence(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
+
+func Test_CheckPackageNameNotEmpty(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *convert.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name: "accepts bundles with non-empty package name",
+			bundle: &convert.RegistryV1{
+				PackageName: "not-empty",
+			},
+		}, {
+			name:   "rejects bundles with empty package name",
+			bundle: &convert.RegistryV1{},
+			expectedErrs: []error{
+				errors.New("package name is empty"),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := convert.CheckPackageNameNotEmpty(tc.bundle)
 			require.Equal(t, tc.expectedErrs, errs)
 		})
 	}

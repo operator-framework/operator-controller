@@ -101,7 +101,8 @@ func (mag *mockActionGetter) Reconcile(rel *release.Release) error {
 var (
 	// required for unmockable call to convert.RegistryV1ToHelmChart
 	validFS = fstest.MapFS{
-		"metadata/annotations.yaml": &fstest.MapFile{Data: []byte("{}")},
+		"metadata/annotations.yaml": &fstest.MapFile{Data: []byte(`annotations:
+  operators.operatorframework.io.bundle.package.v1: my-package`)},
 		"manifests": &fstest.MapFile{Data: []byte(`apiVersion: operators.operatorframework.io/v1alpha1
 kind: ClusterServiceVersion
 metadata:
