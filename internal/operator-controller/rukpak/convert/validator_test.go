@@ -200,25 +200,3 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 		})
 	}
 }
-
-type csvOption func(version *v1alpha1.ClusterServiceVersion)
-
-func withStrategyDeploymentSpecs(strategyDeploymentSpecs ...v1alpha1.StrategyDeploymentSpec) csvOption {
-	return func(csv *v1alpha1.ClusterServiceVersion) {
-		csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs = strategyDeploymentSpecs
-	}
-}
-
-func withOwnedCRDs(crdDesc ...v1alpha1.CRDDescription) csvOption {
-	return func(csv *v1alpha1.ClusterServiceVersion) {
-		csv.Spec.CustomResourceDefinitions.Owned = crdDesc
-	}
-}
-
-func makeCSV(opts ...csvOption) v1alpha1.ClusterServiceVersion {
-	csv := v1alpha1.ClusterServiceVersion{}
-	for _, opt := range opts {
-		opt(&csv)
-	}
-	return csv
-}
