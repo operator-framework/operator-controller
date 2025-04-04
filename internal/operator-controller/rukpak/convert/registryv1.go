@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -277,6 +278,11 @@ func (c Converter) Convert(rv1 RegistryV1, installNamespace string, targetNamesp
 		annotations := util.MergeMaps(rv1.CSV.Annotations, depSpec.Spec.Template.Annotations)
 		annotations["olm.targetNamespaces"] = strings.Join(targetNamespaces, ",")
 		depSpec.Spec.Template.Annotations = annotations
+
+		// Hardcode the deployment with RevisionHistoryLimit=1 to replicate OLMv0 behavior
+		// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/install/deployment.go#L181
+		depSpec.Spec.RevisionHistoryLimit = ptr.To(int32(1))
+
 		deployments = append(deployments, appsv1.Deployment{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Deployment",
@@ -328,8 +334,8 @@ func (c Converter) Convert(rv1 RegistryV1, installNamespace string, targetNamesp
 				APIGroups: []string{corev1.GroupName},
 				Resources: []string{"namespaces"},
 			})
+			clusterPermissions = append(clusterPermissions, p)
 		}
-		clusterPermissions = append(clusterPermissions, permissions...)
 		permissions = nil
 	}
 
