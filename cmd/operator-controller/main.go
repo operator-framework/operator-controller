@@ -187,6 +187,9 @@ func run() error {
 
 	setupLog.Info("starting up the controller", "version info", version.String())
 
+	// log feature gate status after parsing flags and setting up logger
+	features.LogFeatureGateStates(setupLog, features.OperatorControllerFeatureGate)
+
 	authFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s-%s.json", authFilePrefix, apimachineryrand.String(8)))
 	var globalPullSecretKey *k8stypes.NamespacedName
 	if cfg.globalPullSecret != "" {
@@ -419,10 +422,7 @@ func run() error {
 	// determine if PreAuthorizer should be enabled based on feature gate
 	var preAuth authorization.PreAuthorizer
 	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		setupLog.Info("preflight permissions check enabled via feature gate")
 		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
-	} else {
-		setupLog.Info("preflight permissions check disabled via feature gate")
 	}
 
 	// now initialize the helmApplier, assigning the potentially nil preAuth
