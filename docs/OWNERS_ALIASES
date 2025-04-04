@@ -1,0 +1,28 @@
+
+aliases:
+   # contributors who can approve any docs PRs in the repo
+   operator-controller-docs-approvers:
+   - michaelryanpeter
+
+   # contributors who can review/lgtm any docs PRs in the repo
+   operator-controller-docs-reviewers:
+   - anik120
+   - ankitathomas
+   - bentito
+   - camilamacedo86
+   - dtfranz
+   - gallettilance
+   - gavinmbell
+   - grokspawn
+   - jianzhangbjz
+   - joelanford
+   - kevinrizza
+   - LalatenduMohanty
+   - oceanc80
+   - OchiengEd
+   - perdasilva
+   - rashmigottipati
+   - thetechnick
+   - tmshort
+   - trgeiger
+   - Zia-Zhao-rh
