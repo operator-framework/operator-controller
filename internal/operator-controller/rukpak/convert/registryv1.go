@@ -13,6 +13,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +33,7 @@ import (
 type RegistryV1 struct {
 	PackageName string
 	CSV         v1alpha1.ClusterServiceVersion
+	CRDs        []apiextensionsv1.CustomResourceDefinition
 	Others      []unstructured.Unstructured
 }
 
@@ -45,7 +47,7 @@ func RegistryV1ToHelmChart(rv1 fs.FS, installNamespace string, watchNamespace st
 		return nil, err
 	}
 
-	plain, err := Convert(reg, installNamespace, []string{watchNamespace})
+	plain, err := PlainConverter.Convert(reg, installNamespace, []string{watchNamespace})
 	if err != nil {
 		return nil, err
 	}
@@ -121,6 +123,12 @@ func ParseFS(rv1 fs.FS) (RegistryV1, error) {
 				}
 				reg.CSV = csv
 				foundCSV = true
+			case "CustomResourceDefinition":
+				crd := apiextensionsv1.CustomResourceDefinition{}
+				if err := runtime.DefaultUnstructuredConverter.FromUnstructured(info.Object.(*unstructured.Unstructured).Object, &crd); err != nil {
+					return err
+				}
+				reg.CRDs = append(reg.CRDs, crd)
 			default:
 				reg.Others = append(reg.Others, *info.Object.(*unstructured.Unstructured))
 			}
@@ -222,15 +230,23 @@ func saNameOrDefault(saName string) string {
 	return saName
 }
 
-func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) (*Plain, error) {
+type Converter struct {
+	BundleValidator BundleValidator
+}
+
+func (c Converter) Convert(rv1 RegistryV1, installNamespace string, targetNamespaces []string) (*Plain, error) {
+	if err := c.BundleValidator.Validate(&rv1); err != nil {
+		return nil, err
+	}
+
 	if installNamespace == "" {
-		installNamespace = in.CSV.Annotations["operatorframework.io/suggested-namespace"]
+		installNamespace = rv1.CSV.Annotations["operatorframework.io/suggested-namespace"]
 	}
 	if installNamespace == "" {
-		installNamespace = fmt.Sprintf("%s-system", in.PackageName)
+		installNamespace = fmt.Sprintf("%s-system", rv1.PackageName)
 	}
 	supportedInstallModes := sets.New[string]()
-	for _, im := range in.CSV.Spec.InstallModes {
+	for _, im := range rv1.CSV.Spec.InstallModes {
 		if im.Supported {
 			supportedInstallModes.Insert(string(im.Type))
 		}
@@ -247,18 +263,18 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 		return nil, err
 	}
 
-	if len(in.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
+	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
 		return nil, fmt.Errorf("apiServiceDefintions are not supported")
 	}
 
-	if len(in.CSV.Spec.WebhookDefinitions) > 0 {
+	if len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
 		return nil, fmt.Errorf("webhookDefinitions are not supported")
 	}
 
 	deployments := []appsv1.Deployment{}
 	serviceAccounts := map[string]corev1.ServiceAccount{}
-	for _, depSpec := range in.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
-		annotations := util.MergeMaps(in.CSV.Annotations, depSpec.Spec.Template.Annotations)
+	for _, depSpec := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		annotations := util.MergeMaps(rv1.CSV.Annotations, depSpec.Spec.Template.Annotations)
 		annotations["olm.targetNamespaces"] = strings.Join(targetNamespaces, ",")
 		depSpec.Spec.Template.Annotations = annotations
 		deployments = append(deployments, appsv1.Deployment{
@@ -292,8 +308,8 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 	clusterRoles := []rbacv1.ClusterRole{}
 	clusterRoleBindings := []rbacv1.ClusterRoleBinding{}
 
-	permissions := in.CSV.Spec.InstallStrategy.StrategySpec.Permissions
-	clusterPermissions := in.CSV.Spec.InstallStrategy.StrategySpec.ClusterPermissions
+	permissions := rv1.CSV.Spec.InstallStrategy.StrategySpec.Permissions
+	clusterPermissions := rv1.CSV.Spec.InstallStrategy.StrategySpec.ClusterPermissions
 	allPermissions := append(permissions, clusterPermissions...)
 
 	// Create all the service accounts
@@ -320,7 +336,7 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 	for _, ns := range targetNamespaces {
 		for _, permission := range permissions {
 			saName := saNameOrDefault(permission.ServiceAccountName)
-			name, err := generateName(fmt.Sprintf("%s-%s", in.CSV.Name, saName), permission)
+			name, err := generateName(fmt.Sprintf("%s-%s", rv1.CSV.Name, saName), permission)
 			if err != nil {
 				return nil, err
 			}
@@ -331,7 +347,7 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 
 	for _, permission := range clusterPermissions {
 		saName := saNameOrDefault(permission.ServiceAccountName)
-		name, err := generateName(fmt.Sprintf("%s-%s", in.CSV.Name, saName), permission)
+		name, err := generateName(fmt.Sprintf("%s-%s", rv1.CSV.Name, saName), permission)
 		if err != nil {
 			return nil, err
 		}
@@ -362,7 +378,10 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 		obj := obj
 		objs = append(objs, &obj)
 	}
-	for _, obj := range in.Others {
+	for _, obj := range rv1.CRDs {
+		objs = append(objs, &obj)
+	}
+	for _, obj := range rv1.Others {
 		obj := obj
 		supported, namespaced := registrybundle.IsSupported(obj.GetKind())
 		if !supported {
@@ -378,6 +397,10 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 		objs = append(objs, &obj)
 	}
 	return &Plain{Objects: objs}, nil
+}
+
+var PlainConverter = Converter{
+	BundleValidator: RegistryV1BundleValidator,
 }
 
 const maxNameLength = 63
