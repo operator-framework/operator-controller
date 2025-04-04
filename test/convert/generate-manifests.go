@@ -1,11 +1,14 @@
 package main
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
@@ -75,7 +78,7 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 	}
 
 	if err := func() error {
-		for idx, obj := range plain.Objects {
+		for idx, obj := range slices.SortedFunc(slices.Values(plain.Objects), orderByKindNamespaceName) {
 			kind := obj.GetObjectKind().GroupVersionKind().Kind
 			fileName := fmt.Sprintf("%02d_%s_%s.yaml", idx, strings.ToLower(kind), obj.GetName())
 			data, err := yaml.Marshal(obj)
@@ -94,4 +97,12 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 	}
 
 	return nil
+}
+
+func orderByKindNamespaceName(a client.Object, b client.Object) int {
+	return cmp.Or(
+		cmp.Compare(a.GetObjectKind().GroupVersionKind().Kind, b.GetObjectKind().GroupVersionKind().Kind),
+		cmp.Compare(a.GetNamespace(), b.GetNamespace()),
+		cmp.Compare(a.GetName(), b.GetName()),
+	)
 }
