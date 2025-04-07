@@ -18,12 +18,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
@@ -558,6 +560,52 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "webhookDefinitions are not supported")
 	require.Nil(t, plainBundle)
+}
+
+func TestRegistryV1SuiteGenerateWebhooks_WebhookSupportFGEnabled(t *testing.T) {
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.WebhookSupport, true)
+	t.Log("RegistryV1 Suite Convert")
+	t.Log("It should generate objects successfully based on target namespaces")
+
+	t.Log("It should enforce limitations")
+	t.Log("It should allow bundles with webhooks")
+	t.Log("By creating a registry v1 bundle")
+	registryv1Bundle := render.RegistryV1{
+		PackageName: "testPkg",
+		CRDs: []apiextensionsv1.CustomResourceDefinition{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "fake-webhook.package-with-webhooks.io",
+				},
+			},
+		},
+		CSV: MakeCSV(
+			WithName("testCSV"),
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+			WithOwnedCRDs(
+				v1alpha1.CRDDescription{
+					Name: "fake-webhook.package-with-webhooks.io",
+				},
+			),
+			WithStrategyDeploymentSpecs(
+				v1alpha1.StrategyDeploymentSpec{
+					Name: "some-deployment",
+				},
+			),
+			WithWebhookDefinitions(
+				v1alpha1.WebhookDescription{
+					Type:           v1alpha1.ConversionWebhook,
+					ConversionCRDs: []string{"fake-webhook.package-with-webhooks.io"},
+					DeploymentName: "some-deployment",
+				},
+			),
+		),
+	}
+
+	t.Log("By converting to plain")
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, []string{metav1.NamespaceAll})
+	require.NoError(t, err)
+	require.NotNil(t, plainBundle)
 }
 
 func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {

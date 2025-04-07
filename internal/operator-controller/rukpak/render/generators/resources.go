@@ -1,6 +1,9 @@
 package generators
 
 import (
+	"fmt"
+
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -81,6 +84,36 @@ func WithDeploymentSpec(depSpec appsv1.DeploymentSpec) func(client.Object) {
 func WithLabels(labels map[string]string) func(client.Object) {
 	return func(obj client.Object) {
 		obj.SetLabels(labels)
+	}
+}
+
+// WithServiceSpec applies a service spec to a Service resource
+func WithServiceSpec(serviceSpec corev1.ServiceSpec) func(client.Object) {
+	return func(obj client.Object) {
+		switch o := obj.(type) {
+		case *corev1.Service:
+			o.Spec = serviceSpec
+		}
+	}
+}
+
+// WithValidatingWebhooks applies validating webhooks to a ValidatingWebhookConfiguration resource
+func WithValidatingWebhooks(webhooks ...admissionregistrationv1.ValidatingWebhook) func(client.Object) {
+	return func(obj client.Object) {
+		switch o := obj.(type) {
+		case *admissionregistrationv1.ValidatingWebhookConfiguration:
+			o.Webhooks = webhooks
+		}
+	}
+}
+
+// WithMutatingWebhooks applies mutating webhooks to a MutatingWebhookConfiguration resource
+func WithMutatingWebhooks(webhooks ...admissionregistrationv1.MutatingWebhook) func(client.Object) {
+	return func(obj client.Object) {
+		switch o := obj.(type) {
+		case *admissionregistrationv1.MutatingWebhookConfiguration:
+			o.Webhooks = webhooks
+		}
 	}
 }
 
@@ -182,4 +215,47 @@ func CreateDeploymentResource(name string, namespace string, opts ...ResourceCre
 			},
 		},
 	).(*appsv1.Deployment)
+}
+
+func CreateValidatingWebhookConfigurationResource(generateName string, namespace string, opts ...ResourceCreatorOption) *admissionregistrationv1.ValidatingWebhookConfiguration {
+	return ResourceCreatorOptions(opts).ApplyTo(
+		&admissionregistrationv1.ValidatingWebhookConfiguration{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ValidatingWebhookConfiguration",
+				APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: fmt.Sprintf("%s-", generateName),
+				Namespace:    namespace,
+			},
+		},
+	).(*admissionregistrationv1.ValidatingWebhookConfiguration)
+}
+
+func CreateMutatingWebhookConfigurationResource(generateName string, namespace string, opts ...ResourceCreatorOption) *admissionregistrationv1.MutatingWebhookConfiguration {
+	return ResourceCreatorOptions(opts).ApplyTo(
+		&admissionregistrationv1.MutatingWebhookConfiguration{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "MutatingWebhookConfiguration",
+				APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: fmt.Sprintf("%s-", generateName),
+				Namespace:    namespace,
+			},
+		},
+	).(*admissionregistrationv1.MutatingWebhookConfiguration)
+}
+
+func CreateServiceResource(name string, namespace string, opts ...ResourceCreatorOption) *corev1.Service {
+	return ResourceCreatorOptions(opts).ApplyTo(&corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: corev1.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+	}).(*corev1.Service)
 }
