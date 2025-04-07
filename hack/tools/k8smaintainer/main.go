@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/fs" // Imported for fs.FileMode
 	"log"
 	"os"
 	"os/exec"
@@ -16,7 +17,13 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-const k8sRepo = "k8s.io/kubernetes"
+const (
+	k8sRepo                 = "k8s.io/kubernetes"
+	expectedMajorMinorParts = 2
+	goModFilePerms          = fs.FileMode(0600)
+	minGoListVersionFields  = 2
+	minValidPatchNumber     = 1
+)
 
 //nolint:gochecknoglobals
 var goExe = "go"
@@ -69,7 +76,7 @@ func main() {
 	}
 	majorMinor := semver.MajorMinor(k8sVer)             // e.g., "v1.32"
 	patch := strings.TrimPrefix(k8sVer, majorMinor+".") // e.g., "3"
-	if len(strings.Split(majorMinor, ".")) != 2 {
+	if len(strings.Split(majorMinor, ".")) != expectedMajorMinorParts {
 		log.Fatalf("Unexpected format for MajorMinor: %s", majorMinor)
 	}
 	targetStagingVer := "v0" + strings.TrimPrefix(majorMinor, "v1") + "." + patch // e.g., "v0.32.3"
@@ -200,7 +207,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error formatting go.mod: %v", err)
 	}
-	if err := os.WriteFile("go.mod", newModBytes, 0600); err != nil {
+	if err := os.WriteFile("go.mod", newModBytes, goModFilePerms); err != nil {
 		log.Fatalf("Error writing go.mod: %v", err)
 	}
 
@@ -265,7 +272,7 @@ func getModuleVersions(modulePath string) ([]string, error) {
 		return nil, fmt.Errorf("error listing versions for %s: %w", modulePath, err)
 	}
 	fields := strings.Fields(string(output))
-	if len(fields) < 2 {
+	if len(fields) < minGoListVersionFields {
 		return []string{}, nil // No versions listed
 	}
 	return fields[1:], nil // First field is the module path
@@ -294,8 +301,8 @@ func getLatestExistingVersion(modulePath, targetVer string) (string, error) {
 	majorMinor := semver.MajorMinor(targetVer)                // e.g., v0.32
 	patchStr := strings.TrimPrefix(targetVer, majorMinor+".") // e.g., 3
 	var patch int
-	if _, err := fmt.Sscan(patchStr, &patch); err != nil || patch < 1 {
-		log.Printf("Could not parse patch version or patch <= 0 for %s, cannot determine predecessor.", targetVer)
+	if _, err := fmt.Sscan(patchStr, &patch); err != nil || patch < minValidPatchNumber {
+		log.Printf("Could not parse patch version or patch < %d for %s, cannot determine predecessor.", minValidPatchNumber, targetVer)
 		return "", nil // Cannot determine predecessor
 	}
 	prevPatchVer := fmt.Sprintf("%s.%d", majorMinor, patch-1) // e.g., v0.32.2
