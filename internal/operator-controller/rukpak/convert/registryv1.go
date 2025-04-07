@@ -20,8 +20,10 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	registry "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/operator-registry"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/generators"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
 )
@@ -220,6 +222,10 @@ var PlainConverter = Converter{
 			generators.BundleCRDGenerator,
 			generators.BundleAdditionalResourcesGenerator,
 			generators.BundleCSVDeploymentGenerator,
+			generators.BundleValidatingWebhookResourceGenerator,
+			generators.BundleMutatingWebhookResourceGenerator,
+			generators.BundleWebhookServiceResourceGenerator,
+			generators.CertProviderResourceGenerator,
 		},
 	},
 }
@@ -257,11 +263,16 @@ func (c Converter) Convert(rv1 render.RegistryV1, installNamespace string, targe
 		return nil, fmt.Errorf("apiServiceDefintions are not supported")
 	}
 
-	if len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
+	if !features.OperatorControllerFeatureGate.Enabled(features.WebhookSupport) && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
 		return nil, fmt.Errorf("webhookDefinitions are not supported")
 	}
 
-	objs, err := c.BundleRenderer.Render(rv1, installNamespace, render.WithTargetNamespaces(targetNamespaces...))
+	objs, err := c.BundleRenderer.Render(
+		rv1,
+		installNamespace,
+		render.WithTargetNamespaces(targetNamespaces...),
+		certproviders.WithCertManagerCertificateProvider(),
+	)
 	if err != nil {
 		return nil, err
 	}
