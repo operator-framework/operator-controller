@@ -7,6 +7,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
 
@@ -84,5 +86,26 @@ func CheckPackageNameNotEmpty(rv1 *render.RegistryV1) []error {
 	if rv1.PackageName == "" {
 		return []error{errors.New("package name is empty")}
 	}
+	return nil
+}
+
+// CheckWebhookSupport checks that if the bundle cluster service version declares webhook definitions
+// that it is a singleton operator, i.e. that it only supports AllNamespaces mode. This keeps parity
+// with OLMv0 behavior for conversion webhooks,
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/install/webhook.go#L193
+// Since OLMv1 considers APIs to be cluster-scoped, we initially extend this constraint to validating and mutating webhooks.
+// While this might restrict the number of supported bundles, we can tackle the issue of relaxing this constraint in turn
+// after getting the webhook support working.
+func CheckWebhookSupport(rv1 *render.RegistryV1) []error {
+	if len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
+		supportedInstallModes := sets.Set[v1alpha1.InstallModeType]{}
+		for _, mode := range rv1.CSV.Spec.InstallModes {
+			supportedInstallModes.Insert(mode.Type)
+		}
+		if len(supportedInstallModes) != 1 || !supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
+			return []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")}
+		}
+	}
+
 	return nil
 }

@@ -10,6 +10,7 @@ const (
 	// Ex: SomeFeature featuregate.Feature = "SomeFeature"
 	PreflightPermissions             featuregate.Feature = "PreflightPermissions"
 	SingleOwnNamespaceInstallSupport featuregate.Feature = "SingleOwnNamespaceInstallSupport"
+	WebhookSupport                   featuregate.Feature = "WebhookSupport"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -25,6 +26,15 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// registry+v1 cluster extensions with single or own namespaces modes
 	// i.e. with a single watch namespace.
 	SingleOwnNamespaceInstallSupport: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// WebhookSupport enables support for installing
+	// registry+v1 cluster extensions that include validating,
+	// mutating, and/or conversion webhooks
+	WebhookSupport: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,

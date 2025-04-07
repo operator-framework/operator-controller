@@ -13,7 +13,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
-	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
+	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
 func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
@@ -212,6 +212,101 @@ func Test_CheckPackageNameNotEmpty(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := validators.CheckPackageNameNotEmpty(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
+
+func Test_CheckWebhookSupport(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *render.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name: "accepts bundles with validating webhook definitions when they only support AllNamespaces install mode",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.ValidatingAdmissionWebhook,
+						},
+					),
+				),
+			},
+		},
+		{
+			name: "accepts bundles with mutating webhook definitions when they only support AllNamespaces install mode",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.MutatingAdmissionWebhook,
+						},
+					),
+				),
+			},
+		},
+		{
+			name: "accepts bundles with conversion webhook definitions when they only support AllNamespaces install mode",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.ConversionWebhook,
+						},
+					),
+				),
+			},
+		},
+		{
+			name: "rejects bundles with validating webhook definitions when they support more modes than AllNamespaces install mode",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.ValidatingAdmissionWebhook,
+						},
+					),
+				),
+			},
+			expectedErrs: []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")},
+		},
+		{
+			name: "accepts bundles with mutating webhook definitions when they support more modes than AllNamespaces install mode",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.MutatingAdmissionWebhook,
+						},
+					),
+				),
+			},
+			expectedErrs: []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")},
+		},
+		{
+			name: "accepts bundles with conversion webhook definitions when they support more modes than AllNamespaces install mode",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.ConversionWebhook,
+						},
+					),
+				),
+			},
+			expectedErrs: []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := validators.CheckWebhookSupport(tc.bundle)
 			require.Equal(t, tc.expectedErrs, errs)
 		})
 	}
