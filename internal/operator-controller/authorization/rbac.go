@@ -72,7 +72,6 @@ func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
 //     the list (or slice) of missing rules. Note that in some cases the error may encapsulate multiple
 //     evaluation failures
 func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterExtension, manifestReader io.Reader) ([]ScopedPolicyRules, error) {
-	var allMissingPolicyRules []ScopedPolicyRules
 	dm, err := a.decodeManifest(manifestReader)
 	if err != nil {
 		return nil, err
@@ -95,6 +94,7 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 			preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
 		}
 	}
+	allMissingPolicyRules := make([]ScopedPolicyRules, 0, len(missingRules))
 
 	for ns, nsMissingRules := range missingRules {
 		// NOTE: Although CompactRules is defined to return an error, its current implementation
