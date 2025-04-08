@@ -546,16 +546,38 @@ var fullAuthority = []rbacv1.PolicyRule{
 	{Verbs: []string{"*"}, NonResourceURLs: []string{"*"}},
 }
 
+// TODO: Investigate replacing this regex parsing with structured error handling once there are
+//
+//	structured RBAC errors introduced by https://github.com/kubernetes/kubernetes/pull/130955.
+//
+// parseEscalationErrorForMissingRules attempts to extract specific RBAC permissions
+// that were denied due to escalation prevention from a given error's text.
+// It returns the list of extracted PolicyRules and an error.
+// Note: If parsing is successful, the returned error is derived from the *input* error's
+// message (specifically the part indicating the escalation attempt), not an error
+// encountered during the parsing process itself. If parsing fails due to an unexpected
+// error format, a distinct parsing error is returned.
 func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, error) {
-	errRegex := regexp.MustCompile(`(?s)^(user \".*\" \(groups=.*\) is attempting to grant RBAC permissions not currently held):.*?$`)
-	permRegex := regexp.MustCompile(`{APIGroups:\[("[^"]*")\], Resources:\[("[^"]*")\], Verbs:\[("[^"]*")\]}`)
+	// errRegex captures the standard prefix of an escalation error message
+	errRegex := regexp.MustCompile(`(?s)^(user ".*" \(groups=.*\) is attempting to grant RBAC permissions not currently held):.*?$`)
+	// permRegex extracts the details (APIGroups, Resources, Verbs) of individual permissions listed within the error message
+	permRegex := regexp.MustCompile(`{APIGroups:\[("[^"]*")], Resources:\[("[^"]*")], Verbs:\[("[^"]*")]}`)
 
 	errMatches := errRegex.FindAllStringSubmatch(ecError.Error(), -1)
+	// Check if the main error message prefix was matched and captured
+	if len(errMatches) == 0 || len(errMatches[0]) < 2 {
+		// The error format doesn't match the expected pattern for escalation errors
+		return nil, fmt.Errorf("failed to parse escalation error: unexpected format: %w", ecError)
+	}
 
-	// Extract permissions
+	// Extract permissions using permRegex
 	permissions := []rbacv1.PolicyRule{}
 	permMatches := permRegex.FindAllStringSubmatch(ecError.Error(), -1)
 	for _, match := range permMatches {
+		// Ensure the match has the expected number of capture groups
+		if len(match) < 4 {
+			continue // Skip malformed permission strings
+		}
 		permissions = append(permissions, rbacv1.PolicyRule{
 			APIGroups: []string{strings.Trim(match[1], `"`)},
 			Resources: []string{strings.Trim(match[2], `"`)},
@@ -563,6 +585,7 @@ func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, er
 		})
 	}
 
+	// Return the extracted permissions and the captured escalation message prefix as the error context
 	return permissions, errors.New(errMatches[0][1])
 }
 
