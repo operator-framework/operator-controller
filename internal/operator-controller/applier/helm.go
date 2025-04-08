@@ -305,19 +305,19 @@ func ruleDescription(ns string, rule rbacv1.PolicyRule) string {
 	sb.WriteString(fmt.Sprintf("Namespace:%q", ns))
 
 	if len(rule.APIGroups) > 0 {
-		sb.WriteString(fmt.Sprintf(" APIGroups:[%s]", strings.Join(rule.APIGroups, ",")))
+		sb.WriteString(fmt.Sprintf(" APIGroups:[%s]", strings.Join(slices.Sorted(slices.Values(rule.APIGroups)), ",")))
 	}
 	if len(rule.Resources) > 0 {
-		sb.WriteString(fmt.Sprintf(" Resources:[%s]", strings.Join(rule.Resources, ",")))
+		sb.WriteString(fmt.Sprintf(" Resources:[%s]", strings.Join(slices.Sorted(slices.Values(rule.Resources)), ",")))
 	}
 	if len(rule.ResourceNames) > 0 {
-		sb.WriteString(fmt.Sprintf(" ResourceNames:[%s]", strings.Join(rule.ResourceNames, ",")))
+		sb.WriteString(fmt.Sprintf(" ResourceNames:[%s]", strings.Join(slices.Sorted(slices.Values(rule.ResourceNames)), ",")))
 	}
 	if len(rule.Verbs) > 0 {
-		sb.WriteString(fmt.Sprintf(" Verbs:[%s]", strings.Join(rule.Verbs, ",")))
+		sb.WriteString(fmt.Sprintf(" Verbs:[%s]", strings.Join(slices.Sorted(slices.Values(rule.Verbs)), ",")))
 	}
 	if len(rule.NonResourceURLs) > 0 {
-		sb.WriteString(fmt.Sprintf(" NonResourceURLs:[%s]", strings.Join(rule.NonResourceURLs, ",")))
+		sb.WriteString(fmt.Sprintf(" NonResourceURLs:[%s]", strings.Join(slices.Sorted(slices.Values(rule.NonResourceURLs)), ",")))
 	}
 	return sb.String()
 }
