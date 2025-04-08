@@ -105,7 +105,7 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 			missingRules[ns] = compactMissingRules
 		}
 
-		missingRulesWithDeduplicatedVerbs := []rbacv1.PolicyRule{}
+		missingRulesWithDeduplicatedVerbs := make([]rbacv1.PolicyRule, 0, len(missingRules[ns]))
 		for _, rule := range missingRules[ns] {
 			verbSet := sets.New[string](rule.Verbs...)
 			if verbSet.Has("*") {
