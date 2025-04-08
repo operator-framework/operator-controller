@@ -86,12 +86,7 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 		preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
 	}
 
-	ec := escalationChecker{
-		authorizer:        a.authorizer,
-		ruleResolver:      a.ruleResolver,
-		extraClusterRoles: dm.clusterRoles,
-		extraRoles:        dm.roles,
-	}
+	ec := a.escalationCheckerFor(dm)
 
 	for _, obj := range dm.rbacObjects() {
 		if err := ec.checkEscalation(ctx, manifestManager, obj); err != nil {
@@ -136,6 +131,16 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 		return allMissingPolicyRules, fmt.Errorf("authorization evaluation errors: %w", errors.Join(preAuthEvaluationErrors...))
 	}
 	return allMissingPolicyRules, nil
+}
+
+func (a *rbacPreAuthorizer) escalationCheckerFor(dm *decodedManifest) escalationChecker {
+	ec := escalationChecker{
+		authorizer:        a.authorizer,
+		ruleResolver:      a.ruleResolver,
+		extraClusterRoles: dm.clusterRoles,
+		extraRoles:        dm.roles,
+	}
+	return ec
 }
 
 func (a *rbacPreAuthorizer) decodeManifest(manifestReader io.Reader) (*decodedManifest, error) {
