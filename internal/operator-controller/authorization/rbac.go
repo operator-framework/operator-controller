@@ -46,6 +46,14 @@ type ScopedPolicyRules struct {
 
 var objectVerbs = []string{"get", "patch", "update", "delete"}
 
+// Here we are splitting collection verbs based on required scope
+// NB: this split is tightly coupled to the requirements of the contentmanager, specifically
+// its need for cluster-scoped list/watch permissions.
+// TODO: We are accepting this coupling for now, but plan to decouple
+// TODO: link for above https://github.com/operator-framework/operator-controller/issues/1911
+var namespacedCollectionVerbs = []string{"create"}
+var clusterCollectionVerbs = []string{"list", "watch"}
+
 type rbacPreAuthorizer struct {
 	authorizer   authorizer.Authorizer
 	ruleResolver validation.AuthorizationRuleResolver
@@ -301,13 +309,6 @@ func (dm *decodedManifest) rbacObjects() []client.Object {
 
 func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info, ext *ocv1.ClusterExtension) []authorizer.AttributesRecord {
 	var attributeRecords []authorizer.AttributesRecord
-
-	// Here we are splitting collection verbs based on required scope
-	// NB: this split is tightly coupled to the requirements of the contentmanager, specifically
-	// its need for cluster-scoped list/watch permissions.
-	// TODO: We are accepting this coupling for now, but plan to decouple
-	namespacedCollectionVerbs := []string{"create"}
-	clusterCollectionVerbs := []string{"list", "watch"}
 
 	for gvr, keys := range dm.gvrs {
 		namespaces := sets.New[string]()
