@@ -30,16 +30,16 @@ const (
 var goExe = "go"
 
 // readAndParseGoMod reads and parses the go.mod file.
-func readAndParseGoMod(filename string) ([]byte, *modfile.File, error) {
+func readAndParseGoMod(filename string) (*modfile.File, error) {
 	modBytes, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error reading %s: %w", filename, err)
+		return nil, fmt.Errorf("error reading %s: %w", filename, err)
 	}
 	modF, err := modfile.Parse(filename, modBytes, nil)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing %s: %w", filename, err)
+		return nil, fmt.Errorf("error parsing %s: %w", filename, err)
 	}
-	return modBytes, modF, nil
+	return modF, nil
 }
 
 func main() {
@@ -61,7 +61,7 @@ func main() {
 	}
 	log.Printf("Running in module root: %s", modRoot)
 
-	_, modF, err := readAndParseGoMod(goModFilename)
+	modF, err := readAndParseGoMod(goModFilename)
 	if err != nil {
 		log.Fatal(err) // Error already formatted by helper function
 	}
@@ -170,7 +170,7 @@ func main() {
 	log.Printf("Identified %d k8s.io/* modules to manage.", len(pins))
 
 	// Parse go.mod again (needed in case `go list` modified it)
-	_, modF, err = readAndParseGoMod(goModFilename)
+	modF, err = readAndParseGoMod(goModFilename)
 	if err != nil {
 		log.Fatal(err) // Error already formatted by helper function
 	}
