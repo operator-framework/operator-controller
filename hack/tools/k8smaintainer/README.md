@@ -1,44 +1,43 @@
 # Kubernetes Staging Module Version Synchronization Tool
 
 ## Purpose
-This tool ensures that if `k8s.io/kubernetes` changes version in your `go.mod`, all related staging modules (e.g., `k8s.io/api`, `k8s.io/apimachinery`) are automatically pinned to the corresponding published version.
+This tool ensures that if `k8s.io/kubernetes` changes version in your `go.mod`, all related staging modules (e.g., `k8s.io/api`, `k8s.io/apimachinery`) are automatically pinned to the corresponding published version. Recent improvements include an environment variable override and refined logic for version resolution.
 
 ## How It Works
 
-1. **Parse and Filter:**
-   - Reads and parses your `go.mod`.
-   - Removes any existing `replace` directives referencing `k8s.io/`, ensuring no stale mappings persist.
+1. **Parsing and Filtering:**
+    - Reads and parses your `go.mod` file.
+    - Removes existing `replace` directives for `k8s.io/` modules to avoid stale mappings.
 
-2. **Find Kubernetes Version & Compute Staging Version:**
-   - Identifies the pinned `k8s.io/kubernetes` version in the `require` block.
-   - Converts `"v1.xx.yy"` to `"v0.xx.yy"` to determine the correct version for staging modules.
+2. **Determine Kubernetes Version:**
+    - **Environment Variable Override:**  
+      If the environment variable `K8S_IO_K8S_VERSION` is set, its value is validated (using semver standards) and used as the target version for `k8s.io/kubernetes`. The tool then runs `go get k8s.io/kubernetes@<version>` to update the dependency.
+    - **Default Behavior:**  
+      If `K8S_IO_K8S_VERSION` is not set, the tool reads the version of `k8s.io/kubernetes` from the `go.mod` file.
 
-3. **List All Modules in the Graph:**
-   - Runs `go list -m -json all` to get the full dependency tree.
-   - Extracts all `k8s.io/*` modules, ensuring completeness.
+3. **Compute the Target Staging Version:**
+    - Converts a Kubernetes version in the form `v1.xx.yy` into the staging version format `v0.xx.yy`.
+    - If the target staging version is unavailable, the tool attempts to fall back to the previous patch version.
 
-4. **Pin Staging Modules:**
-   - For each `k8s.io/*` module (except `k8s.io/kubernetes`):
-     - If it has a `v0.0.0` version (indicating it’s untagged) or its version doesn’t match the computed published version, the tool updates the `replace` directive accordingly.
-     - Ensures `k8s.io/kubernetes` itself has a `replace` entry for consistency.
+4. **Updating Module Replace Directives:**
+    - Retrieves the full dependency graph using `go list -m -json all`.
+    - Identifies relevant `k8s.io/*` modules (skipping the main module and version-suffixed modules).
+    - Removes outdated `replace` directives (ignoring local path replacements).
+    - Adds new `replace` directives to pin modules—including `k8s.io/kubernetes`—to the computed staging version.
 
-5. **Write & Finalize:**
-   - Writes the updated `go.mod`.
-   - Runs `go mod tidy` to clean up any dangling dependencies.
-   - Runs `go mod download k8s.io/kubernetes` to guarantee required entries in `go.sum`.
-   - Performs a final check that no modules remain at `v0.0.0`.
+5. **Finalizing Changes:**
+    - Writes the updated `go.mod` file.
+    - Runs `go mod tidy` to clean up dependencies.
+    - Executes `go mod download k8s.io/kubernetes` to update `go.sum`.
+    - Logs any issues, such as modules remaining at an untagged version (`v0.0.0`), which may indicate upstream tagging problems.
 
-## Behavior When Kubernetes Version Changes
-- If you manually update `k8s.io/kubernetes` (e.g., from `v1.32.2` to `v1.32.1`) and rerun this tool:
-  - The tool detects the new version and calculates the corresponding staging version (`v0.32.1`).
-  - It updates all staging modules (`k8s.io/*`) to match the new version, ensuring consistency.
-  - Any outdated `replace` directives are removed and replaced with the correct version.
+## Environment Variables
 
-## Additional Checks & Safeguards
-- **Missing `go.sum` Entries:** If `go list -m -json all` fails due to missing entries, the tool runs `go mod download` to ensure completeness.
-- **Conflicting Pinned Versions:** The tool enforces replace directives, but transitive dependencies may still cause conflicts that require manual resolution.
-- **Modules Introduced/Removed in Certain Versions:** If a required module no longer exists in a given Kubernetes version, manual intervention may be needed.
+- **K8S_IO_K8S_VERSION (optional):**  
+  When set, this environment variable overrides the Kubernetes version found in `go.mod`. The tool validates this semver string, updates the dependency using `go get`, and processes modules accordingly.
 
-## Notes
-- Ensures all `k8s.io/*` modules are treated consistently, even if they were not explicitly listed in `go.mod`.
-- Warns if any module remains pinned at `v0.0.0`, which could indicate an issue with upstream tagging.
+## Additional Notes
+
+- The tool ensures consistency across all `k8s.io/*` modules, even if they are not explicitly listed in `go.mod`.
+- If a suitable staging version is not found, a warning is logged and the closest valid version is used.
+- All operations are logged, which helps in troubleshooting and verifying the process.
