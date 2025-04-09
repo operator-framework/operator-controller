@@ -563,7 +563,7 @@ func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, er
 	// Group 2: Optional resolution errors
 	errRegex := regexp.MustCompile(`(?s)^user ".*" \(groups=.*\) is attempting to grant RBAC permissions not currently held: (.*)(?:; resolution errors: (.*))?$`)
 	// permRegex extracts the details (APIGroups, Resources, Verbs) of individual permissions listed within the error message
-	permRegex := regexp.MustCompile(`{APIGroups:\[("[^"]*")], Resources:\[("[^"]*")], Verbs:\[("[^"]*")]}`)
+	permRegex := regexp.MustCompile(`{APIGroups:\[([^\]]*)\], Resources:\[([^\]]*)\], Verbs:\[([^\]]*)\]}`)
 
 	errString := ecError.Error()
 	errMatches := errRegex.FindStringSubmatch(errString) // Use FindStringSubmatch for single match expected
@@ -587,9 +587,9 @@ func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, er
 			continue // Skip malformed permission strings
 		}
 		permissions = append(permissions, rbacv1.PolicyRule{
-			APIGroups: []string{strings.Trim(match[1], `"`)},
-			Resources: []string{strings.Trim(match[2], `"`)},
-			Verbs:     []string{strings.Trim(match[3], `"`)},
+			APIGroups: splitAndTrim(match[1]),
+			Resources: splitAndTrim(match[2]),
+			Verbs:     splitAndTrim(match[3]),
 		})
 	}
 
@@ -601,6 +601,18 @@ func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, er
 
 	// Return the extracted permissions and the constructed error message
 	return permissions, errors.New(errMsg)
+}
+
+func splitAndTrim(input string) []string {
+	parts := strings.Split(input, ",")
+
+	output := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		trimmed = strings.Trim(trimmed, `"`)
+		output = append(output, trimmed)
+	}
+	return output
 }
 
 func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {
