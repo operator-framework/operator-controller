@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/fs" // Imported for fs.FileMode
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -12,9 +12,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/blang/semver/v4"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
-	"golang.org/x/mod/semver"
 )
 
 const (
@@ -47,8 +47,8 @@ func readAndParseGoMod(filename string) (*modfile.File, error) {
 // It validates the version and runs `go get` to update the dependency.
 func getK8sVersionFromEnv(targetK8sVer string) (string, error) {
 	log.Printf("Found target %s version override from env var %s: %s", k8sRepo, k8sVersionEnvVar, targetK8sVer)
-	if !semver.IsValid(targetK8sVer) {
-		return "", fmt.Errorf("invalid semver specified in %s: %s", k8sVersionEnvVar, targetK8sVer)
+	if _, err := semver.ParseTolerant(targetK8sVer); err != nil {
+		return "", fmt.Errorf("invalid semver specified in %s: %s (%w)", k8sVersionEnvVar, targetK8sVer, err)
 	}
 	// Update the go.mod file first
 	log.Printf("Running 'go get %s@%s' to update the main dependency...", k8sRepo, targetK8sVer)
@@ -121,19 +121,22 @@ func main() {
 	}
 
 	// Calculate target staging version
-	if !semver.IsValid(k8sVer) {
-		log.Fatalf("Invalid semver for %s: %s", k8sRepo, k8sVer)
+	k8sSemVer, err := semver.ParseTolerant(k8sVer)
+	if err != nil {
+		// This should ideally not happen if validation passed earlier, but check anyway.
+		log.Fatalf("Invalid semver for %s: %s (%v)", k8sRepo, k8sVer, err) // Adjusted log format slightly
 	}
-	// Example: k8sVer = v1.32.3
-	majorMinor := semver.MajorMinor(k8sVer)             // e.g., "v1.32"
-	patch := strings.TrimPrefix(k8sVer, majorMinor+".") // e.g., "3"
-	if len(strings.Split(majorMinor, ".")) != expectedMajorMinorParts {
-		log.Fatalf("Unexpected format for MajorMinor: %s", majorMinor)
+
+	if k8sSemVer.Major != 1 {
+		log.Fatalf("Expected k8s version %s to have major version 1", k8sVer)
 	}
-	// targetStagingVer becomes "v0" + ".32" + "." + "3" => "v0.32.3"
-	targetStagingVer := "v0" + strings.TrimPrefix(majorMinor, "v1") + "." + patch
-	if !semver.IsValid(targetStagingVer) {
-		log.Fatalf("Calculated invalid staging semver: %s from k8s version %s", targetStagingVer, k8sVer)
+	targetSemVer := semver.Version{Major: 0, Minor: k8sSemVer.Minor, Patch: k8sSemVer.Patch}
+	// Prepend 'v' as expected by Go modules and the rest of the script logic
+	targetStagingVer := "v" + targetSemVer.String()
+
+	// Validate the constructed staging version string
+	if _, err := semver.ParseTolerant(targetStagingVer); err != nil {
+		log.Fatalf("Calculated invalid staging semver: %s from k8s version %s (%v)", targetStagingVer, k8sVer, err) // Adjusted log format slightly
 	}
 	log.Printf("Target staging version calculated: %s", targetStagingVer)
 
@@ -374,22 +377,21 @@ func getLatestExistingVersion(modulePath, targetVer string) (string, error) {
 	}
 
 	// Target not found, try previous patch version
-	majorMinor := semver.MajorMinor(targetVer)                // e.g., v0.32
-	patchStr := strings.TrimPrefix(targetVer, majorMinor+".") // e.g., 3
-	var patch int
-	// Use Sscan to parse the integer patch number
-	if _, err := fmt.Sscan(patchStr, &patch); err != nil {
-		log.Printf("Could not parse patch version from %s for module %s: %v. Cannot determine predecessor.", targetVer, modulePath, err)
+	targetSemVer, err := semver.ParseTolerant(targetVer)
+	if err != nil {
+		log.Printf("Could not parse target version %s for module %s: %v. Cannot determine predecessor.", targetVer, modulePath, err)
 		return "", nil // Cannot determine predecessor
 	}
 
 	// Only try to decrement if the patch number is >= the minimum required to do so
-	if patch < minPatchNumberToDecrementFrom {
-		log.Printf("Patch version %d is less than %d for %s, cannot determine predecessor.", patch, minPatchNumberToDecrementFrom, targetVer)
+	if targetSemVer.Patch < uint64(minPatchNumberToDecrementFrom) {
+		log.Printf("Patch version %d is less than %d for %s, cannot determine predecessor.", targetSemVer.Patch, minPatchNumberToDecrementFrom, targetVer)
 		return "", nil // Cannot determine predecessor (e.g., target was v0.32.0)
 	}
 
-	prevPatchVer := fmt.Sprintf("%s.%d", majorMinor, patch-1) // e.g., v0.32.2
+	prevSemVer := targetSemVer
+	prevSemVer.Patch--
+	prevPatchVer := "v" + prevSemVer.String()
 
 	foundPrev := false
 	for _, v := range availableVersions {
