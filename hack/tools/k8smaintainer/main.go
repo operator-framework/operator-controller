@@ -24,6 +24,7 @@ const (
 	goModFilePerms                = fs.FileMode(0600)
 	minGoListVersionFields        = 2
 	minPatchNumberToDecrementFrom = 1 // We can only decrement patch if it's 1 or greater (to get 0 or greater)
+	k8sVersionEnvVar              = "K8S_IO_K8S_VERSION"
 )
 
 //nolint:gochecknoglobals
@@ -40,6 +41,42 @@ func readAndParseGoMod(filename string) (*modfile.File, error) {
 		return nil, fmt.Errorf("error parsing %s: %w", filename, err)
 	}
 	return modF, nil
+}
+
+// getK8sVersionFromEnv processes the version specified via environment variable.
+// It validates the version and runs `go get` to update the dependency.
+func getK8sVersionFromEnv(targetK8sVer string) (string, error) {
+	log.Printf("Found target %s version override from env var %s: %s", k8sRepo, k8sVersionEnvVar, targetK8sVer)
+	if !semver.IsValid(targetK8sVer) {
+		return "", fmt.Errorf("invalid semver specified in %s: %s", k8sVersionEnvVar, targetK8sVer)
+	}
+	// Update the go.mod file first
+	log.Printf("Running 'go get %s@%s' to update the main dependency...", k8sRepo, targetK8sVer)
+	getArgs := fmt.Sprintf("%s@%s", k8sRepo, targetK8sVer)
+	if _, err := runGoCommand("get", getArgs); err != nil {
+		return "", fmt.Errorf("error running 'go get %s': %w", getArgs, err)
+	}
+	return targetK8sVer, nil // Return the validated version
+}
+
+// getK8sVersionFromMod reads the go.mod file to find the current version of k8s.io/kubernetes.
+// It returns the version string if found, or an empty string (and nil error) if not found.
+func getK8sVersionFromMod() (string, error) {
+	modF, err := readAndParseGoMod(goModFilename)
+	if err != nil {
+		return "", err // Propagate error from reading/parsing
+	}
+
+	// Find k8s.io/kubernetes version
+	for _, req := range modF.Require {
+		if req.Mod.Path == k8sRepo {
+			log.Printf("Found existing %s version in %s: %s", k8sRepo, goModFilename, req.Mod.Version)
+			return req.Mod.Version, nil // Return found version
+		}
+	}
+	// Not found case - return empty string, no error (as per original logic)
+	log.Printf("INFO: %s not found in %s require block. Nothing to do.", k8sRepo, goModFilename)
+	return "", nil
 }
 
 func main() {
@@ -61,23 +98,27 @@ func main() {
 	}
 	log.Printf("Running in module root: %s", modRoot)
 
-	modF, err := readAndParseGoMod(goModFilename)
-	if err != nil {
-		log.Fatal(err) // Error already formatted by helper function
-	}
+	var k8sVer string
 
-	// Find k8s.io/kubernetes version
-	k8sVer := ""
-	for _, req := range modF.Require {
-		if req.Mod.Path == k8sRepo {
-			k8sVer = req.Mod.Version
-			break
+	// Determine the target k8s version using helper functions
+	targetK8sVerEnv := os.Getenv(k8sVersionEnvVar)
+	if targetK8sVerEnv != "" {
+		// Process version from environment variable
+		k8sVer, err = getK8sVersionFromEnv(targetK8sVerEnv)
+		if err != nil {
+			log.Fatalf("Failed to process k8s version from environment variable %s: %v", k8sVersionEnvVar, err)
+		}
+	} else {
+		// Process version from go.mod file
+		k8sVer, err = getK8sVersionFromMod()
+		if err != nil {
+			log.Fatalf("Failed to get k8s version from %s: %v", goModFilename, err)
+		}
+		// Handle the "not found" case where getK8sVersionFromMod returns "", nil
+		if k8sVer == "" {
+			os.Exit(0) // Exit gracefully as requested
 		}
 	}
-	if k8sVer == "" {
-		log.Fatalf("Could not find %s in %s require block", k8sRepo, goModFilename)
-	}
-	log.Printf("Found %s version: %s", k8sRepo, k8sVer)
 
 	// Calculate target staging version
 	if !semver.IsValid(k8sVer) {
@@ -92,7 +133,7 @@ func main() {
 	// targetStagingVer becomes "v0" + ".32" + "." + "3" => "v0.32.3"
 	targetStagingVer := "v0" + strings.TrimPrefix(majorMinor, "v1") + "." + patch
 	if !semver.IsValid(targetStagingVer) {
-		log.Fatalf("Calculated invalid staging semver: %s", targetStagingVer)
+		log.Fatalf("Calculated invalid staging semver: %s from k8s version %s", targetStagingVer, k8sVer)
 	}
 	log.Printf("Target staging version calculated: %s", targetStagingVer)
 
@@ -158,7 +199,7 @@ func main() {
 		}
 
 		if determinedVer != targetStagingVer {
-			log.Printf("WARNING: Target version %s not found for %s. Using existing version %s.", targetStagingVer, effectivePath, determinedVer)
+			log.Printf("INFO: Target version %s not found for %s. Using existing predecessor version %s.", targetStagingVer, effectivePath, determinedVer)
 		}
 
 		// map the original module path (as seen in the dependency graph) to the desired version for the 'replace' directive
@@ -169,18 +210,18 @@ func main() {
 	pins[k8sRepo] = k8sVer
 	log.Printf("Identified %d k8s.io/* modules to manage.", len(pins))
 
-	// Parse go.mod again (needed in case `go list` modified it)
-	modF, err = readAndParseGoMod(goModFilename)
+	// Parse go.mod again (needed in case `go list` or `go get` modified it)
+	modF, err := readAndParseGoMod(goModFilename)
 	if err != nil {
 		log.Fatal(err) // Error already formatted by helper function
 	}
 
-	// Remove all existing k8s.io/* replaces
-	log.Println("Removing existing k8s.io/* replace directives...")
+	// Remove all existing k8s.io/* replaces that target other modules (not local paths)
+	log.Println("Removing existing k8s.io/* module replace directives...")
 	var replacesToRemove []string
 	for _, rep := range modF.Replace {
 		// Only remove replaces targeting k8s.io/* modules (not local replacements like ../staging)
-		// assumes standard module paths contain '.'
+		// Check that the old path starts with k8s.io/ and the new path looks like a module path (contains '.')
 		if strings.HasPrefix(rep.Old.Path, "k8s.io/") && strings.Contains(rep.New.Path, ".") {
 			replacesToRemove = append(replacesToRemove, rep.Old.Path)
 		} else if strings.HasPrefix(rep.Old.Path, "k8s.io/") {
@@ -274,8 +315,12 @@ func runGoCommand(args ...string) ([]byte, error) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+	log.Printf("Executing: %s %s", goExe, strings.Join(args, " "))
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("command '%s %s' failed: %v\nStderr:\n%s", goExe, strings.Join(args, " "), err, stderr.String())
+		if stderr.Len() > 0 {
+			log.Printf("Stderr:\n%s", stderr.String())
+		}
+		return nil, fmt.Errorf("command '%s %s' failed: %w", goExe, strings.Join(args, " "), err)
 	}
 	return stdout.Bytes(), nil
 }
@@ -286,11 +331,14 @@ func getModuleVersions(modulePath string) ([]string, error) {
 	// Combine output and error message for checking because 'go list' sometimes writes errors to stdout
 	combinedOutput := string(output)
 	if err != nil {
-		combinedOutput += err.Error()
+		if !strings.Contains(combinedOutput, err.Error()) {
+			combinedOutput += err.Error()
+		}
 	}
 
 	// Check if the error/output indicates "no matching versions" - this is not a fatal error for our logic
-	if strings.Contains(combinedOutput, "no matching versions") {
+	if strings.Contains(combinedOutput, "no matching versions") || strings.Contains(combinedOutput, "no required module provides package") {
+		log.Printf("INFO: No versions found for module %s via 'go list'.", modulePath)
 		return []string{}, nil // Return empty list, not an error
 	}
 	// If there was an actual error beyond "no matching versions"
@@ -300,6 +348,7 @@ func getModuleVersions(modulePath string) ([]string, error) {
 
 	fields := strings.Fields(string(output))
 	if len(fields) < minGoListVersionFields {
+		log.Printf("INFO: No versions listed for module %s (output: '%s')", modulePath, string(output))
 		return []string{}, nil // No versions listed (e.g., just the module path)
 	}
 	return fields[1:], nil // First field is the module path

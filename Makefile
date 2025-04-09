@@ -120,13 +120,13 @@ custom-linter-build: #EXHELP Build custom linter
 lint-custom: custom-linter-build #EXHELP Call custom linter for the project
 	go vet -tags=$(GO_BUILD_TAGS) -vettool=./bin/custom-linter ./...
 
-.PHONY: k8s-maintainer #EXHELP this tool also calls `go mod tidy` but also allows us maintain k8s.io/kubernetes` changes bumping related staging modules (e.g., `k8s.io/api`, `k8s.io/apimachinery) as needed
-k8s-maintainer:
-	go run hack/tools/k8smaintainer/main.go
+.PHONY: k8s-pin #EXHELP Pin k8s staging modules based on k8s.io/kubernetes version (in go.mod or from K8S_IO_K8S_VERSION env var) and run go mod tidy.
+k8s-pin:
+	K8S_IO_K8S_VERSION='$(K8S_IO_K8S_VERSION)' go run hack/tools/k8smaintainer/main.go
 
-.PHONY: tidy
-tidy: k8s-maintainer #HELP Update dependencies.
-	# k8s-maintainer calls go mod tidy
+.PHONY: tidy #HELP Run go mod tidy.
+tidy:
+	go mod tidy
 
 .PHONY: manifests
 KUSTOMIZE_CATD_CRDS_DIR := config/base/catalogd/crd/bases
@@ -154,7 +154,7 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: tidy fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date.
+verify: k8s-pin fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
 	git diff --exit-code
 
 # Renders registry+v1 bundles in test/convert
