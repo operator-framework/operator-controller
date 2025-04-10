@@ -552,29 +552,37 @@ var fullAuthority = []rbacv1.PolicyRule{
 //
 // parseEscalationErrorForMissingRules attempts to extract specific RBAC permissions
 // that were denied due to escalation prevention from a given error's text.
-// It returns the list of extracted PolicyRules and an error.
+// It returns the list of extracted PolicyRules and an error detailing the escalation attempt
+// and any resolution errors found.
 // Note: If parsing is successful, the returned error is derived from the *input* error's
-// message (specifically the part indicating the escalation attempt), not an error
-// encountered during the parsing process itself. If parsing fails due to an unexpected
+// message, not an error encountered during the parsing process itself. If parsing fails due to an unexpected
 // error format, a distinct parsing error is returned.
 func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, error) {
-	// errRegex captures the standard prefix of an escalation error message
-	errRegex := regexp.MustCompile(`(?s)^(user ".*" \(groups=.*\) is attempting to grant RBAC permissions not currently held):.*?$`)
+	// errRegex captures the missing permissions and optionally resolution errors from an escalation error message
+	// Group 1: The list of missing permissions
+	// Group 2: Optional resolution errors
+	errRegex := regexp.MustCompile(`(?s)^user ".*" \(groups=.*\) is attempting to grant RBAC permissions not currently held: (.*)(?:; resolution errors: (.*))?$`)
 	// permRegex extracts the details (APIGroups, Resources, Verbs) of individual permissions listed within the error message
 	permRegex := regexp.MustCompile(`{APIGroups:\[("[^"]*")], Resources:\[("[^"]*")], Verbs:\[("[^"]*")]}`)
 
-	errMatches := errRegex.FindAllStringSubmatch(ecError.Error(), -1)
-	// Check if the main error message prefix was matched and captured
-	if len(errMatches) == 0 || len(errMatches[0]) < 2 {
+	errString := ecError.Error()
+	errMatches := errRegex.FindStringSubmatch(errString) // Use FindStringSubmatch for single match expected
+
+	// Check if the main error message pattern was matched and captured the required groups
+	// We expect at least 3 elements: full match, missing permissions, resolution errors (can be empty)
+	if len(errMatches) < 3 {
 		// The error format doesn't match the expected pattern for escalation errors
 		return nil, fmt.Errorf("failed to parse escalation error: unexpected format: %w", ecError)
 	}
 
-	// Extract permissions using permRegex
+	missingPermissionsStr := errMatches[1]
+	resolutionErrorsStr := errMatches[2]
+
+	// Extract permissions using permRegex from the captured permissions string (Group 1)
 	permissions := []rbacv1.PolicyRule{}
-	permMatches := permRegex.FindAllStringSubmatch(ecError.Error(), -1)
+	permMatches := permRegex.FindAllStringSubmatch(missingPermissionsStr, -1)
 	for _, match := range permMatches {
-		// Ensure the match has the expected number of capture groups
+		// Ensure the match has the expected number of capture groups (full match + 3 groups)
 		if len(match) < 4 {
 			continue // Skip malformed permission strings
 		}
@@ -585,8 +593,14 @@ func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, er
 		})
 	}
 
-	// Return the extracted permissions and the captured escalation message prefix as the error context
-	return permissions, errors.New(errMatches[0][1])
+	// Construct the error message to return. Include resolution errors if present
+	errMsg := "escalation check failed"
+	if resolutionErrorsStr != "" {
+		errMsg = fmt.Sprintf("%s; resolution errors: %s", errMsg, resolutionErrorsStr)
+	}
+
+	// Return the extracted permissions and the constructed error message
+	return permissions, errors.New(errMsg)
 }
 
 func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {
