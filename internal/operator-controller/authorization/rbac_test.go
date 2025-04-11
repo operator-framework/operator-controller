@@ -290,7 +290,7 @@ func TestParseEscalationErrorForMissingRules(t *testing.T) {
 		{
 			name: "Multiple Missing Rules (Resource + NonResource)",
 			inputError: errors.New(`user "sa" (groups=["system:authenticated"]) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:[""], Resources:["pods"], Verbs:["list", "watch"]} ` + // APIGroups:[""] becomes empty slice {}
+				`{APIGroups:[""], Resources:["pods"], Verbs:["list" "watch"]} ` + // APIGroups:[""] becomes empty slice {}
 				`{NonResourceURLs:["/healthz"], Verbs:["get"]}`),
 			expectedRules: []rbacv1.PolicyRule{
 				{APIGroups: []string{}, Resources: []string{"pods"}, Verbs: []string{"list", "watch"}},
@@ -322,7 +322,7 @@ func TestParseEscalationErrorForMissingRules(t *testing.T) {
 		{
 			name: "Missing Rule (All Resource Fields)",
 			inputError: errors.New(`user "resource-name-user" (groups=test) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:["extensions"], Resources:["ingresses"], ResourceNames:["my-ingress"], Verbs:["update","patch"]}`),
+				`{APIGroups:["extensions"], Resources:["ingresses"], ResourceNames:["my-ingress"], Verbs:["update" "patch"]}`),
 			expectedRules: []rbacv1.PolicyRule{
 				{APIGroups: []string{"extensions"}, Resources: []string{"ingresses"}, ResourceNames: []string{"my-ingress"}, Verbs: []string{"update", "patch"}},
 			},
@@ -340,7 +340,7 @@ func TestParseEscalationErrorForMissingRules(t *testing.T) {
 		{
 			name: "Missing Rule (NonResourceURLs only)",
 			inputError: errors.New(`user "url-user" (groups=test) is attempting to grant RBAC permissions not currently held: ` +
-				`{NonResourceURLs:["/version", "/apis"], Verbs:["get"]}`),
+				`{NonResourceURLs:["/version" "/apis"], Verbs:["get"]}`),
 			expectedRules: []rbacv1.PolicyRule{
 				{NonResourceURLs: []string{"/version", "/apis"}, Verbs: []string{"get"}},
 			},
@@ -369,7 +369,7 @@ func TestParseEscalationErrorForMissingRules(t *testing.T) {
 		{
 			name: "Rule with Empty Strings in lists",
 			inputError: errors.New(`user "empty-strings" (groups=test) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:["","apps"], Resources:["", "deployments"], Verbs:["get", ""]}`),
+				`{APIGroups:["" "apps"], Resources:["" "deployments"], Verbs:["get" ""]}`),
 			expectedRules: []rbacv1.PolicyRule{
 				{APIGroups: []string{"apps"}, Resources: []string{"deployments"}, Verbs: []string{"get"}},
 			},

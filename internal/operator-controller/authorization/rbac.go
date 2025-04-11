@@ -95,11 +95,13 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 
 	ec := a.escalationCheckerFor(dm)
 
+	var parseErrors []error
 	for _, obj := range dm.rbacObjects() {
 		if err := ec.checkEscalation(ctx, manifestManager, obj); err != nil {
-			missingEscalationRules, err := parseEscalationErrorForMissingRules(err)
-			missingRules[obj.GetNamespace()] = append(missingRules[obj.GetNamespace()], missingEscalationRules...)
-			preAuthEvaluationErrors = append(preAuthEvaluationErrors, err)
+			result, err := parseEscalationErrorForMissingRules(err)
+			missingRules[obj.GetNamespace()] = append(missingRules[obj.GetNamespace()], result.MissingRules...)
+			preAuthEvaluationErrors = append(preAuthEvaluationErrors, result.ResolutionErrors)
+			parseErrors = append(parseErrors, err)
 		}
 	}
 	allMissingPolicyRules := make([]ScopedPolicyRules, 0, len(missingRules))
@@ -135,8 +137,15 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 		return strings.Compare(a.Namespace, b.Namespace)
 	})
 
+	var errs []error
+	if parseErr := errors.Join(parseErrors...); parseErr != nil {
+		errs = append(errs, fmt.Errorf("failed to parse escalation check error strings: %v", parseErr))
+	}
 	if len(preAuthEvaluationErrors) > 0 {
-		return allMissingPolicyRules, fmt.Errorf("authorization evaluation errors: %w", errors.Join(preAuthEvaluationErrors...))
+		errs = append(errs, fmt.Errorf("failed to resolve or evaluate permissions: %v", errors.Join(preAuthEvaluationErrors...)))
+	}
+	if len(errs) > 0 {
+		return allMissingPolicyRules, fmt.Errorf("missing rules may be incomplete: %w", errors.Join(errs...))
 	}
 	return allMissingPolicyRules, nil
 }
@@ -546,6 +555,17 @@ var fullAuthority = []rbacv1.PolicyRule{
 	{Verbs: []string{"*"}, NonResourceURLs: []string{"*"}},
 }
 
+var (
+	errRegex  = regexp.MustCompile(`(?s)^user ".*" \(groups=.*\) is attempting to grant RBAC permissions not currently held: (.*)(?:; resolution errors: (.*))?$`)
+	ruleRegex = regexp.MustCompile(`{([^}]+)}`)
+	itemRegex = regexp.MustCompile(`"[^"]*"`)
+)
+
+type parseResult struct {
+	MissingRules     []rbacv1.PolicyRule
+	ResolutionErrors error
+}
+
 // TODO: Investigate replacing this regex parsing with structured error handling once there are
 //
 //	structured RBAC errors introduced by https://github.com/kubernetes/kubernetes/pull/130955.
@@ -557,62 +577,62 @@ var fullAuthority = []rbacv1.PolicyRule{
 // Note: If parsing is successful, the returned error is derived from the *input* error's
 // message, not an error encountered during the parsing process itself. If parsing fails due to an unexpected
 // error format, a distinct parsing error is returned.
-func parseEscalationErrorForMissingRules(ecError error) ([]rbacv1.PolicyRule, error) {
+func parseEscalationErrorForMissingRules(ecError error) (*parseResult, error) {
 	// errRegex captures the missing permissions and optionally resolution errors from an escalation error message
 	// Group 1: The list of missing permissions
 	// Group 2: Optional resolution errors
-	errRegex := regexp.MustCompile(`(?s)^user ".*" \(groups=.*\) is attempting to grant RBAC permissions not currently held: (.*)(?:; resolution errors: (.*))?$`)
-	// permRegex extracts the details (APIGroups, Resources, Verbs) of individual permissions listed within the error message
-	permRegex := regexp.MustCompile(`{APIGroups:\[([^\]]*)\], Resources:\[([^\]]*)\], Verbs:\[([^\]]*)\]}`)
-
 	errString := ecError.Error()
 	errMatches := errRegex.FindStringSubmatch(errString) // Use FindStringSubmatch for single match expected
 
 	// Check if the main error message pattern was matched and captured the required groups
 	// We expect at least 3 elements: full match, missing permissions, resolution errors (can be empty)
-	if len(errMatches) < 3 {
+	if len(errMatches) != 3 {
 		// The error format doesn't match the expected pattern for escalation errors
-		return nil, fmt.Errorf("failed to parse escalation error: unexpected format: %w", ecError)
+		return &parseResult{}, fmt.Errorf("unexpected format of escalation check error string: %q", errString)
 	}
-
 	missingPermissionsStr := errMatches[1]
 	resolutionErrorsStr := errMatches[2]
 
 	// Extract permissions using permRegex from the captured permissions string (Group 1)
-	permissions := []rbacv1.PolicyRule{}
-	permMatches := permRegex.FindAllStringSubmatch(missingPermissionsStr, -1)
-	for _, match := range permMatches {
-		// Ensure the match has the expected number of capture groups (full match + 3 groups)
-		if len(match) < 4 {
-			continue // Skip malformed permission strings
-		}
-		permissions = append(permissions, rbacv1.PolicyRule{
-			APIGroups: splitAndTrim(match[1]),
-			Resources: splitAndTrim(match[2]),
-			Verbs:     splitAndTrim(match[3]),
+	var (
+		permissions []rbacv1.PolicyRule
+		parseErrors []error
+	)
+	for _, rule := range ruleRegex.FindAllString(missingPermissionsStr, -1) {
+		items := mapSlice(strings.Split(rule[1:len(rule)-1], ","), func(in string) string {
+			return strings.TrimSpace(in)
 		})
-	}
-
-	// Construct the error message to return. Include resolution errors if present
-	errMsg := "escalation check failed"
-	if resolutionErrorsStr != "" {
-		errMsg = fmt.Sprintf("%s; resolution errors: %s", errMsg, resolutionErrorsStr)
+		var pr rbacv1.PolicyRule
+		for _, item := range items {
+			field, valuesStr, ok := strings.Cut(item, ":")
+			if !ok {
+				parseErrors = append(parseErrors, fmt.Errorf("unexpected item %q: expected <Type>:[<values>...]", item))
+				continue
+			}
+			values := mapSlice(itemRegex.FindAllString(valuesStr, -1), func(in string) string {
+				return strings.Trim(in, `"`)
+			})
+			switch field {
+			case "APIGroups":
+				pr.APIGroups = values
+			case "Resources":
+				pr.Resources = values
+			case "ResourceNames":
+				pr.ResourceNames = values
+			case "NonResourceURLs":
+				pr.NonResourceURLs = values
+			case "Verbs":
+				pr.Verbs = values
+			}
+		}
+		permissions = append(permissions, pr)
 	}
 
 	// Return the extracted permissions and the constructed error message
-	return permissions, errors.New(errMsg)
-}
-
-func splitAndTrim(input string) []string {
-	parts := strings.Split(input, ",")
-
-	output := make([]string, 0, len(parts))
-	for _, part := range parts {
-		trimmed := strings.TrimSpace(part)
-		trimmed = strings.Trim(trimmed, `"`)
-		output = append(output, trimmed)
-	}
-	return output
+	return &parseResult{
+		MissingRules:     permissions,
+		ResolutionErrors: errors.New(resolutionErrorsStr),
+	}, errors.Join(parseErrors...)
 }
 
 func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {
@@ -620,6 +640,14 @@ func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {
 	// An empty slice of ClusterRoleSelectors means no selectors were provided,
 	// which does NOT imply "match all."
 	return clusterRole.AggregationRule != nil && len(clusterRole.AggregationRule.ClusterRoleSelectors) > 0
+}
+
+func mapSlice[I, O any](in []I, f func(I) O) []O {
+	out := make([]O, len(in))
+	for i := range in {
+		out[i] = f(in[i])
+	}
+	return out
 }
 
 func toPtrSlice[V any](in []V) []*V {
