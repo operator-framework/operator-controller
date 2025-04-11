@@ -1,4 +1,4 @@
-package convert
+package validators
 
 import (
 	"errors"
@@ -6,19 +6,12 @@ import (
 	"slices"
 
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
 
-type BundleValidator []func(v1 *RegistryV1) []error
-
-func (v BundleValidator) Validate(rv1 *RegistryV1) error {
-	var errs []error
-	for _, validator := range v {
-		errs = append(errs, validator(rv1)...)
-	}
-	return errors.Join(errs...)
-}
-
-var RegistryV1BundleValidator = BundleValidator{
+// RegistryV1BundleValidator validates RegistryV1 bundles
+var RegistryV1BundleValidator = render.BundleValidator{
 	// NOTE: if you update this list, Test_BundleValidatorHasAllValidationFns will fail until
 	// you bring the same changes over to that test. This helps ensure all validation rules are executed
 	// while giving us the flexibility to test each validation function individually
@@ -30,7 +23,7 @@ var RegistryV1BundleValidator = BundleValidator{
 
 // CheckDeploymentSpecUniqueness checks that each strategy deployment spec in the csv has a unique name.
 // Errors are sorted by deployment name.
-func CheckDeploymentSpecUniqueness(rv1 *RegistryV1) []error {
+func CheckDeploymentSpecUniqueness(rv1 *render.RegistryV1) []error {
 	deploymentNameSet := sets.Set[string]{}
 	duplicateDeploymentNames := sets.Set[string]{}
 	for _, dep := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
@@ -48,7 +41,7 @@ func CheckDeploymentSpecUniqueness(rv1 *RegistryV1) []error {
 }
 
 // CheckOwnedCRDExistence checks bundle owned custom resource definitions declared in the csv exist in the bundle
-func CheckOwnedCRDExistence(rv1 *RegistryV1) []error {
+func CheckOwnedCRDExistence(rv1 *render.RegistryV1) []error {
 	crdsNames := sets.Set[string]{}
 	for _, crd := range rv1.CRDs {
 		crdsNames.Insert(crd.Name)
@@ -69,7 +62,7 @@ func CheckOwnedCRDExistence(rv1 *RegistryV1) []error {
 }
 
 // CheckCRDResourceUniqueness checks that the bundle CRD names are unique
-func CheckCRDResourceUniqueness(rv1 *RegistryV1) []error {
+func CheckCRDResourceUniqueness(rv1 *render.RegistryV1) []error {
 	crdsNames := sets.Set[string]{}
 	duplicateCRDNames := sets.Set[string]{}
 	for _, crd := range rv1.CRDs {
@@ -87,7 +80,7 @@ func CheckCRDResourceUniqueness(rv1 *RegistryV1) []error {
 }
 
 // CheckPackageNameNotEmpty checks that PackageName is not empty
-func CheckPackageNameNotEmpty(rv1 *RegistryV1) []error {
+func CheckPackageNameNotEmpty(rv1 *render.RegistryV1) []error {
 	if rv1.PackageName == "" {
 		return []error{errors.New("package name is empty")}
 	}
