@@ -570,23 +570,40 @@ func TestRegistryV1SuiteGenerateWebhooks_WebhookSupportFGEnabled(t *testing.T) {
 	t.Log("It should enforce limitations")
 	t.Log("It should allow bundles with webhooks")
 	t.Log("By creating a registry v1 bundle")
-	csv := v1alpha1.ClusterServiceVersion{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "testCSV",
-		},
-		Spec: v1alpha1.ClusterServiceVersionSpec{
-			InstallModes:       []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true}},
-			WebhookDefinitions: []v1alpha1.WebhookDescription{{ConversionCRDs: []string{"fake-webhook.package-with-webhooks.io"}}},
-		},
-	}
-	watchNamespaces := []string{metav1.NamespaceAll}
 	registryv1Bundle := render.RegistryV1{
 		PackageName: "testPkg",
-		CSV:         csv,
+		CRDs: []apiextensionsv1.CustomResourceDefinition{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "fake-webhook.package-with-webhooks.io",
+				},
+			},
+		},
+		CSV: MakeCSV(
+			WithName("testCSV"),
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+			WithOwnedCRDs(
+				v1alpha1.CRDDescription{
+					Name: "fake-webhook.package-with-webhooks.io",
+				},
+			),
+			WithStrategyDeploymentSpecs(
+				v1alpha1.StrategyDeploymentSpec{
+					Name: "some-deployment",
+				},
+			),
+			WithWebhookDefinitions(
+				v1alpha1.WebhookDescription{
+					Type:           v1alpha1.ConversionWebhook,
+					ConversionCRDs: []string{"fake-webhook.package-with-webhooks.io"},
+					DeploymentName: "some-deployment",
+				},
+			),
+		),
 	}
 
 	t.Log("By converting to plain")
-	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, []string{metav1.NamespaceAll})
 	require.NoError(t, err)
 	require.NotNil(t, plainBundle)
 }
