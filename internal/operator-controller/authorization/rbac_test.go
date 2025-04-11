@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -273,113 +272,156 @@ func TestPreAuthorize_CheckEscalation(t *testing.T) {
 // Goal is: prove the regex works as planned AND that if the error messages ever change we'll learn about it with these tests
 func TestParseEscalationErrorForMissingRules(t *testing.T) {
 	testCases := []struct {
-		name                string
-		inputError          error
-		expectParseError    bool // Whether the parser itself should fail (due to unexpected format)
-		expectedRules       []rbacv1.PolicyRule
-		expectedErrorString string // The string of the error returned by the function
+		name           string
+		inputError     error
+		expectedResult *parseResult
+		expectError    require.ErrorAssertionFunc
 	}{
 		{
-			name:       "One Missing Resource Rule",
-			inputError: errors.New(`user "test-user" (groups=test) is attempting to grant RBAC permissions not currently held: {APIGroups:["apps"], Resources:["deployments"], Verbs:["get"]}`),
-			expectedRules: []rbacv1.PolicyRule{
-				{APIGroups: []string{"apps"}, Resources: []string{"deployments"}, Verbs: []string{"get"}},
+			name: "One Missing Resource Rule",
+			inputError: errors.New(`user "test-user" (groups=test) is attempting to grant RBAC permissions not currently held:
+{APIGroups:["apps"], Resources:["deployments"], Verbs:["get"]}`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{"apps"}, Resources: []string{"deployments"}, Verbs: []string{"get"}},
+				},
 			},
-			expectedErrorString: "escalation check failed",
+			expectError: require.NoError,
 		},
 		{
 			name: "Multiple Missing Rules (Resource + NonResource)",
-			inputError: errors.New(`user "sa" (groups=["system:authenticated"]) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:[""], Resources:["pods"], Verbs:["list" "watch"]} ` + // APIGroups:[""] becomes empty slice {}
-				`{NonResourceURLs:["/healthz"], Verbs:["get"]}`),
-			expectedRules: []rbacv1.PolicyRule{
-				{APIGroups: []string{}, Resources: []string{"pods"}, Verbs: []string{"list", "watch"}},
-				{NonResourceURLs: []string{"/healthz"}, Verbs: []string{"get"}},
+			inputError: errors.New(`user "sa" (groups=["system:authenticated"]) is attempting to grant RBAC permissions not currently held:
+{APIGroups:[""], Resources:["pods"], Verbs:["list" "watch"]}
+{NonResourceURLs:["/healthz"], Verbs:["get"]}`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"list", "watch"}},
+					{NonResourceURLs: []string{"/healthz"}, Verbs: []string{"get"}},
+				},
 			},
-			expectedErrorString: "escalation check failed",
+			expectError: require.NoError,
 		},
 		{
 			name: "One Missing Rule with Resolution Errors",
-			inputError: errors.New(`user "test-admin" (groups=["system:masters"]) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:["batch"], Resources:["jobs"], Verbs:["create"]} ; resolution errors: role "missing-role" not found`),
-			expectedRules: []rbacv1.PolicyRule{
-				{APIGroups: []string{"batch"}, Resources: []string{"jobs"}, Verbs: []string{"create"}},
+			inputError: errors.New(`user "test-admin" (groups=["system:masters"]) is attempting to grant RBAC permissions not currently held:
+{APIGroups:["batch"], Resources:["jobs"], Verbs:["create"]}; resolution errors: role "missing-role" not found`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{"batch"}, Resources: []string{"jobs"}, Verbs: []string{"create"}},
+				},
+				ResolutionErrors: errors.New(`role "missing-role" not found`),
 			},
-			expectedErrorString: `escalation check failed; resolution errors: role "missing-role" not found`,
+			expectError: require.NoError,
 		},
 		{
 			name: "Multiple Missing Rules with Resolution Errors",
-			inputError: errors.New(`user "another-user" (groups=[]) is attempting to grant RBAC permissions not currently held: ` +
-				` {APIGroups:[""], Resources:["secrets"], Verbs:["get"]} ` + // APIGroups:[""] becomes {}
-				` {APIGroups:[""], Resources:["configmaps"], Verbs:["list"]} ; ` + // APIGroups:[""] becomes {}
-				` resolution errors: clusterrole "missing-clusterrole" not found, role "other-missing" not found `), // Added spaces
-			expectedRules: []rbacv1.PolicyRule{
-				{APIGroups: []string{}, Resources: []string{"secrets"}, Verbs: []string{"get"}},
-				{APIGroups: []string{}, Resources: []string{"configmaps"}, Verbs: []string{"list"}},
+			inputError: errors.New(`user "another-user" (groups=[]) is attempting to grant RBAC permissions not currently held:
+{APIGroups:[""], Resources:["secrets"], Verbs:["get"]}
+{APIGroups:[""], Resources:["configmaps"], Verbs:["list"]}; resolution errors: clusterrole "missing-clusterrole" not found, role "other-missing" not found`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{""}, Resources: []string{"secrets"}, Verbs: []string{"get"}},
+					{APIGroups: []string{""}, Resources: []string{"configmaps"}, Verbs: []string{"list"}},
+				},
+				ResolutionErrors: errors.New(`clusterrole "missing-clusterrole" not found, role "other-missing" not found`),
 			},
-			expectedErrorString: `escalation check failed; resolution errors: clusterrole "missing-clusterrole" not found, role "other-missing" not found`,
+			expectError: require.NoError,
 		},
 		{
 			name: "Missing Rule (All Resource Fields)",
-			inputError: errors.New(`user "resource-name-user" (groups=test) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:["extensions"], Resources:["ingresses"], ResourceNames:["my-ingress"], Verbs:["update" "patch"]}`),
-			expectedRules: []rbacv1.PolicyRule{
-				{APIGroups: []string{"extensions"}, Resources: []string{"ingresses"}, ResourceNames: []string{"my-ingress"}, Verbs: []string{"update", "patch"}},
+			inputError: errors.New(`user "resource-name-user" (groups=test) is attempting to grant RBAC permissions not currently held:
+{APIGroups:["extensions"], Resources:["ingresses"], ResourceNames:["my-ingress"], Verbs:["update" "patch"]}`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{"extensions"}, Resources: []string{"ingresses"}, ResourceNames: []string{"my-ingress"}, Verbs: []string{"update", "patch"}},
+				},
 			},
-			expectedErrorString: "escalation check failed",
+			expectError: require.NoError,
 		},
 		{
 			name: "Missing Rule (No ResourceNames)",
-			inputError: errors.New(`user "no-res-name-user" (groups=test) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:["networking.k8s.io"], Resources:["networkpolicies"], Verbs:["watch"]}`),
-			expectedRules: []rbacv1.PolicyRule{
-				{APIGroups: []string{"networking.k8s.io"}, Resources: []string{"networkpolicies"}, Verbs: []string{"watch"}},
+			inputError: errors.New(`user "no-res-name-user" (groups=test) is attempting to grant RBAC permissions not currently held:
+{APIGroups:["networking.k8s.io"], Resources:["networkpolicies"], Verbs:["watch"]}`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{"networking.k8s.io"}, Resources: []string{"networkpolicies"}, Verbs: []string{"watch"}},
+				},
 			},
-			expectedErrorString: "escalation check failed",
+			expectError: require.NoError,
 		},
 		{
 			name: "Missing Rule (NonResourceURLs only)",
-			inputError: errors.New(`user "url-user" (groups=test) is attempting to grant RBAC permissions not currently held: ` +
-				`{NonResourceURLs:["/version" "/apis"], Verbs:["get"]}`),
-			expectedRules: []rbacv1.PolicyRule{
-				{NonResourceURLs: []string{"/version", "/apis"}, Verbs: []string{"get"}},
+			inputError: errors.New(`user "url-user" (groups=test) is attempting to grant RBAC permissions not currently held:
+{NonResourceURLs:["/version" "/apis"], Verbs:["get"]}`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{NonResourceURLs: []string{"/version", "/apis"}, Verbs: []string{"get"}},
+				},
 			},
-			expectedErrorString: "escalation check failed",
+			expectError: require.NoError,
 		},
 		{
-			name:             "Unexpected Format",
-			inputError:       errors.New("some completely different error message that doesn't match"),
-			expectParseError: true, // Expecting the parser itself to fail
-		},
-		{
-			name:                "Empty Permissions String",
-			inputError:          errors.New(`user "empty-perms" (groups=test) is attempting to grant RBAC permissions not currently held: `),
-			expectedRules:       []rbacv1.PolicyRule{}, // Should parse successfully but find no rules
-			expectedErrorString: "escalation check failed",
-		},
-		{
-			name: "Malformed Permissions Block (No Verbs)",
-			inputError: errors.New(`user "malformed" (groups=test) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:[""], Resources:["pods"]} {NonResourceURLs:["/ok"], Verbs:["get"]}`),
-			expectedRules: []rbacv1.PolicyRule{ // Only the valid block should be parsed
-				{NonResourceURLs: []string{"/ok"}, Verbs: []string{"get"}},
+			name:           "Unexpected Format",
+			inputError:     errors.New("some completely different error message that doesn't match"),
+			expectedResult: &parseResult{},
+			expectError: func(t require.TestingT, err error, i ...interface{}) {
+				require.ErrorContains(t, err, "unexpected format of escalation check error string")
 			},
-			expectedErrorString: "escalation check failed",
+		},
+		{
+			name: "Empty Permissions String",
+			inputError: errors.New(`user "empty-perms" (groups=test) is attempting to grant RBAC permissions not currently held:
+`),
+			expectedResult: &parseResult{},
+			expectError: func(t require.TestingT, err error, i ...interface{}) {
+				require.ErrorContains(t, err, "unexpected format of escalation check error string")
+			},
 		},
 		{
 			name: "Rule with Empty Strings in lists",
-			inputError: errors.New(`user "empty-strings" (groups=test) is attempting to grant RBAC permissions not currently held: ` +
-				`{APIGroups:["" "apps"], Resources:["" "deployments"], Verbs:["get" ""]}`),
-			expectedRules: []rbacv1.PolicyRule{
-				{APIGroups: []string{"apps"}, Resources: []string{"deployments"}, Verbs: []string{"get"}},
+			inputError: errors.New(`user "empty-strings" (groups=test) is attempting to grant RBAC permissions not currently held:
+{APIGroups:["" "apps"], Resources:["" "deployments"], Verbs:["get" ""]}`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{"", "apps"}, Resources: []string{"", "deployments"}, Verbs: []string{"get", ""}},
+				},
 			},
-			expectedErrorString: "escalation check failed",
+			expectError: require.NoError,
 		},
 		{
-			name:                "Rule with Only Empty Verb", // Add test case for Verbs:[""]
-			inputError:          errors.New(`user "empty-verb" (groups=test) is attempting to grant RBAC permissions not currently held: {APIGroups:[""], Resources:["pods"], Verbs:[""]}`),
-			expectedRules:       []rbacv1.PolicyRule{}, // This rule should be skipped because verbs become empty
-			expectedErrorString: "escalation check failed",
+			name: "Rule with Only Empty Verb",
+			inputError: errors.New(`user "empty-verb" (groups=test) is attempting to grant RBAC permissions not currently held:
+{APIGroups:[""], Resources:["pods"], Verbs:[""]}`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{""}},
+				},
+			},
+			expectError: require.NoError,
+		},
+		{
+			name: "Rule with no fields",
+			inputError: errors.New(`user "empty-verb" (groups=test) is attempting to grant RBAC permissions not currently held:
+{}`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{{}},
+			},
+			expectError: require.NoError,
+		},
+		{
+			name: "Rule with unknown field",
+			inputError: errors.New(`user "empty-verb" (groups=test) is attempting to grant RBAC permissions not currently held:
+{FooBar:["baz"]}
+{APIGroups:[""], Resources:["secrets"], Verbs:["get"]}
+`),
+			expectedResult: &parseResult{
+				MissingRules: []rbacv1.PolicyRule{
+					{APIGroups: []string{""}, Resources: []string{"secrets"}, Verbs: []string{"get"}},
+				},
+			},
+			expectError: func(t require.TestingT, err error, i ...interface{}) {
+				require.ErrorContains(t, err, `unknown field: "FooBar"`)
+			},
 		},
 	}
 
@@ -387,26 +429,8 @@ func TestParseEscalationErrorForMissingRules(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rules, err := parseEscalationErrorForMissingRules(tc.inputError)
 
-			if tc.expectParseError {
-				// We expect a parsing error because the input format is wrong
-				require.Error(t, err, "Expected a parsing error, but got nil")
-				require.Contains(t, err.Error(), "failed to parse escalation error structure", "Expected error to contain parsing failure message: got %v", err)
-				// Check that the original error is wrapped
-				require.ErrorIs(t, err, tc.inputError, "Expected original error to be wrapped in parsing error")
-				require.Nil(t, rules, "Expected nil rules on parsing error")
-			} else {
-				// We expect parsing to succeed
-				// The function *should* return a non-nil error representing the escalation failure
-				// This error should NOT be the specific parsing error
-				require.Error(t, err, "Expected a non-nil error representing the escalation failure, but got nil")
-				require.NotContains(t, err.Error(), "failed to parse escalation error structure", "Got an unexpected parsing error message when success was expected: %v", err)
-
-				// Check the returned error *message* matches the expected generic or resolution error message string
-				require.EqualError(t, err, tc.expectedErrorString, "Returned error message string does not match expected")
-
-				// Check the parsed rules match
-				assert.ElementsMatch(t, tc.expectedRules, rules, "Parsed rules do not match expected rules")
-			}
+			tc.expectError(t, err)
+			require.Equal(t, tc.expectedResult, rules)
 		})
 	}
 }

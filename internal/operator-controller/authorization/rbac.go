@@ -556,8 +556,8 @@ var fullAuthority = []rbacv1.PolicyRule{
 }
 
 var (
-	errRegex  = regexp.MustCompile(`(?s)^user ".*" \(groups=.*\) is attempting to grant RBAC permissions not currently held: (.*)(?:; resolution errors: (.*))?$`)
-	ruleRegex = regexp.MustCompile(`{([^}]+)}`)
+	errRegex  = regexp.MustCompile(`(?s)^user ".*" \(groups=.*\) is attempting to grant RBAC permissions not currently held:\n([^;]+)(?:; resolution errors: (.*))?$`)
+	ruleRegex = regexp.MustCompile(`{([^}]*)}`)
 	itemRegex = regexp.MustCompile(`"[^"]*"`)
 )
 
@@ -578,6 +578,11 @@ type parseResult struct {
 // message, not an error encountered during the parsing process itself. If parsing fails due to an unexpected
 // error format, a distinct parsing error is returned.
 func parseEscalationErrorForMissingRules(ecError error) (*parseResult, error) {
+	var (
+		result      = &parseResult{}
+		parseErrors []error
+	)
+
 	// errRegex captures the missing permissions and optionally resolution errors from an escalation error message
 	// Group 1: The list of missing permissions
 	// Group 2: Optional resolution errors
@@ -591,51 +596,55 @@ func parseEscalationErrorForMissingRules(ecError error) (*parseResult, error) {
 		return &parseResult{}, fmt.Errorf("unexpected format of escalation check error string: %q", errString)
 	}
 	missingPermissionsStr := errMatches[1]
-	resolutionErrorsStr := errMatches[2]
-
-	// Extract permissions using permRegex from the captured permissions string (Group 1)
-	var (
-		permissions []rbacv1.PolicyRule
-		parseErrors []error
-	)
-	for _, rule := range ruleRegex.FindAllString(missingPermissionsStr, -1) {
-		items := mapSlice(strings.Split(rule[1:len(rule)-1], ","), func(in string) string {
-			return strings.TrimSpace(in)
-		})
-		var pr rbacv1.PolicyRule
-		for _, item := range items {
-			field, valuesStr, ok := strings.Cut(item, ":")
-			if !ok {
-				parseErrors = append(parseErrors, fmt.Errorf("unexpected item %q: expected <Type>:[<values>...]", item))
-				continue
-			}
-			values := mapSlice(itemRegex.FindAllString(valuesStr, -1), func(in string) string {
-				return strings.Trim(in, `"`)
-			})
-			switch field {
-			case "APIGroups":
-				pr.APIGroups = values
-			case "Resources":
-				pr.Resources = values
-			case "ResourceNames":
-				pr.ResourceNames = values
-			case "NonResourceURLs":
-				pr.NonResourceURLs = values
-			case "Verbs":
-				pr.Verbs = values
-			default:
-				parseErrors = append(parseErrors, fmt.Errorf("unexpected item %q: unknown field: %q", item, field))
-				continue
-			}
-		}
-		permissions = append(permissions, pr)
+	if resolutionErrorsStr := errMatches[2]; resolutionErrorsStr != "" {
+		result.ResolutionErrors = errors.New(resolutionErrorsStr)
 	}
 
+	// Extract permissions using permRegex from the captured permissions string (Group 1)
+	for _, rule := range ruleRegex.FindAllString(missingPermissionsStr, -1) {
+		pr, err := parseCompactRuleString(rule)
+		if err != nil {
+			parseErrors = append(parseErrors, err)
+			continue
+		}
+		result.MissingRules = append(result.MissingRules, *pr)
+	}
 	// Return the extracted permissions and the constructed error message
-	return &parseResult{
-		MissingRules:     permissions,
-		ResolutionErrors: errors.New(resolutionErrorsStr),
-	}, errors.Join(parseErrors...)
+	return result, errors.Join(parseErrors...)
+}
+
+func parseCompactRuleString(rule string) (*rbacv1.PolicyRule, error) {
+	var fields []string
+	if ruleText := rule[1 : len(rule)-1]; ruleText != "" {
+		fields = mapSlice(strings.Split(rule[1:len(rule)-1], ","), func(in string) string {
+			return strings.TrimSpace(in)
+		})
+	}
+	var pr rbacv1.PolicyRule
+	for _, item := range fields {
+		field, valuesStr, ok := strings.Cut(item, ":")
+		if !ok {
+			return nil, fmt.Errorf("unexpected item %q: expected <Type>:[<values>...]", item)
+		}
+		values := mapSlice(itemRegex.FindAllString(valuesStr, -1), func(in string) string {
+			return strings.Trim(in, `"`)
+		})
+		switch field {
+		case "APIGroups":
+			pr.APIGroups = values
+		case "Resources":
+			pr.Resources = values
+		case "ResourceNames":
+			pr.ResourceNames = values
+		case "NonResourceURLs":
+			pr.NonResourceURLs = values
+		case "Verbs":
+			pr.Verbs = values
+		default:
+			return nil, fmt.Errorf("unexpected item %q: unknown field: %q", item, field)
+		}
+	}
+	return &pr, nil
 }
 
 func hasAggregationRule(clusterRole *rbacv1.ClusterRole) bool {
