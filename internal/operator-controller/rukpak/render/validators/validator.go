@@ -1,11 +1,16 @@
 package validators
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
@@ -19,6 +24,10 @@ var RegistryV1BundleValidator = render.BundleValidator{
 	CheckCRDResourceUniqueness,
 	CheckOwnedCRDExistence,
 	CheckPackageNameNotEmpty,
+	CheckWebhookDeploymentReferentialIntegrity,
+	CheckWebhookNameUniqueness,
+	CheckConversionWebhookCRDReferenceUniqueness,
+	CheckConversionWebhooksReferenceOwnedCRDs,
 }
 
 // CheckDeploymentSpecUniqueness checks that each strategy deployment spec in the csv has a unique name.
@@ -85,4 +94,145 @@ func CheckPackageNameNotEmpty(rv1 *render.RegistryV1) []error {
 		return []error{errors.New("package name is empty")}
 	}
 	return nil
+}
+
+// CheckWebhookSupport checks that if the bundle cluster service version declares webhook definitions
+// that it is a singleton operator, i.e. that it only supports AllNamespaces mode. This keeps parity
+// with OLMv0 behavior for conversion webhooks,
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/install/webhook.go#L193
+// Since OLMv1 considers APIs to be cluster-scoped, we initially extend this constraint to validating and mutating webhooks.
+// While this might restrict the number of supported bundles, we can tackle the issue of relaxing this constraint in turn
+// after getting the webhook support working.
+func CheckWebhookSupport(rv1 *render.RegistryV1) []error {
+	if len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
+		supportedInstallModes := sets.Set[v1alpha1.InstallModeType]{}
+		for _, mode := range rv1.CSV.Spec.InstallModes {
+			supportedInstallModes.Insert(mode.Type)
+		}
+		if len(supportedInstallModes) != 1 || !supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
+			return []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")}
+		}
+	}
+
+	return nil
+}
+
+// CheckWebhookDeploymentReferentialIntegrity checks that each webhook definition in the csv
+// references an existing strategy deployment spec. Errors are sorted by strategy deployment spec name,
+// webhook type, and webhook name.
+func CheckWebhookDeploymentReferentialIntegrity(rv1 *render.RegistryV1) []error {
+	webhooksByDeployment := map[string][]v1alpha1.WebhookDescription{}
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		webhooksByDeployment[wh.DeploymentName] = append(webhooksByDeployment[wh.DeploymentName], wh)
+	}
+
+	for _, depl := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		delete(webhooksByDeployment, depl.Name)
+	}
+
+	var errs []error
+	// Loop through sorted keys to keep error messages ordered by deployment name
+	for _, deploymentName := range slices.Sorted(maps.Keys(webhooksByDeployment)) {
+		webhookDefns := webhooksByDeployment[deploymentName]
+		slices.SortFunc(webhookDefns, func(a, b v1alpha1.WebhookDescription) int {
+			return cmp.Or(cmp.Compare(a.Type, b.Type), cmp.Compare(a.GenerateName, b.GenerateName))
+		})
+		for _, webhookDef := range webhookDefns {
+			errs = append(errs, fmt.Errorf("webhook '%s' of type '%s' references non-existent deployment '%s'", webhookDef.GenerateName, webhookDef.Type, webhookDef.DeploymentName))
+		}
+	}
+	return errs
+}
+
+// CheckWebhookNameUniqueness checks that each webhook definition of each type (validating, mutating, or conversion)
+// has a unique name. Webhooks of different types can have the same name. Errors are sorted by webhook type
+// and name.
+func CheckWebhookNameUniqueness(rv1 *render.RegistryV1) []error {
+	webhookNameSetByType := map[v1alpha1.WebhookAdmissionType]sets.Set[string]{}
+	duplicateWebhooksByType := map[v1alpha1.WebhookAdmissionType]sets.Set[string]{}
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		if _, ok := webhookNameSetByType[wh.Type]; !ok {
+			webhookNameSetByType[wh.Type] = sets.Set[string]{}
+		}
+		if webhookNameSetByType[wh.Type].Has(wh.GenerateName) {
+			if _, ok := duplicateWebhooksByType[wh.Type]; !ok {
+				duplicateWebhooksByType[wh.Type] = sets.Set[string]{}
+			}
+			duplicateWebhooksByType[wh.Type].Insert(wh.GenerateName)
+		}
+		webhookNameSetByType[wh.Type].Insert(wh.GenerateName)
+	}
+
+	var errs []error
+	for _, whType := range slices.Sorted(maps.Keys(duplicateWebhooksByType)) {
+		for _, webhookName := range slices.Sorted(slices.Values(duplicateWebhooksByType[whType].UnsortedList())) {
+			errs = append(errs, fmt.Errorf("duplicate webhook '%s' of type '%s'", webhookName, whType))
+		}
+	}
+	return errs
+}
+
+// CheckConversionWebhooksReferenceOwnedCRDs checks defined conversion webhooks reference bundle owned CRDs.
+// Errors are sorted by webhook name and CRD name.
+func CheckConversionWebhooksReferenceOwnedCRDs(rv1 *render.RegistryV1) []error {
+	//nolint:prealloc
+	var conversionWebhooks []v1alpha1.WebhookDescription
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		if wh.Type != v1alpha1.ConversionWebhook {
+			continue
+		}
+		conversionWebhooks = append(conversionWebhooks, wh)
+	}
+
+	if len(conversionWebhooks) == 0 {
+		return nil
+	}
+
+	ownedCRDNames := sets.Set[string]{}
+	for _, crd := range rv1.CSV.Spec.CustomResourceDefinitions.Owned {
+		ownedCRDNames.Insert(crd.Name)
+	}
+
+	slices.SortFunc(conversionWebhooks, func(a, b v1alpha1.WebhookDescription) int {
+		return cmp.Compare(a.GenerateName, b.GenerateName)
+	})
+
+	var errs []error
+	for _, webhook := range conversionWebhooks {
+		webhookCRDs := webhook.ConversionCRDs
+		slices.Sort(webhookCRDs)
+		for _, crd := range webhookCRDs {
+			if !ownedCRDNames.Has(crd) {
+				errs = append(errs, fmt.Errorf("conversion webhook '%s' references custom resource definition '%s' not owned bundle", webhook.GenerateName, crd))
+			}
+		}
+	}
+	return errs
+}
+
+// CheckConversionWebhookCRDReferenceUniqueness checks no two (or more) conversion webhooks reference the same CRD.
+func CheckConversionWebhookCRDReferenceUniqueness(rv1 *render.RegistryV1) []error {
+	// collect webhooks by crd
+	crdToWh := map[string][]string{}
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		if wh.Type != v1alpha1.ConversionWebhook {
+			continue
+		}
+		for _, crd := range wh.ConversionCRDs {
+			crdToWh[crd] = append(crdToWh[crd], wh.GenerateName)
+		}
+	}
+
+	// remove crds with single webhook
+	maps.DeleteFunc(crdToWh, func(crd string, whs []string) bool {
+		return len(whs) == 1
+	})
+
+	errs := make([]error, 0, len(crdToWh))
+	orderedCRDs := slices.Sorted(maps.Keys(crdToWh))
+	for _, crd := range orderedCRDs {
+		orderedWhs := strings.Join(slices.Sorted(slices.Values(crdToWh[crd])), ",")
+		errs = append(errs, fmt.Errorf("conversion webhooks [%s] reference same custom resource definition '%s'", orderedWhs, crd))
+	}
+	return errs
 }

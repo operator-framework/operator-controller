@@ -58,6 +58,12 @@ func WithInstallModeSupportFor(installModeType ...v1alpha1.InstallModeType) CSVO
 	}
 }
 
+func WithWebhookDefinitions(webhookDefinitions ...v1alpha1.WebhookDescription) CSVOption {
+	return func(csv *v1alpha1.ClusterServiceVersion) {
+		csv.Spec.WebhookDefinitions = webhookDefinitions
+	}
+}
+
 func MakeCSV(opts ...CSVOption) v1alpha1.ClusterServiceVersion {
 	csv := v1alpha1.ClusterServiceVersion{
 		TypeMeta: metav1.TypeMeta{
