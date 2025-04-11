@@ -623,6 +623,9 @@ func parseEscalationErrorForMissingRules(ecError error) (*parseResult, error) {
 				pr.NonResourceURLs = values
 			case "Verbs":
 				pr.Verbs = values
+			default:
+				parseErrors = append(parseErrors, fmt.Errorf("unexpected item %q: unknown field: %q", item, field))
+				continue
 			}
 		}
 		permissions = append(permissions, pr)
