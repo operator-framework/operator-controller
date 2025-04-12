@@ -364,7 +364,7 @@ func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManag
 			})
 		}
 
-		for _, verb := range []string{"update", "patch"} {
+		for _, verb := range []string{"update"} {
 			attributeRecords = append(attributeRecords, authorizer.AttributesRecord{
 				User:            manifestManager,
 				Name:            ext.Name,
