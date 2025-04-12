@@ -616,7 +616,7 @@ func parseEscalationErrorForMissingRules(ecError error) (*parseResult, error) {
 func parseCompactRuleString(rule string) (*rbacv1.PolicyRule, error) {
 	var fields []string
 	if ruleText := rule[1 : len(rule)-1]; ruleText != "" {
-		fields = mapSlice(strings.Split(rule[1:len(rule)-1], ","), func(in string) string {
+		fields = mapSlice(strings.Split(ruleText, ","), func(in string) string {
 			return strings.TrimSpace(in)
 		})
 	}
