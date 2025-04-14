@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/containers/image/v5/types"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -40,7 +39,6 @@ import (
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/textlogger"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
@@ -148,15 +146,14 @@ func init() {
 	//adds version sub command
 	operatorControllerCmd.AddCommand(versionCommand)
 
-	klog.InitFlags(flag.CommandLine)
-
 	//add klog flags to flagset
+	klog.InitFlags(flag.CommandLine)
 	flags.AddGoFlagSet(flag.CommandLine)
 
 	//add feature gate flags to flagset
 	features.OperatorControllerFeatureGate.AddFlag(flags)
 
-	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
+	ctrl.SetLogger(klog.NewKlogr())
 }
 func validateMetricsFlags() error {
 	if (cfg.certFile != "" && cfg.keyFile == "") || (cfg.certFile == "" && cfg.keyFile != "") {
@@ -179,10 +176,6 @@ func validateMetricsFlags() error {
 	return nil
 }
 func run() error {
-	if klog.V(4).Enabled() {
-		logrus.SetLevel(logrus.DebugLevel)
-	}
-
 	setupLog.Info("starting up the controller", "version info", version.String())
 
 	authFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s-%s.json", authFilePrefix, apimachineryrand.String(8)))
