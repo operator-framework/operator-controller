@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/containers/image/v5/types"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -42,7 +41,6 @@ import (
 	"k8s.io/client-go/metadata"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/textlogger"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
@@ -146,7 +144,7 @@ func init() {
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(ocv1.AddToScheme(scheme))
-	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
+	ctrl.SetLogger(klog.NewKlogr())
 }
 
 func main() {
@@ -190,10 +188,6 @@ func validateConfig(cfg *config) error {
 }
 
 func run(ctx context.Context) error {
-	if klog.V(4).Enabled() {
-		logrus.SetLevel(logrus.DebugLevel)
-	}
-
 	authFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s-%s.json", authFilePrefix, apimachineryrand.String(8)))
 
 	protocol := "http://"
