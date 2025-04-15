@@ -1,7 +1,6 @@
 package features
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/go-logr/logr"
@@ -52,9 +51,9 @@ func LogFeatureGateStates(log logr.Logger, fg featuregate.FeatureGate) {
 		return string(featureKeys[i]) < string(featureKeys[j]) // Sort by string representation
 	})
 
-	featurePairs := make([]string, 0, len(featureKeys))
+	featurePairs := make([]interface{}, 0, len(featureKeys))
 	for _, feature := range featureKeys {
-		featurePairs = append(featurePairs, string(feature), fmt.Sprintf("%v", fg.Enabled(feature)))
+		featurePairs = append(featurePairs, feature, fg.Enabled(feature))
 	}
-	log.Info("feature gate status", featurePairs)
+	log.Info("feature gate status", featurePairs...)
 }
