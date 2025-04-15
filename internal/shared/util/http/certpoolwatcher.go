@@ -21,6 +21,7 @@ type CertPoolWatcher struct {
 	log        logr.Logger
 	watcher    *fsnotify.Watcher
 	done       chan bool
+	ticker     *time.Ticker
 }
 
 // Returns the current CertPool and the generation number
@@ -73,12 +74,15 @@ func NewCertPoolWatcher(caDir string, log logr.Logger) (*CertPoolWatcher, error)
 		logPath(p, "watching certificate", log)
 	}
 
+	ticker := time.NewTicker(10 * time.Minute)
+
 	cpw := &CertPoolWatcher{
 		generation: 1,
 		dir:        caDir,
 		pool:       pool,
 		log:        log,
 		watcher:    watcher,
+		ticker:     ticker,
 		done:       make(chan bool),
 	}
 	go func() {
@@ -90,7 +94,10 @@ func NewCertPoolWatcher(caDir string, log logr.Logger) (*CertPoolWatcher, error)
 			case err := <-watcher.Errors:
 				log.Error(err, "error watching certificate dir")
 				os.Exit(1)
+			case <-ticker.C:
+				cpw.update()
 			case <-cpw.done:
+				ticker.Stop()
 				err := watcher.Close()
 				if err != nil {
 					log.Error(err, "error closing watcher")

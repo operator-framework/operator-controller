@@ -10,10 +10,13 @@ import (
 )
 
 func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
+	// Note that this already looks at SSL_CERT_DIR and SSL_CERT_FILE
+	// So, we don't explicitly load certs from those locations
 	caCertPool, err := x509.SystemCertPool()
 	if err != nil {
 		return nil, err
 	}
+
 	if caDir == "" {
 		return caCertPool, nil
 	}
