@@ -16,6 +16,12 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
+func Test_ObjectNameForBaseAndSuffix(t *testing.T) {
+	name := util.ObjectNameForBaseAndSuffix("my.object.thing.has.a.really.really.really.really.really.long.name", "suffix")
+	require.Len(t, name, 63)
+	require.Equal(t, "my.object.thing.has.a.really.really.really.really.really-suffix", name)
+}
+
 func TestMergeMaps(t *testing.T) {
 	tests := []struct {
 		name      string
