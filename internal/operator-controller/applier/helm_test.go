@@ -322,35 +322,6 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		require.Nil(t, objs)
 	})
 
-	t.Run("fails during installation because of missing RBAC rules", func(t *testing.T) {
-		mockAcg := &mockActionGetter{
-			getClientErr: driver.ErrReleaseNotFound,
-			desiredRel: &release.Release{
-				Info:     &release.Info{Status: release.StatusDeployed},
-				Manifest: validManifest,
-			},
-		}
-		helmApplier := applier.Helm{
-			ActionClientGetter:  mockAcg,
-			PreAuthorizer:       &errorPreAuthorizer{},
-			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
-		}
-		// Use a ClusterExtension with valid Spec fields.
-		validCE := &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
-			},
-		}
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "problem running preauthorization")
-		require.Equal(t, "", state)
-		require.Nil(t, objs)
-	})
-
 	t.Run("fails during installation because of pre-authorization failure", func(t *testing.T) {
 		mockAcg := &mockActionGetter{
 			getClientErr: driver.ErrReleaseNotFound,
