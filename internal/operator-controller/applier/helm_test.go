@@ -279,7 +279,6 @@ func TestApply_Installation(t *testing.T) {
 }
 
 func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
-
 	t.Run("fails during dry-run installation", func(t *testing.T) {
 		mockAcg := &mockActionGetter{
 			getClientErr:     driver.ErrReleaseNotFound,
@@ -524,7 +523,6 @@ func TestApply_Upgrade(t *testing.T) {
 }
 
 func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testing.T) {
-
 	t.Run("generates bundle resources using the configured watch namespace", func(t *testing.T) {
 		var expectedWatchNamespace = "watch-namespace"
 
