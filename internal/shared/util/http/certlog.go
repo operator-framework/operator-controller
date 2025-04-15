@@ -34,7 +34,7 @@ func LogDockerCertificates(path string, log logr.Logger) {
 			continue
 		}
 		if !fi.IsDir() {
-			log.V(defaultLogLevel+1).Info("not a directory", "directory", path)
+			log.V(defaultLogLevel).Info("not a directory", "directory", path)
 			continue
 		}
 		dirEntries, err := os.ReadDir(path)
@@ -50,7 +50,7 @@ func LogDockerCertificates(path string, log logr.Logger) {
 				continue
 			}
 			if !fi.IsDir() {
-				log.V(defaultLogLevel+1).Info("ignoring non-directory", "path", hostPath)
+				log.V(defaultLogLevel).Info("ignoring non-directory", "path", hostPath)
 				continue
 			}
 			logPath(hostPath, "dump docker certs", log)
@@ -103,7 +103,7 @@ func logPath(path, action string, log logr.Logger) {
 			continue
 		}
 		if fi.IsDir() {
-			log.V(defaultLogLevel+1).Info("ignoring subdirectory", "directory", file)
+			log.V(defaultLogLevel).Info("ignoring subdirectory", "directory", file)
 			continue
 		}
 		logFile(e.Name(), path, action, log)

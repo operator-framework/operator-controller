@@ -32,10 +32,10 @@ func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 			return nil, err
 		}
 		if fi.IsDir() {
-			log.V(defaultLogLevel+1).Info("skip directory", "name", e.Name())
+			log.V(defaultLogLevel).Info("skip directory", "name", e.Name())
 			continue
 		}
-		log.V(defaultLogLevel+1).Info("load certificate", "name", e.Name())
+		log.V(defaultLogLevel).Info("load certificate", "name", e.Name(), "size", fi.Size(), "modtime", fi.ModTime())
 		data, err := os.ReadFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("error reading cert file %q: %w", file, err)
