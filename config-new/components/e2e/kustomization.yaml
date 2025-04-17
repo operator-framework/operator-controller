@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - coverage_pvc.yaml
+  - coverage_copy_pod.yaml
+  - registries_conf_configmap.yaml
+
+patches:
+  - path: operator_controller_deployment.yaml

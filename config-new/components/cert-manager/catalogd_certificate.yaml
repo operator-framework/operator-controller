@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: catalogd-service-cert
+  namespace: __NAMESPACE_PLACEHOLDER__
+spec:
+  secretName: catalogd-service-cert-${VERSION}
+  dnsNames:
+    - catalogd-service.__NAMESPACE_PLACEHOLDER__.svc
+    - catalogd-service.__NAMESPACE_PLACEHOLDER__.svc.cluster.local
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    kind: Issuer
+    group: cert-manager.io
+    name: olmv1-ca

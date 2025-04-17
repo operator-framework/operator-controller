@@ -7,6 +7,16 @@ SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
 export ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+# attempt to generate the VERSION attribute for certificates
+# fail if it is unset afterwards, since the side effects are indirect
+ifeq ($(strip $(VERSION)),)
+VERSION := $(shell git describe --tags --always --dirty)
+endif
+export VERSION
+ifeq ($(strip $(VERSION)),)
+	$(error undefined VERSION; resulting certs will be invalid)
+endif
+
 GOLANG_VERSION := $(shell sed -En 's/^go (.*)$$/\1/p' "go.mod")
 # Image URL to use all building/pushing image targets
 ifeq ($(origin IMAGE_REGISTRY), undefined)
@@ -25,7 +35,7 @@ endif
 export CATD_IMAGE_REPO
 
 ifeq ($(origin IMAGE_TAG), undefined)
-IMAGE_TAG := devel
+IMAGE_TAG := $(VERSION)
 endif
 export IMAGE_TAG
 
@@ -77,7 +87,7 @@ else
 $(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
-KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
+KUSTOMIZE_BUILD_DIR := config-new/overlays/community
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -248,12 +258,11 @@ image-registry: ## Build the testdata catalog used for e2e tests and push it to 
 # for example: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 .PHONY: test-e2e
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
-test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
+test-e2e: KUSTOMIZE_BUILD_DIR := config-new/overlays/community-e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
-extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
 extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
 extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP Run extension-developer e2e on local kind cluster
@@ -291,7 +300,7 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 kind-deploy: export MANIFEST := ./operator-controller.yaml
 kind-deploy: export DEFAULT_CATALOG := ./config/catalogs/clustercatalogs/default-catalogs.yaml
 kind-deploy: manifests $(KUSTOMIZE)
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | envsubst '$$VERSION' > operator-controller.yaml
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: kind-cluster
@@ -305,16 +314,6 @@ kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 
 #SECTION Build
-
-# attempt to generate the VERSION attribute for certificates
-# fail if it is unset afterwards, since the side effects are indirect
-ifeq ($(strip $(VERSION)),)
-VERSION := $(shell git describe --tags --always --dirty)
-endif
-export VERSION
-ifeq ($(strip $(VERSION)),)
-	$(error undefined VERSION; resulting certs will be invalid)
-endif
 
 ifeq ($(origin CGO_ENABLED), undefined)
 CGO_ENABLED := 0
@@ -384,7 +383,7 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
 quickstart: export DEFAULT_CATALOG := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/default-catalogs.yaml"
 quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | envsubst '$$VERSION' > operator-controller.yaml
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Docs
