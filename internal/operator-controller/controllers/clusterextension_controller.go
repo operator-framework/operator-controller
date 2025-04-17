@@ -93,7 +93,7 @@ type InstalledBundleGetter interface {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
-//+kubebuilder:rbac:namespace=system,groups=core,resources=secrets,verbs=create;update;patch;delete;deletecollection;get;list;watch
+//+kubebuilder:rbac:namespace=__NAMESPACE_PLACEHOLDER__,groups=core,resources=secrets,verbs=create;update;patch;delete;deletecollection;get;list;watch
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts/token,verbs=create
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;clusterrolebindings;roles;rolebindings,verbs=list;watch
