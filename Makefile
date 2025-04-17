@@ -139,11 +139,11 @@ tidy:
 	go mod tidy
 
 .PHONY: manifests
-KUSTOMIZE_CATD_CRDS_DIR := config/base/catalogd/crd/bases
-KUSTOMIZE_CATD_RBAC_DIR := config/base/catalogd/rbac
-KUSTOMIZE_CATD_WEBHOOKS_DIR := config/base/catalogd/manager/webhook
-KUSTOMIZE_OPCON_CRDS_DIR := config/base/operator-controller/crd/bases
-KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
+KUSTOMIZE_CATD_CRDS_DIR := config-new/base/catalogd/crd/bases
+KUSTOMIZE_CATD_RBAC_DIR := config-new/base/catalogd/rbac
+KUSTOMIZE_CATD_WEBHOOKS_DIR := config-new/base/catalogd/manager/webhook
+KUSTOMIZE_OPCON_CRDS_DIR := config-new/base/operator-controller/crd/bases
+KUSTOMIZE_OPCON_RBAC_DIR := config-new/base/operator-controller/rbac
 CRD_WORKING_DIR := crd_work_dir
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
@@ -157,7 +157,6 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
