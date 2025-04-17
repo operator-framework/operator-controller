@@ -1,0 +1,36 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: self-sign-issuer
+  namespace: __NAMESPACE_PLACEHOLDER__
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: olmv1-ca
+  namespace: __NAMESPACE_PLACEHOLDER__
+spec:
+  isCA: true
+  commonName: olmv1-ca
+  secretName: olmv1-ca
+  secretTemplate:
+    annotations:
+      cert-manager.io/allow-direct-injection: "true"
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: self-sign-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: olmv1-ca
+  namespace: __NAMESPACE_PLACEHOLDER__
+spec:
+  ca:
+    secretName: olmv1-ca

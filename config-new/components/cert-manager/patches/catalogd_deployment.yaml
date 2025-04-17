@@ -1,0 +1,21 @@
+- op: add
+  path: /spec/template/spec/volumes/-
+  value: {"name":"olmv1-certificate", "secret":{"secretName":"catalogd-service-cert-${VERSION}", "optional": false, "items": [{"key": "ca.crt", "path": "olm-ca.crt"}]}}
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value: {"name":"olmv1-certificate", "readOnly": true, "mountPath":"/var/ca-certs/"}
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "--pull-cas-dir=/var/ca-certs"
+- op: add
+  path: /spec/template/spec/volumes/-
+  value: {"name":"catalogserver-certs", "secret":{"secretName":"catalogd-service-cert-${VERSION}"}}
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value: {"name":"catalogserver-certs", "mountPath":"/var/certs"}
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "--tls-cert=/var/certs/tls.crt"
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "--tls-key=/var/certs/tls.key"

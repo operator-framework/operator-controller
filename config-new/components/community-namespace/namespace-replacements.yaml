@@ -1,0 +1,22 @@
+source:
+  kind: Namespace
+  fieldPath: .metadata.name
+targets:
+  - select:
+      kind: Certificate
+    reject:
+      - name: olmv1-ca
+    fieldPaths:
+      - "spec.dnsNames.*"
+    options:
+      delimiter: "."
+      index: 1
+      create: false
+  - select:
+      kind: MutatingWebhookConfiguration
+    fieldPaths:
+      - "metadata.annotations.[cert-manager.io/inject-ca-from-secret]"
+    options:
+      delimiter: "/"
+      index: 0
+      create: false

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: e2e-registries-conf
+  namespace: __NAMESPACE_PLACEHOLDER__
+data:
+  registries.conf: |
+    [[registry]]
+    prefix = "mirrored-registry.operator-controller-e2e.svc.cluster.local:5000"
+    location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"
