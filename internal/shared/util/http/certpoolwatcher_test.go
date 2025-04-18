@@ -91,6 +91,7 @@ func TestCertPoolWatcher(t *testing.T) {
 	t.Logf("Create cert file at %q\n", certName)
 	createCert(t, certName)
 
+	// Eventually, the pools updates
 	require.Eventually(t, func() bool {
 		secondPool, secondGen, err := cpw.Get()
 		if err != nil {
@@ -98,4 +99,66 @@ func TestCertPoolWatcher(t *testing.T) {
 		}
 		return secondGen != firstGen && !firstPool.Equal(secondPool)
 	}, 30*time.Second, time.Second)
+}
+
+func TestCertPoolWatcherNoEnv(t *testing.T) {
+	// create a temporary directory
+	tmpDir, err := os.MkdirTemp("", "cert-pool")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	// create the first cert
+	certName := filepath.Join(tmpDir, "test1.pem")
+	t.Logf("Create cert file at %q\n", certName)
+	createCert(t, certName)
+
+	// Clear environment variables for the watcher
+	os.Setenv("SSL_CERT_DIR", "")
+	os.Setenv("SSL_CERT_FILE", "")
+
+	// Create the cert pool watcher
+	cpw, err := httputil.NewCertPoolWatcher(tmpDir, log.FromContext(context.Background()))
+	require.NoError(t, err)
+	defer cpw.Done()
+
+	// Get the original pool
+	firstPool, firstGen, err := cpw.Get()
+	require.NoError(t, err)
+	require.NotNil(t, firstPool)
+
+	// Create a second cert
+	certName = filepath.Join(tmpDir, "test2.pem")
+	t.Logf("Create cert file at %q\n", certName)
+	createCert(t, certName)
+
+	// Eventually, the pool updates
+	require.Eventually(t, func() bool {
+		secondPool, secondGen, err := cpw.Get()
+		if err != nil {
+			return false
+		}
+		return secondGen != firstGen && !firstPool.Equal(secondPool)
+	}, 30*time.Second, time.Second)
+}
+
+func TestCertPoolWatcherNoEnvEqualsSystem(t *testing.T) {
+	// Clear environment variables for the watcher
+	os.Setenv("SSL_CERT_DIR", "")
+	os.Setenv("SSL_CERT_FILE", "")
+
+	// Create the cert pool watcher
+	cpw, err := httputil.NewCertPoolWatcher("", log.FromContext(context.Background()))
+	require.NoError(t, err)
+	defer cpw.Done()
+
+	// Get the original pool
+	firstPool, _, err := cpw.Get()
+	require.NoError(t, err)
+	require.NotNil(t, firstPool)
+
+	// Compare to the system pool
+	sysPool, err := x509.SystemCertPool()
+	require.NoError(t, err)
+	require.NotNil(t, sysPool)
+	require.True(t, firstPool.Equal(sysPool))
 }
