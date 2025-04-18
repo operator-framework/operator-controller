@@ -188,6 +188,9 @@ func validateConfig(cfg *config) error {
 }
 
 func run(ctx context.Context) error {
+	// log startup message and feature gate status
+	setupLog.Info("starting up catalogd", "version info", version.String())
+	features.LogFeatureGateStates(setupLog, features.CatalogdFeatureGate)
 	authFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s-%s.json", authFilePrefix, apimachineryrand.String(8)))
 
 	protocol := "http://"
