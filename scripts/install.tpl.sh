@@ -9,7 +9,7 @@ if [[ -z "$olmv1_manifest" ]]; then
     exit 1
 fi
 
-default_catalogs_manifest=$DEFAULT_CATALOG
+default_catalogs_manifest=$DEFAULT_CATALOGS
 cert_mgr_version=$CERT_MGR_VERSION
 install_default_catalogs=$INSTALL_DEFAULT_CATALOGS
 
