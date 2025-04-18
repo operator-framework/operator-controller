@@ -304,7 +304,7 @@ func run() error {
 		return err
 	}
 	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
-	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
+	clientRestConfigMapper := action.ClusterExtensionUserRestConfigMapper(tokenGetter)
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
 		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
