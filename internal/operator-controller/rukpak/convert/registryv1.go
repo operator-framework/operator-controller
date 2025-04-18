@@ -31,6 +31,10 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
+const (
+	AnnotationRegistryV1GeneratedManifest = "io.operatorframework.olm.generated-manifest"
+)
+
 type RegistryV1 struct {
 	PackageName string
 	CSV         v1alpha1.ClusterServiceVersion
@@ -272,7 +276,7 @@ func (c Converter) Convert(rv1 RegistryV1, installNamespace string, targetNamesp
 		return nil, fmt.Errorf("webhookDefinitions are not supported")
 	}
 
-	deployments := []appsv1.Deployment{}
+	deployments := make([]appsv1.Deployment, 0, len(in.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs))
 	serviceAccounts := map[string]corev1.ServiceAccount{}
 	for _, depSpec := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 		annotations := util.MergeMaps(rv1.CSV.Annotations, depSpec.Spec.Template.Annotations)
@@ -362,23 +366,24 @@ func (c Converter) Convert(rv1 RegistryV1, installNamespace string, targetNamesp
 	}
 
 	objs := []client.Object{}
+
 	for _, obj := range serviceAccounts {
 		obj := obj
 		if obj.GetName() != "default" {
-			objs = append(objs, &obj)
+			objs = append(objs, annotateGenerated(&obj))
 		}
 	}
 	for _, obj := range roles {
 		obj := obj
-		objs = append(objs, &obj)
+		objs = append(objs, annotateGenerated(&obj))
 	}
 	for _, obj := range roleBindings {
 		obj := obj
-		objs = append(objs, &obj)
+		objs = append(objs, annotateGenerated(&obj))
 	}
 	for _, obj := range clusterRoles {
 		obj := obj
-		objs = append(objs, &obj)
+		objs = append(objs, annotateGenerated(&obj))
 	}
 	for _, obj := range clusterRoleBindings {
 		obj := obj
@@ -400,8 +405,9 @@ func (c Converter) Convert(rv1 RegistryV1, installNamespace string, targetNamesp
 	}
 	for _, obj := range deployments {
 		obj := obj
-		objs = append(objs, &obj)
+		objs = append(objs, annotateGenerated(&obj))
 	}
+
 	return &Plain{Objects: objs}, nil
 }
 
@@ -410,6 +416,16 @@ var PlainConverter = Converter{
 }
 
 const maxNameLength = 63
+
+func annotateGenerated(o client.Object) client.Object {
+	annotations := o.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[AnnotationRegistryV1GeneratedManifest] = ""
+	o.SetAnnotations(annotations)
+	return o
+}
 
 func generateName(base string, o interface{}) (string, error) {
 	hashStr, err := util.DeepHashObject(o)
