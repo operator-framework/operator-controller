@@ -1,0 +1,10 @@
+# Use the e2e-ca so that catalogd can communicate with the e2e registry.
+- op: add
+  path: /spec/template/spec/volumes/-
+  value: {"name":"e2e-registry-ca", "secret":{"secretName":"e2e-dummy-cert", "optional": false, "items":[{"key": "ca.crt", "path": "ca.crt"}]}}
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value: {"name":"e2e-registry-ca", "readOnly": true, "mountPath":"/var/certs/e2e-registry-ca"}
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "--pull-cas-dir=/var/certs/e2e-registry-ca"

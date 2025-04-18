@@ -1,18 +1,24 @@
+# operator-controller's server cert (e.g. for serving prometheus metrics)
 - op: add
   path: /spec/template/spec/volumes/-
-  value: {"name":"olmv1-certificate", "secret":{"secretName":"olmv1-cert", "optional": false, "items": [{"key": "ca.crt", "path": "olm-ca.crt"}, {"key": "tls.crt", "path": "tls.cert"}, {"key": "tls.key", "path": "tls.key"}]}}
+  value: {"name":"server-cert", "secret":{"secretName":"operator-controller-cert", "optional": false, "items": [{"key": "tls.crt", "path": "tls.cert"}, {"key": "tls.key", "path": "tls.key"}]}}
 - op: add
   path: /spec/template/spec/containers/0/volumeMounts/-
-  value: {"name":"olmv1-certificate", "readOnly": true, "mountPath":"/var/certs/"}
+  value: {"name":"server-cert", "readOnly": true, "mountPath":"/var/certs/server-cert"}
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "--catalogd-cas-dir=/var/certs"
+  value: "--tls-cert=/var/certs/server-cert/tls.cert"
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "--pull-cas-dir=/var/certs"
+  value: "--tls-key=/var/certs/server-cert/tls.key"
+
+# catalogd CA, so that operator-controller's http client can verify catalogd's server cert
+- op: add
+  path: /spec/template/spec/volumes/-
+  value: {"name":"catalogd-ca", "secret":{"secretName":"catalogd-cert-${VERSION}", "optional": false, "items":[{"key": "ca.crt", "path": "ca.crt"}]}}
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value: {"name":"catalogd-ca", "readOnly": true, "mountPath":"/var/certs/catalogd-ca"}
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "--tls-cert=/var/certs/tls.cert"
-- op: add
-  path: /spec/template/spec/containers/0/args/-
-  value: "--tls-key=/var/certs/tls.key"
+  value: "--catalogd-cas-dir=/var/certs/catalogd-ca"

@@ -14,7 +14,7 @@ resources:
 
 components:
 - ../../components/cert-manager
-- ../../components/community-namespace
+- ../../components/olmv1-system-namespace
 
 
 

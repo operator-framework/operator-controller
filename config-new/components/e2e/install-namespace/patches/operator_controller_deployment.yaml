@@ -1,0 +1,32 @@
+# Use the e2e-ca so that operator-controller can communicate with the e2e registry.
+- op: add
+  path: /spec/template/spec/volumes/-
+  value: {"name":"e2e-registry-ca", "secret":{"secretName":"e2e-dummy-cert", "optional": false, "items":[{"key": "ca.crt", "path": "ca.crt"}]}}
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value: {"name":"e2e-registry-ca", "readOnly": true, "mountPath":"/var/certs/e2e-registry-ca"}
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "--pull-cas-dir=/var/certs/e2e-registry-ca"
+
+# Setup a custom /etc/containers/registries.conf file, used to verify containers/image integration in e2e tests.
+- op: add
+  path: /spec/template/spec/volumes/-
+  value: {"name":"e2e-registries-conf", "configMap":{"name":"e2e-registries-conf"}}
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value: {"name":"e2e-registries-conf", "readOnly": true, "mountPath":"/etc/containers"}
+
+# Setup e2e code coverage
+- op: add
+  path: /spec/template/spec/containers/0/env
+  value: []
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value: {"name":"GOCOVERDIR","value":"/e2e-coverage"}
+- op: add
+  path: /spec/template/spec/volumes/-
+  value: {"name":"e2e-coverage-volume", "persistentVolumeClaim":{"claimName":"e2e-coverage"}}
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value: {"name":"e2e-coverage-volume", "mountPath":"/e2e-coverage"}

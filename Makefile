@@ -244,7 +244,6 @@ E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
 image-registry: export GOOS=linux
 image-registry: export GOARCH=amd64
 image-registry: ## Build the testdata catalog used for e2e tests and push it to the image registry
-	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/registry/bin/registry ./testdata/registry/registry.go
 	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
 	$(CONTAINER_RUNTIME) build -f ./testdata/Dockerfile -t $(E2E_REGISTRY_IMAGE) ./testdata
 	$(CONTAINER_RUNTIME) save $(E2E_REGISTRY_IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
@@ -263,6 +262,7 @@ test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suit
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
+extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config-new/overlays/community-e2e
 extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
 extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP Run extension-developer e2e on local kind cluster
 
@@ -356,7 +356,7 @@ run: docker-build kind-cluster kind-load kind-deploy wait #HELP Build the operat
 CATD_NAMESPACE := olmv1-system
 wait:
 	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
+	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-cert # Avoid upgrade test flakes when reissuing cert
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
