@@ -1,4 +1,0 @@
-## Append samples of your project ##
-resources:
-- olm_v1_clusterextension.yaml
-#+kubebuilder:scaffold:manifestskustomizesamples

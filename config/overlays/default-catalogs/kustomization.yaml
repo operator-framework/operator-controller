@@ -3,14 +3,12 @@ kind: Kustomization
 
 labels:
   - pairs:
-      app.kubernetes.io/name: catalogd
+      app.kubernetes.io/part-of: olm
     includeTemplates: false
     includeSelectors: false
 
-namePrefix: catalogd-
-
 resources:
-  - crd
-  - rbac
-  - manager
+- operatorhubio_clustercatalog.yaml
+
+
 

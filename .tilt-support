@@ -5,7 +5,7 @@ load('ext://cert_manager', 'deploy_cert_manager')
 def deploy_cert_manager_if_needed():
     cert_manager_var = '__CERT_MANAGER__'
     if os.getenv(cert_manager_var) != '1':
-        deploy_cert_manager(version="v1.15.3")
+        deploy_cert_manager(version="v1.17.1")
         os.putenv(cert_manager_var, '1')
 
 
@@ -130,7 +130,6 @@ def process_yaml(yaml):
 # data format:
 # {
 #     'image': 'quay.io/operator-framework/rukpak',
-#     'yaml': 'manifests/overlays/cert-manager',
 #     'binaries': {
 #         'core': 'core',
 #         'crdvalidator': 'crd-validation-webhook',
@@ -148,4 +147,3 @@ def deploy_repo(repo, data, tags="", debug=True):
         build_binary(repo, binary, data['deps'], data['image'], tags, debug)
         k8s_resource(deployment, port_forwards=['{}:30000'.format(local_port)])
         local_port += 1
-    process_yaml(kustomize(data['yaml']))
