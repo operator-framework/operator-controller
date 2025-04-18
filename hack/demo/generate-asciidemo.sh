@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -x
+set +x
 
 trap cleanup SIGINT SIGTERM EXIT
 
