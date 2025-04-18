@@ -2,7 +2,6 @@ FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /
 
-COPY registry/bin/registry registry
 COPY push/bin/push push
 
 COPY images images

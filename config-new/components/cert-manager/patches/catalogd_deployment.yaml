@@ -1,21 +1,13 @@
+# operator-controller's server cert (e.g. for serving the catalogd API and prometheus metrics)
 - op: add
   path: /spec/template/spec/volumes/-
-  value: {"name":"olmv1-certificate", "secret":{"secretName":"catalogd-service-cert-${VERSION}", "optional": false, "items": [{"key": "ca.crt", "path": "olm-ca.crt"}]}}
+  value: {"name":"server-cert","secret":{"secretName":"catalogd-cert-${VERSION}","optional":false,"items":[{"key":"tls.crt","path":"tls.crt"},{"key":"tls.key","path":"tls.key"}]}}
 - op: add
   path: /spec/template/spec/containers/0/volumeMounts/-
-  value: {"name":"olmv1-certificate", "readOnly": true, "mountPath":"/var/ca-certs/"}
+  value: {"name":"server-cert","mountPath":"/var/server-cert"}
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "--pull-cas-dir=/var/ca-certs"
-- op: add
-  path: /spec/template/spec/volumes/-
-  value: {"name":"catalogserver-certs", "secret":{"secretName":"catalogd-service-cert-${VERSION}"}}
-- op: add
-  path: /spec/template/spec/containers/0/volumeMounts/-
-  value: {"name":"catalogserver-certs", "mountPath":"/var/certs"}
+  value: "--tls-cert=/var/server-cert/tls.crt"
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "--tls-cert=/var/certs/tls.crt"
-- op: add
-  path: /spec/template/spec/containers/0/args/-
-  value: "--tls-key=/var/certs/tls.key"
+  value: "--tls-key=/var/server-cert/tls.key"

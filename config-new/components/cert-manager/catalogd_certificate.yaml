@@ -1,10 +1,10 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: catalogd-service-cert
+  name: catalogd-cert
   namespace: __NAMESPACE_PLACEHOLDER__
 spec:
-  secretName: catalogd-service-cert-${VERSION}
+  secretName: catalogd-cert-${VERSION}
   dnsNames:
     - catalogd-service.__NAMESPACE_PLACEHOLDER__.svc
     - catalogd-service.__NAMESPACE_PLACEHOLDER__.svc.cluster.local
