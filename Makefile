@@ -92,10 +92,15 @@ KUSTOMIZE_E2E_OVERLAY := config/overlays/community-e2e
 KUSTOMIZE_TILT_OVERLAY := config/overlays/community-tilt
 KUSTOMIZE_CATALOGS_OVERLAY := config/overlays/default-catalogs
 
-RELEASE_MANIFEST := ./release-manifests/operator-controller.yaml
-E2E_MANIFEST := ./release-manifests/operator-controller-e2e.yaml
-TILT_MANIFEST := ./release-manifests/operator-controller-tilt.yaml
-CATALOGS_MANIFEST := ./release-manifests/default-catalogs.yaml
+export RELEASE_MANIFEST := operator-controller.yaml
+export RELEASE_INSTALL := install.sh
+export RELEASE_CATALOGS := default-catalogs.yaml
+
+DEV_MANIFESTS_DIR := dev-manifests
+DEV_MANIFEST := $(DEV_MANIFESTS_DIR)/operator-controller-dev.yaml
+E2E_MANIFEST := $(DEV_MANIFESTS_DIR)/operator-controller-e2e.yaml
+TILT_MANIFEST := $(DEV_MANIFESTS_DIR)/operator-controller-tilt.yaml
+CATALOGS_MANIFEST := $(DEV_MANIFESTS_DIR)/default-catalogs.yaml
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -165,9 +170,10 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
-	$(KUSTOMIZE) build $(KUSTOMIZE_RELEASE_OVERLAY) | envsubst '$$VERSION' > $(RELEASE_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_E2E_OVERLAY) | envsubst '$$VERSION' > $(E2E_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_TILT_OVERLAY) | envsubst '$$VERSION' > $(TILT_MANIFEST)
+	mkdir -p $(DEV_MANIFESTS_DIR)
+	$(KUSTOMIZE) build $(KUSTOMIZE_RELEASE_OVERLAY) > $(DEV_MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_E2E_OVERLAY) > $(E2E_MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_TILT_OVERLAY) > $(TILT_MANIFEST)
 	$(KUSTOMIZE) build $(KUSTOMIZE_CATALOGS_OVERLAY) > $(CATALOGS_MANIFEST)
 
 
@@ -303,9 +309,9 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 	$(CONTAINER_RUNTIME) save $(CATD_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-deploy
-kind-deploy: export DEFAULT_CATALOGS := $(CATALOGS_MANIFEST)
 kind-deploy: manifests $(KUSTOMIZE)
-	envsubst '$$DEFAULT_CATALOGS,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+	envsubst '$$VERSION' < $$MANIFEST > ./tmp-manifest.yaml
+	export MANIFEST=./tmp-manifest.yaml && envsubst '$$DEFAULT_CATALOGS,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s && rm ./tmp-manifest.yaml
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
@@ -356,7 +362,7 @@ go-build-linux: export GOARCH=amd64
 go-build-linux: $(BINARIES)
 
 .PHONY: run
-run: export MANIFEST := $(RELEASE_MANIFEST)
+run: export MANIFEST := $(DEV_MANIFEST)
 run: run-internal #HELP Build the operator-controller then deploy it into a new kind cluster.
 
 .PHONY: run-internal
@@ -391,7 +397,9 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
 quickstart: export DEFAULT_CATALOGS := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/default-catalogs.yaml"
 quickstart: manifests #EXHELP Generate the unified installation release manifests and scripts.
-	envsubst '$$DEFAULT_CATALOGS,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+	envsubst '$$VERSION' < $(DEV_MANIFEST) > $(RELEASE_MANIFEST)
+	cp $(CATALOGS_MANIFEST) > $(RELEASE_CATALOGS)
+	envsubst '$$DEFAULT_CATALOGS,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(RELEASE_INSTALL)
 
 ##@ Docs
 
