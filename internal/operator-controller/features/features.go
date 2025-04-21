@@ -1,11 +1,11 @@
 package features
 
 import (
-	"sort"
-
 	"github.com/go-logr/logr"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/component-base/featuregate"
+
+	fgutil "github.com/operator-framework/operator-controller/internal/shared/util/featuregates"
 )
 
 const (
@@ -42,18 +42,5 @@ func init() {
 
 // LogFeatureGateStates logs the state of all known feature gates.
 func LogFeatureGateStates(log logr.Logger, fg featuregate.FeatureGate) {
-	// Sort the keys for consistent logging order
-	featureKeys := make([]featuregate.Feature, 0, len(operatorControllerFeatureGates))
-	for k := range operatorControllerFeatureGates {
-		featureKeys = append(featureKeys, k)
-	}
-	sort.Slice(featureKeys, func(i, j int) bool {
-		return string(featureKeys[i]) < string(featureKeys[j]) // Sort by string representation
-	})
-
-	featurePairs := make([]interface{}, 0, len(featureKeys))
-	for _, feature := range featureKeys {
-		featurePairs = append(featurePairs, feature, fg.Enabled(feature))
-	}
-	log.Info("feature gate status", featurePairs...)
+	fgutil.LogFeatureGateStates(log, "feature gate status", fg, operatorControllerFeatureGates)
 }
