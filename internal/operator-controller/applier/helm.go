@@ -109,7 +109,7 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 		preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", authErr))
 	}
 	if len(preAuthErrors) > 0 {
-		return fmt.Errorf("pre-authorization failed: %v", preAuthErrors)
+		return fmt.Errorf("pre-authorization failed: %v", errors.Join(preAuthErrors...))
 	}
 	return nil
 }

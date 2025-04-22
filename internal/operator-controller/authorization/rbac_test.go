@@ -214,6 +214,195 @@ subjects:
 			},
 		},
 	}
+
+	expectedSingleNamespaceMissingRules = []ScopedPolicyRules{
+		{
+			Namespace: "",
+			MissingRules: []rbacv1.PolicyRule{
+				{
+					Verbs:           []string{"list", "watch"},
+					APIGroups:       []string{""},
+					Resources:       []string{"services"},
+					ResourceNames:   []string(nil),
+					NonResourceURLs: []string(nil)},
+				{
+					Verbs:           []string{"list", "watch"},
+					APIGroups:       []string{"rbac.authorization.k8s.io"},
+					Resources:       []string{"rolebindings"},
+					ResourceNames:   []string(nil),
+					NonResourceURLs: []string(nil)},
+				{
+					Verbs:           []string{"list", "watch"},
+					APIGroups:       []string{"rbac.authorization.k8s.io"},
+					Resources:       []string{"roles"},
+					ResourceNames:   []string(nil),
+					NonResourceURLs: []string(nil)},
+				{
+					Verbs:           []string{"update"},
+					APIGroups:       []string{""},
+					Resources:       []string{"clusterextensions/finalizers"},
+					ResourceNames:   []string{"test-cluster-extension"},
+					NonResourceURLs: []string(nil),
+				},
+			},
+		},
+		{
+			Namespace: "test-namespace",
+			MissingRules: []rbacv1.PolicyRule{
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"*"},
+					Resources: []string{"certificates"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{""},
+					Resources: []string{"services"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"rbac.authorization.k8s.io"},
+					Resources: []string{"rolebindings"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"rbac.authorization.k8s.io"},
+					Resources: []string{"roles"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{""},
+					Resources:     []string{"services"},
+					ResourceNames: []string{"test-service"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{"rbac.authorization.k8s.io"},
+					Resources:     []string{"rolebindings"},
+					ResourceNames: []string{"test-extension-binding"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{"rbac.authorization.k8s.io"},
+					Resources:     []string{"roles"},
+					ResourceNames: []string{"test-extension-role"}},
+				{
+					Verbs:     []string{"watch"},
+					APIGroups: []string{"*"},
+					Resources: []string{"serviceaccounts"},
+				},
+			},
+		},
+	}
+
+	expectedMultiNamespaceMissingRules = []ScopedPolicyRules{
+		{
+			Namespace: "",
+			MissingRules: []rbacv1.PolicyRule{
+				{
+					Verbs:           []string{"list", "watch"},
+					APIGroups:       []string{""},
+					Resources:       []string{"services"},
+					ResourceNames:   []string(nil),
+					NonResourceURLs: []string(nil)},
+				{
+					Verbs:           []string{"list", "watch"},
+					APIGroups:       []string{"rbac.authorization.k8s.io"},
+					Resources:       []string{"rolebindings"},
+					ResourceNames:   []string(nil),
+					NonResourceURLs: []string(nil)},
+				{
+					Verbs:           []string{"list", "watch"},
+					APIGroups:       []string{"rbac.authorization.k8s.io"},
+					Resources:       []string{"roles"},
+					ResourceNames:   []string(nil),
+					NonResourceURLs: []string(nil)},
+				{
+					Verbs:           []string{"update"},
+					APIGroups:       []string{""},
+					Resources:       []string{"clusterextensions/finalizers"},
+					ResourceNames:   []string{"test-cluster-extension"},
+					NonResourceURLs: []string(nil),
+				},
+			},
+		},
+		{
+			Namespace: "a-test-namespace",
+			MissingRules: []rbacv1.PolicyRule{
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"*"},
+					Resources: []string{"certificates"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{""},
+					Resources: []string{"services"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"rbac.authorization.k8s.io"},
+					Resources: []string{"rolebindings"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"rbac.authorization.k8s.io"},
+					Resources: []string{"roles"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{""},
+					Resources:     []string{"services"},
+					ResourceNames: []string{"test-service"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{"rbac.authorization.k8s.io"},
+					Resources:     []string{"rolebindings"},
+					ResourceNames: []string{"test-extension-binding"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{"rbac.authorization.k8s.io"},
+					Resources:     []string{"roles"},
+					ResourceNames: []string{"test-extension-role"}},
+				{
+					Verbs:     []string{"watch"},
+					APIGroups: []string{"*"},
+					Resources: []string{"serviceaccounts"},
+				},
+			},
+		},
+		{
+			Namespace: "test-namespace",
+			MissingRules: []rbacv1.PolicyRule{
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"*"},
+					Resources: []string{"certificates"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{""},
+					Resources: []string{"services"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"rbac.authorization.k8s.io"},
+					Resources: []string{"rolebindings"}},
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"rbac.authorization.k8s.io"},
+					Resources: []string{"roles"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{""},
+					Resources:     []string{"services"},
+					ResourceNames: []string{"test-service"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{"rbac.authorization.k8s.io"},
+					Resources:     []string{"rolebindings"},
+					ResourceNames: []string{"test-extension-binding"}},
+				{
+					Verbs:         []string{"delete", "get", "patch", "update"},
+					APIGroups:     []string{"rbac.authorization.k8s.io"},
+					Resources:     []string{"roles"},
+					ResourceNames: []string{"test-extension-role"}},
+				{
+					Verbs:     []string{"watch"},
+					APIGroups: []string{"*"},
+					Resources: []string{"serviceaccounts"},
+				},
+			},
+		},
+	}
 )
 
 func setupFakeClient(role client.Object) client.Client {
@@ -221,7 +410,6 @@ func setupFakeClient(role client.Object) client.Client {
 	_ = corev1.AddToScheme(s)
 	_ = rbacv1.AddToScheme(s)
 	restMapper := testrestmapper.TestOnlyStaticRESTMapper(s)
-	// restMapper := meta.NewDefaultRESTMapper(nil)
 	fakeClientBuilder := fake.NewClientBuilder().WithObjects(append(objects, role)...).WithRESTMapper(restMapper)
 	return fakeClientBuilder.Build()
 }
@@ -236,23 +424,23 @@ func TestPreAuthorize_Success(t *testing.T) {
 	})
 }
 
-func TestPreAuthorize_Failure(t *testing.T) {
-	t.Run("preauthorize fails with missing rbac rules", func(t *testing.T) {
+func TestPreAuthorize_MissingRBAC(t *testing.T) {
+	t.Run("preauthorize fails and finds missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(limitedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
-		require.Error(t, err)
-		require.NotEqual(t, []ScopedPolicyRules{}, missingRules)
+		require.NoError(t, err)
+		require.Equal(t, expectedSingleNamespaceMissingRules, missingRules)
 	})
 }
 
-func TestPreAuthorizeMultiNamespace_Failure(t *testing.T) {
-	t.Run("preauthorize fails with missing rbac rules in multiple namespaces", func(t *testing.T) {
+func TestPreAuthorizeMultiNamespace_MissingRBAC(t *testing.T) {
+	t.Run("preauthorize fails and finds missing rbac rules in multiple namespaces", func(t *testing.T) {
 		fakeClient := setupFakeClient(limitedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifestMultiNamespace))
-		require.Error(t, err)
-		require.NotEqual(t, []ScopedPolicyRules{}, missingRules)
+		require.NoError(t, err)
+		require.Equal(t, expectedMultiNamespaceMissingRules, missingRules)
 	})
 }
 

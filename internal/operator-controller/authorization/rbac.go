@@ -141,8 +141,8 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 	if parseErr := errors.Join(parseErrors...); parseErr != nil {
 		errs = append(errs, fmt.Errorf("failed to parse escalation check error strings: %v", parseErr))
 	}
-	if len(preAuthEvaluationErrors) > 0 {
-		errs = append(errs, fmt.Errorf("failed to resolve or evaluate permissions: %v", errors.Join(preAuthEvaluationErrors...)))
+	if preAuthEvaluationErrors := errors.Join(preAuthEvaluationErrors...); preAuthEvaluationErrors != nil {
+		errs = append(errs, fmt.Errorf("failed to resolve or evaluate permissions: %v", preAuthEvaluationErrors))
 	}
 	if len(errs) > 0 {
 		return allMissingPolicyRules, fmt.Errorf("missing rules may be incomplete: %w", errors.Join(errs...))
