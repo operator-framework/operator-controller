@@ -439,7 +439,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func wrapErrorWithResolutionInfo(resolved ocv1.BundleMetadata, err error) error {
-	return fmt.Errorf("%w for resolved bundle %q with version %q", err, resolved.Name, resolved.Version)
+	return fmt.Errorf("error for resolved bundle %q with version %q: %w", resolved.Name, resolved.Version, err)
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change
