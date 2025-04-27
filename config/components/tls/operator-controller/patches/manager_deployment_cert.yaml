@@ -16,3 +16,6 @@
 - op: add
   path: /spec/template/spec/containers/0/args/-
   value: "--tls-key=/var/certs/tls.key"
+- op: add
+  path: /spec/template/spec/securityContext/seLinuxOptions
+  value: {"type":"spc_t"}
