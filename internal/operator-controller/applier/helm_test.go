@@ -16,6 +16,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,26 +35,17 @@ type mockPreflight struct {
 	upgradeErr error
 }
 
-type noOpPreAuthorizer struct{}
-
-func (p *noOpPreAuthorizer) PreAuthorize(
-	ctx context.Context,
-	ext *ocv1.ClusterExtension,
-	manifestReader io.Reader,
-) ([]authorization.ScopedPolicyRules, error) {
-	// No-op: always return an empty map and no error
-	return nil, nil
+type mockPreAuthorizer struct {
+	missingRules []authorization.ScopedPolicyRules
+	returnError  error
 }
 
-type errorPreAuthorizer struct{}
-
-func (p *errorPreAuthorizer) PreAuthorize(
+func (p *mockPreAuthorizer) PreAuthorize(
 	ctx context.Context,
 	ext *ocv1.ClusterExtension,
 	manifestReader io.Reader,
 ) ([]authorization.ScopedPolicyRules, error) {
-	// Always returns no missing rules and an error
-	return nil, errors.New("problem running preauthorization")
+	return p.missingRules, p.returnError
 }
 
 func (mp *mockPreflight) Install(context.Context, *release.Release) error {
@@ -163,6 +155,33 @@ spec:
 	testCE            = &ocv1.ClusterExtension{}
 	testObjectLabels  = map[string]string{"object": "label"}
 	testStorageLabels = map[string]string{"storage": "label"}
+	errPreAuth        = errors.New("problem running preauthorization")
+	missingRBAC       = []authorization.ScopedPolicyRules{
+		{
+			Namespace: "",
+			MissingRules: []rbacv1.PolicyRule{
+				{
+					Verbs:           []string{"list", "watch"},
+					APIGroups:       []string{""},
+					Resources:       []string{"services"},
+					ResourceNames:   []string(nil),
+					NonResourceURLs: []string(nil)},
+			},
+		},
+		{
+			Namespace: "test-namespace",
+			MissingRules: []rbacv1.PolicyRule{
+				{
+					Verbs:     []string{"create"},
+					APIGroups: []string{"*"},
+					Resources: []string{"certificates"}},
+			},
+		},
+	}
+
+	errMissingRBAC = `pre-authorization failed: service account requires the following permissions to manage cluster extension:
+  Namespace:"" APIGroups:[] Resources:[services] Verbs:[list,watch]
+  Namespace:"test-namespace" APIGroups:[*] Resources:[certificates] Verbs:[create]`
 )
 
 func TestApply_Base(t *testing.T) {
@@ -311,7 +330,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		helmApplier := applier.Helm{
 			ActionClientGetter:  mockAcg,
 			Preflights:          []applier.Preflight{mockPf},
-			PreAuthorizer:       &noOpPreAuthorizer{},
+			PreAuthorizer:       &mockPreAuthorizer{nil, nil},
 			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
 		}
 
@@ -332,7 +351,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter:  mockAcg,
-			PreAuthorizer:       &errorPreAuthorizer{},
+			PreAuthorizer:       &mockPreAuthorizer{nil, errPreAuth},
 			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
 		}
 		// Use a ClusterExtension with valid Spec fields.
@@ -351,6 +370,35 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		require.Nil(t, objs)
 	})
 
+	t.Run("fails during installation due to missing RBAC rules", func(t *testing.T) {
+		mockAcg := &mockActionGetter{
+			getClientErr: driver.ErrReleaseNotFound,
+			desiredRel: &release.Release{
+				Info:     &release.Info{Status: release.StatusDeployed},
+				Manifest: validManifest,
+			},
+		}
+		helmApplier := applier.Helm{
+			ActionClientGetter:  mockAcg,
+			PreAuthorizer:       &mockPreAuthorizer{missingRBAC, nil},
+			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
+		}
+		// Use a ClusterExtension with valid Spec fields.
+		validCE := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
+				},
+			},
+		}
+		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+		require.ErrorContains(t, err, errMissingRBAC)
+		require.Equal(t, "", state)
+		require.Nil(t, objs)
+	})
+
 	t.Run("successful installation", func(t *testing.T) {
 		mockAcg := &mockActionGetter{
 			getClientErr: driver.ErrReleaseNotFound,
@@ -361,7 +409,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter:  mockAcg,
-			PreAuthorizer:       &noOpPreAuthorizer{},
+			PreAuthorizer:       &mockPreAuthorizer{nil, nil},
 			BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
 		}
 
