@@ -1,11 +1,21 @@
 package util
 
 import (
+	"fmt"
 	"io"
 
 	"k8s.io/cli-runtime/pkg/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const maxNameLength = 63
+
+func ObjectNameForBaseAndSuffix(base string, suffix string) string {
+	if len(base)+len(suffix) > maxNameLength {
+		base = base[:maxNameLength-len(suffix)-1]
+	}
+	return fmt.Sprintf("%s-%s", base, suffix)
+}
 
 func MergeMaps(maps ...map[string]string) map[string]string {
 	out := map[string]string{}
