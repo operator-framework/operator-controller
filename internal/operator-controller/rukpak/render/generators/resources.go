@@ -1,8 +1,6 @@
 package generators
 
 import (
-	"fmt"
-
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -217,7 +215,9 @@ func CreateDeploymentResource(name string, namespace string, opts ...ResourceCre
 	).(*appsv1.Deployment)
 }
 
-func CreateValidatingWebhookConfigurationResource(generateName string, namespace string, opts ...ResourceCreatorOption) *admissionregistrationv1.ValidatingWebhookConfiguration {
+// CreateValidatingWebhookConfigurationResource creates a ValidatingWebhookConfiguration resource with name 'name',
+// namespace 'namespace', and applying any ValidatingWebhookConfiguration related options in opts
+func CreateValidatingWebhookConfigurationResource(name string, namespace string, opts ...ResourceCreatorOption) *admissionregistrationv1.ValidatingWebhookConfiguration {
 	return ResourceCreatorOptions(opts).ApplyTo(
 		&admissionregistrationv1.ValidatingWebhookConfiguration{
 			TypeMeta: metav1.TypeMeta{
@@ -225,14 +225,16 @@ func CreateValidatingWebhookConfigurationResource(generateName string, namespace
 				APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: fmt.Sprintf("%s-", generateName),
-				Namespace:    namespace,
+				Name:      name,
+				Namespace: namespace,
 			},
 		},
 	).(*admissionregistrationv1.ValidatingWebhookConfiguration)
 }
 
-func CreateMutatingWebhookConfigurationResource(generateName string, namespace string, opts ...ResourceCreatorOption) *admissionregistrationv1.MutatingWebhookConfiguration {
+// CreateMutatingWebhookConfigurationResource creates a MutatingWebhookConfiguration resource with name 'name',
+// namespace 'namespace', and applying any MutatingWebhookConfiguration related options in opts
+func CreateMutatingWebhookConfigurationResource(name string, namespace string, opts ...ResourceCreatorOption) *admissionregistrationv1.MutatingWebhookConfiguration {
 	return ResourceCreatorOptions(opts).ApplyTo(
 		&admissionregistrationv1.MutatingWebhookConfiguration{
 			TypeMeta: metav1.TypeMeta{
@@ -240,13 +242,14 @@ func CreateMutatingWebhookConfigurationResource(generateName string, namespace s
 				APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: fmt.Sprintf("%s-", generateName),
-				Namespace:    namespace,
+				Name:      name,
+				Namespace: namespace,
 			},
 		},
 	).(*admissionregistrationv1.MutatingWebhookConfiguration)
 }
 
+// CreateServiceResource creates a Service resource with name 'name', namespace 'namespace', and applying any Service related options in opts
 func CreateServiceResource(name string, namespace string, opts ...ResourceCreatorOption) *corev1.Service {
 	return ResourceCreatorOptions(opts).ApplyTo(&corev1.Service{
 		TypeMeta: metav1.TypeMeta{

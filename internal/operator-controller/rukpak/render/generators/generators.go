@@ -304,12 +304,13 @@ func BundleValidatingWebhookResourceGenerator(rv1 *render.RegistryV1, opts rende
 			continue
 		}
 		certProvisioner := render.CertProvisionerFor(wh.DeploymentName, opts)
+		webhookName := strings.TrimSuffix(wh.GenerateName, "-")
 		webhookResource := CreateValidatingWebhookConfigurationResource(
-			wh.GenerateName,
+			webhookName,
 			opts.InstallNamespace,
 			WithValidatingWebhooks(
 				admissionregistrationv1.ValidatingWebhook{
-					Name:                    wh.GenerateName,
+					Name:                    webhookName,
 					Rules:                   wh.Rules,
 					FailurePolicy:           wh.FailurePolicy,
 					MatchPolicy:             wh.MatchPolicy,
@@ -351,12 +352,13 @@ func BundleMutatingWebhookResourceGenerator(rv1 *render.RegistryV1, opts render.
 			continue
 		}
 		certProvisioner := render.CertProvisionerFor(wh.DeploymentName, opts)
+		webhookName := strings.TrimSuffix(wh.GenerateName, "-")
 		webhookResource := CreateMutatingWebhookConfigurationResource(
-			wh.GenerateName,
+			webhookName,
 			opts.InstallNamespace,
 			WithMutatingWebhooks(
 				admissionregistrationv1.MutatingWebhook{
-					Name:                    wh.GenerateName,
+					Name:                    webhookName,
 					Rules:                   wh.Rules,
 					FailurePolicy:           wh.FailurePolicy,
 					MatchPolicy:             wh.MatchPolicy,

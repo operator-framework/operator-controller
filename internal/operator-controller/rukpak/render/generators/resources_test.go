@@ -85,14 +85,14 @@ func Test_CreateService(t *testing.T) {
 func Test_CreateValidatingWebhookConfiguration(t *testing.T) {
 	wh := generators.CreateValidatingWebhookConfigurationResource("my-validating-webhook-configuration", "my-namespace")
 	require.NotNil(t, wh)
-	require.Equal(t, "my-validating-webhook-configuration-", wh.GenerateName)
+	require.Equal(t, "my-validating-webhook-configuration", wh.Name)
 	require.Equal(t, "my-namespace", wh.Namespace)
 }
 
 func Test_CreateMutatingWebhookConfiguration(t *testing.T) {
 	wh := generators.CreateMutatingWebhookConfigurationResource("my-mutating-webhook-configuration", "my-namespace")
 	require.NotNil(t, wh)
-	require.Equal(t, "my-mutating-webhook-configuration-", wh.GenerateName)
+	require.Equal(t, "my-mutating-webhook-configuration", wh.Name)
 	require.Equal(t, "my-namespace", wh.Namespace)
 }
 

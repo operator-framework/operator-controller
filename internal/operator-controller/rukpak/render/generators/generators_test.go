@@ -1547,8 +1547,101 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						GenerateName: "my-webhook-",
-						Namespace:    "install-namespace",
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name: "my-webhook",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Namespace: "install-namespace",
+									Name:      "my-deployment-service",
+									Path:      ptr.To("/webhook-path"),
+									Port:      ptr.To(int32(443)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName:   "my-webhook-",
+							DeploymentName: "my-deployment",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							WebhookPath:   ptr.To("/webhook-path"),
+							ContainerPort: 443,
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&admissionregistrationv1.ValidatingWebhookConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ValidatingWebhookConfiguration",
+						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
 					},
 					Webhooks: []admissionregistrationv1.ValidatingWebhook{
 						{
@@ -1616,8 +1709,8 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						GenerateName: "my-webhook-",
-						Namespace:    "install-namespace",
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
 						Annotations: map[string]string{
 							"cert-provider": "annotation",
 						},
@@ -1719,8 +1812,103 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						GenerateName: "my-webhook-",
-						Namespace:    "install-namespace",
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
+					},
+					Webhooks: []admissionregistrationv1.MutatingWebhook{
+						{
+							Name: "my-webhook",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							ReinvocationPolicy: ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Namespace: "install-namespace",
+									Name:      "my-deployment-service",
+									Path:      ptr.To("/webhook-path"),
+									Port:      ptr.To(int32(443)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							GenerateName:   "my-webhook-",
+							DeploymentName: "my-deployment",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							WebhookPath:        ptr.To("/webhook-path"),
+							ContainerPort:      443,
+							ReinvocationPolicy: ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&admissionregistrationv1.MutatingWebhookConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "MutatingWebhookConfiguration",
+						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
 					},
 					Webhooks: []admissionregistrationv1.MutatingWebhook{
 						{
@@ -1789,8 +1977,8 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						GenerateName: "my-webhook-",
-						Namespace:    "install-namespace",
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
 						Annotations: map[string]string{
 							"cert-provider": "annotation",
 						},
@@ -2258,6 +2446,7 @@ func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
 	fakeProvider := FakeCertProvider{
 		AdditionalObjectsFn: func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
 			return []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{
+				TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: cfg.CertName,
 				},
@@ -2290,9 +2479,8 @@ func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []client.Object{
 		ToUnstructuredT(t, &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "my-deployment-service-cert",
-			},
+			TypeMeta:   metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
+			ObjectMeta: metav1.ObjectMeta{Name: "my-deployment-service-cert"},
 		}),
 	}, objs)
 }
