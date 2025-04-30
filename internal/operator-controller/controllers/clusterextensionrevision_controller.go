@@ -59,6 +59,10 @@ type accessManager interface {
 	Source(handler.EventHandler, ...predicate.Predicate) source.Source
 }
 
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/status,verbs=update;patch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/finalizers,verbs=update
+
 func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	l := log.FromContext(ctx).WithName("cluster-extension-revision")
 	ctx = log.IntoContext(ctx, l)
@@ -271,7 +275,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(
 func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
-			&corev1.ConfigMap{},
+			&ocv1.ClusterExtensionRevision{},
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
 		WatchesRawSource(

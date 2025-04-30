@@ -31,7 +31,6 @@ import (
 	"github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
 	rbacv1 "k8s.io/api/rbac/v1"
-	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -60,7 +59,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
@@ -68,11 +66,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
@@ -417,45 +410,50 @@ func run() error {
 		},
 	}
 
-	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
-	if err != nil {
-		setupLog.Error(err, "unable to create apiextensions client")
-		return err
-	}
+	// aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
+	// if err != nil {
+	// 	setupLog.Error(err, "unable to create apiextensions client")
+	// 	return err
+	// }
 
-	preflights := []applier.Preflight{
-		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
-	}
+	// preflights := []applier.Preflight{
+	// 	crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
+	// }
 
-	// determine if PreAuthorizer should be enabled based on feature gate
-	var preAuth authorization.PreAuthorizer
-	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
+	// // determine if PreAuthorizer should be enabled based on feature gate
+	// var preAuth authorization.PreAuthorizer
+	// if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+	// 	preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
+	// }
+
+	boxcutterApplier := &applier.Boxcutter{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}
 
 	// determine if a certificate provider should be set in the bundle renderer and feature support for the provider
 	// based on the feature flag
-	var certProvider render.CertificateProvider
-	var isWebhookSupportEnabled bool
-	if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
-		certProvider = certproviders.CertManagerCertificateProvider{}
-		isWebhookSupportEnabled = true
-	} else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
-		certProvider = certproviders.OpenshiftServiceCaCertificateProvider{}
-		isWebhookSupportEnabled = true
-	}
+	// var certProvider render.CertificateProvider
+	// var isWebhookSupportEnabled bool
+	// if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
+	// 	certProvider = certproviders.CertManagerCertificateProvider{}
+	// 	isWebhookSupportEnabled = true
+	// } else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
+	// 	certProvider = certproviders.OpenshiftServiceCaCertificateProvider{}
+	// 	isWebhookSupportEnabled = true
+	// }
 
 	// now initialize the helmApplier, assigning the potentially nil preAuth
-	helmApplier := &applier.Helm{
-		ActionClientGetter: acg,
-		Preflights:         preflights,
-		BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
-			BundleRenderer:          registryv1.Renderer,
-			CertificateProvider:     certProvider,
-			IsWebhookSupportEnabled: isWebhookSupportEnabled,
-		},
-		PreAuthorizer: preAuth,
-	}
+	// helmApplier := &applier.Helm{
+	// 	ActionClientGetter: acg,
+	// 	Preflights:         preflights,
+	// 	BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
+	// 		BundleRenderer:          registryv1.Renderer,
+	// 		CertificateProvider:     certProvider,
+	// 		IsWebhookSupportEnabled: isWebhookSupportEnabled,
+	// 	},
+	// 	PreAuthorizer: preAuth,
+	// }
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
 	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
@@ -498,7 +496,7 @@ func run() error {
 		Resolver:              resolver,
 		ImageCache:            imageCache,
 		ImagePuller:           imagePuller,
-		Applier:               helmApplier,
+		Applier:               boxcutterApplier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
 		Manager:               cm,

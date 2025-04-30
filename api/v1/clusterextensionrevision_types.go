@@ -29,7 +29,7 @@ type ClusterExtensionRevisionSpec struct {
 	// Specifies the lifecycle state of the ClusterExtensionRevision.
 	// +kubebuilder:default="Active"
 	// +kubebuilder:validation:Enum=Active;Paused;Archived
-	// +kubebuilder:validation:XValidation:rule="oldSelf == "Active" || oldSelf == "Paused" || oldSelf == 'Archived' && oldSelf == self", message="can not un-archive"
+	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Paused' || oldSelf == 'Archived' && oldSelf == self", message="can not un-archive"
 	LifecycleState ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
