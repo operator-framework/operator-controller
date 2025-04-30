@@ -20,12 +20,6 @@ const (
 	certManagerInjectCAAnnotation = "cert-manager.io/inject-ca-from"
 )
 
-func WithCertManagerCertificateProvider() render.Option {
-	return func(o *render.Options) {
-		o.CertificateProvider = CertManagerCertificateProvider{}
-	}
-}
-
 var _ render.CertificateProvider = (*CertManagerCertificateProvider)(nil)
 
 type CertManagerCertificateProvider struct{}
