@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -19,8 +20,20 @@ func ObjectNameForBaseAndSuffix(base string, suffix string) string {
 	return fmt.Sprintf("%s-%s", base, suffix)
 }
 
+// ToUnstructured converts obj into an Unstructured. It expects the obj's gvk to be defined. If it is not,
+// an error will be returned.
 func ToUnstructured(obj client.Object) (*unstructured.Unstructured, error) {
+	if obj == nil {
+		return nil, errors.New("object is nil")
+	}
+
 	gvk := obj.GetObjectKind().GroupVersionKind()
+	if len(gvk.Kind) == 0 {
+		return nil, errors.New("object has no kind")
+	}
+	if len(gvk.Version) == 0 {
+		return nil, errors.New("object has no version")
+	}
 
 	var u unstructured.Unstructured
 	uObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -36,7 +37,9 @@ func Test_CertificateProvisioner_WithCertProvider(t *testing.T) {
 			return nil
 		},
 		AdditionalObjectsFn: func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
-			return []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{})}, nil
+			return []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{
+				TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
+			})}, nil
 		},
 		GetCertSecretInfoFn: func(cfg render.CertificateProvisionerConfig) render.CertSecretInfo {
 			return render.CertSecretInfo{
@@ -59,7 +62,9 @@ func Test_CertificateProvisioner_WithCertProvider(t *testing.T) {
 
 	objs, err := provisioner.AdditionalObjects()
 	require.NoError(t, err)
-	require.Equal(t, []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{})}, objs)
+	require.Equal(t, []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
+	})}, objs)
 
 	require.Equal(t, &render.CertSecretInfo{
 		SecretName:     "some-secret",
