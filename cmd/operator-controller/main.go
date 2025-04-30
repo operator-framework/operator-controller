@@ -34,13 +34,18 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/discovery"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
+	"pkg.package-operator.run/boxcutter/managedcache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
@@ -266,7 +271,8 @@ func run() error {
 			"Metrics will not be served since the TLS certificate and key file are not provided.")
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme.Scheme,
 		Metrics:                       metricsServerOptions,
 		PprofBindAddress:              cfg.pprofAddr,
@@ -437,6 +443,31 @@ func run() error {
 		return err
 	}
 
+	// Boxcutter
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(restConfig)
+	if err != nil {
+		setupLog.Error(err, "unable to create discovery client")
+		return err
+	}
+	mapFunc := func(ctx context.Context, ce *ocv1.ClusterExtension, c *rest.Config, o crcache.Options) (*rest.Config, crcache.Options, error) {
+		// TODO: Rest Config Mapping / change ServiceAccount
+
+		// Cache scoping
+		req1, err := labels.NewRequirement(
+			controllers.ClusterExtensionRevisionOwnerLabel, selection.Equals, []string{ce.Name})
+		if err != nil {
+			return nil, o, err
+		}
+		o.DefaultLabelSelector = labels.NewSelector().Add(*req1)
+
+		return c, o, nil
+	}
+	accessManager := managedcache.NewObjectBoundAccessManager[*ocv1.ClusterExtension](
+		ctrl.Log.WithName("accessmanager"), mapFunc, restConfig, crcache.Options{
+			Scheme: mgr.GetScheme(), Mapper: mgr.GetRESTMapper(),
+		})
+	// Boxcutter
+
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
 		Resolver:              resolver,
@@ -446,6 +477,17 @@ func run() error {
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
 		Manager:               cm,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
+		return err
+	}
+
+	if err = (&controllers.ClusterExtensionRevisionReconciler{
+		Client:          cl,
+		AccessManager:   accessManager,
+		Scheme:          mgr.GetScheme(),
+		RestMapper:      mgr.GetRESTMapper(),
+		DiscoveryClient: discoveryClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		return err
