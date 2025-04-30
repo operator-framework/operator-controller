@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -69,19 +70,33 @@ type Options struct {
 
 func (o *Options) apply(opts ...Option) *Options {
 	for _, opt := range opts {
-		opt(o)
+		if opt != nil {
+			opt(o)
+		}
 	}
 	return o
 }
 
 type Option func(*Options)
 
+func WithTargetNamespaces(namespaces ...string) Option {
+	return func(o *Options) {
+		o.TargetNamespaces = namespaces
+	}
+}
+
+func WithUniqueNameGenerator(generator UniqueNameGenerator) Option {
+	return func(o *Options) {
+		o.UniqueNameGenerator = generator
+	}
+}
+
 type BundleRenderer struct {
 	BundleValidator    BundleValidator
 	ResourceGenerators []ResourceGenerator
 }
 
-func (r BundleRenderer) Render(rv1 RegistryV1, installNamespace string, watchNamespaces []string, opts ...Option) ([]client.Object, error) {
+func (r BundleRenderer) Render(rv1 RegistryV1, installNamespace string, opts ...Option) ([]client.Object, error) {
 	// validate bundle
 	if err := r.BundleValidator.Validate(&rv1); err != nil {
 		return nil, err
@@ -89,7 +104,7 @@ func (r BundleRenderer) Render(rv1 RegistryV1, installNamespace string, watchNam
 
 	genOpts := (&Options{
 		InstallNamespace:    installNamespace,
-		TargetNamespaces:    watchNamespaces,
+		TargetNamespaces:    []string{metav1.NamespaceAll},
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
 	}).apply(opts...)
 

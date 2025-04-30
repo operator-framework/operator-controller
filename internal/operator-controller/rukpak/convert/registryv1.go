@@ -261,7 +261,7 @@ func (c Converter) Convert(rv1 render.RegistryV1, installNamespace string, targe
 		return nil, fmt.Errorf("webhookDefinitions are not supported")
 	}
 
-	objs, err := c.BundleRenderer.Render(rv1, installNamespace, targetNamespaces)
+	objs, err := c.BundleRenderer.Render(rv1, installNamespace, render.WithTargetNamespaces(targetNamespaces...))
 	if err != nil {
 		return nil, err
 	}

@@ -29,7 +29,7 @@ func Test_BundleRenderer_ValidatesBundle(t *testing.T) {
 			},
 		},
 	}
-	objs, err := renderer.Render(render.RegistryV1{}, "", nil)
+	objs, err := renderer.Render(render.RegistryV1{}, "")
 	require.Nil(t, objs)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "this bundle is invalid")
@@ -37,7 +37,7 @@ func Test_BundleRenderer_ValidatesBundle(t *testing.T) {
 
 func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
 	expectedInstallNamespace := "install-namespace"
-	expectedTargetNamespaces := []string{"ns-one", "ns-two"}
+	expectedTargetNamespaces := []string{""}
 	expectedUniqueNameGenerator := render.DefaultUniqueNameGenerator
 
 	renderer := render.BundleRenderer{
@@ -51,7 +51,34 @@ func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
 		},
 	}
 
-	_, _ = renderer.Render(render.RegistryV1{}, expectedInstallNamespace, expectedTargetNamespaces)
+	_, _ = renderer.Render(render.RegistryV1{}, expectedInstallNamespace)
+}
+
+func Test_BundleRenderer_AppliesUserOptions(t *testing.T) {
+	isOptionApplied := false
+	_, _ = render.BundleRenderer{}.Render(render.RegistryV1{}, "install-namespace", func(options *render.Options) {
+		isOptionApplied = true
+	})
+	require.True(t, isOptionApplied)
+}
+
+func Test_WithTargetNamespaces(t *testing.T) {
+	opts := &render.Options{
+		TargetNamespaces: []string{"target-namespace"},
+	}
+	render.WithTargetNamespaces("a", "b", "c")(opts)
+	require.Equal(t, []string{"a", "b", "c"}, opts.TargetNamespaces)
+}
+
+func Test_WithUniqueNameGenerator(t *testing.T) {
+	opts := &render.Options{
+		UniqueNameGenerator: render.DefaultUniqueNameGenerator,
+	}
+	render.WithUniqueNameGenerator(func(s string, i interface{}) (string, error) {
+		return "a man needs a name", nil
+	})(opts)
+	generatedName, _ := opts.UniqueNameGenerator("", nil)
+	require.Equal(t, "a man needs a name", generatedName)
 }
 
 func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
@@ -65,7 +92,7 @@ func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 			},
 		},
 	}
-	objs, err := renderer.Render(render.RegistryV1{}, "", nil)
+	objs, err := renderer.Render(render.RegistryV1{}, "")
 	require.NoError(t, err)
 	require.Equal(t, []client.Object{&corev1.Namespace{}, &corev1.Service{}, &appsv1.Deployment{}}, objs)
 }
@@ -81,7 +108,7 @@ func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
 			},
 		},
 	}
-	objs, err := renderer.Render(render.RegistryV1{}, "", nil)
+	objs, err := renderer.Render(render.RegistryV1{}, "")
 	require.Nil(t, objs)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "generator error")
