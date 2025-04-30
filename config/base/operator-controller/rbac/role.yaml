@@ -27,6 +27,7 @@ rules:
 - apiGroups:
   - olm.operatorframework.io
   resources:
+  - clusterextensionrevisions
   - clusterextensions
   verbs:
   - get
@@ -37,12 +38,14 @@ rules:
 - apiGroups:
   - olm.operatorframework.io
   resources:
+  - clusterextensionrevisions/finalizers
   - clusterextensions/finalizers
   verbs:
   - update
 - apiGroups:
   - olm.operatorframework.io
   resources:
+  - clusterextensionrevisions/status
   - clusterextensions/status
   verbs:
   - patch
