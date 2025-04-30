@@ -92,6 +92,12 @@ func WithUniqueNameGenerator(generator UniqueNameGenerator) Option {
 	}
 }
 
+func WithCertificateProvider(provider CertificateProvider) Option {
+	return func(o *Options) {
+		o.CertificateProvider = provider
+	}
+}
+
 type BundleRenderer struct {
 	BundleValidator    BundleValidator
 	ResourceGenerators []ResourceGenerator

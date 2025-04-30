@@ -271,7 +271,7 @@ func (c Converter) Convert(rv1 render.RegistryV1, installNamespace string, targe
 		rv1,
 		installNamespace,
 		render.WithTargetNamespaces(targetNamespaces...),
-		certproviders.WithCertManagerCertificateProvider(),
+		render.WithCertificateProvider(certproviders.CertManagerCertificateProvider{}),
 	)
 	if err != nil {
 		return nil, err
