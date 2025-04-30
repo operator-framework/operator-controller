@@ -59,6 +59,10 @@ type accessManager interface {
 	Source(handler.EventHandler, ...predicate.Predicate) source.Source
 }
 
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions,verbs=get;list;watch;update;patch;create;delete
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/status,verbs=update;patch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/finalizers,verbs=update
+
 func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	l := log.FromContext(ctx).WithName("cluster-extension-revision")
 	ctx = log.IntoContext(ctx, l)
@@ -79,16 +83,19 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 		// This situation can only appear if the ClusterExtension object has been deleted with --cascade=Orphan.
 		// To not leave unactionable resources on the cluster, we are going to just
 		// reap the revision reverences and propagate the Orphan deletion.
-		err := client.IgnoreNotFound(
-			c.Client.Delete(ctx, rev, client.PropagationPolicy(metav1.DeletePropagationOrphan), client.Preconditions{
-				UID:             ptr.To(rev.GetUID()),
-				ResourceVersion: ptr.To(rev.GetResourceVersion()),
-			}),
-		)
-		if err != nil {
-			return res, err
+		if rev.DeletionTimestamp.IsZero() {
+			err := client.IgnoreNotFound(
+				c.Client.Delete(ctx, rev, client.PropagationPolicy(metav1.DeletePropagationOrphan), client.Preconditions{
+					UID:             ptr.To(rev.GetUID()),
+					ResourceVersion: ptr.To(rev.GetResourceVersion()),
+				}),
+			)
+			if err != nil {
+				return res, err
+			}
+			// we get requeued to remove the finalizer.
+			return res, nil
 		}
-
 		if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 			return res, err
 		}
@@ -114,6 +121,18 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(
 			objects = append(objects, &pobj)
 		}
 	}
+
+	// THIS IS STUPID, PLEASE FIX!
+	// Revisions need individual finalizers on the ClusterExtension to prevent it's premature deletion.
+	if rev.DeletionTimestamp.IsZero() &&
+		rev.Spec.LifecycleState != ocv1.ClusterExtensionRevisionLifecycleStateArchived {
+		// We can't lookup the complete ClusterExtension when it's already deleted.
+		// This only works when the controller-manager is not restarted during teardown.
+		if err := c.Client.Get(ctx, client.ObjectKeyFromObject(ce), ce); err != nil {
+			return res, err
+		}
+	}
+
 	accessor, err := c.AccessManager.GetWithUser(ctx, ce, rev, objects)
 	if err != nil {
 		return res, fmt.Errorf("get cache: %w", err)
@@ -271,12 +290,12 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(
 func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
-			&corev1.ConfigMap{},
+			&ocv1.ClusterExtensionRevision{},
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
 		WatchesRawSource(
 			c.AccessManager.Source(
-				handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtension{}),
+				handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtensionRevision{}),
 				predicate.ResourceVersionChangedPredicate{},
 			),
 		).

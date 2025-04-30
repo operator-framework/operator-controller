@@ -29,16 +29,16 @@ type ClusterExtensionRevisionSpec struct {
 	// Specifies the lifecycle state of the ClusterExtensionRevision.
 	// +kubebuilder:default="Active"
 	// +kubebuilder:validation:Enum=Active;Paused;Archived
-	// +kubebuilder:validation:XValidation:rule="oldSelf == "Active" || oldSelf == "Paused" || oldSelf == 'Archived' && oldSelf == self", message="can not un-archive"
+	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Paused' || oldSelf == 'Archived' && oldSelf == self", message="can not un-archive"
 	LifecycleState ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision"`
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="phases is immutable"
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
 	Phases []ClusterExtensionRevisionPhase `json:"phases"`
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="previous is immutable"
-	Previous []ClusterExtensionRevisionPrevious `json:"previous"`
+	Previous []ClusterExtensionRevisionPrevious `json:"previous,omitempty"`
 }
 
 // ClusterExtensionRevisionLifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
@@ -59,6 +59,7 @@ const (
 type ClusterExtensionRevisionPhase struct {
 	Name    string                           `json:"name"`
 	Objects []ClusterExtensionRevisionObject `json:"objects"`
+	Slices  []string                         `json:"slices,omitempty"`
 }
 
 type ClusterExtensionRevisionObject struct {

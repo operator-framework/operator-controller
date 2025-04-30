@@ -13,7 +13,8 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,8 +29,9 @@ const (
 )
 
 type Boxcutter struct {
-	Client client.Client
-	Scheme *runtime.Scheme
+	Client         client.Client
+	Scheme         *runtime.Scheme
+	BundleRenderer render.BundleRenderer
 }
 
 func (bc *Boxcutter) Apply(
@@ -46,7 +48,7 @@ func (bc *Boxcutter) apply(
 	ext *ocv1.ClusterExtension,
 	objectLabels, _ map[string]string,
 ) ([]client.Object, error) {
-	reg, err := convert.ParseFS(contentFS)
+	reg, err := source.FromFS(contentFS).GetBundle()
 	if err != nil {
 		return nil, err
 	}
@@ -56,14 +58,14 @@ func (bc *Boxcutter) apply(
 		return nil, err
 	}
 
-	plain, err := convert.PlainConverter.Convert(reg, ext.Spec.Namespace, []string{watchNamespace})
+	plain, err := bc.BundleRenderer.Render(reg, ext.Spec.Namespace, render.WithTargetNamespaces(watchNamespace))
 	if err != nil {
 		return nil, err
 	}
 
 	// objectLabels
-	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain.Objects))
-	for _, obj := range plain.Objects {
+	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
+	for _, obj := range plain {
 		labels := obj.GetLabels()
 		if labels == nil {
 			labels = map[string]string{}
@@ -103,6 +105,7 @@ func (bc *Boxcutter) apply(
 	// Build desired revision
 	desiredRevision := &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{},
 			Labels: map[string]string{
 				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 			},
@@ -144,8 +147,9 @@ func (bc *Boxcutter) apply(
 		revisionNumber++
 
 		newRevision := desiredRevision
+		newRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
+		newRevision.Annotations[revisionHashAnnotation] = desiredHash
 		newRevision.Spec.Revision = revisionNumber
-		// newRevision.Spec.Previous
 		for _, prevRevision := range prevRevisions {
 			newRevision.Spec.Previous = append(newRevision.Spec.Previous, ocv1.ClusterExtensionRevisionPrevious{
 				Name: prevRevision.Name,
@@ -178,7 +182,7 @@ func (bc *Boxcutter) apply(
 
 	// TODO: Read status from revision.
 
-	return plain.Objects, nil
+	return plain, nil
 }
 
 // computeSHA256Hash returns a sha236 hash value calculated from object.
