@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/operator-framework/operator-controller/test/utils"
 )
@@ -31,38 +31,45 @@ import (
 // TestOperatorControllerMetricsExportedEndpoint verifies that the metrics endpoint for the operator controller
 func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 	client := utils.FindK8sClient(t)
+	curlNamespace := createRandomNamespace(t, client)
+	componentNamespace := getComponentNamespace(t, client, "control-plane=operator-controller-controller-manager")
+	metricsURL := fmt.Sprintf("https://operator-controller-service.%s.svc.cluster.local:8443/metrics", componentNamespace)
+
 	config := NewMetricsTestConfig(
-		t, client,
-		"control-plane=operator-controller-controller-manager",
+		client,
+		curlNamespace,
 		"operator-controller-metrics-reader",
 		"operator-controller-metrics-binding",
-		"operator-controller-controller-manager",
+		"operator-controller-metrics-reader",
 		"oper-curl-metrics",
-		"https://operator-controller-service.NAMESPACE.svc.cluster.local:8443/metrics",
+		metricsURL,
 	)
 
-	config.run()
+	config.run(t)
 }
 
 // TestCatalogdMetricsExportedEndpoint verifies that the metrics endpoint for catalogd
 func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 	client := utils.FindK8sClient(t)
+	curlNamespace := createRandomNamespace(t, client)
+	componentNamespace := getComponentNamespace(t, client, "control-plane=catalogd-controller-manager")
+	metricsURL := fmt.Sprintf("https://catalogd-service.%s.svc.cluster.local:7443/metrics", componentNamespace)
+
 	config := NewMetricsTestConfig(
-		t, client,
-		"control-plane=catalogd-controller-manager",
+		client,
+		curlNamespace,
 		"catalogd-metrics-reader",
 		"catalogd-metrics-binding",
-		"catalogd-controller-manager",
+		"catalogd-metrics-reader",
 		"catalogd-curl-metrics",
-		"https://catalogd-service.NAMESPACE.svc.cluster.local:7443/metrics",
+		metricsURL,
 	)
 
-	config.run()
+	config.run(t)
 }
 
 // MetricsTestConfig holds the necessary configurations for testing metrics endpoints.
 type MetricsTestConfig struct {
-	t              *testing.T
 	client         string
 	namespace      string
 	clusterRole    string
@@ -73,12 +80,8 @@ type MetricsTestConfig struct {
 }
 
 // NewMetricsTestConfig initializes a new MetricsTestConfig.
-func NewMetricsTestConfig(t *testing.T, client, selector, clusterRole, clusterBinding, serviceAccount, curlPodName, metricsURL string) *MetricsTestConfig {
-	namespace := getComponentNamespace(t, client, selector)
-	metricsURL = strings.ReplaceAll(metricsURL, "NAMESPACE", namespace)
-
+func NewMetricsTestConfig(client, namespace, clusterRole, clusterBinding, serviceAccount, curlPodName, metricsURL string) *MetricsTestConfig {
 	return &MetricsTestConfig{
-		t:              t,
 		client:         client,
 		namespace:      namespace,
 		clusterRole:    clusterRole,
@@ -90,38 +93,44 @@ func NewMetricsTestConfig(t *testing.T, client, selector, clusterRole, clusterBi
 }
 
 // run will execute all steps of those tests
-func (c *MetricsTestConfig) run() {
-	c.createMetricsClusterRoleBinding()
-	token := c.getServiceAccountToken()
-	c.createCurlMetricsPod()
-	c.validate(token)
-	defer c.cleanup()
+func (c *MetricsTestConfig) run(t *testing.T) {
+	defer c.cleanup(t)
+
+	c.createMetricsClusterRoleBinding(t)
+	token := c.getServiceAccountToken(t)
+	c.createCurlMetricsPod(t)
+	c.validate(t, token)
 }
 
 // createMetricsClusterRoleBinding to binding and expose the metrics
-func (c *MetricsTestConfig) createMetricsClusterRoleBinding() {
-	c.t.Logf("Creating ClusterRoleBinding %s in namespace %s", c.clusterBinding, c.namespace)
+func (c *MetricsTestConfig) createMetricsClusterRoleBinding(t *testing.T) {
+	t.Logf("Creating ClusterRoleBinding %s for %s in namespace %s", c.clusterBinding, c.serviceAccount, c.namespace)
 	cmd := exec.Command(c.client, "create", "clusterrolebinding", c.clusterBinding,
 		"--clusterrole="+c.clusterRole,
 		"--serviceaccount="+c.namespace+":"+c.serviceAccount)
 	output, err := cmd.CombinedOutput()
-	require.NoError(c.t, err, "Error creating ClusterRoleBinding: %s", string(output))
+	require.NoError(t, err, "Error creating ClusterRoleBinding: %s", string(output))
 }
 
 // getServiceAccountToken return the token requires to have access to the metrics
-func (c *MetricsTestConfig) getServiceAccountToken() string {
-	c.t.Logf("Generating ServiceAccount token at namespace %s", c.namespace)
-	cmd := exec.Command(c.client, "create", "token", c.serviceAccount, "-n", c.namespace)
+func (c *MetricsTestConfig) getServiceAccountToken(t *testing.T) string {
+	t.Logf("Creating ServiceAccount %q in namespace %q", c.serviceAccount, c.namespace)
+	output, err := exec.Command(c.client, "create", "serviceaccount", c.serviceAccount, "--namespace="+c.namespace).CombinedOutput()
+	require.NoError(t, err, "Error creating service account: %v", string(output))
+
+	t.Logf("Generating ServiceAccount token for %q in namespace %q", c.serviceAccount, c.namespace)
+	cmd := exec.Command(c.client, "create", "token", c.serviceAccount, "--namespace", c.namespace)
 	tokenOutput, tokenCombinedOutput, err := stdoutAndCombined(cmd)
-	require.NoError(c.t, err, "Error creating token: %s", string(tokenCombinedOutput))
+	require.NoError(t, err, "Error creating token: %s", string(tokenCombinedOutput))
 	return string(bytes.TrimSpace(tokenOutput))
 }
 
 // createCurlMetricsPod creates the Pod with curl image to allow check if the metrics are working
-func (c *MetricsTestConfig) createCurlMetricsPod() {
-	c.t.Logf("Creating curl pod (%s/%s) to validate the metrics endpoint", c.namespace, c.curlPodName)
+func (c *MetricsTestConfig) createCurlMetricsPod(t *testing.T) {
+	t.Logf("Creating curl pod (%s/%s) to validate the metrics endpoint", c.namespace, c.curlPodName)
 	cmd := exec.Command(c.client, "run", c.curlPodName,
-		"--image=curlimages/curl", "-n", c.namespace,
+		"--image=curlimages/curl",
+		"--namespace", c.namespace,
 		"--restart=Never",
 		"--overrides", `{
 			"spec": {
@@ -142,61 +151,83 @@ func (c *MetricsTestConfig) createCurlMetricsPod() {
 			}
 		}`)
 	output, err := cmd.CombinedOutput()
-	require.NoError(c.t, err, "Error creating curl pod: %s", string(output))
+	require.NoError(t, err, "Error creating curl pod: %s", string(output))
 }
 
 // validate verifies if is possible to access the metrics
-func (c *MetricsTestConfig) validate(token string) {
-	c.t.Log("Waiting for the curl pod to be ready")
-	waitCmd := exec.Command(c.client, "wait", "--for=condition=Ready", "pod", c.curlPodName, "-n", c.namespace, "--timeout=60s")
+func (c *MetricsTestConfig) validate(t *testing.T, token string) {
+	t.Log("Waiting for the curl pod to be ready")
+	waitCmd := exec.Command(c.client, "wait", "--for=condition=Ready", "pod", c.curlPodName, "--namespace", c.namespace, "--timeout=60s")
 	waitOutput, waitErr := waitCmd.CombinedOutput()
-	require.NoError(c.t, waitErr, "Error waiting for curl pod to be ready: %s", string(waitOutput))
+	require.NoError(t, waitErr, "Error waiting for curl pod to be ready: %s", string(waitOutput))
 
-	c.t.Log("Validating the metrics endpoint")
-	curlCmd := exec.Command(c.client, "exec", c.curlPodName, "-n", c.namespace, "--",
+	t.Log("Validating the metrics endpoint")
+	curlCmd := exec.Command(c.client, "exec", c.curlPodName, "--namespace", c.namespace, "--",
 		"curl", "-v", "-k", "-H", "Authorization: Bearer "+token, c.metricsURL)
 	output, err := curlCmd.CombinedOutput()
-	require.NoError(c.t, err, "Error calling metrics endpoint: %s", string(output))
-	require.Contains(c.t, string(output), "200 OK", "Metrics endpoint did not return 200 OK")
+	require.NoError(t, err, "Error calling metrics endpoint: %s", string(output))
+	require.Contains(t, string(output), "200 OK", "Metrics endpoint did not return 200 OK")
 }
 
 // cleanup removes the created resources. Uses a context with timeout to prevent hangs.
-func (c *MetricsTestConfig) cleanup() {
-	c.t.Log("Cleaning up resources")
-	_ = exec.Command(c.client, "delete", "clusterrolebinding", c.clusterBinding, "--ignore-not-found=true", "--force").Run()
-	_ = exec.Command(c.client, "delete", "pod", c.curlPodName, "-n", c.namespace, "--ignore-not-found=true", "--force").Run()
+func (c *MetricsTestConfig) cleanup(t *testing.T) {
+	type objDesc struct {
+		resourceName string
+		name         string
+		namespace    string
+	}
+	objects := []objDesc{
+		{"clusterrolebinding", c.clusterBinding, ""},
+		{"pod", c.curlPodName, c.namespace},
+		{"serviceaccount", c.serviceAccount, c.namespace},
+		{"namespace", c.namespace, ""},
+	}
+
+	t.Log("Cleaning up resources")
+	for _, obj := range objects {
+		args := []string{"delete", obj.resourceName, obj.name, "--ignore-not-found=true", "--force"}
+		if obj.namespace != "" {
+			args = append(args, "--namespace", obj.namespace)
+		}
+		output, err := exec.Command(c.client, args...).CombinedOutput()
+		require.NoError(t, err, "Error deleting %q %q in namespace %q: %v", obj.resourceName, obj.name, obj.namespace, string(output))
+	}
 
 	// Create a context with a 60-second timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	// Wait for the ClusterRoleBinding to be deleted.
-	if err := waitForDeletion(ctx, c.client, "clusterrolebinding", c.clusterBinding); err != nil {
-		c.t.Logf("Error waiting for clusterrolebinding deletion: %v", err)
-	} else {
-		c.t.Log("ClusterRoleBinding deleted")
-	}
-
-	// Wait for the Pod to be deleted.
-	if err := waitForDeletion(ctx, c.client, "pod", c.curlPodName, "-n", c.namespace); err != nil {
-		c.t.Logf("Error waiting for pod deletion: %v", err)
-	} else {
-		c.t.Log("Pod deleted")
+	for _, obj := range objects {
+		err := waitForDeletion(ctx, c.client, obj.resourceName, obj.name, obj.namespace)
+		require.NoError(t, err, "Error deleting %q %q in namespace %q", obj.resourceName, obj.name, obj.namespace)
+		t.Logf("Successfully deleted %q %q in namespace %q", obj.resourceName, obj.name, obj.namespace)
 	}
 }
 
 // waitForDeletion uses "kubectl wait" to block until the specified resource is deleted
 // or until the 60-second timeout is reached.
-func waitForDeletion(ctx context.Context, client, resourceType, resourceName string, extraArgs ...string) error {
-	args := []string{"wait", "--for=delete", resourceType, resourceName}
-	args = append(args, extraArgs...)
-	args = append(args, "--timeout=60s")
+func waitForDeletion(ctx context.Context, client, resourceType, resourceName, resourceNamespace string) error {
+	args := []string{"wait", "--for=delete", "--timeout=60s", resourceType, resourceName}
+	if resourceNamespace != "" {
+		args = append(args, "--namespace", resourceNamespace)
+	}
 	cmd := exec.CommandContext(ctx, client, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("error waiting for deletion of %s %s: %v, output: %s", resourceType, resourceName, err, string(output))
 	}
 	return nil
+}
+
+// createRandomNamespace creates a random namespace
+func createRandomNamespace(t *testing.T, client string) string {
+	nsName := fmt.Sprintf("testns-%s", rand.String(8))
+
+	cmd := exec.Command(client, "create", "namespace", nsName)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Error creating namespace: %s", string(output))
+
+	return nsName
 }
 
 // getComponentNamespace returns the namespace where operator-controller or catalogd is running

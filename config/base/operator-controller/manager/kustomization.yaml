@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
 - manager.yaml
 - service.yaml
+- network_policy.yaml
 
 images:
 - name: controller

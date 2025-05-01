@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  podSelector:
+    matchLabels:
+      control-plane: operator-controller-controller-manager
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8443 # metrics
+  egress:
+    - {}  # Allows all egress traffic (needed to pull bundle images from arbitrary image registries)
