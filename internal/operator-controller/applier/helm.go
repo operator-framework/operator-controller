@@ -26,9 +26,11 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
+	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const (
@@ -209,6 +211,17 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 	if err != nil {
 		return nil, err
 	}
+	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
+		meta := new(chart.Metadata)
+		if ok, _ := imageutil.IsBundleSourceChart(bundleFS, meta); ok {
+			return imageutil.LoadChartFSWithOptions(
+				bundleFS,
+				fmt.Sprintf("%s-%s.tgz", meta.Name, meta.Version),
+				imageutil.WithInstallNamespace(ext.Spec.Namespace),
+			)
+		}
+	}
+
 	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace)
 }
 
