@@ -224,6 +224,11 @@ func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, 
 		}
 	}()
 
+	if hasChart(img) {
+		return pullChart(ctx, ownerID, imgSrc, canonicalRef, cache, srcImgRef)
+	}
+
+	// Helm charts would error when getting OCI config
 	ociImg, err := img.OCIConfig(ctx)
 	if err != nil {
 		return nil, time.Time{}, err
