@@ -164,7 +164,7 @@ func (p *ContainersImagePuller) pull(ctx context.Context, ownerID string, docker
 	// Mount the image we just pulled
 	//
 	//////////////////////////////////////////////////////
-	fsys, modTime, err = p.applyImage(ctx, ownerID, dockerRef, canonicalRef, layoutImgRef, cache, srcCtx)
+	fsys, modTime, err = p.applyImage(ctx, ownerID, dockerRef, canonicalRef, layoutImgRef, cache, srcCtx, layoutDir)
 	if err != nil {
 		return nil, nil, time.Time{}, fmt.Errorf("error applying image: %w", err)
 	}
@@ -206,7 +206,7 @@ func resolveCanonicalRef(ctx context.Context, imgRef types.ImageReference, srcCt
 	return canonicalRef, nil
 }
 
-func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, srcRef reference.Named, canonicalRef reference.Canonical, srcImgRef types.ImageReference, cache Cache, sourceContext *types.SystemContext) (fs.FS, time.Time, error) {
+func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, srcRef reference.Named, canonicalRef reference.Canonical, srcImgRef types.ImageReference, cache Cache, sourceContext *types.SystemContext, layoutDir string) (fs.FS, time.Time, error) {
 	imgSrc, err := srcImgRef.NewImageSource(ctx, sourceContext)
 	if err != nil {
 		return nil, time.Time{}, fmt.Errorf("error creating image source: %w", err)
@@ -224,6 +224,11 @@ func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, 
 		}
 	}()
 
+	if hasChart(img) {
+		return pullChart(ctx, ownerID, imgSrc, canonicalRef, cache, layoutDir)
+	}
+
+	// Helm charts would error when getting OCI config
 	ociImg, err := img.OCIConfig(ctx)
 	if err != nil {
 		return nil, time.Time{}, err
