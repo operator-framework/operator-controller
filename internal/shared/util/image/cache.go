@@ -16,6 +16,8 @@ import (
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/opencontainers/go-digest"
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/registry"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
@@ -23,9 +25,10 @@ import (
 )
 
 type LayerData struct {
-	Reader io.Reader
-	Index  int
-	Err    error
+	MediaType string
+	Reader    io.Reader
+	Index     int
+	Err       error
 }
 
 type Cache interface {
@@ -128,8 +131,15 @@ func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.
 			if layer.Err != nil {
 				return fmt.Errorf("error reading layer[%d]: %w", layer.Index, layer.Err)
 			}
-			if _, err := archive.Apply(ctx, dest, layer.Reader, applyOpts...); err != nil {
-				return fmt.Errorf("error applying layer[%d]: %w", layer.Index, err)
+			switch layer.MediaType {
+			case registry.ChartLayerMediaType:
+				if err := storeChartLayer(dest, layer); err != nil {
+					return err
+				}
+			default:
+				if _, err := archive.Apply(ctx, dest, layer.Reader, applyOpts...); err != nil {
+					return fmt.Errorf("error applying layer[%d]: %w", layer.Index, err)
+				}
 			}
 			l.Info("applied layer", "layer", layer.Index)
 		}
@@ -145,6 +155,33 @@ func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.
 		return nil, time.Time{}, fmt.Errorf("error getting mod time of unpack directory: %w", err)
 	}
 	return os.DirFS(dest), modTime, nil
+}
+
+func storeChartLayer(path string, layer LayerData) error {
+	if layer.Err != nil {
+		return fmt.Errorf("error found in layer data: %w", layer.Err)
+	}
+	data, err := io.ReadAll(layer.Reader)
+	if err != nil {
+		return fmt.Errorf("error reading layer[%d]: %w", layer.Index, err)
+	}
+	meta := new(chart.Metadata)
+	_, err = inspectChart(data, meta)
+	if err != nil {
+		return fmt.Errorf("inspecting chart layer: %w", err)
+	}
+	filename := filepath.Join(path,
+		fmt.Sprintf("%s-%s.tgz", meta.Name, meta.Version),
+	)
+	fmt.Println(filename)
+	chart, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("writing chart layer: %w", err)
+	}
+	defer chart.Close()
+
+	_, err = chart.Write(data)
+	return err
 }
 
 func (a *diskCache) Delete(_ context.Context, ownerID string) error {
