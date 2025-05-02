@@ -7,11 +7,14 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
@@ -26,6 +29,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
@@ -209,7 +213,81 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 	if err != nil {
 		return nil, err
 	}
+	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
+		chart := new(chart.Chart)
+		if IsBundleSourceHelmChart(bundleFS, chart) {
+			return enrichChart(chart, WithInstallNamespace(ext.Spec.Namespace))
+		}
+	}
+
 	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace)
+}
+
+func IsBundleSourceHelmChart(bundleFS fs.FS, chart *chart.Chart) bool {
+	var filename string
+	if err := fs.WalkDir(bundleFS, ".",
+		func(path string, f fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if filepath.Ext(f.Name()) == ".tgz" &&
+				!f.IsDir() {
+				filename = path
+				return fs.SkipAll
+			}
+
+			return nil
+		},
+	); err != nil &&
+		!errors.Is(err, fs.SkipAll) {
+		return false
+	}
+
+	ch, err := readChartFS(bundleFS, filename)
+	if err != nil {
+		return false
+	}
+	*chart = *ch
+
+	return chart.Metadata != nil &&
+		chart.Metadata.Name != "" &&
+		chart.Metadata.Version != "" &&
+		len(chart.Templates) > 0
+}
+
+type ChartOption func(*chart.Chart)
+
+func WithInstallNamespace(namespace string) ChartOption {
+	re := regexp.MustCompile(`{{\W+\.Release\.Namespace\W+}}`)
+
+	return func(chrt *chart.Chart) {
+		for i, template := range chrt.Templates {
+			chrt.Templates[i].Data = re.ReplaceAll(template.Data, []byte(namespace))
+		}
+	}
+}
+
+func enrichChart(chart *chart.Chart, options ...ChartOption) (*chart.Chart, error) {
+	if chart != nil {
+		for _, f := range options {
+			f(chart)
+		}
+		return chart, nil
+	}
+	return nil, fmt.Errorf("chart can not be nil")
+}
+
+func readChartFS(bundleFS fs.FS, filename string) (*chart.Chart, error) {
+	if filename == "" {
+		return nil, fmt.Errorf("chart file name was not provided")
+	}
+
+	tarball, err := fs.ReadFile(bundleFS, filename)
+	if err != nil {
+		return nil, fmt.Errorf("reading chart %s; %+v", filename, err)
+	}
+	return loader.LoadArchive(bytes.NewBuffer(tarball))
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {

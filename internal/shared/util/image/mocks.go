@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"io"
 	"io/fs"
 	"iter"
 	"time"
@@ -42,6 +43,10 @@ type MockCache struct {
 	DeleteErr error
 
 	GarbageCollectError error
+}
+
+func (m MockCache) StoreChart(_ string, _ string, _ reference.Canonical, _ io.Reader) (fs.FS, time.Time, error) {
+	return m.StoreFS, m.StoreModTime, m.StoreError
 }
 
 func (m MockCache) Fetch(_ context.Context, _ string, _ reference.Canonical) (fs.FS, time.Time, error) {
