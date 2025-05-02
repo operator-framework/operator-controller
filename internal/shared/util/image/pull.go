@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/shared/util/http"
 )
 
@@ -224,6 +225,12 @@ func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, 
 		}
 	}()
 
+	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
+		if hasChart(img) {
+			return pullChart(ctx, ownerID, srcRef, canonicalRef, imgSrc, cache)
+		}
+	}
+
 	ociImg, err := img.OCIConfig(ctx)
 	if err != nil {
 		return nil, time.Time{}, err
@@ -231,7 +238,7 @@ func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, 
 
 	layerIter := iter.Seq[LayerData](func(yield func(LayerData) bool) {
 		for i, layerInfo := range img.LayerInfos() {
-			ld := LayerData{Index: i}
+			ld := LayerData{Index: i, MediaType: layerInfo.MediaType}
 			layerReader, _, err := imgSrc.GetBlob(ctx, layerInfo, none.NoCache)
 			if err != nil {
 				ld.Err = fmt.Errorf("error getting layer blob reader: %w", err)

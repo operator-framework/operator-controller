@@ -1,6 +1,7 @@
 package image
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -10,22 +11,28 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"testing"
 	"time"
 
 	"github.com/containerd/containerd/archive"
 	"github.com/containers/image/v5/docker/reference"
+	"github.com/google/renameio/v2"
 	"github.com/opencontainers/go-digest"
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/registry"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 )
 
 type LayerData struct {
-	Reader io.Reader
-	Index  int
-	Err    error
+	MediaType string
+	Reader    io.Reader
+	Index     int
+	Err       error
 }
 
 type Cache interface {
@@ -106,6 +113,40 @@ func (a *diskCache) unpackPath(ownerID string, digest digest.Digest) string {
 	return filepath.Join(a.ownerIDPath(ownerID), digest.String())
 }
 
+type LayerUnpacker interface {
+	Unpack(_ context.Context, path string, layer LayerData, opts ...archive.ApplyOpt) error
+}
+
+type defaultLayerUnpacker struct{}
+
+type chartLayerUnpacker struct{}
+
+var _ LayerUnpacker = &defaultLayerUnpacker{}
+var _ LayerUnpacker = &chartLayerUnpacker{}
+
+func imageLayerUnpacker(layer LayerData) LayerUnpacker {
+	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) || testing.Testing() {
+		if layer.MediaType == registry.ChartLayerMediaType {
+			return &chartLayerUnpacker{}
+		}
+	}
+	return &defaultLayerUnpacker{}
+}
+
+func (u *chartLayerUnpacker) Unpack(_ context.Context, path string, layer LayerData, _ ...archive.ApplyOpt) error {
+	if err := storeChartLayer(path, layer); err != nil {
+		return fmt.Errorf("error applying chart layer[%d]: %w", layer.Index, err)
+	}
+	return nil
+}
+
+func (u *defaultLayerUnpacker) Unpack(ctx context.Context, path string, layer LayerData, opts ...archive.ApplyOpt) error {
+	if _, err := archive.Apply(ctx, path, layer.Reader, opts...); err != nil {
+		return fmt.Errorf("error applying layer[%d]: %w", layer.Index, err)
+	}
+	return nil
+}
+
 func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.Named, canonicalRef reference.Canonical, imgCfg ocispecv1.Image, layers iter.Seq[LayerData]) (fs.FS, time.Time, error) {
 	var applyOpts []archive.ApplyOpt
 	if a.filterFunc != nil {
@@ -128,8 +169,9 @@ func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.
 			if layer.Err != nil {
 				return fmt.Errorf("error reading layer[%d]: %w", layer.Index, layer.Err)
 			}
-			if _, err := archive.Apply(ctx, dest, layer.Reader, applyOpts...); err != nil {
-				return fmt.Errorf("error applying layer[%d]: %w", layer.Index, err)
+			layerUnpacker := imageLayerUnpacker(layer)
+			if err := layerUnpacker.Unpack(ctx, dest, layer, applyOpts...); err != nil {
+				return fmt.Errorf("unpacking layer: %w", err)
 			}
 			l.Info("applied layer", "layer", layer.Index)
 		}
@@ -145,6 +187,40 @@ func (a *diskCache) Store(ctx context.Context, ownerID string, srcRef reference.
 		return nil, time.Time{}, fmt.Errorf("error getting mod time of unpack directory: %w", err)
 	}
 	return os.DirFS(dest), modTime, nil
+}
+
+func storeChartLayer(path string, layer LayerData) error {
+	if layer.Err != nil {
+		return fmt.Errorf("error found in layer data: %w", layer.Err)
+	}
+	data, err := io.ReadAll(layer.Reader)
+	if err != nil {
+		return fmt.Errorf("error reading layer[%d]: %w", layer.Index, err)
+	}
+	meta := new(chart.Metadata)
+	_, err = inspectChart(data, meta)
+	if err != nil {
+		return fmt.Errorf("inspecting chart layer: %w", err)
+	}
+	chart, err := renameio.TempFile("",
+		filepath.Join(path,
+			fmt.Sprintf("%s-%s.tgz", meta.Name, meta.Version),
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+	defer func() {
+		_ = chart.Cleanup()
+	}()
+	if _, err := io.Copy(chart, bytes.NewReader(data)); err != nil {
+		return fmt.Errorf("copying chart archive: %w", err)
+	}
+	_, err = chart.Seek(0, io.SeekStart)
+	if err != nil {
+		return fmt.Errorf("seek chart archive start: %w", err)
+	}
+	return chart.CloseAtomicallyReplace()
 }
 
 func (a *diskCache) Delete(_ context.Context, ownerID string) error {
