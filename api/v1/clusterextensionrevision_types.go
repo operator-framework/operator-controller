@@ -38,7 +38,7 @@ type ClusterExtensionRevisionSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="phases is immutable"
 	Phases []ClusterExtensionRevisionPhase `json:"phases"`
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="previous is immutable"
-	Previous []ClusterExtensionRevisionPrevious `json:"previous"`
+	Previous []ClusterExtensionRevisionPrevious `json:"previous,omitempty"`
 }
 
 // ClusterExtensionRevisionLifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
