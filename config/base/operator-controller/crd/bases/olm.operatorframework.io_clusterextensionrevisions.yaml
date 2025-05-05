@@ -104,7 +104,6 @@ spec:
                   rule: self == oldSelf
             required:
             - phases
-            - previous
             - revision
             type: object
           status:

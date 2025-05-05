@@ -103,6 +103,7 @@ func (bc *Boxcutter) apply(
 	// Build desired revision
 	desiredRevision := &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{},
 			Labels: map[string]string{
 				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 			},
@@ -144,8 +145,9 @@ func (bc *Boxcutter) apply(
 		revisionNumber++
 
 		newRevision := desiredRevision
+		newRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
+		newRevision.Annotations[revisionHashAnnotation] = desiredHash
 		newRevision.Spec.Revision = revisionNumber
-		// newRevision.Spec.Previous
 		for _, prevRevision := range prevRevisions {
 			newRevision.Spec.Previous = append(newRevision.Spec.Previous, ocv1.ClusterExtensionRevisionPrevious{
 				Name: prevRevision.Name,

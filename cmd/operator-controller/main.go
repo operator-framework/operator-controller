@@ -451,7 +451,18 @@ func run() error {
 		return err
 	}
 	mapFunc := func(ctx context.Context, ce *ocv1.ClusterExtension, c *rest.Config, o crcache.Options) (*rest.Config, crcache.Options, error) {
-		// TODO: Rest Config Mapping / change ServiceAccount
+		saKey := client.ObjectKey{
+			Name:      ce.Spec.ServiceAccount.Name,
+			Namespace: ce.Spec.Namespace,
+		}
+		saConfig := rest.AnonymousClientConfig(c)
+		saConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+			return &authentication.TokenInjectingRoundTripper{
+				Tripper:     rt,
+				TokenGetter: tokenGetter,
+				Key:         saKey,
+			}
+		})
 
 		// Cache scoping
 		req1, err := labels.NewRequirement(
@@ -461,12 +472,17 @@ func run() error {
 		}
 		o.DefaultLabelSelector = labels.NewSelector().Add(*req1)
 
-		return c, o, nil
+		return saConfig, o, nil
 	}
-	accessManager := managedcache.NewObjectBoundAccessManager[*ocv1.ClusterExtension](
+
+	accessManager := managedcache.NewObjectBoundAccessManager(
 		ctrl.Log.WithName("accessmanager"), mapFunc, restConfig, crcache.Options{
 			Scheme: mgr.GetScheme(), Mapper: mgr.GetRESTMapper(),
 		})
+	if err := mgr.Add(accessManager); err != nil {
+		setupLog.Error(err, "unable to register AccessManager")
+		return err
+	}
 	// Boxcutter
 
 	if err = (&controllers.ClusterExtensionReconciler{

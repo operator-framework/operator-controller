@@ -409,6 +409,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1.ClusterExtension{}).
 		Named("controller-operator-cluster-extension-controller").
+		Owns(&ocv1.ClusterExtensionRevision{}).
 		Watches(&ocv1.ClusterCatalog{},
 			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger())),
 			builder.WithPredicates(predicate.Funcs{

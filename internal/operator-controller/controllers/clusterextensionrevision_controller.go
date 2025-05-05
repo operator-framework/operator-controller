@@ -59,7 +59,7 @@ type accessManager interface {
 	Source(handler.EventHandler, ...predicate.Predicate) source.Source
 }
 
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions,verbs=get;list;watch;update;patch;create;delete
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/finalizers,verbs=update
 
@@ -118,6 +118,18 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(
 			objects = append(objects, &pobj)
 		}
 	}
+
+	// THIS IS STUPID, PLEASE FIX!
+	// Revisions need individual finalizers on the ClusterExtension to prevent it's premature deletion.
+	if rev.DeletionTimestamp.IsZero() &&
+		rev.Spec.LifecycleState != ocv1.ClusterExtensionRevisionLifecycleStateArchived {
+		// We can't lookup the complete ClusterExtension when it's already deleted.
+		// This only works when the controller-manager is not restarted during teardown.
+		if err := c.Client.Get(ctx, client.ObjectKeyFromObject(ce), ce); err != nil {
+			return res, err
+		}
+	}
+
 	accessor, err := c.AccessManager.GetWithUser(ctx, ce, rev, objects)
 	if err != nil {
 		return res, fmt.Errorf("get cache: %w", err)
@@ -280,7 +292,7 @@ func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) 
 		).
 		WatchesRawSource(
 			c.AccessManager.Source(
-				handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtension{}),
+				handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtensionRevision{}),
 				predicate.ResourceVersionChangedPredicate{},
 			),
 		).
