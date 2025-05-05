@@ -206,7 +206,7 @@ func getBaseCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 		}),
 		WithStrategyDeploymentSpecs(
 			v1alpha1.StrategyDeploymentSpec{
-				Name: "testDeployment",
+				Name: "test-deployment",
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
@@ -271,7 +271,7 @@ func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
 	require.Len(t, plainBundle.Objects, 5)
 
 	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	dep := findObjectByName("test-deployment", plainBundle.Objects)
 	require.NotNil(t, dep)
 	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
@@ -304,7 +304,7 @@ func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
 	require.Len(t, plainBundle.Objects, 7)
 
 	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	dep := findObjectByName("test-deployment", plainBundle.Objects)
 	require.NotNil(t, dep)
 	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
@@ -337,7 +337,7 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 	require.Len(t, plainBundle.Objects, 5)
 
 	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	dep := findObjectByName("test-deployment", plainBundle.Objects)
 	require.NotNil(t, dep)
 	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
@@ -370,7 +370,7 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 	require.Len(t, plainBundle.Objects, 5)
 
 	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	dep := findObjectByName("test-deployment", plainBundle.Objects)
 	require.NotNil(t, dep)
 	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
@@ -575,7 +575,7 @@ func TestRegistryV1SuiteGenerateWebhooks_WebhookSupportFGEnabled(t *testing.T) {
 		CRDs: []apiextensionsv1.CustomResourceDefinition{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "fake-webhook.package-with-webhooks.io",
+					Name: "fake-webhook.package-with-webhooks",
 				},
 			},
 		},
@@ -584,7 +584,7 @@ func TestRegistryV1SuiteGenerateWebhooks_WebhookSupportFGEnabled(t *testing.T) {
 			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 			WithOwnedCRDs(
 				v1alpha1.CRDDescription{
-					Name: "fake-webhook.package-with-webhooks.io",
+					Name: "fake-webhook.package-with-webhooks",
 				},
 			),
 			WithStrategyDeploymentSpecs(
@@ -595,8 +595,9 @@ func TestRegistryV1SuiteGenerateWebhooks_WebhookSupportFGEnabled(t *testing.T) {
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:           v1alpha1.ConversionWebhook,
-					ConversionCRDs: []string{"fake-webhook.package-with-webhooks.io"},
+					ConversionCRDs: []string{"fake-webhook.package-with-webhooks"},
 					DeploymentName: "some-deployment",
+					GenerateName:   "my-conversion-webhook",
 				},
 			),
 		),

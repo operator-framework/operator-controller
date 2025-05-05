@@ -4,12 +4,12 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"maps"
 	"slices"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -22,11 +22,13 @@ var RegistryV1BundleValidator = render.BundleValidator{
 	// you bring the same changes over to that test. This helps ensure all validation rules are executed
 	// while giving us the flexibility to test each validation function individually
 	CheckDeploymentSpecUniqueness,
+	CheckDeploymentNameIsDNS1123SubDomain,
 	CheckCRDResourceUniqueness,
 	CheckOwnedCRDExistence,
 	CheckPackageNameNotEmpty,
 	CheckWebhookDeploymentReferentialIntegrity,
 	CheckWebhookNameUniqueness,
+	CheckWebhookNameIsDNS1123SubDomain,
 	CheckConversionWebhookCRDReferenceUniqueness,
 	CheckConversionWebhooksReferenceOwnedCRDs,
 }
@@ -62,7 +64,7 @@ func CheckDeploymentNameIsDNS1123SubDomain(rv1 *render.RegistryV1) []error {
 		}
 	}
 
-	var errs []error
+	errs := make([]error, 0, len(deploymentNameErrMap))
 	for _, dep := range slices.Sorted(maps.Keys(deploymentNameErrMap)) {
 		errs = append(errs, fmt.Errorf("invalid cluster service version strategy deployment name '%s': %s", dep, strings.Join(deploymentNameErrMap[dep], ", ")))
 	}
@@ -158,7 +160,7 @@ func CheckWebhookDeploymentReferentialIntegrity(rv1 *render.RegistryV1) []error 
 			return cmp.Or(cmp.Compare(a.Type, b.Type), cmp.Compare(a.GenerateName, b.GenerateName))
 		})
 		for _, webhookDef := range webhookDefns {
-			errs = append(errs, fmt.Errorf("webhook '%s' of type '%s' references non-existent deployment '%s'", webhookDef.GenerateName, webhookDef.Type, webhookDef.DeploymentName))
+			errs = append(errs, fmt.Errorf("webhook of type '%s' with name '%s' references non-existent deployment '%s'", webhookDef.Type, webhookDef.GenerateName, webhookDef.DeploymentName))
 		}
 	}
 	return errs
@@ -253,6 +255,29 @@ func CheckConversionWebhookCRDReferenceUniqueness(rv1 *render.RegistryV1) []erro
 	for _, crd := range orderedCRDs {
 		orderedWhs := strings.Join(slices.Sorted(slices.Values(crdToWh[crd])), ",")
 		errs = append(errs, fmt.Errorf("conversion webhooks [%s] reference same custom resource definition '%s'", orderedWhs, crd))
+	}
+	return errs
+}
+
+// CheckWebhookNameIsDNS1123SubDomain checks each webhook configuration name complies with the Kubernetes resource naming conversions
+func CheckWebhookNameIsDNS1123SubDomain(rv1 *render.RegistryV1) []error {
+	invalidWebhooksByType := map[v1alpha1.WebhookAdmissionType]map[string][]string{}
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		if _, ok := invalidWebhooksByType[wh.Type]; !ok {
+			invalidWebhooksByType[wh.Type] = map[string][]string{}
+		}
+		errs := validation.IsDNS1123Subdomain(wh.GenerateName)
+		if len(errs) > 0 {
+			slices.Sort(errs)
+			invalidWebhooksByType[wh.Type][wh.GenerateName] = errs
+		}
+	}
+
+	var errs []error
+	for _, whType := range slices.Sorted(maps.Keys(invalidWebhooksByType)) {
+		for _, webhookName := range slices.Sorted(maps.Keys(invalidWebhooksByType[whType])) {
+			errs = append(errs, fmt.Errorf("webhook of type '%s' has invalid name '%s': %s", whType, webhookName, strings.Join(invalidWebhooksByType[whType][webhookName], ",")))
+		}
 	}
 	return errs
 }

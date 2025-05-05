@@ -19,11 +19,13 @@ import (
 func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 	expectedValidationFns := []func(v1 *render.RegistryV1) []error{
 		validators.CheckDeploymentSpecUniqueness,
+		validators.CheckDeploymentNameIsDNS1123SubDomain,
 		validators.CheckCRDResourceUniqueness,
 		validators.CheckOwnedCRDExistence,
 		validators.CheckPackageNameNotEmpty,
 		validators.CheckWebhookDeploymentReferentialIntegrity,
 		validators.CheckWebhookNameUniqueness,
+		validators.CheckWebhookNameIsDNS1123SubDomain,
 		validators.CheckConversionWebhookCRDReferenceUniqueness,
 		validators.CheckConversionWebhooksReferenceOwnedCRDs,
 	}
@@ -87,6 +89,48 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := validators.CheckDeploymentSpecUniqueness(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
+
+func Test_CheckDeploymentNameIsDNS1123SubDomain(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *render.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name: "accepts valid deployment strategy spec names",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
+						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-two"},
+					),
+				),
+			},
+			expectedErrs: []error{},
+		}, {
+			name: "rejects bundles with invalid deployment strategy spec names - errors are sorted by name",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{Name: "-bad-name"},
+						v1alpha1.StrategyDeploymentSpec{Name: "b-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long"},
+						v1alpha1.StrategyDeploymentSpec{Name: "a-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long-and-bad-"},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("invalid cluster service version strategy deployment name '-bad-name': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),
+				errors.New("invalid cluster service version strategy deployment name 'a-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long-and-bad-': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'), must be no more than 253 characters"),
+				errors.New("invalid cluster service version strategy deployment name 'b-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long': must be no more than 253 characters"),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := validators.CheckDeploymentNameIsDNS1123SubDomain(tc.bundle)
 			require.Equal(t, tc.expectedErrs, errs)
 		})
 	}
@@ -356,7 +400,7 @@ func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 				),
 			},
 			expectedErrs: []error{
-				errors.New("webhook 'test-webhook' of type 'ValidatingAdmissionWebhook' references non-existent deployment 'test-deployment-two'"),
+				errors.New("webhook of type 'ValidatingAdmissionWebhook' with name 'test-webhook' references non-existent deployment 'test-deployment-two'"),
 			},
 		}, {
 			name: "errors are ordered by deployment strategy spec name, webhook type, and webhook name",
@@ -398,12 +442,12 @@ func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 				),
 			},
 			expectedErrs: []error{
-				errors.New("webhook 'test-mute-webhook-a' of type 'MutatingAdmissionWebhook' references non-existent deployment 'test-deployment-a'"),
-				errors.New("webhook 'test-conv-webhook-b' of type 'ConversionWebhook' references non-existent deployment 'test-deployment-b'"),
-				errors.New("webhook 'test-conv-webhook-c-a' of type 'ConversionWebhook' references non-existent deployment 'test-deployment-c'"),
-				errors.New("webhook 'test-conv-webhook-c-b' of type 'ConversionWebhook' references non-existent deployment 'test-deployment-c'"),
-				errors.New("webhook 'test-mute-webhook-c' of type 'MutatingAdmissionWebhook' references non-existent deployment 'test-deployment-c'"),
-				errors.New("webhook 'test-val-webhook-c' of type 'ValidatingAdmissionWebhook' references non-existent deployment 'test-deployment-c'"),
+				errors.New("webhook of type 'MutatingAdmissionWebhook' with name 'test-mute-webhook-a' references non-existent deployment 'test-deployment-a'"),
+				errors.New("webhook of type 'ConversionWebhook' with name 'test-conv-webhook-b' references non-existent deployment 'test-deployment-b'"),
+				errors.New("webhook of type 'ConversionWebhook' with name 'test-conv-webhook-c-a' references non-existent deployment 'test-deployment-c'"),
+				errors.New("webhook of type 'ConversionWebhook' with name 'test-conv-webhook-c-b' references non-existent deployment 'test-deployment-c'"),
+				errors.New("webhook of type 'MutatingAdmissionWebhook' with name 'test-mute-webhook-c' references non-existent deployment 'test-deployment-c'"),
+				errors.New("webhook of type 'ValidatingAdmissionWebhook' with name 'test-val-webhook-c' references non-existent deployment 'test-deployment-c'"),
 			},
 		},
 	} {
@@ -833,6 +877,69 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := validators.CheckConversionWebhookCRDReferenceUniqueness(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
+
+func Test_CheckWebhookNameIsDNS1123SubDomain(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *render.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name: "accepts bundles without webhook definitions",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(),
+			},
+		}, {
+			name: "rejects bundles with invalid webhook definitions names and orders errors by webhook type and name",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "b-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long-and-bad-",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "a-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "-bad-name",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "b-bad-name-",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "b-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long-and-bad-",
+						}, v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "a-bad-name-",
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ConversionWebhook,
+							GenerateName: "a-bad-name-",
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook of type 'ConversionWebhook' has invalid name 'a-bad-name-': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),
+				errors.New("webhook of type 'ConversionWebhook' has invalid name 'b-bad-name-': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),
+				errors.New("webhook of type 'MutatingAdmissionWebhook' has invalid name 'a-bad-name-': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),
+				errors.New("webhook of type 'MutatingAdmissionWebhook' has invalid name 'b-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long-and-bad-': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'),must be no more than 253 characters"),
+				errors.New("webhook of type 'ValidatingAdmissionWebhook' has invalid name '-bad-name': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),
+				errors.New("webhook of type 'ValidatingAdmissionWebhook' has invalid name 'a-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long': must be no more than 253 characters"),
+				errors.New("webhook of type 'ValidatingAdmissionWebhook' has invalid name 'b-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long-and-bad-': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'),must be no more than 253 characters"),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := validators.CheckWebhookNameIsDNS1123SubDomain(tc.bundle)
 			require.Equal(t, tc.expectedErrs, errs)
 		})
 	}
