@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"maps"
 	"slices"
 	"strings"
@@ -45,6 +46,25 @@ func CheckDeploymentSpecUniqueness(rv1 *render.RegistryV1) []error {
 	errs := make([]error, 0, len(duplicateDeploymentNames))
 	for _, d := range slices.Sorted(slices.Values(duplicateDeploymentNames.UnsortedList())) {
 		errs = append(errs, fmt.Errorf("cluster service version contains duplicate strategy deployment spec '%s'", d))
+	}
+	return errs
+}
+
+// CheckDeploymentNameIsDNS1123SubDomain checks each deployment strategy spec name complies with the Kubernetes
+// resource naming conversions
+func CheckDeploymentNameIsDNS1123SubDomain(rv1 *render.RegistryV1) []error {
+	deploymentNameErrMap := map[string][]string{}
+	for _, dep := range rv1.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		errs := validation.IsDNS1123Subdomain(dep.Name)
+		if len(errs) > 0 {
+			slices.Sort(errs)
+			deploymentNameErrMap[dep.Name] = errs
+		}
+	}
+
+	var errs []error
+	for _, dep := range slices.Sorted(maps.Keys(deploymentNameErrMap)) {
+		errs = append(errs, fmt.Errorf("invalid cluster service version strategy deployment name '%s': %s", dep, strings.Join(deploymentNameErrMap[dep], ", ")))
 	}
 	return errs
 }
