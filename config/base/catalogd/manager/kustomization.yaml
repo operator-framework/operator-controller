@@ -1,7 +1,6 @@
 resources:
 - manager.yaml
 - service.yaml
-- network_policy.yaml
 - webhook/manifests.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
