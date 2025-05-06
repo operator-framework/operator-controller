@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -11,38 +12,22 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
 const syntheticServiceAccountName = "olm.synthetic-user"
 
-type clusterExtensionRestConfigMapper struct {
-	saRestConfigMapper        func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error)
-	synthUserRestConfigMapper func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error)
-}
-
-func (m *clusterExtensionRestConfigMapper) mapper() func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-	synthAuthFeatureEnabled := features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions)
+// SyntheticUserRestConfigMapper returns an AuthConfigMapper that that impersonates synthetic users and groups for Object o.
+// o is expected to be a ClusterExtension. If the service account defined in o is different from 'olm.synthetic-user', the
+// defaultAuthMapper will be used
+func SyntheticUserRestConfigMapper(defaultAuthMapper func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error)) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-		cExt := o.(*ocv1.ClusterExtension)
-		if synthAuthFeatureEnabled && cExt.Spec.ServiceAccount.Name == syntheticServiceAccountName {
-			return m.synthUserRestConfigMapper(ctx, o, c)
+		cExt, err := validate(o, c)
+		if err != nil {
+			return nil, err
 		}
-		return m.saRestConfigMapper(ctx, o, c)
-	}
-}
-
-func ClusterExtensionUserRestConfigMapper(tokenGetter *authentication.TokenGetter) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-	m := &clusterExtensionRestConfigMapper{
-		saRestConfigMapper:        serviceAccountRestConfigMapper(tokenGetter),
-		synthUserRestConfigMapper: syntheticUserRestConfigMapper(),
-	}
-	return m.mapper()
-}
-
-func syntheticUserRestConfigMapper() func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-		cExt := o.(*ocv1.ClusterExtension)
+		if cExt.Spec.ServiceAccount.Name != syntheticServiceAccountName {
+			return defaultAuthMapper(ctx, cExt, c)
+		}
 		cc := rest.CopyConfig(c)
 		cc.Wrap(func(rt http.RoundTripper) http.RoundTripper {
 			return transport.NewImpersonatingRoundTripper(authentication.SyntheticImpersonationConfig(*cExt), rt)
@@ -51,21 +36,39 @@ func syntheticUserRestConfigMapper() func(ctx context.Context, o client.Object, 
 	}
 }
 
-func serviceAccountRestConfigMapper(tokenGetter *authentication.TokenGetter) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
+// ServiceAccountRestConfigMapper returns an AuthConfigMapper scoped to the service account defined in o, which is expected to
+// be a ClusterExtension
+func ServiceAccountRestConfigMapper(tokenGetter *authentication.TokenGetter) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-		cExt := o.(*ocv1.ClusterExtension)
-		saKey := types.NamespacedName{
-			Name:      cExt.Spec.ServiceAccount.Name,
-			Namespace: cExt.Spec.Namespace,
+		cExt, err := validate(o, c)
+		if err != nil {
+			return nil, err
 		}
 		saConfig := rest.AnonymousClientConfig(c)
 		saConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
 			return &authentication.TokenInjectingRoundTripper{
 				Tripper:     rt,
 				TokenGetter: tokenGetter,
-				Key:         saKey,
+				Key: types.NamespacedName{
+					Name:      cExt.Spec.ServiceAccount.Name,
+					Namespace: cExt.Spec.Namespace,
+				},
 			}
 		})
 		return saConfig, nil
 	}
+}
+
+func validate(o client.Object, c *rest.Config) (*ocv1.ClusterExtension, error) {
+	if c == nil {
+		return nil, fmt.Errorf("rest config is nil")
+	}
+	if o == nil {
+		return nil, fmt.Errorf("object is nil")
+	}
+	cExt, ok := o.(*ocv1.ClusterExtension)
+	if !ok {
+		return nil, fmt.Errorf("object is not a ClusterExtension")
+	}
+	return cExt, nil
 }

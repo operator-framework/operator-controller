@@ -304,7 +304,10 @@ func run() error {
 		return err
 	}
 	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
-	clientRestConfigMapper := action.ClusterExtensionUserRestConfigMapper(tokenGetter)
+	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
+	if features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions) {
+		clientRestConfigMapper = action.SyntheticUserRestConfigMapper(clientRestConfigMapper)
+	}
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
 		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
