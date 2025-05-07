@@ -5,6 +5,11 @@ codecov:
 # Configure the paths to include in coverage reports.
 # Exclude documentation, YAML configurations, and test files.
 coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
   paths:
     - "api/"
     - "cmd/"
