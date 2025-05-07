@@ -83,16 +83,19 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 		// This situation can only appear if the ClusterExtension object has been deleted with --cascade=Orphan.
 		// To not leave unactionable resources on the cluster, we are going to just
 		// reap the revision reverences and propagate the Orphan deletion.
-		err := client.IgnoreNotFound(
-			c.Client.Delete(ctx, rev, client.PropagationPolicy(metav1.DeletePropagationOrphan), client.Preconditions{
-				UID:             ptr.To(rev.GetUID()),
-				ResourceVersion: ptr.To(rev.GetResourceVersion()),
-			}),
-		)
-		if err != nil {
-			return res, err
+		if rev.DeletionTimestamp.IsZero() {
+			err := client.IgnoreNotFound(
+				c.Client.Delete(ctx, rev, client.PropagationPolicy(metav1.DeletePropagationOrphan), client.Preconditions{
+					UID:             ptr.To(rev.GetUID()),
+					ResourceVersion: ptr.To(rev.GetResourceVersion()),
+				}),
+			)
+			if err != nil {
+				return res, err
+			}
+			// we get requeued to remove the finalizer.
+			return res, nil
 		}
-
 		if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 			return res, err
 		}
