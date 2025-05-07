@@ -103,12 +103,14 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 			}
 		}
 		slices.Sort(missingRuleDescriptions)
+		// This phrase is explicitly checked by external testing
 		preAuthErrors = append(preAuthErrors, fmt.Errorf("service account requires the following permissions to manage cluster extension:\n  %s", strings.Join(missingRuleDescriptions, "\n  ")))
 	}
 	if authErr != nil {
 		preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", authErr))
 	}
 	if len(preAuthErrors) > 0 {
+		// This phrase is explicitly checked by external testing
 		return fmt.Errorf("pre-authorization failed: %v", errors.Join(preAuthErrors...))
 	}
 	return nil
