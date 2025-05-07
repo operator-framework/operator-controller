@@ -2,8 +2,6 @@ module github.com/operator-framework/operator-controller
 
 go 1.23.4
 
-replace pkg.package-operator.run/boxcutter => ../../package-operator/boxcutter
-
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/Masterminds/semver/v3 v3.3.1
