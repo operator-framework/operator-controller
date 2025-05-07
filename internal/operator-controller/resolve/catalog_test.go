@@ -586,7 +586,7 @@ func buildFooClusterExtension(pkg string, channels []string, version string, upg
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace:      "default",
-			ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+			ServiceAccount: &ocv1.ServiceAccountReference{Name: "default"},
 			Source: ocv1.SourceConfig{
 				SourceType: "Catalog",
 				Catalog: &ocv1.CatalogFilter{

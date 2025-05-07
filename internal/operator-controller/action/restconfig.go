@@ -15,6 +15,9 @@ import (
 func ServiceAccountRestConfigMapper(tokenGetter *authentication.TokenGetter) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 		cExt := o.(*ocv1.ClusterExtension)
+		if cExt.Spec.ServiceAccount == nil {
+			return rest.CopyConfig(c), nil
+		}
 		saKey := types.NamespacedName{
 			Name:      cExt.Spec.ServiceAccount.Name,
 			Namespace: cExt.Spec.Namespace,

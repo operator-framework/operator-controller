@@ -135,7 +135,7 @@ subjects:
 		ObjectMeta: metav1.ObjectMeta{Name: "test-cluster-extension"},
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: ns,
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: saName,
 			},
 		},

@@ -125,7 +125,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		labels: objectLabels,
 	}
 
-	if h.PreAuthorizer != nil {
+	if h.PreAuthorizer != nil && ext.Spec.ServiceAccount != nil {
 		err := h.runPreAuthorizationChecks(ctx, ext, chrt, values, post)
 		if err != nil {
 			// Return the pre-authorization error directly
@@ -166,6 +166,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		rel, err = ac.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(install *action.Install) error {
 			install.CreateNamespace = false
 			install.Labels = storageLabels
+			install.CreateNamespace = true
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {

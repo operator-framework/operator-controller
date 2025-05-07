@@ -358,7 +358,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		validCE := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			},
@@ -387,7 +387,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		validCE := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			},
@@ -417,7 +417,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		validCE := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			},

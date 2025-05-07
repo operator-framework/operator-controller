@@ -135,7 +135,7 @@ spec:
                   with the cluster that are required to manage the extension.
                   The ServiceAccount must be configured with the necessary permissions to perform these interactions.
                   The ServiceAccount must exist in the namespace referenced in the spec.
-                  serviceAccount is required.
+                  serviceAccount is optional.
                 properties:
                   name:
                     description: |-
@@ -458,7 +458,6 @@ spec:
                     has(self.catalog) : !has(self.catalog)'
             required:
             - namespace
-            - serviceAccount
             - source
             type: object
           status:
