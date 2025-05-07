@@ -6,3 +6,4 @@ resources:
 - crd
 - rbac
 - manager
+- net
