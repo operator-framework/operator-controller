@@ -69,7 +69,7 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 				},
 			},
 			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: "default",
 			},
 		},
@@ -145,7 +145,7 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 						},
 					},
 					Namespace: namespace,
-					ServiceAccount: ocv1.ServiceAccountReference{
+					ServiceAccount: &ocv1.ServiceAccountReference{
 						Name: serviceAccount,
 					},
 				},
@@ -225,7 +225,7 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: serviceAccount,
 			},
 		},
@@ -295,7 +295,7 @@ func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
 				},
 			},
 			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: "missing-sa",
 			},
 		},
@@ -356,7 +356,7 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: serviceAccount,
 			},
 		},
@@ -452,7 +452,7 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: serviceAccount,
 			},
 		},
@@ -531,7 +531,7 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 				},
 			},
 			Namespace: installNamespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: serviceAccount,
 			},
 		},
@@ -611,7 +611,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: serviceAccount,
 			},
 		},
@@ -689,7 +689,7 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 				},
 			},
 			Namespace: namespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
+			ServiceAccount: &ocv1.ServiceAccountReference{
 				Name: serviceAccount,
 			},
 		},

@@ -66,10 +66,10 @@ type ClusterExtensionSpec struct {
 	// with the cluster that are required to manage the extension.
 	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
 	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// serviceAccount is required.
+	// serviceAccount is optional.
 	//
-	// +kubebuilder:validation:Required
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+	// +optional
+	ServiceAccount *ServiceAccountReference `json:"serviceAccount"`
 
 	// source is a required field which selects the installation source of content
 	// for this ClusterExtension. Selection is performed by setting the sourceType.

@@ -44,7 +44,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 						},
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
+					ServiceAccount: &ocv1.ServiceAccountReference{
 						Name: "default",
 					},
 				}))
@@ -55,7 +55,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 						SourceType: tc.sourceType,
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
+					ServiceAccount: &ocv1.ServiceAccountReference{
 						Name: "default",
 					},
 				}))
@@ -114,7 +114,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			}))
@@ -212,7 +212,7 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			}))
@@ -267,7 +267,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			}))
@@ -320,7 +320,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 					},
 				},
 				Namespace: tc.namespace,
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			}))
@@ -374,7 +374,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: tc.serviceAccount,
 				},
 			}))
@@ -433,7 +433,7 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: &ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 				Install: tc.installConfig,

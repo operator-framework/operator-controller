@@ -1,0 +1,12 @@
+---
+apiVersion: olm.operatorframework.io/v1
+kind: ClusterExtension
+metadata:
+  name: zookeeper-operator
+spec:
+  namespace: zookeeper-operator
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: zookeeper-operator
+      version: 0.17.0
