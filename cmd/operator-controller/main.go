@@ -424,6 +424,9 @@ func run() error {
 		Preflights:          preflights,
 		BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
 		PreAuthorizer:       preAuth,
+		Arbackulator: &applier.Arbackulator{
+			Client: cl,
+		},
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())

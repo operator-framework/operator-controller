@@ -56,6 +56,13 @@ spec:
             description: spec is an optional field that defines the desired state
               of the ClusterExtension.
             properties:
+              deploymentApprovalPolicy:
+                default: Manual
+                description: |-
+                  how to handle operator lifecycle rbac requirements
+                  Automatic: assign necessary rbac to service account
+                  Manual:
+                type: string
               install:
                 description: |-
                   install is an optional field used to configure the installation options

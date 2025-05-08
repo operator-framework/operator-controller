@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"io/fs"
 	"strings"
 	"time"
@@ -97,8 +98,9 @@ type InstalledBundleGetter interface {
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts/token,verbs=create
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;clusterrolebindings;roles;rolebindings,verbs=list;watch
-
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=list;watch
+
+//+kubebuilder:rbac:groups=*,resources=*,verbs=*
 
 // The operator controller needs to watch all the bundle objects and reconcile accordingly. Though not ideal, but these permissions are required.
 // This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
@@ -287,12 +289,30 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	managedObjs, _, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
+	managedObjs, state, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
 	if err != nil {
+		if state == applier.StateNeedsArbackulationApproval {
+			progressingCond := metav1.Condition{
+				Type:               ocv1.TypeProgressing,
+				Status:             metav1.ConditionFalse,
+				Reason:             ocv1.ReasonArbackulationApprovalRequired,
+				Message:            err.Error(),
+				ObservedGeneration: ext.GetGeneration(),
+			}
+			apimeta.SetStatusCondition(&ext.Status.Conditions, progressingCond)
+			return ctrl.Result{}, nil
+		}
+
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
 		// Now that we're actually trying to install, use the error
 		setInstalledStatusFromBundle(ext, installedBundle)
 		return ctrl.Result{}, err
+	}
+
+	// if state is needs install and not objects were generated
+	// applier needs another round of reconciliation
+	if state == applier.StateNeedsInstall && managedObjs == nil {
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	newInstalledBundle := &InstalledBundle{

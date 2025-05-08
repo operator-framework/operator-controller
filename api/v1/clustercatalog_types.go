@@ -36,7 +36,9 @@ const (
 	AvailabilityModeUnavailable AvailabilityMode = "Unavailable"
 
 	// Condition types
-	TypeServing = "Serving"
+	TypeServing                       = "Serving"
+	TypeArbackulationApprovalRequired = "ArbackulationApprovalRequired"
+	TypeArbackulationApprovalGranted  = "ArbackulationApprovalGranted"
 
 	// Serving Reasons
 	ReasonAvailable                = "Available"
