@@ -25,6 +25,8 @@ var ClusterExtensionKind = "ClusterExtension"
 type (
 	UpgradeConstraintPolicy     string
 	CRDUpgradeSafetyEnforcement string
+
+	DeploymentApprovalPolicy string
 )
 
 const (
@@ -39,6 +41,9 @@ const (
 	// Use with caution as this can lead to unknown and potentially
 	// disastrous results such as data loss.
 	UpgradeConstraintPolicySelfCertified UpgradeConstraintPolicy = "SelfCertified"
+
+	DeploymentApprovalPolicyAutomatic DeploymentApprovalPolicy = "Automatic"
+	DeploymentApprovalPolicyManual    DeploymentApprovalPolicy = "Manual"
 )
 
 // ClusterExtensionSpec defines the desired state of ClusterExtension
@@ -92,6 +97,13 @@ type ClusterExtensionSpec struct {
 	//
 	// +optional
 	Install *ClusterExtensionInstallConfig `json:"install,omitempty"`
+
+	// how to handle operator lifecycle rbac requirements
+	// Automatic: assign necessary rbac to service account
+	// Manual:
+	// +kubebuilder:default:=Manual
+	// +optional
+	DeploymentApprovalPolicy DeploymentApprovalPolicy `json:"deploymentApprovalPolicy,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"

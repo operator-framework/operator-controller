@@ -21,9 +21,10 @@ const (
 	TypeProgressing = "Progressing"
 
 	// Progressing reasons
-	ReasonSucceeded = "Succeeded"
-	ReasonRetrying  = "Retrying"
-	ReasonBlocked   = "Blocked"
+	ReasonSucceeded                     = "Succeeded"
+	ReasonRetrying                      = "Retrying"
+	ReasonBlocked                       = "Blocked"
+	ReasonArbackulationApprovalRequired = "ArbackulationApprovalRequired"
 
 	// Terminal reasons
 	ReasonDeprecated = "Deprecated"

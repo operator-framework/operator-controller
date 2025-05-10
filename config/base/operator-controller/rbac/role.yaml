@@ -11,6 +11,12 @@ rules:
   verbs:
   - create
 - apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions

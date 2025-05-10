@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"slices"
 	"strings"
 
@@ -31,11 +32,12 @@ import (
 )
 
 const (
-	StateNeedsInstall     string = "NeedsInstall"
-	StateNeedsUpgrade     string = "NeedsUpgrade"
-	StateUnchanged        string = "Unchanged"
-	StateError            string = "Error"
-	maxHelmReleaseHistory        = 10
+	StateNeedsInstall               string = "NeedsInstall"
+	StateNeedsUpgrade               string = "NeedsUpgrade"
+	StateUnchanged                  string = "Unchanged"
+	StateNeedsArbackulationApproval string = "ArbackulationRequired"
+	StateError                      string = "Error"
+	maxHelmReleaseHistory                  = 10
 )
 
 // Preflight is a check that should be run before making any changes to the cluster
@@ -60,6 +62,7 @@ type Helm struct {
 	Preflights          []Preflight
 	PreAuthorizer       authorization.PreAuthorizer
 	BundleToHelmChartFn BundleToHelmChartFn
+	Arbackulator        *Arbackulator
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -85,10 +88,10 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.Clu
 // runPreAuthorizationChecks performs pre-authorization checks for a Helm release
 // it renders a client-only release, checks permissions using the PreAuthorizer
 // and returns an error if authorization fails or required permissions are missing
-func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterExtension, chart *chart.Chart, values chartutil.Values, post postrender.PostRenderer) error {
+func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterExtension, chart *chart.Chart, values chartutil.Values, post postrender.PostRenderer) ([]authorization.ScopedPolicyRules, error) {
 	tmplRel, err := h.renderClientOnlyRelease(ctx, ext, chart, values, post)
 	if err != nil {
-		return fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
+		return nil, fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
 	}
 
 	missingRules, authErr := h.PreAuthorizer.PreAuthorize(ctx, ext, strings.NewReader(tmplRel.Manifest))
@@ -111,9 +114,9 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 	}
 	if len(preAuthErrors) > 0 {
 		// This phrase is explicitly checked by external testing
-		return fmt.Errorf("pre-authorization failed: %v", errors.Join(preAuthErrors...))
+		return missingRules, fmt.Errorf("pre-authorization failed: %v", errors.Join(preAuthErrors...))
 	}
-	return nil
+	return nil, nil
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
@@ -128,10 +131,18 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	}
 
 	if h.PreAuthorizer != nil {
-		err := h.runPreAuthorizationChecks(ctx, ext, chrt, values, post)
-		if err != nil {
-			// Return the pre-authorization error directly
-			return nil, "", err
+		missingRules, err := h.runPreAuthorizationChecks(ctx, ext, chrt, values, post)
+		if len(missingRules) > 0 {
+			if shouldArbackulate(ext) {
+				if err := h.Arbackulator.GrantPassage(ctx, ext, missingRules); err != nil {
+					return nil, "", fmt.Errorf("error arbackulating: %w", err)
+				}
+				return nil, StateNeedsInstall, nil
+			} else if ext.Spec.DeploymentApprovalPolicy == ocv1.DeploymentApprovalPolicyManual {
+				return nil, StateNeedsArbackulationApproval, err
+			} else {
+				return nil, "", err
+			}
 		}
 	}
 
@@ -322,4 +333,11 @@ func ruleDescription(ns string, rule rbacv1.PolicyRule) string {
 		sb.WriteString(fmt.Sprintf(" NonResourceURLs:[%s]", strings.Join(slices.Sorted(slices.Values(rule.NonResourceURLs)), ",")))
 	}
 	return sb.String()
+}
+
+func shouldArbackulate(cExt *ocv1.ClusterExtension) bool {
+	if cExt.Spec.DeploymentApprovalPolicy == ocv1.DeploymentApprovalPolicyAutomatic {
+		return true
+	}
+	return meta.FindStatusCondition(cExt.Status.Conditions, ocv1.TypeArbackulationApprovalGranted) != nil
 }
