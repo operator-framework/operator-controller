@@ -56,15 +56,6 @@ func TestMergeMaps(t *testing.T) {
 	}
 }
 
-// Mock reader for testing that always returns an error when Read is called
-type errorReader struct {
-	io.Reader
-}
-
-func (m errorReader) Read(p []byte) (int, error) {
-	return 0, errors.New("Oh no!")
-}
-
 func TestManifestObjects(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -151,4 +142,55 @@ spec:
 			}
 		})
 	}
+}
+
+func Test_ToUnstructured(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		obj  client.Object
+		err  error
+	}{
+		{
+			name: "converts object to unstructured",
+			obj: &corev1.Service{
+				TypeMeta:   metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
+				ObjectMeta: metav1.ObjectMeta{Name: "my-service", Namespace: "my-namespace"},
+			},
+		}, {
+			name: "fails if object doesn't define kind",
+			obj: &corev1.Service{
+				TypeMeta:   metav1.TypeMeta{Kind: "", APIVersion: "v1"},
+				ObjectMeta: metav1.ObjectMeta{Name: "my-service", Namespace: "my-namespace"},
+			},
+			err: errors.New("object has no kind"),
+		}, {
+			name: "fails if object doesn't define version",
+			obj: &corev1.Service{
+				TypeMeta:   metav1.TypeMeta{Kind: "Service", APIVersion: ""},
+				ObjectMeta: metav1.ObjectMeta{Name: "my-service", Namespace: "my-namespace"},
+			},
+			err: errors.New("object has no version"),
+		}, {
+			name: "fails if object is nil",
+			err:  errors.New("object is nil"),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := util.ToUnstructured(tc.obj)
+			if tc.err != nil {
+				require.Error(t, err)
+			} else {
+				assert.Equal(t, tc.obj.GetObjectKind().GroupVersionKind(), out.GroupVersionKind())
+			}
+		})
+	}
+}
+
+// Mock reader for testing that always returns an error when Read is called
+type errorReader struct {
+	io.Reader
+}
+
+func (m errorReader) Read(p []byte) (int, error) {
+	return 0, errors.New("Oh no!")
 }

@@ -18,12 +18,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
@@ -204,7 +206,7 @@ func getBaseCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 		}),
 		WithStrategyDeploymentSpecs(
 			v1alpha1.StrategyDeploymentSpec{
-				Name: "testDeployment",
+				Name: "test-deployment",
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
@@ -269,7 +271,7 @@ func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
 	require.Len(t, plainBundle.Objects, 5)
 
 	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	dep := findObjectByName("test-deployment", plainBundle.Objects)
 	require.NotNil(t, dep)
 	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
@@ -302,7 +304,7 @@ func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
 	require.Len(t, plainBundle.Objects, 7)
 
 	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	dep := findObjectByName("test-deployment", plainBundle.Objects)
 	require.NotNil(t, dep)
 	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
@@ -335,7 +337,7 @@ func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
 	require.Len(t, plainBundle.Objects, 5)
 
 	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	dep := findObjectByName("test-deployment", plainBundle.Objects)
 	require.NotNil(t, dep)
 	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
@@ -368,7 +370,7 @@ func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
 	require.Len(t, plainBundle.Objects, 5)
 
 	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("testDeployment", plainBundle.Objects)
+	dep := findObjectByName("test-deployment", plainBundle.Objects)
 	require.NotNil(t, dep)
 	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
 	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
@@ -558,6 +560,53 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "webhookDefinitions are not supported")
 	require.Nil(t, plainBundle)
+}
+
+func TestRegistryV1SuiteGenerateWebhooks_WebhookSupportFGEnabled(t *testing.T) {
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.WebhookSupport, true)
+	t.Log("RegistryV1 Suite Convert")
+	t.Log("It should generate objects successfully based on target namespaces")
+
+	t.Log("It should enforce limitations")
+	t.Log("It should allow bundles with webhooks")
+	t.Log("By creating a registry v1 bundle")
+	registryv1Bundle := render.RegistryV1{
+		PackageName: "testPkg",
+		CRDs: []apiextensionsv1.CustomResourceDefinition{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "fake-webhook.package-with-webhooks",
+				},
+			},
+		},
+		CSV: MakeCSV(
+			WithName("testCSV"),
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+			WithOwnedCRDs(
+				v1alpha1.CRDDescription{
+					Name: "fake-webhook.package-with-webhooks",
+				},
+			),
+			WithStrategyDeploymentSpecs(
+				v1alpha1.StrategyDeploymentSpec{
+					Name: "some-deployment",
+				},
+			),
+			WithWebhookDefinitions(
+				v1alpha1.WebhookDescription{
+					Type:           v1alpha1.ConversionWebhook,
+					ConversionCRDs: []string{"fake-webhook.package-with-webhooks"},
+					DeploymentName: "some-deployment",
+					GenerateName:   "my-conversion-webhook",
+				},
+			),
+		),
+	}
+
+	t.Log("By converting to plain")
+	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, []string{metav1.NamespaceAll})
+	require.NoError(t, err)
+	require.NotNil(t, plainBundle)
 }
 
 func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {

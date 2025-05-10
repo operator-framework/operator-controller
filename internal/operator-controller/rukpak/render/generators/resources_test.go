@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -72,6 +73,27 @@ func Test_CreateDeployment(t *testing.T) {
 	require.NotNil(t, deployment)
 	require.Equal(t, "my-deployment", deployment.Name)
 	require.Equal(t, "my-namespace", deployment.Namespace)
+}
+
+func Test_CreateService(t *testing.T) {
+	svc := generators.CreateServiceResource("my-service", "my-namespace")
+	require.NotNil(t, svc)
+	require.Equal(t, "my-service", svc.Name)
+	require.Equal(t, "my-namespace", svc.Namespace)
+}
+
+func Test_CreateValidatingWebhookConfiguration(t *testing.T) {
+	wh := generators.CreateValidatingWebhookConfigurationResource("my-validating-webhook-configuration", "my-namespace")
+	require.NotNil(t, wh)
+	require.Equal(t, "my-validating-webhook-configuration", wh.Name)
+	require.Equal(t, "my-namespace", wh.Namespace)
+}
+
+func Test_CreateMutatingWebhookConfiguration(t *testing.T) {
+	wh := generators.CreateMutatingWebhookConfigurationResource("my-mutating-webhook-configuration", "my-namespace")
+	require.NotNil(t, wh)
+	require.Equal(t, "my-mutating-webhook-configuration", wh.Name)
+	require.Equal(t, "my-namespace", wh.Namespace)
 }
 
 func Test_WithSubjects(t *testing.T) {
@@ -207,4 +229,50 @@ func Test_WithLabels(t *testing.T) {
 			require.Equal(t, tc.labels, dep.Labels)
 		})
 	}
+}
+
+func Test_WithServiceSpec(t *testing.T) {
+	svc := generators.CreateServiceResource("mysvc", "myns", generators.WithServiceSpec(corev1.ServiceSpec{
+		ClusterIP: "1.2.3.4",
+	}))
+	require.NotNil(t, svc)
+	require.Equal(t, corev1.ServiceSpec{
+		ClusterIP: "1.2.3.4",
+	}, svc.Spec)
+}
+
+func Test_WithValidatingWebhook(t *testing.T) {
+	wh := generators.CreateValidatingWebhookConfigurationResource("mywh", "myns",
+		generators.WithValidatingWebhooks(
+			admissionregistrationv1.ValidatingWebhook{
+				Name: "wh-one",
+			},
+			admissionregistrationv1.ValidatingWebhook{
+				Name: "wh-two",
+			},
+		),
+	)
+	require.NotNil(t, wh)
+	require.Equal(t, []admissionregistrationv1.ValidatingWebhook{
+		{Name: "wh-one"},
+		{Name: "wh-two"},
+	}, wh.Webhooks)
+}
+
+func Test_WithMutatingWebhook(t *testing.T) {
+	wh := generators.CreateMutatingWebhookConfigurationResource("mywh", "myns",
+		generators.WithMutatingWebhooks(
+			admissionregistrationv1.MutatingWebhook{
+				Name: "wh-one",
+			},
+			admissionregistrationv1.MutatingWebhook{
+				Name: "wh-two",
+			},
+		),
+	)
+	require.NotNil(t, wh)
+	require.Equal(t, []admissionregistrationv1.MutatingWebhook{
+		{Name: "wh-one"},
+		{Name: "wh-two"},
+	}, wh.Webhooks)
 }

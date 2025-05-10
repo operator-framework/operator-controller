@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
 func Test_BundleRenderer_NoConfig(t *testing.T) {
@@ -79,6 +80,13 @@ func Test_WithUniqueNameGenerator(t *testing.T) {
 	})(opts)
 	generatedName, _ := opts.UniqueNameGenerator("", nil)
 	require.Equal(t, "a man needs a name", generatedName)
+}
+
+func Test_WithCertificateProvide(t *testing.T) {
+	opts := &render.Options{}
+	expectedCertProvider := FakeCertProvider{}
+	render.WithCertificateProvider(expectedCertProvider)(opts)
+	require.Equal(t, expectedCertProvider, opts.CertificateProvider)
 }
 
 func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {

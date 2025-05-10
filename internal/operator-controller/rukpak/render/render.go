@@ -66,6 +66,7 @@ type Options struct {
 	InstallNamespace    string
 	TargetNamespaces    []string
 	UniqueNameGenerator UniqueNameGenerator
+	CertificateProvider CertificateProvider
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -88,6 +89,12 @@ func WithTargetNamespaces(namespaces ...string) Option {
 func WithUniqueNameGenerator(generator UniqueNameGenerator) Option {
 	return func(o *Options) {
 		o.UniqueNameGenerator = generator
+	}
+}
+
+func WithCertificateProvider(provider CertificateProvider) Option {
+	return func(o *Options) {
+		o.CertificateProvider = provider
 	}
 }
 
