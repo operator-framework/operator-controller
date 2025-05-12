@@ -1,8 +1,6 @@
 name: go-verdiff
 on:
   pull_request:
-    paths:
-    - '**.mod'
     branches:
     - main
 jobs:
