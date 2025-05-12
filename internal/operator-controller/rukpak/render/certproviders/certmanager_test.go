@@ -2,6 +2,7 @@ package certproviders_test
 
 import (
 	"testing"
+	"time"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	certmanagermetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
@@ -128,9 +129,19 @@ func Test_CertManagerProvider_AdditionalObjects(t *testing.T) {
 			Spec: certmanagerv1.CertificateSpec{
 				SecretName: "cert-name",
 				Usages:     []certmanagerv1.KeyUsage{certmanagerv1.UsageServerAuth},
-				DNSNames:   []string{"webhook-service.namespace.svc"},
+				CommonName: "webhook-service.namespace",
+				IsCA:       false,
+				DNSNames: []string{
+					"webhook-service.namespace",
+					"webhook-service.namespace.svc",
+					"webhook-service.namespace.svc.cluster.local",
+				},
 				IssuerRef: certmanagermetav1.ObjectReference{
 					Name: "cert-name-selfsigned-issuer",
+				},
+				Duration: &metav1.Duration{
+					// OLMv0 has a 2 year certificate rotation period
+					Duration: 730 * 24 * time.Hour,
 				},
 			},
 		}),

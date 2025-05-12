@@ -3,6 +3,7 @@ package certproviders
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	certmanagermetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
@@ -18,6 +19,7 @@ import (
 
 const (
 	certManagerInjectCAAnnotation = "cert-manager.io/inject-ca-from"
+	olmv0RotationPeriod           = 730 * 24 * time.Hour // 2 year rotation
 )
 
 var _ render.CertificateProvider = (*CertManagerCertificateProvider)(nil)
@@ -49,6 +51,72 @@ func (p CertManagerCertificateProvider) AdditionalObjects(cfg render.Certificate
 		objs []unstructured.Unstructured
 		errs []error
 	)
+
+	// OLMv0 parity:
+	// - self-signed issuer
+	// - 2 year rotation period
+	// - CN: argocd-operator-controller-manager-service.argocd (<deploymentName>-service.<namespace>)
+	// - CA: false
+	// - DNS:argocd-operator-controller-manager-service.argocd, DNS:argocd-operator-controller-manager-service.argocd.svc, DNS:argocd-operator-controller-manager-service.argocd.svc.cluster.local
+
+	// Full example of OLMv0 Certificate data (argocd-operator.v0.8.0):
+	//Certificate:
+	//    Data:
+	//        Version: 3 (0x2)
+	//        Serial Number: 1507821748758744637 (0x14ecdbe4475f8e3d)
+	//        Signature Algorithm: ecdsa-with-SHA256
+	//        Issuer: O=Red Hat, Inc., CN=olm-selfsigned-275dd2a363db7513
+	//        Validity
+	//            Not Before: May 12 11:15:02 2025 GMT
+	//            Not After : May 12 11:15:02 2027 GMT
+	//        Subject: O=Red Hat, Inc., CN=argocd-operator-controller-manager-service.argocd
+	//        Subject Public Key Info:
+	//            Public Key Algorithm: id-ecPublicKey
+	//                Public-Key: (256 bit)
+	//                pub: ...
+	//                ASN1 OID: prime256v1
+	//                NIST CURVE: P-256
+	//        X509v3 extensions:
+	//            X509v3 Extended Key Usage:
+	//                TLS Web Server Authentication
+	//            X509v3 Basic Constraints: critical
+	//                CA:FALSE
+	//            X509v3 Authority Key Identifier: ...
+	//            X509v3 Subject Alternative Name:
+	//                DNS:argocd-operator-controller-manager-service.argocd, DNS:argocd-operator-controller-manager-service.argocd.svc, DNS:argocd-operator-controller-manager-service.argocd.svc.cluster.local
+	//    Signature Algorithm: ecdsa-with-SHA256
+	//    Signature Value: ...
+
+	// Full example of OLMv1 certificate for argocd-operator v0.8.0 with the Issuer and Certificate settings that follow:
+	//Certificate:
+	//    Data:
+	//        Version: 3 (0x2)
+	//        Serial Number:
+	//            d5:8f:4f:ae:b1:67:59:9d:fe:53:b5:41:d3:10:5a:2b
+	//        Signature Algorithm: sha256WithRSAEncryption
+	//        Issuer: CN=argocd-operator-controller-manager-service.argocd
+	//        Validity
+	//            Not Before: May 12 11:55:28 2025 GMT
+	//            Not After : May 12 11:55:28 2027 GMT
+	//        Subject: CN=argocd-operator-controller-manager-service.argocd
+	//        Subject Public Key Info:
+	//            Public Key Algorithm: rsaEncryption
+	//                Public-Key: (2048 bit)
+	//                Modulus: ...
+	//                Exponent: 65537 (0x10001)
+	//        X509v3 extensions:
+	//            X509v3 Extended Key Usage:
+	//                TLS Web Server Authentication
+	//            X509v3 Basic Constraints: critical
+	//                CA:FALSE
+	//            X509v3 Subject Alternative Name:
+	//                DNS:argocd-operator-controller-manager-service.argocd, DNS:argocd-operator-controller-manager-service.argocd.svc, DNS:argocd-operator-controller-manager-service.argocd.svc.cluster.local
+	//    Signature Algorithm: sha256WithRSAEncryption
+	//    Signature Value: ...
+
+	// Notes:
+	// - the Organization "Red Hat, Inc." will not be used to avoid any hard links between Red Hat and the operator-controller project
+	// - for OLMv1 we'll use the default algorithm settings and key size (2048) coming from cert-manager as this is deemed more secure
 
 	issuer := &certmanagerv1.Issuer{
 		TypeMeta: metav1.TypeMeta{
@@ -83,10 +151,19 @@ func (p CertManagerCertificateProvider) AdditionalObjects(cfg render.Certificate
 		},
 		Spec: certmanagerv1.CertificateSpec{
 			SecretName: cfg.CertName,
+			CommonName: fmt.Sprintf("%s.%s", cfg.WebhookServiceName, cfg.Namespace),
 			Usages:     []certmanagerv1.KeyUsage{certmanagerv1.UsageServerAuth},
-			DNSNames:   []string{fmt.Sprintf("%s.%s.svc", cfg.WebhookServiceName, cfg.Namespace)},
+			IsCA:       false,
+			DNSNames: []string{
+				fmt.Sprintf("%s.%s", cfg.WebhookServiceName, cfg.Namespace),
+				fmt.Sprintf("%s.%s.svc", cfg.WebhookServiceName, cfg.Namespace),
+				fmt.Sprintf("%s.%s.svc.cluster.local", cfg.WebhookServiceName, cfg.Namespace),
+			},
 			IssuerRef: certmanagermetav1.ObjectReference{
 				Name: issuer.GetName(),
+			},
+			Duration: &metav1.Duration{
+				Duration: olmv0RotationPeriod,
 			},
 		},
 	}
