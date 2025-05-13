@@ -12,7 +12,6 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/cli-runtime/pkg/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -23,28 +22,47 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	registry "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/operator-registry"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 )
 
 type Plain struct {
 	Objects []client.Object
 }
 
-func RegistryV1ToHelmChart(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-	reg, err := ParseFS(rv1)
+type RegistryV1Converter struct {
+	BundleRenderer      render.BundleRenderer
+	CertificateProvider *render.CertificateProvider
+}
+
+func (r *RegistryV1Converter) ToHelmChart(rv1fs fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+	rv1, err := ParseFS(rv1fs)
 	if err != nil {
 		return nil, err
 	}
 
-	plain, err := PlainConverter.Convert(reg, installNamespace, []string{watchNamespace})
-	if err != nil {
-		return nil, err
+	if installNamespace == "" {
+		installNamespace = rv1.CSV.Annotations["operatorframework.io/suggested-namespace"]
 	}
+	if installNamespace == "" {
+		installNamespace = fmt.Sprintf("%s-system", rv1.PackageName)
+	}
+
+	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
+		return nil, fmt.Errorf("apiServiceDefintions are not supported")
+	}
+
+	if r.CertificateProvider == nil && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
+		return nil, fmt.Errorf("webhookDefinitions are not supported")
+	}
+
+	objs, err := r.BundleRenderer.Render(
+		rv1,
+		installNamespace,
+		render.WithTargetNamespaces(watchNamespace),
+		render.WithCertificateProvider(r.CertificateProvider))
 
 	chrt := &chart.Chart{Metadata: &chart.Metadata{}}
-	chrt.Metadata.Annotations = reg.CSV.GetAnnotations()
-	for _, obj := range plain.Objects {
+	chrt.Metadata.Annotations = rv1.CSV.GetAnnotations()
+	for _, obj := range objs {
 		jsonData, err := json.Marshal(obj)
 		if err != nil {
 			return nil, err
@@ -188,53 +206,4 @@ func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS
 	}
 	csv.Annotations["olm.properties"] = string(allPropertiesJSON)
 	return nil
-}
-
-var PlainConverter = Converter{
-	BundleRenderer: registryv1.Renderer,
-}
-
-type Converter struct {
-	render.BundleRenderer
-}
-
-func (c Converter) Convert(rv1 render.RegistryV1, installNamespace string, targetNamespaces []string) (*Plain, error) {
-	if installNamespace == "" {
-		installNamespace = rv1.CSV.Annotations["operatorframework.io/suggested-namespace"]
-	}
-	if installNamespace == "" {
-		installNamespace = fmt.Sprintf("%s-system", rv1.PackageName)
-	}
-	supportedInstallModes := sets.New[string]()
-	for _, im := range rv1.CSV.Spec.InstallModes {
-		if im.Supported {
-			supportedInstallModes.Insert(string(im.Type))
-		}
-	}
-	if len(targetNamespaces) == 0 {
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeAllNamespaces)) {
-			targetNamespaces = []string{""}
-		} else if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) {
-			targetNamespaces = []string{installNamespace}
-		}
-	}
-
-	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
-		return nil, fmt.Errorf("apiServiceDefintions are not supported")
-	}
-
-	if !features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
-		return nil, fmt.Errorf("webhookDefinitions are not supported")
-	}
-
-	objs, err := c.BundleRenderer.Render(
-		rv1,
-		installNamespace,
-		render.WithTargetNamespaces(targetNamespaces...),
-		render.WithCertificateProvider(certproviders.CertManagerCertificateProvider{}),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &Plain{Objects: objs}, nil
 }
