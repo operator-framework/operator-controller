@@ -2,7 +2,6 @@ package validators_test
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,30 +11,9 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/validators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
-
-func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
-	expectedValidationFns := []func(v1 *render.RegistryV1) []error{
-		validators.CheckDeploymentSpecUniqueness,
-		validators.CheckDeploymentNameIsDNS1123SubDomain,
-		validators.CheckCRDResourceUniqueness,
-		validators.CheckOwnedCRDExistence,
-		validators.CheckPackageNameNotEmpty,
-		validators.CheckWebhookDeploymentReferentialIntegrity,
-		validators.CheckWebhookNameUniqueness,
-		validators.CheckWebhookNameIsDNS1123SubDomain,
-		validators.CheckConversionWebhookCRDReferenceUniqueness,
-		validators.CheckConversionWebhooksReferenceOwnedCRDs,
-	}
-	actualValidationFns := validators.RegistryV1BundleValidator
-
-	require.Equal(t, len(expectedValidationFns), len(actualValidationFns))
-	for i := range expectedValidationFns {
-		require.Equal(t, reflect.ValueOf(expectedValidationFns[i]).Pointer(), reflect.ValueOf(actualValidationFns[i]).Pointer(), "bundle validator has unexpected validation function")
-	}
-}
 
 func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 	for _, tc := range []struct {

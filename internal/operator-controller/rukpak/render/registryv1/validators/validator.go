@@ -16,23 +16,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
 
-// RegistryV1BundleValidator validates RegistryV1 bundles
-var RegistryV1BundleValidator = render.BundleValidator{
-	// NOTE: if you update this list, Test_BundleValidatorHasAllValidationFns will fail until
-	// you bring the same changes over to that test. This helps ensure all validation rules are executed
-	// while giving us the flexibility to test each validation function individually
-	CheckDeploymentSpecUniqueness,
-	CheckDeploymentNameIsDNS1123SubDomain,
-	CheckCRDResourceUniqueness,
-	CheckOwnedCRDExistence,
-	CheckPackageNameNotEmpty,
-	CheckWebhookDeploymentReferentialIntegrity,
-	CheckWebhookNameUniqueness,
-	CheckWebhookNameIsDNS1123SubDomain,
-	CheckConversionWebhookCRDReferenceUniqueness,
-	CheckConversionWebhooksReferenceOwnedCRDs,
-}
-
 // CheckDeploymentSpecUniqueness checks that each strategy deployment spec in the csv has a unique name.
 // Errors are sorted by deployment name.
 func CheckDeploymentSpecUniqueness(rv1 *render.RegistryV1) []error {

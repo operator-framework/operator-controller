@@ -22,7 +22,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
@@ -47,7 +47,7 @@ func getCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 }
 
 func TestPlainConverterUsedRegV1Validator(t *testing.T) {
-	require.Equal(t, validators.RegistryV1BundleValidator, convert.PlainConverter.BundleValidator)
+	require.Equal(t, registryv1.BundleValidator, convert.PlainConverter.BundleValidator)
 }
 
 func TestRegistryV1SuiteNamespaceNotAvailable(t *testing.T) {

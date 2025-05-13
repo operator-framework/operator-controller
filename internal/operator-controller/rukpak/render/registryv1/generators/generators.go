@@ -36,14 +36,6 @@ var certVolumeMounts = map[string]corev1.VolumeMount{
 	},
 }
 
-// BundleCSVRBACResourceGenerator generates all ServiceAccounts, ClusterRoles, ClusterRoleBindings, Roles, RoleBindings
-// defined in the RegistryV1 bundle's cluster service version (CSV)
-var BundleCSVRBACResourceGenerator = render.ResourceGenerators{
-	BundleCSVServiceAccountGenerator,
-	BundleCSVPermissionsGenerator,
-	BundleCSVClusterPermissionsGenerator,
-}
-
 // BundleCSVDeploymentGenerator generates all deployments defined in rv1's cluster service version (CSV). The generated
 // resource aim to have parity with OLMv0 generated Deployment resources:
 // - olm.targetNamespaces annotation is set with the opts.TargetNamespace value

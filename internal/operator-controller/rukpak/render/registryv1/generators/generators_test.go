@@ -3,7 +3,6 @@ package generators_test
 import (
 	"cmp"
 	"fmt"
-	"reflect"
 	"slices"
 	"testing"
 
@@ -22,23 +21,9 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/generators"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
-
-func Test_BundleCSVRBACResourceGenerator_HasCorrectGenerators(t *testing.T) {
-	expectedResourceGenerators := []render.ResourceGenerator{
-		generators.BundleCSVServiceAccountGenerator,
-		generators.BundleCSVPermissionsGenerator,
-		generators.BundleCSVClusterPermissionsGenerator,
-	}
-	actualResourceGenerators := generators.BundleCSVRBACResourceGenerator
-
-	require.Equal(t, len(expectedResourceGenerators), len(actualResourceGenerators))
-	for i := range expectedResourceGenerators {
-		require.Equal(t, reflect.ValueOf(expectedResourceGenerators[i]).Pointer(), reflect.ValueOf(actualResourceGenerators[i]).Pointer(), "bundle validator has unexpected validation function")
-	}
-}
 
 func Test_ResourceGenerators(t *testing.T) {
 	g := render.ResourceGenerators{

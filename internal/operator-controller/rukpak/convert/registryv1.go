@@ -24,8 +24,7 @@ import (
 	registry "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/operator-registry"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/generators"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 )
 
 type Plain struct {
@@ -192,19 +191,7 @@ func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS
 }
 
 var PlainConverter = Converter{
-	BundleRenderer: render.BundleRenderer{
-		BundleValidator: validators.RegistryV1BundleValidator,
-		ResourceGenerators: []render.ResourceGenerator{
-			generators.BundleCSVRBACResourceGenerator.ResourceGenerator(),
-			generators.BundleCRDGenerator,
-			generators.BundleAdditionalResourcesGenerator,
-			generators.BundleCSVDeploymentGenerator,
-			generators.BundleValidatingWebhookResourceGenerator,
-			generators.BundleMutatingWebhookResourceGenerator,
-			generators.BundleWebhookServiceResourceGenerator,
-			generators.CertProviderResourceGenerator,
-		},
-	},
+	BundleRenderer: registryv1.Renderer,
 }
 
 type Converter struct {
