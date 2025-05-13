@@ -13,6 +13,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
@@ -20,7 +21,7 @@ import (
 func Test_BundleRenderer_NoConfig(t *testing.T) {
 	renderer := render.BundleRenderer{}
 	objs, err := renderer.Render(
-		render.RegistryV1{
+		bundle.RegistryV1{
 			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
 		}, "", nil)
 	require.NoError(t, err)
@@ -30,12 +31,12 @@ func Test_BundleRenderer_NoConfig(t *testing.T) {
 func Test_BundleRenderer_ValidatesBundle(t *testing.T) {
 	renderer := render.BundleRenderer{
 		BundleValidator: render.BundleValidator{
-			func(v1 *render.RegistryV1) []error {
+			func(v1 *bundle.RegistryV1) []error {
 				return []error{errors.New("this bundle is invalid")}
 			},
 		},
 	}
-	objs, err := renderer.Render(render.RegistryV1{}, "")
+	objs, err := renderer.Render(bundle.RegistryV1{}, "")
 	require.Nil(t, objs)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "this bundle is invalid")
@@ -48,7 +49,7 @@ func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
 
 	renderer := render.BundleRenderer{
 		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 				require.Equal(t, expectedInstallNamespace, opts.InstallNamespace)
 				require.Equal(t, expectedTargetNamespaces, opts.TargetNamespaces)
 				require.Equal(t, reflect.ValueOf(expectedUniqueNameGenerator).Pointer(), reflect.ValueOf(render.DefaultUniqueNameGenerator).Pointer(), "options has unexpected default unique name generator")
@@ -57,7 +58,7 @@ func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
 		},
 	}
 
-	_, _ = renderer.Render(render.RegistryV1{}, expectedInstallNamespace)
+	_, _ = renderer.Render(bundle.RegistryV1{}, expectedInstallNamespace)
 }
 
 func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
@@ -164,7 +165,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			renderer := render.BundleRenderer{}
 			_, err := renderer.Render(
-				render.RegistryV1{CSV: tc.csv},
+				bundle.RegistryV1{CSV: tc.csv},
 				tc.installNamespace,
 				tc.opts...,
 			)
@@ -180,7 +181,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 
 func Test_BundleRenderer_AppliesUserOptions(t *testing.T) {
 	isOptionApplied := false
-	_, _ = render.BundleRenderer{}.Render(render.RegistryV1{}, "install-namespace", func(options *render.Options) {
+	_, _ = render.BundleRenderer{}.Render(bundle.RegistryV1{}, "install-namespace", func(options *render.Options) {
 		isOptionApplied = true
 	})
 	require.True(t, isOptionApplied)
@@ -215,16 +216,16 @@ func Test_WithCertificateProvide(t *testing.T) {
 func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 	renderer := render.BundleRenderer{
 		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
 			},
-			func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 				return []client.Object{&appsv1.Deployment{}}, nil
 			},
 		},
 	}
 	objs, err := renderer.Render(
-		render.RegistryV1{
+		bundle.RegistryV1{
 			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
 		}, "")
 	require.NoError(t, err)
@@ -234,16 +235,16 @@ func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
 	renderer := render.BundleRenderer{
 		ResourceGenerators: []render.ResourceGenerator{
-			func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 				return []client.Object{&corev1.Namespace{}, &corev1.Service{}}, nil
 			},
-			func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 				return nil, fmt.Errorf("generator error")
 			},
 		},
 	}
 	objs, err := renderer.Render(
-		render.RegistryV1{
+		bundle.RegistryV1{
 			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
 		}, "")
 	require.Nil(t, objs)
@@ -254,11 +255,11 @@ func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
 func Test_BundleValidatorCallsAllValidationFnsInOrder(t *testing.T) {
 	actual := ""
 	val := render.BundleValidator{
-		func(v1 *render.RegistryV1) []error {
+		func(v1 *bundle.RegistryV1) []error {
 			actual += "h"
 			return nil
 		},
-		func(v1 *render.RegistryV1) []error {
+		func(v1 *bundle.RegistryV1) []error {
 			actual += "i"
 			return nil
 		},

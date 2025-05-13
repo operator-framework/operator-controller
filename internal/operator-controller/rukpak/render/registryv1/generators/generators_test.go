@@ -20,6 +20,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
@@ -27,30 +28,30 @@ import (
 
 func Test_ResourceGenerators(t *testing.T) {
 	g := render.ResourceGenerators{
-		func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+		func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 			return []client.Object{&corev1.Service{}}, nil
 		},
-		func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+		func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 			return []client.Object{&corev1.ConfigMap{}}, nil
 		},
 	}
 
-	objs, err := g.GenerateResources(&render.RegistryV1{}, render.Options{})
+	objs, err := g.GenerateResources(&bundle.RegistryV1{}, render.Options{})
 	require.NoError(t, err)
 	require.Equal(t, []client.Object{&corev1.Service{}, &corev1.ConfigMap{}}, objs)
 }
 
 func Test_ResourceGenerators_Errors(t *testing.T) {
 	g := render.ResourceGenerators{
-		func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+		func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 			return []client.Object{&corev1.Service{}}, nil
 		},
-		func(rv1 *render.RegistryV1, opts render.Options) ([]client.Object, error) {
+		func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 			return nil, fmt.Errorf("generator error")
 		},
 	}
 
-	objs, err := g.GenerateResources(&render.RegistryV1{}, render.Options{})
+	objs, err := g.GenerateResources(&bundle.RegistryV1{}, render.Options{})
 	require.Nil(t, objs)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "generator error")
@@ -59,13 +60,13 @@ func Test_ResourceGenerators_Errors(t *testing.T) {
 func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
-		bundle            *render.RegistryV1
+		bundle            *bundle.RegistryV1
 		opts              render.Options
 		expectedResources []client.Object
 	}{
 		{
 			name: "generates deployment resources",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithAnnotations(map[string]string{
 						"csv": "annotation",
@@ -172,7 +173,7 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 		},
 	}
 
-	bundle := &render.RegistryV1{
+	bundle := &bundle.RegistryV1{
 		CSV: MakeCSV(
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
@@ -330,7 +331,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		opts              render.Options
-		bundle            *render.RegistryV1
+		bundle            *bundle.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
@@ -340,7 +341,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				TargetNamespaces:    []string{""},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithPermissions(
@@ -366,7 +367,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithPermissions(
@@ -441,7 +442,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				TargetNamespaces:    []string{"watch-namespace", "watch-namespace-two"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithPermissions(
@@ -560,7 +561,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithPermissions(
@@ -677,7 +678,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithPermissions(
@@ -764,7 +765,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		opts              render.Options
-		bundle            *render.RegistryV1
+		bundle            *bundle.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
@@ -774,7 +775,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				TargetNamespaces:    []string{""},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithPermissions(
@@ -895,7 +896,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithClusterPermissions(
@@ -1008,7 +1009,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				TargetNamespaces:    []string{"watch-namespace"},
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithClusterPermissions(
@@ -1089,7 +1090,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		opts              render.Options
-		bundle            *render.RegistryV1
+		bundle            *bundle.RegistryV1
 		expectedResources []client.Object
 	}{
 		{
@@ -1097,7 +1098,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithPermissions(
@@ -1184,7 +1185,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
 			},
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithName("csv"),
 					WithPermissions(
@@ -1243,7 +1244,7 @@ func Test_BundleCRDGenerator_Succeeds(t *testing.T) {
 		TargetNamespaces: []string{""},
 	}
 
-	bundle := &render.RegistryV1{
+	bundle := &bundle.RegistryV1{
 		CRDs: []apiextensionsv1.CustomResourceDefinition{
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
@@ -1264,7 +1265,7 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Succeeds(t *testing.T) {
 		TargetNamespaces: []string{""},
 	}
 
-	bundle := &render.RegistryV1{
+	bundle := &bundle.RegistryV1{
 		CRDs: []apiextensionsv1.CustomResourceDefinition{
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
@@ -1345,7 +1346,7 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Fails(t *testing.T) {
 		TargetNamespaces: []string{""},
 	}
 
-	bundle := &render.RegistryV1{
+	bundle := &bundle.RegistryV1{
 		CRDs: []apiextensionsv1.CustomResourceDefinition{
 			{
 				ObjectMeta: metav1.ObjectMeta{Name: "crd-one"},
@@ -1390,7 +1391,7 @@ func Test_BundleCRDGenerator_WithCertProvider_Succeeds(t *testing.T) {
 		CertificateProvider: fakeProvider,
 	}
 
-	bundle := &render.RegistryV1{
+	bundle := &bundle.RegistryV1{
 		CRDs: []apiextensionsv1.CustomResourceDefinition{
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
@@ -1428,7 +1429,7 @@ func Test_BundleAdditionalResourcesGenerator_Succeeds(t *testing.T) {
 		InstallNamespace: "install-namespace",
 	}
 
-	bundle := &render.RegistryV1{
+	bundle := &bundle.RegistryV1{
 		Others: []unstructured.Unstructured{
 			*ToUnstructuredT(t,
 				&corev1.Service{
@@ -1478,13 +1479,13 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 	}
 	for _, tc := range []struct {
 		name              string
-		bundle            *render.RegistryV1
+		bundle            *bundle.RegistryV1
 		opts              render.Options
 		expectedResources []client.Object
 	}{
 		{
 			name: "generates validating webhook configuration resources described in the bundle's cluster service version",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -1577,7 +1578,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -1670,7 +1671,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "generates validating webhook configuration resources with certificate provider modifications",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -1742,13 +1743,13 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 	}
 	for _, tc := range []struct {
 		name              string
-		bundle            *render.RegistryV1
+		bundle            *bundle.RegistryV1
 		opts              render.Options
 		expectedResources []client.Object
 	}{
 		{
 			name: "generates validating webhook configuration resources described in the bundle's cluster service version",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -1843,7 +1844,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -1938,7 +1939,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "generates validating webhook configuration resources with certificate provider modifications",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -2010,13 +2011,13 @@ func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
 	}
 	for _, tc := range []struct {
 		name              string
-		bundle            *render.RegistryV1
+		bundle            *bundle.RegistryV1
 		opts              render.Options
 		expectedResources []client.Object
 	}{
 		{
 			name: "generates webhook services using container port 443 and target port 443 by default",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
@@ -2061,7 +2062,7 @@ func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "generates webhook services using the given container port and setting target port the same as the container port if not given",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
@@ -2107,7 +2108,7 @@ func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "generates webhook services using given container port of 443 and given target port",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
@@ -2156,7 +2157,7 @@ func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "generates webhook services using given container port and target port",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
@@ -2206,7 +2207,7 @@ func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "generates webhook services using referenced deployment defined label selector",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
@@ -2266,7 +2267,7 @@ func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "aggregates all webhook definitions referencing the same deployment into a single service",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
@@ -2364,7 +2365,7 @@ func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
 		},
 		{
 			name: "applies cert provider modifiers to webhook service",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
@@ -2439,7 +2440,7 @@ func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
 		},
 	}
 
-	objs, err := generators.CertProviderResourceGenerator(&render.RegistryV1{
+	objs, err := generators.CertProviderResourceGenerator(&bundle.RegistryV1{
 		CSV: MakeCSV(
 			WithWebhookDefinitions(
 				// only generate resources for deployments referenced by webhook definitions

@@ -5,15 +5,22 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/validators"
+	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
 func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
-	expectedValidationFns := []func(v1 *render.RegistryV1) []error{
+	expectedValidationFns := []func(v1 *bundle.RegistryV1) []error{
 		validators.CheckDeploymentSpecUniqueness,
 		validators.CheckDeploymentNameIsDNS1123SubDomain,
 		validators.CheckCRDResourceUniqueness,
@@ -52,4 +59,65 @@ func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
 	for i := range expectedGenerators {
 		require.Equal(t, reflect.ValueOf(expectedGenerators[i]).Pointer(), reflect.ValueOf(actualGenerators[i]).Pointer(), "bundle validator has unexpected validation function")
 	}
+}
+
+func Test_Renderer_Success(t *testing.T) {
+	bundle := bundle.RegistryV1{
+		PackageName: "my-package",
+		CSV: MakeCSV(
+			WithName("test-bundle"),
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+		),
+		Others: []unstructured.Unstructured{
+			*ToUnstructuredT(t, &corev1.Service{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Service",
+					APIVersion: corev1.SchemeGroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-service",
+				},
+			}),
+		},
+	}
+
+	objs, err := registryv1.Renderer.Render(bundle, "install-namespace")
+	t.Log("Check renderer returns objects and no errors")
+	require.NoError(t, err)
+	require.NotEmpty(t, objs)
+
+	t.Log("Check renderer returns a single object")
+	// bundle only contains a service - bundle csv is empty
+	require.Len(t, objs, 1)
+
+	t.Log("Check correct name and that the correct namespace was applied")
+	require.Equal(t, "my-service", objs[0].GetName())
+	require.Equal(t, "install-namespace", objs[0].GetNamespace())
+}
+
+func Test_Renderer_Failure_UnsupportedKind(t *testing.T) {
+	bundle := bundle.RegistryV1{
+		PackageName: "my-package",
+		CSV: MakeCSV(
+			WithName("test-bundle"),
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+		),
+		Others: []unstructured.Unstructured{
+			*ToUnstructuredT(t, &corev1.Event{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Event",
+					APIVersion: corev1.SchemeGroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testEvent",
+				},
+			}),
+		},
+	}
+
+	objs, err := registryv1.Renderer.Render(bundle, "install-namespace")
+	t.Log("Check renderer returns objects and no errors")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
+	require.Empty(t, objs)
 }

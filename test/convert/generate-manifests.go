@@ -11,7 +11,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 )
 
 func main() {
@@ -60,14 +62,14 @@ func main() {
 
 func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace string) error {
 	// Parse bundleFS into RegistryV1
-	regv1, err := convert.ParseFS(os.DirFS(bundleDir))
+	regv1, err := source.FromFS(os.DirFS(bundleDir)).GetBundle()
 	if err != nil {
 		fmt.Printf("error parsing bundle directory: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Convert RegistryV1 to plain manifests
-	plain, err := convert.PlainConverter.Convert(regv1, installNamespace, []string{watchNamespace})
+	objs, err := registryv1.Renderer.Render(regv1, installNamespace, render.WithTargetNamespaces(watchNamespace))
 	if err != nil {
 		return fmt.Errorf("error converting registry+v1 bundle: %w", err)
 	}
@@ -78,7 +80,7 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 	}
 
 	if err := func() error {
-		for idx, obj := range slices.SortedFunc(slices.Values(plain.Objects), orderByKindNamespaceName) {
+		for idx, obj := range slices.SortedFunc(slices.Values(objs), orderByKindNamespaceName) {
 			kind := obj.GetObjectKind().GroupVersionKind().Kind
 			fileName := fmt.Sprintf("%02d_%s_%s.yaml", idx, strings.ToLower(kind), obj.GetName())
 			data, err := yaml.Marshal(obj)

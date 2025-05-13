@@ -1,93 +1,62 @@
-package convert
+package source
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
 
-	"helm.sh/helm/v3/pkg/chart"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/resource"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	registry "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/operator-registry"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
 
-type Plain struct {
-	Objects []client.Object
+type BundleSource interface {
+	GetBundle() (bundle.RegistryV1, error)
 }
 
-type RegistryV1Converter struct {
-	BundleRenderer      render.BundleRenderer
-	CertificateProvider *render.CertificateProvider
+// identitySource is a bundle source that returns itself
+type identitySource bundle.RegistryV1
+
+func (r identitySource) GetBundle() (bundle.RegistryV1, error) {
+	return bundle.RegistryV1(r), nil
 }
 
-func (r *RegistryV1Converter) ToHelmChart(rv1fs fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-	rv1, err := ParseFS(rv1fs)
-	if err != nil {
-		return nil, err
-	}
-
-	if installNamespace == "" {
-		installNamespace = rv1.CSV.Annotations["operatorframework.io/suggested-namespace"]
-	}
-	if installNamespace == "" {
-		installNamespace = fmt.Sprintf("%s-system", rv1.PackageName)
-	}
-
-	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
-		return nil, fmt.Errorf("apiServiceDefintions are not supported")
-	}
-
-	if r.CertificateProvider == nil && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
-		return nil, fmt.Errorf("webhookDefinitions are not supported")
-	}
-
-	objs, err := r.BundleRenderer.Render(
-		rv1,
-		installNamespace,
-		render.WithTargetNamespaces(watchNamespace),
-		render.WithCertificateProvider(r.CertificateProvider))
-
-	chrt := &chart.Chart{Metadata: &chart.Metadata{}}
-	chrt.Metadata.Annotations = rv1.CSV.GetAnnotations()
-	for _, obj := range objs {
-		jsonData, err := json.Marshal(obj)
-		if err != nil {
-			return nil, err
-		}
-		hash := sha256.Sum256(jsonData)
-		chrt.Templates = append(chrt.Templates, &chart.File{
-			Name: fmt.Sprintf("object-%x.json", hash[0:8]),
-			Data: jsonData,
-		})
-	}
-
-	return chrt, nil
+func FromBundle(rv1 bundle.RegistryV1) BundleSource {
+	return identitySource(rv1)
 }
 
-// ParseFS converts the rv1 filesystem into a render.RegistryV1.
-// ParseFS expects the filesystem to conform to the registry+v1 format:
+// FromFS returns a BundleSource that loads a registry+v1 bundle from a filesystem.
+// The filesystem is expected to conform to the registry+v1 format:
 // metadata/annotations.yaml
+// metadata/properties.yaml
 // manifests/
 //   - csv.yaml
 //   - ...
 //
-// manifests directory does not contain subdirectories
-func ParseFS(rv1 fs.FS) (render.RegistryV1, error) {
-	reg := render.RegistryV1{}
-	annotationsFileData, err := fs.ReadFile(rv1, filepath.Join("metadata", "annotations.yaml"))
+// manifests directory should not contain subdirectories
+func FromFS(fs fs.FS) BundleSource {
+	return fsBundleSource{
+		FS: fs,
+	}
+}
+
+type fsBundleSource struct {
+	FS fs.FS
+}
+
+func (f fsBundleSource) GetBundle() (bundle.RegistryV1, error) {
+	reg := bundle.RegistryV1{}
+	annotationsFileData, err := fs.ReadFile(f.FS, filepath.Join("metadata", "annotations.yaml"))
 	if err != nil {
 		return reg, err
 	}
@@ -99,7 +68,7 @@ func ParseFS(rv1 fs.FS) (render.RegistryV1, error) {
 
 	const manifestsDir = "manifests"
 	foundCSV := false
-	if err := fs.WalkDir(rv1, manifestsDir, func(path string, e fs.DirEntry, err error) error {
+	if err := fs.WalkDir(f.FS, manifestsDir, func(path string, e fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -109,7 +78,7 @@ func ParseFS(rv1 fs.FS) (render.RegistryV1, error) {
 			}
 			return fmt.Errorf("subdirectories are not allowed within the %q directory of the bundle image filesystem: found %q", manifestsDir, path)
 		}
-		manifestFile, err := rv1.Open(path)
+		manifestFile, err := f.FS.Open(path)
 		if err != nil {
 			return err
 		}
@@ -153,7 +122,7 @@ func ParseFS(rv1 fs.FS) (render.RegistryV1, error) {
 		return reg, fmt.Errorf("no ClusterServiceVersion found in %q", manifestsDir)
 	}
 
-	if err := copyMetadataPropertiesToCSV(&reg.CSV, rv1); err != nil {
+	if err := copyMetadataPropertiesToCSV(&reg.CSV, f.FS); err != nil {
 		return reg, err
 	}
 

@@ -67,6 +67,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
@@ -423,10 +424,12 @@ func run() error {
 
 	// now initialize the helmApplier, assigning the potentially nil preAuth
 	helmApplier := &applier.Helm{
-		ActionClientGetter:  acg,
-		Preflights:          preflights,
-		BundleToHelmChartFn: convert.RegistryV1ToHelmChart,
-		PreAuthorizer:       preAuth,
+		ActionClientGetter: acg,
+		Preflights:         preflights,
+		BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
+			BundleRenderer: registryv1.Renderer,
+		},
+		PreAuthorizer: preAuth,
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
