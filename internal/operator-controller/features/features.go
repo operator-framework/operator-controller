@@ -14,7 +14,7 @@ const (
 	PreflightPermissions             featuregate.Feature = "PreflightPermissions"
 	SingleOwnNamespaceInstallSupport featuregate.Feature = "SingleOwnNamespaceInstallSupport"
 	SyntheticPermissions             featuregate.Feature = "SyntheticPermissions"
-	WebhookSupport                   featuregate.Feature = "WebhookSupport"
+	WebhookProviderCertManager       featuregate.Feature = "WebhookProviderCertManager"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -43,10 +43,11 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 		LockToDefault: false,
 	},
 
-	// WebhookSupport enables support for installing
+	// WebhookProviderCertManager enables support for installing
 	// registry+v1 cluster extensions that include validating,
-	// mutating, and/or conversion webhooks
-	WebhookSupport: {
+	// mutating, and/or conversion webhooks with CertManager
+	// as the certificate provider.
+	WebhookProviderCertManager: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,

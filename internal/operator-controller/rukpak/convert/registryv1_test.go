@@ -563,7 +563,7 @@ func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
 }
 
 func TestRegistryV1SuiteGenerateWebhooks_WebhookSupportFGEnabled(t *testing.T) {
-	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.WebhookSupport, true)
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.WebhookProviderCertManager, true)
 	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 

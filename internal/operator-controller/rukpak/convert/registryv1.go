@@ -263,7 +263,7 @@ func (c Converter) Convert(rv1 render.RegistryV1, installNamespace string, targe
 		return nil, fmt.Errorf("apiServiceDefintions are not supported")
 	}
 
-	if !features.OperatorControllerFeatureGate.Enabled(features.WebhookSupport) && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
+	if !features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
 		return nil, fmt.Errorf("webhookDefinitions are not supported")
 	}
 
