@@ -191,29 +191,6 @@ func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS
 	return nil
 }
 
-func validateTargetNamespaces(supportedInstallModes sets.Set[string], installNamespace string, targetNamespaces []string) error {
-	set := sets.New[string](targetNamespaces...)
-	switch {
-	case set.Len() == 0 || (set.Len() == 1 && set.Has("")):
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeAllNamespaces)) {
-			return nil
-		}
-		return fmt.Errorf("supported install modes %v do not support targeting all namespaces", sets.List(supportedInstallModes))
-	case set.Len() == 1 && !set.Has(""):
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeSingleNamespace)) {
-			return nil
-		}
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && targetNamespaces[0] == installNamespace {
-			return nil
-		}
-	default:
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeMultiNamespace)) && !set.Has("") {
-			return nil
-		}
-	}
-	return fmt.Errorf("supported install modes %v do not support target namespaces %v", sets.List[string](supportedInstallModes), targetNamespaces)
-}
-
 var PlainConverter = Converter{
 	BundleRenderer: render.BundleRenderer{
 		BundleValidator: validators.RegistryV1BundleValidator,
@@ -253,10 +230,6 @@ func (c Converter) Convert(rv1 render.RegistryV1, installNamespace string, targe
 		} else if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) {
 			targetNamespaces = []string{installNamespace}
 		}
-	}
-
-	if err := validateTargetNamespaces(supportedInstallModes, installNamespace, targetNamespaces); err != nil {
-		return nil, err
 	}
 
 	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {

@@ -11,13 +11,18 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
 func Test_BundleRenderer_NoConfig(t *testing.T) {
 	renderer := render.BundleRenderer{}
-	objs, err := renderer.Render(render.RegistryV1{}, "", nil)
+	objs, err := renderer.Render(
+		render.RegistryV1{
+			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+		}, "", nil)
 	require.NoError(t, err)
 	require.Empty(t, objs)
 }
@@ -53,6 +58,124 @@ func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
 	}
 
 	_, _ = renderer.Render(render.RegistryV1{}, expectedInstallNamespace)
+}
+
+func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		installNamespace string
+		csv              v1alpha1.ClusterServiceVersion
+		opts             []render.Option
+		err              error
+	}{
+		{
+			name:             "rejects empty targetNamespaces",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			opts: []render.Option{
+				render.WithTargetNamespaces(),
+			},
+			err: errors.New("invalid option(s): at least one target namespace must be specified"),
+		}, {
+			name:             "rejects nil unique name generator",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			opts: []render.Option{
+				render.WithUniqueNameGenerator(nil),
+			},
+			err: errors.New("invalid option(s): unique name generator must be specified"),
+		}, {
+			name:             "rejects all namespace install if AllNamespaces install mode is not supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces(corev1.NamespaceAll),
+			},
+			err: errors.New("invalid option(s): invalid target namespaces []: supported install modes [SingleNamespace] do not support targeting all namespaces"),
+		}, {
+			name:             "rejects own namespace install if only AllNamespace install mode is supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("install-namespace"),
+			},
+			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [AllNamespaces] do not support target namespaces [install-namespace]"),
+		}, {
+			name:             "rejects install out of own namespace if only OwnNamespace install mode is supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("not-install-namespace"),
+			},
+			err: errors.New("invalid option(s): invalid target namespaces [not-install-namespace]: supported install modes [OwnNamespace] do not support target namespaces [not-install-namespace]"),
+		}, {
+			name:             "rejects multi-namespace install if MultiNamespace install mode is not supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("ns1", "ns2", "ns3"),
+			},
+			err: errors.New("invalid option(s): invalid target namespaces [ns1 ns2 ns3]: supported install modes [AllNamespaces] do not support target namespaces [ns1 ns2 ns3]"),
+		}, {
+			name:             "rejects if bundle supports no install modes",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(),
+			opts: []render.Option{
+				render.WithTargetNamespaces("some-namespace"),
+			},
+			err: errors.New("invalid option(s): invalid target namespaces [some-namespace]: supported install modes [] do not support target namespaces [some-namespace]"),
+		}, {
+			name:             "accepts all namespace render if AllNamespaces install mode is supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			opts: []render.Option{
+				render.WithTargetNamespaces(""),
+			},
+		}, {
+			name:             "accepts install namespace render if SingleNamespace install mode is supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("some-namespace"),
+			},
+		}, {
+			name:             "accepts all install namespace render if OwnNamespace install mode is supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("install-namespace"),
+			},
+		}, {
+			name:             "accepts single namespace render if SingleNamespace install mode is supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("some-namespace"),
+			},
+		}, {
+			name:             "accepts multi namespace render if MultiNamespace install mode is supported",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("n1", "n2", "n3"),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			renderer := render.BundleRenderer{}
+			_, err := renderer.Render(
+				render.RegistryV1{CSV: tc.csv},
+				tc.installNamespace,
+				tc.opts...,
+			)
+			if tc.err == nil {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Equal(t, tc.err.Error(), err.Error())
+			}
+		})
+	}
 }
 
 func Test_BundleRenderer_AppliesUserOptions(t *testing.T) {
@@ -100,7 +223,10 @@ func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 			},
 		},
 	}
-	objs, err := renderer.Render(render.RegistryV1{}, "")
+	objs, err := renderer.Render(
+		render.RegistryV1{
+			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+		}, "")
 	require.NoError(t, err)
 	require.Equal(t, []client.Object{&corev1.Namespace{}, &corev1.Service{}, &appsv1.Deployment{}}, objs)
 }
@@ -116,7 +242,10 @@ func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
 			},
 		},
 	}
-	objs, err := renderer.Render(render.RegistryV1{}, "")
+	objs, err := renderer.Render(
+		render.RegistryV1{
+			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+		}, "")
 	require.Nil(t, objs)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "generator error")

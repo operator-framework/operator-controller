@@ -2,10 +2,12 @@ package render
 
 import (
 	"errors"
+	"fmt"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -78,6 +80,20 @@ func (o *Options) apply(opts ...Option) *Options {
 	return o
 }
 
+func (o *Options) validate(rv1 *RegistryV1) (*Options, []error) {
+	var errs []error
+	if len(o.TargetNamespaces) == 0 {
+		errs = append(errs, errors.New("at least one target namespace must be specified"))
+	}
+	if o.UniqueNameGenerator == nil {
+		errs = append(errs, errors.New("unique name generator must be specified"))
+	}
+	if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
+		errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
+	}
+	return o, errs
+}
+
 type Option func(*Options)
 
 func WithTargetNamespaces(namespaces ...string) Option {
@@ -109,13 +125,19 @@ func (r BundleRenderer) Render(rv1 RegistryV1, installNamespace string, opts ...
 		return nil, err
 	}
 
-	genOpts := (&Options{
+	// generate bundle objects
+	genOpts, errs := (&Options{
+		// default options
 		InstallNamespace:    installNamespace,
 		TargetNamespaces:    []string{metav1.NamespaceAll},
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
-	}).apply(opts...)
+		CertificateProvider: nil,
+	}).apply(opts...).validate(&rv1)
 
-	// generate bundle objects
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("invalid option(s): %w", errors.Join(errs...))
+	}
+
 	objs, err := ResourceGenerators(r.ResourceGenerators).GenerateResources(&rv1, *genOpts)
 	if err != nil {
 		return nil, err
@@ -130,4 +152,34 @@ func DefaultUniqueNameGenerator(base string, o interface{}) (string, error) {
 		return "", err
 	}
 	return util.ObjectNameForBaseAndSuffix(base, hashStr), nil
+}
+
+func validateTargetNamespaces(rv1 *RegistryV1, installNamespace string, targetNamespaces []string) error {
+	supportedInstallModes := sets.New[string]()
+	for _, im := range rv1.CSV.Spec.InstallModes {
+		if im.Supported {
+			supportedInstallModes.Insert(string(im.Type))
+		}
+	}
+
+	set := sets.New[string](targetNamespaces...)
+	switch {
+	case set.Len() == 0 || (set.Len() == 1 && set.Has("")):
+		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeAllNamespaces)) {
+			return nil
+		}
+		return fmt.Errorf("supported install modes %v do not support targeting all namespaces", sets.List(supportedInstallModes))
+	case set.Len() == 1 && !set.Has(""):
+		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeSingleNamespace)) {
+			return nil
+		}
+		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && targetNamespaces[0] == installNamespace {
+			return nil
+		}
+	default:
+		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeMultiNamespace)) && !set.Has("") {
+			return nil
+		}
+	}
+	return fmt.Errorf("supported install modes %v do not support target namespaces %v", sets.List[string](supportedInstallModes), targetNamespaces)
 }

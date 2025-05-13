@@ -244,138 +244,6 @@ func getBaseCsvAndService() (v1alpha1.ClusterServiceVersion, corev1.Service) {
 	return baseCSV, svc
 }
 
-func TestRegistryV1SuiteGenerateAllNamespace(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
-
-	t.Log("It should convert into plain manifests successfully with AllNamespaces")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true}}
-
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{""}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := render.RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
-	}
-
-	t.Log("By converting to plain")
-	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
-	require.NoError(t, err)
-
-	t.Log("By verifying if plain bundle has required objects")
-	require.NotNil(t, plainBundle)
-	require.Len(t, plainBundle.Objects, 5)
-
-	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("test-deployment", plainBundle.Objects)
-	require.NotNil(t, dep)
-	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
-	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
-}
-
-func TestRegistryV1SuiteGenerateMultiNamespace(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
-
-	t.Log("It should convert into plain manifests successfully with MultiNamespace")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true}}
-
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{"testWatchNs1", "testWatchNs2"}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := render.RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
-	}
-
-	t.Log("By converting to plain")
-	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
-	require.NoError(t, err)
-
-	t.Log("By verifying if plain bundle has required objects")
-	require.NotNil(t, plainBundle)
-	require.Len(t, plainBundle.Objects, 7)
-
-	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("test-deployment", plainBundle.Objects)
-	require.NotNil(t, dep)
-	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
-	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
-}
-
-func TestRegistryV1SuiteGenerateSingleNamespace(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
-
-	t.Log("It should convert into plain manifests successfully with SingleNamespace")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true}}
-
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{"testWatchNs1"}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := render.RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
-	}
-
-	t.Log("By converting to plain")
-	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
-	require.NoError(t, err)
-
-	t.Log("By verifying if plain bundle has required objects")
-	require.NotNil(t, plainBundle)
-	require.Len(t, plainBundle.Objects, 5)
-
-	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("test-deployment", plainBundle.Objects)
-	require.NotNil(t, dep)
-	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
-	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
-}
-
-func TestRegistryV1SuiteGenerateOwnNamespace(t *testing.T) {
-	t.Log("RegistryV1 Suite Convert")
-	t.Log("It should generate objects successfully based on target namespaces")
-
-	t.Log("It should convert into plain manifests successfully with own namespace")
-	baseCSV, svc := getBaseCsvAndService()
-	csv := baseCSV.DeepCopy()
-	csv.Spec.InstallModes = []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true}}
-
-	t.Log("By creating a registry v1 bundle")
-	watchNamespaces := []string{installNamespace}
-	unstructuredSvc := convertToUnstructured(t, svc)
-	registryv1Bundle := render.RegistryV1{
-		PackageName: "testPkg",
-		CSV:         *csv,
-		Others:      []unstructured.Unstructured{unstructuredSvc},
-	}
-
-	t.Log("By converting to plain")
-	plainBundle, err := convert.PlainConverter.Convert(registryv1Bundle, installNamespace, watchNamespaces)
-	require.NoError(t, err)
-
-	t.Log("By verifying if plain bundle has required objects")
-	require.NotNil(t, plainBundle)
-	require.Len(t, plainBundle.Objects, 5)
-
-	t.Log("By verifying olm.targetNamespaces annotation in the deployment's pod template")
-	dep := findObjectByName("test-deployment", plainBundle.Objects)
-	require.NotNil(t, dep)
-	require.Contains(t, dep.(*appsv1.Deployment).Spec.Template.Annotations, olmNamespaces)
-	require.Equal(t, strings.Join(watchNamespaces, ","), dep.(*appsv1.Deployment).Spec.Template.Annotations[olmNamespaces])
-}
-
 func TestConvertInstallModeValidation(t *testing.T) {
 	for _, tc := range []struct {
 		description      string
@@ -609,7 +477,7 @@ func TestRegistryV1SuiteGenerateWebhooks_WebhookSupportFGEnabled(t *testing.T) {
 	require.NotNil(t, plainBundle)
 }
 
-func TestRegistryV1SuiteGenerateNoAPISerciceDefinitions(t *testing.T) {
+func TestRegistryV1SuiteGenerateNoAPIServiceDefinitions(t *testing.T) {
 	t.Log("RegistryV1 Suite Convert")
 	t.Log("It should generate objects successfully based on target namespaces")
 
