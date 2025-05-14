@@ -66,7 +66,9 @@ func Test_BundleToHelmChartConverter_ToHelmChart_NoAPIServiceDefinitions(t *test
 }
 
 func Test_BundleToHelmChartConverter_ToHelmChart_NoWebhooksWithoutCertProvider(t *testing.T) {
-	converter := convert.BundleToHelmChartConverter{}
+	converter := convert.BundleToHelmChartConverter{
+		IsWebhookSupportEnabled: true,
+	}
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
@@ -76,12 +78,29 @@ func Test_BundleToHelmChartConverter_ToHelmChart_NoWebhooksWithoutCertProvider(t
 
 	_, err := converter.ToHelmChart(b, "install-namespace", "")
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "unsupported bundle: webhookDefinitions are not supported")
+	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
+}
+
+func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksSupportDisabled(t *testing.T) {
+	converter := convert.BundleToHelmChartConverter{
+		IsWebhookSupportEnabled: false,
+	}
+
+	b := source.FromBundle(
+		bundle.RegistryV1{
+			CSV: MakeCSV(WithWebhookDefinitions(v1alpha1.WebhookDescription{})),
+		},
+	)
+
+	_, err := converter.ToHelmChart(b, "install-namespace", "")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 }
 
 func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksWithCertProvider(t *testing.T) {
 	converter := convert.BundleToHelmChartConverter{
-		CertificateProvider: FakeCertProvider{},
+		CertificateProvider:     FakeCertProvider{},
+		IsWebhookSupportEnabled: true,
 	}
 
 	b := source.FromBundle(

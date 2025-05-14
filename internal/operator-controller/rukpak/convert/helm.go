@@ -12,8 +12,9 @@ import (
 )
 
 type BundleToHelmChartConverter struct {
-	BundleRenderer      render.BundleRenderer
-	CertificateProvider render.CertificateProvider
+	BundleRenderer          render.BundleRenderer
+	CertificateProvider     render.CertificateProvider
+	IsWebhookSupportEnabled bool
 }
 
 func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
@@ -24,6 +25,14 @@ func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, ins
 
 	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
 		return nil, fmt.Errorf("unsupported bundle: apiServiceDefintions are not supported")
+	}
+
+	if len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
+		if !r.IsWebhookSupportEnabled {
+			return nil, fmt.Errorf("unsupported bundle: webhookDefinitions are not supported")
+		} else if r.CertificateProvider == nil {
+			return nil, fmt.Errorf("unsupported bundle: webhookDefinitions are not supported: certificate provider is nil")
+		}
 	}
 
 	if r.CertificateProvider == nil && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {

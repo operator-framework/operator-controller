@@ -67,6 +67,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
@@ -190,7 +192,7 @@ func run() error {
 		secretParts := strings.Split(cfg.globalPullSecret, "/")
 		if len(secretParts) != 2 {
 			err := fmt.Errorf("incorrect number of components")
-			setupLog.Error(err, "value of global-pull-secret should be of the format <namespace>/<name>")
+			setupLog.Error(err, "Value of global-pull-secret should be of the format <namespace>/<name>")
 			return err
 		}
 		globalPullSecretKey = &k8stypes.NamespacedName{Name: secretParts[1], Namespace: secretParts[0]}
@@ -422,12 +424,23 @@ func run() error {
 		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
 	}
 
+	// determine if a certificate provider should be set in the bundle renderer and feature support for the provider
+	// based on the feature flag
+	var certProvider render.CertificateProvider
+	var isWebhookSupportEnabled bool
+	if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
+		certProvider = certproviders.CertManagerCertificateProvider{}
+		isWebhookSupportEnabled = true
+	}
+
 	// now initialize the helmApplier, assigning the potentially nil preAuth
 	helmApplier := &applier.Helm{
 		ActionClientGetter: acg,
 		Preflights:         preflights,
 		BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
-			BundleRenderer: registryv1.Renderer,
+			BundleRenderer:          registryv1.Renderer,
+			CertificateProvider:     certProvider,
+			IsWebhookSupportEnabled: isWebhookSupportEnabled,
 		},
 		PreAuthorizer: preAuth,
 	}
