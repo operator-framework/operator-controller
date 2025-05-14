@@ -13,6 +13,7 @@ const (
 	// Ex: SomeFeature featuregate.Feature = "SomeFeature"
 	PreflightPermissions             featuregate.Feature = "PreflightPermissions"
 	SingleOwnNamespaceInstallSupport featuregate.Feature = "SingleOwnNamespaceInstallSupport"
+	SyntheticPermissions             featuregate.Feature = "SyntheticPermissions"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -28,6 +29,14 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// registry+v1 cluster extensions with single or own namespaces modes
 	// i.e. with a single watch namespace.
 	SingleOwnNamespaceInstallSupport: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// SyntheticPermissions enables support for a synthetic user permission
+	// model to manage operator permission boundaries
+	SyntheticPermissions: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,

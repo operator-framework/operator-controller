@@ -1,0 +1,11 @@
+# enable synthetic-user feature gate
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+    - ""
+    resources:
+    - groups
+    - users
+    verbs:
+    - impersonate
