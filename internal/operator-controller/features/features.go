@@ -11,10 +11,11 @@ import (
 const (
 	// Add new feature gates constants (strings)
 	// Ex: SomeFeature featuregate.Feature = "SomeFeature"
-	PreflightPermissions             featuregate.Feature = "PreflightPermissions"
-	SingleOwnNamespaceInstallSupport featuregate.Feature = "SingleOwnNamespaceInstallSupport"
-	SyntheticPermissions             featuregate.Feature = "SyntheticPermissions"
-	WebhookProviderCertManager       featuregate.Feature = "WebhookProviderCertManager"
+	PreflightPermissions              featuregate.Feature = "PreflightPermissions"
+	SingleOwnNamespaceInstallSupport  featuregate.Feature = "SingleOwnNamespaceInstallSupport"
+	SyntheticPermissions              featuregate.Feature = "SyntheticPermissions"
+	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
+	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -48,6 +49,16 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// mutating, and/or conversion webhooks with CertManager
 	// as the certificate provider.
 	WebhookProviderCertManager: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// WebhookProviderCertManager enables support for installing
+	// registry+v1 cluster extensions that include validating,
+	// mutating, and/or conversion webhooks with Openshift Service CA
+	// as the certificate provider.
+	WebhookProviderOpenshiftServiceCA: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,

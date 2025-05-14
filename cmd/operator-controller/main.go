@@ -431,6 +431,9 @@ func run() error {
 	if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
 		certProvider = certproviders.CertManagerCertificateProvider{}
 		isWebhookSupportEnabled = true
+	} else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
+		certProvider = certproviders.OpenshiftServiceCaCertificateProvider{}
+		isWebhookSupportEnabled = true
 	}
 
 	// now initialize the helmApplier, assigning the potentially nil preAuth
