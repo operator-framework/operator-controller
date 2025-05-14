@@ -20,8 +20,10 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	registry "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/operator-registry"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/generators"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
 )
@@ -189,29 +191,6 @@ func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS
 	return nil
 }
 
-func validateTargetNamespaces(supportedInstallModes sets.Set[string], installNamespace string, targetNamespaces []string) error {
-	set := sets.New[string](targetNamespaces...)
-	switch {
-	case set.Len() == 0 || (set.Len() == 1 && set.Has("")):
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeAllNamespaces)) {
-			return nil
-		}
-		return fmt.Errorf("supported install modes %v do not support targeting all namespaces", sets.List(supportedInstallModes))
-	case set.Len() == 1 && !set.Has(""):
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeSingleNamespace)) {
-			return nil
-		}
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) && targetNamespaces[0] == installNamespace {
-			return nil
-		}
-	default:
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeMultiNamespace)) && !set.Has("") {
-			return nil
-		}
-	}
-	return fmt.Errorf("supported install modes %v do not support target namespaces %v", sets.List[string](supportedInstallModes), targetNamespaces)
-}
-
 var PlainConverter = Converter{
 	BundleRenderer: render.BundleRenderer{
 		BundleValidator: validators.RegistryV1BundleValidator,
@@ -220,6 +199,10 @@ var PlainConverter = Converter{
 			generators.BundleCRDGenerator,
 			generators.BundleAdditionalResourcesGenerator,
 			generators.BundleCSVDeploymentGenerator,
+			generators.BundleValidatingWebhookResourceGenerator,
+			generators.BundleMutatingWebhookResourceGenerator,
+			generators.BundleWebhookServiceResourceGenerator,
+			generators.CertProviderResourceGenerator,
 		},
 	},
 }
@@ -249,19 +232,20 @@ func (c Converter) Convert(rv1 render.RegistryV1, installNamespace string, targe
 		}
 	}
 
-	if err := validateTargetNamespaces(supportedInstallModes, installNamespace, targetNamespaces); err != nil {
-		return nil, err
-	}
-
 	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
 		return nil, fmt.Errorf("apiServiceDefintions are not supported")
 	}
 
-	if len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
+	if !features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
 		return nil, fmt.Errorf("webhookDefinitions are not supported")
 	}
 
-	objs, err := c.BundleRenderer.Render(rv1, installNamespace, render.WithTargetNamespaces(targetNamespaces...))
+	objs, err := c.BundleRenderer.Render(
+		rv1,
+		installNamespace,
+		render.WithTargetNamespaces(targetNamespaces...),
+		render.WithCertificateProvider(certproviders.CertManagerCertificateProvider{}),
+	)
 	if err != nil {
 		return nil, err
 	}

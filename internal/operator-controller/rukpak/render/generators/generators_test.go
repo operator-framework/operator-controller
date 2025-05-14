@@ -8,13 +8,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -22,7 +23,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/generators"
-	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
+	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
 func Test_BundleCSVRBACResourceGenerator_HasCorrectGenerators(t *testing.T) {
@@ -173,6 +174,160 @@ func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 			require.Equal(t, tc.expectedResources, objs)
 		})
 	}
+}
+
+func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *testing.T) {
+	fakeProvider := FakeCertProvider{
+		GetCertSecretInfoFn: func(cfg render.CertificateProvisionerConfig) render.CertSecretInfo {
+			return render.CertSecretInfo{
+				SecretName:     "some-secret",
+				CertificateKey: "some-cert-key",
+				PrivateKeyKey:  "some-private-key-key",
+			}
+		},
+	}
+
+	bundle := &render.RegistryV1{
+		CSV: MakeCSV(
+			WithWebhookDefinitions(
+				v1alpha1.WebhookDescription{
+					Type:           v1alpha1.ValidatingAdmissionWebhook,
+					DeploymentName: "deployment-one",
+				}),
+			// deployment must have a referencing webhook (or owned apiservice) definition to trigger cert secret
+			WithStrategyDeploymentSpecs(
+				v1alpha1.StrategyDeploymentSpec{
+					Name: "deployment-one",
+					Spec: appsv1.DeploymentSpec{
+						Template: corev1.PodTemplateSpec{
+							Spec: corev1.PodSpec{
+								Volumes: []corev1.Volume{
+									{
+										Name: "apiservice-cert",
+										VolumeSource: corev1.VolumeSource{
+											EmptyDir: &corev1.EmptyDirVolumeSource{},
+										},
+									},
+									{
+										Name: "some-other-mount",
+										VolumeSource: corev1.VolumeSource{
+											EmptyDir: &corev1.EmptyDirVolumeSource{},
+										},
+									},
+									// expect webhook-cert volume to be injected
+								},
+								Containers: []corev1.Container{
+									{
+										Name: "container-1",
+										VolumeMounts: []corev1.VolumeMount{
+											// expect apiservice-cert volume to be injected
+											{
+												Name:      "webhook-cert",
+												MountPath: "/webhook-cert-path",
+											}, {
+												Name:      "some-other-mount",
+												MountPath: "/some/other/mount/path",
+											},
+										},
+									},
+									{
+										Name: "container-2",
+										// expect cert volumes to be injected
+									},
+								},
+							},
+						},
+					},
+				},
+			),
+		),
+	}
+
+	objs, err := generators.BundleCSVDeploymentGenerator(bundle, render.Options{
+		InstallNamespace:    "install-namespace",
+		CertificateProvider: fakeProvider,
+	})
+	require.NoError(t, err)
+	require.Len(t, objs, 1)
+
+	deployment := objs[0].(*appsv1.Deployment)
+	require.NotNil(t, deployment)
+
+	require.Equal(t, []corev1.Volume{
+		{
+			Name: "some-other-mount",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+		{
+			Name: "apiservice-cert",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "some-secret",
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "some-cert-key",
+							Path: "apiserver.crt",
+						},
+						{
+							Key:  "some-private-key-key",
+							Path: "apiserver.key",
+						},
+					},
+				},
+			},
+		}, {
+			Name: "webhook-cert",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "some-secret",
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "some-cert-key",
+							Path: "tls.crt",
+						},
+						{
+							Key:  "some-private-key-key",
+							Path: "tls.key",
+						},
+					},
+				},
+			},
+		},
+	}, deployment.Spec.Template.Spec.Volumes)
+	require.Equal(t, []corev1.Container{
+		{
+			Name: "container-1",
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "some-other-mount",
+					MountPath: "/some/other/mount/path",
+				},
+				{
+					Name:      "apiservice-cert",
+					MountPath: "/apiserver.local.config/certificates",
+				},
+				{
+					Name:      "webhook-cert",
+					MountPath: "/tmp/k8s-webhook-server/serving-certs",
+				},
+			},
+		},
+		{
+			Name: "container-2",
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "apiservice-cert",
+					MountPath: "/apiserver.local.config/certificates",
+				},
+				{
+					Name:      "webhook-cert",
+					MountPath: "/tmp/k8s-webhook-server/serving-certs",
+				},
+			},
+		},
+	}, deployment.Spec.Template.Spec.Containers)
 }
 
 func Test_BundleCSVDeploymentGenerator_FailsOnNil(t *testing.T) {
@@ -1118,6 +1273,164 @@ func Test_BundleCRDGenerator_Succeeds(t *testing.T) {
 	}, objs)
 }
 
+func Test_BundleCRDGenerator_WithConversionWebhook_Succeeds(t *testing.T) {
+	opts := render.Options{
+		InstallNamespace: "install-namespace",
+		TargetNamespaces: []string{""},
+	}
+
+	bundle := &render.RegistryV1{
+		CRDs: []apiextensionsv1.CustomResourceDefinition{
+			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
+			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
+		},
+		CSV: MakeCSV(
+			WithWebhookDefinitions(
+				v1alpha1.WebhookDescription{
+					Type:                    v1alpha1.ConversionWebhook,
+					WebhookPath:             ptr.To("/some/path"),
+					ContainerPort:           8443,
+					AdmissionReviewVersions: []string{"v1", "v1beta1"},
+					ConversionCRDs:          []string{"crd-one"},
+					DeploymentName:          "some-deployment",
+				},
+				v1alpha1.WebhookDescription{
+					// should use / as WebhookPath by default
+					Type:                    v1alpha1.ConversionWebhook,
+					ContainerPort:           8443,
+					AdmissionReviewVersions: []string{"v1", "v1beta1"},
+					ConversionCRDs:          []string{"crd-two"},
+					DeploymentName:          "some-deployment",
+				},
+			),
+		),
+	}
+
+	objs, err := generators.BundleCRDGenerator(bundle, opts)
+	require.NoError(t, err)
+	require.Equal(t, []client.Object{
+		&apiextensionsv1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "crd-one",
+			},
+			Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+				Conversion: &apiextensionsv1.CustomResourceConversion{
+					Strategy: apiextensionsv1.WebhookConverter,
+					Webhook: &apiextensionsv1.WebhookConversion{
+						ClientConfig: &apiextensionsv1.WebhookClientConfig{
+							Service: &apiextensionsv1.ServiceReference{
+								Namespace: "install-namespace",
+								Name:      "some-deployment-service",
+								Path:      ptr.To("/some/path"),
+								Port:      ptr.To(int32(8443)),
+							},
+						},
+						ConversionReviewVersions: []string{"v1", "v1beta1"},
+					},
+				},
+			},
+		},
+		&apiextensionsv1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "crd-two",
+			},
+			Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+				Conversion: &apiextensionsv1.CustomResourceConversion{
+					Strategy: apiextensionsv1.WebhookConverter,
+					Webhook: &apiextensionsv1.WebhookConversion{
+						ClientConfig: &apiextensionsv1.WebhookClientConfig{
+							Service: &apiextensionsv1.ServiceReference{
+								Namespace: "install-namespace",
+								Name:      "some-deployment-service",
+								Path:      ptr.To("/"),
+								Port:      ptr.To(int32(8443)),
+							},
+						},
+						ConversionReviewVersions: []string{"v1", "v1beta1"},
+					},
+				},
+			},
+		},
+	}, objs)
+}
+
+func Test_BundleCRDGenerator_WithConversionWebhook_Fails(t *testing.T) {
+	opts := render.Options{
+		InstallNamespace: "install-namespace",
+		TargetNamespaces: []string{""},
+	}
+
+	bundle := &render.RegistryV1{
+		CRDs: []apiextensionsv1.CustomResourceDefinition{
+			{
+				ObjectMeta: metav1.ObjectMeta{Name: "crd-one"},
+				Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+					PreserveUnknownFields: true,
+				},
+			},
+		},
+		CSV: MakeCSV(
+			WithWebhookDefinitions(
+				v1alpha1.WebhookDescription{
+					Type:                    v1alpha1.ConversionWebhook,
+					WebhookPath:             ptr.To("/some/path"),
+					ContainerPort:           8443,
+					AdmissionReviewVersions: []string{"v1", "v1beta1"},
+					ConversionCRDs:          []string{"crd-one"},
+					DeploymentName:          "some-deployment",
+				},
+			),
+		),
+	}
+
+	objs, err := generators.BundleCRDGenerator(bundle, opts)
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "must have .spec.preserveUnknownFields set to false to let API Server call webhook to do the conversion")
+}
+
+func Test_BundleCRDGenerator_WithCertProvider_Succeeds(t *testing.T) {
+	fakeProvider := FakeCertProvider{
+		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
+			obj.SetAnnotations(map[string]string{
+				"cert-provider": "annotation",
+			})
+			return nil
+		},
+	}
+
+	opts := render.Options{
+		InstallNamespace:    "install-namespace",
+		TargetNamespaces:    []string{""},
+		CertificateProvider: fakeProvider,
+	}
+
+	bundle := &render.RegistryV1{
+		CRDs: []apiextensionsv1.CustomResourceDefinition{
+			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
+			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
+		},
+		CSV: MakeCSV(
+			WithWebhookDefinitions(
+				v1alpha1.WebhookDescription{
+					Type:           v1alpha1.ConversionWebhook,
+					DeploymentName: "my-deployment",
+					ConversionCRDs: []string{
+						"crd-one",
+					},
+				},
+			),
+		),
+	}
+
+	objs, err := generators.BundleCRDGenerator(bundle, opts)
+	require.NoError(t, err)
+	require.Len(t, objs, 2)
+	require.Equal(t, map[string]string{
+		"cert-provider": "annotation",
+	}, objs[0].GetAnnotations())
+}
+
 func Test_BundleCRDGenerator_FailsOnNil(t *testing.T) {
 	objs, err := generators.BundleCRDGenerator(nil, render.Options{})
 	require.Nil(t, objs)
@@ -1132,7 +1445,7 @@ func Test_BundleAdditionalResourcesGenerator_Succeeds(t *testing.T) {
 
 	bundle := &render.RegistryV1{
 		Others: []unstructured.Unstructured{
-			toUnstructured(t,
+			*ToUnstructuredT(t,
 				&corev1.Service{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Service",
@@ -1143,7 +1456,7 @@ func Test_BundleAdditionalResourcesGenerator_Succeeds(t *testing.T) {
 					},
 				},
 			),
-			toUnstructured(t,
+			*ToUnstructuredT(t,
 				&rbacv1.ClusterRole{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ClusterRole",
@@ -1169,15 +1482,1005 @@ func Test_BundleAdditionalResourcesGenerator_FailsOnNil(t *testing.T) {
 	require.Contains(t, err.Error(), "bundle cannot be nil")
 }
 
-func toUnstructured(t *testing.T, obj client.Object) unstructured.Unstructured {
-	gvk := obj.GetObjectKind().GroupVersionKind()
+func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
+	fakeProvider := FakeCertProvider{
+		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
+			obj.SetAnnotations(map[string]string{
+				"cert-provider": "annotation",
+			})
+			return nil
+		},
+	}
+	for _, tc := range []struct {
+		name              string
+		bundle            *render.RegistryV1
+		opts              render.Options
+		expectedResources []client.Object
+	}{
+		{
+			name: "generates validating webhook configuration resources described in the bundle's cluster service version",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName:   "my-webhook",
+							DeploymentName: "my-deployment",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							WebhookPath:   ptr.To("/webhook-path"),
+							ContainerPort: 443,
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&admissionregistrationv1.ValidatingWebhookConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ValidatingWebhookConfiguration",
+						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name: "my-webhook",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Namespace: "install-namespace",
+									Name:      "my-deployment-service",
+									Path:      ptr.To("/webhook-path"),
+									Port:      ptr.To(int32(443)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName:   "my-webhook-",
+							DeploymentName: "my-deployment",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							WebhookPath:   ptr.To("/webhook-path"),
+							ContainerPort: 443,
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&admissionregistrationv1.ValidatingWebhookConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ValidatingWebhookConfiguration",
+						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name: "my-webhook",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Namespace: "install-namespace",
+									Name:      "my-deployment-service",
+									Path:      ptr.To("/webhook-path"),
+									Port:      ptr.To(int32(443)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "generates validating webhook configuration resources with certificate provider modifications",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName:   "my-webhook",
+							DeploymentName: "my-deployment",
+							ContainerPort:  443,
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace:    "install-namespace",
+				TargetNamespaces:    []string{"watch-namespace-one", "watch-namespace-two"},
+				CertificateProvider: fakeProvider,
+			},
+			expectedResources: []client.Object{
+				&admissionregistrationv1.ValidatingWebhookConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ValidatingWebhookConfiguration",
+						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
+						Annotations: map[string]string{
+							"cert-provider": "annotation",
+						},
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name: "my-webhook",
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Namespace: "install-namespace",
+									Name:      "my-deployment-service",
+									Port:      ptr.To(int32(443)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			objs, err := generators.BundleValidatingWebhookResourceGenerator(tc.bundle, tc.opts)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedResources, objs)
+		})
+	}
+}
 
-	var u unstructured.Unstructured
-	uObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+func Test_BundleValidatingWebhookResourceGenerator_FailsOnNil(t *testing.T) {
+	objs, err := generators.BundleValidatingWebhookResourceGenerator(nil, render.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
+func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
+	fakeProvider := FakeCertProvider{
+		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
+			obj.SetAnnotations(map[string]string{
+				"cert-provider": "annotation",
+			})
+			return nil
+		},
+	}
+	for _, tc := range []struct {
+		name              string
+		bundle            *render.RegistryV1
+		opts              render.Options
+		expectedResources []client.Object
+	}{
+		{
+			name: "generates validating webhook configuration resources described in the bundle's cluster service version",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							GenerateName:   "my-webhook",
+							DeploymentName: "my-deployment",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							WebhookPath:        ptr.To("/webhook-path"),
+							ContainerPort:      443,
+							ReinvocationPolicy: ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&admissionregistrationv1.MutatingWebhookConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "MutatingWebhookConfiguration",
+						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
+					},
+					Webhooks: []admissionregistrationv1.MutatingWebhook{
+						{
+							Name: "my-webhook",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							ReinvocationPolicy: ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Namespace: "install-namespace",
+									Name:      "my-deployment-service",
+									Path:      ptr.To("/webhook-path"),
+									Port:      ptr.To(int32(443)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							GenerateName:   "my-webhook-",
+							DeploymentName: "my-deployment",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							WebhookPath:        ptr.To("/webhook-path"),
+							ContainerPort:      443,
+							ReinvocationPolicy: ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&admissionregistrationv1.MutatingWebhookConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "MutatingWebhookConfiguration",
+						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
+					},
+					Webhooks: []admissionregistrationv1.MutatingWebhook{
+						{
+							Name: "my-webhook",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Operations: []admissionregistrationv1.OperationType{
+										admissionregistrationv1.OperationAll,
+									},
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{""},
+										Resources:   []string{"namespaces"},
+									},
+								},
+							},
+							FailurePolicy: ptr.To(admissionregistrationv1.Fail),
+							ObjectSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"foo": "bar",
+								},
+							},
+							SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassNone),
+							TimeoutSeconds: ptr.To(int32(1)),
+							AdmissionReviewVersions: []string{
+								"v1beta1",
+								"v1beta2",
+							},
+							ReinvocationPolicy: ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Namespace: "install-namespace",
+									Name:      "my-deployment-service",
+									Path:      ptr.To("/webhook-path"),
+									Port:      ptr.To(int32(443)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "generates validating webhook configuration resources with certificate provider modifications",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							GenerateName:   "my-webhook",
+							DeploymentName: "my-deployment",
+							ContainerPort:  443,
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace:    "install-namespace",
+				TargetNamespaces:    []string{"watch-namespace-one", "watch-namespace-two"},
+				CertificateProvider: fakeProvider,
+			},
+			expectedResources: []client.Object{
+				&admissionregistrationv1.MutatingWebhookConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "MutatingWebhookConfiguration",
+						APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-webhook",
+						Namespace: "install-namespace",
+						Annotations: map[string]string{
+							"cert-provider": "annotation",
+						},
+					},
+					Webhooks: []admissionregistrationv1.MutatingWebhook{
+						{
+							Name: "my-webhook",
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Namespace: "install-namespace",
+									Name:      "my-deployment-service",
+									Port:      ptr.To(int32(443)),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			objs, err := generators.BundleMutatingWebhookResourceGenerator(tc.bundle, tc.opts)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedResources, objs)
+		})
+	}
+}
+
+func Test_BundleMutatingWebhookResourceGenerator_FailsOnNil(t *testing.T) {
+	objs, err := generators.BundleMutatingWebhookResourceGenerator(nil, render.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
+func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
+	fakeProvider := FakeCertProvider{
+		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
+			obj.SetAnnotations(map[string]string{
+				"cert-provider": "annotation",
+			})
+			return nil
+		},
+	}
+	for _, tc := range []struct {
+		name              string
+		bundle            *render.RegistryV1
+		opts              render.Options
+		expectedResources []client.Object
+	}{
+		{
+			name: "generates webhook services using container port 443 and target port 443 by default",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "my-deployment",
+						}),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							DeploymentName: "my-deployment",
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&corev1.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-deployment-service",
+						Namespace: "install-namespace",
+					},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name: "443",
+								Port: int32(443),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 443,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "generates webhook services using the given container port and setting target port the same as the container port if not given",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "my-deployment",
+						}),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ValidatingAdmissionWebhook,
+							DeploymentName: "my-deployment",
+							ContainerPort:  int32(8443),
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&corev1.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-deployment-service",
+						Namespace: "install-namespace",
+					},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name: "8443",
+								Port: int32(8443),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 8443,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "generates webhook services using given container port of 443 and given target port",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "my-deployment",
+						}),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ConversionWebhook,
+							DeploymentName: "my-deployment",
+							TargetPort: &intstr.IntOrString{
+								Type:   intstr.Int,
+								IntVal: 8080,
+							},
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&corev1.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-deployment-service",
+						Namespace: "install-namespace",
+					},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name: "443",
+								Port: int32(443),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 8080,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "generates webhook services using given container port and target port",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "my-deployment",
+						}),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ConversionWebhook,
+							DeploymentName: "my-deployment",
+							ContainerPort:  int32(9090),
+							TargetPort: &intstr.IntOrString{
+								Type:   intstr.Int,
+								IntVal: 9099,
+							},
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&corev1.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-deployment-service",
+						Namespace: "install-namespace",
+					},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name: "9090",
+								Port: int32(9090),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 9099,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "generates webhook services using referenced deployment defined label selector",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "my-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Selector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"foo": "bar",
+									},
+								},
+							},
+						}),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ConversionWebhook,
+							DeploymentName: "my-deployment",
+							ContainerPort:  int32(9090),
+							TargetPort: &intstr.IntOrString{
+								Type:   intstr.Int,
+								IntVal: 9099,
+							},
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&corev1.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-deployment-service",
+						Namespace: "install-namespace",
+					},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name: "9090",
+								Port: int32(9090),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 9099,
+								},
+							},
+						},
+						Selector: map[string]string{
+							"foo": "bar",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "aggregates all webhook definitions referencing the same deployment into a single service",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "my-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Selector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"foo": "bar",
+									},
+								},
+							},
+						}),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							DeploymentName: "my-deployment",
+						},
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ValidatingAdmissionWebhook,
+							DeploymentName: "my-deployment",
+							ContainerPort:  int32(8443),
+						},
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ConversionWebhook,
+							DeploymentName: "my-deployment",
+							TargetPort: &intstr.IntOrString{
+								Type:   intstr.Int,
+								IntVal: 8080,
+							},
+						},
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.ConversionWebhook,
+							DeploymentName: "my-deployment",
+							ContainerPort:  int32(9090),
+							TargetPort: &intstr.IntOrString{
+								Type:   intstr.Int,
+								IntVal: 9099,
+							},
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace: "install-namespace",
+				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+			},
+			expectedResources: []client.Object{
+				&corev1.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-deployment-service",
+						Namespace: "install-namespace",
+					},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name: "443",
+								Port: int32(443),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 443,
+								},
+							}, {
+								Name: "443",
+								Port: int32(443),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 8080,
+								},
+							}, {
+								Name: "8443",
+								Port: int32(8443),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 8443,
+								},
+							}, {
+								Name: "9090",
+								Port: int32(9090),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 9099,
+								},
+							},
+						},
+						Selector: map[string]string{
+							"foo": "bar",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "applies cert provider modifiers to webhook service",
+			bundle: &render.RegistryV1{
+				CSV: MakeCSV(
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "my-deployment",
+						}),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:           v1alpha1.MutatingAdmissionWebhook,
+							DeploymentName: "my-deployment",
+						},
+					),
+				),
+			},
+			opts: render.Options{
+				InstallNamespace:    "install-namespace",
+				TargetNamespaces:    []string{"watch-namespace-one", "watch-namespace-two"},
+				CertificateProvider: fakeProvider,
+			},
+			expectedResources: []client.Object{
+				&corev1.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-deployment-service",
+						Namespace: "install-namespace",
+						Annotations: map[string]string{
+							"cert-provider": "annotation",
+						},
+					},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name: "443",
+								Port: int32(443),
+								TargetPort: intstr.IntOrString{
+									Type:   intstr.Int,
+									IntVal: 443,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			objs, err := generators.BundleWebhookServiceResourceGenerator(tc.bundle, tc.opts)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedResources, objs)
+		})
+	}
+}
+
+func Test_BundleWebhookServiceResourceGenerator_FailsOnNil(t *testing.T) {
+	objs, err := generators.BundleMutatingWebhookResourceGenerator(nil, render.Options{})
+	require.Nil(t, objs)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bundle cannot be nil")
+}
+
+func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
+	fakeProvider := FakeCertProvider{
+		AdditionalObjectsFn: func(cfg render.CertificateProvisionerConfig) ([]unstructured.Unstructured, error) {
+			return []unstructured.Unstructured{*ToUnstructuredT(t, &corev1.Secret{
+				TypeMeta: metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: cfg.CertName,
+				},
+			})}, nil
+		},
+	}
+
+	objs, err := generators.CertProviderResourceGenerator(&render.RegistryV1{
+		CSV: MakeCSV(
+			WithWebhookDefinitions(
+				// only generate resources for deployments referenced by webhook definitions
+				v1alpha1.WebhookDescription{
+					Type:           v1alpha1.MutatingAdmissionWebhook,
+					DeploymentName: "my-deployment",
+				},
+			),
+			WithStrategyDeploymentSpecs(
+				v1alpha1.StrategyDeploymentSpec{
+					Name: "my-deployment",
+				},
+				v1alpha1.StrategyDeploymentSpec{
+					Name: "my-other-deployment",
+				},
+			),
+		),
+	}, render.Options{
+		InstallNamespace:    "install-namespace",
+		CertificateProvider: fakeProvider,
+	})
 	require.NoError(t, err)
-	unstructured.RemoveNestedField(uObj, "metadata", "creationTimestamp")
-	unstructured.RemoveNestedField(uObj, "status")
-	u.Object = uObj
-	u.SetGroupVersionKind(gvk)
-	return u
+	require.Equal(t, []client.Object{
+		ToUnstructuredT(t, &corev1.Secret{
+			TypeMeta:   metav1.TypeMeta{Kind: "Secret", APIVersion: corev1.SchemeGroupVersion.String()},
+			ObjectMeta: metav1.ObjectMeta{Name: "my-deployment-service-cert"},
+		}),
+	}, objs)
 }

@@ -14,6 +14,7 @@ const (
 	PreflightPermissions             featuregate.Feature = "PreflightPermissions"
 	SingleOwnNamespaceInstallSupport featuregate.Feature = "SingleOwnNamespaceInstallSupport"
 	SyntheticPermissions             featuregate.Feature = "SyntheticPermissions"
+	WebhookProviderCertManager       featuregate.Feature = "WebhookProviderCertManager"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -37,6 +38,16 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// SyntheticPermissions enables support for a synthetic user permission
 	// model to manage operator permission boundaries
 	SyntheticPermissions: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// WebhookProviderCertManager enables support for installing
+	// registry+v1 cluster extensions that include validating,
+	// mutating, and/or conversion webhooks with CertManager
+	// as the certificate provider.
+	WebhookProviderCertManager: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
