@@ -2,7 +2,6 @@ package validators_test
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,41 +10,20 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/validators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
-
-func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
-	expectedValidationFns := []func(v1 *render.RegistryV1) []error{
-		validators.CheckDeploymentSpecUniqueness,
-		validators.CheckDeploymentNameIsDNS1123SubDomain,
-		validators.CheckCRDResourceUniqueness,
-		validators.CheckOwnedCRDExistence,
-		validators.CheckPackageNameNotEmpty,
-		validators.CheckWebhookDeploymentReferentialIntegrity,
-		validators.CheckWebhookNameUniqueness,
-		validators.CheckWebhookNameIsDNS1123SubDomain,
-		validators.CheckConversionWebhookCRDReferenceUniqueness,
-		validators.CheckConversionWebhooksReferenceOwnedCRDs,
-	}
-	actualValidationFns := validators.RegistryV1BundleValidator
-
-	require.Equal(t, len(expectedValidationFns), len(actualValidationFns))
-	for i := range expectedValidationFns {
-		require.Equal(t, reflect.ValueOf(expectedValidationFns[i]).Pointer(), reflect.ValueOf(actualValidationFns[i]).Pointer(), "bundle validator has unexpected validation function")
-	}
-}
 
 func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts bundles with unique deployment strategy spec names",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
@@ -56,7 +34,7 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with duplicate deployment strategy spec names",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
@@ -70,7 +48,7 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 			},
 		}, {
 			name: "errors are ordered by deployment strategy spec name",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-a"},
@@ -97,12 +75,12 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 func Test_CheckDeploymentNameIsDNS1123SubDomain(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts valid deployment strategy spec names",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
@@ -113,7 +91,7 @@ func Test_CheckDeploymentNameIsDNS1123SubDomain(t *testing.T) {
 			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with invalid deployment strategy spec names - errors are sorted by name",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "-bad-name"},
@@ -139,12 +117,12 @@ func Test_CheckDeploymentNameIsDNS1123SubDomain(t *testing.T) {
 func Test_CRDResourceUniqueness(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts bundles with unique custom resource definition resources",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CRDs: []apiextensionsv1.CustomResourceDefinition{
 					{ObjectMeta: metav1.ObjectMeta{Name: "a.crd.something"}},
 					{ObjectMeta: metav1.ObjectMeta{Name: "b.crd.something"}},
@@ -153,7 +131,7 @@ func Test_CRDResourceUniqueness(t *testing.T) {
 			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with duplicate custom resource definition resources",
-			bundle: &render.RegistryV1{CRDs: []apiextensionsv1.CustomResourceDefinition{
+			bundle: &bundle.RegistryV1{CRDs: []apiextensionsv1.CustomResourceDefinition{
 				{ObjectMeta: metav1.ObjectMeta{Name: "a.crd.something"}},
 				{ObjectMeta: metav1.ObjectMeta{Name: "a.crd.something"}},
 			}},
@@ -162,7 +140,7 @@ func Test_CRDResourceUniqueness(t *testing.T) {
 			},
 		}, {
 			name: "errors are ordered by custom resource definition name",
-			bundle: &render.RegistryV1{CRDs: []apiextensionsv1.CustomResourceDefinition{
+			bundle: &bundle.RegistryV1{CRDs: []apiextensionsv1.CustomResourceDefinition{
 				{ObjectMeta: metav1.ObjectMeta{Name: "c.crd.something"}},
 				{ObjectMeta: metav1.ObjectMeta{Name: "c.crd.something"}},
 				{ObjectMeta: metav1.ObjectMeta{Name: "a.crd.something"}},
@@ -184,12 +162,12 @@ func Test_CRDResourceUniqueness(t *testing.T) {
 func Test_CheckOwnedCRDExistence(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts bundles with existing owned custom resource definition resources",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CRDs: []apiextensionsv1.CustomResourceDefinition{
 					{ObjectMeta: metav1.ObjectMeta{Name: "a.crd.something"}},
 					{ObjectMeta: metav1.ObjectMeta{Name: "b.crd.something"}},
@@ -204,7 +182,7 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with missing owned custom resource definition resources",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CRDs: []apiextensionsv1.CustomResourceDefinition{},
 				CSV: MakeCSV(
 					WithOwnedCRDs(v1alpha1.CRDDescription{Name: "a.crd.something"}),
@@ -215,7 +193,7 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 			},
 		}, {
 			name: "errors are ordered by owned custom resource definition name",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CRDs: []apiextensionsv1.CustomResourceDefinition{},
 				CSV: MakeCSV(
 					WithOwnedCRDs(
@@ -242,17 +220,17 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 func Test_CheckPackageNameNotEmpty(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts bundles with non-empty package name",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				PackageName: "not-empty",
 			},
 		}, {
 			name:   "rejects bundles with empty package name",
-			bundle: &render.RegistryV1{},
+			bundle: &bundle.RegistryV1{},
 			expectedErrs: []error{
 				errors.New("package name is empty"),
 			},
@@ -268,12 +246,12 @@ func Test_CheckPackageNameNotEmpty(t *testing.T) {
 func Test_CheckWebhookSupport(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts bundles with validating webhook definitions when they only support AllNamespaces install mode",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 					WithWebhookDefinitions(
@@ -286,7 +264,7 @@ func Test_CheckWebhookSupport(t *testing.T) {
 		},
 		{
 			name: "accepts bundles with mutating webhook definitions when they only support AllNamespaces install mode",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 					WithWebhookDefinitions(
@@ -299,7 +277,7 @@ func Test_CheckWebhookSupport(t *testing.T) {
 		},
 		{
 			name: "accepts bundles with conversion webhook definitions when they only support AllNamespaces install mode",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
 					WithWebhookDefinitions(
@@ -312,7 +290,7 @@ func Test_CheckWebhookSupport(t *testing.T) {
 		},
 		{
 			name: "rejects bundles with validating webhook definitions when they support more modes than AllNamespaces install mode",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
 					WithWebhookDefinitions(
@@ -326,7 +304,7 @@ func Test_CheckWebhookSupport(t *testing.T) {
 		},
 		{
 			name: "accepts bundles with mutating webhook definitions when they support more modes than AllNamespaces install mode",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
 					WithWebhookDefinitions(
@@ -340,7 +318,7 @@ func Test_CheckWebhookSupport(t *testing.T) {
 		},
 		{
 			name: "accepts bundles with conversion webhook definitions when they support more modes than AllNamespaces install mode",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
 					WithWebhookDefinitions(
@@ -363,12 +341,12 @@ func Test_CheckWebhookSupport(t *testing.T) {
 func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts bundles where webhook definitions reference existing strategy deployment specs",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
@@ -385,7 +363,7 @@ func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 			},
 		}, {
 			name: "rejects bundles with webhook definitions that reference non-existing strategy deployment specs",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
@@ -404,7 +382,7 @@ func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 			},
 		}, {
 			name: "errors are ordered by deployment strategy spec name, webhook type, and webhook name",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
@@ -461,17 +439,17 @@ func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 func Test_CheckWebhookNameUniqueness(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts bundles without webhook definitions",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(),
 			},
 		}, {
 			name: "accepts bundles with unique webhook names",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -498,7 +476,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 			},
 		}, {
 			name: "accepts bundles with webhooks with the same name but different types",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -516,7 +494,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 			},
 		}, {
 			name: "rejects bundles with duplicate validating webhook definitions",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -534,7 +512,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 			},
 		}, {
 			name: "rejects bundles with duplicate mutating webhook definitions",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -552,7 +530,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 			},
 		}, {
 			name: "rejects bundles with duplicate conversion webhook definitions",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -570,7 +548,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 			},
 		}, {
 			name: "orders errors by webhook type and name",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -637,15 +615,15 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name:   "accepts bundles without webhook definitions",
-			bundle: &render.RegistryV1{},
+			bundle: &bundle.RegistryV1{},
 		}, {
 			name: "accepts bundles without conversion webhook definitions",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -661,7 +639,7 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 			},
 		}, {
 			name: "accepts bundles with conversion webhooks that reference owned CRDs",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "some.crd.something"},
@@ -681,7 +659,7 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 			},
 		}, {
 			name: "rejects bundles with conversion webhooks that reference existing CRDs that are not owned",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "some.crd.something"},
@@ -703,7 +681,7 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 			},
 		}, {
 			name: "errors are ordered by webhook name and CRD name",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "b.crd.something"},
@@ -751,17 +729,17 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name:         "accepts bundles without webhook definitions",
-			bundle:       &render.RegistryV1{},
+			bundle:       &bundle.RegistryV1{},
 			expectedErrs: []error{},
 		},
 		{
 			name: "accepts bundles without conversion webhook definitions",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
@@ -779,7 +757,7 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 		},
 		{
 			name: "accepts bundles with conversion webhooks that reference different CRDs",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "some.crd.something"},
@@ -807,7 +785,7 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 		},
 		{
 			name: "rejects bundles with conversion webhooks that reference the same CRD",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "some.crd.something"},
@@ -836,7 +814,7 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 		},
 		{
 			name: "errors are ordered by CRD name and webhook names",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "b.crd.something"},
@@ -885,17 +863,17 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 func Test_CheckWebhookNameIsDNS1123SubDomain(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
-		bundle       *render.RegistryV1
+		bundle       *bundle.RegistryV1
 		expectedErrs []error
 	}{
 		{
 			name: "accepts bundles without webhook definitions",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(),
 			},
 		}, {
 			name: "rejects bundles with invalid webhook definitions names and orders errors by webhook type and name",
-			bundle: &render.RegistryV1{
+			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{

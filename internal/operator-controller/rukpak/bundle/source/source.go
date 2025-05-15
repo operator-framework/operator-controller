@@ -1,76 +1,62 @@
-package convert
+package source
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
 
-	"helm.sh/helm/v3/pkg/chart"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/cli-runtime/pkg/resource"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	registry "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/operator-registry"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/generators"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/validators"
 )
 
-type Plain struct {
-	Objects []client.Object
+type BundleSource interface {
+	GetBundle() (bundle.RegistryV1, error)
 }
 
-func RegistryV1ToHelmChart(rv1 fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-	reg, err := ParseFS(rv1)
-	if err != nil {
-		return nil, err
-	}
+// identitySource is a bundle source that returns itself
+type identitySource bundle.RegistryV1
 
-	plain, err := PlainConverter.Convert(reg, installNamespace, []string{watchNamespace})
-	if err != nil {
-		return nil, err
-	}
-
-	chrt := &chart.Chart{Metadata: &chart.Metadata{}}
-	chrt.Metadata.Annotations = reg.CSV.GetAnnotations()
-	for _, obj := range plain.Objects {
-		jsonData, err := json.Marshal(obj)
-		if err != nil {
-			return nil, err
-		}
-		hash := sha256.Sum256(jsonData)
-		chrt.Templates = append(chrt.Templates, &chart.File{
-			Name: fmt.Sprintf("object-%x.json", hash[0:8]),
-			Data: jsonData,
-		})
-	}
-
-	return chrt, nil
+func (r identitySource) GetBundle() (bundle.RegistryV1, error) {
+	return bundle.RegistryV1(r), nil
 }
 
-// ParseFS converts the rv1 filesystem into a render.RegistryV1.
-// ParseFS expects the filesystem to conform to the registry+v1 format:
+func FromBundle(rv1 bundle.RegistryV1) BundleSource {
+	return identitySource(rv1)
+}
+
+// FromFS returns a BundleSource that loads a registry+v1 bundle from a filesystem.
+// The filesystem is expected to conform to the registry+v1 format:
 // metadata/annotations.yaml
+// metadata/properties.yaml
 // manifests/
 //   - csv.yaml
 //   - ...
 //
-// manifests directory does not contain subdirectories
-func ParseFS(rv1 fs.FS) (render.RegistryV1, error) {
-	reg := render.RegistryV1{}
-	annotationsFileData, err := fs.ReadFile(rv1, filepath.Join("metadata", "annotations.yaml"))
+// manifests directory should not contain subdirectories
+func FromFS(fs fs.FS) BundleSource {
+	return fsBundleSource{
+		FS: fs,
+	}
+}
+
+type fsBundleSource struct {
+	FS fs.FS
+}
+
+func (f fsBundleSource) GetBundle() (bundle.RegistryV1, error) {
+	reg := bundle.RegistryV1{}
+	annotationsFileData, err := fs.ReadFile(f.FS, filepath.Join("metadata", "annotations.yaml"))
 	if err != nil {
 		return reg, err
 	}
@@ -82,7 +68,7 @@ func ParseFS(rv1 fs.FS) (render.RegistryV1, error) {
 
 	const manifestsDir = "manifests"
 	foundCSV := false
-	if err := fs.WalkDir(rv1, manifestsDir, func(path string, e fs.DirEntry, err error) error {
+	if err := fs.WalkDir(f.FS, manifestsDir, func(path string, e fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -92,7 +78,7 @@ func ParseFS(rv1 fs.FS) (render.RegistryV1, error) {
 			}
 			return fmt.Errorf("subdirectories are not allowed within the %q directory of the bundle image filesystem: found %q", manifestsDir, path)
 		}
-		manifestFile, err := rv1.Open(path)
+		manifestFile, err := f.FS.Open(path)
 		if err != nil {
 			return err
 		}
@@ -136,7 +122,7 @@ func ParseFS(rv1 fs.FS) (render.RegistryV1, error) {
 		return reg, fmt.Errorf("no ClusterServiceVersion found in %q", manifestsDir)
 	}
 
-	if err := copyMetadataPropertiesToCSV(&reg.CSV, rv1); err != nil {
+	if err := copyMetadataPropertiesToCSV(&reg.CSV, f.FS); err != nil {
 		return reg, err
 	}
 
@@ -189,65 +175,4 @@ func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS
 	}
 	csv.Annotations["olm.properties"] = string(allPropertiesJSON)
 	return nil
-}
-
-var PlainConverter = Converter{
-	BundleRenderer: render.BundleRenderer{
-		BundleValidator: validators.RegistryV1BundleValidator,
-		ResourceGenerators: []render.ResourceGenerator{
-			generators.BundleCSVRBACResourceGenerator.ResourceGenerator(),
-			generators.BundleCRDGenerator,
-			generators.BundleAdditionalResourcesGenerator,
-			generators.BundleCSVDeploymentGenerator,
-			generators.BundleValidatingWebhookResourceGenerator,
-			generators.BundleMutatingWebhookResourceGenerator,
-			generators.BundleWebhookServiceResourceGenerator,
-			generators.CertProviderResourceGenerator,
-		},
-	},
-}
-
-type Converter struct {
-	render.BundleRenderer
-}
-
-func (c Converter) Convert(rv1 render.RegistryV1, installNamespace string, targetNamespaces []string) (*Plain, error) {
-	if installNamespace == "" {
-		installNamespace = rv1.CSV.Annotations["operatorframework.io/suggested-namespace"]
-	}
-	if installNamespace == "" {
-		installNamespace = fmt.Sprintf("%s-system", rv1.PackageName)
-	}
-	supportedInstallModes := sets.New[string]()
-	for _, im := range rv1.CSV.Spec.InstallModes {
-		if im.Supported {
-			supportedInstallModes.Insert(string(im.Type))
-		}
-	}
-	if len(targetNamespaces) == 0 {
-		if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeAllNamespaces)) {
-			targetNamespaces = []string{""}
-		} else if supportedInstallModes.Has(string(v1alpha1.InstallModeTypeOwnNamespace)) {
-			targetNamespaces = []string{installNamespace}
-		}
-	}
-
-	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
-		return nil, fmt.Errorf("apiServiceDefintions are not supported")
-	}
-
-	if !features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
-		return nil, fmt.Errorf("webhookDefinitions are not supported")
-	}
-
-	objs, err := c.BundleRenderer.Render(
-		rv1,
-		installNamespace,
-		render.WithTargetNamespaces(targetNamespaces...),
-		render.WithCertificateProvider(certproviders.CertManagerCertificateProvider{}),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &Plain{Objects: objs}, nil
 }

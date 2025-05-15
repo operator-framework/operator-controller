@@ -4,29 +4,21 @@ import (
 	"errors"
 	"fmt"
 
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
-type RegistryV1 struct {
-	PackageName string
-	CSV         v1alpha1.ClusterServiceVersion
-	CRDs        []apiextensionsv1.CustomResourceDefinition
-	Others      []unstructured.Unstructured
-}
-
 // BundleValidator validates a RegistryV1 bundle by executing a series of
 // checks on it and collecting any errors that were found
-type BundleValidator []func(v1 *RegistryV1) []error
+type BundleValidator []func(v1 *bundle.RegistryV1) []error
 
-func (v BundleValidator) Validate(rv1 *RegistryV1) error {
+func (v BundleValidator) Validate(rv1 *bundle.RegistryV1) error {
 	var errs []error
 	for _, validator := range v {
 		errs = append(errs, validator(rv1)...)
@@ -35,9 +27,9 @@ func (v BundleValidator) Validate(rv1 *RegistryV1) error {
 }
 
 // ResourceGenerator generates resources given a registry+v1 bundle and options
-type ResourceGenerator func(rv1 *RegistryV1, opts Options) ([]client.Object, error)
+type ResourceGenerator func(rv1 *bundle.RegistryV1, opts Options) ([]client.Object, error)
 
-func (g ResourceGenerator) GenerateResources(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
+func (g ResourceGenerator) GenerateResources(rv1 *bundle.RegistryV1, opts Options) ([]client.Object, error) {
 	return g(rv1, opts)
 }
 
@@ -45,7 +37,7 @@ func (g ResourceGenerator) GenerateResources(rv1 *RegistryV1, opts Options) ([]c
 // generated resources.
 type ResourceGenerators []ResourceGenerator
 
-func (r ResourceGenerators) GenerateResources(rv1 *RegistryV1, opts Options) ([]client.Object, error) {
+func (r ResourceGenerators) GenerateResources(rv1 *bundle.RegistryV1, opts Options) ([]client.Object, error) {
 	//nolint:prealloc
 	var renderedObjects []client.Object
 	for _, generator := range r {
@@ -80,7 +72,7 @@ func (o *Options) apply(opts ...Option) *Options {
 	return o
 }
 
-func (o *Options) validate(rv1 *RegistryV1) (*Options, []error) {
+func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 	var errs []error
 	if len(o.TargetNamespaces) == 0 {
 		errs = append(errs, errors.New("at least one target namespace must be specified"))
@@ -119,7 +111,7 @@ type BundleRenderer struct {
 	ResourceGenerators []ResourceGenerator
 }
 
-func (r BundleRenderer) Render(rv1 RegistryV1, installNamespace string, opts ...Option) ([]client.Object, error) {
+func (r BundleRenderer) Render(rv1 bundle.RegistryV1, installNamespace string, opts ...Option) ([]client.Object, error) {
 	// validate bundle
 	if err := r.BundleValidator.Validate(&rv1); err != nil {
 		return nil, err
@@ -154,7 +146,7 @@ func DefaultUniqueNameGenerator(base string, o interface{}) (string, error) {
 	return util.ObjectNameForBaseAndSuffix(base, hashStr), nil
 }
 
-func validateTargetNamespaces(rv1 *RegistryV1, installNamespace string, targetNamespaces []string) error {
+func validateTargetNamespaces(rv1 *bundle.RegistryV1, installNamespace string, targetNamespaces []string) error {
 	supportedInstallModes := sets.New[string]()
 	for _, im := range rv1.CSV.Spec.InstallModes {
 		if im.Supported {

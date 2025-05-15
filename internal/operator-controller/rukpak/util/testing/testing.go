@@ -10,6 +10,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
@@ -72,6 +73,12 @@ func WithWebhookDefinitions(webhookDefinitions ...v1alpha1.WebhookDescription) C
 	}
 }
 
+func WithOwnedAPIServiceDescriptions(ownedAPIServiceDescriptions ...v1alpha1.APIServiceDescription) CSVOption {
+	return func(csv *v1alpha1.ClusterServiceVersion) {
+		csv.Spec.APIServiceDefinitions.Owned = ownedAPIServiceDescriptions
+	}
+}
+
 func MakeCSV(opts ...CSVOption) v1alpha1.ClusterServiceVersion {
 	csv := v1alpha1.ClusterServiceVersion{
 		TypeMeta: metav1.TypeMeta{
@@ -101,6 +108,12 @@ func (f FakeCertProvider) AdditionalObjects(cfg render.CertificateProvisionerCon
 
 func (f FakeCertProvider) GetCertSecretInfo(cfg render.CertificateProvisionerConfig) render.CertSecretInfo {
 	return f.GetCertSecretInfoFn(cfg)
+}
+
+type FakeBundleSource func() (bundle.RegistryV1, error)
+
+func (f FakeBundleSource) GetBundle() (bundle.RegistryV1, error) {
+	return f()
 }
 
 func ToUnstructuredT(t *testing.T, obj client.Object) *unstructured.Unstructured {
