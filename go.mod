@@ -1,12 +1,12 @@
 module github.com/operator-framework/operator-controller
 
-go 1.23.4
+go 1.23.8
 
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cert-manager/cert-manager v1.17.1
+	github.com/cert-manager/cert-manager v1.17.2
 	github.com/containerd/containerd v1.7.27
 	github.com/containers/image/v5 v5.35.0
 	github.com/fsnotify/fsnotify v1.9.0
