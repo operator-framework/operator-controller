@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 
 	v1 "github.com/operator-framework/operator-controller/api/v1"
@@ -17,11 +18,17 @@ func TestGetWatchNamespacesWhenFeatureGateIsDisabled(t *testing.T) {
 	watchNamespace, err := applier.GetWatchNamespace(&v1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "extension",
-			Annotations: map[string]string{
-				"olm.operatorframework.io/watch-namespace": "watch-namespace",
+			// Annotations: map[string]string{
+			// 	"olm.operatorframework.io/watch-namespace": "watch-namespace",
+			// },
+		},
+		Spec: v1.ClusterExtensionSpec{
+			Config: []runtime.RawExtension{
+				{Raw: []byte(
+					`{"apiVersion":"olm.operatorframework.io/v1","kind":"BundleConfig",` +
+						`"spec":{"watchNamespace":"watch-namespace"}}`)},
 			},
 		},
-		Spec: v1.ClusterExtensionSpec{},
 	})
 	require.NoError(t, err)
 	t.Log("Check watchNamespace is '' even if the annotation is set")
@@ -54,11 +61,14 @@ func TestGetWatchNamespace(t *testing.T) {
 			csv: &v1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "extension",
-					Annotations: map[string]string{
-						"olm.operatorframework.io/watch-namespace": "watch-namespace",
+				},
+				Spec: v1.ClusterExtensionSpec{
+					Config: []runtime.RawExtension{
+						{Raw: []byte(
+							`{"apiVersion":"olm.operatorframework.io/v1","kind":"BundleConfig",` +
+								`"spec":{"watchNamespace":"watch-namespace"}}`)},
 					},
 				},
-				Spec: v1.ClusterExtensionSpec{},
 			},
 			expectError: false,
 		}, {
@@ -67,11 +77,14 @@ func TestGetWatchNamespace(t *testing.T) {
 			csv: &v1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "extension",
-					Annotations: map[string]string{
-						"olm.operatorframework.io/watch-namespace": "watch-namespace,watch-namespace2,watch-namespace3",
+				},
+				Spec: v1.ClusterExtensionSpec{
+					Config: []runtime.RawExtension{
+						{Raw: []byte(
+							`{"apiVersion":"olm.operatorframework.io/v1","kind":"BundleConfig",` +
+								`"spec":{"watchNamespace":"watch-namespace,watch-namespace2,watch-namespace3"}}`)},
 					},
 				},
-				Spec: v1.ClusterExtensionSpec{},
 			},
 			expectError: true,
 		}, {
@@ -84,7 +97,13 @@ func TestGetWatchNamespace(t *testing.T) {
 						"olm.operatorframework.io/watch-namespace": "watch-namespace-",
 					},
 				},
-				Spec: v1.ClusterExtensionSpec{},
+				Spec: v1.ClusterExtensionSpec{
+					Config: []runtime.RawExtension{
+						{Raw: []byte(
+							`{"apiVersion":"olm.operatorframework.io/v1","kind":"BundleConfig",` +
+								`"spec":{"watchNamespace":"watch-namespace-"}}`)},
+					},
+				},
 			},
 			expectError: true,
 		},
