@@ -7,11 +7,14 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
@@ -26,6 +29,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
@@ -209,7 +213,119 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 	if err != nil {
 		return nil, err
 	}
-	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace)
+	var result *chart.Chart
+	contentType := bundleContentType(bundleFS)
+	switch contentType {
+	case HelmContent:
+		if !features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
+			return nil, fmt.Errorf("helm chart support is not enabled")
+		}
+		result, err = loadChartWithEnrichments(bundleFS, WithInstallNamespace(ext.Spec.Namespace))
+		if err != nil {
+			return nil, fmt.Errorf("loading Helm chart; %w", err)
+		}
+	case BundleContent:
+		result, err = h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unknown content found")
+	}
+
+	return result, nil
+}
+
+const (
+	HelmContent    string = "helm"
+	BundleContent  string = "bundle"
+	UnknownContent string = "unknown"
+)
+
+func bundleContentType(bundleFS fs.FS) string {
+	var contentType string
+	_ = fs.WalkDir(bundleFS, ".", func(path string, f fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !f.IsDir() {
+			// Check if Helm chart
+			if filepath.Dir(path) == "charts" &&
+				filepath.Ext(f.Name()) == ".tgz" {
+				contentType = HelmContent
+				return fs.SkipAll
+			}
+
+			// Check if registry/v1 bundle
+			if filepath.Dir(path) == "metadata" &&
+				f.Name() == "annotations.yaml" {
+				contentType = BundleContent
+				return fs.SkipAll
+			}
+		}
+
+		return nil
+	})
+
+	if contentType != "" {
+		return contentType
+	}
+
+	return UnknownContent
+}
+
+type ChartOption func(*chart.Chart)
+
+func WithInstallNamespace(namespace string) ChartOption {
+	re := regexp.MustCompile(`{{\W+\.Release\.Namespace\W+}}`)
+
+	return func(chrt *chart.Chart) {
+		for i, template := range chrt.Templates {
+			chrt.Templates[i].Data = re.ReplaceAll(template.Data, []byte(namespace))
+		}
+	}
+}
+
+func loadChartWithEnrichments(bundleFS fs.FS, options ...ChartOption) (*chart.Chart, error) {
+	chrt, err := loadPulledHelmChart(bundleFS)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range options {
+		f(chrt)
+	}
+
+	return chrt, nil
+}
+
+func loadPulledHelmChart(bundleFS fs.FS) (*chart.Chart, error) {
+	var filename string
+
+	if err := fs.WalkDir(bundleFS, ".", func(path string, f fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if strings.HasSuffix(f.Name(), ".tgz") && !f.IsDir() {
+			filename = path
+			return fs.SkipAll
+		}
+
+		return nil
+	}); err != nil && !errors.Is(err, fs.SkipAll) {
+		return nil, err
+	}
+
+	if filename == "" {
+		return nil, fmt.Errorf("no helm chart found")
+	}
+
+	tarball, err := fs.ReadFile(bundleFS, filename)
+	if err != nil {
+		return nil, fmt.Errorf("reading helm chart; %+v", err)
+	}
+	return loader.LoadArchive(bytes.NewBuffer(tarball))
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {
