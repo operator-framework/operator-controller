@@ -1581,7 +1581,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: quay.io/operator-framework/catalogd:${VERSION}
+        image: quay.io/operator-framework/catalogd:devel
         imagePullPolicy: IfNotPresent
         livenessProbe: null
         name: manager
@@ -1618,7 +1618,7 @@ spec:
           - key: tls.key
             path: tls.key
           optional: false
-          secretName: catalogd-cert-${VERSION}
+          secretName: catalogd-cert-devel
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -1668,7 +1668,7 @@ spec:
         - --catalogd-cas-dir=/var/certs/catalogd-ca
         command:
         - /operator-controller
-        image: quay.io/operator-framework/operator-controller:${VERSION}
+        image: quay.io/operator-framework/operator-controller:devel
         imagePullPolicy: IfNotPresent
         livenessProbe: null
         name: manager
@@ -1716,7 +1716,7 @@ spec:
           - key: ca.crt
             path: ca.crt
           optional: false
-          secretName: catalogd-cert-${VERSION}
+          secretName: catalogd-cert-devel
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -1736,7 +1736,7 @@ spec:
   privateKey:
     algorithm: ECDSA
     size: 256
-  secretName: catalogd-cert-${VERSION}
+  secretName: catalogd-cert-devel
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

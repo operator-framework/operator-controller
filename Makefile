@@ -171,10 +171,10 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	# Generate the remaining catalogd manifests
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
 	mkdir -p $(DEV_MANIFESTS_DIR)
-	$(KUSTOMIZE) build $(KUSTOMIZE_RELEASE_OVERLAY) > $(DEV_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_E2E_OVERLAY) > $(E2E_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_TILT_OVERLAY) > $(TILT_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_CATALOGS_OVERLAY) > $(CATALOGS_MANIFEST)
+	export VERSION=devel && $(KUSTOMIZE) build $(KUSTOMIZE_RELEASE_OVERLAY) | envsubst '$$VERSION' > $(DEV_MANIFEST)
+	export VERSION=devel && $(KUSTOMIZE) build $(KUSTOMIZE_E2E_OVERLAY) | envsubst '$$VERSION' > $(E2E_MANIFEST)
+	export VERSION=devel && $(KUSTOMIZE) build $(KUSTOMIZE_TILT_OVERLAY) | envsubst '$$VERSION' > $(TILT_MANIFEST)
+	export VERSION=devel && $(KUSTOMIZE) build $(KUSTOMIZE_CATALOGS_OVERLAY) | envsubst '$$VERSION' > $(CATALOGS_MANIFEST)
 
 
 .PHONY: generate

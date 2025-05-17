@@ -20,4 +20,4 @@ catalogd = {
 }
 
 deploy_repo('catalogd', catalogd, '-tags containers_image_openpgp')
-process_yaml(read_file('release-manifests/operator-controller-tilt.yaml'))
+process_yaml(read_file('dev-manifests/operator-controller-tilt.yaml'))
