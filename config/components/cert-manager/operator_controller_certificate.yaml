@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: operator-controller-cert
+spec:
+  secretName: operator-controller-cert
+  dnsNames:
+    - operator-controller-service.__NAMESPACE_PLACEHOLDER__.svc
+    - operator-controller-service.__NAMESPACE_PLACEHOLDER__.svc.cluster.local
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: olmv1-ca
+    kind: Issuer
+    group: cert-manager.io

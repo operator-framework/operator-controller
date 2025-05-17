@@ -7,6 +7,16 @@ SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
 export ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+# attempt to generate the VERSION attribute for certificates
+# fail if it is unset afterwards, since the side effects are indirect
+ifeq ($(strip $(VERSION)),)
+VERSION := $(shell git describe --tags --always --dirty)
+endif
+export VERSION
+ifeq ($(strip $(VERSION)),)
+	$(error undefined VERSION; resulting certs will be invalid)
+endif
+
 GOLANG_VERSION := $(shell sed -En 's/^go (.*)$$/\1/p' "go.mod")
 # Image URL to use all building/pushing image targets
 ifeq ($(origin IMAGE_REGISTRY), undefined)
@@ -25,7 +35,7 @@ endif
 export CATD_IMAGE_REPO
 
 ifeq ($(origin IMAGE_TAG), undefined)
-IMAGE_TAG := devel
+IMAGE_TAG := $(VERSION)
 endif
 export IMAGE_TAG
 
@@ -77,7 +87,20 @@ else
 $(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
-KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
+KUSTOMIZE_RELEASE_OVERLAY := config/overlays/community
+KUSTOMIZE_E2E_OVERLAY := config/overlays/community-e2e
+KUSTOMIZE_TILT_OVERLAY := config/overlays/community-tilt
+KUSTOMIZE_CATALOGS_OVERLAY := config/overlays/default-catalogs
+
+export RELEASE_MANIFEST := operator-controller.yaml
+export RELEASE_INSTALL := install.sh
+export RELEASE_CATALOGS := default-catalogs.yaml
+
+DEV_MANIFESTS_DIR := dev-manifests
+DEV_MANIFEST := $(DEV_MANIFESTS_DIR)/operator-controller-dev.yaml
+E2E_MANIFEST := $(DEV_MANIFESTS_DIR)/operator-controller-e2e.yaml
+TILT_MANIFEST := $(DEV_MANIFESTS_DIR)/operator-controller-tilt.yaml
+CATALOGS_MANIFEST := $(DEV_MANIFESTS_DIR)/default-catalogs.yaml
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -137,7 +160,7 @@ KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
 CRD_WORKING_DIR := crd_work_dir
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
-manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	mkdir $(CRD_WORKING_DIR)
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clusterextensions.yaml $(KUSTOMIZE_OPCON_CRDS_DIR)
@@ -147,7 +170,12 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
+	mkdir -p $(DEV_MANIFESTS_DIR)
+	export VERSION=devel && $(KUSTOMIZE) build $(KUSTOMIZE_RELEASE_OVERLAY) | envsubst '$$VERSION' > $(DEV_MANIFEST)
+	export VERSION=devel && $(KUSTOMIZE) build $(KUSTOMIZE_E2E_OVERLAY) | envsubst '$$VERSION' > $(E2E_MANIFEST)
+	export VERSION=devel && $(KUSTOMIZE) build $(KUSTOMIZE_TILT_OVERLAY) | envsubst '$$VERSION' > $(TILT_MANIFEST)
+	export VERSION=devel && $(KUSTOMIZE) build $(KUSTOMIZE_CATALOGS_OVERLAY) | envsubst '$$VERSION' > $(CATALOGS_MANIFEST)
+
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -201,11 +229,11 @@ E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
 
 export REG_PKG_NAME := registry-operator
-export LOCAL_REGISTRY_HOST := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
-export CLUSTER_REGISTRY_HOST := localhost:30000
+export INCLUSTER_REGISTRY_HOST := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
+export LOCAL_REGISTRY_HOST := localhost:30000
 export E2E_TEST_CATALOG_V1 := e2e/test-catalog:v1
 export E2E_TEST_CATALOG_V2 := e2e/test-catalog:v2
-export CATALOG_IMG := $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
+export CATALOG_IMG := $(INCLUSTER_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
@@ -230,16 +258,9 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 $(UNIT_TEST_DIRS) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
-.PHONY: image-registry
-E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
-image-registry: export GOOS=linux
-image-registry: export GOARCH=amd64
-image-registry: ## Build the testdata catalog used for e2e tests and push it to the image registry
-	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/registry/bin/registry ./testdata/registry/registry.go
-	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
-	$(CONTAINER_RUNTIME) build -f ./testdata/Dockerfile -t $(E2E_REGISTRY_IMAGE) ./testdata
-	$(CONTAINER_RUNTIME) save $(E2E_REGISTRY_IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
-	./testdata/build-test-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME) $(E2E_REGISTRY_IMAGE)
+.PHONY: push-test-images
+push-test-images: ## Build the testdata catalog used for e2e tests and push it to the image registry
+	(cd ./testdata/push && go run ./ --images-path=../images --registry-address=localhost:30000)
 
 # When running the e2e suite, you can set the ARTIFACT_PATH variable to the absolute path
 # of the directory for the operator-controller e2e tests to store the artifacts, which
@@ -248,15 +269,15 @@ image-registry: ## Build the testdata catalog used for e2e tests and push it to 
 # for example: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 .PHONY: test-e2e
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
-test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
+test-e2e: export MANIFEST := $(E2E_MANIFEST)
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
-test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run-internal push-test-images e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
-extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
+extension-developer-e2e: export MANIFEST := $(E2E_MANIFEST)
 extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
-extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP Run extension-developer e2e on local kind cluster
+extension-developer-e2e: run-internal push-test-images test-ext-dev-e2e kind-clean #EXHELP Run extension-developer e2e on local kind cluster
 
 .PHONY: run-latest-release
 run-latest-release:
@@ -274,7 +295,7 @@ post-upgrade-checks:
 test-upgrade-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-e2e
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-upgrade-e2e: kind-cluster run-latest-release image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean #HELP Run upgrade e2e tests on a local kind cluster
+test-upgrade-e2e: kind-cluster run-latest-release push-test-images pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean #HELP Run upgrade e2e tests on a local kind cluster
 
 .PHONY: e2e-coverage
 e2e-coverage:
@@ -288,11 +309,9 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 	$(CONTAINER_RUNTIME) save $(CATD_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-deploy
-kind-deploy: export MANIFEST := ./operator-controller.yaml
-kind-deploy: export DEFAULT_CATALOG := ./config/catalogs/clustercatalogs/default-catalogs.yaml
 kind-deploy: manifests $(KUSTOMIZE)
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(MANIFEST)
-	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+	envsubst '$$VERSION' < $$MANIFEST > ./tmp-manifest.yaml
+	export MANIFEST=./tmp-manifest.yaml && envsubst '$$DEFAULT_CATALOGS,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s && rm ./tmp-manifest.yaml
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
@@ -305,16 +324,6 @@ kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 
 #SECTION Build
-
-# attempt to generate the VERSION attribute for certificates
-# fail if it is unset afterwards, since the side effects are indirect
-ifeq ($(strip $(VERSION)),)
-VERSION := $(shell git describe --tags --always --dirty)
-endif
-export VERSION
-ifeq ($(strip $(VERSION)),)
-	$(error undefined VERSION; resulting certs will be invalid)
-endif
 
 ifeq ($(origin CGO_ENABLED), undefined)
 CGO_ENABLED := 0
@@ -353,12 +362,16 @@ go-build-linux: export GOARCH=amd64
 go-build-linux: $(BINARIES)
 
 .PHONY: run
-run: docker-build kind-cluster kind-load kind-deploy wait #HELP Build the operator-controller then deploy it into a new kind cluster.
+run: export MANIFEST := $(DEV_MANIFEST)
+run: run-internal #HELP Build the operator-controller then deploy it into a new kind cluster.
+
+.PHONY: run-internal
+run-internal: docker-build kind-cluster kind-load kind-deploy wait
 
 CATD_NAMESPACE := olmv1-system
 wait:
 	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
+	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-cert # Avoid upgrade test flakes when reissuing cert
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
@@ -382,10 +395,11 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 
 .PHONY: quickstart
 quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
-quickstart: export DEFAULT_CATALOG := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/default-catalogs.yaml"
-quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
-	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+quickstart: export DEFAULT_CATALOGS := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/default-catalogs.yaml"
+quickstart: manifests #EXHELP Generate the unified installation release manifests and scripts.
+	envsubst '$$VERSION' < $(DEV_MANIFEST) > $(RELEASE_MANIFEST)
+	cp $(CATALOGS_MANIFEST) > $(RELEASE_CATALOGS)
+	envsubst '$$DEFAULT_CATALOGS,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(RELEASE_INSTALL)
 
 ##@ Docs
 
