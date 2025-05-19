@@ -35,7 +35,7 @@ type ClusterExtensionRevisionSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision"`
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="phases is immutable"
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
 	Phases []ClusterExtensionRevisionPhase `json:"phases"`
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="previous is immutable"
 	Previous []ClusterExtensionRevisionPrevious `json:"previous,omitempty"`
@@ -59,6 +59,7 @@ const (
 type ClusterExtensionRevisionPhase struct {
 	Name    string                           `json:"name"`
 	Objects []ClusterExtensionRevisionObject `json:"objects"`
+	Slices  []string                         `json:"slices,omitempty"`
 }
 
 type ClusterExtensionRevisionObject struct {
