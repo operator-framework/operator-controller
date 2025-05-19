@@ -79,6 +79,12 @@ endif
 
 KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
 
+export RELEASE_MANIFEST := operator-controller.yaml
+export RELEASE_INSTALL := install.sh
+export RELEASE_CATALOGS := default-catalogs.yaml
+
+CATALOGS_MANIFEST := ./config/catalogs/clustercatalogs/default-catalogs.yaml
+
 # Disable -j flag for make
 .NOTPARALLEL:
 
@@ -260,7 +266,7 @@ extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP 
 
 .PHONY: run-latest-release
 run-latest-release:
-	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/$(notdir $(RELEASE_INSTALL)) | bash -s
 
 .PHONY: pre-upgrade-setup
 pre-upgrade-setup:
@@ -288,10 +294,11 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 	$(CONTAINER_RUNTIME) save $(CATD_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-deploy
-kind-deploy: export MANIFEST := ./operator-controller.yaml
-kind-deploy: export DEFAULT_CATALOG := ./config/catalogs/clustercatalogs/default-catalogs.yaml
+kind-deploy: export MANIFEST := $(RELEASE_MANIFEST)
+kind-deploy: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
 kind-deploy: manifests $(KUSTOMIZE)
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(MANIFEST)
+	cp $(CATALOGS_MANIFEST) $(DEFAULT_CATALOG)
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: kind-cluster
@@ -381,11 +388,12 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 	OPCON_IMAGE_REPO=$(OPCON_IMAGE_REPO) CATD_IMAGE_REPO=$(CATD_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
-quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
-quickstart: export DEFAULT_CATALOG := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/default-catalogs.yaml"
+quickstart: export MANIFEST := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(RELEASE_MANIFEST))"
+quickstart: export DEFAULT_CATALOG := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(RELEASE_CATALOGS))"
 quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
-	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > $(RELEASE_MANIFEST)
+	cp $(CATALOGS_MANIFEST) $(RELEASE_CATALOGS)
+	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(RELEASE_INSTALL)
 
 ##@ Docs
 

@@ -124,9 +124,9 @@ release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
   mode: replace
   extra_files:
-    - glob: 'operator-controller.yaml'
-    - glob: './config/catalogs/clustercatalogs/default-catalogs.yaml'
-    - glob: 'install.sh'
+    - glob: '{{ .Env.RELEASE_MANIFEST }}'
+    - glob: '{{ .Env.RELEASE_INSTALL }}'
+    - glob: '{{ .Env.RELEASE_CATALOGS }}'
   header: |
     ## Installation
 
