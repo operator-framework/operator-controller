@@ -138,20 +138,14 @@ tidy:
 	go mod tidy
 
 .PHONY: manifests
-KUSTOMIZE_CATD_CRDS_DIR := config/base/catalogd/crd/bases
 KUSTOMIZE_CATD_RBAC_DIR := config/base/catalogd/rbac
 KUSTOMIZE_CATD_WEBHOOKS_DIR := config/base/catalogd/manager/webhook
-KUSTOMIZE_OPCON_CRDS_DIR := config/base/operator-controller/crd/bases
 KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
-CRD_WORKING_DIR := crd_work_dir
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
 manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
-	mkdir $(CRD_WORKING_DIR)
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
-	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clusterextensions.yaml $(KUSTOMIZE_OPCON_CRDS_DIR)
-	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clustercatalogs.yaml $(KUSTOMIZE_CATD_CRDS_DIR)
-	rmdir $(CRD_WORKING_DIR)
+	# Generate CRDs via our own generator
+	hack/tools/update-crds.sh
 	# Generate the remaining operator-controller manifests
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)
 	# Generate the remaining catalogd manifests
@@ -193,8 +187,8 @@ bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := git://main?path=
 CRD_DIFF_UPDATED_REF := file://
-CRD_DIFF_OPCON_SOURCE := config/base/operator-controller/crd/bases/olm.operatorframework.io_clusterextensions.yaml
-CRD_DIFF_CATD_SOURCE := config/base/catalogd/crd/bases/olm.operatorframework.io_clustercatalogs.yaml
+CRD_DIFF_OPCON_SOURCE := config/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml
+CRD_DIFF_CATD_SOURCE := config/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml
 CRD_DIFF_CONFIG := crd-diff-config.yaml
 verify-crd-compatibility: $(CRD_DIFF) manifests
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "${CRD_DIFF_ORIGINAL_REF}${CRD_DIFF_OPCON_SOURCE}" ${CRD_DIFF_UPDATED_REF}${CRD_DIFF_OPCON_SOURCE}

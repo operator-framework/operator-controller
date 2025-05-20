@@ -12,6 +12,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.3
+    olm.operatorframework.io/feature-set: standard
   name: clustercatalogs.olm.operatorframework.io
 spec:
   group: olm.operatorframework.io
@@ -453,6 +454,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.3
+    olm.operatorframework.io/feature-set: standard
   name: clusterextensions.olm.operatorframework.io
 spec:
   group: olm.operatorframework.io
