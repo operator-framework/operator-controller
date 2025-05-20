@@ -10,6 +10,10 @@ coverage:
       default:
         target: auto
         threshold: 2%
+    patch:
+      default:
+        target: auto
+        threshold: 1%
   paths:
     - "api/"
     - "cmd/"
