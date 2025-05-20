@@ -377,12 +377,6 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 					assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
 				}
 			}, pollDuration, pollInterval)
-
-			t.Log("By verifying that no templating occurs for registry+v1 bundle manifests")
-			cm := corev1.ConfigMap{}
-			require.NoError(t, c.Get(context.Background(), types.NamespacedName{Namespace: ns.Name, Name: "test-configmap"}, &cm))
-			require.Contains(t, cm.Annotations, "shouldNotTemplate")
-			require.Contains(t, cm.Annotations["shouldNotTemplate"], "{{ $labels.namespace }}")
 		})
 	}
 }
@@ -718,7 +712,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 
 	// patch imageRef tag on test-catalog image with v2 image
 	t.Log("By patching the catalog ImageRef to point to the v2 catalog")
-	updatedCatalogImage := fmt.Sprintf("%s/test-catalog:v2", os.Getenv("LOCAL_REGISTRY_HOST"))
+	updatedCatalogImage := fmt.Sprintf("%s/e2e/test-catalog:v2", os.Getenv("LOCAL_REGISTRY_HOST"))
 	err := patchTestCatalog(context.Background(), testCatalogName, updatedCatalogImage)
 	require.NoError(t, err)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -730,15 +724,23 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		}
 	}, pollDuration, pollInterval)
 
-	t.Log("By eventually reporting a successful resolution and bundle path")
+	t.Log("By eventually installing the package successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+			assert.Contains(ct, cond.Message, "Installed bundle")
+			assert.Contains(ct, clusterExtension.Status.Install.Bundle.Version, "2.0.0")
 		}
 	}, pollDuration, pollInterval)
+
+	t.Log("By verifying that no templating occurs for registry+v1 bundle manifests")
+	cm := corev1.ConfigMap{}
+	require.NoError(t, c.Get(context.Background(), types.NamespacedName{Namespace: ns.Name, Name: "test-configmap"}, &cm))
+	require.Contains(t, cm.Annotations, "shouldNotTemplate")
+	require.Contains(t, cm.Annotations["shouldNotTemplate"], "{{ $labels.namespace }}")
 }
 
 func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {

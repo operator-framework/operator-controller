@@ -45,11 +45,15 @@ func main() {
 	}
 	// Push the images
 	for name, image := range bundles {
-		if err := crane.Push(image, fmt.Sprintf("%s/%s", registryAddr, name)); err != nil {
+		dest := fmt.Sprintf("%s/%s", registryAddr, name)
+		log.Printf("pushing bundle %s to %s", name, dest)
+		if err := crane.Push(image, dest); err != nil {
 			log.Fatalf("failed to push bundle images: %s", err.Error())
 		}
 	}
 	for name, image := range catalogs {
+		dest := fmt.Sprintf("%s/%s", registryAddr, name)
+		log.Printf("pushing catalog %s to %s", name, dest)
 		if err := crane.Push(image, fmt.Sprintf("%s/%s", registryAddr, name)); err != nil {
 			log.Fatalf("failed to push catalog images: %s", err.Error())
 		}
