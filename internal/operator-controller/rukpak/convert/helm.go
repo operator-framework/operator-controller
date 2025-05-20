@@ -57,9 +57,21 @@ func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, ins
 			return nil, err
 		}
 		hash := sha256.Sum256(jsonData)
-		chrt.Templates = append(chrt.Templates, &chart.File{
-			Name: fmt.Sprintf("object-%x.json", hash[0:8]),
+		name := fmt.Sprintf("object-%x.json", hash[0:8])
+
+		// Some registry+v1 manifests may actually contain Go Template strings
+		// that are meant to survive and actually persist into etcd (e.g. to be
+		// used as a templated configuration for another component). In order to
+		// avoid applying templating logic to registry+v1's static manifests, we
+		// create the manifests as Files, and then template those files via simple
+		// Templates.
+		chrt.Files = append(chrt.Files, &chart.File{
+			Name: name,
 			Data: jsonData,
+		})
+		chrt.Templates = append(chrt.Templates, &chart.File{
+			Name: name,
+			Data: []byte(fmt.Sprintf(`{{.Files.Get "%s"}}`, name)),
 		})
 	}
 

@@ -377,6 +377,12 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 					assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
 				}
 			}, pollDuration, pollInterval)
+
+			t.Log("By verifying that no templating occurs for registry+v1 bundle manifests")
+			cm := corev1.ConfigMap{}
+			require.NoError(t, c.Get(context.Background(), types.NamespacedName{Namespace: ns.Name, Name: "test-configmap"}, &cm))
+			require.Contains(t, cm.Annotations, "shouldNotTemplate")
+			require.Contains(t, cm.Annotations["shouldNotTemplate"], "{{ $labels.namespace }}")
 		})
 	}
 }
