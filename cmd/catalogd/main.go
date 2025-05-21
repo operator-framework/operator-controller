@@ -199,6 +199,7 @@ func run(ctx context.Context) error {
 	}
 	cfg.externalAddr = protocol + cfg.externalAddr
 
+	setupLog.Info("server certificate", "cert", cfg.certFile, "key", cfg.keyFile)
 	cw, err := certwatcher.New(cfg.certFile, cfg.keyFile)
 	if err != nil {
 		setupLog.Error(err, "failed to initialize certificate watcher")

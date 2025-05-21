@@ -19,10 +19,10 @@ coverage
 cover.out
 
 # Release output
-dist/**
-operator-controller.yaml
-install.sh
-catalogd.yaml
+/dist/**
+/operator-controller.yaml
+/default-catalogs.yaml
+/install.sh
 
 # vendored files
 vendor/

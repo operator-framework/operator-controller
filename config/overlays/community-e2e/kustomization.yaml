@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../community
+
+components:
+  - ../../components/e2e/install-namespace
+  - ../../components/e2e/cert-manager-namespace
+  - ../../components/e2e/registry-namespace
+

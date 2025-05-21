@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+- olmv1_ca_issuer.yaml
+- catalogd_certificate.yaml
+- operator_controller_certificate.yaml
+
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      labelSelector: control-plane=operator-controller-controller-manager
+    path: patches/operator_controller_deployment.yaml
+
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      labelSelector: control-plane=catalogd-controller-manager
+    path: patches/catalogd_deployment.yaml
+
+  - target:
+      group: ""
+      version: v1
+      kind: Service
+      labelSelector: control-plane=catalogd-controller-manager
+    path: patches/catalogd_service.yaml
+
+  - target:
+      group: admissionregistration.k8s.io
+      version: v1
+      kind: MutatingWebhookConfiguration
+      name: mutating-webhook-configuration
+    path: patches/catalogd_mutatingwebhookconfiguration.yaml
