@@ -29,6 +29,7 @@ type LayerData struct {
 }
 
 type Cache interface {
+	ExtendCache
 	Fetch(context.Context, string, reference.Canonical) (fs.FS, time.Time, error)
 	Store(context.Context, string, reference.Named, reference.Canonical, ocispecv1.Image, iter.Seq[LayerData]) (fs.FS, time.Time, error)
 	Delete(context.Context, string) error
