@@ -241,7 +241,7 @@ func BundleCRDGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.O
 					ClientConfig: &apiextensionsv1.WebhookClientConfig{
 						Service: &apiextensionsv1.ServiceReference{
 							Namespace: opts.InstallNamespace,
-							Name:      certProvisioner.WebhookServiceName,
+							Name:      certProvisioner.ServiceName,
 							Path:      &conversionWebhookPath,
 							Port:      &cw.ContainerPort,
 						},
@@ -314,7 +314,7 @@ func BundleValidatingWebhookResourceGenerator(rv1 *bundle.RegistryV1, opts rende
 					ClientConfig: admissionregistrationv1.WebhookClientConfig{
 						Service: &admissionregistrationv1.ServiceReference{
 							Namespace: opts.InstallNamespace,
-							Name:      certProvisioner.WebhookServiceName,
+							Name:      certProvisioner.ServiceName,
 							Path:      wh.WebhookPath,
 							Port:      &wh.ContainerPort,
 						},
@@ -362,7 +362,7 @@ func BundleMutatingWebhookResourceGenerator(rv1 *bundle.RegistryV1, opts render.
 					ClientConfig: admissionregistrationv1.WebhookClientConfig{
 						Service: &admissionregistrationv1.ServiceReference{
 							Namespace: opts.InstallNamespace,
-							Name:      certProvisioner.WebhookServiceName,
+							Name:      certProvisioner.ServiceName,
 							Path:      wh.WebhookPath,
 							Port:      &wh.ContainerPort,
 						},
@@ -415,7 +415,7 @@ func BundleWebhookServiceResourceGenerator(rv1 *bundle.RegistryV1, opts render.O
 
 		certProvisioner := render.CertProvisionerFor(deploymentSpec.Name, opts)
 		serviceResource := CreateServiceResource(
-			certProvisioner.WebhookServiceName,
+			certProvisioner.ServiceName,
 			opts.InstallNamespace,
 			WithServiceSpec(
 				corev1.ServiceSpec{
