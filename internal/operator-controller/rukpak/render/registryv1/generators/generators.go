@@ -379,10 +379,10 @@ func BundleMutatingWebhookResourceGenerator(rv1 *bundle.RegistryV1, opts render.
 	return objs, nil
 }
 
-// BundleWebhookServiceResourceGenerator generates Service resources based that support the webhooks defined in
-// the bundle's cluster service version spec. The resource is modified by the CertificateProvider in opts
+// BundleDeploymentServiceResourceGenerator generates Service resources that support, e.g. the webhooks,
+// defined in the bundle's cluster service version spec. The resource is modified by the CertificateProvider in opts
 // to add any annotations or modifications necessary for certificate injection.
-func BundleWebhookServiceResourceGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+func BundleDeploymentServiceResourceGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 	if rv1 == nil {
 		return nil, fmt.Errorf("bundle cannot be nil")
 	}

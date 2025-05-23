@@ -50,7 +50,7 @@ func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
 		generators.BundleCSVDeploymentGenerator,
 		generators.BundleValidatingWebhookResourceGenerator,
 		generators.BundleMutatingWebhookResourceGenerator,
-		generators.BundleWebhookServiceResourceGenerator,
+		generators.BundleDeploymentServiceResourceGenerator,
 		generators.CertProviderResourceGenerator,
 	}
 	actualGenerators := registryv1.ResourceGenerators

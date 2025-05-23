@@ -43,6 +43,6 @@ var ResourceGenerators = []render.ResourceGenerator{
 	generators.BundleCSVDeploymentGenerator,
 	generators.BundleValidatingWebhookResourceGenerator,
 	generators.BundleMutatingWebhookResourceGenerator,
-	generators.BundleWebhookServiceResourceGenerator,
+	generators.BundleDeploymentServiceResourceGenerator,
 	generators.CertProviderResourceGenerator,
 }
