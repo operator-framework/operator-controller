@@ -2000,7 +2000,7 @@ func Test_BundleMutatingWebhookResourceGenerator_FailsOnNil(t *testing.T) {
 	require.Contains(t, err.Error(), "bundle cannot be nil")
 }
 
-func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
+func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 	fakeProvider := FakeCertProvider{
 		InjectCABundleFn: func(obj client.Object, cfg render.CertificateProvisionerConfig) error {
 			obj.SetAnnotations(map[string]string{
@@ -2414,14 +2414,14 @@ func Test_BundleWebhookServiceResourceGenerator_Succeeds(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			objs, err := generators.BundleWebhookServiceResourceGenerator(tc.bundle, tc.opts)
+			objs, err := generators.BundleDeploymentServiceResourceGenerator(tc.bundle, tc.opts)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedResources, objs)
 		})
 	}
 }
 
-func Test_BundleWebhookServiceResourceGenerator_FailsOnNil(t *testing.T) {
+func Test_BundleDeploymentServiceResourceGenerator_FailsOnNil(t *testing.T) {
 	objs, err := generators.BundleMutatingWebhookResourceGenerator(nil, render.Options{})
 	require.Nil(t, objs)
 	require.Error(t, err)

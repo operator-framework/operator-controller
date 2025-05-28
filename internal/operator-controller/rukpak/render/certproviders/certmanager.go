@@ -153,13 +153,13 @@ func (p CertManagerCertificateProvider) AdditionalObjects(cfg render.Certificate
 		},
 		Spec: certmanagerv1.CertificateSpec{
 			SecretName: cfg.CertName,
-			CommonName: fmt.Sprintf("%s.%s", cfg.WebhookServiceName, cfg.Namespace),
+			CommonName: fmt.Sprintf("%s.%s", cfg.ServiceName, cfg.Namespace),
 			Usages:     []certmanagerv1.KeyUsage{certmanagerv1.UsageServerAuth},
 			IsCA:       false,
 			DNSNames: []string{
-				fmt.Sprintf("%s.%s", cfg.WebhookServiceName, cfg.Namespace),
-				fmt.Sprintf("%s.%s.svc", cfg.WebhookServiceName, cfg.Namespace),
-				fmt.Sprintf("%s.%s.svc.cluster.local", cfg.WebhookServiceName, cfg.Namespace),
+				fmt.Sprintf("%s.%s", cfg.ServiceName, cfg.Namespace),
+				fmt.Sprintf("%s.%s.svc", cfg.ServiceName, cfg.Namespace),
+				fmt.Sprintf("%s.%s.svc.cluster.local", cfg.ServiceName, cfg.Namespace),
 			},
 			IssuerRef: certmanagermetav1.ObjectReference{
 				Name: issuer.GetName(),

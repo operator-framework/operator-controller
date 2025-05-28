@@ -28,10 +28,10 @@ type CertSecretInfo struct {
 // CertificateProvisionerConfig contains the necessary information for a CertificateProvider
 // to correctly generate and modify object for certificate injection and automation
 type CertificateProvisionerConfig struct {
-	WebhookServiceName string
-	CertName           string
-	Namespace          string
-	CertProvider       CertificateProvider
+	ServiceName  string
+	CertName     string
+	Namespace    string
+	CertProvider CertificateProvider
 }
 
 // CertificateProvisioner uses a CertificateProvider to modify and generate objects based on its
@@ -70,9 +70,9 @@ func CertProvisionerFor(deploymentName string, opts Options) CertificateProvisio
 	certName := util.ObjectNameForBaseAndSuffix(webhookServiceName, "cert")
 
 	return CertificateProvisioner{
-		CertProvider:       opts.CertificateProvider,
-		WebhookServiceName: webhookServiceName,
-		Namespace:          opts.InstallNamespace,
-		CertName:           certName,
+		CertProvider: opts.CertificateProvider,
+		ServiceName:  webhookServiceName,
+		Namespace:    opts.InstallNamespace,
+		CertName:     certName,
 	}
 }

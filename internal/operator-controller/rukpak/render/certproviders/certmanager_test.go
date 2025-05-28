@@ -30,9 +30,9 @@ func Test_CertManagerProvider_InjectCABundle(t *testing.T) {
 			name: "injects certificate annotation in validating webhook configuration",
 			obj:  &admissionregistrationv1.ValidatingWebhookConfiguration{},
 			cfg: render.CertificateProvisionerConfig{
-				WebhookServiceName: "webhook-service",
-				Namespace:          "namespace",
-				CertName:           "cert-name",
+				ServiceName: "webhook-service",
+				Namespace:   "namespace",
+				CertName:    "cert-name",
 			},
 			expectedObj: &admissionregistrationv1.ValidatingWebhookConfiguration{
 				ObjectMeta: metav1.ObjectMeta{
@@ -46,9 +46,9 @@ func Test_CertManagerProvider_InjectCABundle(t *testing.T) {
 			name: "injects certificate annotation in mutating webhook configuration",
 			obj:  &admissionregistrationv1.MutatingWebhookConfiguration{},
 			cfg: render.CertificateProvisionerConfig{
-				WebhookServiceName: "webhook-service",
-				Namespace:          "namespace",
-				CertName:           "cert-name",
+				ServiceName: "webhook-service",
+				Namespace:   "namespace",
+				CertName:    "cert-name",
 			},
 			expectedObj: &admissionregistrationv1.MutatingWebhookConfiguration{
 				ObjectMeta: metav1.ObjectMeta{
@@ -62,9 +62,9 @@ func Test_CertManagerProvider_InjectCABundle(t *testing.T) {
 			name: "injects certificate annotation in custom resource definition",
 			obj:  &apiextensionsv1.CustomResourceDefinition{},
 			cfg: render.CertificateProvisionerConfig{
-				WebhookServiceName: "webhook-service",
-				Namespace:          "namespace",
-				CertName:           "cert-name",
+				ServiceName: "webhook-service",
+				Namespace:   "namespace",
+				CertName:    "cert-name",
 			},
 			expectedObj: &apiextensionsv1.CustomResourceDefinition{
 				ObjectMeta: metav1.ObjectMeta{
@@ -78,9 +78,9 @@ func Test_CertManagerProvider_InjectCABundle(t *testing.T) {
 			name: "ignores other objects",
 			obj:  &corev1.Service{},
 			cfg: render.CertificateProvisionerConfig{
-				WebhookServiceName: "webhook-service",
-				Namespace:          "namespace",
-				CertName:           "cert-name",
+				ServiceName: "webhook-service",
+				Namespace:   "namespace",
+				CertName:    "cert-name",
 			},
 			expectedObj: &corev1.Service{},
 		},
@@ -96,9 +96,9 @@ func Test_CertManagerProvider_InjectCABundle(t *testing.T) {
 func Test_CertManagerProvider_AdditionalObjects(t *testing.T) {
 	certProvier := certproviders.CertManagerCertificateProvider{}
 	objs, err := certProvier.AdditionalObjects(render.CertificateProvisionerConfig{
-		WebhookServiceName: "webhook-service",
-		Namespace:          "namespace",
-		CertName:           "cert-name",
+		ServiceName: "webhook-service",
+		Namespace:   "namespace",
+		CertName:    "cert-name",
 	})
 	require.NoError(t, err)
 	require.Equal(t, []unstructured.Unstructured{
@@ -155,9 +155,9 @@ func Test_CertManagerProvider_AdditionalObjects(t *testing.T) {
 func Test_CertManagerProvider_GetCertSecretInfo(t *testing.T) {
 	certProvier := certproviders.CertManagerCertificateProvider{}
 	certInfo := certProvier.GetCertSecretInfo(render.CertificateProvisionerConfig{
-		WebhookServiceName: "webhook-service",
-		Namespace:          "namespace",
-		CertName:           "cert-name",
+		ServiceName: "webhook-service",
+		Namespace:   "namespace",
+		CertName:    "cert-name",
 	})
 	require.Equal(t, render.CertSecretInfo{
 		SecretName:     "cert-name",

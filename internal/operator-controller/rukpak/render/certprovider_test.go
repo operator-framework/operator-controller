@@ -16,10 +16,10 @@ import (
 
 func Test_CertificateProvisioner_WithoutCertProvider(t *testing.T) {
 	provisioner := &render.CertificateProvisioner{
-		WebhookServiceName: "webhook",
-		CertName:           "cert",
-		Namespace:          "namespace",
-		CertProvider:       nil,
+		ServiceName:  "webhook",
+		CertName:     "cert",
+		Namespace:    "namespace",
+		CertProvider: nil,
 	}
 
 	require.NoError(t, provisioner.InjectCABundle(&corev1.Secret{}))
@@ -50,10 +50,10 @@ func Test_CertificateProvisioner_WithCertProvider(t *testing.T) {
 		},
 	}
 	provisioner := &render.CertificateProvisioner{
-		WebhookServiceName: "webhook",
-		CertName:           "cert",
-		Namespace:          "namespace",
-		CertProvider:       fakeProvider,
+		ServiceName:  "webhook",
+		CertName:     "cert",
+		Namespace:    "namespace",
+		CertProvider: fakeProvider,
 	}
 
 	svc := &corev1.Service{}
@@ -83,10 +83,10 @@ func Test_CertificateProvisioner_Errors(t *testing.T) {
 		},
 	}
 	provisioner := &render.CertificateProvisioner{
-		WebhookServiceName: "webhook",
-		CertName:           "cert",
-		Namespace:          "namespace",
-		CertProvider:       fakeProvider,
+		ServiceName:  "webhook",
+		CertName:     "cert",
+		Namespace:    "namespace",
+		CertProvider: fakeProvider,
 	}
 
 	err := provisioner.InjectCABundle(&corev1.Service{})
@@ -107,7 +107,7 @@ func Test_CertProvisionerFor(t *testing.T) {
 	})
 
 	require.Equal(t, prov.CertProvider, fakeProvider)
-	require.Equal(t, "my-deployment-thing-service", prov.WebhookServiceName)
+	require.Equal(t, "my-deployment-thing-service", prov.ServiceName)
 	require.Equal(t, "my-deployment-thing-service-cert", prov.CertName)
 	require.Equal(t, "my-namespace", prov.Namespace)
 }
@@ -115,8 +115,8 @@ func Test_CertProvisionerFor(t *testing.T) {
 func Test_CertProvisionerFor_ExtraLargeName_MoreThan63Chars(t *testing.T) {
 	prov := render.CertProvisionerFor("my.object.thing.has.a.really.really.really.really.really.long.name", render.Options{})
 
-	require.Len(t, prov.WebhookServiceName, 63)
+	require.Len(t, prov.ServiceName, 63)
 	require.Len(t, prov.CertName, 63)
-	require.Equal(t, "my-object-thing-has-a-really-really-really-really-reall-service", prov.WebhookServiceName)
+	require.Equal(t, "my-object-thing-has-a-really-really-really-really-reall-service", prov.ServiceName)
 	require.Equal(t, "my-object-thing-has-a-really-really-really-really-reall-se-cert", prov.CertName)
 }
