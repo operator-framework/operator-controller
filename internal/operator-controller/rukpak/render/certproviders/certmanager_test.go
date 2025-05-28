@@ -143,6 +143,10 @@ func Test_CertManagerProvider_AdditionalObjects(t *testing.T) {
 					// OLMv0 has a 2 year certificate rotation period
 					Duration: 730 * 24 * time.Hour,
 				},
+				RenewBefore: &metav1.Duration{
+					// OLMv0 reviews 24h before expiry
+					Duration: 24 * time.Hour,
+				},
 			},
 		}),
 	}, objs)
