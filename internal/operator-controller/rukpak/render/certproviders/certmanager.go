@@ -20,6 +20,7 @@ import (
 const (
 	certManagerInjectCAAnnotation = "cert-manager.io/inject-ca-from"
 	olmv0RotationPeriod           = 730 * 24 * time.Hour // 2 year rotation
+	olmv0RenewBefore              = 24 * time.Hour       // renew certificate within 24h of expiry
 )
 
 var _ render.CertificateProvider = (*CertManagerCertificateProvider)(nil)
@@ -55,6 +56,7 @@ func (p CertManagerCertificateProvider) AdditionalObjects(cfg render.Certificate
 	// OLMv0 parity:
 	// - self-signed issuer
 	// - 2 year rotation period
+	// - renew 24h before expiry
 	// - CN: argocd-operator-controller-manager-service.argocd (<deploymentName>-service.<namespace>)
 	// - CA: false
 	// - DNS:argocd-operator-controller-manager-service.argocd, DNS:argocd-operator-controller-manager-service.argocd.svc, DNS:argocd-operator-controller-manager-service.argocd.svc.cluster.local
@@ -164,6 +166,9 @@ func (p CertManagerCertificateProvider) AdditionalObjects(cfg render.Certificate
 			},
 			Duration: &metav1.Duration{
 				Duration: olmv0RotationPeriod,
+			},
+			RenewBefore: &metav1.Duration{
+				Duration: olmv0RenewBefore,
 			},
 		},
 	}
