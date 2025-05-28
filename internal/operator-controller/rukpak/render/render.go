@@ -56,11 +56,16 @@ func (r ResourceGenerators) ResourceGenerator() ResourceGenerator {
 
 type UniqueNameGenerator func(string, interface{}) (string, error)
 
+type Proxy struct {
+	HttpProxy, HttpsProxy, NoProxy string
+}
+
 type Options struct {
 	InstallNamespace    string
 	TargetNamespaces    []string
 	UniqueNameGenerator UniqueNameGenerator
 	CertificateProvider CertificateProvider
+	Proxy               *Proxy
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -103,6 +108,12 @@ func WithUniqueNameGenerator(generator UniqueNameGenerator) Option {
 func WithCertificateProvider(provider CertificateProvider) Option {
 	return func(o *Options) {
 		o.CertificateProvider = provider
+	}
+}
+
+func WithProxy(proxy Proxy) Option {
+	return func(o *Options) {
+		o.Proxy = &proxy
 	}
 }
 

@@ -115,6 +115,40 @@ func WithMutatingWebhooks(webhooks ...admissionregistrationv1.MutatingWebhook) f
 	}
 }
 
+// With
+func WithProxy(httpProxy, httpsProxy, noProxy string) func(client.Object) {
+	return func(obj client.Object) {
+		switch o := obj.(type) {
+		case *appsv1.Deployment:
+			addProxyEnvVars(httpProxy, httpsProxy, noProxy, o.Spec.Template.Spec.Containers)
+		}
+	}
+}
+
+func addProxyEnvVars(httpProxy, httpsProxy, noProxy string, containers []corev1.Container) {
+	cs := containers
+	for i := range cs {
+		if len(httpProxy) > 0 {
+			cs[i].Env = append(cs[i].Env, corev1.EnvVar{
+				Name:  "HTTP_PROXY",
+				Value: httpProxy,
+			})
+		}
+		if len(httpsProxy) > 0 {
+			cs[i].Env = append(cs[i].Env, corev1.EnvVar{
+				Name:  "HTTPS_PROXY",
+				Value: httpsProxy,
+			})
+		}
+		if len(noProxy) > 0 {
+			cs[i].Env = append(cs[i].Env, corev1.EnvVar{
+				Name:  "NO_PROXY",
+				Value: noProxy,
+			})
+		}
+	}
+}
+
 // CreateServiceAccountResource creates a ServiceAccount resource with name 'name', namespace 'namespace', and applying
 // any ServiceAccount related options in opts
 func CreateServiceAccountResource(name string, namespace string, opts ...ResourceCreatorOption) *corev1.ServiceAccount {

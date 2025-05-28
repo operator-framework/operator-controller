@@ -69,11 +69,20 @@ func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 		// See https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/install/deployment.go#L177-L180
 		depSpec.Spec.RevisionHistoryLimit = ptr.To(int32(1))
 
+		deploymentOpts := []ResourceCreatorOption{
+			WithDeploymentSpec(depSpec.Spec),
+			WithLabels(depSpec.Label),
+		}
+		if opts.Proxy != nil {
+			deploymentOpts = append(
+				deploymentOpts,
+				WithProxy(opts.Proxy.HttpProxy, opts.Proxy.HttpsProxy, opts.Proxy.NoProxy),
+			)
+		}
 		deploymentResource := CreateDeploymentResource(
 			depSpec.Name,
 			opts.InstallNamespace,
-			WithDeploymentSpec(depSpec.Spec),
-			WithLabels(depSpec.Label),
+			deploymentOpts...,
 		)
 
 		secretInfo := render.CertProvisionerFor(depSpec.Name, opts).GetCertSecretInfo()
