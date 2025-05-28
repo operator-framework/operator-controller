@@ -57,7 +57,7 @@ func (r ResourceGenerators) ResourceGenerator() ResourceGenerator {
 type UniqueNameGenerator func(string, interface{}) (string, error)
 
 type Proxy struct {
-	HttpProxy, HttpsProxy, NoProxy string
+	HTTPProxy, HTTPSProxy, NoProxy string
 }
 
 type Options struct {

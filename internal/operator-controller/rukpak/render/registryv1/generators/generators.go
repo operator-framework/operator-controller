@@ -76,7 +76,7 @@ func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 		if opts.Proxy != nil {
 			deploymentOpts = append(
 				deploymentOpts,
-				WithProxy(opts.Proxy.HttpProxy, opts.Proxy.HttpsProxy, opts.Proxy.NoProxy),
+				WithProxy(opts.Proxy.HTTPProxy, opts.Proxy.HTTPSProxy, opts.Proxy.NoProxy),
 			)
 		}
 		deploymentResource := CreateDeploymentResource(
