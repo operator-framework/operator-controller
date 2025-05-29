@@ -1,0 +1,15 @@
+apiVersion: olm.operatorframework.io/v1
+kind: ClusterExtension
+metadata:
+  name: webhook-operator
+spec:
+  namespace: webhook-operator
+  serviceAccount:
+    name: webhook-operator-installer
+  source:
+    catalog:
+      packageName: webhook-operator
+      version: 0.0.1
+      selector: {}
+      upgradeConstraintPolicy: CatalogProvided
+    sourceType: Catalog

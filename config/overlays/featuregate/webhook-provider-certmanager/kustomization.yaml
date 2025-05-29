@@ -1,4 +1,4 @@
-# kustomization file for OLMv1 support for synthetic auth
+# kustomization file for cert-manager backed OLMv1 support for installation of bundles with webhooks
 # DO NOT ADD A NAMESPACE HERE
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -13,7 +13,3 @@ patches:
       kind: Deployment
       name: operator-controller-controller-manager
    path: patches/enable-featuregate.yaml
- - target:
-     kind: ClusterRole
-     name: operator-controller-manager-role
-   path: patches/impersonate-perms.yaml
