@@ -21,11 +21,11 @@ import (
 )
 
 type dynamicSourcerer struct {
-	informerFactoryCreateFunc func() dynamicinformer.DynamicSharedInformerFactory
+	informerFactoryCreateFunc func(namespace string) dynamicinformer.DynamicSharedInformerFactory
 	mapper                    meta.RESTMapper
 }
 
-func (ds *dynamicSourcerer) Source(gvk schema.GroupVersionKind, owner client.Object, onPostSyncError func(context.Context)) (cache.CloserSyncingSource, error) {
+func (ds *dynamicSourcerer) Source(namespace string, gvk schema.GroupVersionKind, owner client.Object, onPostSyncError func(context.Context)) (cache.CloserSyncingSource, error) {
 	scheme, err := buildScheme(gvk)
 	if err != nil {
 		return nil, fmt.Errorf("building scheme: %w", err)
@@ -48,7 +48,7 @@ func (ds *dynamicSourcerer) Source(gvk schema.GroupVersionKind, owner client.Obj
 				GenericFunc: func(tge event.TypedGenericEvent[client.Object]) bool { return true },
 			},
 		},
-		DynamicInformerFactory: ds.informerFactoryCreateFunc(),
+		DynamicInformerFactory: ds.informerFactoryCreateFunc(namespace),
 		OnPostSyncError:        onPostSyncError,
 	})
 	return s, nil
