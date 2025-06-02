@@ -27,10 +27,6 @@ import (
 )
 
 var certVolumeMounts = map[string]corev1.VolumeMount{
-	"apiservice-cert": {
-		Name:      "apiservice-cert",
-		MountPath: "/apiserver.local.config/certificates",
-	},
 	"webhook-cert": {
 		Name:      "webhook-cert",
 		MountPath: "/tmp/k8s-webhook-server/serving-certs",
@@ -488,23 +484,6 @@ func addCertVolumesToDeployment(dep *appsv1.Deployment, certSecretInfo render.Ce
 		}),
 		[]corev1.Volume{
 			{
-				Name: "apiservice-cert",
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: certSecretInfo.SecretName,
-						Items: []corev1.KeyToPath{
-							{
-								Key:  certSecretInfo.CertificateKey,
-								Path: "apiserver.crt",
-							},
-							{
-								Key:  certSecretInfo.PrivateKeyKey,
-								Path: "apiserver.key",
-							},
-						},
-					},
-				},
-			}, {
 				Name: "webhook-cert",
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
