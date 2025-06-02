@@ -71,9 +71,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
+	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
+	sautil "github.com/operator-framework/operator-controller/internal/shared/util/sa"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
 
@@ -217,18 +219,40 @@ func run() error {
 		},
 		DefaultLabelSelector: k8slabels.Nothing(),
 	}
-	if globalPullSecretKey != nil {
-		cacheOptions.ByObject[&corev1.Secret{}] = crcache.ByObject{
-			Namespaces: map[string]crcache.Config{
-				globalPullSecretKey.Namespace: {
-					LabelSelector: k8slabels.Everything(),
-					FieldSelector: fields.SelectorFromSet(map[string]string{
-						"metadata.name": globalPullSecretKey.Name,
-					}),
-				},
+
+	saKey, err := sautil.GetServiceAccount()
+	if err != nil {
+		setupLog.Error(err, "Unable to get pod namesapce and serviceaccount")
+		return err
+	}
+
+	setupLog.Info("Read token", "serviceaccount", saKey)
+	cacheOptions.ByObject[&corev1.ServiceAccount{}] = crcache.ByObject{
+		Namespaces: map[string]crcache.Config{
+			saKey.Namespace: {
+				LabelSelector: k8slabels.Everything(),
+				FieldSelector: fields.SelectorFromSet(map[string]string{
+					"metadata.name": saKey.Name,
+				}),
 			},
+		},
+	}
+
+	secretCache := crcache.ByObject{}
+	secretCache.Namespaces = make(map[string]crcache.Config, 2)
+	secretCache.Namespaces[saKey.Namespace] = crcache.Config{
+		LabelSelector: k8slabels.Everything(),
+		FieldSelector: fields.Everything(),
+	}
+	if globalPullSecretKey != nil {
+		secretCache.Namespaces[globalPullSecretKey.Namespace] = crcache.Config{
+			LabelSelector: k8slabels.Everything(),
+			FieldSelector: fields.SelectorFromSet(map[string]string{
+				"metadata.name": globalPullSecretKey.Name,
+			}),
 		}
 	}
+	cacheOptions.ByObject[&corev1.Secret{}] = secretCache
 
 	metricsServerOptions := server.Options{}
 	if len(cfg.certFile) > 0 && len(cfg.keyFile) > 0 {
@@ -360,7 +384,7 @@ func run() error {
 				OCICertPath:    cfg.pullCasDir,
 			}
 			logger := log.FromContext(ctx)
-			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
+			if _, err := os.Stat(authFilePath); err == nil {
 				logger.Info("using available authentication information for pulling image")
 				srcContext.AuthFilePath = authFilePath
 			} else if os.IsNotExist(err) {
@@ -482,17 +506,16 @@ func run() error {
 		return err
 	}
 
-	if globalPullSecretKey != nil {
-		setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", cfg.globalPullSecret)
-		err := (&controllers.PullSecretReconciler{
-			Client:       mgr.GetClient(),
-			AuthFilePath: authFilePath,
-			SecretKey:    *globalPullSecretKey,
-		}).SetupWithManager(mgr)
-		if err != nil {
-			setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
-			return err
-		}
+	setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", cfg.globalPullSecret)
+	err = (&sharedcontrollers.PullSecretReconciler{
+		Client:            mgr.GetClient(),
+		AuthFilePath:      authFilePath,
+		SecretKey:         globalPullSecretKey,
+		ServiceAccountKey: saKey,
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
+		return err
 	}
 
 	//+kubebuilder:scaffold:builder
