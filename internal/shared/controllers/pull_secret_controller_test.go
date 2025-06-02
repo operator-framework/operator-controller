@@ -1,4 +1,4 @@
-package controllers_test
+package controllers
 
 import (
 	"context"
@@ -12,13 +12,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 )
 
 func TestSecretSyncerReconciler(t *testing.T) {
-	secretData := []byte(`{"auths":{"exampleRegistry": "exampledata"}}`)
+	secretFullData := []byte(`{"auths":{"exampleRegistry": {"auth": "exampledata"}}}`)
+	secretPartData := []byte(`{"exampleRegistry": {"auth": "exampledata"}}`)
 	authFileName := "test-auth.json"
 	for _, tt := range []struct {
 		name                  string
@@ -29,14 +27,29 @@ func TestSecretSyncerReconciler(t *testing.T) {
 		fileShouldExistAfter  bool
 	}{
 		{
-			name: "secret exists, content gets saved to authFile",
+			name: "secret exists, dockerconfigjson content gets saved to authFile",
 			secret: &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-secret",
 					Namespace: "test-secret-namespace",
 				},
 				Data: map[string][]byte{
-					".dockerconfigjson": secretData,
+					".dockerconfigjson": secretFullData,
+				},
+			},
+			addSecret:             true,
+			fileShouldExistBefore: false,
+			fileShouldExistAfter:  true,
+		},
+		{
+			name: "secret exists, dockercfg content gets saved to authFile",
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-secret",
+					Namespace: "test-secret-namespace",
+				},
+				Data: map[string][]byte{
+					".dockercfg": secretPartData,
 				},
 			},
 			addSecret:             true,
@@ -51,7 +64,7 @@ func TestSecretSyncerReconciler(t *testing.T) {
 					Namespace: "test-secret-namespace",
 				},
 				Data: map[string][]byte{
-					".dockerconfigjson": secretData,
+					".dockerconfigjson": secretFullData,
 				},
 			},
 			addSecret:             false,
@@ -62,20 +75,20 @@ func TestSecretSyncerReconciler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			tempAuthFile := filepath.Join(t.TempDir(), authFileName)
-			clientBuilder := fake.NewClientBuilder().WithScheme(scheme.Scheme)
+			clientBuilder := fake.NewClientBuilder()
 			if tt.addSecret {
 				clientBuilder = clientBuilder.WithObjects(tt.secret)
 			}
 			cl := clientBuilder.Build()
 
 			secretKey := types.NamespacedName{Namespace: tt.secret.Namespace, Name: tt.secret.Name}
-			r := &controllers.PullSecretReconciler{
+			r := &PullSecretReconciler{
 				Client:       cl,
-				SecretKey:    secretKey,
+				SecretKey:    &secretKey,
 				AuthFilePath: tempAuthFile,
 			}
 			if tt.fileShouldExistBefore {
-				err := os.WriteFile(tempAuthFile, secretData, 0600)
+				err := os.WriteFile(tempAuthFile, secretFullData, 0600)
 				require.NoError(t, err)
 			}
 			res, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: secretKey})
