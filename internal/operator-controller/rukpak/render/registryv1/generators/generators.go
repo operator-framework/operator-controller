@@ -26,6 +26,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
+const (
+	tlsCrtPath = "tls.crt"
+	tlsKeyPath = "tls.key"
+)
+
 var certVolumeMounts = map[string]corev1.VolumeMount{
 	"webhook-cert": {
 		Name:      "webhook-cert",
@@ -491,11 +496,11 @@ func addCertVolumesToDeployment(dep *appsv1.Deployment, certSecretInfo render.Ce
 						Items: []corev1.KeyToPath{
 							{
 								Key:  certSecretInfo.CertificateKey,
-								Path: "tls.crt",
+								Path: tlsCrtPath,
 							},
 							{
 								Key:  certSecretInfo.PrivateKeyKey,
-								Path: "tls.key",
+								Path: tlsKeyPath,
 							},
 						},
 					},
