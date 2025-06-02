@@ -173,7 +173,7 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 		},
 	}
 
-	bundle := &bundle.RegistryV1{
+	b := &bundle.RegistryV1{
 		CSV: MakeCSV(
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
@@ -189,30 +189,38 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 							Spec: corev1.PodSpec{
 								Volumes: []corev1.Volume{
 									{
-										Name: "apiservice-cert",
-										VolumeSource: corev1.VolumeSource{
-											EmptyDir: &corev1.EmptyDirVolumeSource{},
-										},
-									},
-									{
 										Name: "some-other-mount",
 										VolumeSource: corev1.VolumeSource{
 											EmptyDir: &corev1.EmptyDirVolumeSource{},
 										},
 									},
-									// expect webhook-cert volume to be injected
+									// this volume should be replaced by the webhook-cert volume
+									// because it has a volume mount targeting the protected path
+									// /tmp/k8s-webhook-server/serving-certs
+									{
+										Name: "some-webhook-cert-mount",
+										VolumeSource: corev1.VolumeSource{
+											EmptyDir: &corev1.EmptyDirVolumeSource{},
+										},
+									},
 								},
 								Containers: []corev1.Container{
 									{
 										Name: "container-1",
 										VolumeMounts: []corev1.VolumeMount{
-											// expect apiservice-cert volume to be injected
+											// the mount path for this volume mount will be replaced with
+											// /tmp/k8s-webhook-server/serving-certs
 											{
 												Name:      "webhook-cert",
 												MountPath: "/webhook-cert-path",
 											}, {
 												Name:      "some-other-mount",
 												MountPath: "/some/other/mount/path",
+											},
+											// this volume mount will be removed
+											{
+												Name:      "some-webhook-cert-mount",
+												MountPath: "/tmp/k8s-webhook-server/serving-certs",
 											},
 										},
 									},
@@ -229,7 +237,7 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 		),
 	}
 
-	objs, err := generators.BundleCSVDeploymentGenerator(bundle, render.Options{
+	objs, err := generators.BundleCSVDeploymentGenerator(b, render.Options{
 		InstallNamespace:    "install-namespace",
 		CertificateProvider: fakeProvider,
 	})
@@ -247,23 +255,6 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 			},
 		},
 		{
-			Name: "apiservice-cert",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: "some-secret",
-					Items: []corev1.KeyToPath{
-						{
-							Key:  "some-cert-key",
-							Path: "apiserver.crt",
-						},
-						{
-							Key:  "some-private-key-key",
-							Path: "apiserver.key",
-						},
-					},
-				},
-			},
-		}, {
 			Name: "webhook-cert",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
@@ -291,10 +282,6 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 					MountPath: "/some/other/mount/path",
 				},
 				{
-					Name:      "apiservice-cert",
-					MountPath: "/apiserver.local.config/certificates",
-				},
-				{
 					Name:      "webhook-cert",
 					MountPath: "/tmp/k8s-webhook-server/serving-certs",
 				},
@@ -303,10 +290,6 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 		{
 			Name: "container-2",
 			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "apiservice-cert",
-					MountPath: "/apiserver.local.config/certificates",
-				},
 				{
 					Name:      "webhook-cert",
 					MountPath: "/tmp/k8s-webhook-server/serving-certs",

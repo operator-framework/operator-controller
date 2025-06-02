@@ -26,15 +26,14 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
-var certVolumeMounts = map[string]corev1.VolumeMount{
-	"apiservice-cert": {
-		Name:      "apiservice-cert",
-		MountPath: "/apiserver.local.config/certificates",
-	},
-	"webhook-cert": {
-		Name:      "webhook-cert",
-		MountPath: "/tmp/k8s-webhook-server/serving-certs",
-	},
+const (
+	tlsCrtPath = "tls.crt"
+	tlsKeyPath = "tls.key"
+)
+
+// volume mount name -> mount path
+var certVolumeMounts = map[string]string{
+	"webhook-cert": "/tmp/k8s-webhook-server/serving-certs",
 }
 
 // BundleCSVDeploymentGenerator generates all deployments defined in rv1's cluster service version (CSV). The generated
@@ -480,31 +479,23 @@ func getWebhookServicePort(wh v1alpha1.WebhookDescription) corev1.ServicePort {
 }
 
 func addCertVolumesToDeployment(dep *appsv1.Deployment, certSecretInfo render.CertSecretInfo) {
+	volumeMountsToReplace := sets.New(slices.Collect(maps.Keys(certVolumeMounts))...)
+	certVolumeMountPaths := sets.New(slices.Collect(maps.Values(certVolumeMounts))...)
+	for _, c := range dep.Spec.Template.Spec.Containers {
+		for _, containerVolumeMount := range c.VolumeMounts {
+			if certVolumeMountPaths.Has(containerVolumeMount.MountPath) {
+				volumeMountsToReplace.Insert(containerVolumeMount.Name)
+			}
+		}
+	}
+
 	// update pod volumes
 	dep.Spec.Template.Spec.Volumes = slices.Concat(
 		slices.DeleteFunc(dep.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
-			_, ok := certVolumeMounts[v.Name]
-			return ok
+			return volumeMountsToReplace.Has(v.Name)
 		}),
 		[]corev1.Volume{
 			{
-				Name: "apiservice-cert",
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: certSecretInfo.SecretName,
-						Items: []corev1.KeyToPath{
-							{
-								Key:  certSecretInfo.CertificateKey,
-								Path: "apiserver.crt",
-							},
-							{
-								Key:  certSecretInfo.PrivateKeyKey,
-								Path: "apiserver.key",
-							},
-						},
-					},
-				},
-			}, {
 				Name: "webhook-cert",
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
@@ -512,11 +503,11 @@ func addCertVolumesToDeployment(dep *appsv1.Deployment, certSecretInfo render.Ce
 						Items: []corev1.KeyToPath{
 							{
 								Key:  certSecretInfo.CertificateKey,
-								Path: "tls.crt",
+								Path: tlsCrtPath,
 							},
 							{
 								Key:  certSecretInfo.PrivateKeyKey,
-								Path: "tls.key",
+								Path: tlsKeyPath,
 							},
 						},
 					},
@@ -529,15 +520,18 @@ func addCertVolumesToDeployment(dep *appsv1.Deployment, certSecretInfo render.Ce
 	for i := range dep.Spec.Template.Spec.Containers {
 		dep.Spec.Template.Spec.Containers[i].VolumeMounts = slices.Concat(
 			slices.DeleteFunc(dep.Spec.Template.Spec.Containers[i].VolumeMounts, func(v corev1.VolumeMount) bool {
-				_, ok := certVolumeMounts[v.Name]
-				return ok
+				return volumeMountsToReplace.Has(v.Name)
 			}),
-			slices.SortedFunc(
-				maps.Values(certVolumeMounts),
-				func(a corev1.VolumeMount, b corev1.VolumeMount) int {
-					return cmp.Compare(a.Name, b.Name)
-				},
-			),
+			func() []corev1.VolumeMount {
+				volumeMounts := make([]corev1.VolumeMount, 0, len(certVolumeMounts))
+				for _, name := range slices.Sorted(maps.Keys(certVolumeMounts)) {
+					volumeMounts = append(volumeMounts, corev1.VolumeMount{
+						Name:      name,
+						MountPath: certVolumeMounts[name],
+					})
+				}
+				return volumeMounts
+			}(),
 		)
 	}
 }
