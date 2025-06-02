@@ -194,18 +194,33 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 											EmptyDir: &corev1.EmptyDirVolumeSource{},
 										},
 									},
-									// expect webhook-cert volume to be injected
+									// this volume should be replaced by the webhook-cert volume
+									// because it has a volume mount targeting the protected path
+									// /tmp/k8s-webhook-server/serving-certs
+									{
+										Name: "some-webhook-cert-mount",
+										VolumeSource: corev1.VolumeSource{
+											EmptyDir: &corev1.EmptyDirVolumeSource{},
+										},
+									},
 								},
 								Containers: []corev1.Container{
 									{
 										Name: "container-1",
 										VolumeMounts: []corev1.VolumeMount{
+											// the mount path for this volume mount will be replaced with
+											// /tmp/k8s-webhook-server/serving-certs
 											{
 												Name:      "webhook-cert",
 												MountPath: "/webhook-cert-path",
 											}, {
 												Name:      "some-other-mount",
 												MountPath: "/some/other/mount/path",
+											},
+											// this volume mount will be removed
+											{
+												Name:      "some-webhook-cert-mount",
+												MountPath: "/tmp/k8s-webhook-server/serving-certs",
 											},
 										},
 									},
