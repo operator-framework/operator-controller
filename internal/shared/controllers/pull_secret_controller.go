@@ -46,8 +46,8 @@ type PullSecretReconciler struct {
 func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx).WithName("pull-secret-reconciler")
 
-	logger.Info("processing event", logName(req.NamespacedName)...)
-	defer logger.Info("processed event", logName(req.NamespacedName)...)
+	logger.Info("processing event", "name", req.Name, "namespace", req.Namespace)
+	defer logger.Info("processed event", "name", req.Name, "namespace", req.Namespace)
 
 	secrets := []*corev1.Secret{}
 
@@ -67,9 +67,9 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	logger.Info("serviceaccount", "name", r.ServiceAccountKey)
 	if err := r.Get(ctx, r.ServiceAccountKey, sa); err != nil { //nolint:nestif
 		if apierrors.IsNotFound(err) {
-			logger.Info("serviceaccount not found", logName(r.ServiceAccountKey)...)
+			logger.Info("serviceaccount not found", "name", r.ServiceAccountKey.Name, "namespace", r.ServiceAccountKey.Namespace)
 		} else {
-			logger.Error(err, "failed to get serviceaccount", logName(r.ServiceAccountKey)...)
+			logger.Error(err, "failed to get serviceaccount", "name", r.ServiceAccountKey.Name, "namespace", r.ServiceAccountKey.Namespace)
 			return ctrl.Result{}, err
 		}
 	} else {
@@ -102,21 +102,16 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 func (r *PullSecretReconciler) getSecret(ctx context.Context, logger logr.Logger, nn types.NamespacedName) (*corev1.Secret, error) {
 	secret := &corev1.Secret{}
-	if err := r.Get(ctx, *r.SecretKey, secret); err != nil {
+	if err := r.Get(ctx, nn, secret); err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.Info("secret not found", logName(nn)...)
+			logger.Info("secret not found", "name", nn.Name, "namespace", nn.Namespace)
 			return nil, nil
 		}
-		logger.Error(err, "failed to get secret", logName(nn)...)
+		logger.Error(err, "failed to get secret", "name", nn.Name, "namespace", nn.Namespace)
 		return nil, err
 	}
-	logger.Info("found secret", logName(nn)...)
+	logger.Info("found secret", "name", nn.Name, "namespace", nn.Namespace)
 	return secret, nil
-}
-
-// Helper function to log NamespacedNames
-func logName(nn types.NamespacedName) []any {
-	return []any{"name", nn.Name, "namespace", nn.Namespace}
 }
 
 // SetupWithManager sets up the controller with the Manager.
