@@ -23,6 +23,7 @@ import (
 	"os"
 
 	"github.com/go-logr/logr"
+	"github.com/google/renameio/v2"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -45,23 +46,18 @@ type PullSecretReconciler struct {
 func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx).WithName("pull-secret-reconciler")
 
-	logger.Info("processing event", "name", req.NamespacedName)
-	defer logger.Info("processed event", "name", req.NamespacedName)
+	logger.Info("processing event", logName(req.NamespacedName)...)
+	defer logger.Info("processed event", logName(req.NamespacedName)...)
 
 	secrets := []*corev1.Secret{}
-	secret := &corev1.Secret{}
 
 	if r.SecretKey != nil { //nolint:nestif
+		secret, err := r.getSecret(ctx, logger, *r.SecretKey)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		// Add the configured pull secret to the list of secrets
-		if err := r.Get(ctx, *r.SecretKey, secret); err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Info("secret not found", "name", r.SecretKey)
-			} else {
-				logger.Error(err, "failed to get Secret", "name", r.SecretKey)
-				return ctrl.Result{}, err
-			}
-		} else {
-			logger.Info("global pull secret", "name", *r.SecretKey)
+		if secret != nil {
 			secrets = append(secrets, secret)
 		}
 	}
@@ -71,9 +67,9 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	logger.Info("serviceaccount", "name", r.ServiceAccountKey)
 	if err := r.Get(ctx, r.ServiceAccountKey, sa); err != nil { //nolint:nestif
 		if apierrors.IsNotFound(err) {
-			logger.Info("serviceaccount not found", "serviceaccount", r.ServiceAccountKey)
+			logger.Info("serviceaccount not found", logName(r.ServiceAccountKey)...)
 		} else {
-			logger.Error(err, "failed to get serviceaccount", "serviceaccount", r.ServiceAccountKey)
+			logger.Error(err, "failed to get serviceaccount", logName(r.ServiceAccountKey)...)
 			return ctrl.Result{}, err
 		}
 	} else {
@@ -84,16 +80,12 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			// This is to update the list of secrets that we are filtering on
 			// Add all secrets regardless if they exist or not
 			pullSecrets = append(pullSecrets, nn)
-			secret := &corev1.Secret{}
-			err = r.Get(ctx, nn, secret)
+
+			secret, err := r.getSecret(ctx, logger, nn)
 			if err != nil {
-				if apierrors.IsNotFound(err) {
-					logger.Info("serviceaccount pull secret not found", "secret", nn)
-				} else {
-					logger.Error(err, "failed to get serviceaccount pull secret", "secret", nn)
-					return ctrl.Result{}, err
-				}
-			} else {
+				return ctrl.Result{}, err
+			}
+			if secret != nil {
 				secrets = append(secrets, secret)
 			}
 		}
@@ -106,6 +98,25 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, r.deleteSecretFile(logger)
 	}
 	return ctrl.Result{}, r.writeSecretToFile(logger, secrets)
+}
+
+func (r *PullSecretReconciler) getSecret(ctx context.Context, logger logr.Logger, nn types.NamespacedName) (*corev1.Secret, error) {
+	secret := &corev1.Secret{}
+	if err := r.Get(ctx, *r.SecretKey, secret); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("secret not found", logName(nn)...)
+			return nil, nil
+		}
+		logger.Error(err, "failed to get secret", logName(nn)...)
+		return nil, err
+	}
+	logger.Info("found secret", logName(nn)...)
+	return secret, nil
+}
+
+// Helper function to log NamespacedNames
+func logName(nn types.NamespacedName) []any {
+	return []any{"name", nn.Name, "namespace", nn.Namespace}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -205,7 +216,7 @@ func (r *PullSecretReconciler) writeSecretToFile(logger logr.Logger, secrets []*
 	if err != nil {
 		return fmt.Errorf("failed to marshal secret data: %w", err)
 	}
-	err = os.WriteFile(r.AuthFilePath, data, 0600)
+	err = renameio.WriteFile(r.AuthFilePath, data, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write secret data to file: %w", err)
 	}
