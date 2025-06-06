@@ -43,11 +43,11 @@ type PullSecretReconciler struct {
 	AuthFilePath              string
 }
 
-func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *PullSecretReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx).WithName("pull-secret-reconciler")
 
-	logger.Info("processing event", "name", req.Name, "namespace", req.Namespace)
-	defer logger.Info("processed event", "name", req.Name, "namespace", req.Namespace)
+	logger.Info("starting reconciliation")
+	defer logger.Info("finishing reconciliation")
 
 	secrets := []*corev1.Secret{}
 
@@ -64,15 +64,15 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Grab all the pull secrets from the serviceaccount and add them to the list of secrets
 	sa := &corev1.ServiceAccount{}
-	logger.Info("serviceaccount", "name", r.ServiceAccountKey)
 	if err := r.Get(ctx, r.ServiceAccountKey, sa); err != nil { //nolint:nestif
 		if apierrors.IsNotFound(err) {
-			logger.Info("serviceaccount not found", "name", r.ServiceAccountKey.Name, "namespace", r.ServiceAccountKey.Namespace)
+			logger.Info("serviceaccount not found", "pod-sa", logNamespacedName(r.ServiceAccountKey))
 		} else {
-			logger.Error(err, "failed to get serviceaccount", "name", r.ServiceAccountKey.Name, "namespace", r.ServiceAccountKey.Namespace)
+			logger.Error(err, "failed to get serviceaccount", "pod-sa", logNamespacedName(r.ServiceAccountKey))
 			return ctrl.Result{}, err
 		}
 	} else {
+		logger.Info("found serviceaccount", "pod-sa", logNamespacedName(r.ServiceAccountKey))
 		nn := types.NamespacedName{Namespace: r.ServiceAccountKey.Namespace}
 		pullSecrets := []types.NamespacedName{}
 		for _, ips := range sa.ImagePullSecrets {
@@ -90,8 +90,13 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 		}
 		// update list of pull secrets from service account
-		logger.Info("updating list of pull secrets", "list", pullSecrets)
 		r.ServiceAccountPullSecrets = pullSecrets
+		// Log ever-so slightly nicer
+		names := []string{}
+		for _, ps := range pullSecrets {
+			names = append(names, logNamespacedName(ps))
+		}
+		logger.Info("updating list of pull-secrets", "pull-secrets", names)
 	}
 
 	if len(secrets) == 0 {
@@ -104,14 +109,18 @@ func (r *PullSecretReconciler) getSecret(ctx context.Context, logger logr.Logger
 	secret := &corev1.Secret{}
 	if err := r.Get(ctx, nn, secret); err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.Info("secret not found", "name", nn.Name, "namespace", nn.Namespace)
+			logger.Info("pull-secret not found", "pull-secret", logNamespacedName(nn))
 			return nil, nil
 		}
-		logger.Error(err, "failed to get secret", "name", nn.Name, "namespace", nn.Namespace)
+		logger.Error(err, "failed to get pull-secret", "pull-secret", logNamespacedName(nn))
 		return nil, err
 	}
-	logger.Info("found secret", "name", nn.Name, "namespace", nn.Namespace)
+	logger.Info("found pull-secret", "pull-secret", logNamespacedName(nn))
 	return secret, nil
+}
+
+func logNamespacedName(nn types.NamespacedName) string {
+	return fmt.Sprintf("%s/%s", nn.Namespace, nn.Name)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -204,7 +213,7 @@ func (r *PullSecretReconciler) writeSecretToFile(logger logr.Logger, secrets []*
 			continue
 		}
 		// Ignore the unknown secret
-		logger.Info("expected secret.Data key not found", "secret", types.NamespacedName{Name: s.Name, Namespace: s.Namespace})
+		logger.Info("expected secret.Data key not found", "pull-secret", logNamespacedName(types.NamespacedName{Name: s.Name, Namespace: s.Namespace}))
 	}
 
 	data, err := json.Marshal(jsonData)
