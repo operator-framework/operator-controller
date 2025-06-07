@@ -258,6 +258,24 @@ test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
+.PHONY: test-e2e-metrics
+test-e2e-metrics: KIND_CLUSTER_NAME := operator-controller-e2e
+test-e2e-metrics: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
+test-e2e-metrics: GO_BUILD_EXTRA_FLAGS := -cover
+test-e2e-metrics: run image-registry prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster with prometheus installed
+
+.PHONY: prometheus
+prometheus: PROMETHEUS_NAMESPACE := prometheus
+prometheus: TMPDIR := $(shell mktemp -d)
+prometheus: PROMETHEUS_VERSION := v0.83.0
+prometheus: ## Deploy Prometheus into 'prometheus' namespace
+	trap 'echo "Cleaning up $(TMPDIR)"; rm -rf "$(TMPDIR)"' EXIT; \
+	kubectl create ns $(PROMETHEUS_NAMESPACE); \
+	curl -s "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/refs/tags/$(PROMETHEUS_VERSION)/kustomization.yaml" > "$(TMPDIR)/kustomization.yaml" ; \
+	curl -s "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/refs/tags/$(PROMETHEUS_VERSION)/bundle.yaml" > "$(TMPDIR)/bundle.yaml" ; \
+	(cd $(TMPDIR) && $(KUSTOMIZE) edit set namespace $(PROMETHEUS_NAMESPACE)) && kubectl create -k "$(TMPDIR)" ; \
+	kubectl wait --for=condition=Ready pods -n $(PROMETHEUS_NAMESPACE) -l app.kubernetes.io/name=prometheus-operator
+
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
