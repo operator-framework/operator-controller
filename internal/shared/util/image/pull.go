@@ -224,6 +224,11 @@ func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, 
 		}
 	}()
 
+	if hasChart(img) {
+		return pullChart(ctx, ownerID, srcRef, canonicalRef, imgSrc, srcImgRef, cache)
+	}
+
+	// Helm charts would error when getting OCI config
 	ociImg, err := img.OCIConfig(ctx)
 	if err != nil {
 		return nil, time.Time{}, err
@@ -231,7 +236,7 @@ func (p *ContainersImagePuller) applyImage(ctx context.Context, ownerID string, 
 
 	layerIter := iter.Seq[LayerData](func(yield func(LayerData) bool) {
 		for i, layerInfo := range img.LayerInfos() {
-			ld := LayerData{Index: i}
+			ld := LayerData{Index: i, MediaType: layerInfo.MediaType}
 			layerReader, _, err := imgSrc.GetBlob(ctx, layerInfo, none.NoCache)
 			if err != nil {
 				ld.Err = fmt.Errorf("error getting layer blob reader: %w", err)

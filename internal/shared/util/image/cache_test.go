@@ -2,6 +2,7 @@ package image
 
 import (
 	"archive/tar"
+	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -20,6 +21,7 @@ import (
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/registry"
 
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 )
@@ -209,6 +211,22 @@ func TestDiskCacheStore(t *testing.T) {
 			},
 			expect: func(t *testing.T, cache *diskCache, fsys fs.FS, modTime time.Time, err error) {
 				assert.ErrorContains(t, err, "error applying layer")
+			},
+		},
+		{
+			name:         "returns no error if layer read contains helm chart",
+			ownerID:      myOwner,
+			srcRef:       myTaggedRef,
+			canonicalRef: myCanonicalRef,
+			layers: func() iter.Seq[LayerData] {
+				sampleChart := filepath.Join("../../../../", "testdata", "charts", "sample-chart-0.1.0.tgz")
+				data, _ := os.ReadFile(sampleChart)
+				return func(yield func(LayerData) bool) {
+					yield(LayerData{Reader: bytes.NewBuffer(data), MediaType: registry.ChartLayerMediaType})
+				}
+			}(),
+			expect: func(t *testing.T, cache *diskCache, fsys fs.FS, modTime time.Time, err error) {
+				require.NoError(t, err)
 			},
 		},
 		{
