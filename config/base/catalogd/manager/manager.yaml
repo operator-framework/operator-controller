@@ -52,8 +52,11 @@ spec:
         volumeMounts:
             - name: cache
               mountPath: /var/cache/
+            - name: tmp
+              mountPath: /tmp
         securityContext:
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL
@@ -79,4 +82,6 @@ spec:
       terminationGracePeriodSeconds: 10
       volumes:
         - name: cache
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}

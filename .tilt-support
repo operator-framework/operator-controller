@@ -67,6 +67,7 @@ COPY {} /
         live_update=[
             sync('.tiltbuild/bin/{}'.format(binary_name), '/{}'.format(binary_name)),
         ],
+        restart_file="/.tilt_restart_proc",
         # The command to run in the container.
         entrypoint=entrypoint,
     )
