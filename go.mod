@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cert-manager/cert-manager v1.17.1
+	github.com/cert-manager/cert-manager v1.18.0
 	github.com/containerd/containerd v1.7.27
 	github.com/containers/image/v5 v5.35.0
 	github.com/fsnotify/fsnotify v1.9.0
@@ -52,7 +52,7 @@ require (
 require (
 	cel.dev/expr v0.23.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
-	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
+	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
