@@ -766,6 +766,40 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "reconcile should be short-circuited if the clustercatalog has a deletion timestamp and all known finalizers have been removed",
+			catalog: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "catalog",
+					Finalizers:        []string{"finalizer"},
+					DeletionTimestamp: &metav1.Time{Time: time.Date(2025, 6, 10, 16, 43, 0, 0, time.UTC)},
+				},
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					AvailabilityMode: ocv1.AvailabilityModeAvailable,
+				},
+			},
+			expectedCatalog: &ocv1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "catalog",
+					Finalizers:        []string{"finalizer"},
+					DeletionTimestamp: &metav1.Time{Time: time.Date(2025, 6, 10, 16, 43, 0, 0, time.UTC)}},
+				Spec: ocv1.ClusterCatalogSpec{
+					Source: ocv1.CatalogSource{
+						Type: ocv1.SourceTypeImage,
+						Image: &ocv1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					AvailabilityMode: ocv1.AvailabilityModeAvailable,
+				},
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			reconciler := &ClusterCatalogReconciler{

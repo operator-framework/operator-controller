@@ -196,6 +196,14 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 		return ctrl.Result{}, nil
 	}
 
+	if catalog.GetDeletionTimestamp() != nil {
+		// If we've gotten here, that means the cluster catalog is being deleted, we've handled all of
+		// _our_ finalizers (above), but the cluster catalog is still present in the cluster, likely
+		// because there are _other_ finalizers that other controllers need to handle, (e.g. the orphan
+		// deletion finalizer).
+		return ctrl.Result{}, nil
+	}
+
 	// TODO: The below algorithm to get the current state based on an in-memory
 	//    storedCatalogs map is a hack that helps us keep the ClusterCatalog's
 	//    status up-to-date. The fact that we need this setup is indicative of

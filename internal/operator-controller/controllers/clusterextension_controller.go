@@ -206,6 +206,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		return ctrl.Result{}, nil
 	}
 
+	if ext.GetDeletionTimestamp() != nil {
+		// If we've gotten here, that means the cluster extension is being deleted, we've handled all of
+		// _our_ finalizers (above), but the cluster extension is still present in the cluster, likely
+		// because there are _other_ finalizers that other controllers need to handle, (e.g. the orphan
+		// deletion finalizer).
+		return ctrl.Result{}, nil
+	}
+
 	l.Info("getting installed bundle")
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
