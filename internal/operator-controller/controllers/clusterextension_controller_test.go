@@ -48,6 +48,79 @@ func TestClusterExtensionDoesNotExist(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t)
+
+	installedBundleGetterCalledErr := errors.New("installed bundle getter called")
+	checkInstalledBundleGetterCalled := func(t require.TestingT, err error, args ...interface{}) {
+		require.Equal(t, installedBundleGetterCalledErr, err)
+	}
+	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
+		err: installedBundleGetterCalledErr,
+	}
+
+	type testCase struct {
+		name         string
+		finalizers   []string
+		shouldDelete bool
+		expectErr    require.ErrorAssertionFunc
+	}
+	for _, tc := range []testCase{
+		{
+			name:      "no finalizers, not deleted",
+			expectErr: checkInstalledBundleGetterCalled,
+		},
+		{
+			name:       "has finalizers, not deleted",
+			finalizers: []string{"finalizer"},
+			expectErr:  checkInstalledBundleGetterCalled,
+		},
+		{
+			name:         "has finalizers, deleted",
+			finalizers:   []string{"finalizer"},
+			shouldDelete: true,
+			expectErr:    require.NoError,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pkgName := fmt.Sprintf("test-pkg-%s", rand.String(6))
+
+			ctx := context.Background()
+			extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+			t.Log("When the cluster extension specifies a non-existent package")
+			t.Log("By initializing cluster state")
+			clusterExtension := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       extKey.Name,
+					Finalizers: tc.finalizers,
+				},
+				Spec: ocv1.ClusterExtensionSpec{
+					Source: ocv1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1.CatalogFilter{
+							PackageName: pkgName,
+						},
+					},
+					Namespace: "default",
+					ServiceAccount: ocv1.ServiceAccountReference{
+						Name: "default",
+					},
+				},
+			}
+			require.NoError(t, cl.Create(ctx, clusterExtension))
+			if tc.shouldDelete {
+				require.NoError(t, cl.Delete(ctx, clusterExtension))
+			}
+
+			t.Log("By running reconcile")
+			res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+			require.Equal(t, ctrl.Result{}, res)
+			tc.expectErr(t, err)
+		})
+	}
+}
+
 func TestClusterExtensionResolutionFails(t *testing.T) {
 	pkgName := fmt.Sprintf("non-existent-%s", rand.String(6))
 	cl, reconciler := newClientAndReconciler(t)
