@@ -31,6 +31,7 @@ type Preflight struct {
 
 func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface, opts ...Option) *Preflight {
 	changeValidations := []ChangeValidation{
+		Description,
 		Enum,
 		Required,
 		Maximum,

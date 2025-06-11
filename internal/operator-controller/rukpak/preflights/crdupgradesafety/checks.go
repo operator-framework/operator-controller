@@ -242,3 +242,13 @@ func Type(diff FieldDiff) (bool, error) {
 
 	return isHandled(diff, reset), err
 }
+
+// Description changes are considered safe and non-breaking.
+func Description(diff FieldDiff) (bool, error) {
+	reset := func(diff FieldDiff) FieldDiff {
+		diff.Old.Description = ""
+		diff.New.Description = ""
+		return diff
+	}
+	return isHandled(diff, reset), nil
+}
