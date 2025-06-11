@@ -26,7 +26,7 @@ func SetupPullSecretCache(cacheOptions *cache.Options, globalPullSecretKey *type
 		LabelSelector: labels.Everything(),
 		FieldSelector: fields.Everything(),
 	}
-	if globalPullSecretKey != nil {
+	if globalPullSecretKey != nil && globalPullSecretKey.Namespace != saKey.Namespace {
 		secretCache.Namespaces[globalPullSecretKey.Namespace] = cache.Config{
 			LabelSelector: labels.Everything(),
 			FieldSelector: fields.SelectorFromSet(map[string]string{
