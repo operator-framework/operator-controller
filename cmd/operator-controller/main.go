@@ -30,10 +30,8 @@ import (
 
 	"github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
@@ -75,6 +73,7 @@ import (
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
+	"github.com/operator-framework/operator-controller/internal/shared/util/pullsecretcache"
 	sautil "github.com/operator-framework/operator-controller/internal/shared/util/sa"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
@@ -222,37 +221,17 @@ func run() error {
 
 	saKey, err := sautil.GetServiceAccount()
 	if err != nil {
-		setupLog.Error(err, "Unable to get pod namesapce and serviceaccount")
+		setupLog.Error(err, "Failed to extract serviceaccount from JWT")
 		return err
 	}
+	setupLog.Info("Successfully extracted serviceaccount from JWT", "serviceaccount",
+		fmt.Sprintf("%s/%s", saKey.Namespace, saKey.Name))
 
-	setupLog.Info("Read token", "serviceaccount", saKey)
-	cacheOptions.ByObject[&corev1.ServiceAccount{}] = crcache.ByObject{
-		Namespaces: map[string]crcache.Config{
-			saKey.Namespace: {
-				LabelSelector: k8slabels.Everything(),
-				FieldSelector: fields.SelectorFromSet(map[string]string{
-					"metadata.name": saKey.Name,
-				}),
-			},
-		},
+	err = pullsecretcache.SetupPullSecretCache(&cacheOptions, globalPullSecretKey, saKey)
+	if err != nil {
+		setupLog.Error(err, "Unable to setup pull-secret cache")
+		return err
 	}
-
-	secretCache := crcache.ByObject{}
-	secretCache.Namespaces = make(map[string]crcache.Config, 2)
-	secretCache.Namespaces[saKey.Namespace] = crcache.Config{
-		LabelSelector: k8slabels.Everything(),
-		FieldSelector: fields.Everything(),
-	}
-	if globalPullSecretKey != nil {
-		secretCache.Namespaces[globalPullSecretKey.Namespace] = crcache.Config{
-			LabelSelector: k8slabels.Everything(),
-			FieldSelector: fields.SelectorFromSet(map[string]string{
-				"metadata.name": globalPullSecretKey.Name,
-			}),
-		}
-	}
-	cacheOptions.ByObject[&corev1.Secret{}] = secretCache
 
 	metricsServerOptions := server.Options{}
 	if len(cfg.certFile) > 0 && len(cfg.keyFile) > 0 {

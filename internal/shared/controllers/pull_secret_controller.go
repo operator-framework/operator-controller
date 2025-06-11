@@ -51,7 +51,7 @@ func (r *PullSecretReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (c
 
 	secrets := []*corev1.Secret{}
 
-	if r.SecretKey != nil { //nolint:nestif
+	if r.SecretKey != nil {
 		secret, err := r.getSecret(ctx, logger, *r.SecretKey)
 		if err != nil {
 			return ctrl.Result{}, err

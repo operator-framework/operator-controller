@@ -44,7 +44,7 @@ func getServiceAccountInternal(data []byte, err error) (k8stypes.NamespacedName,
 		return k8stypes.NamespacedName{}, err
 	}
 	subjects := strings.Split(subject, ":")
-	if len(subjects) != 4 {
+	if len(subjects) != 4 || subjects[2] == "" || subjects[3] == "" {
 		return k8stypes.NamespacedName{}, fmt.Errorf("badly formatted subject: %s", subject)
 	}
 	return k8stypes.NamespacedName{Namespace: subjects[2], Name: subjects[3]}, nil
