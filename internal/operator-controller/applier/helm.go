@@ -91,7 +91,7 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.Clu
 func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterExtension, chart *chart.Chart, values chartutil.Values, post postrender.PostRenderer) error {
 	tmplRel, err := h.renderClientOnlyRelease(ctx, ext, chart, values, post)
 	if err != nil {
-		return fmt.Errorf("failed to get release state using client-only dry-run: %w", err)
+		return fmt.Errorf("error rendering content for pre-authorization checks: %w", err)
 	}
 
 	missingRules, authErr := h.PreAuthorizer.PreAuthorize(ctx, ext, strings.NewReader(tmplRel.Manifest))
