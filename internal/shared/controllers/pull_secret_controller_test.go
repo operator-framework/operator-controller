@@ -20,78 +20,121 @@ func TestSecretSyncerReconciler(t *testing.T) {
 	authFileName := "test-auth.json"
 	for _, tt := range []struct {
 		name                  string
-		secret                *corev1.Secret
-		addSecret             bool
+		secretKey             *types.NamespacedName
+		sa                    *corev1.ServiceAccount
+		secrets               []corev1.Secret
 		wantErr               string
 		fileShouldExistBefore bool
 		fileShouldExistAfter  bool
 	}{
 		{
-			name: "secret exists, dockerconfigjson content gets saved to authFile",
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-secret",
-					Namespace: "test-secret-namespace",
-				},
-				Data: map[string][]byte{
-					".dockerconfigjson": secretFullData,
+			name:      "secret exists, dockerconfigjson content gets saved to authFile",
+			secretKey: &types.NamespacedName{Namespace: "test-secret-namespace", Name: "test-secret"},
+			secrets: []corev1.Secret{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret",
+						Namespace: "test-secret-namespace",
+					},
+					Data: map[string][]byte{
+						".dockerconfigjson": secretFullData,
+					},
 				},
 			},
-			addSecret:             true,
 			fileShouldExistBefore: false,
 			fileShouldExistAfter:  true,
 		},
 		{
-			name: "secret exists, dockercfg content gets saved to authFile",
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-secret",
-					Namespace: "test-secret-namespace",
-				},
-				Data: map[string][]byte{
-					".dockercfg": secretPartData,
+			name:      "secret exists, dockercfg content gets saved to authFile",
+			secretKey: &types.NamespacedName{Namespace: "test-secret-namespace", Name: "test-secret"},
+			secrets: []corev1.Secret{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret",
+						Namespace: "test-secret-namespace",
+					},
+					Data: map[string][]byte{
+						".dockercfg": secretPartData,
+					},
 				},
 			},
-			addSecret:             true,
 			fileShouldExistBefore: false,
 			fileShouldExistAfter:  true,
 		},
 		{
-			name: "secret does not exist, file exists previously, file should get deleted",
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-secret",
-					Namespace: "test-secret-namespace",
-				},
-				Data: map[string][]byte{
-					".dockerconfigjson": secretFullData,
-				},
-			},
-			addSecret:             false,
+			name:                  "secret does not exist, file exists previously, file should get deleted",
+			secretKey:             &types.NamespacedName{Namespace: "test-secret-namespace", Name: "test-secret"},
 			fileShouldExistBefore: true,
 			fileShouldExistAfter:  false,
+		},
+		{
+			name: "serviceaccount secrets, both dockerconfigjson and dockercfg content gets saved to authFile",
+			sa: &corev1.ServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-sa",
+					Namespace: "test-secret-namespace",
+				},
+				ImagePullSecrets: []corev1.LocalObjectReference{
+					{Name: "test-secret1"},
+					{Name: "test-secret2"},
+				},
+			},
+			secrets: []corev1.Secret{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret1",
+						Namespace: "test-secret-namespace",
+					},
+					Data: map[string][]byte{
+						".dockerconfigjson": secretFullData,
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret2",
+						Namespace: "test-secret-namespace",
+					},
+					Data: map[string][]byte{
+						".dockerconfigjson": secretFullData,
+					},
+				},
+			},
+			fileShouldExistBefore: false,
+			fileShouldExistAfter:  true,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			tempAuthFile := filepath.Join(t.TempDir(), authFileName)
 			clientBuilder := fake.NewClientBuilder()
-			if tt.addSecret {
-				clientBuilder = clientBuilder.WithObjects(tt.secret)
+			for _, ps := range tt.secrets {
+				clientBuilder = clientBuilder.WithObjects(ps.DeepCopy())
+			}
+			if tt.sa != nil {
+				clientBuilder = clientBuilder.WithObjects(tt.sa)
 			}
 			cl := clientBuilder.Build()
 
-			secretKey := types.NamespacedName{Namespace: tt.secret.Namespace, Name: tt.secret.Name}
+			var triggerKey types.NamespacedName
+			if tt.secretKey != nil {
+				triggerKey = *tt.secretKey
+			}
+			var saKey types.NamespacedName
+			if tt.sa != nil {
+				saKey = types.NamespacedName{Namespace: tt.sa.Namespace, Name: tt.sa.Name}
+				triggerKey = saKey
+			}
 			r := &PullSecretReconciler{
-				Client:       cl,
-				SecretKey:    &secretKey,
-				AuthFilePath: tempAuthFile,
+				Client:            cl,
+				SecretKey:         tt.secretKey,
+				ServiceAccountKey: saKey,
+				AuthFilePath:      tempAuthFile,
 			}
 			if tt.fileShouldExistBefore {
 				err := os.WriteFile(tempAuthFile, secretFullData, 0600)
 				require.NoError(t, err)
 			}
-			res, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: secretKey})
+			res, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: triggerKey})
 			if tt.wantErr == "" {
 				require.NoError(t, err)
 			} else {
