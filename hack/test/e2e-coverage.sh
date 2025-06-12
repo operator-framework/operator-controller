@@ -6,6 +6,10 @@ COVERAGE_OUTPUT="${COVERAGE_OUTPUT:-${ROOT_DIR}/coverage/e2e.out}"
 
 OPERATOR_CONTROLLER_NAMESPACE="olmv1-system"
 OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME="operator-controller-controller-manager"
+
+CATALOGD_NAMESPACE="olmv1-system"
+CATALOGD_MANAGER_DEPLOYMENT_NAME="catalogd-controller-manager"
+
 COPY_POD_NAME="e2e-coverage-copy-pod"
 
 # Create a temporary directory for coverage
@@ -15,6 +19,7 @@ rm -rf ${COVERAGE_DIR} && mkdir -p ${COVERAGE_DIR}
 # Coverage-instrumented binary produces coverage on termination,
 # so we scale down the manager before gathering the coverage
 kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" scale deployment/"$OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME" --replicas=0
+kubectl -n "$CATALOGD_NAMESPACE" scale deployment/"$CATALOGD_MANAGER_DEPLOYMENT_NAME" --replicas=0
 
 # Wait for the copy pod to be ready
 kubectl -n "$OPERATOR_CONTROLLER_NAMESPACE" wait --for=condition=ready pod "$COPY_POD_NAME"

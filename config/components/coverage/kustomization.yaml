@@ -5,4 +5,5 @@ resources:
 - manager_e2e_coverage_pvc.yaml
 - manager_e2e_coverage_copy_pod.yaml
 patches:
-- path: manager_e2e_coverage_patch.yaml
+- path: operator_controller_manager_e2e_coverage_patch.yaml
+- path: catalogd_manager_e2e_coverage_patch.yaml
