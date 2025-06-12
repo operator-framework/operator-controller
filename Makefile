@@ -83,7 +83,10 @@ export RELEASE_MANIFEST := operator-controller.yaml
 export RELEASE_INSTALL := install.sh
 export RELEASE_CATALOGS := default-catalogs.yaml
 
-CATALOGS_MANIFEST := ./config/catalogs/clustercatalogs/default-catalogs.yaml
+# List of manifests that are checked in
+MANIFEST_HOME := ./manifests
+STANDARD_MANIFEST := ./manifests/standard.yaml
+CATALOGS_MANIFEST := ./manifests/default-catalogs.yaml
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -143,7 +146,7 @@ KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
 CRD_WORKING_DIR := crd_work_dir
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
-manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	mkdir $(CRD_WORKING_DIR)
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clusterextensions.yaml $(KUSTOMIZE_OPCON_CRDS_DIR)
@@ -154,6 +157,9 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole,
 	# Generate the remaining catalogd manifests
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
+	# Generate manifests stored in source-control
+	mkdir -p $(MANIFEST_HOME)
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > $(STANDARD_MANIFEST)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -296,8 +302,8 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 .PHONY: kind-deploy
 kind-deploy: export MANIFEST := $(RELEASE_MANIFEST)
 kind-deploy: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
-kind-deploy: manifests $(KUSTOMIZE)
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(MANIFEST)
+kind-deploy: manifests
+	sed "s/cert-git-version/cert-$(VERSION)/g" $(STANDARD_MANIFEST) > $(MANIFEST)
 	cp $(CATALOGS_MANIFEST) $(DEFAULT_CATALOG)
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
@@ -390,8 +396,9 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 .PHONY: quickstart
 quickstart: export MANIFEST := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(RELEASE_MANIFEST))"
 quickstart: export DEFAULT_CATALOG := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(RELEASE_CATALOGS))"
-quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/cert-git-version/cert-$(VERSION)/g" | sed "s/:devel/:$(VERSION)/g" > $(RELEASE_MANIFEST)
+quickstart: manifests #EXHELP Generate the unified installation release manifests and scripts.
+	# Update the stored standard manifests for distribution
+	sed "s/:devel/:$(VERSION)/g" $(STANDARD_MANIFEST) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(RELEASE_MANIFEST)
 	cp $(CATALOGS_MANIFEST) $(RELEASE_CATALOGS)
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(RELEASE_INSTALL)
 
