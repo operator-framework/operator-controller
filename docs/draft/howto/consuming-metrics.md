@@ -6,7 +6,7 @@ The following procedure is provided as an example for testing purposes. Do not d
 
 In OLM v1, you can use the provided metrics with tools such as the [Prometheus Operator][prometheus-operator]. By default, Operator Controller and catalogd export metrics to the `/metrics` endpoint of each service.
 
-You must grant the necessary permissions to access the metrics by using [role-based access control (RBAC) polices][rbac-k8s-docs].
+You must grant the necessary permissions to access the metrics by using [role-based access control (RBAC) polices][rbac-k8s-docs]. You will also need to create a `NetworkPolicy` to allow egress traffic from your scraper pod, as the OLM namespace by default allows only `catalogd` and `operator-controller` to send and receive traffic.
 Because the metrics are exposed over HTTPS by default, you need valid certificates to use the metrics with services such as Prometheus.
 The following sections cover enabling metrics, validating access, and provide a reference of a `ServiceMonitor`
 to illustrate how you might integrate the metrics with the [Prometheus Operator][prometheus-operator] or other third-part solutions.
@@ -23,6 +23,25 @@ kubectl create clusterrolebinding operator-controller-metrics-binding \
    --serviceaccount=olmv1-system:operator-controller-controller-manager
 ```
 
+2. Next, create a `NetworkPolicy` to allow the scraper pods to send their scrape requests:
+
+```shell
+kubectl apply -f - << EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: scraper-policy
+  namespace: olmv1-system
+spec:
+  podSelector:
+    matchLabels:
+      metrics: scraper
+  policyTypes:
+    - Egress
+  egress:
+    - {}  # Allows all egress traffic for metrics requests
+EOF
+```
 ### Validating Access Manually
 
 1. Generate a token for the service account and extract the required certificates:
@@ -41,6 +60,8 @@ kind: Pod
 metadata:
   name: curl-metrics
   namespace: olmv1-system
+  labels:
+    metrics: scraper
 spec:
   serviceAccountName: operator-controller-controller-manager
   containers:
@@ -69,28 +90,27 @@ spec:
       secretName: olmv1-cert
   securityContext:
     runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+        type: RuntimeDefault
   restartPolicy: Never
 EOF
 ```
 
-3. Access the pod:
+3. Run the following command using the `TOKEN` value obtained above to check the metrics:
 
 ```shell
-kubectl exec -it curl-metrics -n olmv1-system -- sh
-```
-
-4. Run the following command using the `TOKEN` value obtained above to check the metrics:
-
-```shell
-curl -v -k -H "Authorization: Bearer <TOKEN>" \
+kubectl exec -it curl-metrics -n olmv1-system -- \
+curl -v -k -H "Authorization: Bearer ${TOKEN}" \
 https://operator-controller-service.olmv1-system.svc.cluster.local:8443/metrics
 ```
 
-5. Run the following command to validate the certificates and token:
+4. Run the following command to validate the certificates and token:
 
 ```shell
+kubectl exec -it curl-metrics -n olmv1-system -- \
 curl -v --cacert /tmp/cert/ca.crt --cert /tmp/cert/tls.crt --key /tmp/cert/tls.key \
--H "Authorization: Bearer <TOKEN>" \
+-H "Authorization: Bearer ${TOKEN}" \
 https://operator-controller-service.olmv1-system.svc.cluster.local:8443/metrics
 ```
 
@@ -131,6 +151,8 @@ kind: Pod
 metadata:
   name: curl-metrics-catalogd
   namespace: olmv1-system
+  labels:
+    metrics: scraper
 spec:
   serviceAccountName: catalogd-controller-manager
   containers:
@@ -159,27 +181,26 @@ spec:
       secretName: $OLM_SECRET
   securityContext:
     runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+        type: RuntimeDefault
   restartPolicy: Never
 EOF
 ```
 
-4. Access the pod:
+4. Run the following command using the `TOKEN` value obtained above to check the metrics:
 
 ```shell
-kubectl exec -it curl-metrics-catalogd -n olmv1-system -- sh
-```
-
-5. Run the following command using the `TOKEN` value obtained above to check the metrics:
-
-```shell
-curl -v -k -H "Authorization: Bearer <TOKEN>" \
+kubectl exec -it curl-metrics -n olmv1-system -- \
+curl -v -k -H "Authorization: Bearer ${TOKEN}" \
 https://catalogd-service.olmv1-system.svc.cluster.local:7443/metrics
 ```
 
-6. Run the following command to validate the certificates and token:
+5. Run the following command to validate the certificates and token:
 ```shell
+kubectl exec -it curl-metrics -n olmv1-system -- \
 curl -v --cacert /tmp/cert/ca.crt --cert /tmp/cert/tls.crt --key /tmp/cert/tls.key \
--H "Authorization: Bearer <TOKEN>" \
+-H "Authorization: Bearer ${TOKEN}" \
 https://catalogd-service.olmv1-system.svc.cluster.local:7443/metrics
 ```
 
@@ -253,7 +274,7 @@ metadata:
 spec:
   endpoints:
     - path: /metrics
-      port: https
+      port: metrics
       scheme: https
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       tlsConfig:
@@ -272,7 +293,7 @@ spec:
           key: tls.key
   selector:
     matchLabels:
-      control-plane: catalogd-controller-manager
+      app.kubernetes.io/name: catalogd
 EOF
 ```
 
