@@ -1096,6 +1096,22 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  name: catalogd-manager-role
+  namespace: olmv1-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - serviceaccounts
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
   name: operator-controller-leader-election-role
   namespace: olmv1-system
 rules:
@@ -1149,6 +1165,14 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - get
+  - list
   - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1348,6 +1372,23 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: catalogd-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: catalogd-controller-manager
+  namespace: olmv1-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: catalogd
+    app.kubernetes.io/part-of: olm
+  name: catalogd-manager-rolebinding
+  namespace: olmv1-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: catalogd-manager-role
 subjects:
 - kind: ServiceAccount
   name: catalogd-controller-manager

@@ -30,10 +30,8 @@ import (
 
 	"github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
@@ -71,9 +69,12 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
+	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
+	"github.com/operator-framework/operator-controller/internal/shared/util/pullsecretcache"
+	sautil "github.com/operator-framework/operator-controller/internal/shared/util/sa"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
 
@@ -217,17 +218,19 @@ func run() error {
 		},
 		DefaultLabelSelector: k8slabels.Nothing(),
 	}
-	if globalPullSecretKey != nil {
-		cacheOptions.ByObject[&corev1.Secret{}] = crcache.ByObject{
-			Namespaces: map[string]crcache.Config{
-				globalPullSecretKey.Namespace: {
-					LabelSelector: k8slabels.Everything(),
-					FieldSelector: fields.SelectorFromSet(map[string]string{
-						"metadata.name": globalPullSecretKey.Name,
-					}),
-				},
-			},
-		}
+
+	saKey, err := sautil.GetServiceAccount()
+	if err != nil {
+		setupLog.Error(err, "Failed to extract serviceaccount from JWT")
+		return err
+	}
+	setupLog.Info("Successfully extracted serviceaccount from JWT", "serviceaccount",
+		fmt.Sprintf("%s/%s", saKey.Namespace, saKey.Name))
+
+	err = pullsecretcache.SetupPullSecretCache(&cacheOptions, globalPullSecretKey, saKey)
+	if err != nil {
+		setupLog.Error(err, "Unable to setup pull-secret cache")
+		return err
 	}
 
 	metricsServerOptions := server.Options{}
@@ -360,7 +363,7 @@ func run() error {
 				OCICertPath:    cfg.pullCasDir,
 			}
 			logger := log.FromContext(ctx)
-			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
+			if _, err := os.Stat(authFilePath); err == nil {
 				logger.Info("using available authentication information for pulling image")
 				srcContext.AuthFilePath = authFilePath
 			} else if os.IsNotExist(err) {
@@ -482,17 +485,16 @@ func run() error {
 		return err
 	}
 
-	if globalPullSecretKey != nil {
-		setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", cfg.globalPullSecret)
-		err := (&controllers.PullSecretReconciler{
-			Client:       mgr.GetClient(),
-			AuthFilePath: authFilePath,
-			SecretKey:    *globalPullSecretKey,
-		}).SetupWithManager(mgr)
-		if err != nil {
-			setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
-			return err
-		}
+	setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", cfg.globalPullSecret)
+	err = (&sharedcontrollers.PullSecretReconciler{
+		Client:            mgr.GetClient(),
+		AuthFilePath:      authFilePath,
+		SecretKey:         globalPullSecretKey,
+		ServiceAccountKey: saKey,
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
+		return err
 	}
 
 	//+kubebuilder:scaffold:builder

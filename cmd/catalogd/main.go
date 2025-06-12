@@ -30,9 +30,6 @@ import (
 
 	"github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
@@ -61,8 +58,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogd/serverutil"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	"github.com/operator-framework/operator-controller/internal/catalogd/webhook"
+	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
+	"github.com/operator-framework/operator-controller/internal/shared/util/pullsecretcache"
+	sautil "github.com/operator-framework/operator-controller/internal/shared/util/sa"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
 
@@ -246,17 +246,19 @@ func run(ctx context.Context) error {
 	cacheOptions := crcache.Options{
 		ByObject: map[client.Object]crcache.ByObject{},
 	}
-	if cfg.globalPullSecretKey != nil {
-		cacheOptions.ByObject[&corev1.Secret{}] = crcache.ByObject{
-			Namespaces: map[string]crcache.Config{
-				cfg.globalPullSecretKey.Namespace: {
-					LabelSelector: k8slabels.Everything(),
-					FieldSelector: fields.SelectorFromSet(map[string]string{
-						"metadata.name": cfg.globalPullSecretKey.Name,
-					}),
-				},
-			},
-		}
+
+	saKey, err := sautil.GetServiceAccount()
+	if err != nil {
+		setupLog.Error(err, "Failed to extract serviceaccount from JWT")
+		return err
+	}
+	setupLog.Info("Successfully extracted serviceaccount from JWT", "serviceaccount",
+		fmt.Sprintf("%s/%s", saKey.Namespace, saKey.Name))
+
+	err = pullsecretcache.SetupPullSecretCache(&cacheOptions, cfg.globalPullSecretKey, saKey)
+	if err != nil {
+		setupLog.Error(err, "Unable to setup pull-secret cache")
+		return err
 	}
 
 	// Create manager
@@ -312,7 +314,7 @@ func run(ctx context.Context) error {
 				DockerCertPath: cfg.pullCasDir,
 				OCICertPath:    cfg.pullCasDir,
 			}
-			if _, err := os.Stat(authFilePath); err == nil && cfg.globalPullSecretKey != nil {
+			if _, err := os.Stat(authFilePath); err == nil {
 				logger.Info("using available authentication information for pulling image")
 				srcContext.AuthFilePath = authFilePath
 			} else if os.IsNotExist(err) {
@@ -370,17 +372,16 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	if cfg.globalPullSecretKey != nil {
-		setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", cfg.globalPullSecret)
-		err := (&corecontrollers.PullSecretReconciler{
-			Client:       mgr.GetClient(),
-			AuthFilePath: authFilePath,
-			SecretKey:    *cfg.globalPullSecretKey,
-		}).SetupWithManager(mgr)
-		if err != nil {
-			setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
-			return err
-		}
+	setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", cfg.globalPullSecret)
+	err = (&sharedcontrollers.PullSecretReconciler{
+		Client:            mgr.GetClient(),
+		AuthFilePath:      authFilePath,
+		SecretKey:         cfg.globalPullSecretKey,
+		ServiceAccountKey: saKey,
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
+		return err
 	}
 	//+kubebuilder:scaffold:builder
 
