@@ -262,7 +262,24 @@ image-registry: ## Build the testdata catalog used for e2e tests and push it to 
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
-test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry prometheus e2e e2e-metrics e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+
+.PHONY: prometheus
+prometheus: PROMETHEUS_NAMESPACE := olmv1-system
+prometheus: PROMETHEUS_VERSION := v0.83.0
+prometheus: #HELP Deploy Prometheus into specified namespace
+	./hack/test/setup-monitoring.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE)
+
+# The metrics.out file contains raw json data of the metrics collected during a test run.
+# In an upcoming PR, this query will be replaced with one that checks for alerts from
+# prometheus. Prometheus will gather metrics we currently query for over the test run, 
+# and provide alerts from the metrics based on the rules that we set.
+.PHONY: e2e-metrics
+e2e-metrics: #HELP Request metrics from prometheus; place in ARTIFACT_PATH if set
+	curl -X POST \
+	-H "Content-Type: application/x-www-form-urlencoded" \
+	--data 'query={pod=~"operator-controller-controller-manager-.*|catalogd-controller-manager-.*"}' \
+	http://localhost:30900/api/v1/query > $(if $(ARTIFACT_PATH),$(ARTIFACT_PATH),.)/metrics.out
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager

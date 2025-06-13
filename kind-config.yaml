@@ -8,6 +8,11 @@ nodes:
         hostPort: 30000
         listenAddress: "127.0.0.1"
         protocol: tcp
+    # prometheus metrics service's NodePort
+      - containerPort: 30900
+        hostPort: 30900
+        listenAddress: "127.0.0.1"
+        protocol: tcp
     kubeadmConfigPatches:
       - |
         kind: ClusterConfiguration
