@@ -904,3 +904,105 @@ func TestType(t *testing.T) {
 		})
 	}
 }
+
+func TestDescription(t *testing.T) {
+	for _, tc := range []testcase{
+		{
+			name: "no diff, no error, handled",
+			diff: FieldDiff{
+				Old: &apiextensionsv1.JSONSchemaProps{
+					Description: "some field",
+				},
+				New: &apiextensionsv1.JSONSchemaProps{
+					Description: "some field",
+				},
+			},
+			err:     nil,
+			handled: true,
+		},
+		{
+			name: "description changed, no error, handled",
+			diff: FieldDiff{
+				Old: &apiextensionsv1.JSONSchemaProps{
+					Description: "old description",
+				},
+				New: &apiextensionsv1.JSONSchemaProps{
+					Description: "new description",
+				},
+			},
+			err:     nil,
+			handled: true,
+		},
+		{
+			name: "description added, no error, handled",
+			diff: FieldDiff{
+				Old: &apiextensionsv1.JSONSchemaProps{},
+				New: &apiextensionsv1.JSONSchemaProps{
+					Description: "a new description was added",
+				},
+			},
+			err:     nil,
+			handled: true,
+		},
+		{
+			name: "description removed, no error, handled",
+			diff: FieldDiff{
+				Old: &apiextensionsv1.JSONSchemaProps{
+					Description: "this description will be removed",
+				},
+				New: &apiextensionsv1.JSONSchemaProps{},
+			},
+			err:     nil,
+			handled: true,
+		},
+		{
+			name: "different field changed, no error, not handled",
+			diff: FieldDiff{
+				Old: &apiextensionsv1.JSONSchemaProps{
+					ID: "foo",
+				},
+				New: &apiextensionsv1.JSONSchemaProps{
+					ID: "bar",
+				},
+			},
+			err:     nil,
+			handled: false,
+		},
+		{
+			name: "different field changed with description, no error, not handled",
+			diff: FieldDiff{
+				Old: &apiextensionsv1.JSONSchemaProps{
+					ID:          "foo",
+					Description: "description",
+				},
+				New: &apiextensionsv1.JSONSchemaProps{
+					ID:          "bar",
+					Description: "description",
+				},
+			},
+			err:     nil,
+			handled: false,
+		},
+		{
+			name: "description and ID changed, no error, not handled",
+			diff: FieldDiff{
+				Old: &apiextensionsv1.JSONSchemaProps{
+					ID:          "foo",
+					Description: "old description",
+				},
+				New: &apiextensionsv1.JSONSchemaProps{
+					ID:          "bar",
+					Description: "new description",
+				},
+			},
+			err:     nil,
+			handled: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			handled, err := Description(tc.diff)
+			require.Equal(t, tc.err, err)
+			require.Equal(t, tc.handled, handled)
+		})
+	}
+}
