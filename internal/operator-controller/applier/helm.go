@@ -39,6 +39,11 @@ const (
 	maxHelmReleaseHistory        = 10
 )
 
+var (
+	errPendingRelease                = errors.New("release is in a pending state")
+	errBundleToHelmChartConverterNil = errors.New("BundleToHelmChartConverter is nil")
+)
+
 // Preflight is a check that should be run before making any changes to the cluster
 type Preflight interface {
 	// Install runs checks that should be successful prior
@@ -143,7 +148,24 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		return nil, "", err
 	}
 
-	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, post)
+	rel, desiredRel, state, err := h.getReleaseState(ctx, ac, ext, chrt, values, post)
+	// if a release is pending, that means that a helm action
+	// (installation/upgrade) we were attempting was likely interrupted in-flight.
+	// Pending release would leave us in reconciliation error loop because helm
+	// wouldn't be able to progress automatically from it.
+	//
+	// one of the workarounds is to try and remove helm metadata relating to
+	// that pending release which should 'reset' its state communicated to helm
+	// and the next reconciliation should be able to successfully pick up from here
+	// for context see: https://github.com/helm/helm/issues/5595 and https://github.com/helm/helm/issues/7476
+	// and the discussion in https://github.com/operator-framework/operator-controller/pull/1776
+	if errors.Is(err, errPendingRelease) {
+		if _, err := ac.Config().Releases.Delete(rel.Name, rel.Version); err != nil {
+			return nil, "", fmt.Errorf("failed removing pending release %q version %d metadata: %w", rel.Name, rel.Version, err)
+		}
+		// return an error to try to detect proper state (installation/upgrade) at next reconciliation
+		return nil, "", fmt.Errorf("removed pending release %q version %d metadata", rel.Name, rel.Version)
+	}
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to get release state using server-side dry-run: %w", err)
 	}
@@ -203,7 +225,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 
 func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 	if h.BundleToHelmChartConverter == nil {
-		return nil, errors.New("BundleToHelmChartConverter is nil")
+		return nil, errBundleToHelmChartConverterNil
 	}
 	watchNamespace, err := GetWatchNamespace(ext)
 	if err != nil {
@@ -240,9 +262,12 @@ func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExt
 	}, helmclient.AppendInstallPostRenderer(post))
 }
 
-func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+func (h *Helm) getReleaseState(ctx context.Context, cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+	logger := log.FromContext(ctx)
 	currentRelease, err := cl.Get(ext.GetName())
+
 	if errors.Is(err, driver.ErrReleaseNotFound) {
+		logger.V(4).Info("ClusterExtension dry-run install", "extension", ext.GetName())
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
 			i.DryRun = true
 			i.DryRunOption = "server"
@@ -256,8 +281,12 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterE
 	if err != nil {
 		return nil, nil, StateError, err
 	}
+	if currentRelease.Info.Status.IsPending() {
+		return currentRelease, nil, StateError, errPendingRelease
+	}
 
 	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
+		logger.V(4).Info("ClusterExtension dry-run upgrade", "extension", ext.GetName())
 		upgrade.MaxHistory = maxHelmReleaseHistory
 		upgrade.DryRun = true
 		upgrade.DryRunOption = "server"
