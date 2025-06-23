@@ -11,9 +11,12 @@ import (
 )
 
 func TestRunGenerator(t *testing.T) {
-	// Get to repo root
-	err := os.Chdir("../../..")
+	here, err := os.Getwd()
 	require.NoError(t, err)
+	// Get to repo root
+	err = os.Chdir("../../..")
+	require.NoError(t, err)
+	defer os.Chdir(here)
 	dir, err := os.MkdirTemp("", "crd-generate-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
@@ -21,23 +24,47 @@ func TestRunGenerator(t *testing.T) {
 	require.NoError(t, os.Mkdir(filepath.Join(dir, "experimental"), 0o700))
 	runGenerator(dir, "v0.17.3")
 
-	f1 := filepath.Join(dir, "/standard/olm.operatorframework.io_clusterextensions.yaml")
+	f1 := filepath.Join(dir, "standard/olm.operatorframework.io_clusterextensions.yaml")
 	f2 := "config/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml"
 	fmt.Printf("comparing: %s to %s\n", f1, f2)
 	compareFiles(t, f1, f2)
 
-	f1 = filepath.Join(dir, "/standard/olm.operatorframework.io_clustercatalogs.yaml")
+	f1 = filepath.Join(dir, "standard/olm.operatorframework.io_clustercatalogs.yaml")
 	f2 = "config/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml"
 	fmt.Printf("comparing: %s to %s\n", f1, f2)
 	compareFiles(t, f1, f2)
 
-	f1 = filepath.Join(dir, "/experimental/olm.operatorframework.io_clusterextensions.yaml")
+	f1 = filepath.Join(dir, "experimental/olm.operatorframework.io_clusterextensions.yaml")
 	f2 = "config/base/operator-controller/crd/experimental/olm.operatorframework.io_clusterextensions.yaml"
 	fmt.Printf("comparing: %s to %s\n", f1, f2)
 	compareFiles(t, f1, f2)
 
-	f1 = filepath.Join(dir, "/experimental/olm.operatorframework.io_clustercatalogs.yaml")
+	f1 = filepath.Join(dir, "experimental/olm.operatorframework.io_clustercatalogs.yaml")
 	f2 = "config/base/catalogd/crd/experimental/olm.operatorframework.io_clustercatalogs.yaml"
+	fmt.Printf("comparing: %s to %s\n", f1, f2)
+	compareFiles(t, f1, f2)
+}
+
+func TestTags(t *testing.T) {
+	here, err := os.Getwd()
+	require.NoError(t, err)
+	err = os.Chdir("testdata")
+	defer os.Chdir(here)
+	require.NoError(t, err)
+	dir, err := os.MkdirTemp("", "crd-generate-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(dir)
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "standard"), 0o700))
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "experimental"), 0o700))
+	runGenerator(dir, "v0.17.3", "github.com/operator-framework/operator-controller/hack/tools/crd-generator/testdata/api/v1")
+
+	f1 := filepath.Join(dir, "standard/olm.operatorframework.io_clusterextensions.yaml")
+	f2 := "output/standard/olm.operatorframework.io_clusterextensions.yaml"
+	fmt.Printf("comparing: %s to %s\n", f1, f2)
+	compareFiles(t, f1, f2)
+
+	f1 = filepath.Join(dir, "experimental/olm.operatorframework.io_clusterextensions.yaml")
+	f2 = "output/experimental/olm.operatorframework.io_clusterextensions.yaml"
 	fmt.Printf("comparing: %s to %s\n", f1, f2)
 	compareFiles(t, f1, f2)
 }
