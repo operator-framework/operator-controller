@@ -56,6 +56,15 @@ type allowedPolicyDefinition struct {
 	denyAllEgressJustification  string // Justification if Egress is in PolicyTypes and EgressRules is empty
 }
 
+var denyAllPolicySpec = allowedPolicyDefinition{
+	selector:    metav1.LabelSelector{}, // Empty selector, matches all pods
+	policyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
+	// No IngressRules means deny all ingress if PolicyTypeIngress is present
+	// No EgressRules means deny all egress if PolicyTypeEgress is present
+	denyAllIngressJustification: "Denies all ingress traffic to pods selected by this policy by default, unless explicitly allowed by other policy rules, ensuring a baseline secure posture.",
+	denyAllEgressJustification:  "Denies all egress traffic from pods selected by this policy by default, unless explicitly allowed by other policy rules, minimizing potential exfiltration paths.",
+}
+
 // Ref: https://docs.google.com/document/d/1bHEEWzA65u-kjJFQRUY1iBuMIIM1HbPy4MeDLX4NI3o/edit?usp=sharing
 var allowedNetworkPolicies = map[string]allowedPolicyDefinition{
 	"catalogd-controller-manager": {
@@ -106,14 +115,6 @@ var allowedNetworkPolicies = map[string]allowedPolicyDefinition{
 			},
 		},
 	},
-	"default-deny-all-traffic": {
-		selector:    metav1.LabelSelector{}, // Empty selector, matches all pods
-		policyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
-		// No IngressRules means deny all ingress if PolicyTypeIngress is present
-		// No EgressRules means deny all egress if PolicyTypeEgress is present
-		denyAllIngressJustification: "Denies all ingress traffic to pods selected by this policy by default, unless explicitly allowed by other policy rules, ensuring a baseline secure posture.",
-		denyAllEgressJustification:  "Denies all egress traffic from pods selected by this policy by default, unless explicitly allowed by other policy rules, minimizing potential exfiltration paths.",
-	},
 }
 
 func TestNetworkPolicyJustifications(t *testing.T) {
@@ -155,6 +156,13 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 		err := c.List(ctx, policies, client.InNamespace(catalogDNamespace))
 		require.NoError(t, err, "Failed to list NetworkPolicies in namespace %q", catalogDNamespace)
 		clusterPolicies = append(clusterPolicies, policies.Items...)
+
+		t.Log("Detected dual-namespace configuration, expecting two prefixed 'default-deny-all-traffic' policies.")
+		allowedNetworkPolicies["catalogd-default-deny-all-traffic"] = denyAllPolicySpec
+		allowedNetworkPolicies["operator-controller-default-deny-all-traffic"] = denyAllPolicySpec
+	} else {
+		t.Log("Detected single-namespace configuration, expecting one 'default-deny-all-traffic' policy.")
+		allowedNetworkPolicies["default-deny-all-traffic"] = denyAllPolicySpec
 	}
 
 	validatedRegistryPolicies := make(map[string]bool)
