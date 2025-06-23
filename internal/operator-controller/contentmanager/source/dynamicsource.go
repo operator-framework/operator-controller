@@ -120,7 +120,7 @@ func (dis *dynamicInformerSource) Start(ctx context.Context, q workqueue.TypedRa
 			dis.cfg.OnPostSyncError(dis.informerCtx)
 		}
 		dis.informerCancel()
-		cgocache.DefaultWatchErrorHandler(r, err)
+		cgocache.DefaultWatchErrorHandler(dis.informerCtx, r, err)
 	})
 	if err != nil {
 		return fmt.Errorf("setting WatchErrorHandler: %w", err)
