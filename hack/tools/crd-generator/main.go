@@ -70,8 +70,6 @@ func runGenerator(args ...string) {
 		crdRoot = args[2]
 	}
 
-	log.Printf("crdRoot: %s", crdRoot)
-
 	roots, err := loader.LoadRoots(
 		"k8s.io/apimachinery/pkg/runtime/schema", // Needed to parse generated register functions.
 		crdRoot,
@@ -96,7 +94,6 @@ func runGenerator(args ...string) {
 
 	crd.AddKnownTypes(parser)
 	for _, r := range roots {
-		log.Printf("Looking at package %v", r)
 		parser.NeedPackage(r)
 	}
 
@@ -144,7 +141,6 @@ func runGenerator(args ...string) {
 
 			conv, err := crd.AsVersion(*channelCrd, apiextensionsv1.SchemeGroupVersion)
 			if err != nil {
-				log.Printf("CRD: %v", *channelCrd)
 				log.Fatalf("failed to convert CRD: %s", err)
 			}
 
@@ -173,8 +169,6 @@ func runGenerator(args ...string) {
 			if !bytes.HasPrefix(out, breakLine) {
 				out = append(breakLine, out...)
 			}
-
-			log.Printf("writing %v bytes", len(out))
 
 			fileName := fmt.Sprintf("%s/%s/%s_%s.yaml", outputDir, channel, crdRaw.Spec.Group, crdRaw.Spec.Names.Plural)
 			err = os.WriteFile(fileName, out, 0o600)
@@ -216,8 +210,6 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 	numExpressions := strings.Count(jsonProps.Description, validationPrefix)
 	numValid := 0
 	if numExpressions > 0 {
-		log.Printf("found validations")
-
 		enumRe := regexp.MustCompile(validationPrefix + "Enum=([A-Za-z;]*)>")
 		enumMatches := enumRe.FindAllStringSubmatch(jsonProps.Description, 64)
 		for _, enumMatch := range enumMatches {
@@ -248,7 +240,6 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 	}
 
 	if numValid < numExpressions {
-		fmt.Printf("Description: %s\n", jsonProps.Description)
 		log.Fatalf("Found %d Opcon validation expressions, but only %d were valid", numExpressions, numValid)
 	}
 
@@ -274,7 +265,6 @@ func formatDescription(description string, channel string, name string) string {
 			log.Fatalf("Invalid <opcon:experimental:description> tag for %s", name)
 		}
 		description = re.ReplaceAllString(description, "\n\n")
-		log.Printf("found experimental:description")
 	} else {
 		description = strings.ReplaceAll(description, startTag, "")
 		description = strings.ReplaceAll(description, endTag, "")
@@ -292,7 +282,6 @@ func formatDescription(description string, channel string, name string) string {
 			log.Fatalf("Invalid <opcon:util:excludeFromCRD> tag for %s", name)
 		}
 		description = re.ReplaceAllString(description, "\n\n\n")
-		log.Printf("found excludeFromCRD")
 	}
 
 	opconRe := regexp.MustCompile(`<opcon:.*>`)

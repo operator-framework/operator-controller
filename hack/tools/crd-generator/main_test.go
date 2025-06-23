@@ -16,7 +16,9 @@ func TestRunGenerator(t *testing.T) {
 	// Get to repo root
 	err = os.Chdir("../../..")
 	require.NoError(t, err)
-	defer os.Chdir(here)
+	defer func() {
+		_ = os.Chdir(here)
+	}()
 	dir, err := os.MkdirTemp("", "crd-generate-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
@@ -49,7 +51,9 @@ func TestTags(t *testing.T) {
 	here, err := os.Getwd()
 	require.NoError(t, err)
 	err = os.Chdir("testdata")
-	defer os.Chdir(here)
+	defer func() {
+		_ = os.Chdir(here)
+	}()
 	require.NoError(t, err)
 	dir, err := os.MkdirTemp("", "crd-generate-*")
 	require.NoError(t, err)
@@ -72,11 +76,15 @@ func TestTags(t *testing.T) {
 func compareFiles(t *testing.T, file1, file2 string) {
 	f1, err := os.Open(file1)
 	require.NoError(t, err)
-	defer f1.Close()
+	defer func() {
+		_ = f1.Close()
+	}()
 
 	f2, err := os.Open(file2)
 	require.NoError(t, err)
-	defer f2.Close()
+	defer func() {
+		_ = f2.Close()
+	}()
 
 	for {
 		b1 := make([]byte, 64000)
