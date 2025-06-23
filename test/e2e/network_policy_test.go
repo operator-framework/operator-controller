@@ -140,14 +140,26 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 	}
 
 	clientForComponent := utils.FindK8sClient(t)
-	componentNamespace := getComponentNamespace(t, clientForComponent, operatorManagerSelector)
-	clusterPolicies := &networkingv1.NetworkPolicyList{}
-	err := c.List(ctx, clusterPolicies, client.InNamespace(componentNamespace))
-	require.NoError(t, err, "Failed to list NetworkPolicies in namespace %q", componentNamespace)
+
+	operatorControllerNamespace := getComponentNamespace(t, clientForComponent, operatorManagerSelector)
+	catalogDNamespace := getComponentNamespace(t, clientForComponent, catalogdManagerSelector)
+
+	policies := &networkingv1.NetworkPolicyList{}
+	err := c.List(ctx, policies, client.InNamespace(operatorControllerNamespace))
+	require.NoError(t, err, "Failed to list NetworkPolicies in namespace %q", operatorControllerNamespace)
+
+	clusterPolicies := policies.Items
+
+	if operatorControllerNamespace != catalogDNamespace {
+		policies := &networkingv1.NetworkPolicyList{}
+		err := c.List(ctx, policies, client.InNamespace(catalogDNamespace))
+		require.NoError(t, err, "Failed to list NetworkPolicies in namespace %q", catalogDNamespace)
+		clusterPolicies = append(clusterPolicies, policies.Items...)
+	}
 
 	validatedRegistryPolicies := make(map[string]bool)
 
-	for _, policy := range clusterPolicies.Items {
+	for _, policy := range clusterPolicies {
 		t.Run(fmt.Sprintf("Policy_%s", strings.ReplaceAll(policy.Name, "-", "_")), func(t *testing.T) {
 			expectedPolicy, found := allowedNetworkPolicies[policy.Name]
 			require.Truef(t, found, "NetworkPolicy %q found in cluster but not in allowed registry. Namespace: %s", policy.Name, policy.Namespace)
