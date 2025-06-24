@@ -448,8 +448,12 @@ deploy-docs: venv
 	mkdocs gh-deploy --force
 
 # The demo script requires to install asciinema with: brew install asciinema to run on mac os envs.
-.PHONY: demo-update #EXHELP build demo
-demo-update:
-	./hack/demo/generate-asciidemo.sh -u -n catalogd-demo catalogd-demo-script.sh
+# Please ensure that all demos are named with the demo name and the suffix -demo-script.sh
+.PHONY: update-demos #EXHELP Update and upload the demos.
+update-demos:
+	@for script in hack/demo/*-demo-script.sh; do \
+	  nm=$$(basename $$script -script.sh); \
+	  ./hack/demo/generate-asciidemo.sh -u -n $$nm $$(basename $$script); \
+	done
 
 include Makefile.venv

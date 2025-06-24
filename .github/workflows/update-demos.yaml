@@ -1,13 +1,22 @@
-name: catalogd-demo
+name: update-demos
 
 on:
+  schedule:
+    - cron: '0 3 * * *'  # Runs every day at 03:00 UTC
   workflow_dispatch:
-  merge_group:
-  pull_request:
   push:
-    branches:
-    - main
-
+    paths:
+      - 'api/*'
+      - 'config/*'
+      - 'hack/demo/*'
+      - '.github/workflows/update-demos.yaml'
+  pull_request:
+    paths:
+      - 'api/*'
+      - 'config/*'
+      - 'hack/demo/*'
+      - '.github/workflows/update-demos.yaml'
+      
 jobs:
   demo:
     runs-on: ubuntu-latest
@@ -26,5 +35,5 @@ jobs:
             PATH="$PATH" \
             TERM="xterm-256color" \
             SHELL="/bin/bash" \
-            make demo-update
+            make update-demos
 
