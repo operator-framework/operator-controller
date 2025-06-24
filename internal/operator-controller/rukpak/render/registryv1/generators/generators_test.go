@@ -728,7 +728,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 			for i := range objs {
 				require.Equal(t, tc.expectedResources[i], objs[i], "failed to find expected resource at index %d", i)
 			}
-			require.Equal(t, len(tc.expectedResources), len(objs))
+			require.Len(t, objs, len(tc.expectedResources))
 		})
 	}
 }
@@ -1057,7 +1057,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 			for i := range objs {
 				require.Equal(t, tc.expectedResources[i], objs[i], "failed to find expected resource at index %d", i)
 			}
-			require.Equal(t, len(tc.expectedResources), len(objs))
+			require.Len(t, objs, len(tc.expectedResources))
 		})
 	}
 }
@@ -1209,7 +1209,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 			for i := range objs {
 				require.Equal(t, tc.expectedResources[i], objs[i], "failed to find expected resource at index %d", i)
 			}
-			require.Equal(t, len(tc.expectedResources), len(objs))
+			require.Len(t, objs, len(tc.expectedResources))
 		})
 	}
 }

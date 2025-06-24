@@ -199,7 +199,7 @@ func TestInstall(t *testing.T) {
 			err := preflight.Install(context.Background(), tc.release)
 			if len(tc.wantErrMsgs) != 0 {
 				for _, expectedErrMsg := range tc.wantErrMsgs {
-					require.ErrorContainsf(t, err, expectedErrMsg, "")
+					require.ErrorContains(t, err, expectedErrMsg)
 				}
 			} else {
 				require.NoError(t, err)
@@ -355,7 +355,7 @@ func TestUpgrade(t *testing.T) {
 			err := preflight.Upgrade(context.Background(), tc.release)
 			if len(tc.wantErrMsgs) != 0 {
 				for _, expectedErrMsg := range tc.wantErrMsgs {
-					require.ErrorContainsf(t, err, expectedErrMsg, "")
+					require.ErrorContains(t, err, expectedErrMsg)
 				}
 			} else {
 				require.NoError(t, err)

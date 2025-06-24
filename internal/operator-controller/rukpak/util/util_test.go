@@ -127,7 +127,7 @@ spec:
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {
-				assert.Equal(t, len(objs), len(tc.expectObjects))
+				assert.Len(t, tc.expectObjects, len(objs))
 				// Sort the objs by name for easy direct comparison
 				sort.Slice(objs, func(i int, j int) bool {
 					return objs[i].GetName() < objs[j].GetName()

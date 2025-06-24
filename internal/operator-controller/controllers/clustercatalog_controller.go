@@ -55,7 +55,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	defer l.Info("reconcile ending")
 
 	existingCatalog := &ocv1.ClusterCatalog{}
-	err := r.Client.Get(ctx, req.NamespacedName, existingCatalog)
+	err := r.Get(ctx, req.NamespacedName, existingCatalog)
 	if apierrors.IsNotFound(err) {
 		if err := r.CatalogCache.Remove(req.Name); err != nil {
 			return ctrl.Result{}, fmt.Errorf("error removing cache for catalog %q: %v", req.Name, err)

@@ -95,7 +95,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	defer l.Info("reconcile ending")
 
 	existingCatsrc := ocv1.ClusterCatalog{}
-	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -134,7 +134,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	reconciledCatsrc.Finalizers = finalizers
 
 	if updateFinalizers {
-		if err := r.Client.Update(ctx, reconciledCatsrc); err != nil {
+		if err := r.Update(ctx, reconciledCatsrc); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}

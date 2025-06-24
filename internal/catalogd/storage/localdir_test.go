@@ -401,7 +401,7 @@ func TestMetasEndpoint(t *testing.T) {
 			require.Equal(t, tc.expectedStatusCode, resp.StatusCode)
 			actualContent, err = io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			require.Equal(t, "", string(actualContent)) // HEAD should not return a body
+			require.Empty(t, string(actualContent)) // HEAD should not return a body
 			resp.Body.Close()
 
 			// And make sure any other method is not allowed

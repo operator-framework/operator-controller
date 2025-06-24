@@ -251,7 +251,7 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 	}
 
 	// 5. Ensure all policies in the registry were found in the cluster
-	assert.Equal(t, len(allowedNetworkPolicies), len(validatedRegistryPolicies),
+	assert.Len(t, validatedRegistryPolicies, len(allowedNetworkPolicies),
 		"Mismatch between number of expected policies in registry (%d) and number of policies found & validated in cluster (%d). Missing policies from registry: %v", len(allowedNetworkPolicies), len(validatedRegistryPolicies), missingPolicies(allowedNetworkPolicies, validatedRegistryPolicies))
 }
 

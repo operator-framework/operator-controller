@@ -120,12 +120,12 @@ func runGenerator(args ...string) {
 			crdRaw := parser.CustomResourceDefinitions[groupKind]
 
 			// Inline version of "addAttribution(&crdRaw)" ...
-			if crdRaw.ObjectMeta.Annotations == nil {
-				crdRaw.ObjectMeta.Annotations = map[string]string{}
+			if crdRaw.Annotations == nil {
+				crdRaw.Annotations = map[string]string{}
 			}
-			crdRaw.ObjectMeta.Annotations[FeatureSetAnnotation] = channel
+			crdRaw.Annotations[FeatureSetAnnotation] = channel
 			if ctVer != "" {
-				crdRaw.ObjectMeta.Annotations[VersionAnnotation] = ctVer
+				crdRaw.Annotations[VersionAnnotation] = ctVer
 			}
 
 			// Prevent the top level metadata for the CRD to be generated regardless of the intention in the arguments

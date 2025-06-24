@@ -228,9 +228,9 @@ func validateCatalogUnpack(t *testing.T) {
 	}, pollDuration, pollInterval)
 
 	t.Log("Checking that catalog has the expected metadata label")
-	assert.NotNil(t, catalog.ObjectMeta.Labels)
-	assert.Contains(t, catalog.ObjectMeta.Labels, "olm.operatorframework.io/metadata.name")
-	assert.Equal(t, testCatalogName, catalog.ObjectMeta.Labels["olm.operatorframework.io/metadata.name"])
+	assert.NotNil(t, catalog.Labels)
+	assert.Contains(t, catalog.Labels, "olm.operatorframework.io/metadata.name")
+	assert.Equal(t, testCatalogName, catalog.Labels["olm.operatorframework.io/metadata.name"])
 
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Type = Serving with status == True")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
