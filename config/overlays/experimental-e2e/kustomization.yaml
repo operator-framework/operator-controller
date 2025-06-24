@@ -1,0 +1,20 @@
+# kustomization file for all the e2e's
+# DO NOT ADD A NAMESPACE HERE
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base/catalogd
+- ../../base/catalogd/crd/experimental
+- ../../base/operator-controller
+- ../../base/operator-controller/crd/experimental
+- ../../base/common
+components:
+- ../../components/features/synthetic-user-permissions
+- ../../components/features/webhook-provider-certmanager
+- ../../components/features/webhook-provider-openshift-serviceca
+- ../../components/tls/catalogd
+- ../../components/tls/operator-controller
+- ../../components/e2e/coverage
+- ../../components/e2e/registries-conf
+# ca must be last or other components will overwrite the namespaces
+- ../../components/tls/ca

@@ -3,6 +3,5 @@ kind: Kustomization
 namespace: olmv1-system
 namePrefix: catalogd-
 resources:
-- crd
 - rbac
 - manager

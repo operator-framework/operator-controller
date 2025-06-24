@@ -71,7 +71,10 @@ else
 $(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
-KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
+KUSTOMIZE_STANDARD_OVERLAY := config/overlays/standard
+KUSTOMIZE_STANDARD_E2E_OVERLAY := config/overlays/standard-e2e
+KUSTOMIZE_EXPERIMENTAL_OVERLAY := config/overlays/experimental
+KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY := config/overlays/experimental-e2e
 
 export RELEASE_MANIFEST := operator-controller.yaml
 export RELEASE_INSTALL := install.sh
@@ -80,7 +83,13 @@ export RELEASE_CATALOGS := default-catalogs.yaml
 # List of manifests that are checked in
 MANIFEST_HOME := ./manifests
 STANDARD_MANIFEST := ./manifests/standard.yaml
+STANDARD_E2E_MANIFEST := ./manifests/standard-e2e.yaml
+EXPERIMENTAL_MANIFEST := ./manifests/experimental.yaml
+EXPERIMENTAL_E2E_MANIFEST := ./manifests/experimental-e2e.yaml
 CATALOGS_MANIFEST := ./manifests/default-catalogs.yaml
+
+# Manifest used by kind-deploy, which may be overridden by other targets
+SOURCE_MANIFEST := $(STANDARD_MANIFEST)
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -147,7 +156,10 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)
 	# Generate manifests stored in source-control
 	mkdir -p $(MANIFEST_HOME)
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > $(STANDARD_MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_OVERLAY) > $(STANDARD_MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_E2E_OVERLAY) > $(STANDARD_E2E_MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_OVERLAY) > $(EXPERIMENTAL_MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY) > $(EXPERIMENTAL_E2E_MANIFEST)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -247,10 +259,16 @@ image-registry: ## Build the testdata catalog used for e2e tests and push it to 
 #
 # for example: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 .PHONY: test-e2e
+test-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
-test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: run image-registry prometheus e2e e2e-metrics e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+
+.PHONY: test-experimental-e2e
+test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
+test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
+test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
+test-experimental-e2e: run image-registry prometheus e2e e2e-metrics e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
@@ -270,7 +288,6 @@ e2e-metrics: #HELP Request metrics from prometheus; place in ARTIFACT_PATH if se
 	http://localhost:30900/api/v1/query > $(if $(ARTIFACT_PATH),$(ARTIFACT_PATH),.)/metrics.out
 
 .PHONY: extension-developer-e2e
-extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
 extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
 extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP Run extension-developer e2e on local kind cluster
@@ -308,7 +325,8 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 kind-deploy: export MANIFEST := $(RELEASE_MANIFEST)
 kind-deploy: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
 kind-deploy: manifests
-	sed "s/cert-git-version/cert-$(VERSION)/g" $(STANDARD_MANIFEST) > $(MANIFEST)
+	@echo -e "\n\U1F4D8 Using $(SOURCE_MANIFEST) as source manifest\n"
+	sed "s/cert-git-version/cert-$(VERSION)/g" $(SOURCE_MANIFEST) > $(MANIFEST)
 	cp $(CATALOGS_MANIFEST) $(DEFAULT_CATALOG)
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 

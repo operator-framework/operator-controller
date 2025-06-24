@@ -4,9 +4,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - ../../base/catalogd
+- ../../base/catalogd/crd/experimental
 - ../../base/operator-controller
+- ../../base/operator-controller/crd/experimental
 - ../../base/common
 components:
+- ../../components/features/synthetic-user-permissions
+- ../../components/features/webhook-provider-certmanager
+- ../../components/features/webhook-provider-openshift-serviceca
 - ../../components/tls/catalogd
 - ../../components/tls/operator-controller
 # ca must be last other components will overwrite the namespaces
