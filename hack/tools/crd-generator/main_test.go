@@ -24,7 +24,7 @@ func TestRunGenerator(t *testing.T) {
 	defer os.RemoveAll(dir)
 	require.NoError(t, os.Mkdir(filepath.Join(dir, "standard"), 0o700))
 	require.NoError(t, os.Mkdir(filepath.Join(dir, "experimental"), 0o700))
-	runGenerator(dir, "v0.17.3")
+	runGenerator(dir, "v0.18.0")
 
 	f1 := filepath.Join(dir, "standard/olm.operatorframework.io_clusterextensions.yaml")
 	f2 := "config/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml"
@@ -60,7 +60,7 @@ func TestTags(t *testing.T) {
 	defer os.RemoveAll(dir)
 	require.NoError(t, os.Mkdir(filepath.Join(dir, "standard"), 0o700))
 	require.NoError(t, os.Mkdir(filepath.Join(dir, "experimental"), 0o700))
-	runGenerator(dir, "v0.17.3", "github.com/operator-framework/operator-controller/hack/tools/crd-generator/testdata/api/v1")
+	runGenerator(dir, "v0.18.0", "github.com/operator-framework/operator-controller/hack/tools/crd-generator/testdata/api/v1")
 
 	f1 := filepath.Join(dir, "standard/olm.operatorframework.io_clusterextensions.yaml")
 	f2 := "output/standard/olm.operatorframework.io_clusterextensions.yaml"
