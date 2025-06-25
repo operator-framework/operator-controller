@@ -40,12 +40,6 @@ endif
 # Ensure ENVTEST_VERSION follows correct "X.Y.x" format
 ENVTEST_VERSION := $(K8S_VERSION).x
 
-# Not guaranteed to have patch releases available and node image tags are full versions (i.e v1.28.0 - no v1.28, v1.29, etc.)
-# The K8S_VERSION is set by getting the version of the k8s.io/client-go dependency from the go.mod
-# and sets major version to "1" and the patch version to "0". For example, a client-go version of v0.28.5
-# will map to a K8S_VERSION of 1.28.0
-KIND_CLUSTER_IMAGE := kindest/node:v$(K8S_VERSION).0
-
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.17.1
 export WAIT_TIMEOUT := 60s
@@ -160,7 +154,7 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: k8s-pin fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
+verify: k8s-version-check k8s-pin fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
 	git diff --exit-code
 
 # Renders registry+v1 bundles in test/convert
@@ -321,7 +315,7 @@ kind-deploy: manifests
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
-	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --image $(KIND_CLUSTER_IMAGE) --config ./kind-config.yaml
+	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config ./kind-config.yaml
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-clean
@@ -449,5 +443,9 @@ update-demos:
 	  nm=$$(basename $$script -script.sh); \
 	  ./hack/demo/generate-asciidemo.sh -u -n $$nm $$(basename $$script); \
 	done
+
+.PHONY: k8s-version-check
+k8s-version-check: #EXHELP verify tooling aligns with k8s MAJOR.MINOR version
+	go run hack/tools/k8smaintainer/main.go --kube-version $(K8S_VERSION) --kind-mod-path ./.bingo/kind.mod
 
 include Makefile.venv
