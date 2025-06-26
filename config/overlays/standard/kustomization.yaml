@@ -7,7 +7,5 @@ resources:
 - ../../base/operator-controller
 - ../../base/common
 components:
-- ../../components/tls/catalogd
-- ../../components/tls/operator-controller
-# ca must be last other components will overwrite the namespaces
-- ../../components/tls/ca
+# This must be last due to namespace overwrite issues of the ca
+- ../../components/cert-manager

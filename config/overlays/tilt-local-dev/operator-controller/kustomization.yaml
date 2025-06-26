@@ -6,9 +6,9 @@ resources:
 - ../../../base/operator-controller
 - ../../../base/common
 components:
-- ../../../components/tls/operator-controller
+- ../../../components/cert-manager/operator-controller
 # ca must be last or other components will overwrite the namespaces
-- ../../../components/tls/ca
+- ../../../components/cert-manager/ca
 
 patches:
  - target:
