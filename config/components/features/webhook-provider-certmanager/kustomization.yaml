@@ -1,13 +1,7 @@
 # kustomization file for cert-manager backed OLMv1 support for installation of bundles with webhooks
 # DO NOT ADD A NAMESPACE HERE
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - ../../../base/operator-controller
-  - ../../../base/common
-components:
-  - ../../../components/tls/operator-controller
-
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
 patches:
  - target:
       kind: Deployment
