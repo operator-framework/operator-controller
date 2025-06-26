@@ -92,6 +92,7 @@ spec:
     runAsUser: 65534
     seccompProfile:
         type: RuntimeDefault
+  serviceDiscoveryRole: EndpointSlice
   serviceMonitorSelector: {}
 EOF
 
