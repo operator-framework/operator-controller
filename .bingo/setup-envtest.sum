@@ -73,6 +73,8 @@ golang.org/x/text v0.19.0 h1:kTxAhCbGbxhK0IwgSKiMO5awPoDQ0RpfiVYBfK860YM=
 golang.org/x/text v0.19.0/go.mod h1:BuEKDfySbSR4drPmRPG/7iBdf8hvFMuRexcpahXilzY=
 golang.org/x/text v0.21.0 h1:zyQAAkrwaneQ066sspRyJaG9VNi/YJ1NfzcGB3hZ/qo=
 golang.org/x/text v0.21.0/go.mod h1:4IBbMaMmOPCJ8SecivzSH54+73PCFmPWxNTLm+vZkEQ=
+golang.org/x/text v0.23.0 h1:D71I7dUrlY+VX0gQShAThNGHFxZ13dGLBHQLVl1mJlY=
+golang.org/x/text v0.23.0/go.mod h1:/BLNzu4aZCJ1+kcD0DNRotWKage4q2rGVAg4o22unh4=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
 golang.org/x/tools v0.0.0-20190311212946-11955173bddd/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
 golang.org/x/tools v0.0.0-20191108193012-7d206e10da11/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
@@ -99,5 +101,7 @@ sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250226022829-9d8d219
 sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250226022829-9d8d219840a4/go.mod h1:QXw4XLB4ayZHsgXTf7cdyGzacNz9KQsdiI6apU+K07E=
 sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250304084143-6eb011f4f89e h1:ezClPOTx54T3hRw/3eNMYr5LKzikTvQ380UuGy/X/Co=
 sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250304084143-6eb011f4f89e/go.mod h1:QXw4XLB4ayZHsgXTf7cdyGzacNz9KQsdiI6apU+K07E=
+sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250620151452-b9a9ca01fd37 h1:NSnbH7C6/fYc5L3FxMQiSlFBqYi+32LnFsXwArzOlIM=
+sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250620151452-b9a9ca01fd37/go.mod h1:zCcqn1oG9844T8/vZSYcnqOyoEmTHro4bliTJI6j4OY=
 sigs.k8s.io/yaml v1.4.0 h1:Mk1wCc2gy/F0THH0TAp1QYyJNzRm2KCLy3o5ASXVI5E=
 sigs.k8s.io/yaml v1.4.0/go.mod h1:Ejl7/uTz7PSA4eKMyQCUTnhZYNmLIl+5c2lQPGR2BPY=
