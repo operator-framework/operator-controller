@@ -40,12 +40,6 @@ endif
 # Ensure ENVTEST_VERSION follows correct "X.Y.x" format
 ENVTEST_VERSION := $(K8S_VERSION).x
 
-# Not guaranteed to have patch releases available and node image tags are full versions (i.e v1.28.0 - no v1.28, v1.29, etc.)
-# The K8S_VERSION is set by getting the version of the k8s.io/client-go dependency from the go.mod
-# and sets major version to "1" and the patch version to "0". For example, a client-go version of v0.28.5
-# will map to a K8S_VERSION of 1.28.0
-KIND_CLUSTER_IMAGE := kindest/node:v$(K8S_VERSION).0
-
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.17.1
 export WAIT_TIMEOUT := 60s
@@ -320,8 +314,9 @@ kind-deploy: manifests
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
+	env K8S_VERSION=v$(K8S_VERSION) KIND=$(KIND) GOBIN=$(GOBIN) hack/tools/validate_kindest_node.sh
 	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
-	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --image $(KIND_CLUSTER_IMAGE) --config ./kind-config.yaml
+	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config ./kind-config.yaml
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-clean
