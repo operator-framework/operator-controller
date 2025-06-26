@@ -113,7 +113,8 @@ help-extended: #HELP Display extended help.
 
 .PHONY: lint
 lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
-	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
+	$(GOLANGCI_LINT) custom
+	./bin/golangci-kube-api-linter run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: custom-linter-build
 custom-linter-build: #EXHELP Build custom linter

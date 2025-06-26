@@ -37,6 +37,7 @@ linters:
   - unparam
   - unused
   - whitespace
+  - kubeapilinter
 
 linters-settings:
   gci:
@@ -69,7 +70,27 @@ linters-settings:
       alias: bsemver
     - pkg: "^github.com/operator-framework/operator-controller/internal/util/([^/]+)$"
       alias: "${1}util"
+  
+  custom:
+    kubeapilinter:
+      type: "module"
+      description: Kube API Linter lints Kube like APIs based on API conventions and best practices.
+      settings:
+        linters: {}
+        lintersConfig:
+          optionalFields:
+            pointers:
+              preference: WhenRequired
+              policy: Warn
+            omitempty:
+              policy: Warn
 
 output:
   formats:
     - format: tab
+
+issues:
+  exclude-rules:
+    - path-except: "api/*"
+      linters:
+        - kubeapilinter
