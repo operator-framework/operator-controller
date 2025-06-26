@@ -263,6 +263,30 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 
 	resolvedBundleMetadata := bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
 
+	// Check if this is an upgrade that should be handled by ClusterExtensionRevision controller
+	if installedBundle != nil && installedBundle.Version != resolvedBundleVersion.String() {
+		// This is an upgrade (there's an installed bundle and the resolved version is different)
+		// Check if there's an approved ClusterExtensionRevision for this upgrade
+		if approved, err := r.isUpgradeApproved(ctx, ext, resolvedBundleVersion.String()); err != nil {
+			l.Error(err, "failed to check for approved revision")
+			setStatusProgressing(ext, fmt.Errorf("failed to check for approved revision: %w", err))
+			setInstalledStatusFromBundle(ext, installedBundle)
+			return ctrl.Result{}, err
+		} else if !approved {
+			// No approved revision found, don't upgrade
+			l.Info("upgrade available but not approved, waiting for ClusterExtensionRevision approval",
+				"installedVersion", installedBundle.Version,
+				"availableVersion", resolvedBundleVersion.String())
+			setInstalledStatusFromBundle(ext, installedBundle)
+			setStatusProgressing(ext, nil)                         // No error, just waiting for approval
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil // Check again later
+		}
+		// If we reach here, the upgrade is approved, continue with installation
+		l.Info("upgrade approved, proceeding with installation",
+			"installedVersion", installedBundle.Version,
+			"targetVersion", resolvedBundleVersion.String())
+	}
+
 	l.Info("unpacking resolved bundle")
 	imageFS, _, _, err := r.ImagePuller.Pull(ctx, ext.GetName(), resolvedBundle.Image, r.ImageCache)
 	if err != nil {
@@ -332,6 +356,30 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// the desired state by providing a nil error value.
 	setStatusProgressing(ext, nil)
 	return ctrl.Result{}, nil
+}
+
+// isUpgradeApproved checks if there's an approved ClusterExtensionRevision for the given version upgrade
+func (r *ClusterExtensionReconciler) isUpgradeApproved(ctx context.Context, ext *ocv1.ClusterExtension, targetVersion string) (bool, error) {
+	logger := log.FromContext(ctx)
+
+	// List all ClusterExtensionRevisions for this ClusterExtension
+	var revisions ocv1.ClusterExtensionRevisionList
+	if err := r.List(ctx, &revisions); err != nil {
+		return false, fmt.Errorf("failed to list ClusterExtensionRevisions: %w", err)
+	}
+
+	// Filter and look for an approved revision with the target version for this ClusterExtension
+	for _, revision := range revisions.Items {
+		if revision.Spec.ClusterExtensionRef.Name == ext.Name &&
+			revision.Spec.Version == targetVersion &&
+			revision.Spec.Approved {
+			logger.V(4).Info("found approved revision for upgrade", "revision", revision.Name, "version", targetVersion)
+			return true, nil
+		}
+	}
+
+	logger.V(4).Info("no approved revision found for upgrade", "targetVersion", targetVersion)
+	return false, nil
 }
 
 // SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension

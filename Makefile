@@ -150,6 +150,7 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	mkdir $(CRD_WORKING_DIR)
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) crd paths="./api/v1/..." output:crd:artifacts:config=$(CRD_WORKING_DIR)
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clusterextensions.yaml $(KUSTOMIZE_OPCON_CRDS_DIR)
+	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clusterextensionrevisions.yaml $(KUSTOMIZE_OPCON_CRDS_DIR)
 	mv $(CRD_WORKING_DIR)/olm.operatorframework.io_clustercatalogs.yaml $(KUSTOMIZE_CATD_CRDS_DIR)
 	rmdir $(CRD_WORKING_DIR)
 	# Generate the remaining operator-controller manifests

@@ -476,6 +476,16 @@ func run() error {
 		return err
 	}
 
+	if err = (&controllers.ClusterExtensionRevisionReconciler{
+		Client:                cl,
+		Scheme:                mgr.GetScheme(),
+		Resolver:              resolver,
+		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtensionRevision")
+		return err
+	}
+
 	if err = (&controllers.ClusterCatalogReconciler{
 		Client:                cl,
 		CatalogCache:          catalogClientBackend,

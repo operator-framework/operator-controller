@@ -1,0 +1,211 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.3
+  name: clusterextensionrevisions.olm.operatorframework.io
+spec:
+  group: olm.operatorframework.io
+  names:
+    kind: ClusterExtensionRevision
+    listKind: ClusterExtensionRevisionList
+    plural: clusterextensionrevisions
+    singular: clusterextensionrevision
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.clusterExtensionRef.name
+      name: Extension
+      type: string
+    - jsonPath: .spec.version
+      name: Version
+      type: string
+    - jsonPath: .spec.approved
+      name: Approved
+      type: boolean
+    - jsonPath: .spec.approvedAt
+      name: Approved At
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          ClusterExtensionRevision represents an available upgrade for a ClusterExtension.
+          It is created automatically by the operator-controller when new versions become
+          available in catalogs that represent valid upgrade paths for installed ClusterExtensions.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the available upgrade revision details.
+            properties:
+              approved:
+                description: |-
+                  approved indicates whether this upgrade revision has been approved for execution.
+                  When set to true, the controller will automatically update the corresponding
+                  ClusterExtension to trigger the upgrade to this version.
+                type: boolean
+              approvedAt:
+                description: |-
+                  approvedAt indicates when this upgrade revision was approved for execution.
+                  This field is set automatically when the approved field changes from false to true.
+                format: date-time
+                type: string
+              availableSince:
+                description: |-
+                  availableSince indicates when this upgrade revision was first detected
+                  as being available. This helps track how long an upgrade has been pending.
+                format: date-time
+                type: string
+              bundleMetadata:
+                description: |-
+                  bundleMetadata contains the complete metadata for the bundle that represents
+                  this available upgrade.
+                properties:
+                  name:
+                    description: |-
+                      name is required and follows the DNS subdomain standard
+                      as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
+                      hyphens (-) or periods (.), start and end with an alphanumeric character,
+                      and be no longer than 253 characters.
+                    type: string
+                    x-kubernetes-validations:
+                    - message: packageName must be a valid DNS1123 subdomain. It must
+                        contain only lowercase alphanumeric characters, hyphens (-)
+                        or periods (.), start and end with an alphanumeric character,
+                        and be no longer than 253 characters
+                      rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
+                  version:
+                    description: |-
+                      version is a required field and is a reference to the version that this bundle represents
+                      version follows the semantic versioning standard as defined in https://semver.org/.
+                    type: string
+                    x-kubernetes-validations:
+                    - message: version must be well-formed semver
+                      rule: self.matches("^([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([-0-9A-Za-z]+(\\.[-0-9A-Za-z]+)*))?(\\+([-0-9A-Za-z]+(-\\.[-0-9A-Za-z]+)*))?")
+                required:
+                - name
+                - version
+                type: object
+              clusterExtensionRef:
+                description: |-
+                  clusterExtensionRef is a required reference to the ClusterExtension
+                  that this revision represents an available upgrade for.
+                properties:
+                  name:
+                    description: name is the name of the ClusterExtension
+                    maxLength: 253
+                    type: string
+                    x-kubernetes-validations:
+                    - message: name must be a valid DNS1123 subdomain
+                      rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
+                required:
+                - name
+                type: object
+              version:
+                description: |-
+                  version is a required field that specifies the exact version of the bundle
+                  that represents this available upgrade.
+
+                  version follows the semantic versioning standard as defined in https://semver.org/.
+                type: string
+                x-kubernetes-validations:
+                - message: version must be well-formed semver
+                  rule: self.matches("^([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([-0-9A-Za-z]+(\\.[-0-9A-Za-z]+)*))?(\\+([-0-9A-Za-z]+(-\\.[-0-9A-Za-z]+)*))?")
+            required:
+            - availableSince
+            - bundleMetadata
+            - clusterExtensionRef
+            - version
+            type: object
+          status:
+            description: status represents the current status of this ClusterExtensionRevision.
+            properties:
+              conditions:
+                description: conditions represent the latest available observations
+                  of the ClusterExtensionRevision's current state.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

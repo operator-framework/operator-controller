@@ -27,6 +27,26 @@ rules:
 - apiGroups:
   - olm.operatorframework.io
   resources:
+  - clusterextensionrevisions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - clusterextensionrevisions/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
   - clusterextensions
   verbs:
   - get
