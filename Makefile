@@ -154,7 +154,7 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: k8s-pin fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
+verify: k8s-pin kind-verify-versions fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
 	git diff --exit-code
 
 # Renders registry+v1 bundles in test/convert
@@ -313,8 +313,7 @@ kind-deploy: manifests
 	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: kind-cluster
-kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
-	env K8S_VERSION=v$(K8S_VERSION) KIND=$(KIND) GOBIN=$(GOBIN) hack/tools/validate_kindest_node.sh
+kind-cluster: $(KIND) kind-verify-versions #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config ./kind-config.yaml
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
@@ -322,6 +321,11 @@ kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 .PHONY: kind-clean
 kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
+
+.PHONY: kind-verify-versions
+kind-verify-versions:
+	env K8S_VERSION=v$(K8S_VERSION) KIND=$(KIND) GOBIN=$(GOBIN) hack/tools/validate_kindest_node.sh
+
 
 #SECTION Build
 
