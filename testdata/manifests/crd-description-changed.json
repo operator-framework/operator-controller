@@ -16,7 +16,7 @@
                         "type": "object",
                         "properties": {
                             "spec": {
-                                "description": "description one",
+                                "description": "description two",
                                 "type": "object",
                                 "properties": {
                                     "removedField": {
