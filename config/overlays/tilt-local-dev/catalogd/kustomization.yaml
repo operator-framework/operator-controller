@@ -6,9 +6,9 @@ resources:
 - ../../../base/catalogd
 - ../../../base/common
 components:
-- ../../../components/tls/catalogd
+- ../../../components/cert-manager/catalogd
 # ca must be last or other components will overwrite the namespaces
-- ../../../components/tls/ca
+- ../../../components/cert-manager/ca
 
 patches:
  - target:
