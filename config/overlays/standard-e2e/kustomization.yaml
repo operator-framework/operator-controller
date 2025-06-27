@@ -2,11 +2,8 @@
 # DO NOT ADD A NAMESPACE HERE
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-- ../../base/catalogd
-- ../../base/operator-controller
-- ../../base/common
 components:
+- ../../components/base/standard
 - ../../components/e2e
 # This must be last due to namespace overwrite issues of the ca
 - ../../components/cert-manager

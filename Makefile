@@ -73,6 +73,7 @@ endif
 
 KUSTOMIZE_STANDARD_OVERLAY := config/overlays/standard
 KUSTOMIZE_STANDARD_E2E_OVERLAY := config/overlays/standard-e2e
+KUSTOMIZE_EXPERIMENTAL_OVERLAY := config/overlays/experimental
 
 export RELEASE_MANIFEST := operator-controller.yaml
 export RELEASE_INSTALL := install.sh
@@ -82,6 +83,7 @@ export RELEASE_CATALOGS := default-catalogs.yaml
 MANIFEST_HOME := ./manifests
 STANDARD_MANIFEST := ./manifests/standard.yaml
 STANDARD_E2E_MANIFEST := ./manifests/standard-e2e.yaml
+EXPERIMENTAL_MANIFEST := ./manifests/experimental.yaml
 CATALOGS_MANIFEST := ./manifests/default-catalogs.yaml
 
 # Manifest used by kind-deploy, which may be overridden by other targets
@@ -154,6 +156,7 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	mkdir -p $(MANIFEST_HOME)
 	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_OVERLAY) > $(STANDARD_MANIFEST)
 	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_E2E_OVERLAY) > $(STANDARD_E2E_MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_OVERLAY) > $(EXPERIMENTAL_MANIFEST)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -261,7 +264,7 @@ test-e2e: run image-registry prometheus e2e e2e-metrics e2e-coverage kind-clean 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
 prometheus: PROMETHEUS_VERSION := v0.83.0
-prometheus: #HELP Deploy Prometheus into specified namespace
+prometheus: #EXHELP Deploy Prometheus into specified namespace
 	./hack/test/setup-monitoring.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE)
 
 # The metrics.out file contains raw json data of the metrics collected during a test run.
@@ -269,7 +272,7 @@ prometheus: #HELP Deploy Prometheus into specified namespace
 # prometheus. Prometheus will gather metrics we currently query for over the test run, 
 # and provide alerts from the metrics based on the rules that we set.
 .PHONY: e2e-metrics
-e2e-metrics: #HELP Request metrics from prometheus; place in ARTIFACT_PATH if set
+e2e-metrics: #EXHELP Request metrics from prometheus; place in ARTIFACT_PATH if set
 	curl -X POST \
 	-H "Content-Type: application/x-www-form-urlencoded" \
 	--data 'query={pod=~"operator-controller-controller-manager-.*|catalogd-controller-manager-.*"}' \
@@ -383,6 +386,10 @@ go-build-linux: $(BINARIES)
 
 .PHONY: run
 run: docker-build kind-cluster kind-load kind-deploy wait #HELP Build the operator-controller then deploy it into a new kind cluster.
+
+.PHONY: run-experimental
+run-experimental: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
+run-experimental: run #HELP Build the operator-controller then deploy it with the experimental manifest into a new kind cluster.
 
 CATD_NAMESPACE := olmv1-system
 wait:

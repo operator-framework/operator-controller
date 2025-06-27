@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# Pull in the experimental CRDs
+resources:
+- ../../../base/catalogd/crd/experimental
+- ../../../base/operator-controller/crd/experimental
+# Pull in the component(s) common to standard and experimental
+components:
+- ../common
+# EXPERIMENTAL FEATURES ARE LISTED HERE
+- ../../features/synthetic-user-permissions
+- ../../features/webhook-provider-certmanager
+- ../../features/webhook-provider-openshift-serviceca
