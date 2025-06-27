@@ -54,17 +54,19 @@ const (
 // ClusterCatalog enables users to make File-Based Catalog (FBC) catalog data available to the cluster.
 // For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
 type ClusterCatalog struct {
+	// +optional
 	metav1.TypeMeta `json:",inline"`
 
 	// metadata is the standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata"`
 
 	// spec is the desired state of the ClusterCatalog.
 	// spec is required.
 	// The controller will work to ensure that the desired
 	// catalog is unpacked and served over the catalog content HTTP server.
-	// +kubebuilder:validation:Required
+	// +required
 	Spec ClusterCatalogSpec `json:"spec"`
 
 	// status contains information about the state of the ClusterCatalog such as:
@@ -72,7 +74,7 @@ type ClusterCatalog struct {
 	//   - Whether or not the ClusterCatalog is progressing to a new state
 	//   - A reference to the source from which the catalog contents were retrieved
 	// +optional
-	Status ClusterCatalogStatus `json:"status,omitempty"`
+	Status ClusterCatalogStatus `json:"status,omitempty"` //nolint: kubeapilinter
 }
 
 //+kubebuilder:object:root=true
@@ -87,7 +89,7 @@ type ClusterCatalogList struct {
 
 	// items is a list of ClusterCatalogs.
 	// items is required.
-	// +kubebuilder:validation:Required
+	// +required
 	Items []ClusterCatalog `json:"items"`
 }
 
@@ -110,7 +112,7 @@ type ClusterCatalogSpec struct {
 	//    image:
 	//      ref: quay.io/operatorhubio/catalog:latest
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	Source CatalogSource `json:"source"`
 
 	// priority allows the user to define a priority for a ClusterCatalog.
@@ -131,8 +133,8 @@ type ClusterCatalogSpec struct {
 	// The highest possible value is 2147483647.
 	//
 	// +kubebuilder:default:=0
-	// +kubebuilder:validation:minimum:=-2147483648
-	// +kubebuilder:validation:maximum:=2147483647
+	// +kubebuilder:validation:Minimum:=-2147483648
+	// +kubebuilder:validation:Maximum:=2147483647
 	// +optional
 	Priority int32 `json:"priority"`
 
@@ -179,6 +181,8 @@ type ClusterCatalogStatus struct {
 	// contents. This could occur when we've initially fetched the latest contents from the source for this catalog and when polling for changes
 	// to the contents we identify that there are updates to the contents.
 	//
+	// +patchMergeKey=type
+	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
 	// +optional
@@ -214,7 +218,7 @@ type ClusterCatalogURLs struct {
 	//
 	// As the needs of users and clients of the evolve, new endpoints may be added.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=525
 	// +kubebuilder:validation:XValidation:rule="isURL(self)",message="must be a valid URL"
 	// +kubebuilder:validation:XValidation:rule="isURL(self) ? (url(self).getScheme() == \"http\" || url(self).getScheme() == \"https\") : true",message="scheme must be either http or https"
@@ -236,7 +240,7 @@ type CatalogSource struct {
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Image"
-	// +kubebuilder:validation:Required
+	// +required
 	Type SourceType `json:"type"`
 	// image is used to configure how catalog contents are sourced from an OCI image.
 	// This field is required when type is Image, and forbidden otherwise.
@@ -258,11 +262,12 @@ type ResolvedCatalogSource struct {
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Image"
-	// +kubebuilder:validation:Required
+	// +required
 	Type SourceType `json:"type"`
 	// image is a field containing resolution information for a catalog sourced from an image.
 	// This field must be set when type is Image, and forbidden otherwise.
-	Image *ResolvedImageSource `json:"image"`
+	// +optional
+	Image *ResolvedImageSource `json:"image,omitempty"`
 }
 
 // ResolvedImageSource provides information about the resolved source of a Catalog sourced from an image.
@@ -270,7 +275,7 @@ type ResolvedImageSource struct {
 	// ref contains the resolved image digest-based reference.
 	// The digest format is used so users can use other tooling to fetch the exact
 	// OCI manifests that were used to extract the catalog contents.
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=1000
 	// +kubebuilder:validation:XValidation:rule="self.matches('^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\\\b')",message="must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character."
 	// +kubebuilder:validation:XValidation:rule="self.find('(\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)') != \"\"",message="a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters."
@@ -325,7 +330,7 @@ type ImageSource struct {
 	// An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"
 	// An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest"
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=1000
 	// +kubebuilder:validation:XValidation:rule="self.matches('^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\\\b')",message="must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character."
 	// +kubebuilder:validation:XValidation:rule="self.find('(\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)') != \"\"",message="a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters."
@@ -344,7 +349,7 @@ type ImageSource struct {
 	// When omitted, the image will not be polled for new content.
 	// +kubebuilder:validation:Minimum:=1
 	// +optional
-	PollIntervalMinutes *int `json:"pollIntervalMinutes,omitempty"`
+	PollIntervalMinutes *int `json:"pollIntervalMinutes,omitempty"` //nolint: kubeapilinter
 }
 
 func init() {
