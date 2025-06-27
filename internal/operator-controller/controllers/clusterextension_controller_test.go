@@ -1442,7 +1442,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 			controllers.SetDeprecationStatus(tc.clusterExtension, tc.bundle.Name, tc.deprecation)
 			// TODO: we should test for unexpected changes to lastTransitionTime. We only expect
 			//  lastTransitionTime to change when the status of the condition changes.
-			assert.Equal(t, "", cmp.Diff(tc.expectedClusterExtension, tc.clusterExtension, cmpopts.IgnoreFields(metav1.Condition{}, "Message", "LastTransitionTime")))
+			assert.Empty(t, cmp.Diff(tc.expectedClusterExtension, tc.clusterExtension, cmpopts.IgnoreFields(metav1.Condition{}, "Message", "LastTransitionTime")))
 		})
 	}
 }

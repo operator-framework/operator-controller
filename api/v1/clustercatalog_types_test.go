@@ -149,7 +149,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 			obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&tc.spec) //nolint:gosec
 			require.NoError(t, err)
 			errs := validator(obj, nil)
-			require.Equal(t, len(tc.wantErrs), len(errs), "want", tc.wantErrs, "got", errs)
+			require.Len(t, errs, len(tc.wantErrs), "want", tc.wantErrs, "got", errs)
 			for i := range tc.wantErrs {
 				got := errs[i].Error()
 				assert.Equal(t, tc.wantErrs[i], got)
@@ -242,7 +242,7 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			errs := validator(tc.spec.Ref, nil)
-			require.Equal(t, len(tc.wantErrs), len(errs), "want", tc.wantErrs, "got", errs)
+			require.Len(t, errs, len(tc.wantErrs), "want", tc.wantErrs, "got", errs)
 			for i := range tc.wantErrs {
 				got := errs[i].Error()
 				assert.Equal(t, tc.wantErrs[i], got)
@@ -286,7 +286,7 @@ func TestClusterCatalogURLsCELValidation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			errs := validator(tc.urls.Base, nil)
 			fmt.Println(errs)
-			require.Equal(t, len(tc.wantErrs), len(errs))
+			require.Len(t, errs, len(tc.wantErrs))
 			for i := range tc.wantErrs {
 				got := errs[i].Error()
 				assert.Equal(t, tc.wantErrs[i], got)
@@ -327,7 +327,7 @@ func TestSourceCELValidation(t *testing.T) {
 			require.NoError(t, err)
 			errs := validator(obj, nil)
 			fmt.Println(errs)
-			require.Equal(t, len(tc.wantErrs), len(errs))
+			require.Len(t, errs, len(tc.wantErrs))
 			for i := range tc.wantErrs {
 				got := errs[i].Error()
 				assert.Equal(t, tc.wantErrs[i], got)
@@ -368,7 +368,7 @@ func TestResolvedSourceCELValidation(t *testing.T) {
 			obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&tc.source) //nolint:gosec
 			require.NoError(t, err)
 			errs := validator(obj, nil)
-			require.Equal(t, len(tc.wantErrs), len(errs))
+			require.Len(t, errs, len(tc.wantErrs))
 			for i := range tc.wantErrs {
 				got := errs[i].Error()
 				assert.Equal(t, tc.wantErrs[i], got)

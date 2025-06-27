@@ -34,7 +34,7 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 	}
 	actualValidationFns := registryv1.BundleValidator
 
-	require.Equal(t, len(expectedValidationFns), len(actualValidationFns))
+	require.Len(t, actualValidationFns, len(expectedValidationFns))
 	for i := range expectedValidationFns {
 		require.Equal(t, reflect.ValueOf(expectedValidationFns[i]).Pointer(), reflect.ValueOf(actualValidationFns[i]).Pointer(), "bundle validator has unexpected validation function")
 	}
@@ -55,7 +55,7 @@ func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
 	}
 	actualGenerators := registryv1.ResourceGenerators
 
-	require.Equal(t, len(expectedGenerators), len(actualGenerators))
+	require.Len(t, actualGenerators, len(expectedGenerators))
 	for i := range expectedGenerators {
 		require.Equal(t, reflect.ValueOf(expectedGenerators[i]).Pointer(), reflect.ValueOf(actualGenerators[i]).Pointer(), "bundle validator has unexpected validation function")
 	}

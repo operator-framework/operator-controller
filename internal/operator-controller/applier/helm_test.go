@@ -366,7 +366,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "problem running preauthorization")
-		require.Equal(t, "", state)
+		require.Empty(t, state)
 		require.Nil(t, objs)
 	})
 
@@ -395,7 +395,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, errMissingRBAC)
-		require.Equal(t, "", state)
+		require.Empty(t, state)
 		require.Nil(t, objs)
 	})
 

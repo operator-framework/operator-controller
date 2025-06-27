@@ -618,7 +618,7 @@ func (w staticCatalogWalker) WalkCatalogs(ctx context.Context, _ string, f Catal
 		for _, opt := range opts {
 			opt.ApplyToList(&options)
 		}
-		if !options.LabelSelector.Matches(labels.Set(cat.ObjectMeta.Labels)) {
+		if !options.LabelSelector.Matches(labels.Set(cat.Labels)) {
 			continue
 		}
 		fbc, catCfg, fbcErr := v()

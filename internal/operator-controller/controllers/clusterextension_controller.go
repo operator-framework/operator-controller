@@ -111,7 +111,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	defer l.Info("reconcile ending")
 
 	existingExt := &ocv1.ClusterExtension{}
-	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, existingExt); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -141,7 +141,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	reconciledExt.Finalizers = finalizers
 
 	if updateFinalizers {
-		if err := r.Client.Update(ctx, reconciledExt); err != nil {
+		if err := r.Update(ctx, reconciledExt); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
