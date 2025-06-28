@@ -1,8 +1,8 @@
+# Does not include the CRD, which must be added separately (it's non-namespaced)
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: olmv1-system
 namePrefix: catalogd-
 resources:
-- crd
 - rbac
 - manager
