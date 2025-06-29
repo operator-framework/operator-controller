@@ -74,6 +74,7 @@ endif
 KUSTOMIZE_STANDARD_OVERLAY := config/overlays/standard
 KUSTOMIZE_STANDARD_E2E_OVERLAY := config/overlays/standard-e2e
 KUSTOMIZE_EXPERIMENTAL_OVERLAY := config/overlays/experimental
+KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY := config/overlays/experimental-e2e
 
 export RELEASE_MANIFEST := operator-controller.yaml
 export RELEASE_INSTALL := install.sh
@@ -84,6 +85,7 @@ MANIFEST_HOME := ./manifests
 STANDARD_MANIFEST := ./manifests/standard.yaml
 STANDARD_E2E_MANIFEST := ./manifests/standard-e2e.yaml
 EXPERIMENTAL_MANIFEST := ./manifests/experimental.yaml
+EXPERIMENTAL_E2E_MANIFEST := ./manifests/experimental-e2e.yaml
 CATALOGS_MANIFEST := ./manifests/default-catalogs.yaml
 
 # Manifest used by kind-deploy, which may be overridden by other targets
@@ -110,7 +112,7 @@ SOURCE_MANIFEST := $(STANDARD_MANIFEST)
 
 .PHONY: help
 help: #HELP Display essential help.
-	@awk 'BEGIN {FS = ":[^#]*#HELP"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\n"} /^[a-zA-Z_0-9-]+:.*#HELP / { printf "  \033[36m%-17s\033[0m %s\n", $$1, $$2 } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":[^#]*#HELP"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\n"} /^[a-zA-Z_0-9-]+:.*#HELP / { printf "  \033[36m%-21s\033[0m %s\n", $$1, $$2 } ' $(MAKEFILE_LIST)
 
 .PHONY: help-extended
 help-extended: #HELP Display extended help.
@@ -157,6 +159,7 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_OVERLAY) > $(STANDARD_MANIFEST)
 	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_E2E_OVERLAY) > $(STANDARD_E2E_MANIFEST)
 	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_OVERLAY) > $(EXPERIMENTAL_MANIFEST)
+	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY) > $(EXPERIMENTAL_E2E_MANIFEST)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -205,6 +208,10 @@ test: manifests generate fmt lint test-unit test-e2e #HELP Run all tests.
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
 	go test -count=1 -v ./test/e2e/...
+
+.PHONY: experimental-e2e
+experimental-e2e: #EXHELP Run the experimental e2e tests.
+	go test -count=1 -v ./test/experimental-e2e/...
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
@@ -260,6 +267,12 @@ test-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: run image-registry prometheus e2e e2e-metrics e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+
+.PHONY: test-experimental-e2e
+test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
+test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
+test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
+test-experimental-e2e: run image-registry prometheus experimental-e2e e2e-metrics e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
