@@ -19,7 +19,6 @@ require (
 	github.com/klauspost/compress v1.18.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11
 	github.com/operator-framework/api v0.32.0
 	github.com/operator-framework/helm-operator-plugins v0.8.0
 	github.com/operator-framework/operator-registry v1.55.0
@@ -44,6 +43,7 @@ require (
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/controller-tools v0.18.0
+	sigs.k8s.io/crdify v0.4.1-0.20250613143457-398e4483fb58
 	sigs.k8s.io/yaml v1.5.0
 )
 
