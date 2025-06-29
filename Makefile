@@ -7,6 +7,9 @@ SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
 export ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+# use CI-provided SOURCE_GIT_COMMIT if available, fallback to local git commit ID
+export GIT_COMMIT := $(or $(SOURCE_GIT_COMMIT),$(shell git rev-parse HEAD))
+
 GOLANG_VERSION := $(shell sed -En 's/^go (.*)$$/\1/p' "go.mod")
 # Image URL to use all building/pushing image targets
 ifeq ($(origin IMAGE_REGISTRY), undefined)
