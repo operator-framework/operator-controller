@@ -68,6 +68,13 @@ jobs:
           name: experimental-e2e-artifacts
           path: /tmp/artifacts/
 
+      - uses: codecov/codecov-action@v5.4.3
+        with:
+          disable_search: true
+          files: coverage/e2e.out
+          flags: experimental-e2e
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   upgrade-e2e:
     runs-on: ubuntu-latest
     steps:

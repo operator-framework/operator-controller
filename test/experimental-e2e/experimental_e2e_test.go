@@ -11,6 +11,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
+	"github.com/operator-framework/operator-controller/test/utils"
+)
+
+const (
+	artifactName = "operator-controller-experimental-e2e"
 )
 
 var (
@@ -31,4 +36,5 @@ func TestMain(m *testing.M) {
 
 func TestNoop(t *testing.T) {
 	t.Log("Running experimental-e2e tests")
+	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
 }
