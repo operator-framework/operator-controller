@@ -6,8 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -275,4 +277,61 @@ func Test_WithMutatingWebhook(t *testing.T) {
 		{Name: "wh-one"},
 		{Name: "wh-two"},
 	}, wh.Webhooks)
+}
+
+func Test_WithProxy(t *testing.T) {
+	depSpec := appsv1.DeploymentSpec{
+		Template: corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name: "c1",
+						Env: []corev1.EnvVar{
+							{
+								Name:  "TEST",
+								Value: "xxx",
+							},
+						},
+					},
+					{
+						Name: "c2",
+						Env: []corev1.EnvVar{
+							{
+								Name:  "TEST",
+								Value: "xxx",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	depl := generators.CreateDeploymentResource(
+		"test",
+		"test-ns",
+		generators.WithDeploymentSpec(depSpec),
+		generators.WithProxy("http,prox", "https,prox", "no,prox"),
+	)
+
+	expected := []corev1.EnvVar{
+		{
+			Name:  "TEST",
+			Value: "xxx",
+		},
+		{
+			Name:  "HTTP_PROXY",
+			Value: "http,prox",
+		},
+		{
+			Name:  "HTTPS_PROXY",
+			Value: "https,prox",
+		},
+		{
+			Name:  "NO_PROXY",
+			Value: "no,prox",
+		},
+	}
+	assert.Equal(t, expected, depl.Spec.Template.Spec.Containers[0].Env)
+	assert.Equal(t, expected, depl.Spec.Template.Spec.Containers[1].Env)
 }
