@@ -6,5 +6,5 @@ resources:
 - ../../../base/operator-controller
 - ../../../base/common
 # components should include any GA'd features (none as of now)
+# they should not be listed in the standard config, as they will be excluded from the experimental manifest
 components:
-
