@@ -1,77 +1,79 @@
-# OPERATOR-CONTROLLER CONFIG
+# OPERATOR-CONTROLLER CONFIGURATION
+
+The main kustomize targets are all located in the `config/overlays` directory. These are the directories that should be passed to kustomize:
+
+e.g.
+```
+kustomize build config/overlays/standard > standard.yaml
+```
+
+# Overlays
+
+All other directories are in support of of these overlays.
 
 ## config/overlays/basic-olm
 
-This includes basic support for an insecure OLMv1 deployment. This configuration uses:
-* config/base/catalogd
-* config/base/operator-controller
-* config/base/common
+This includes basic support for an insecure (non-TLS) OLMv1 deployment.
 
-## config/overlays/cert-manager
+## config/overlays/standard
 
-This includes support for a secure (i.e. with TLS) configuration of OLMv1. This configuration uses:
-* config/base/catalogd
-* config/base/operator-controller
-* config/base/common
-* config/components/tls/catalogd
-* config/components/tls/operator-controller
-* config/components/tls/ca
+This includes support for a secure (i.e. with TLS) configuration of OLMv1. This configuration requires cert-manager.
 
-This configuration requires cert-manager.
+This configuration is used to generate `manifests/standard.yaml`.
 
-## config/overlays/e2e
+## config/overlays/standard-e2e
 
-This provides additional configuration support for end-to-end testing, including code coverage. This configuration uses:
-* config/base/catalogd
-* config/base/operator-controller
-* config/base/common
-* config/components/coverage
-* config/components/tls/catalogd
-* config/components/tls/operator-controller
-* config/components/tls/ca
+This provides additional configuration support for end-to-end testing, including code coverage. This configuration requires cert-manager.
 
-This configuration requires cert-manager.
+This configuration is used to generate `manifests/standard-e2e.yaml`.
 
-## Base Configuration
+## config/overlays/experimental
 
-The base configuration specifies a namespace of `olmv1-system`.
+This provides additional configuration used to support experimental features, including CRDs. This configuration requires cert-manager.
 
-### config/base/catalogd
+This configuration is used to generate `manifests/experimental.yaml`.
 
-This provides the base configuration of catalogd.
+## config/overlays/experimental-e2e
 
-### config/base/operator-controller
+This provides experimental configuration and support for end-to-end testing, includng code coverage. This configuration requires cert-manager.
 
-This provides the base configuration of operator-controller.
+This configuration is used to generate `manifests/experimental-e2e.yaml`.
 
-### config/base/common
+## config/overlays/tilt-local-dev
 
-This provides common components to both operator-controller and catalogd, i.e. namespace.
+This provides configuration for Tilt debugging support.
 
-## Components
+# Components
 
-Each of the `kustomization.yaml` files specify a `Component`, rather than an overlay, and thus, can be used within the overlays.
+Components are the kustomize configuration building blocks.
 
-### config/components/tls/catalogd
+## config/components/base
 
-This provides a basic configuration of catalogd with TLS support.
+This directory provides multiple configurations for organizing the base configuration into standard and experimental configurations.
 
-This component requires cert-manager.
+:bangbang: *The following rules should be followed when configurating a feature:*
 
-### config/components/tls/operator-controller
+* Feature components that are GA'd and should be part of the standard manifest should be listed in `config/components/base/common/kustomization.yaml`. This `commmon` kustomization file is included by *both* the **standard** and **experimental** configurations.
+* Feature components that are still experimental and should be part of the standard manifest should be listed only in `config/components/base/experimental/kustomization.yaml`.
 
-This provides a basic configuration of operator-controller with TLS support for catalogd.
+## config/components/features
 
-This component requires cert-manager.
+This directory contains contains configuration for features (experimental or otherwise).
 
-### config/components/tls/ca
+:bangbang: *Feature configuration should be placed into a subdirectory here.*
 
-Provides a CA for operator-controller/catalogd operation.
+## config/components/cert-manager
 
-This component _does not_ specify a namespace, and _must_ be included last.
+This directory provides configuration for using cert-manager with OLMv1.
 
-This component requires cert-manager.
+## config/components/e2e
 
-### config/components/coverage
+This directory provides configuration for end-to-end testing of OLMv1.
 
-Provides configuration for code coverage.
+# Base Configuration
+
+The `config/base` directory contains the base kubebuilder-generated configuration, along with CRDs.
+
+# Samples
+
+The `config/samples` directory contains example ClusterCatalog and ClusterExtension resources.

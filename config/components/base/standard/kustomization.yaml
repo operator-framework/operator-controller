@@ -7,4 +7,4 @@ resources:
 # Pull in the component(s) common to standard and experimental
 components:
 - ../common
-# GA'D FEATURES ARE LISTED HERE
+# GA'D FEATURES ARE LISTED IN THE COMMON CONFIG, NOT HERE
