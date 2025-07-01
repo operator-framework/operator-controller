@@ -1596,6 +1596,7 @@ spec:
         - --leader-elect
         - --metrics-bind-address=:7443
         - --external-address=catalogd-service.olmv1-system.svc
+        - --feature-gates=APIV1MetasHandler=true
         - --tls-cert=/var/certs/tls.crt
         - --tls-key=/var/certs/tls.key
         - --pull-cas-dir=/var/ca-certs
@@ -1711,7 +1712,8 @@ spec:
         - --leader-elect
         - --feature-gates=SyntheticPermissions=true
         - --feature-gates=WebhookProviderCertManager=true
-        - --feature-gates=WebhookProviderOpenshiftServiceCA=true
+        - --feature-gates=SingleOwnNamespaceInstallSupport=true
+        - --feature-gates=PreflightPermissions=true
         - --catalogd-cas-dir=/var/certs
         - --pull-cas-dir=/var/certs
         - --tls-cert=/var/certs/tls.cert
