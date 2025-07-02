@@ -57,7 +57,7 @@ func Test_hasChart(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		args
+		args args
 		want bool
 	}{
 		{
