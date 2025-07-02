@@ -272,7 +272,7 @@ test-e2e: run image-registry prometheus e2e e2e-metrics e2e-coverage kind-clean 
 test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
 test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
-test-experimental-e2e: run image-registry prometheus experimental-e2e e2e-metrics e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
+test-experimental-e2e: run image-registry prometheus experimental-e2e e2e e2e-metrics e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system

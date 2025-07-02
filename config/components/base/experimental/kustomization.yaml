@@ -10,4 +10,8 @@ components:
 # EXPERIMENTAL FEATURES ARE LISTED HERE
 - ../../features/synthetic-user-permissions
 - ../../features/webhook-provider-certmanager
-- ../../features/webhook-provider-openshift-serviceca
+- ../../features/single-own-namespace
+- ../../features/preflight-permissions
+- ../../features/apiv1-metas-handler
+# This one is downstream only, so we shant use it
+# - ../../features/webhook-provider-openshift-serviceca
