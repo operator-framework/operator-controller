@@ -12,51 +12,38 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/crdify/pkg/config"
+	"sigs.k8s.io/crdify/pkg/runner"
+	"sigs.k8s.io/crdify/pkg/validations"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
 
 type Option func(p *Preflight)
 
-func WithValidator(v *Validator) Option {
+func WithConfig(cfg *config.Config) Option {
 	return func(p *Preflight) {
-		p.validator = v
+		p.config = cfg
+	}
+}
+
+func WithRegistry(reg validations.Registry) Option {
+	return func(p *Preflight) {
+		p.registry = reg
 	}
 }
 
 type Preflight struct {
 	crdClient apiextensionsv1client.CustomResourceDefinitionInterface
-	validator *Validator
+	config    *config.Config
+	registry  validations.Registry
 }
 
 func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface, opts ...Option) *Preflight {
-	changeValidations := []ChangeValidation{
-		Description,
-		Enum,
-		Required,
-		Maximum,
-		MaxItems,
-		MaxLength,
-		MaxProperties,
-		Minimum,
-		MinItems,
-		MinLength,
-		MinProperties,
-		Default,
-		Type,
-	}
 	p := &Preflight{
 		crdClient: crdCli,
-		// create a default validator. Can be overridden via the options
-		validator: &Validator{
-			Validations: []Validation{
-				NewValidationFunc("NoScopeChange", NoScopeChange),
-				NewValidationFunc("NoStoredVersionRemoved", NoStoredVersionRemoved),
-				NewValidationFunc("NoExistingFieldRemoved", NoExistingFieldRemoved),
-				&ServedVersionValidator{Validations: changeValidations},
-				&ChangeValidator{Validations: changeValidations},
-			},
-		},
+		config:    defaultConfig(),
+		registry:  defaultRegistry(),
 	}
 
 	for _, o := range opts {
@@ -82,6 +69,11 @@ func (p *Preflight) runPreflight(ctx context.Context, rel *release.Release) erro
 	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
 	if err != nil {
 		return fmt.Errorf("parsing release %q objects: %w", rel.Name, err)
+	}
+
+	runner, err := runner.New(p.config, p.registry)
+	if err != nil {
+		return fmt.Errorf("creating CRD validation runner: %w", err)
 	}
 
 	validateErrors := make([]error, 0, len(relObjects))
@@ -110,11 +102,91 @@ func (p *Preflight) runPreflight(ctx context.Context, rel *release.Release) erro
 			return fmt.Errorf("getting existing resource for CRD %q: %w", newCrd.Name, err)
 		}
 
-		err = p.validator.Validate(*oldCrd, *newCrd)
-		if err != nil {
-			validateErrors = append(validateErrors, fmt.Errorf("validating upgrade for CRD %q failed: %w", newCrd.Name, err))
+		results := runner.Run(oldCrd, newCrd)
+		if results.HasFailures() {
+			resultErrs := crdWideErrors(results)
+			resultErrs = append(resultErrs, sameVersionErrors(results)...)
+			resultErrs = append(resultErrs, servedVersionErrors(results)...)
+
+			validateErrors = append(validateErrors, fmt.Errorf("validating upgrade for CRD %q: %w", newCrd.Name, errors.Join(resultErrs...)))
 		}
 	}
 
 	return errors.Join(validateErrors...)
+}
+
+func defaultConfig() *config.Config {
+	return &config.Config{
+		// Ignore served version validations if conversion policy is set.
+		Conversion: config.ConversionPolicyIgnore,
+		// Fail-closed by default
+		UnhandledEnforcement: config.EnforcementPolicyError,
+		// Use the default validation configurations as they are
+		// the strictest possible.
+		Validations: []config.ValidationConfig{
+			// Do not enforce the description validation
+			// because OLM should not block on field description changes.
+			{
+				Name:        "description",
+				Enforcement: config.EnforcementPolicyNone,
+			},
+		},
+	}
+}
+
+func defaultRegistry() validations.Registry {
+	return runner.DefaultRegistry()
+}
+
+func crdWideErrors(results *runner.Results) []error {
+	if results == nil {
+		return nil
+	}
+
+	errs := []error{}
+	for _, result := range results.CRDValidation {
+		for _, err := range result.Errors {
+			errs = append(errs, fmt.Errorf("%s: %s", result.Name, err))
+		}
+	}
+
+	return errs
+}
+
+func sameVersionErrors(results *runner.Results) []error {
+	if results == nil {
+		return nil
+	}
+
+	errs := []error{}
+	for version, propertyResults := range results.SameVersionValidation {
+		for property, comparisonResults := range propertyResults {
+			for _, result := range comparisonResults {
+				for _, err := range result.Errors {
+					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", version, property, result.Name, err))
+				}
+			}
+		}
+	}
+
+	return errs
+}
+
+func servedVersionErrors(results *runner.Results) []error {
+	if results == nil {
+		return nil
+	}
+
+	errs := []error{}
+	for version, propertyResults := range results.ServedVersionValidation {
+		for property, comparisonResults := range propertyResults {
+			for _, result := range comparisonResults {
+				for _, err := range result.Errors {
+					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", version, property, result.Name, err))
+				}
+			}
+		}
+	}
+
+	return errs
 }
