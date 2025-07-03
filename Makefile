@@ -41,7 +41,7 @@ endif
 ENVTEST_VERSION := $(K8S_VERSION).x
 
 # Define dependency versions (use go.mod if we also use Go code from dependency)
-export CERT_MGR_VERSION := v1.18.1
+export CERT_MGR_VERSION := v1.18.2
 export WAIT_TIMEOUT := 60s
 
 # Install default ClusterCatalogs

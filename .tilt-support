@@ -5,7 +5,7 @@ load('ext://cert_manager', 'deploy_cert_manager')
 def deploy_cert_manager_if_needed():
     cert_manager_var = '__CERT_MANAGER__'
     if os.getenv(cert_manager_var) != '1':
-        deploy_cert_manager(version="v1.15.3")
+        deploy_cert_manager(version="v1.18.2")
         os.putenv(cert_manager_var, '1')
 
 
