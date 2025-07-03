@@ -2,7 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: catalogd-service-cert
-  namespace: system
+  namespace: olmv1-system
 spec:
   secretName: catalogd-service-cert-git-version
   dnsNames:

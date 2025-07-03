@@ -5,6 +5,7 @@ metadata:
     app.kubernetes.io/part-of: olm
     app.kubernetes.io/name: catalogd
   name: leader-election-rolebinding
+  namespace: olmv1-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -12,4 +13,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: controller-manager
-  namespace: system
+  namespace: olmv1-system
