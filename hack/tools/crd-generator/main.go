@@ -35,7 +35,7 @@ import (
 const (
 	// FeatureSetAnnotation is the annotation key used in the Operator-Controller API CRDs to specify
 	// the installed Operator-Controller API channel.
-	GeneratorAnnotation = "olm.operatorframework.io/generated"
+	GeneratorAnnotation = "olm.operatorframework.io/generator"
 	VersionAnnotation   = "controller-gen.kubebuilder.io/version"
 	StandardChannel     = "standard"
 	ExperimentalChannel = "experimental"

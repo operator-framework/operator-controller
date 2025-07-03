@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-    olm.operatorframework.io/generated: experimental
+    olm.operatorframework.io/generator: experimental
   name: clustercatalogs.olm.operatorframework.io
 spec:
   group: olm.operatorframework.io
