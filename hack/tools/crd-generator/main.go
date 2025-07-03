@@ -35,10 +35,10 @@ import (
 const (
 	// FeatureSetAnnotation is the annotation key used in the Operator-Controller API CRDs to specify
 	// the installed Operator-Controller API channel.
-	FeatureSetAnnotation = "olm.operatorframework.io/feature-set"
-	VersionAnnotation    = "controller-gen.kubebuilder.io/version"
-	StandardChannel      = "standard"
-	ExperimentalChannel  = "experimental"
+	GeneratorAnnotation = "olm.operatorframework.io/generated"
+	VersionAnnotation   = "controller-gen.kubebuilder.io/version"
+	StandardChannel     = "standard"
+	ExperimentalChannel = "experimental"
 )
 
 var standardKinds = map[string]bool{
@@ -123,7 +123,7 @@ func runGenerator(args ...string) {
 			if crdRaw.Annotations == nil {
 				crdRaw.Annotations = map[string]string{}
 			}
-			crdRaw.Annotations[FeatureSetAnnotation] = channel
+			crdRaw.Annotations[GeneratorAnnotation] = channel
 			if ctVer != "" {
 				crdRaw.Annotations[VersionAnnotation] = ctVer
 			}
