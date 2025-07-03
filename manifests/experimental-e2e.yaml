@@ -9,6 +9,13 @@ metadata:
     pod-security.kubernetes.io/enforce-version: latest
   name: olmv1-system
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  name: operator-controller-e2e
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -1596,6 +1603,23 @@ spec:
     control-plane: operator-controller-controller-manager
 ---
 apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  name: docker-registry
+  namespace: operator-controller-e2e
+spec:
+  ports:
+  - name: http
+    nodePort: 30000
+    port: 5000
+    targetPort: 5000
+  selector:
+    app: registry
+  type: NodePort
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   annotations:
@@ -1855,6 +1879,46 @@ spec:
           optional: false
           secretName: olmv1-cert
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  labels:
+    app: registry
+  name: docker-registry
+  namespace: operator-controller-e2e
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  template:
+    metadata:
+      annotations:
+        olm.operatorframework.io/feature-set: experimental
+      labels:
+        app: registry
+    spec:
+      containers:
+      - env:
+        - name: REGISTRY_HTTP_ADDR
+          value: :5000
+        - name: REGISTRY_HTTP_TLS_CERTIFICATE
+          value: /certs/tls.crt
+        - name: REGISTRY_HTTP_TLS_KEY
+          value: /certs/tls.key
+        image: registry:3
+        imagePullPolicy: IfNotPresent
+        name: registry
+        volumeMounts:
+        - mountPath: /certs
+          name: certs-vol
+      volumes:
+      - name: certs-vol
+        secret:
+          secretName: operator-controller-e2e-registry
+---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -1917,6 +1981,29 @@ spec:
     algorithm: ECDSA
     size: 256
   secretName: olmv1-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: experimental
+  name: operator-controller-e2e-registry
+  namespace: operator-controller-e2e
+spec:
+  dnsNames:
+  - docker-registry.operator-controller-e2e.svc
+  - docker-registry.operator-controller-e2e.svc.cluster.local
+  - docker-registry-controller-manager-metrics-service.operator-controller-e2e.svc
+  - docker-registry-controller-manager-metrics-service.operator-controller-e2e.svc.cluster.local
+  isCA: true
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: olmv1-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  secretName: operator-controller-e2e-registry
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer

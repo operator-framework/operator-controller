@@ -291,6 +291,7 @@ e2e-metrics: #EXHELP Request metrics from prometheus; place in ARTIFACT_PATH if 
 	http://localhost:30900/api/v1/query > $(if $(ARTIFACT_PATH),$(ARTIFACT_PATH),.)/metrics.out
 
 .PHONY: extension-developer-e2e
+extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
 extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
 extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP Run extension-developer e2e on local kind cluster
@@ -308,6 +309,7 @@ post-upgrade-checks:
 	go test -count=1 -v ./test/upgrade-e2e/...
 
 .PHONY: test-upgrade-e2e
+test-upgrade-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-upgrade-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-e2e
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
