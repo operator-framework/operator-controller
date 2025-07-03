@@ -1,6 +1,8 @@
 apiVersion: v1
 kind: Namespace
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/part-of: olm
     pod-security.kubernetes.io/enforce: restricted
@@ -13,6 +15,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
     olm.operatorframework.io/feature-set: standard
+    olm.operatorframework.io/generated: standard
   name: clustercatalogs.olm.operatorframework.io
 spec:
   group: olm.operatorframework.io
@@ -455,6 +458,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
     olm.operatorframework.io/feature-set: standard
+    olm.operatorframework.io/generated: standard
   name: clusterextensions.olm.operatorframework.io
 spec:
   group: olm.operatorframework.io
@@ -1042,6 +1046,8 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1051,12 +1057,16 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-controller-manager
   namespace: olmv1-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1098,6 +1108,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: catalogd-manager-role
   namespace: olmv1-system
 rules:
@@ -1114,6 +1126,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-leader-election-role
   namespace: olmv1-system
 rules:
@@ -1152,6 +1166,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-manager-role
   namespace: olmv1-system
 rules:
@@ -1180,6 +1196,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: catalogd-manager-role
 rules:
 - apiGroups:
@@ -1212,6 +1230,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1225,6 +1245,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1246,6 +1268,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-clusterextension-editor-role
 rules:
 - apiGroups:
@@ -1264,6 +1288,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-clusterextension-viewer-role
 rules:
 - apiGroups:
@@ -1278,6 +1304,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-manager-role
 rules:
 - apiGroups:
@@ -1337,6 +1365,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-metrics-reader
 rules:
 - nonResourceURLs:
@@ -1347,6 +1377,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-proxy-role
 rules:
 - apiGroups:
@@ -1365,6 +1397,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1382,6 +1416,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1399,6 +1435,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-leader-election-rolebinding
   namespace: olmv1-system
 roleRef:
@@ -1413,6 +1451,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-manager-rolebinding
   namespace: olmv1-system
 roleRef:
@@ -1427,6 +1467,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1443,6 +1485,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1459,6 +1503,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -1472,6 +1518,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-proxy-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -1485,6 +1533,8 @@ subjects:
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
@@ -1510,6 +1560,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   labels:
     control-plane: operator-controller-controller-manager
   name: operator-controller-service
@@ -1528,6 +1580,7 @@ kind: Deployment
 metadata:
   annotations:
     kubectl.kubernetes.io/default-logs-container: manager
+    olm.operatorframework.io/feature-set: standard
   labels:
     control-plane: catalogd-controller-manager
   name: catalogd-controller-manager
@@ -1542,6 +1595,7 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
+        olm.operatorframework.io/feature-set: standard
       labels:
         control-plane: catalogd-controller-manager
     spec:
@@ -1634,6 +1688,7 @@ kind: Deployment
 metadata:
   annotations:
     kubectl.kubernetes.io/default-logs-container: manager
+    olm.operatorframework.io/feature-set: standard
   labels:
     control-plane: operator-controller-controller-manager
   name: operator-controller-controller-manager
@@ -1647,6 +1702,7 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
+        olm.operatorframework.io/feature-set: standard
       labels:
         control-plane: operator-controller-controller-manager
     spec:
@@ -1737,6 +1793,8 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: olmv1-ca
   namespace: cert-manager
 spec:
@@ -1757,6 +1815,8 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: catalogd-service-cert
   namespace: olmv1-system
 spec:
@@ -1776,6 +1836,8 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: olmv1-cert
   namespace: olmv1-system
 spec:
@@ -1794,6 +1856,8 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: olmv1-ca
 spec:
   ca:
@@ -1802,6 +1866,8 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: self-sign-issuer
   namespace: cert-manager
 spec:
@@ -1810,6 +1876,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: catalogd-controller-manager
   namespace: olmv1-system
 spec:
@@ -1833,6 +1901,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: default-deny-all-traffic
   namespace: olmv1-system
 spec:
@@ -1844,6 +1914,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
   name: operator-controller-controller-manager
   namespace: olmv1-system
 spec:
@@ -1865,6 +1937,7 @@ kind: MutatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
+    olm.operatorframework.io/feature-set: standard
   name: catalogd-mutating-webhook-configuration
 webhooks:
 - admissionReviewVersions:

@@ -2,6 +2,8 @@
 # DO NOT ADD A NAMESPACE HERE
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+commonAnnotations:
+  olm.operatorframework.io/feature-set: standard-e2e
 components:
 - ../../components/base/standard
 - ../../components/e2e
