@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: e2e-registries-conf
-  namespace: system
+  namespace: olmv1-system
 data:
   registries.conf: |
     [[registry]]
