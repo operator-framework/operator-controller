@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- testolm_v2_testoperator.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples
