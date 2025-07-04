@@ -2,8 +2,10 @@ package image
 
 import (
 	"archive/tar"
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"iter"
@@ -20,6 +22,7 @@ import (
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/registry"
 
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 )
@@ -140,6 +143,67 @@ func TestDiskCacheFetch(t *testing.T) {
 			require.NotNil(t, tc.expect, "test case must include an expect function")
 			tc.expect(t, dc, fsys, modTime, err)
 			require.NoError(t, fsutil.SetWritableRecursive(dc.basePath))
+		})
+	}
+}
+
+func TestDiskCacheStore_HelmChart(t *testing.T) {
+	const myOwner = "myOwner"
+	myCanonicalRef := mustParseCanonical(t, "my.registry.io/ns/chart@sha256:5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
+	myTaggedRef, err := reference.WithTag(reference.TrimNamed(myCanonicalRef), "test-tag")
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name         string
+		ownerID      string
+		srcRef       reference.Named
+		canonicalRef reference.Canonical
+		imgConfig    ocispecv1.Image
+		layers       iter.Seq[LayerData]
+		filterFunc   func(context.Context, reference.Named, ocispecv1.Image) (archive.Filter, error)
+		setup        func(*testing.T, *diskCache)
+		expect       func(*testing.T, *diskCache, fs.FS, time.Time, error)
+	}{
+		{
+			name:         "returns no error if layer read contains helm chart",
+			ownerID:      myOwner,
+			srcRef:       myTaggedRef,
+			canonicalRef: myCanonicalRef,
+			layers: func() iter.Seq[LayerData] {
+				testChart := mockHelmChartTgz(t,
+					[]fileContent{
+						{
+							name:    "testchart/Chart.yaml",
+							content: []byte("apiVersion: v2\nname: testchart\nversion: 0.1.0"),
+						},
+						{
+							name:    "testchart/templates/deployment.yaml",
+							content: []byte("kind: Deployment\napiVersion: apps/v1"),
+						},
+					},
+				)
+				return func(yield func(LayerData) bool) {
+					yield(LayerData{Reader: bytes.NewBuffer(testChart), MediaType: registry.ChartLayerMediaType})
+				}
+			}(),
+			expect: func(t *testing.T, cache *diskCache, fsys fs.FS, modTime time.Time, err error) {
+				require.NoError(t, err)
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dc := &diskCache{
+				basePath:   t.TempDir(),
+				filterFunc: tc.filterFunc,
+			}
+			if tc.setup != nil {
+				tc.setup(t, dc)
+			}
+			fsys, modTime, err := dc.Store(context.Background(), tc.ownerID, tc.srcRef, tc.canonicalRef, tc.imgConfig, tc.layers)
+			require.NotNil(t, tc.expect, "test case must include an expect function")
+			tc.expect(t, dc, fsys, modTime, err)
+			require.NoError(t, fsutil.DeleteReadOnlyRecursive(dc.basePath))
 		})
 	}
 }
@@ -585,6 +649,120 @@ func TestDiskCacheGarbageCollection(t *testing.T) {
 	}
 }
 
+func Test_storeChartLayer(t *testing.T) {
+	tmp := t.TempDir()
+	type args struct {
+		path string
+		data LayerData
+	}
+	type want struct {
+		errStr string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "store chart layer to given path",
+			args: args{
+				path: tmp,
+				data: LayerData{
+					Index:     0,
+					MediaType: registry.ChartLayerMediaType,
+					Reader: bytes.NewBuffer(mockHelmChartTgz(t,
+						[]fileContent{
+							{
+								name:    "testchart/Chart.yaml",
+								content: []byte("apiVersion: v2\nname: testchart\nversion: 0.1.0"),
+							},
+							{
+								name:    "testchart/templates/deployment.yaml",
+								content: []byte("kind: Deployment\napiVersion: apps/v1"),
+							},
+						},
+					)),
+				},
+			},
+		},
+		{
+			name: "store invalid chart layer",
+			args: args{
+				path: tmp,
+				data: LayerData{
+					Index:     0,
+					MediaType: registry.ChartLayerMediaType,
+					Reader: bytes.NewBuffer(mockHelmChartTgz(t,
+						[]fileContent{
+							{
+								name:    "testchart/Chart.yaml",
+								content: []byte("apiVersion: v2\nname: testchart\nversion: 0.1.0"),
+							},
+							{
+								name:    "testchart/deployment.yaml",
+								content: []byte("kind: Deployment\napiVersion: apps/v1"),
+							},
+						},
+					)),
+				},
+			},
+		},
+		{
+			name: "store existing from dummy reader",
+			args: args{
+				path: tmp,
+				data: LayerData{
+					Index:     0,
+					MediaType: registry.ChartLayerMediaType,
+					Reader:    &dummyReader{},
+				},
+			},
+			want: want{
+				errStr: "error reading layer[0]: something went wrong",
+			},
+		},
+		{
+			name: "handle chart layer data",
+			args: args{
+				path: tmp,
+				data: LayerData{
+					Index:     0,
+					MediaType: registry.ChartLayerMediaType,
+					Err:       fmt.Errorf("invalid layer data"),
+					Reader: bytes.NewBuffer(mockHelmChartTgz(t,
+						[]fileContent{
+							{
+								name:    "testchart/Chart.yaml",
+								content: []byte("apiVersion: v2\nname: testchart\nversion: 0.1.0"),
+							},
+							{
+								name:    "testchart/deployment.yaml",
+								content: []byte("kind: Deployment\napiVersion: apps/v1"),
+							},
+						},
+					)),
+				},
+			},
+			want: want{
+				errStr: "error found in layer data: invalid layer data",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := storeChartLayer(tc.args.path, tc.args.data)
+			if tc.want.errStr != "" {
+				require.Error(t, err)
+				require.EqualError(t, err, tc.want.errStr, "chart store error")
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func mustParseCanonical(t *testing.T, s string) reference.Canonical {
 	n, err := reference.ParseNamed(s)
 	require.NoError(t, err)
@@ -618,4 +796,12 @@ func fsTarReader(fsys fs.FS) io.ReadCloser {
 		_ = pw.CloseWithError(err)
 	}()
 	return pr
+}
+
+type dummyReader struct{}
+
+var _ io.Reader = &dummyReader{}
+
+func (r *dummyReader) Read(p []byte) (int, error) {
+	return 0, errors.New("something went wrong")
 }
