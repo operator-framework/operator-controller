@@ -1507,7 +1507,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
-				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+				TargetNamespaces: []string{""},
 			},
 			expectedResources: []client.Object{
 				&admissionregistrationv1.ValidatingWebhookConfiguration{
@@ -1554,6 +1554,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 									Port:      ptr.To(int32(443)),
 								},
 							},
+							// No NamespaceSelector is set targetNamespaces = []string{""} (AllNamespaces install mode)
 						},
 					},
 				},
@@ -1647,6 +1648,15 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 									Port:      ptr.To(int32(443)),
 								},
 							},
+							NamespaceSelector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:      "kubernetes.io/metadata.name",
+										Operator: metav1.LabelSelectorOpIn,
+										Values:   []string{"watch-namespace-one", "watch-namespace-two"},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -1692,6 +1702,15 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 									Namespace: "install-namespace",
 									Name:      "my-deployment-service",
 									Port:      ptr.To(int32(443)),
+								},
+							},
+							NamespaceSelector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:      "kubernetes.io/metadata.name",
+										Operator: metav1.LabelSelectorOpIn,
+										Values:   []string{"watch-namespace-one", "watch-namespace-two"},
+									},
 								},
 							},
 						},
@@ -1772,7 +1791,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
-				TargetNamespaces: []string{"watch-namespace-one", "watch-namespace-two"},
+				TargetNamespaces: []string{""},
 			},
 			expectedResources: []client.Object{
 				&admissionregistrationv1.MutatingWebhookConfiguration{
@@ -1820,6 +1839,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 									Port:      ptr.To(int32(443)),
 								},
 							},
+							// No NamespaceSelector is set targetNamespaces = []string{""} (AllNamespaces install mode)
 						},
 					},
 				},
@@ -1915,6 +1935,15 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 									Port:      ptr.To(int32(443)),
 								},
 							},
+							NamespaceSelector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:      "kubernetes.io/metadata.name",
+										Operator: metav1.LabelSelectorOpIn,
+										Values:   []string{"watch-namespace-one", "watch-namespace-two"},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -1960,6 +1989,15 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 									Namespace: "install-namespace",
 									Name:      "my-deployment-service",
 									Port:      ptr.To(int32(443)),
+								},
+							},
+							NamespaceSelector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:      "kubernetes.io/metadata.name",
+										Operator: metav1.LabelSelectorOpIn,
+										Values:   []string{"watch-namespace-one", "watch-namespace-two"},
+									},
 								},
 							},
 						},
