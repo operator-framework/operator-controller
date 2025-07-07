@@ -15,17 +15,13 @@ certificate provider. Currently, two certificate providers are supported: CertMa
 
 As CertManager is already installed with OLMv1, we suggest using `WebhookProviderCertManager`.
 
-### Update OLM to enable Feature
+### Run OLM v1with Experimental Features Enabled
 
-```terminal title=Enable WebhookProviderCertManager feature
-kubectl kustomize config/overlays/featuregate/webhook-provider-certmanager | kubectl apply -f -
+```terminal title=Enable Experimental Features in a New Kind Cluster
+make run-experimental
 ```
 
-Or,
-
-```terminal title=Enable WebhookProviderOpenshiftServiceCA feature
-kubectl kustomize config/overlays/featuregate/webhook-provider-openshift-serviceca | kubectl apply -f -
-```
+This will enable only the `WebhookProviderCertManager` feature-gate, which works with cert-manager.
 
 Then,
 

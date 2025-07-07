@@ -317,7 +317,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		},
 		{
 			// NOTE: This test requires an extra configuration in /etc/containers/registries.conf, which is mounted
-			// for this e2e via the ./config/components/registries-conf kustomize component as part of the e2e overlay.
+			// for this e2e via the ./config/components/e2e/registries-conf kustomize component as part of the e2e component.
 			// The goal here is to prove that "mirrored-registry.operator-controller-e2e.svc.cluster.local:5000" is
 			// mapped to the "real" registry hostname ("docker-registry.operator-controller-e2e.svc.cluster.local:5000").
 			name:        "package requires mirror registry configuration in /etc/containers/registries.conf",

@@ -8,10 +8,10 @@ Synthetic user permissions enables fine-grained configuration of ClusterExtensio
 User can not only configure RBAC permissions governing the management across all ClusterExtensions, but also on a 
 case-by-case basis.
 
-### Update OLM to enable Feature
+### Run OLM v1with Experimental Features Enabled
 
-```terminal title=Enable SyntheticPermissions feature
-kubectl kustomize config/overlays/featuregate/synthetic-user-permissions | kubectl apply -f -
+```terminal title=Enable Experimental Features in a New Kind Cluster
+make run-experimental
 ```
 
 ```terminal title=Wait for rollout to complete
