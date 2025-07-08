@@ -6,6 +6,7 @@ commonAnnotations:
   olm.operatorframework.io/feature-set: tilt
 resources:
 - ../../../base/operator-controller
+- ../../../base/operator-controller/crd/experimental
 - ../../../base/common
 components:
 - ../../../components/cert-manager/operator-controller
