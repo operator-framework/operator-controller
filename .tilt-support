@@ -130,23 +130,24 @@ def process_yaml(yaml):
 
 # data format:
 # {
-#     'image': 'quay.io/operator-framework/rukpak',
-#     'yaml': 'manifests/overlays/cert-manager',
-#     'binaries': {
-#         'core': 'core',
-#         'crdvalidator': 'crd-validation-webhook',
-#         'helm': 'helm-provisioner',
-#         'webhooks': 'rukpak-webhooks',
+#     'repos': {
+#         'catalogd': {
+#             'image': 'quay.io/operator-framework/catalogd',
+#             'binary': './cmd/catalogd',
+#             'deployment': 'catalogd-controller-manager',
+#             'deps': ['api', 'cmd/catalogd', 'internal/catalogd', 'internal/shared', 'go.mod', 'go.sum'],
+#             'starting_debug_port': 20000,
+#         },
+#         ... additional entries here ...
 #     },
-#     'deps': ['api', 'cmd/binary_name', 'internal', 'pkg'],
-# },
-def deploy_repo(repo, data, tags="", debug=True):
-    print('Deploying repo {}'.format(repo))
-    deploy_cert_manager_if_needed()
+#     'yaml': 'config/overlays/tilt-local-dev',
+# }
 
-    local_port = data['starting_debug_port']
-    for binary, deployment in data['binaries'].items():
-        build_binary(repo, binary, data['deps'], data['image'], tags, debug)
-        k8s_resource(deployment, port_forwards=['{}:30000'.format(local_port)])
-        local_port += 1
+def deploy_repo(data, tags="", debug=True):
+    deploy_cert_manager_if_needed()
+    for reponame, repo in data['repos'].items():
+        print('Deploying repo {}'.format(reponame))
+        local_port = repo['starting_debug_port']
+        build_binary(reponame, repo['binary'], repo['deps'], repo['image'], tags, debug)
+        k8s_resource(repo['deployment'], port_forwards=['{}:30000'.format(local_port)])
     process_yaml(kustomize(data['yaml']))
