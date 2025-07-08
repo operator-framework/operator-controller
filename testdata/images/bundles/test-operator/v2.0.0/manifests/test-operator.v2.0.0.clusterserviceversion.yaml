@@ -1,0 +1,252 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+    createdAt: "2025-07-04T08:55:46Z"
+    operators.operatorframework.io/builder: operator-sdk-v1.40.0+git
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+  name: test-operator.v2.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: TestOperator is the Schema for the testoperators API.
+      displayName: Test Operator
+      kind: TestOperator
+      name: testoperators.testolm.operatorframework.io
+      version: v1
+    - description: TestOperator is the Schema for the testoperators API.
+      displayName: Test Operator
+      kind: TestOperator
+      name: testoperators.testolm.operatorframework.io
+      version: v2
+  description: OLM Test Operator
+  displayName: OLM Test Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - testolm.operatorframework.io
+          resources:
+          - testoperators
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - testolm.operatorframework.io
+          resources:
+          - testoperators/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - testolm.operatorframework.io
+          resources:
+          - testoperators/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: test-operator-controller-manager
+      deployments:
+      - label:
+          app.kubernetes.io/managed-by: kustomize
+          app.kubernetes.io/name: test-operator
+          control-plane: controller-manager
+        name: test-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: test-operator
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              annotations:
+                kubectl.kubernetes.io/default-container: manager
+              labels:
+                app.kubernetes.io/name: test-operator
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --leader-elect
+                - --health-probe-bind-address=:8081
+                - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
+                command:
+                - /manager
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/controllers/test-operator:v2.0.0
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                ports:
+                - containerPort: 9443
+                  name: webhook-server
+                  protocol: TCP
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+              securityContext:
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              serviceAccountName: test-operator-controller-manager
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: test-operator-controller-manager
+    strategy: deployment
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - test
+  - operator
+  links:
+  - name: V1
+    url: https://github.com/operator-framework/operator-controller
+  maintainers:
+  - email: operator-framework-olm-dev@googlegroups.com
+    name: community
+  maturity: alpha
+  provider:
+    name: operator-framework
+    url: https://github.com/operator-framework/operator-controller
+  version: 2.0.0
+  webhookdefinitions:
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    conversionCRDs:
+    - testoperators.testolm.operatorframework.io
+    deploymentName: test-operator-controller-manager
+    generateName: ctestoperators.kb.io
+    sideEffects: None
+    targetPort: 9443
+    type: ConversionWebhook
+    webhookPath: /convert
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: test-operator-controller-manager
+    failurePolicy: Fail
+    generateName: mtestoperator-v2.kb.io
+    rules:
+    - apiGroups:
+      - testolm.operatorframework.io
+      apiVersions:
+      - v2
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - testoperators
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-testolm-operatorframework-io-v2-testoperator
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: test-operator-controller-manager
+    failurePolicy: Fail
+    generateName: vtestoperator-v2.kb.io
+    rules:
+    - apiGroups:
+      - testolm.operatorframework.io
+      apiVersions:
+      - v2
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - testoperators
+    sideEffects: None
+    targetPort: 9443
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-testolm-operatorframework-io-v2-testoperator
