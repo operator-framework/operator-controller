@@ -1,0 +1,49 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: test.v1.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: TestOperator is the Schema for the testoperators API.
+      displayName: Test Operator
+      kind: TestOperator
+      name: testoperators.testolm.operatorframework.io
+      version: v1
+  description: Test OLM Operator
+  displayName: OLM Test Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - test
+  - operator
+  links:
+  - name: V1
+    url: https://github.com/operator-framework/operator-controller
+  maintainers:
+  - email: operator-framework-olm-dev@googlegroups.com
+    name: community
+  maturity: alpha
+  provider:
+    name: operator-framework
+    url: https://github.com/operator-framework/operator-controller
+  version: 1.0.0
