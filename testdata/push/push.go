@@ -1,23 +1,31 @@
 package main
 
 import (
+	"archive/tar"
+	"bytes"
 	"flag"
 	"fmt"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"io"
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/crane"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
 
 const (
-	bundlesSubPath  string = "bundles"
-	catalogsSubPath string = "catalogs"
+	controllersSubPath string = "controllers"
+	bundlesSubPath     string = "bundles"
+	catalogsSubPath    string = "catalogs"
 )
 
 func main() {
@@ -34,6 +42,7 @@ func main() {
 
 	bundlesFullPath := fmt.Sprintf("%s/%s", imagesPath, bundlesSubPath)
 	catalogsFullPath := fmt.Sprintf("%s/%s", imagesPath, catalogsSubPath)
+	controllersFullPath := fmt.Sprintf("%s/%s", imagesPath, controllersSubPath)
 
 	bundles, err := buildBundles(bundlesFullPath)
 	if err != nil {
@@ -42,6 +51,10 @@ func main() {
 	catalogs, err := buildCatalogs(catalogsFullPath)
 	if err != nil {
 		log.Fatalf("failed to build catalogs: %s", err.Error())
+	}
+	controllers, err := buildControllers(controllersFullPath)
+	if err != nil {
+		log.Fatalf("failed to build controllers: %s", err.Error())
 	}
 	// Push the images
 	for name, image := range bundles {
@@ -56,6 +69,13 @@ func main() {
 		log.Printf("pushing catalog %s to %s", name, dest)
 		if err := crane.Push(image, fmt.Sprintf("%s/%s", registryAddr, name)); err != nil {
 			log.Fatalf("failed to push catalog images: %s", err.Error())
+		}
+	}
+	for name, image := range controllers {
+		dest := fmt.Sprintf("%s/%s", registryAddr, name)
+		log.Printf("pushing controller %s to %s", name, dest)
+		if err := crane.Push(image, dest); err != nil {
+			log.Fatalf("failed to push controller images: %s", err.Error())
 		}
 	}
 	log.Printf("finished")
@@ -122,6 +142,27 @@ func buildCatalogs(path string) (map[string]v1.Image, error) {
 	return mutatedMap, nil
 }
 
+func buildControllers(path string) (map[string]v1.Image, error) {
+	controllers, err := processImageDirTree(path)
+	if err != nil {
+		return nil, err
+	}
+	mutatedMap := make(map[string]v1.Image, 0)
+	// Apply required catalog label
+	for key, img := range controllers {
+		cfg := v1.Config{
+			WorkingDir: "/",
+			Entrypoint: []string{"/manager"},
+			User:       "65532:65532",
+		}
+		mutatedMap[fmt.Sprintf("controllers/%s", key)], err = mutate.Config(img, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to apply image labels: %w", err)
+		}
+	}
+	return mutatedMap, nil
+}
+
 func processImageDirTree(path string) (map[string]v1.Image, error) {
 	imageMap := make(map[string]v1.Image, 0)
 	images, err := os.ReadDir(path)
@@ -145,16 +186,47 @@ func processImageDirTree(path string) (map[string]v1.Image, error) {
 				continue
 			}
 			tagFullPath := fmt.Sprintf("%s/%s", entryFullPath, tag.Name())
+			b := &bytes.Buffer{}
+			w := tar.NewWriter(b)
 
-			var fileMap map[string][]byte
-			fileMap, err = createFileMap(tagFullPath)
+			files, err := collectFiles(tagFullPath)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read files for image: %w", err)
 			}
+			sort.Strings(files)
 
-			image, err := crane.Image(fileMap)
+			for _, f := range files {
+				filePath := filepath.Join(tagFullPath, f)
+				fileBytes, err := os.ReadFile(filePath)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read file %q for image: %w", filePath, err)
+				}
+				if err := w.WriteHeader(&tar.Header{
+					Name: f,
+					Mode: 0755,
+					Size: int64(len(fileBytes)),
+				}); err != nil {
+					return nil, err
+				}
+				if _, err := w.Write(fileBytes); err != nil {
+					return nil, err
+				}
+			}
+			if err := w.Close(); err != nil {
+				return nil, err
+			}
+
+			// Return a new copy of the buffer each time it's opened.
+			layer, err := tarball.LayerFromOpener(func() (io.ReadCloser, error) {
+				return io.NopCloser(bytes.NewBuffer(b.Bytes())), nil
+			})
 			if err != nil {
-				return nil, fmt.Errorf("failed to generate image: %w", err)
+				return nil, fmt.Errorf("failed to create image layer: %w", err)
+			}
+
+			image, err := mutate.AppendLayers(empty.Image, layer)
+			if err != nil {
+				return nil, fmt.Errorf("failed to append layer to image: %w", err)
 			}
 			imageMap[fmt.Sprintf("%s:%s", entry.Name(), tag.Name())] = image
 		}
@@ -162,21 +234,18 @@ func processImageDirTree(path string) (map[string]v1.Image, error) {
 	return imageMap, nil
 }
 
-func createFileMap(originPath string) (map[string][]byte, error) {
-	fileMap := make(map[string][]byte)
+func collectFiles(originPath string) ([]string, error) {
+	var files []string
 	if err := fs.WalkDir(os.DirFS(originPath), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d != nil && !d.IsDir() {
-			fileMap[path], err = os.ReadFile(fmt.Sprintf("%s/%s", originPath, path))
-			if err != nil {
-				return err
-			}
+			files = append(files, path)
 		}
 		return nil
 	}); err != nil {
 		return nil, err
 	}
-	return fileMap, nil
+	return files, nil
 }
