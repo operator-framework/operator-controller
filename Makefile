@@ -172,9 +172,22 @@ verify: k8s-pin kind-verify-versions fmt generate manifests crd-ref-docs generat
 
 # Renders registry+v1 bundles in test/convert
 # Used by CI in verify to catch regressions in the registry+v1 -> plain conversion code
-.PHONY: generate-test-data
-generate-test-data:
+.PHONY: render-regv1-bundle
+render-regv1-bundle:
 	go run test/convert/generate-manifests.go
+
+.PHONY: generate-test-operator-bundles
+generate-test-operator-bundles:
+	BUNDLE_VERSION=1.0.0 BUNDLE_CHANNELS=beta BUNDLE_MANIFEST_PATH=$(ROOT_DIR)/testdata/images/bundles/test-operator/v1.0.0 \
+		$(MAKE) -C ./testdata/operators/test-operator/v1 bundle
+	BUNDLE_VERSION=1.3.0 BUNDLE_CHANNELS=beta BUNDLE_MANIFEST_PATH=$(ROOT_DIR)/testdata/images/bundles/test-operator/v1.3.0 \
+    	HELM_OPTS=--set=configmap.shouldNotTemplate=true $(MAKE) -C ./testdata/operators/test-operator/v1 bundle
+	BUNDLE_VERSION=2.0.0 BUNDLE_CHANNELS=beta BUNDLE_MANIFEST_PATH=$(ROOT_DIR)/testdata/images/bundles/test-operator/v2.0.0 \
+    	$(MAKE) -C ./testdata/operators/test-operator/v2 bundle
+
+.PHONY: generate-test-data
+generate-test-data: render-regv1-bundle generate-test-operator-bundles
+
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
@@ -247,11 +260,21 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 $(UNIT_TEST_DIRS) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
+.PHONY: test-operator-test-unit
+test-operator-test-unit: $(SETUP_ENVTEST) envtest-k8s-bins
+	$(MAKE) -C ./testdata/operators/test-operator/v1 test-unit
+	$(MAKE) -C ./testdata/operators/test-operator/v2 test-unit
+
+.PHONY: build-test-operator-controllers
+build-test-operator-controllers:
+	CONTROLLER_BINARY_PATH=$(ROOT_DIR)/testdata/images/controllers/test-operator/v1.0.0 $(MAKE) -C ./testdata/operators/test-operator/v1 build
+	CONTROLLER_BINARY_PATH=$(ROOT_DIR)/testdata/images/controllers/test-operator/v2.0.0 $(MAKE) -C ./testdata/operators/test-operator/v2 build
+
 .PHONY: image-registry
 E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
 image-registry: export GOOS=linux
 image-registry: export GOARCH=amd64
-image-registry: ## Build the testdata catalog used for e2e tests and push it to the image registry
+image-registry: build-test-operator-controllers ## Build the testdata catalog used for e2e tests and push it to the image registry
 	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
 	$(CONTAINER_RUNTIME) build -f ./testdata/Dockerfile -t $(E2E_REGISTRY_IMAGE) ./testdata
 	$(CONTAINER_RUNTIME) save $(E2E_REGISTRY_IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)

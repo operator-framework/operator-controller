@@ -1,0 +1,6 @@
+apiVersion: v1
+appVersion: 2.0.0
+description: A Helm Chart for the OLMv1 Test Operator
+name: test-operator
+version: 2.0.0
+home: https://github.com/operator-framework/operator-controller/testadata/operators/test-operator

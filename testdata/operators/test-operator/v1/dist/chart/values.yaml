@@ -1,0 +1,6 @@
+
+controller:
+  image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/controllers/test-operator:v1.0.0
+
+configmap:
+  shouldNotTemplate: false
