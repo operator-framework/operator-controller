@@ -19,3 +19,10 @@ nodes:
         apiServer:
             extraArgs:
               enable-admission-plugins: OwnerReferencesPermissionEnforcement
+    extraMounts:
+      - hostPath: ./hack/kind-config/containerd/certs.d
+        containerPath: /etc/containerd/certs.d
+containerdConfigPatches:
+  - |-    
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/containerd/certs.d"

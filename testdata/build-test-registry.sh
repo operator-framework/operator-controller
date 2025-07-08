@@ -71,12 +71,8 @@ spec:
     spec:
       containers:
       - name: registry
-        image: ${image}
+        image: registry:3
         imagePullPolicy: IfNotPresent
-        command:
-        - /registry
-        args:
-        - "--registry-address=:5000"
         volumeMounts:
         - name: certs-vol
           mountPath: "/certs"
