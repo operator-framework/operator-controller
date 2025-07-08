@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
@@ -29,6 +30,8 @@ import (
 const (
 	tlsCrtPath = "tls.crt"
 	tlsKeyPath = "tls.key"
+
+	labelKubernetesNamespaceMetadataName = "kubernetes.io/metadata.name"
 )
 
 // volume mount name -> mount path
@@ -291,6 +294,7 @@ func BundleValidatingWebhookResourceGenerator(rv1 *bundle.RegistryV1, opts rende
 
 	//nolint:prealloc
 	var objs []client.Object
+
 	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
 		if wh.Type != v1alpha1.ValidatingAdmissionWebhook {
 			continue
@@ -318,6 +322,9 @@ func BundleValidatingWebhookResourceGenerator(rv1 *bundle.RegistryV1, opts rende
 							Port:      &wh.ContainerPort,
 						},
 					},
+					// It is safe to create a namespace selector even for cluster scoped CRs. A webhook
+					// is never skipped for cluster scoped CRs.
+					NamespaceSelector: getWebhookNamespaceSelector(opts.TargetNamespaces),
 				},
 			),
 		)
@@ -367,6 +374,9 @@ func BundleMutatingWebhookResourceGenerator(rv1 *bundle.RegistryV1, opts render.
 						},
 					},
 					ReinvocationPolicy: wh.ReinvocationPolicy,
+					// It is safe to create a namespace selector even for cluster scoped CRs. A webhook
+					// is never skipped for cluster scoped CRs.
+					NamespaceSelector: getWebhookNamespaceSelector(opts.TargetNamespaces),
 				},
 			),
 		)
@@ -534,4 +544,21 @@ func addCertVolumesToDeployment(dep *appsv1.Deployment, certSecretInfo render.Ce
 			}(),
 		)
 	}
+}
+
+// getWebhookNamespaceSelector returns a label selector that matches any namespace in targetNamespaces.
+// If targetNamespaces is empty, nil, or includes "" (signifying all namespaces) nil is returned.
+func getWebhookNamespaceSelector(targetNamespaces []string) *metav1.LabelSelector {
+	if len(targetNamespaces) > 0 && !slices.Contains(targetNamespaces, "") {
+		return &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Key:      labelKubernetesNamespaceMetadataName,
+					Operator: metav1.LabelSelectorOpIn,
+					Values:   targetNamespaces,
+				},
+			},
+		}
+	}
+	return nil
 }
