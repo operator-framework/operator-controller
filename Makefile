@@ -246,11 +246,18 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 $(UNIT_TEST_DIRS) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
+TEST_OPERATOR_CONTROLLERS_HOME=./testdata/images/controllers
+TEST_OPERATOR_CONTROLLERS=v1.0.0 v2.0.0
+
+.PHONY: $(TEST_OPERATOR_CONTROLLERS)
+$(TEST_OPERATOR_CONTROLLERS):
+	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(TEST_OPERATOR_CONTROLLERS_HOME)/test-operator/$@/manager ./testdata/images/bundles/test-operator/$@/cmd/main.go
+
 .PHONY: image-registry
 E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
 image-registry: export GOOS=linux
 image-registry: export GOARCH=amd64
-image-registry: ## Build the testdata catalog used for e2e tests and push it to the image registry
+image-registry: $(TEST_OPERATOR_CONTROLLERS) ## Build the testdata catalog used for e2e tests and push it to the image registry
 	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
 	$(CONTAINER_RUNTIME) build -f ./testdata/Dockerfile -t $(E2E_REGISTRY_IMAGE) ./testdata
 	$(CONTAINER_RUNTIME) save $(E2E_REGISTRY_IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
