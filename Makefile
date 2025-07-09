@@ -246,6 +246,12 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 $(UNIT_TEST_DIRS) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
+
+.PHONY: test-test-operator
+test-test-operator: $(SETUP_ENVTEST) envtest-k8s-bins
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use -p path $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE))" \
+		CGO_ENABLED=1 go test -tags '$(GO_BUILD_TAGS)' -count=1 -race -short ./testdata/images/bundles/test-operator/...
+
 TEST_OPERATOR_CONTROLLERS_HOME=./testdata/images/controllers
 TEST_OPERATOR_CONTROLLERS=v1.0.0 v2.0.0
 
