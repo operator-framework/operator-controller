@@ -18,7 +18,6 @@ package controller_test
 
 import (
 	"context"
-	"github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/internal/controller"
 	"github.com/stretchr/testify/require"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -30,13 +29,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"testing"
+	"testolmv2/internal/controller"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	testolmv2 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/api/v2"
+	testolmv2 "testolmv2/api/v2"
 )
 
 var (

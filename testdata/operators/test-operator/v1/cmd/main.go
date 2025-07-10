@@ -37,8 +37,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	testolmv1 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v1/api/v1"
-	"github.com/operator-framework/operator-controller/testdata/operators/test-operator/v1/internal/controller"
+	testolmv1 "testolmv1/api/v1"
+	"testolmv1/internal/controller"
 )
 
 var (

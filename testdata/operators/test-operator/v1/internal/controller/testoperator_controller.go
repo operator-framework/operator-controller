@@ -26,7 +26,7 @@ import (
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	testolmv1 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v1/api/v1"
+	testolmv1 "testolmv1/api/v1"
 )
 
 const (

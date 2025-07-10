@@ -19,7 +19,6 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	testolmv1 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v1/api/v1"
 	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
@@ -38,9 +37,10 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	testolmv2 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/api/v2"
-	"github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/internal/controller"
-	testolmwebhook "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/internal/webhook"
+	testolmv1 "testolmv2/api/v2"
+	testolmv2 "testolmv2/api/v2"
+	"testolmv2/internal/controller"
+	testolmwebhook "testolmv2/internal/webhook"
 )
 
 var (

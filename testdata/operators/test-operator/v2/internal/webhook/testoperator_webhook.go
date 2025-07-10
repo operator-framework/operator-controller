@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	testolmv2 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/api/v2"
+	testolmv2 "testolmv2/api/v2"
 )
 
 const (

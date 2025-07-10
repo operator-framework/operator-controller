@@ -18,10 +18,10 @@ package webhook_test
 
 import (
 	"context"
-	testolmv2 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/api/v2"
-	"github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/internal/webhook"
 	"github.com/stretchr/testify/require"
 	"testing"
+	testolmv2 "testolmv2/api/v2"
+	"testolmv2/internal/webhook"
 )
 
 func Test_DefaultingWebhook(t *testing.T) {

@@ -18,7 +18,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	testolmv2 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/v2/api/v2"
+	testolmv2 "testolmv2/api/v2"
 )
 
 // ConvertTo converts this TestOperator (v1) to the Hub version (v2).
