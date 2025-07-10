@@ -1744,6 +1744,7 @@ spec:
         - --feature-gates=WebhookProviderCertManager=true
         - --feature-gates=SingleOwnNamespaceInstallSupport=true
         - --feature-gates=PreflightPermissions=true
+        - --feature-gates=HelmChartSupport=true
         - --catalogd-cas-dir=/var/certs
         - --pull-cas-dir=/var/certs
         - --tls-cert=/var/certs/tls.cert

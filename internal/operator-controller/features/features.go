@@ -16,6 +16,7 @@ const (
 	SyntheticPermissions              featuregate.Feature = "SyntheticPermissions"
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
+	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -59,6 +60,14 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// mutating, and/or conversion webhooks with Openshift Service CA
 	// as the certificate provider.
 	WebhookProviderOpenshiftServiceCA: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// HelmChartSupport enables support for installing,
+	// updating and uninstalling Helm Charts via Cluster Extensions.
+	HelmChartSupport: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
