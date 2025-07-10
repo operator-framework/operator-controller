@@ -18,7 +18,6 @@ package controller_test
 
 import (
 	"context"
-	"github.com/operator-framework/operator-controller/testdata/operators/test-operator/v1/internal/controller"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,8 +33,8 @@ import (
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"testing"
-
-	testolmv1 "github.com/operator-framework/operator-controller/testdata/operators/test-operator/api/v1"
+	testolmv1 "testolmv1/api/v1"
+	"testolmv1/internal/controller"
 )
 
 func Test_Reconcile(t *testing.T) {

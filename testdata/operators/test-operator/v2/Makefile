@@ -29,7 +29,7 @@ test-unit: $(SETUP_ENVTEST)
 
 .PHONY: manifests
 manifests: $(CONTROLLER_GEN)
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) crd paths="../api/v1/..." paths="../api/v2/..." output:dir=dist/chart/crds
+	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) crd paths="./api/..." output:dir=dist/chart/crds
     $(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=test-operator-manager-role paths="./..." output:dir=dist/chart/templates
 
 .PHONY: bundle
