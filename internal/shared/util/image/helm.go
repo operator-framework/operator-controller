@@ -103,28 +103,10 @@ func inspectChart(data []byte, metadata *chart.Metadata) (chartInspectionResult,
 	return report, nil
 }
 
-func IsBundleSourceChart(bundleFS fs.FS, metadata *chart.Metadata) (bool, error) {
-	var chartPath string
-	files, _ := fs.ReadDir(bundleFS, ".")
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".tgz") ||
-			strings.HasSuffix(file.Name(), ".tar.gz") {
-			chartPath = file.Name()
-			break
-		}
-	}
-
-	chartData, err := fs.ReadFile(bundleFS, chartPath)
-	if err != nil {
-		return false, err
-	}
-
-	result, err := inspectChart(chartData, metadata)
-	if err != nil {
-		return false, fmt.Errorf("reading %s from fs: %w", chartPath, err)
-	}
-
-	return (result.templatesExist && result.chartfileExists), nil
+// IsBundleSourceChart is a stand-in method until metadata can accompany the bundle filesystem
+// and provide a bundle type. Any bundle file system with a tar archive will be considered a helm bundle.
+func IsBundleSourceChart(bundleFS fs.FS) bool {
+	return findChartArchive(bundleFS) != ""
 }
 
 type ChartOption func(*chart.Chart)
@@ -139,8 +121,12 @@ func WithInstallNamespace(namespace string) ChartOption {
 	}
 }
 
-func LoadChartFSWithOptions(bundleFS fs.FS, filename string, options ...ChartOption) (*chart.Chart, error) {
-	ch, err := loadChartFS(bundleFS, filename)
+func LoadChartFSWithOptions(bundleFS fs.FS, options ...ChartOption) (*chart.Chart, error) {
+	chartPath := findChartArchive(bundleFS)
+	if chartPath == "" {
+		return nil, errors.New("unsupported filesystem: no chart archive found")
+	}
+	ch, err := loadChartFS(bundleFS, chartPath)
 	if err != nil {
 		return nil, err
 	}
@@ -167,9 +153,22 @@ func loadChartFS(bundleFS fs.FS, filename string) (*chart.Chart, error) {
 		return nil, fmt.Errorf("chart file name was not provided")
 	}
 
-	tarball, err := fs.ReadFile(bundleFS, filename)
+	f, err := bundleFS.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("reading chart %s; %+v", filename, err)
 	}
-	return loader.LoadArchive(bytes.NewBuffer(tarball))
+	return loader.LoadArchive(f)
+}
+
+func findChartArchive(bundleFS fs.FS) string {
+	var chartPath string
+	files, _ := fs.ReadDir(bundleFS, ".")
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".tgz") ||
+			strings.HasSuffix(file.Name(), ".tar.gz") {
+			chartPath = file.Name()
+			break
+		}
+	}
+	return chartPath
 }

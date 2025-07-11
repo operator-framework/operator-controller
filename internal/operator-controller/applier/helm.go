@@ -26,11 +26,8 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
-	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const (
@@ -56,15 +53,19 @@ type Preflight interface {
 	Upgrade(context.Context, *release.Release) error
 }
 
-type BundleToHelmChartConverter interface {
-	ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error)
+// HelmChartLoader loads helm charts from bundle filesystems
+type HelmChartLoader interface {
+	// Load loads a Helm Chart from the filesytem and applies the Install- and WatchNamespace values (if appropriate).
+	// If the returned chart is nil and there is no error, this indicates that the underlying filesystem is not a
+	// Helm bundle. If there is an error, this is indeterminate.
+	Load(bundleFS fs.FS, installNamespace string, watchNamespace string) (*chart.Chart, error)
 }
 
 type Helm struct {
-	ActionClientGetter         helmclient.ActionClientGetter
-	Preflights                 []Preflight
-	PreAuthorizer              authorization.PreAuthorizer
-	BundleToHelmChartConverter BundleToHelmChartConverter
+	ActionClientGetter helmclient.ActionClientGetter
+	Preflights         []Preflight
+	PreAuthorizer      authorization.PreAuthorizer
+	HelmChartLoader    HelmChartLoader
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -122,7 +123,7 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
-	chrt, err := h.buildHelmChart(contentFS, ext)
+	chrt, err := h.loadHelmChart(contentFS, ext)
 	if err != nil {
 		return nil, "", err
 	}
@@ -203,26 +204,15 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	return relObjects, state, nil
 }
 
-func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
-	if h.BundleToHelmChartConverter == nil {
-		return nil, errors.New("BundleToHelmChartConverter is nil")
+func (h *Helm) loadHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
+	if h.HelmChartLoader == nil {
+		return nil, fmt.Errorf("HelmChartLoader is not set")
 	}
 	watchNamespace, err := GetWatchNamespace(ext)
 	if err != nil {
 		return nil, err
 	}
-	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
-		meta := new(chart.Metadata)
-		if ok, _ := imageutil.IsBundleSourceChart(bundleFS, meta); ok {
-			return imageutil.LoadChartFSWithOptions(
-				bundleFS,
-				fmt.Sprintf("%s-%s.tgz", meta.Name, meta.Version),
-				imageutil.WithInstallNamespace(ext.Spec.Namespace),
-			)
-		}
-	}
-
-	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace)
+	return h.HelmChartLoader.Load(bundleFS, ext.Spec.Namespace, watchNamespace)
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {
