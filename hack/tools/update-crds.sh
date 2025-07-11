@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+set -e
+
 # This uses a custom CRD generator to create "standard" and "experimental" CRDs
 
 # The names of the generated CRDs
