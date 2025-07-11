@@ -103,6 +103,16 @@ rules:
     - "bind"
     - "escalate"
   - apiGroups:
+    - networking.k8s.io
+    resources:
+    - networkpolicies
+    verbs:
+    - get
+    - list
+    - create
+    - update
+    - delete
+  - apiGroups:
     - "olm.operatorframework.io"
     resources:
     - "clusterextensions/finalizers"
