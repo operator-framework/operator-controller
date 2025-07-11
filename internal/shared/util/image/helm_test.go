@@ -327,8 +327,7 @@ func TestIsBundleSourceChart(t *testing.T) {
 				},
 			},
 			want: want{
-				value:  false,
-				errStr: "reading testchart-0.1.0.tgz from fs: loading chart archive: Chart.yaml file is missing",
+				value: false,
 			},
 		},
 		{
@@ -343,8 +342,7 @@ func TestIsBundleSourceChart(t *testing.T) {
 				},
 			},
 			want: want{
-				value:  false,
-				errStr: "reading testchart-0.1.0.tgz from fs: loading chart archive: Chart.yaml file is missing",
+				value: false,
 			},
 		},
 	}
@@ -352,7 +350,7 @@ func TestIsBundleSourceChart(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			chartFS, _ := createTempFS(t, mockHelmChartTgz(t, tc.args.files))
-			got, err := IsBundleSourceChart(chartFS, tc.args.meta)
+			got, err := IsBundleSourceChart(chartFS)
 			if tc.want.errStr != "" {
 				require.Error(t, err, "chart validation error required")
 				require.EqualError(t, err, tc.want.errStr, "chart error")
@@ -466,8 +464,7 @@ func Test_loadChartFS(t *testing.T) {
 
 func TestLoadChartFSWithOptions(t *testing.T) {
 	type args struct {
-		filename string
-		files    []fileContent
+		files []fileContent
 	}
 	type want struct {
 		name    string
@@ -481,31 +478,18 @@ func TestLoadChartFSWithOptions(t *testing.T) {
 		expect func(*chart.Chart, want, error)
 	}{
 		{
-			name: "empty filename is provided",
-			args: args{
-				filename: "",
-				files: []fileContent{
-					{
-						name:    "testchart/Chart.yaml",
-						content: []byte("apiVersion: v2\nname: testchart\nversion: 0.1.0"),
-					},
-					{
-						name:    "testchart/templates/deployment.yaml",
-						content: []byte("kind: Deployment\napiVersion: apps/v1"),
-					},
-				},
-			},
+			name: "no chart archive in filesystem",
+			args: args{},
 			want: want{
-				errMsg: "chart file name was not provided",
+				errMsg: "no chart archive found",
 			},
 			expect: func(chart *chart.Chart, want want, err error) {
-				require.Error(t, err, want.errMsg)
+				require.Contains(t, err.Error(), want.errMsg)
 			},
 		},
 		{
 			name: "load sample chart",
 			args: args{
-				filename: "testchart-0.1.0.tgz",
 				files: []fileContent{
 					{
 						name:    "testchart/Chart.yaml",
@@ -527,35 +511,12 @@ func TestLoadChartFSWithOptions(t *testing.T) {
 				assert.Equal(t, want.version, chart.Metadata.Version, "chart version")
 			},
 		},
-		{
-			name: "load nonexistent chart",
-			args: args{
-				filename: "nonexistent-chart-0.1.0.tgz",
-				files: []fileContent{
-					{
-						name:    "testchart/Chart.yaml",
-						content: []byte("apiVersion: v2\nname: testchart\nversion: 0.1.0"),
-					},
-					{
-						name:    "testchart/templates/deployment.yaml",
-						content: []byte("kind: Deployment\napiVersion: apps/v1"),
-					},
-				},
-			},
-			want: want{
-				errMsg: "reading chart nonexistent-chart-0.1.0.tgz; open nonexistent-chart-0.1.0.tgz: no such file or directory",
-			},
-			expect: func(chart *chart.Chart, want want, err error) {
-				require.Error(t, err, want.errMsg)
-				assert.Nil(t, chart)
-			},
-		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			chartFS, _ := createTempFS(t, mockHelmChartTgz(t, tc.args.files))
-			got, err := LoadChartFSWithOptions(chartFS, tc.args.filename, WithInstallNamespace("metrics-server-system"))
+			got, err := LoadChartFSWithOptions(chartFS, WithInstallNamespace("metrics-server-system"))
 			require.NotNil(t, tc.expect)
 			tc.expect(got, tc.want, err)
 		})
@@ -636,7 +597,9 @@ type fileContent struct {
 }
 
 func mockHelmChartTgz(t *testing.T, contents []fileContent) []byte {
-	require.NotEmpty(t, contents, "chart content required")
+	if len(contents) == 0 {
+		return nil
+	}
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 
@@ -662,7 +625,6 @@ func mockHelmChartTgz(t *testing.T, contents []fileContent) []byte {
 }
 
 func createTempFS(t *testing.T, data []byte) (fs.FS, error) {
-	require.NotEmpty(t, data, "chart data")
 	tmpDir, _ := os.MkdirTemp(t.TempDir(), "bundlefs-")
 	if len(data) == 0 {
 		return os.DirFS(tmpDir), nil
