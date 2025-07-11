@@ -6,6 +6,7 @@ metadata:
     app.kubernetes.io/part-of: olm
     app.kubernetes.io/name: catalogd
   name: leader-election-role
+  namespace: olmv1-system
 rules:
 - apiGroups:
   - ""

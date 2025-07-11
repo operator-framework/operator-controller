@@ -5,7 +5,7 @@ metadata:
       app.kubernetes.io/part-of: olm
       app.kubernetes.io/name: catalogd
   name: service
-  namespace: system
+  namespace: olmv1-system
 spec:
   selector:
     control-plane: catalogd-controller-manager

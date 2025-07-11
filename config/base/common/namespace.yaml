@@ -5,4 +5,4 @@ metadata:
     app.kubernetes.io/part-of: olm
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
-  name: system
+  name: olmv1-system

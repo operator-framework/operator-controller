@@ -1,0 +1,20 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: operator-controller-e2e-registry
+  namespace: operator-controller-e2e
+spec:
+  secretName: operator-controller-e2e-registry
+  isCA: true
+  dnsNames:
+    - docker-registry.operator-controller-e2e.svc
+    - docker-registry.operator-controller-e2e.svc.cluster.local
+    - docker-registry-controller-manager-metrics-service.operator-controller-e2e.svc
+    - docker-registry-controller-manager-metrics-service.operator-controller-e2e.svc.cluster.local
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: olmv1-ca
+    kind: ClusterIssuer
+    group: cert-manager.io
