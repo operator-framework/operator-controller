@@ -65,8 +65,7 @@ func (in *CatalogFilter) DeepCopyInto(out *CatalogFilter) {
 	}
 	if in.Selector != nil {
 		in, out := &in.Selector, &out.Selector
-		*out = new(metav1.LabelSelector)
-		(*in).DeepCopyInto(*out)
+		*out = (*in).DeepCopy()
 	}
 }
 
