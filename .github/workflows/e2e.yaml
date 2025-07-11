@@ -35,6 +35,21 @@ jobs:
       - name: Run e2e tests
         run: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 
+      - name: alerts-check
+        # Grab all current alerts, filtering out pending, and print the GH actions warning string
+        # containing the alert name and description.
+        #
+        # NOTE: Leaving this as annotating-only instead of failing the run until we have some more 
+        # finely-tuned alerts.
+        run: |
+          if [[ -s /tmp/artifacts/alerts.out ]]; then \
+            jq -r 'if .state=="firing" then 
+              "::error title=Prometheus Alert Firing::\(.labels.alertname): \(.annotations.description)" 
+            elif .state=="pending" then
+              "::warning title=Prometheus Alert Pending::\(.labels.alertname): \(.annotations.description)"
+            end' /tmp/artifacts/alerts.out
+          fi
+
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

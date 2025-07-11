@@ -277,19 +277,23 @@ test-experimental-e2e: run image-registry prometheus experimental-e2e e2e e2e-me
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
 prometheus: PROMETHEUS_VERSION := v0.83.0
+prometheus: TMPDIR := $(shell mktemp -d)
 prometheus: #EXHELP Deploy Prometheus into specified namespace
-	./hack/test/setup-monitoring.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE)
+	trap 'echo "Cleaning up $(TMPDIR)"; rm -rf "$(TMPDIR)"' EXIT; \
+	curl -s "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/refs/tags/$(PROMETHEUS_VERSION)/kustomization.yaml" > "$(TMPDIR)/kustomization.yaml"; \
+	curl -s "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/refs/tags/$(PROMETHEUS_VERSION)/bundle.yaml" > "$(TMPDIR)/bundle.yaml"; \
+	(cd $(TMPDIR) && $(KUSTOMIZE) edit set namespace $(PROMETHEUS_NAMESPACE)) && kubectl create -k "$(TMPDIR)"
+	kubectl wait --for=condition=Ready pods -n $(PROMETHEUS_NAMESPACE) -l app.kubernetes.io/name=prometheus-operator
+	$(KUSTOMIZE) build config/prometheus | CATALOGD_SERVICE_CERT=$(shell kubectl get certificate -n olmv1-system catalogd-service-cert -o jsonpath={.spec.secretName}) envsubst '$$CATALOGD_SERVICE_CERT' | kubectl apply -f -
+	kubectl wait --for=condition=Ready pods -n $(PROMETHEUS_NAMESPACE) -l app.kubernetes.io/name=prometheus-operator --timeout=60s
+	kubectl wait --for=create pods -n $(PROMETHEUS_NAMESPACE) prometheus-prometheus-0 --timeout=60s
+	kubectl wait --for=condition=Ready pods -n $(PROMETHEUS_NAMESPACE) prometheus-prometheus-0 --timeout=120s
 
-# The metrics.out file contains raw json data of the metrics collected during a test run.
-# In an upcoming PR, this query will be replaced with one that checks for alerts from
-# prometheus. Prometheus will gather metrics we currently query for over the test run, 
-# and provide alerts from the metrics based on the rules that we set.
+# The output alerts.out file contains any alerts, pending or firing, collected during a test run in json format. 
 .PHONY: e2e-metrics
-e2e-metrics: #EXHELP Request metrics from prometheus; place in ARTIFACT_PATH if set
-	curl -X POST \
-	-H "Content-Type: application/x-www-form-urlencoded" \
-	--data 'query={pod=~"operator-controller-controller-manager-.*|catalogd-controller-manager-.*"}' \
-	http://localhost:30900/api/v1/query > $(if $(ARTIFACT_PATH),$(ARTIFACT_PATH),.)/metrics.out
+e2e-metrics: ALERTS_FILE_PATH := $(if $(ARTIFACT_PATH),$(ARTIFACT_PATH),.)/alerts.out
+e2e-metrics: #EXHELP Request metrics from prometheus; select only actively firing alerts; place in ARTIFACT_PATH if set
+	curl -X GET http://localhost:30900/api/v1/alerts | jq 'if (.data.alerts | length) > 0 then .data.alerts.[] else empty end' > $(ALERTS_FILE_PATH)
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e

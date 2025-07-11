@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus
+  namespace: system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  policyTypes:
+    - Egress
+    - Ingress
+  egress:
+    - {}  # Allows all egress traffic for metrics requests
+  ingress:
+    - {}  # Allows us to query prometheus
