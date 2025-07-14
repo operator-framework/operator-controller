@@ -8,7 +8,6 @@ resources:
 components:
 - ../common
 # EXPERIMENTAL FEATURES ARE LISTED HERE
-- ../../features/synthetic-user-permissions
 - ../../features/webhook-provider-certmanager
 - ../../features/single-own-namespace
 - ../../features/preflight-permissions
