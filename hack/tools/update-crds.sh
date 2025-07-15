@@ -38,7 +38,11 @@ done
 # Copy the generated files
 for b in ${!modules[@]}; do
     for c in ${channels[@]}; do
-        cp ${CRD_TMP}/${c}/${crds[${b}]} config/base/${modules[${b}]}/crd/${c}
+        # CRDs for kinds not listed in the standardKinds map in crd-generator/main.go
+        # will not be generated for the standard channel - so we check the expected generated
+        # file exists before copying it.
+        FILE="${CRD_TMP}/${c}/${crds[${b}]}"
+        [[ -e "${FILE}" ]] && cp "${FILE}" config/base/${modules[${b}]}/crd/${c}
     done
 done
 
