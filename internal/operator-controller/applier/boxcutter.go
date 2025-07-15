@@ -1,6 +1,7 @@
 package applier
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -9,7 +10,6 @@ import (
 	"io/fs"
 	"maps"
 	"slices"
-	"sort"
 
 	"github.com/davecgh/go-spew/spew"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,41 +26,22 @@ import (
 )
 
 const (
-	revisionHashAnnotation = "olm.operatorframework.io/hash"
-	revisionHistoryLimit   = 5
+	RevisionHashAnnotation = "olm.operatorframework.io/hash"
+	// revisionHistoryLimit   = 5
 )
 
-type Boxcutter struct {
-	Client         client.Client
+type ClusterExtensionRevisionGenerator interface {
+	GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error)
+}
+
+type SimpleRevisionGenerator struct {
 	Scheme         *runtime.Scheme
-	BundleRenderer render.BundleRenderer
+	BundleRenderer BundleRenderer
 }
 
-func (bc *Boxcutter) Apply(
-	ctx context.Context, contentFS fs.FS,
-	ext *ocv1.ClusterExtension,
-	objectLabels, storageLabels map[string]string,
-) ([]client.Object, string, error) {
-	objs, err := bc.apply(ctx, contentFS, ext, objectLabels, storageLabels)
-	return objs, "", err
-}
-
-func (bc *Boxcutter) apply(
-	ctx context.Context, contentFS fs.FS,
-	ext *ocv1.ClusterExtension,
-	objectLabels, _ map[string]string,
-) ([]client.Object, error) {
-	reg, err := source.FromFS(contentFS).GetBundle()
-	if err != nil {
-		return nil, err
-	}
-
-	watchNamespace, err := GetWatchNamespace(ext)
-	if err != nil {
-		return nil, err
-	}
-
-	plain, err := bc.BundleRenderer.Render(reg, ext.Spec.Namespace, render.WithTargetNamespaces(watchNamespace))
+func (r *SimpleRevisionGenerator) GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+	// extract plain manifests
+	plain, err := r.BundleRenderer.Render(bundleFS, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -68,11 +49,16 @@ func (bc *Boxcutter) apply(
 	// objectLabels
 	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
 	for _, obj := range plain {
-		labels := maps.Clone(obj.GetLabels())
-		maps.Copy(labels, objectLabels)
-		obj.SetLabels(labels)
+		if len(obj.GetLabels()) > 0 {
+			labels := maps.Clone(obj.GetLabels())
+			if labels == nil {
+				labels = map[string]string{}
+			}
+			maps.Copy(labels, objectLabels)
+			obj.SetLabels(labels)
+		}
 
-		gvk, err := apiutil.GVKForObject(obj, bc.Scheme)
+		gvk, err := apiutil.GVKForObject(obj, r.Scheme)
 		if err != nil {
 			return nil, err
 		}
@@ -89,18 +75,8 @@ func (bc *Boxcutter) apply(
 		})
 	}
 
-	// List all existing revisions
-	existingRevisionList := &ocv1.ClusterExtensionRevisionList{}
-	if err := bc.Client.List(ctx, existingRevisionList, client.MatchingLabels{
-		controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
-	}); err != nil {
-		return nil, fmt.Errorf("listing revisions: %w", err)
-	}
-	sort.Sort(revisionAscending(existingRevisionList.Items))
-	existingRevisions := existingRevisionList.Items
-
 	// Build desired revision
-	desiredRevision := &ocv1.ClusterExtensionRevision{
+	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{},
 			Labels: map[string]string{
@@ -108,7 +84,6 @@ func (bc *Boxcutter) apply(
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
-			Revision: 1,
 			Phases: []ocv1.ClusterExtensionRevisionPhase{
 				{
 					Name:    "everything",
@@ -116,36 +91,61 @@ func (bc *Boxcutter) apply(
 				},
 			},
 		},
+	}, nil
+}
+
+type Boxcutter struct {
+	Client            client.Client
+	Scheme            *runtime.Scheme
+	RevisionGenerator ClusterExtensionRevisionGenerator
+}
+
+func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, storageLabels map[string]string) ([]client.Object, string, error) {
+	objs, err := bc.apply(ctx, contentFS, ext, objectLabels, storageLabels)
+	return objs, "", err
+}
+
+func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, _ map[string]string) ([]client.Object, error) {
+	// Generate desired revision
+	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(contentFS, ext, objectLabels)
+	if err != nil {
+		return nil, err
+	}
+
+	// List all existing revisions
+	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
+	if err != nil {
+		return nil, err
 	}
 	desiredHash := computeSHA256Hash(desiredRevision.Spec.Phases)
 
 	// Sort into current and previous revisions.
 	var (
 		currentRevision *ocv1.ClusterExtensionRevision
-		prevRevisions   []ocv1.ClusterExtensionRevision
+		// prevRevisions   []ocv1.ClusterExtensionRevision
 	)
 	if len(existingRevisions) > 0 {
 		maybeCurrentRevision := existingRevisions[len(existingRevisions)-1]
-
 		annotations := maybeCurrentRevision.GetAnnotations()
 		if annotations != nil {
-			if hash, ok := annotations[revisionHashAnnotation]; ok &&
-				hash == desiredHash {
+			if revisionHash, ok := annotations[RevisionHashAnnotation]; ok && revisionHash == desiredHash {
 				currentRevision = &maybeCurrentRevision
-				prevRevisions = existingRevisions[0 : len(existingRevisions)-1] // previous is everything excluding current
+				//prevRevisions = existingRevisions[0 : len(existingRevisions)-1] // previous is everything excluding current
 			}
 		}
 	}
 
 	if currentRevision == nil {
 		// all Revisions are outdated => create a new one.
-		prevRevisions = existingRevisions
-		revisionNumber := latestRevisionNumber(prevRevisions)
-		revisionNumber++
+		prevRevisions := existingRevisions
+		revisionNumber := latestRevisionNumber(prevRevisions) + 1
 
 		newRevision := desiredRevision
 		newRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
-		newRevision.Annotations[revisionHashAnnotation] = desiredHash
+		if newRevision.GetAnnotations() == nil {
+			newRevision.Annotations = map[string]string{}
+		}
+		newRevision.Annotations[RevisionHashAnnotation] = desiredHash
 		newRevision.Spec.Revision = revisionNumber
 		for _, prevRevision := range prevRevisions {
 			newRevision.Spec.Previous = append(newRevision.Spec.Previous, ocv1.ClusterExtensionRevisionPrevious{
@@ -163,23 +163,44 @@ func (bc *Boxcutter) apply(
 	}
 
 	// Delete archived previous revisions over revisionHistory limit
-	numToDelete := len(prevRevisions) - revisionHistoryLimit
-	slices.Reverse(prevRevisions)
-
-	for _, prevRev := range prevRevisions {
-		if numToDelete <= 0 {
-			break
-		}
-
-		if err := client.IgnoreNotFound(bc.Client.Delete(ctx, &prevRev)); err != nil {
-			return nil, fmt.Errorf("failed to delete revision (history limit): %w", err)
-		}
-		numToDelete--
-	}
+	//numToDelete := len(prevRevisions) - revisionHistoryLimit
+	//slices.Reverse(prevRevisions)
+	//
+	//for _, prevRev := range prevRevisions {
+	//	if numToDelete <= 0 {
+	//		break
+	//	}
+	//
+	//	if err := client.IgnoreNotFound(bc.Client.Delete(ctx, &prevRev)); err != nil {
+	//		return nil, fmt.Errorf("failed to delete revision (history limit): %w", err)
+	//	}
+	//	numToDelete--
+	//}
 
 	// TODO: Read status from revision.
 
+	// Collect objects
+	var plain []client.Object
+	for _, phase := range desiredRevision.Spec.Phases {
+		for _, phaseObject := range phase.Objects {
+			plain = append(plain, &phaseObject.Object)
+		}
+	}
 	return plain, nil
+}
+
+// getExistingRevisions returns the list of ClusterExtensionRevisions for a ClusterExtension with name extName in revision order (oldest to newest)
+func (bc *Boxcutter) getExistingRevisions(ctx context.Context, extName string) ([]ocv1.ClusterExtensionRevision, error) {
+	existingRevisionList := &ocv1.ClusterExtensionRevisionList{}
+	if err := bc.Client.List(ctx, existingRevisionList, client.MatchingLabels{
+		controllers.ClusterExtensionRevisionOwnerLabel: extName,
+	}); err != nil {
+		return nil, fmt.Errorf("listing revisions: %w", err)
+	}
+	slices.SortFunc(existingRevisionList.Items, func(a, b ocv1.ClusterExtensionRevision) int {
+		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
+	})
+	return existingRevisionList.Items, nil
 }
 
 // computeSHA256Hash returns a sha236 hash value calculated from object.
@@ -206,21 +227,29 @@ func deepHashObject(hasher hash.Hash, objectToWrite any) {
 	}
 }
 
-type revisionAscending []ocv1.ClusterExtensionRevision
-
-func (a revisionAscending) Len() int      { return len(a) }
-func (a revisionAscending) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a revisionAscending) Less(i, j int) bool {
-	iObj := a[i]
-	jObj := a[j]
-
-	return iObj.Spec.Revision < jObj.Spec.Revision
-}
-
 func latestRevisionNumber(prevRevisions []ocv1.ClusterExtensionRevision) int64 {
 	if len(prevRevisions) == 0 {
 		return 0
 	}
-
 	return prevRevisions[len(prevRevisions)-1].Spec.Revision
+}
+
+type BundleRenderer interface {
+	Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
+}
+
+type RegistryV1BundleRenderer struct {
+	BundleRenderer render.BundleRenderer
+}
+
+func (r *RegistryV1BundleRenderer) Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
+	reg, err := source.FromFS(bundleFS).GetBundle()
+	if err != nil {
+		return nil, err
+	}
+	watchNamespace, err := GetWatchNamespace(ext)
+	if err != nil {
+		return nil, err
+	}
+	return r.BundleRenderer.Render(reg, ext.Spec.Namespace, render.WithTargetNamespaces(watchNamespace))
 }
