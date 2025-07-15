@@ -1,3 +1,5 @@
+//go:build experimental
+
 package controllers
 
 import (
