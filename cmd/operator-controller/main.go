@@ -523,15 +523,17 @@ func run() error {
 		return err
 	}
 
-	if err = (&controllers.ClusterExtensionRevisionReconciler{
-		Client:          cl,
-		AccessManager:   accessManager,
-		Scheme:          mgr.GetScheme(),
-		RestMapper:      mgr.GetRESTMapper(),
-		DiscoveryClient: discoveryClient,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
-		return err
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		if err = (&controllers.ClusterExtensionRevisionReconciler{
+			Client:          cl,
+			AccessManager:   accessManager,
+			Scheme:          mgr.GetScheme(),
+			RestMapper:      mgr.GetRESTMapper(),
+			DiscoveryClient: discoveryClient,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
+			return err
+		}
 	}
 
 	if err = (&controllers.ClusterCatalogReconciler{
