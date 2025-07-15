@@ -27,33 +27,6 @@ rules:
 - apiGroups:
   - olm.operatorframework.io
   resources:
-  - clusterextensionrevisions
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clusterextensionrevisions/finalizers
-  - clusterextensions/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clusterextensionrevisions/status
-  - clusterextensions/status
-  verbs:
-  - patch
-  - update
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
   - clusterextensions
   verbs:
   - get
@@ -61,6 +34,19 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - clusterextensions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - clusterextensions/status
+  verbs:
+  - patch
+  - update
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:

@@ -1128,36 +1128,6 @@ kind: Role
 metadata:
   annotations:
     olm.operatorframework.io/feature-set: standard
-  name: manager-role
-  namespace: olmv1-system
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts
-  verbs:
-  - get
-  - list
-  - watch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  annotations:
-    olm.operatorframework.io/feature-set: standard
   name: operator-controller-leader-election-role
   namespace: olmv1-system
 rules:
@@ -1300,67 +1270,6 @@ kind: ClusterRole
 metadata:
   annotations:
     olm.operatorframework.io/feature-set: standard
-  name: manager-role
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts/token
-  verbs:
-  - create
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - get
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clustercatalogs
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clusterextensions
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clusterextensions/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clusterextensions/status
-  verbs:
-  - patch
-  - update
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterrolebindings
-  - clusterroles
-  - rolebindings
-  - roles
-  verbs:
-  - list
-  - watch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  annotations:
-    olm.operatorframework.io/feature-set: standard
   name: operator-controller-clusterextension-editor-role
 rules:
 - apiGroups:
@@ -1422,33 +1331,6 @@ rules:
 - apiGroups:
   - olm.operatorframework.io
   resources:
-  - clusterextensionrevisions
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clusterextensionrevisions/finalizers
-  - clusterextensions/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clusterextensionrevisions/status
-  - clusterextensions/status
-  verbs:
-  - patch
-  - update
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
   - clusterextensions
   verbs:
   - get
@@ -1456,6 +1338,19 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - clusterextensions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - clusterextensions/status
+  verbs:
+  - patch
+  - update
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
