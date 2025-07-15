@@ -49,6 +49,8 @@ require (
 	sigs.k8s.io/yaml v1.5.0
 )
 
+replace pkg.package-operator.run/boxcutter => github.com/perdasilva/boxcutter v0.0.0-20250715101157-18ea858f54bd
+
 require (
 	k8s.io/component-helpers v0.33.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
@@ -179,7 +181,7 @@ require (
 	github.com/proglottis/gpgme v0.1.4 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.65.0 // indirect
-	github.com/prometheus/procfs v0.16.1 // indirect
+	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rubenv/sql-migrate v1.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
