@@ -17,6 +17,8 @@ import (
 	"golang.org/x/sync/singleflight"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	"github.com/graphql-go/graphql"
+	gql "github.com/operator-framework/operator-controller/internal/catalogd/graphql"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 
@@ -193,9 +195,16 @@ func (s *LocalDirV1) StorageServerHandler() http.Handler {
 	if s.EnableMetasHandler {
 		mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "metas").Path, s.handleV1Metas)
 	}
+	mux.HandleFunc(s.RootURL.JoinPath("{catalog}", "api", "v1", "graphql").Path, s.handleV1GraphQL)
+
 	allowedMethodsHandler := func(next http.Handler, allowedMethods ...string) http.Handler {
 		allowedMethodSet := sets.New[string](allowedMethods...)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Allow POST requests for GraphQL endpoint
+			if r.URL.Path != "" && r.URL.Path[len(r.URL.Path)-7:] == "graphql" && r.Method == http.MethodPost {
+				next.ServeHTTP(w, r)
+				return
+			}
 			if !allowedMethodSet.Has(r.Method) {
 				http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				return
@@ -270,6 +279,59 @@ func (s *LocalDirV1) handleV1Metas(w http.ResponseWriter, r *http.Request) {
 	serveJSONLines(w, r, indexReader)
 }
 
+func (s *LocalDirV1) handleV1GraphQL(w http.ResponseWriter, r *http.Request) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	catalog := r.PathValue("catalog")
+	catalogFile, _, err := s.catalogData(catalog)
+	if err != nil {
+		httpError(w, err)
+		return
+	}
+	defer catalogFile.Close()
+
+	// Parse GraphQL query from request body
+	var params struct {
+		Query string `json:"query"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Create catalog filesystem from the stored data
+	catalogFS, err := s.createCatalogFS(catalog)
+	if err != nil {
+		httpError(w, err)
+		return
+	}
+
+	// Build dynamic GraphQL schema for this catalog
+	dynamicSchema, err := s.buildCatalogGraphQLSchema(catalogFS)
+	if err != nil {
+		httpError(w, err)
+		return
+	}
+
+	// Execute GraphQL query
+	result := graphql.Do(graphql.Params{
+		Schema:        dynamicSchema.Schema,
+		RequestString: params.Query,
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		httpError(w, err)
+		return
+	}
+}
+
 func (s *LocalDirV1) catalogData(catalog string) (*os.File, os.FileInfo, error) {
 	catalogFile, err := os.Open(catalogFilePath(s.catalogDir(catalog)))
 	if err != nil {
@@ -328,4 +390,51 @@ func (s *LocalDirV1) getIndex(catalog string) (*index, error) {
 		return nil, err
 	}
 	return idx.(*index), nil
+}
+
+// createCatalogFS creates a filesystem interface for the catalog data
+func (s *LocalDirV1) createCatalogFS(catalog string) (fs.FS, error) {
+	catalogDir := s.catalogDir(catalog)
+	return os.DirFS(catalogDir), nil
+}
+
+// buildCatalogGraphQLSchema builds a dynamic GraphQL schema for the given catalog
+func (s *LocalDirV1) buildCatalogGraphQLSchema(catalogFS fs.FS) (*gql.DynamicSchema, error) {
+	var metas []*declcfg.Meta
+
+	// Collect all metas from the catalog filesystem
+	err := declcfg.WalkMetasFS(context.Background(), catalogFS, func(path string, meta *declcfg.Meta, err error) error {
+		if err != nil {
+			return err
+		}
+		if meta != nil {
+			metas = append(metas, meta)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error walking catalog metas: %w", err)
+	}
+
+	// Discover schema from collected metas
+	catalogSchema, err := gql.DiscoverSchemaFromMetas(metas)
+	if err != nil {
+		return nil, fmt.Errorf("error discovering schema: %w", err)
+	}
+
+	// Organize metas by schema for resolvers
+	metasBySchema := make(map[string][]*declcfg.Meta)
+	for _, meta := range metas {
+		if meta.Schema != "" {
+			metasBySchema[meta.Schema] = append(metasBySchema[meta.Schema], meta)
+		}
+	}
+
+	// Build dynamic GraphQL schema
+	dynamicSchema, err := gql.BuildDynamicGraphQLSchema(catalogSchema, metasBySchema)
+	if err != nil {
+		return nil, fmt.Errorf("error building GraphQL schema: %w", err)
+	}
+
+	return dynamicSchema, nil
 }
