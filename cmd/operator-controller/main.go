@@ -22,6 +22,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
+	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -410,50 +417,47 @@ func run() error {
 		},
 	}
 
-	// aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
-	// if err != nil {
-	// 	setupLog.Error(err, "unable to create apiextensions client")
-	// 	return err
-	// }
-
-	// preflights := []applier.Preflight{
-	// 	crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
-	// }
-
-	// // determine if PreAuthorizer should be enabled based on feature gate
-	// var preAuth authorization.PreAuthorizer
-	// if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-	// 	preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
-	// }
-
-	boxcutterApplier := &applier.Boxcutter{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		setupLog.Error(err, "unable to create apiextensions client")
+		return err
 	}
 
-	// determine if a certificate provider should be set in the bundle renderer and feature support for the provider
-	// based on the feature flag
-	// var certProvider render.CertificateProvider
-	// var isWebhookSupportEnabled bool
-	// if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
-	// 	certProvider = certproviders.CertManagerCertificateProvider{}
-	// 	isWebhookSupportEnabled = true
-	// } else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
-	// 	certProvider = certproviders.OpenshiftServiceCaCertificateProvider{}
-	// 	isWebhookSupportEnabled = true
-	// }
+	preflights := []applier.Preflight{
+		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
+	}
 
-	// now initialize the helmApplier, assigning the potentially nil preAuth
-	// helmApplier := &applier.Helm{
-	// 	ActionClientGetter: acg,
-	// 	Preflights:         preflights,
-	// 	BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
-	// 		BundleRenderer:          registryv1.Renderer,
-	// 		CertificateProvider:     certProvider,
-	// 		IsWebhookSupportEnabled: isWebhookSupportEnabled,
-	// 	},
-	// 	PreAuthorizer: preAuth,
-	// }
+	// determine if PreAuthorizer should be enabled based on feature gate
+	var preAuth authorization.PreAuthorizer
+	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
+	}
+
+	// create applier
+	var ctrlBuilderOpts []controllers.ControllerBuilderOption
+	var extApplier controllers.Applier
+
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		// TODO: add support for preflight checks
+		extApplier = &applier.Boxcutter{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		}
+		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterExtensionRevision{}))
+	} else {
+		// now initialize the helmApplier, assigning the potentially nil preAuth
+		certProvider := getCertificateProvider()
+		extApplier = &applier.Helm{
+			ActionClientGetter: acg,
+			Preflights:         preflights,
+			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
+				BundleRenderer:          registryv1.Renderer,
+				CertificateProvider:     certProvider,
+				IsWebhookSupportEnabled: certProvider != nil,
+			},
+			PreAuthorizer: preAuth,
+		}
+	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
 	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
@@ -505,18 +509,17 @@ func run() error {
 		setupLog.Error(err, "unable to register AccessManager")
 		return err
 	}
-	// Boxcutter
 
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
 		Resolver:              resolver,
 		ImageCache:            imageCache,
 		ImagePuller:           imagePuller,
-		Applier:               boxcutterApplier,
+		Applier:               extApplier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
 		Manager:               cm,
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, ctrlBuilderOpts...); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		return err
 	}
@@ -573,6 +576,15 @@ func run() error {
 	if err := os.Remove(authFilePath); err != nil {
 		setupLog.Error(err, "failed to cleanup temporary auth file")
 		return err
+	}
+	return nil
+}
+
+func getCertificateProvider() render.CertificateProvider {
+	if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
+		return certproviders.CertManagerCertificateProvider{}
+	} else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
+		return certproviders.OpenshiftServiceCaCertificateProvider{}
 	}
 	return nil
 }

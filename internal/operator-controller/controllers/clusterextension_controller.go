@@ -413,12 +413,19 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, bundleName string, depreca
 	}
 }
 
+type ControllerBuilderOption func(builder *ctrl.Builder)
+
+func WithOwns(obj client.Object) ControllerBuilderOption {
+	return func(builder *ctrl.Builder) {
+		builder.Owns(obj)
+	}
+}
+
 // SetupWithManager sets up the controller with the Manager.
-func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	controller, err := ctrl.NewControllerManagedBy(mgr).
+func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager, opts ...ControllerBuilderOption) error {
+	ctrlBuilder := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1.ClusterExtension{}).
 		Named("controller-operator-cluster-extension-controller").
-		Owns(&ocv1.ClusterExtensionRevision{}).
 		Watches(&ocv1.ClusterCatalog{},
 			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger())),
 			builder.WithPredicates(predicate.Funcs{
@@ -437,8 +444,13 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					}
 					return true
 				},
-			})).
-		Build(r)
+			}))
+
+	for _, applyOpt := range opts {
+		applyOpt(ctrlBuilder)
+	}
+
+	controller, err := ctrlBuilder.Build(r)
 	if err != nil {
 		return err
 	}
