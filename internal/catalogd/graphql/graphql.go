@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -13,8 +12,6 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
-
-var schema graphql.Schema
 
 // FieldInfo represents discovered field information
 type FieldInfo struct {
@@ -565,7 +562,7 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 }
 
 // LoadAndSummarizeCatalogDynamic loads FBC using WalkMetasReader and builds dynamic GraphQL schema
-func LoadAndSummarizeCatalogDynamic(catalogFS fs.FS) error {
+func LoadAndSummarizeCatalogDynamic(catalogFS fs.FS) (*DynamicSchema, error) {
 	var metas []*declcfg.Meta
 
 	// Collect all metas from the filesystem
@@ -579,13 +576,13 @@ func LoadAndSummarizeCatalogDynamic(catalogFS fs.FS) error {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("error walking catalog metas: %w", err)
+		return nil, fmt.Errorf("error walking catalog metas: %w", err)
 	}
 
 	// Discover schema from collected metas
 	catalogSchema, err := DiscoverSchemaFromMetas(metas)
 	if err != nil {
-		return fmt.Errorf("error discovering schema: %w", err)
+		return nil, fmt.Errorf("error discovering schema: %w", err)
 	}
 
 	// Organize metas by schema for resolvers
@@ -599,11 +596,15 @@ func LoadAndSummarizeCatalogDynamic(catalogFS fs.FS) error {
 	// Build dynamic GraphQL schema
 	dynamicSchema, err := BuildDynamicGraphQLSchema(catalogSchema, metasBySchema)
 	if err != nil {
-		return fmt.Errorf("error building GraphQL schema: %w", err)
+		return nil, fmt.Errorf("error building GraphQL schema: %w", err)
 	}
 
-	// Set the global schema for serving
-	schema = dynamicSchema.Schema
+	return dynamicSchema, nil
+}
+
+// PrintCatalogSummary prints a comprehensive summary of the discovered schema
+func PrintCatalogSummary(dynamicSchema *DynamicSchema) {
+	catalogSchema := dynamicSchema.CatalogSchema
 
 	// Print comprehensive summary
 	fmt.Printf("Dynamic GraphQL schema generation complete.\n")
@@ -661,32 +662,4 @@ func LoadAndSummarizeCatalogDynamic(catalogFS fs.FS) error {
 		fmt.Printf("  packages(limit: 5) { name }\n")
 	}
 	fmt.Printf("}\n")
-
-	return nil
-}
-
-// ServeGraphQL starts an HTTPS server with the /graphql endpoint.
-func ServeGraphQL(listenAddr, certPath, keyPath string) error {
-	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Only POST is allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		var params struct {
-			Query string `json:"query"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
-		}
-		result := graphql.Do(graphql.Params{
-			Schema:        schema,
-			RequestString: params.Query,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
-	})
-
-	fmt.Printf("Serving GraphQL endpoint at https://%s/graphql\n", listenAddr)
-	return http.ListenAndServeTLS(listenAddr, certPath, keyPath, nil)
 }
