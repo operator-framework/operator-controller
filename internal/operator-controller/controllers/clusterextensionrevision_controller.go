@@ -1,4 +1,4 @@
-//go:build experimental
+//go:build !standard
 
 package controllers
 
@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -33,6 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 const (
@@ -65,17 +66,17 @@ type accessManager interface {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions/finalizers,verbs=update
 
-func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
+func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("cluster-extension-revision")
 	ctx = log.IntoContext(ctx, l)
 
 	rev := &ocv1.ClusterExtensionRevision{}
 	if err := c.Client.Get(
 		ctx, req.NamespacedName, rev); err != nil {
-		return res, client.IgnoreNotFound(err)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	l = l.WithValues("key", req.NamespacedName.String())
+	l = l.WithValues("key", req.String())
 	l.Info("reconcile starting")
 	defer l.Info("reconcile ending")
 
@@ -86,22 +87,14 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 		// To not leave unactionable resources on the cluster, we are going to just
 		// reap the revision reverences and propagate the Orphan deletion.
 		if rev.DeletionTimestamp.IsZero() {
-			err := client.IgnoreNotFound(
+			return ctrl.Result{}, client.IgnoreNotFound(
 				c.Client.Delete(ctx, rev, client.PropagationPolicy(metav1.DeletePropagationOrphan), client.Preconditions{
 					UID:             ptr.To(rev.GetUID()),
 					ResourceVersion: ptr.To(rev.GetResourceVersion()),
 				}),
 			)
-			if err != nil {
-				return res, err
-			}
-			// we get requeued to remove the finalizer.
-			return res, nil
 		}
-		if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
-			return res, err
-		}
-		return res, nil
+		return ctrl.Result{}, c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer)
 	}
 
 	return c.reconcile(ctx, controller, rev)
@@ -109,13 +102,10 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 
 func (c *ClusterExtensionRevisionReconciler) reconcile(
 	ctx context.Context, ce *ocv1.ClusterExtension, rev *ocv1.ClusterExtensionRevision,
-) (res ctrl.Result, err error) {
+) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
-	revision, opts, previous, err := toBoxcutterRevision(ce.Name, rev)
-	if err != nil {
-		return res, fmt.Errorf("converting CM to revision: %w", err)
-	}
+	revision, opts, previous := toBoxcutterRevision(ce.Name, rev)
 
 	var objects []client.Object
 	for _, phase := range revision.GetPhases() {
@@ -131,13 +121,13 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(
 		// We can't lookup the complete ClusterExtension when it's already deleted.
 		// This only works when the controller-manager is not restarted during teardown.
 		if err := c.Client.Get(ctx, client.ObjectKeyFromObject(ce), ce); err != nil {
-			return res, err
+			return ctrl.Result{}, err
 		}
 	}
 
 	accessor, err := c.AccessManager.GetWithUser(ctx, ce, rev, objects)
 	if err != nil {
-		return res, fmt.Errorf("get cache: %w", err)
+		return ctrl.Result{}, fmt.Errorf("get cache: %w", err)
 	}
 
 	// Boxcutter machinery setup.
@@ -160,32 +150,29 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(
 		//
 		tres, err := re.Teardown(ctx, *revision)
 		if err != nil {
-			return res, fmt.Errorf("revision teardown: %w", err)
+			return ctrl.Result{}, fmt.Errorf("revision teardown: %w", err)
 		}
 
 		l.Info("teardown report", "report", tres.String())
 
 		if !tres.IsComplete() {
-			return res, nil
+			return ctrl.Result{}, nil
 		}
 		if err := c.AccessManager.FreeWithUser(ctx, ce, rev); err != nil {
-			return res, fmt.Errorf("get cache: %w", err)
+			return ctrl.Result{}, fmt.Errorf("get cache: %w", err)
 		}
-		if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
-			return res, err
-		}
-		return res, nil
+		return ctrl.Result{}, c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer)
 	}
 
 	//
 	// Reconcile
 	//
 	if err := c.ensureFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
-		return res, err
+		return ctrl.Result{}, err
 	}
 	rres, err := re.Reconcile(ctx, *revision, opts...)
 	if err != nil {
-		return res, fmt.Errorf("revision reconcile: %w", err)
+		return ctrl.Result{}, fmt.Errorf("revision reconcile: %w", err)
 	}
 	l.Info("reconcile report", "report", rres.String())
 
@@ -193,27 +180,22 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(
 	// TODO: report status, backoff?
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Info("preflight error, retrying after 10s", "err", verr.String())
-
-		res.RequeueAfter = 10 * time.Second
-		//nolint:nilerr
-		return res, nil
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 	for _, pres := range rres.GetPhases() {
 		if verr := pres.GetValidationError(); verr != nil {
 			l.Info("preflight error, retrying after 10s", "err", verr.String())
-
-			res.RequeueAfter = 10 * time.Second
-			//nolint:nilerr
-			return res, nil
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	}
 
+	//nolint:nestif
 	if rres.IsComplete() {
 		// Archive other revisions.
 		for _, a := range previous {
 			if err := c.Client.Patch(ctx, a, client.RawPatch(
 				types.MergePatchType, []byte(`{"data":{"state":"Archived"}}`))); err != nil {
-				return res, fmt.Errorf("archive previous Revision: %w", err)
+				return ctrl.Result{}, fmt.Errorf("archive previous Revision: %w", err)
 			}
 		}
 
@@ -286,7 +268,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(
 		meta.RemoveStatusCondition(&rev.Status.Conditions, "InTransition")
 	}
 
-	return res, c.Client.Status().Update(ctx, rev)
+	return ctrl.Result{}, c.Client.Status().Update(ctx, rev)
 }
 
 func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -373,9 +355,9 @@ func getControllingClusterExtension(obj client.Object) (*ocv1.ClusterExtension, 
 }
 
 func toBoxcutterRevision(clusterExtensionName string, rev *ocv1.ClusterExtensionRevision) (
-	r *boxcutter.Revision, opts []boxcutter.RevisionReconcileOption, previous []client.Object, err error,
+	*boxcutter.Revision, []boxcutter.RevisionReconcileOption, []client.Object,
 ) {
-	r = &boxcutter.Revision{
+	r := &boxcutter.Revision{
 		Name:     rev.Name,
 		Owner:    rev,
 		Revision: rev.Spec.Revision,
@@ -397,6 +379,7 @@ func toBoxcutterRevision(clusterExtensionName string, rev *ocv1.ClusterExtension
 		r.Phases = append(r.Phases, phase)
 	}
 
+	previous := make([]client.Object, 0, len(rev.Spec.Previous))
 	for _, specPrevious := range rev.Spec.Previous {
 		prev := &unstructured.Unstructured{}
 		prev.SetName(specPrevious.Name)
@@ -405,9 +388,9 @@ func toBoxcutterRevision(clusterExtensionName string, rev *ocv1.ClusterExtension
 		previous = append(previous, prev)
 	}
 
-	opts = []boxcutter.RevisionReconcileOption{
+	opts := []boxcutter.RevisionReconcileOption{
 		boxcutter.WithPreviousOwners(previous),
-		boxcutter.WithProbe(boxcutter.ProgressProbeType, boxcutter.ProbeFunc(func(obj client.Object) (success bool, messages []string) {
+		boxcutter.WithProbe(boxcutter.ProgressProbeType, boxcutter.ProbeFunc(func(obj client.Object) (bool, []string) {
 			deployGK := schema.GroupKind{
 				Group: "apps", Kind: "Deployment",
 			}
@@ -430,12 +413,11 @@ func toBoxcutterRevision(clusterExtensionName string, rev *ocv1.ClusterExtension
 					return true, nil
 				}
 			}
-
 			return false, []string{"not available or not fully updated"}
 		})),
 	}
 	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStatePaused {
 		opts = append(opts, boxcutter.WithPaused{})
 	}
-	return
+	return r, opts, previous
 }

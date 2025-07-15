@@ -7,20 +7,22 @@ import (
 	"fmt"
 	"hash"
 	"io/fs"
+	"maps"
 	"slices"
 	"sort"
 
 	"github.com/davecgh/go-spew/spew"
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
 
 const (
@@ -66,13 +68,8 @@ func (bc *Boxcutter) apply(
 	// objectLabels
 	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
 	for _, obj := range plain {
-		labels := obj.GetLabels()
-		if labels == nil {
-			labels = map[string]string{}
-		}
-		for k, v := range objectLabels {
-			labels[k] = v
-		}
+		labels := maps.Clone(obj.GetLabels())
+		maps.Copy(labels, objectLabels)
 		obj.SetLabels(labels)
 
 		gvk, err := apiutil.GVKForObject(obj, bc.Scheme)

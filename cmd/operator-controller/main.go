@@ -22,13 +22,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
-	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -38,7 +31,7 @@ import (
 	"github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	k8stypes "k8s.io/apimachinery/pkg/types"
@@ -66,6 +59,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
@@ -73,6 +67,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
@@ -491,12 +490,12 @@ func run() error {
 		})
 
 		// Cache scoping
-		req1, err := labels.NewRequirement(
+		req1, err := k8slabels.NewRequirement(
 			controllers.ClusterExtensionRevisionOwnerLabel, selection.Equals, []string{ce.Name})
 		if err != nil {
 			return nil, o, err
 		}
-		o.DefaultLabelSelector = labels.NewSelector().Add(*req1)
+		o.DefaultLabelSelector = k8slabels.NewSelector().Add(*req1)
 
 		return saConfig, o, nil
 	}
