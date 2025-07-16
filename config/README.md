@@ -33,6 +33,8 @@ Overlay containing manifest files which enable prometheus scraping of the catalo
 
 These manifests will not end up in the `manifests/` folder, as they must be applied in two distinct steps to avoid issues with applying prometheus CRDs and CRs simultaneously.
 
+Performance alert settings can be found in: `config/overlays/prometheus/prometheus_rule.yaml`
+
 ## config/overlays/experimental
 
 This provides additional configuration used to support experimental features, including CRDs. This configuration requires cert-manager.
