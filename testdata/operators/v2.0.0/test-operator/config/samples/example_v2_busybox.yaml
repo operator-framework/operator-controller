@@ -1,0 +1,9 @@
+apiVersion: example.olmv1.com/v2
+kind: Busybox
+metadata:
+  labels:
+    app.kubernetes.io/name: test-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: busybox-sample
+spec:
+  # TODO(user): Add fields here
