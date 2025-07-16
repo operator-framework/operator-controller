@@ -4,6 +4,7 @@ kind: Component
 resources:
 - ../../../base/catalogd/crd/standard
 - ../../../base/catalogd/rbac/standard
+- ../../../base/catalogd/webhook/standard
 - ../../../base/operator-controller/crd/standard
 - ../../../base/operator-controller/rbac/standard
 # Pull in the component(s) common to standard and experimental
