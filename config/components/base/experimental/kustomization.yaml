@@ -12,6 +12,7 @@ components:
 - ../../features/single-own-namespace
 - ../../features/preflight-permissions
 - ../../features/apiv1-metas-handler
+- ../../features/apiv1-graphql-handler
 - ../../features/helm-chart
 # This one is downstream only, so we shant use it
 # - ../../features/webhook-provider-openshift-serviceca

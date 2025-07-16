@@ -9,11 +9,13 @@ import (
 )
 
 const (
-	APIV1MetasHandler = featuregate.Feature("APIV1MetasHandler")
+	APIV1MetasHandler   = featuregate.Feature("APIV1MetasHandler")
+	APIV1GraphQLHandler = featuregate.Feature("APIV1GraphQLHandler")
 )
 
 var catalogdFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
-	APIV1MetasHandler: {Default: false, PreRelease: featuregate.Alpha},
+	APIV1MetasHandler:   {Default: false, PreRelease: featuregate.Alpha},
+	APIV1GraphQLHandler: {Default: false, PreRelease: featuregate.Alpha},
 }
 
 var CatalogdFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()

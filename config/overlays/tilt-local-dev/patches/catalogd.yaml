@@ -7,4 +7,4 @@
   value: null
 - op: remove
   # remove --leader-elect so container doesn't restart during breakpoints
-  path: /spec/template/spec/containers/0/args/2
+  path: /spec/template/spec/containers/0/args/0

@@ -22,6 +22,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -54,6 +55,7 @@ import (
 	corecontrollers "github.com/operator-framework/operator-controller/internal/catalogd/controllers/core"
 	"github.com/operator-framework/operator-controller/internal/catalogd/features"
 	"github.com/operator-framework/operator-controller/internal/catalogd/garbagecollection"
+	"github.com/operator-framework/operator-controller/internal/catalogd/handlers"
 	catalogdmetrics "github.com/operator-framework/operator-controller/internal/catalogd/metrics"
 	"github.com/operator-framework/operator-controller/internal/catalogd/serverutil"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
@@ -341,10 +343,24 @@ func run(ctx context.Context) error {
 		return err
 	}
 
+	indexer := storage.NewIndexer()
+	handlersMap := map[string]http.Handler{
+		"/all": handlers.V1AllHandler(indexer),
+	}
+
+	if features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler) {
+		handlersMap["/metas"] = handlers.V1MetasHandler(indexer)
+	}
+
+	if features.CatalogdFeatureGate.Enabled(features.APIV1GraphQLHandler) {
+		handlersMap["/graphql"] = handlers.V1GraphQLHandler()
+	}
+
 	localStorage = &storage.LocalDirV1{
-		RootDir:            storeDir,
-		RootURL:            baseStorageURL,
-		EnableMetasHandler: features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler),
+		Indexer:  indexer,
+		Handlers: handlersMap,
+		RootDir:  storeDir,
+		RootURL:  baseStorageURL,
 	}
 
 	// Config for the catalogd web server
