@@ -272,26 +272,20 @@ test-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: COVERAGE_NAME := e2e
-test-e2e: run image-registry prometheus e2e e2e-metrics e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: test-experimental-e2e
 test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
 test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: COVERAGE_NAME := experimental-e2e
-test-experimental-e2e: run image-registry prometheus experimental-e2e e2e e2e-metrics e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
+test-experimental-e2e: run image-registry prometheus experimental-e2e e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
 prometheus: PROMETHEUS_VERSION := v0.83.0
 prometheus: #EXHELP Deploy Prometheus into specified namespace
 	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE) $(VERSION)
-
-# The output alerts.out file contains any alerts, pending or firing, collected during a test run in json format.
-.PHONY: e2e-metrics
-e2e-metrics: ALERTS_FILE_PATH := $(if $(ARTIFACT_PATH),$(ARTIFACT_PATH),.)/alerts.out
-e2e-metrics: #EXHELP Request metrics from prometheus; place in ARTIFACT_PATH if set
-	curl -X GET http://localhost:30900/api/v1/alerts | jq 'if (.data.alerts | length) > 0 then .data.alerts.[] else empty end' > $(ALERTS_FILE_PATH)
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e

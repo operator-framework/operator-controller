@@ -15,6 +15,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
+	utils "github.com/operator-framework/operator-controller/test/utils"
 )
 
 var (
@@ -23,9 +24,10 @@ var (
 )
 
 const (
-	testCatalogRefEnvVar = "CATALOG_IMG"
-	testCatalogName      = "test-catalog"
-	latestImageTag       = "latest"
+	testSummaryOutputEnvVar = "GITHUB_STEP_SUMMARY"
+	testCatalogRefEnvVar    = "CATALOG_IMG"
+	testCatalogName         = "test-catalog"
+	latestImageTag          = "latest"
 )
 
 func TestMain(m *testing.M) {
@@ -36,7 +38,10 @@ func TestMain(m *testing.M) {
 	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	utilruntime.Must(err)
 
-	os.Exit(m.Run())
+	res := m.Run()
+	err = utils.PrintSummary(testSummaryOutputEnvVar)
+	utilruntime.Must(err)
+	os.Exit(res)
 }
 
 // createTestCatalog will create a new catalog on the test cluster, provided

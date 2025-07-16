@@ -1,0 +1,16 @@
+{{- /* -------------------- Alert Template --------------------- */ -}}
+{{define "alert"}}
+| {{ .Name }} | {{ .Description }} |
+| -------- | ------- |
+| ActiveAt  | {{ .ActiveAt }} |
+| State  | {{ .State }} |
+{{- end}}
+
+### Firing Alerts
+{{ range .FiringAlerts }}
+{{ template "alert" .}}
+{{ end }}
+### Pending Alerts
+{{ range .PendingAlerts }}
+{{ template "alert" .}}
+{{ end }}

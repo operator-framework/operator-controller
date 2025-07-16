@@ -22,13 +22,13 @@ spec:
       annotations:
         description: "container {{ $labels.container }} of pod {{ $labels.pod }} experienced OOM event(s); count={{ $value }}"
     - alert: operator-controller-memory-growth
-      expr: deriv(sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"})[5m:]) > 50_000
+      expr: deriv(sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"})[5m:]) > 100_000
       for: 5m
       keep_firing_for: 1d
       annotations:
         description: "operator-controller pod memory usage growing at a high rate for 5 minutes: {{ $value | humanize }}B/sec"
     - alert: catalogd-memory-growth
-      expr: deriv(sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"})[5m:]) > 50_000
+      expr: deriv(sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"})[5m:]) > 100_000
       for: 5m
       keep_firing_for: 1d
       annotations:

@@ -129,7 +129,7 @@ func (c *MetricsTestConfig) getServiceAccountToken(t *testing.T) string {
 func (c *MetricsTestConfig) createCurlMetricsPod(t *testing.T) {
 	t.Logf("Creating curl pod (%s/%s) to validate the metrics endpoint", c.namespace, c.curlPodName)
 	cmd := exec.Command(c.client, "run", c.curlPodName,
-		"--image=curlimages/curl",
+		"--image=curlimages/curl:8.15.0",
 		"--namespace", c.namespace,
 		"--restart=Never",
 		"--overrides", `{
@@ -137,7 +137,7 @@ func (c *MetricsTestConfig) createCurlMetricsPod(t *testing.T) {
 				"terminationGradePeriodSeconds": 0,
 				"containers": [{
 					"name": "curl",
-					"image": "curlimages/curl",
+					"image": "curlimages/curl:8.15.0",
 					"command": ["sh", "-c", "sleep 3600"],
 					"securityContext": {
 						"allowPrivilegeEscalation": false,
