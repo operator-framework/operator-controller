@@ -27,6 +27,12 @@ This provides additional configuration support for end-to-end testing, including
 
 This configuration is used to generate `manifests/standard-e2e.yaml`.
 
+## config/overlays/prometheus
+
+Overlay containing manifest files which enable prometheus scraping of the catalogd and operator-controller pods. Used during e2e runs to measure performance over the lifetime of the test. 
+
+These manifests will not end up in the `manifests/` folder, as they must be applied in two distinct steps to avoid issues with applying prometheus CRDs and CRs simultaneously.
+
 ## config/overlays/experimental
 
 This provides additional configuration used to support experimental features, including CRDs. This configuration requires cert-manager.
