@@ -3,7 +3,10 @@ kind: Component
 # Pull in the experimental CRDs
 resources:
 - ../../../base/catalogd/crd/experimental
+- ../../../base/catalogd/rbac/experimental
+- ../../../base/catalogd/webhook/experimental
 - ../../../base/operator-controller/crd/experimental
+- ../../../base/operator-controller/rbac/experimental
 # Pull in the component(s) common to standard and experimental
 components:
 - ../common

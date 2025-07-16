@@ -1,0 +1,4 @@
+# This kustomization picks the standard webhook by default
+# If the experimental webhook is desired, select that directory explicitly
+resources:
+- standard
