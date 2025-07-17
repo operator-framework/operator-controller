@@ -3,7 +3,6 @@ package generators
 import (
 	"cmp"
 	"fmt"
-	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -28,15 +27,31 @@ import (
 )
 
 const (
-	tlsCrtPath = "tls.crt"
-	tlsKeyPath = "tls.key"
-
 	labelKubernetesNamespaceMetadataName = "kubernetes.io/metadata.name"
 )
 
-// volume mount name -> mount path
-var certVolumeMounts = map[string]string{
-	"webhook-cert": "/tmp/k8s-webhook-server/serving-certs",
+type certVolumeConfig struct {
+	Name        string
+	Path        string
+	TLSCertPath string
+	TLSKeyPath  string
+}
+
+// certVolumeConfigs contain the expected configurations for certificate volume/mounts
+// that the generated Deployment resources for bundle containing webhooks and/or apiservices
+// should contain.
+var certVolumeConfigs = []certVolumeConfig{
+	{
+		Name:        "webhook-cert",
+		Path:        "/tmp/k8s-webhook-server/serving-certs",
+		TLSCertPath: "tls.crt",
+		TLSKeyPath:  "tls.key",
+	}, {
+		Name:        "apiservice-cert",
+		Path:        "/apiserver.local.config/certificates",
+		TLSCertPath: "apiserver.crt",
+		TLSKeyPath:  "apiserver.key",
+	},
 }
 
 // BundleCSVDeploymentGenerator generates all deployments defined in rv1's cluster service version (CSV). The generated
@@ -80,7 +95,7 @@ func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 
 		secretInfo := render.CertProvisionerFor(depSpec.Name, opts).GetCertSecretInfo()
 		if webhookDeployments.Has(depSpec.Name) && secretInfo != nil {
-			addCertVolumesToDeployment(deploymentResource, *secretInfo)
+			ensureCorrectDeploymentCertVolumes(deploymentResource, *secretInfo)
 		}
 
 		objs = append(objs, deploymentResource)
@@ -488,13 +503,48 @@ func getWebhookServicePort(wh v1alpha1.WebhookDescription) corev1.ServicePort {
 	}
 }
 
-func addCertVolumesToDeployment(dep *appsv1.Deployment, certSecretInfo render.CertSecretInfo) {
-	volumeMountsToReplace := sets.New(slices.Collect(maps.Keys(certVolumeMounts))...)
-	certVolumeMountPaths := sets.New(slices.Collect(maps.Values(certVolumeMounts))...)
+// ensureCorrectDeploymentCertVolumes ensures the deployment has the correct certificate volume mounts by
+// - removing all existing volumes with protected certificate volume names (i.e. webhook-cert and apiservice-cert)
+// - removing all existing volumes that point to the protected certificate paths (e.g. /tmp/k8s-webhook-server/serving-certs)
+// - adding the correct certificate volumes with the correct configuration
+// - applying the same changes to all container volume mounts
+func ensureCorrectDeploymentCertVolumes(dep *appsv1.Deployment, certSecretInfo render.CertSecretInfo) {
+	// collect volumes and paths to replace
+	volumesToRemove := sets.New[string]()
+	protectedVolumePaths := sets.New[string]()
+	certVolumes := make([]corev1.Volume, 0, len(certVolumeConfigs))
+	certVolumeMounts := make([]corev1.VolumeMount, 0, len(certVolumeConfigs))
+	for _, cfg := range certVolumeConfigs {
+		volumesToRemove.Insert(cfg.Name)
+		protectedVolumePaths.Insert(cfg.Path)
+		certVolumes = append(certVolumes, corev1.Volume{
+			Name: cfg.Name,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: certSecretInfo.SecretName,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  certSecretInfo.CertificateKey,
+							Path: cfg.TLSCertPath,
+						},
+						{
+							Key:  certSecretInfo.PrivateKeyKey,
+							Path: cfg.TLSKeyPath,
+						},
+					},
+				},
+			},
+		})
+		certVolumeMounts = append(certVolumeMounts, corev1.VolumeMount{
+			Name:      cfg.Name,
+			MountPath: cfg.Path,
+		})
+	}
+
 	for _, c := range dep.Spec.Template.Spec.Containers {
 		for _, containerVolumeMount := range c.VolumeMounts {
-			if certVolumeMountPaths.Has(containerVolumeMount.MountPath) {
-				volumeMountsToReplace.Insert(containerVolumeMount.Name)
+			if protectedVolumePaths.Has(containerVolumeMount.MountPath) {
+				volumesToRemove.Insert(containerVolumeMount.Name)
 			}
 		}
 	}
@@ -502,46 +552,18 @@ func addCertVolumesToDeployment(dep *appsv1.Deployment, certSecretInfo render.Ce
 	// update pod volumes
 	dep.Spec.Template.Spec.Volumes = slices.Concat(
 		slices.DeleteFunc(dep.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
-			return volumeMountsToReplace.Has(v.Name)
+			return volumesToRemove.Has(v.Name)
 		}),
-		[]corev1.Volume{
-			{
-				Name: "webhook-cert",
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: certSecretInfo.SecretName,
-						Items: []corev1.KeyToPath{
-							{
-								Key:  certSecretInfo.CertificateKey,
-								Path: tlsCrtPath,
-							},
-							{
-								Key:  certSecretInfo.PrivateKeyKey,
-								Path: tlsKeyPath,
-							},
-						},
-					},
-				},
-			},
-		},
+		certVolumes,
 	)
 
 	// update container volume mounts
 	for i := range dep.Spec.Template.Spec.Containers {
 		dep.Spec.Template.Spec.Containers[i].VolumeMounts = slices.Concat(
 			slices.DeleteFunc(dep.Spec.Template.Spec.Containers[i].VolumeMounts, func(v corev1.VolumeMount) bool {
-				return volumeMountsToReplace.Has(v.Name)
+				return volumesToRemove.Has(v.Name)
 			}),
-			func() []corev1.VolumeMount {
-				volumeMounts := make([]corev1.VolumeMount, 0, len(certVolumeMounts))
-				for _, name := range slices.Sorted(maps.Keys(certVolumeMounts)) {
-					volumeMounts = append(volumeMounts, corev1.VolumeMount{
-						Name:      name,
-						MountPath: certVolumeMounts[name],
-					})
-				}
-				return volumeMounts
-			}(),
+			certVolumeMounts,
 		)
 	}
 }

@@ -188,15 +188,29 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 						Template: corev1.PodTemplateSpec{
 							Spec: corev1.PodSpec{
 								Volumes: []corev1.Volume{
+									// volume that have neither protected names: webhook-cert and apiservice-cert,
+									// or target protected certificate paths should remain untouched
 									{
 										Name: "some-other-mount",
 										VolumeSource: corev1.VolumeSource{
 											EmptyDir: &corev1.EmptyDirVolumeSource{},
 										},
 									},
-									// this volume should be replaced by the webhook-cert volume
-									// because it has a volume mount targeting the protected path
-									// /tmp/k8s-webhook-server/serving-certs
+									// volume mounts with protected names will be rewritten to ensure they point to
+									// the right certificate path. If they do not exist, they will be created.
+									{
+										Name: "webhook-cert",
+										VolumeSource: corev1.VolumeSource{
+											EmptyDir: &corev1.EmptyDirVolumeSource{},
+										},
+									},
+									// volumes that point to protected paths will be removed
+									{
+										Name: "some-mount",
+										VolumeSource: corev1.VolumeSource{
+											EmptyDir: &corev1.EmptyDirVolumeSource{},
+										},
+									},
 									{
 										Name: "some-webhook-cert-mount",
 										VolumeSource: corev1.VolumeSource{
@@ -208,19 +222,24 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 									{
 										Name: "container-1",
 										VolumeMounts: []corev1.VolumeMount{
-											// the mount path for this volume mount will be replaced with
-											// /tmp/k8s-webhook-server/serving-certs
+											// the mount path for the following volume will be replaced
+											// since the volume name is protected
 											{
 												Name:      "webhook-cert",
 												MountPath: "/webhook-cert-path",
-											}, {
+											},
+											// the following volume will be preserved
+											{
 												Name:      "some-other-mount",
 												MountPath: "/some/other/mount/path",
 											},
-											// this volume mount will be removed
+											// these volume mount will be removed for referencing protected cert paths
 											{
 												Name:      "some-webhook-cert-mount",
 												MountPath: "/tmp/k8s-webhook-server/serving-certs",
+											}, {
+												Name:      "some-mount",
+												MountPath: "/apiserver.local.config/certificates",
 											},
 										},
 									},
@@ -272,6 +291,24 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 				},
 			},
 		},
+		{
+			Name: "apiservice-cert",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "some-secret",
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "some-cert-key",
+							Path: "apiserver.crt",
+						},
+						{
+							Key:  "some-private-key-key",
+							Path: "apiserver.key",
+						},
+					},
+				},
+			},
+		},
 	}, deployment.Spec.Template.Spec.Volumes)
 	require.Equal(t, []corev1.Container{
 		{
@@ -285,6 +322,10 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 					Name:      "webhook-cert",
 					MountPath: "/tmp/k8s-webhook-server/serving-certs",
 				},
+				{
+					Name:      "apiservice-cert",
+					MountPath: "/apiserver.local.config/certificates",
+				},
 			},
 		},
 		{
@@ -293,6 +334,10 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 				{
 					Name:      "webhook-cert",
 					MountPath: "/tmp/k8s-webhook-server/serving-certs",
+				},
+				{
+					Name:      "apiservice-cert",
+					MountPath: "/apiserver.local.config/certificates",
 				},
 			},
 		},
