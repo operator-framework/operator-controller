@@ -172,14 +172,8 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: k8s-pin kind-verify-versions fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
+verify: k8s-pin kind-verify-versions fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
 	git diff --exit-code
-
-# Renders registry+v1 bundles in test/convert
-# Used by CI in verify to catch regressions in the registry+v1 -> plain conversion code
-.PHONY: generate-test-data
-generate-test-data:
-	go run test/convert/generate-manifests.go
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues

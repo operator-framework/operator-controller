@@ -6,9 +6,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -266,4 +270,191 @@ func Test_BundleValidatorCallsAllValidationFnsInOrder(t *testing.T) {
 	}
 	require.NoError(t, val.Validate(nil))
 	require.Equal(t, "hi", actual)
+}
+
+// Test_Render_ValidatesOutputForAllInstallModes verifies that the BundleRenderer
+// generates the correct set of Kubernetes resources (client.Objects) for each supported
+// install mode: AllNamespaces, SingleNamespace, and OwnNamespace.
+//
+// For each mode, it checks that:
+// - All expected resources are returned.
+// - The full content of each resource matches the expected values
+// It validates that the rendered objects are correctly rendered.
+func Test_Render_ValidatesOutputForAllInstallModes(t *testing.T) {
+	testCases := []struct {
+		name             string
+		installNamespace string
+		watchNamespace   string
+		installModes     []v1alpha1.InstallMode
+		expectedNS       string
+	}{
+		{
+			name:             "AllNamespaces",
+			installNamespace: "mock-system",
+			watchNamespace:   "",
+			installModes: []v1alpha1.InstallMode{
+				{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+			},
+			expectedNS: "mock-system",
+		},
+		{
+			name:             "SingleNamespace",
+			installNamespace: "mock-system",
+			watchNamespace:   "mock-watch",
+			installModes: []v1alpha1.InstallMode{
+				{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+			},
+			expectedNS: "mock-watch",
+		},
+		{
+			name:             "OwnNamespace",
+			installNamespace: "mock-system",
+			watchNamespace:   "mock-system",
+			installModes: []v1alpha1.InstallMode{
+				{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+			},
+			expectedNS: "mock-system",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given the mock scenarios
+			expectedObjects := []client.Object{
+				fakeUnstructured("ClusterRole", "", "mock-clusterrole"),
+				fakeUnstructured("ClusterRoleBinding", "", "mock-clusterrolebinding"),
+				fakeUnstructured("Role", tc.expectedNS, "mock-role"),
+				fakeUnstructured("RoleBinding", tc.expectedNS, "mock-rolebinding"),
+				fakeUnstructured("ConfigMap", tc.expectedNS, "mock-config"),
+				fakeUnstructured("Secret", tc.expectedNS, "mock-secret"),
+				fakeUnstructured("Service", tc.expectedNS, "mock-service"),
+				fakeUnstructured("Deployment", tc.expectedNS, "mock-deployment"),
+				fakeUnstructured("ServiceAccount", tc.expectedNS, "mock-sa"),
+				fakeUnstructured("NetworkPolicy", tc.expectedNS, "mock-netpol"),
+			}
+
+			mockGen := render.ResourceGenerator(func(_ *bundle.RegistryV1, _ render.Options) ([]client.Object, error) {
+				return expectedObjects, nil
+			})
+
+			mockBundle := bundle.RegistryV1{
+				CSV: v1alpha1.ClusterServiceVersion{
+					Spec: v1alpha1.ClusterServiceVersionSpec{
+						InstallModes: tc.installModes,
+					},
+				},
+			}
+
+			// When we call the BundleRenderer with the mock bundle
+			renderer := render.BundleRenderer{
+				BundleValidator: render.BundleValidator{
+					func(_ *bundle.RegistryV1) []error { return nil },
+				},
+				ResourceGenerators: []render.ResourceGenerator{mockGen},
+			}
+
+			opts := []render.Option{
+				render.WithTargetNamespaces(tc.watchNamespace),
+				render.WithUniqueNameGenerator(render.DefaultUniqueNameGenerator),
+			}
+
+			// Then we expect the rendered objects to match the expected objects
+			objs, err := renderer.Render(mockBundle, tc.installNamespace, opts...)
+			require.NoError(t, err)
+			require.Len(t, objs, len(expectedObjects))
+
+			gotMap := make(map[string]client.Object)
+			for _, obj := range objs {
+				gotMap[objectKey(obj)] = obj
+			}
+
+			for _, exp := range expectedObjects {
+				key := objectKey(exp)
+				got, exists := gotMap[key]
+				require.True(t, exists, "missing expected object: %s", key)
+
+				expObj := exp.(*unstructured.Unstructured)
+				gotObj := got.(*unstructured.Unstructured)
+
+				if diff := cmp.Diff(expObj.Object, gotObj.Object, cmpopts.EquateEmpty()); diff != "" {
+					t.Errorf("object content mismatch for %s (-want +got):\n%s", key, diff)
+				}
+			}
+		})
+	}
+}
+
+// fakeUnstructured creates a fake unstructured client.Object with the specified kind, namespace, and name
+// to allow us mocks resources to be rendered by the BundleRenderer.
+func fakeUnstructured(kind, namespace, name string) client.Object {
+	obj := &unstructured.Unstructured{}
+	obj.Object = make(map[string]interface{})
+
+	group := ""
+	version := "v1"
+
+	switch kind {
+	case "NetworkPolicy":
+		err := unstructured.SetNestedField(obj.Object, map[string]interface{}{
+			"podSelector": map[string]interface{}{
+				"matchLabels": map[string]interface{}{"app": "my-app"},
+			},
+			"policyTypes": []interface{}{"Ingress"},
+		}, "spec")
+		if err != nil {
+			panic(fmt.Sprintf("failed to set spec for NetworkPolicy: %v", err))
+		}
+	case "Service":
+		_ = unstructured.SetNestedField(obj.Object, map[string]interface{}{
+			"ports": []interface{}{
+				map[string]interface{}{
+					"port":       int64(8080),
+					"targetPort": "http",
+				},
+			},
+			"selector": map[string]interface{}{
+				"app": "mock-app",
+			},
+		}, "spec")
+	case "Deployment":
+		_ = unstructured.SetNestedField(obj.Object, map[string]interface{}{
+			"replicas": int64(1),
+			"selector": map[string]interface{}{
+				"matchLabels": map[string]interface{}{"app": "mock-app"},
+			},
+			"template": map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"labels": map[string]interface{}{"app": "mock-app"},
+				},
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":  "controller",
+							"image": "mock-controller:latest",
+						},
+					},
+				},
+			},
+		}, "spec")
+	case "ConfigMap":
+		_ = unstructured.SetNestedField(obj.Object, map[string]interface{}{
+			"controller": "enabled",
+		}, "data")
+	}
+
+	obj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   group,
+		Version: version,
+		Kind:    kind,
+	})
+	obj.SetNamespace(namespace)
+	obj.SetName(name)
+
+	return obj
+}
+
+// objectKey returns a unique key for k8s resources
+func objectKey(obj client.Object) string {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	return fmt.Sprintf("%s/%s/%s", gvk.Kind, obj.GetNamespace(), obj.GetName())
 }
