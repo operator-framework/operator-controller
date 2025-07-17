@@ -89,3 +89,23 @@ properties:
     value:
       packageName: dynamic
       version: 1.2.0
+---
+schema: olm.package
+name: webhook-operator
+defaultChannel: alpha
+---
+schema: olm.channel
+name: alpha
+package: webhook-operator
+entries:
+  - name: webhook-operator.v0.0.1
+---
+schema: olm.bundle
+name: webhook-operator.v0.0.1
+package: webhook-operator
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/webhook-operator:v0.0.1
+properties:
+  - type: olm.package
+    value:
+      packageName: webhook-operator
+      version: 0.0.1
