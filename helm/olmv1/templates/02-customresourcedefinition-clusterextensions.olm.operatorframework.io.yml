@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-    {{- include "olmv1.annotations" . | nindent 4}}
+    {{- include "olmv1.annotations" . | nindent 4 }}
     olm.operatorframework.io/generator: experimental
   name: clusterextensions.olm.operatorframework.io
 spec:
