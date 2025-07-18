@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: olmv1
     {{- include "olmv1.labels" . | nindent 4 }}
   name: default-deny-all-traffic
-  namespace: {{ .Values.namespaces.olmv1 }}
+  namespace: {{ .Values.namespaces.olmv1.name }}
 spec:
   podSelector: {}
   policyTypes:

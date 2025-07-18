@@ -8,11 +8,11 @@ metadata:
     app.kubernetes.io/name: olmv1
     {{- include "olmv1.labels" . | nindent 4 }}
   name: olmv1-cert
-  namespace: {{ .Values.namespaces.olmv1 }}
+  namespace: {{ .Values.namespaces.olmv1.name }}
 spec:
   dnsNames:
-    - operator-controller-service.{{ .Values.namespaces.olmv1 }}.svc
-    - operator-controller-service.{{ .Values.namespaces.olmv1 }}.svc.cluster.local
+    - operator-controller-service.{{ .Values.namespaces.olmv1.name }}.svc
+    - operator-controller-service.{{ .Values.namespaces.olmv1.name }}.svc.cluster.local
   issuerRef:
     group: cert-manager.io
     kind: ClusterIssuer

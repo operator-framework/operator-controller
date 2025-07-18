@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/name: catalogd
     {{- include "olmv1.labels" . | nindent 4 }}
   name: catalogd-controller-manager
-  namespace: {{ .Values.namespaces.olmv1 }}
+  namespace: {{ .Values.namespaces.olmv1.name }}
 spec:
   minReadySeconds: 5
   replicas: 1
@@ -45,7 +45,7 @@ spec:
         - args:
             - --leader-elect
             - --metrics-bind-address=:7443
-            - --external-address=catalogd-service.{{ .Values.namespaces.olmv1 }}.svc
+            - --external-address=catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc
             {{- if .Values.features.apiV1MetasHandler.enabled }}
             - --feature-gates=APIV1MetasHandler=true
             {{- end }}
@@ -92,11 +92,16 @@ spec:
               name: cache
             - mountPath: /tmp
               name: tmp
+            {{- if .Values.components.certManager.enabled }}
             - mountPath: /var/certs
               name: catalogserver-certs
             - mountPath: /var/ca-certs/
               name: olmv1-certificate
               readOnly: true
+            {{- end }}
+            {{- with .Values.components.catalogd.volumeMounts }}
+              {{- toYaml . | nindent }}
+            {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -113,6 +118,7 @@ spec:
           name: cache
         - emptyDir: {}
           name: tmp
+        {{- if .Values.components.certManager.enabled }}
         - name: catalogserver-certs
           secret:
             secretName: catalogd-service-cert-git-version
@@ -123,4 +129,20 @@ spec:
                 path: olm-ca.crt
             optional: false
             secretName: catalogd-service-cert-git-version
+        {{- end }}
+        {{- with .Values.components.catalogd.volumes }}
+          {{- toYaml . | indent 8 }}
+        {{- end }}
+      {{- with .Values.components.catalogd.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.components.catalogd.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.components.catalogd.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}

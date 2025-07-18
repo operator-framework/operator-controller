@@ -4,9 +4,13 @@ kind: Namespace
 metadata:
   annotations:
     {{- include "olmv1.annotations" . | nindent 4 }}
+    {{- with .Values.namespaces.olmv1.annotations }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   labels:
     app.kubernetes.io/name: olmv1
     {{- include "olmv1.labels" . | nindent 4 }}
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: latest
-  name: {{ .Values.namespaces.olmv1 }}
+    {{- with .Values.namespaces.olmv1.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  name: {{ .Values.namespaces.olmv1.name }}
