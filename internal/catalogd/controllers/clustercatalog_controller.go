@@ -14,12 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package core
+package controllers
 
 import (
 	"context" // #nosec
 	"errors"
 	"fmt"
+	"io/fs"
+	"iter"
 	"slices"
 	"sync"
 	"time"
@@ -37,6 +39,8 @@ import (
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
@@ -57,7 +61,8 @@ type ClusterCatalogReconciler struct {
 	ImageCache  imageutil.Cache
 	ImagePuller imageutil.Puller
 
-	Storage storage.Instance
+	Storage    storage.Instance
+	GetBaseURL func(catalogName string) string
 
 	finalizers crfinalizer.Finalizers
 
@@ -224,7 +229,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 	case !hasStoredCatalog:
 		l.Info("unpack required: no cached catalog metadata found for this catalog")
 		needsUnpack = true
-	case !r.Storage.ContentExists(catalog.Name):
+	case !r.Storage.Exists(catalog.Name):
 		l.Info("unpack required: no stored content found for this catalog")
 		needsUnpack = true
 	case !equality.Semantic.DeepEqual(catalog.Status, *expectedStatus):
@@ -265,12 +270,12 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 	// TODO: We should check to see if the unpacked result has the same content
 	//   as the already unpacked content. If it does, we should skip this rest
 	//   of the unpacking steps.
-	if err := r.Storage.Store(ctx, catalog.Name, fsys); err != nil {
+	if err := r.Storage.Store(ctx, catalog.Name, walkMetasFSIterator(ctx, fsys)); err != nil {
 		storageErr := fmt.Errorf("error storing fbc: %v", err)
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), storageErr)
 		return ctrl.Result{}, storageErr
 	}
-	baseURL := r.Storage.BaseURL(catalog.Name)
+	baseURL := r.GetBaseURL(catalog.Name)
 
 	updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), nil)
 	updateStatusServing(&catalog.Status, canonicalRef, unpackTime, baseURL, catalog.GetGeneration())
@@ -296,8 +301,8 @@ func (r *ClusterCatalogReconciler) getCurrentState(catalog *ocv1.ClusterCatalog)
 
 	// Set expected status based on what we see in the stored catalog
 	clearUnknownConditions(expectedStatus)
-	if hasStoredCatalog && r.Storage.ContentExists(catalog.Name) {
-		updateStatusServing(expectedStatus, storedCatalog.ref, storedCatalog.lastUnpack, r.Storage.BaseURL(catalog.Name), storedCatalog.observedGeneration)
+	if hasStoredCatalog && r.Storage.Exists(catalog.Name) {
+		updateStatusServing(expectedStatus, storedCatalog.ref, storedCatalog.lastUnpack, r.GetBaseURL(catalog.Name), storedCatalog.observedGeneration)
 		updateStatusProgressing(expectedStatus, storedCatalog.observedGeneration, nil)
 	}
 
@@ -458,7 +463,7 @@ func (r *ClusterCatalogReconciler) deleteStoredCatalog(catalogName string) {
 }
 
 func (r *ClusterCatalogReconciler) deleteCatalogCache(ctx context.Context, catalog *ocv1.ClusterCatalog) error {
-	if err := r.Storage.Delete(catalog.Name); err != nil {
+	if err := r.Storage.Delete(ctx, catalog.Name); err != nil {
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), err)
 		return err
 	}
@@ -469,4 +474,13 @@ func (r *ClusterCatalogReconciler) deleteCatalogCache(ctx context.Context, catal
 	}
 	r.deleteStoredCatalog(catalog.Name)
 	return nil
+}
+
+func walkMetasFSIterator(ctx context.Context, fsys fs.FS) iter.Seq2[*declcfg.Meta, error] {
+	return func(yield func(*declcfg.Meta, error) bool) {
+		_ = declcfg.WalkMetasFS(ctx, fsys, func(path string, meta *declcfg.Meta, err error) error {
+			yield(meta, err)
+			return nil
+		}, declcfg.WithConcurrency(1))
+	}
 }

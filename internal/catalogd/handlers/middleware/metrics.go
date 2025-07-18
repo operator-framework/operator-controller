@@ -1,10 +1,11 @@
-package metrics
+package middleware
 
 import (
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 // Query C: sum(catalogd_http_request_duration_seconds_count)
 // Expression for Apdex Score: ($A + (($B - $A) / 2)) / $C
 var (
-	RequestDurationMetric = prometheus.NewHistogramVec(
+	requestDurationMetric = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name: RequestDurationMetricName,
 			Help: "Histogram of request duration in seconds",
@@ -35,6 +36,10 @@ var (
 	)
 )
 
-func AddMetricsToHandler(handler http.Handler) http.Handler {
-	return promhttp.InstrumentHandlerDuration(RequestDurationMetric, handler)
+func init() {
+	metrics.Registry.MustRegister(requestDurationMetric)
+}
+
+func MetricsHandler(handler http.Handler) http.Handler {
+	return promhttp.InstrumentHandlerDuration(requestDurationMetric, handler)
 }

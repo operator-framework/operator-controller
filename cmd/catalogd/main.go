@@ -46,17 +46,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	corecontrollers "github.com/operator-framework/operator-controller/internal/catalogd/controllers/core"
+	"github.com/operator-framework/operator-controller/internal/catalogd/controllers"
 	"github.com/operator-framework/operator-controller/internal/catalogd/features"
 	"github.com/operator-framework/operator-controller/internal/catalogd/garbagecollection"
-	"github.com/operator-framework/operator-controller/internal/catalogd/handlers"
-	catalogdmetrics "github.com/operator-framework/operator-controller/internal/catalogd/metrics"
+	v1 "github.com/operator-framework/operator-controller/internal/catalogd/handlers/api/v1"
+	"github.com/operator-framework/operator-controller/internal/catalogd/handlers/middleware"
 	"github.com/operator-framework/operator-controller/internal/catalogd/serverutil"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	"github.com/operator-framework/operator-controller/internal/catalogd/webhook"
@@ -328,61 +327,55 @@ func run(ctx context.Context) error {
 		},
 	}
 
-	var localStorage storage.Instance
-	metrics.Registry.MustRegister(catalogdmetrics.RequestDurationMetric)
-
 	storeDir := filepath.Join(cfg.cacheDir, storageDir)
 	if err := os.MkdirAll(storeDir, 0700); err != nil {
 		setupLog.Error(err, "unable to create storage directory for catalogs")
 		return err
 	}
 
-	baseStorageURL, err := url.Parse(fmt.Sprintf("%s/catalogs/", cfg.externalAddr))
+	const catalogsSubPath = "catalogs"
+	baseCatalogsURL, err := url.Parse(fmt.Sprintf("%s/%s", cfg.externalAddr, catalogsSubPath))
 	if err != nil {
 		setupLog.Error(err, "unable to create base storage URL")
 		return err
 	}
 
-	indexer := storage.NewIndexer()
-	handlersMap := map[string]http.Handler{
-		"/all": handlers.V1AllHandler(indexer),
-	}
-
-	if features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler) {
-		handlersMap["/metas"] = handlers.V1MetasHandler(indexer)
-	}
-
-	if features.CatalogdFeatureGate.Enabled(features.APIV1GraphQLHandler) {
-		handlersMap["/graphql"] = handlers.V1GraphQLHandler()
-	}
-
-	localStorage = &storage.LocalDirV1{
-		Indexer:  indexer,
-		Handlers: handlersMap,
-		RootDir:  storeDir,
-		RootURL:  baseStorageURL,
-	}
+	storageInstances := configureStorage(storeDir)
+	handler := configureHandler(configAPIV1Handler(catalogsSubPath, storageInstances))
 
 	// Config for the catalogd web server
-	catalogServerConfig := serverutil.CatalogServerConfig{
-		ExternalAddr: cfg.externalAddr,
-		CatalogAddr:  cfg.catalogServerAddr,
-		CertFile:     cfg.certFile,
-		KeyFile:      cfg.keyFile,
-		LocalStorage: localStorage,
+	catalogServerConfig := serverutil.ServerConfig{
+		Name:                "catalogs",
+		OnlyServeWhenLeader: true,
+		ListenAddr:          cfg.catalogServerAddr,
+		Server: &http.Server{
+			Handler:      handler,
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Minute,
+		},
+	}
+	if cfg.certFile != "" && cfg.keyFile != "" {
+		catalogServerConfig.GetCertificate = cw.GetCertificate
 	}
 
-	err = serverutil.AddCatalogServerToManager(mgr, catalogServerConfig, cw)
+	catalogServer, err := serverutil.NewManagerServer(catalogServerConfig)
 	if err != nil {
 		setupLog.Error(err, "unable to configure catalog server")
 		return err
 	}
+	if err := mgr.Add(catalogServer); err != nil {
+		setupLog.Error(err, "unable to add catalog server to manager")
+		return err
+	}
 
-	if err = (&corecontrollers.ClusterCatalogReconciler{
+	if err = (&controllers.ClusterCatalogReconciler{
 		Client:      mgr.GetClient(),
 		ImageCache:  imageCache,
 		ImagePuller: imagePuller,
-		Storage:     localStorage,
+		Storage:     storageInstances,
+		GetBaseURL: func(catalogName string) string {
+			return fmt.Sprintf("%s/%s", baseCatalogsURL, catalogName)
+		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		return err
@@ -451,4 +444,55 @@ func podNamespace() string {
 		return "olmv1-system"
 	}
 	return string(namespace)
+}
+
+func configureStorage(storeDir string) *storage.Instances {
+	metasEnabled := features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler)
+	graphqlEnabled := features.CatalogdFeatureGate.Enabled(features.APIV1GraphQLHandler)
+	needsIndices := metasEnabled || graphqlEnabled
+
+	// Setup storage instances
+	storageInstances := storage.Instances{}
+	storageInstances.Files = storage.NewFiles(storeDir)
+
+	if needsIndices {
+		storageInstances.Indices = storage.NewIndices(storeDir)
+	}
+	if graphqlEnabled {
+		storageInstances.GraphQLSchemas = storage.NewGraphQLSchemas()
+	}
+
+	return &storageInstances
+}
+
+func configAPIV1Handler(baseURLPath string, si *storage.Instances) subPathedHandler {
+	metasEnabled := features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler)
+	graphqlEnabled := features.CatalogdFeatureGate.Enabled(features.APIV1GraphQLHandler)
+
+	// Setup API v1 handler
+	apiV1HandlerOpts := []v1.APIV1HandlerOption{}
+	apiV1HandlerOpts = append(apiV1HandlerOpts, v1.WithAllHandler(si.Files))
+
+	if metasEnabled {
+		apiV1HandlerOpts = append(apiV1HandlerOpts, v1.WithMetasHandler(si.Files, si.Indices))
+	}
+
+	if graphqlEnabled {
+		apiV1HandlerOpts = append(apiV1HandlerOpts, v1.WithGraphQLHandler(si.Files, si.Indices, si.GraphQLSchemas))
+	}
+
+	return v1.NewAPIV1Handler(baseURLPath, apiV1HandlerOpts...)
+}
+
+type subPathedHandler interface {
+	SubPath() string
+	http.Handler
+}
+
+func configureHandler(handlers ...subPathedHandler) http.Handler {
+	mux := http.NewServeMux()
+	for _, h := range handlers {
+		mux.Handle(h.SubPath(), h)
+	}
+	return middleware.Standard(mux)
 }
