@@ -6,6 +6,6 @@
 components:
   e2e:
     enabled: true
-  
+
 # This can be one of: standard, standard-e2e, experimental, or experimental-e2e
 featureSet: standard-e2e
