@@ -146,6 +146,7 @@ tidy:
 KUSTOMIZE_CATD_RBAC_DIR := config/base/catalogd/rbac
 KUSTOMIZE_CATD_WEBHOOKS_DIR := config/base/catalogd/webhook
 KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
+BASE_COPY := helm/olmv1/base
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
 manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
@@ -163,20 +164,13 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)/experimental
 	# Generate manifests stored in source-control
 	mkdir -p $(MANIFEST_HOME)
-	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_OVERLAY) > $(STANDARD_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_E2E_OVERLAY) > $(STANDARD_E2E_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_OVERLAY) > $(EXPERIMENTAL_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY) > $(EXPERIMENTAL_E2E_MANIFEST)
-
-BASE_COPY := helm/olmv1/base
-helm-manifests: #EXHELP WIP: Make manifests via helm
 	rm -rf $(BASE_COPY)
 	mkdir -p $(BASE_COPY)
 	cp -r config/base/* $(BASE_COPY)
-	helm template olmv1 helm/olmv1 --values helm/standard.yaml > $(STANDARD_MANIFEST:.yaml=-helm.yaml)
-	helm template olmv1 helm/olmv1 --values helm/standard-e2e.yaml > $(STANDARD_E2E_MANIFEST:.yaml=-helm.yaml)
-	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST:.yaml=-helm.yaml)
-	helm template olmv1 helm/olmv1 --values helm/experimental-e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST:.yaml=-helm.yaml)
+	helm template olmv1 helm/olmv1 --values helm/standard.yaml > $(STANDARD_MANIFEST)
+	helm template olmv1 helm/olmv1 --values helm/standard-e2e.yaml > $(STANDARD_E2E_MANIFEST)
+	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
+	helm template olmv1 helm/olmv1 --values helm/experimental-e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
 	rm -rf $(BASE_COPY)
 
 .PHONY: generate
