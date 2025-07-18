@@ -6,7 +6,10 @@ metadata:
     {{- if .Values.components.certManager.enabled }}
     cert-manager.io/inject-ca-from-secret: {{ .Values.namespaces.certManager }}/olmv1-ca
     {{- end }}
-    {{- include "olmv1.annotations" . | nindent 4}}
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: catalogd
+    {{- include "olmv1.labels" . | nindent 4 }}
   name: catalogd-mutating-webhook-configuration
 webhooks:
   - admissionReviewVersions:

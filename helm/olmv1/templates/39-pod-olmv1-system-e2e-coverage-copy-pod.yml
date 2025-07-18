@@ -3,7 +3,10 @@ apiVersion: v1
 kind: Pod
 metadata:
   annotations:
-    {{- include "olmv1.annotations" . | nindent 4}}
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: e2e
+    {{- include "olmv1.labels" . | nindent 4 }}
   name: e2e-coverage-copy-pod
   namespace: {{ .Values.namespaces.olmv1 }}
 spec:

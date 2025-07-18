@@ -3,7 +3,10 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   annotations:
-    {{- include "olmv1.annotations" . | nindent 4}}
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: catalogd
+    {{- include "olmv1.labels" . | nindent 4 }}
   name: catalogd-service-cert
   namespace: {{ .Values.namespaces.olmv1 }}
 spec:
