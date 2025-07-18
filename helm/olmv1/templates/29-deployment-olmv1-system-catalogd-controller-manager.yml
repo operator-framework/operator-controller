@@ -1,0 +1,124 @@
+{{- if .Values.components.catalogd.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kubectl.kubernetes.io/default-logs-container: manager
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    control-plane: catalogd-controller-manager
+  name: catalogd-controller-manager
+  namespace: {{ .Values.namespaces.olmv1 }}
+spec:
+  minReadySeconds: 5
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: catalogd-controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+        {{- include "olmv1.annotations" . | nindent 8 }}
+      labels:
+        control-plane: catalogd-controller-manager
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+                      - arm64
+                      - ppc64le
+                      - s390x
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      containers:
+        - args:
+            - --leader-elect
+            - --metrics-bind-address=:7443
+            - --external-address=catalogd-service.{{ .Values.namespaces.olmv1 }}.svc
+            {{- if .Values.features.apiV1MetasHandler.enabled }}
+            - --feature-gates=APIV1MetasHandler=true
+            {{- end }}
+            - --tls-cert=/var/certs/tls.crt
+            - --tls-key=/var/certs/tls.key
+            - --pull-cas-dir=/var/ca-certs
+          command:
+            - ./catalogd
+          {{- if .Values.components.e2e.enabled }}
+          env:
+            - name: GOCOVERDIR
+              value: /e2e-coverage
+          {{- end }}
+          image: "{{ .Values.components.catalogd.image.repository }}:{{ .Values.components.catalogd.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.components.catalogd.image.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: manager
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            {{- if .Values.components.e2e.enabled }}
+            - mountPath: /e2e-coverage
+              name: e2e-coverage-volume
+            {{- end }}
+            - mountPath: /var/cache/
+              name: cache
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /var/certs
+              name: catalogserver-certs
+            - mountPath: /var/ca-certs/
+              name: olmv1-certificate
+              readOnly: true
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: catalogd-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+        {{- if .Values.components.e2e.enabled }}
+        - name: e2e-coverage-volume
+          persistentVolumeClaim:
+            claimName: e2e-coverage
+        {{- end }}
+        - emptyDir: {}
+          name: cache
+        - emptyDir: {}
+          name: tmp
+        - name: catalogserver-certs
+          secret:
+            secretName: catalogd-service-cert-git-version
+        - name: olmv1-certificate
+          secret:
+            items:
+              - key: ca.crt
+                path: olm-ca.crt
+            optional: false
+            secretName: catalogd-service-cert-git-version
+{{- end }}
