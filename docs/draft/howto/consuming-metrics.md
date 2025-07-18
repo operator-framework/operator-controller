@@ -226,7 +226,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: operator-controller-controller-manager
+    apps.kubernetes.io/name: operator-controller
   name: controller-manager-metrics-monitor
   namespace: olmv1-system
 spec:
@@ -251,7 +251,7 @@ spec:
           key: tls.key
   selector:
     matchLabels:
-      control-plane: operator-controller-controller-manager
+      apps.kubernetes.io/name: operator-controller
 EOF
 ```
 
@@ -268,7 +268,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: catalogd-controller-manager
+    apps.kubernetes.io/name: catalogd
   name: catalogd-metrics-monitor
   namespace: olmv1-system
 spec:

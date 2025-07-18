@@ -140,30 +140,21 @@ tidy:
 	go mod tidy
 
 .PHONY: manifests
-KUSTOMIZE_CATD_RBAC_DIR := config/base/catalogd/rbac
-KUSTOMIZE_CATD_WEBHOOKS_DIR := config/base/catalogd/webhook
-KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
+KUSTOMIZE_CATD_RBAC_DIR := helm/olmv1/base/catalogd/rbac
+KUSTOMIZE_CATD_WEBHOOKS_DIR := helm/olmv1/base/catalogd/webhook
+KUSTOMIZE_OPCON_RBAC_DIR := helm/olmv1/base/operator-controller/rbac
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
-manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) $(HELM) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	# Generate CRDs via our own generator
 	hack/tools/update-crds.sh
-	# Generate the remaining operator-controller standard manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)/standard
-	# Generate the remaining operator-controller experimental manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)/experimental
-	# Generate the remaining catalogd standard manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)/standard
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)/standard
-	# Generate the remaining catalogd experimental manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)/experimental
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)/experimental
 	# Generate manifests stored in source-control
 	mkdir -p $(MANIFEST_HOME)
-	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_OVERLAY) > $(STANDARD_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_E2E_OVERLAY) > $(STANDARD_E2E_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_OVERLAY) > $(EXPERIMENTAL_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY) > $(EXPERIMENTAL_E2E_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml > $(STANDARD_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/e2e.yaml > $(STANDARD_E2E_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/experimental.yaml --values helm/e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/tilt.yaml > /dev/null
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -285,7 +276,7 @@ test-experimental-e2e: run-internal image-registry prometheus experimental-e2e e
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
 prometheus: PROMETHEUS_VERSION := v0.83.0
-prometheus: #EXHELP Deploy Prometheus into specified namespace
+prometheus: $(KUSTOMIZE) #EXHELP Deploy Prometheus into specified namespace
 	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE) $(VERSION)
 
 .PHONY: test-extension-developer-e2e
