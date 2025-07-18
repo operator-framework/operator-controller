@@ -168,6 +168,12 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_OVERLAY) > $(EXPERIMENTAL_MANIFEST)
 	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY) > $(EXPERIMENTAL_E2E_MANIFEST)
 
+helm-manifests: #EXHELP WIP: Make manifests via helm
+	helm template olmv1 helm/olmv1 --values helm/standard.yaml > $(STANDARD_MANIFEST)
+	helm template olmv1 helm/olmv1 --values helm/standard-e2e.yaml > $(STANDARD_E2E_MANIFEST)
+	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
+	helm template olmv1 helm/olmv1 --values helm/experimental-e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
+
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	@find api cmd hack internal -name "zz_generated.deepcopy.go" -delete # Need to delete the files for them to be generated properly
