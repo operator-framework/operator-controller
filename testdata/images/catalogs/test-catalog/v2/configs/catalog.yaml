@@ -7,15 +7,15 @@ schema: olm.channel
 name: beta
 package: test
 entries:
-  - name: test-operator.2.0.0
+  - name: test-operator.1.3.0
     replaces: test-operator.1.2.0
 ---
 schema: olm.bundle
-name: test-operator.2.0.0
+name: test-operator.1.3.0
 package: test
-image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/test-operator:v2.0.0
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/test-operator:v1.0.0
 properties:
   - type: olm.package
     value:
       packageName: test
-      version: 2.0.0
+      version: 1.3.0
