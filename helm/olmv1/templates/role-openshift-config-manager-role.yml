@@ -1,0 +1,24 @@
+{{- if .Values.options.openshift.enabled -}}
+{{- if or .Values.options.catalogd.enabled .Values.options.operatorController.enabled -}}
+# permissions to do leader election.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: {{ include "olmv1.label.name" . }}
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: {{ include "olmv1.label.name" . -}}-manager-role
+  namespace: openshift-config
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+{{- end -}}
+{{- end -}}

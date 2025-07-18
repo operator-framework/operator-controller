@@ -1,0 +1,18 @@
+{{- if .Values.options.e2e.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: e2e
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: e2e-coverage
+  namespace: {{ .Values.namespaces.olmv1.name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 64Mi
+{{- end }}

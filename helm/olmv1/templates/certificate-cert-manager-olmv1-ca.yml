@@ -1,0 +1,27 @@
+{{- if .Values.options.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: {{ include "olmv1.label.name" . }}
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: olmv1-ca
+  namespace: {{ .Values.namespaces.certManager.name }}
+spec:
+  commonName: olmv1-ca
+  isCA: true
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: self-sign-issuer
+  privateKey:
+    algorithm: ECDSA
+    rotationPolicy: Always
+    size: 256
+  secretName: olmv1-ca
+  secretTemplate:
+    annotations:
+      cert-manager.io/allow-direct-injection: "true"
+{{- end }}

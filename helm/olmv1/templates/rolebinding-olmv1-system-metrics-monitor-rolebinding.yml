@@ -1,0 +1,22 @@
+{{- if .Values.options.openshift.enabled -}}
+{{- if or .Values.options.catalogd.enabled .Values.options.operatorController.enabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: {{ include "olmv1.label.name" . }}
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: {{ include "olmv1.label.name" . -}}-metrics-monitor-rolebinding
+  namespace: {{ .Values.namespaces.olmv1.name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "olmv1.label.name" . -}}-metrics-monitor-role
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-k8s
+    namespace: openshift-monitoring
+{{- end -}}
+{{- end -}}

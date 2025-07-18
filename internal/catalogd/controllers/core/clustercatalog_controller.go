@@ -76,12 +76,6 @@ type storedCatalogData struct {
 	observedGeneration int64
 }
 
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs/finalizers,verbs=update
-//+kubebuilder:rbac:namespace=olmv1-system,groups=core,resources=secrets,verbs=get;list;watch
-//+kubebuilder:rbac:namespace=olmv1-system,groups=core,resources=serviceaccounts,verbs=get;list;watch
-
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 //

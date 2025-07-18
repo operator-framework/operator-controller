@@ -150,4 +150,4 @@ def deploy_repo(data, tags="", debug=True):
         local_port = repo['starting_debug_port']
         build_binary(reponame, repo['binary'], repo['deps'], repo['image'], tags, debug)
         k8s_resource(repo['deployment'], port_forwards=['{}:30000'.format(local_port)])
-    process_yaml(kustomize(data['yaml']))
+    process_yaml(helm('helm/olmv1', name="olmv1", values=[data['yaml']]))

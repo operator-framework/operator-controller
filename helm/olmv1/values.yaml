@@ -1,0 +1,84 @@
+# Default values for OLMv1.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# List of components to include
+options:
+  operatorController:
+    enabled: true
+    deployment:
+      image: quay.io/operator-framework/operator-controller:devel
+  catalogd:
+    enabled: true
+    deployment:
+      image: quay.io/operator-framework/catalogd:devel
+  certManager:
+    enabled: false
+  e2e:
+    enabled: false
+  tilt:
+    enabled: false
+  openshift:
+    enabled: false
+  # This can be one of: standard or experimental
+  featureSet: standard
+
+operatorControllerFeatures: []
+catalogdFeatures: []
+
+
+# The set of namespaces
+namespaces:
+  olmv1:
+    name: olmv1-system
+  certManager:
+    name: cert-manager
+
+# Common deployment values for operator-controller and catalogd
+deployments:
+  templateSpec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
+                    - ppc64le
+                    - s390x
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                    - linux
+    nodeSelector:
+      kubernetes.io/os: linux
+      node-role.kubernetes.io/control-plane: ""
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    terminationGracePeriodSeconds: 10
+    tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+        tolerationSeconds: 120
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+        tolerationSeconds: 120
+  containerSpec:
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+    terminationMessagePolicy: FallbackToLogsOnError

@@ -1,0 +1,43 @@
+{{- if .Values.options.catalogd.enabled }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: catalogd-mutating-webhook-configuration
+  labels:
+    app.kubernetes.io/name: catalogd
+    {{- include "olmv1.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.options.certManager.enabled }}
+    cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
+    {{- end }}
+    {{- if .Values.options.openshift.enabled }}
+    service.beta.openshift.io/inject-cabundle: "true"
+    {{- end }}
+    {{- include "olmv1.annotations" . | nindent 4 }}
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      service:
+        name: catalogd-service
+        namespace: {{ .Values.namespaces.olmv1.name }}
+        path: /mutate-olm-operatorframework-io-v1-clustercatalog
+        port: 9443
+    failurePolicy: Fail
+    name: inject-metadata-name.olm.operatorframework.io
+    rules:
+      - apiGroups:
+          - olm.operatorframework.io
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - clustercatalogs
+    sideEffects: None
+    timeoutSeconds: 10
+    matchConditions:
+      - name: MissingOrIncorrectMetadataNameLabel
+        expression: "'name' in object.metadata && (!has(object.metadata.labels) || !('olm.operatorframework.io/metadata.name' in object.metadata.labels) || object.metadata.labels['olm.operatorframework.io/metadata.name'] != object.metadata.name)"
+{{- end }}

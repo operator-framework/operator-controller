@@ -1,0 +1,17 @@
+{{- if .Values.options.e2e.enabled }}
+apiVersion: v1
+data:
+  registries.conf: |
+    [[registry]]
+    prefix = "mirrored-registry.operator-controller-e2e.svc.cluster.local:5000"
+    location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"
+kind: ConfigMap
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: e2e
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: e2e-registries-conf
+  namespace: {{ .Values.namespaces.olmv1.name }}
+{{- end }}

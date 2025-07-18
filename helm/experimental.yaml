@@ -1,0 +1,22 @@
+# experimental values for OLMv1.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# List of enabled experimental features for operator-controller
+# Use with {{- if has "FeatureGate" .Value.operatorControllerFeatures }}
+# to pull in resources or additions
+operatorControllerFeatures:
+  - WebhookProviderCertManager
+  - SingleOwnNamespaceInstallSupport
+  - PreflightPermissions
+  - HelmChartSupport
+
+# List of enabled experimental features for catalogd
+# Use with {{- if has "FeatureGate" .Value.catalogdFeatures }}
+# to pull in resources or additions
+catalogdFeatures:
+  - APIV1MetasHandler
+
+# This can be one of: standard or experimental
+options:
+  featureSet: experimental

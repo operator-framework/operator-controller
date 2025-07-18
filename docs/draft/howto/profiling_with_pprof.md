@@ -21,7 +21,7 @@ The following steps are examples to demonstrate the required changes to enable P
 1. Run the following command to patch the Deployment and add the `--pprof-bind-address=:8082` flag:
 
 ```shell
-kubectl patch deployment $(kubectl get deployments -n olmv1-system -l control-plane=operator-controller-controller-manager -o jsonpath='{.items[0].metadata.name}') \
+kubectl patch deployment $(kubectl get deployments -n olmv1-system -l apps.kubernetes.io/name=operator-controller -o jsonpath='{.items[0].metadata.name}') \
 -n olmv1-system --type='json' -p='[
   {
     "op": "add",
@@ -127,7 +127,7 @@ go tool pprof -http=:8080 ./operator-controller-profile.pprof
 1. Run the following command to patch the Deployment and add the `--pprof-bind-address=:8083` flag:
 
 ```shell
-kubectl patch deployment $(kubectl get deployments -n olmv1-system -l control-plane=catalogd-controller-manager -o jsonpath='{.items[0].metadata.name}') \
+kubectl patch deployment $(kubectl get deployments -n olmv1-system -l apps.kubernetes.io/name=catalogd -o jsonpath='{.items[0].metadata.name}') \
 -n olmv1-system --type='json' -p='[
   {
     "op": "add",
@@ -235,7 +235,7 @@ go tool pprof -http=:8080 ./catalogd-profile.pprof
 1. Run the following command to bind to `--pprof-bind-address` the value `0` in order to disable the endpoint.
 
 ```shell
-kubectl patch deployment $(kubectl get deployments -n olmv1-system -l control-plane=operator-controller-controller-manager -o jsonpath='{.items[0].metadata.name}') \
+kubectl patch deployment $(kubectl get deployments -n olmv1-system -l apps.kubernetes.io/name=operator-controller -o jsonpath='{.items[0].metadata.name}') \
 -n olmv1-system --type='json' -p='[
   {
     "op": "replace",
@@ -266,7 +266,7 @@ kubectl delete pod curl-oper-con-pprof -n olmv1-system
 
 1. Run the following command to bind to `--pprof-bind-address` the value `0` in order to disable the endpoint.
 ```shell
-kubectl patch deployment $(kubectl get deployments -n olmv1-system -l control-plane=catalogd-controller-manager -o jsonpath='{.items[0].metadata.name}') \
+kubectl patch deployment $(kubectl get deployments -n olmv1-system -l apps.kubernetes.io/name=catalogd -o jsonpath='{.items[0].metadata.name}') \
 -n olmv1-system --type='json' -p='[
   {
     "op": "replace",
