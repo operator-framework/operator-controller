@@ -756,7 +756,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 			assert.Contains(ct, cond.Message, "Installed bundle")
-			assert.Contains(ct, clusterExtension.Status.Install.Bundle.Version, "2.0.0")
+			assert.Contains(ct, clusterExtension.Status.Install.Bundle.Version, "1.3.0")
 		}
 	}, pollDuration, pollInterval)
 

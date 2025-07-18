@@ -53,6 +53,12 @@ $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
 	@echo "(re)installing $(GOBIN)/goreleaser-v1.26.2"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v1.26.2 "github.com/goreleaser/goreleaser"
 
+HELM := $(GOBIN)/helm-v3.18.4
+$(HELM): $(BINGO_DIR)/helm.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/helm-v3.18.4"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=helm.mod -o=$(GOBIN)/helm-v3.18.4 "helm.sh/helm/v3/cmd/helm"
+
 KIND := $(GOBIN)/kind-v0.29.0
 $(KIND): $(BINGO_DIR)/kind.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.

@@ -1,7 +1,7 @@
 apiVersion: v1
+data:
+  name: test-configmap
+  version: v1.0.0
 kind: ConfigMap
 metadata:
   name: test-configmap
-data:
-  version: "v1.0.0"
-  name: "test-configmap"

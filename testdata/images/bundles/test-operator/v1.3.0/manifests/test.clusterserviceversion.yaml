@@ -1,0 +1,141 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.34.1
+    operators.operatorframework.io/project_layout: unknown
+  name: test.v1.3.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: TestOperator is the Schema for the testoperators API.
+      displayName: Test Operator
+      kind: TestOperator
+      name: testoperators.testolm.operatorframework.io
+      version: v1
+  description: Test OLM Operator
+  displayName: OLM Test Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - testolm.operatorframework.io
+          resources:
+          - testoperators
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - testolm.operatorframework.io
+          resources:
+          - testoperators/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - testolm.operatorframework.io
+          resources:
+          - testoperators/status
+          verbs:
+          - get
+          - patch
+          - update
+        serviceAccountName: test-operator-manager
+      deployments:
+      - label:
+          app.kubernetes.io/name: test-operator
+          control-plane: controller-manager
+        name: controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: test-operator
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              annotations:
+                kubectl.kubernetes.io/default-container: manager
+              labels:
+                app.kubernetes.io/name: test-operator
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --health-probe-bind-address=:8081
+                command:
+                - /manager
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/controllers/test-operator:v1.0.0
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+              securityContext:
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
+              serviceAccountName: test-operator-manager
+              terminationGracePeriodSeconds: 10
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - test
+  - operator
+  links:
+  - name: V1
+    url: https://github.com/operator-framework/operator-controller
+  maintainers:
+  - email: operator-framework-olm-dev@googlegroups.com
+    name: community
+  maturity: alpha
+  provider:
+    name: operator-framework
+    url: https://github.com/operator-framework/operator-controller
+  version: 1.3.0
