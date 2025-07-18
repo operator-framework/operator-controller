@@ -1,0 +1,9 @@
+# DO NOT ADD A NAMESPACE HERE
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+ - target:
+      kind: Deployment
+      name: operator-controller-controller-manager
+   path: patches/enable-featuregate.yaml
