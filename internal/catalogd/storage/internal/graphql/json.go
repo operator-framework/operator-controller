@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/graphql-go/graphql"
@@ -60,25 +59,6 @@ var jsonScalar = graphql.NewScalar(graphql.ScalarConfig{
 	},
 })
 
-func contextWithJQCodeMap(ctx context.Context) context.Context {
-	jqCodeMap := make(map[string]*gojq.Code)
-	return context.WithValue(ctx, "jqCode", jqCodeMap)
-}
-
-func getOrCompileJQCode(ctx context.Context, jqQueryString string) (*gojq.Code, error) {
-	jqCodeMap := ctx.Value("jqCode").(map[string]*gojq.Code)
-	jqCode, ok := jqCodeMap[jqQueryString]
-	if !ok {
-		var err error
-		jqCode, err = jqQuery(jqQueryString)
-		if err != nil {
-			return nil, err
-		}
-		jqCodeMap[jqQueryString] = jqCode
-	}
-	return jqCode, nil
-}
-
 func newJSONScalarField(fieldName string) *graphql.Field {
 	return &graphql.Field{
 		Type: jsonScalar,
@@ -96,7 +76,7 @@ func newJSONScalarField(fieldName string) *graphql.Field {
 				return data, nil
 			}
 
-			jqCode, err := getOrCompileJQCode(p.Context, jqQueryString)
+			jqCode, err := jqCodeFromContextOrCompileAndSet(p.Context, jqQueryString)
 			if err != nil {
 				return nil, err
 			}
@@ -104,17 +84,4 @@ func newJSONScalarField(fieldName string) *graphql.Field {
 			return applyJQQuery(data, jqCode)
 		},
 	}
-}
-
-func jqQuery(queryString string) (*gojq.Code, error) {
-	query, err := gojq.Parse(queryString)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse jq query %q: %w", queryString, err)
-	}
-
-	code, err := gojq.Compile(query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile jq query %q: %w", queryString, err)
-	}
-	return code, nil
 }

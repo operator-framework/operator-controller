@@ -17,7 +17,7 @@ import (
 // scanETag determines if a syntactically valid ETag is present at s. If so,
 // the ETag and remaining text after consuming ETag is returned. Otherwise,
 // it returns "", "".
-func scanETag(s string) (etag string, remain string) {
+func scanETag(s string) (string, string) {
 	s = textproto.TrimString(s)
 	start := 0
 	if strings.HasPrefix(s, "W/") {
@@ -220,7 +220,7 @@ func writeNotModified(w http.ResponseWriter) {
 
 // CheckPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func CheckPreconditions(w http.ResponseWriter, r *http.Request, modtime time.Time) (done bool, rangeHeader string) {
+func CheckPreconditions(w http.ResponseWriter, r *http.Request, modtime time.Time) (bool, string) {
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(w, r)
 	if ch == condNone {
@@ -246,7 +246,7 @@ func CheckPreconditions(w http.ResponseWriter, r *http.Request, modtime time.Tim
 		}
 	}
 
-	rangeHeader = getHTTPHeader(r.Header, "Range")
+	rangeHeader := getHTTPHeader(r.Header, "Range")
 	if rangeHeader != "" && checkIfRange(w, r, modtime) == condFalse {
 		rangeHeader = ""
 	}

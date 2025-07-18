@@ -1,61 +1,59 @@
 package graphql
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"iter"
 	"regexp"
 
 	"github.com/graphql-go/graphql"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
-
-	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 )
 
-// graphQLSchemaGenerator generates GraphQL schemas from Meta objects using two-phase processing
-type graphQLSchemaGenerator struct {
-	schemaFieldData map[string]map[string]interface{} // schema -> fieldName -> merged value
-	resolver        *storage.Index
-}
+// GenerateSchema processes FBC meta objects and returns a GraphQL schema that represents them.
+func GenerateSchema(ctx context.Context, metas iter.Seq2[*declcfg.Meta, error]) (*graphql.Schema, error) {
+	schemaFieldData := make(map[string]map[string]interface{})
+	for meta, iterErr := range metas {
+		if iterErr != nil {
+			return nil, fmt.Errorf("error walking FBC data: %v", iterErr)
+		}
 
-// newGraphQLSchemaGenerator creates a new schema generator
-func newGraphQLSchemaGenerator(resolver *storage.Index) *graphQLSchemaGenerator {
-	return &graphQLSchemaGenerator{
-		schemaFieldData: map[string]map[string]interface{}{},
-		resolver:        resolver,
-	}
-}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
 
-// ProcessMeta processes a single Meta object incrementally - Phase 1: Data Accumulation
-func (g *graphQLSchemaGenerator) ProcessMeta(meta *declcfg.Meta) error {
-	// Parse the blob content
-	var blobContent map[string]interface{}
-	if err := json.Unmarshal(meta.Blob, &blobContent); err != nil {
-		return err
-	}
+		// Parse the blob content
+		var blobContent map[string]interface{}
+		if err := json.Unmarshal(meta.Blob, &blobContent); err != nil {
+			return nil, err
+		}
 
-	// Initialize schema field data if not exists
-	if g.schemaFieldData[meta.Schema] == nil {
-		g.schemaFieldData[meta.Schema] = map[string]interface{}{}
-	}
+		// Initialize schema field data if not exists
+		if schemaFieldData[meta.Schema] == nil {
+			schemaFieldData[meta.Schema] = map[string]interface{}{}
+		}
 
-	// Process each field in the blob - only merge data, no GraphQL object creation
-	for fieldName, fieldValue := range blobContent {
-		// Deep merge field values to capture all possible nested fields
-		if existingValue, exists := g.schemaFieldData[meta.Schema][fieldName]; exists {
-			mergedValue, err := deepMerge(existingValue, fieldValue, fmt.Sprintf("%s.%s", meta.Schema, fieldName))
-			if err != nil {
-				return fmt.Errorf("failed to merge field '%s' in schema '%s': %w",
-					fieldName, meta.Schema, err)
+		// Process each field in the blob - only merge data, no GraphQL object creation
+		for fieldName, fieldValue := range blobContent {
+			// Deep merge field values to capture all possible nested fields
+			if existingValue, exists := schemaFieldData[meta.Schema][fieldName]; exists {
+				mergedValue, err := deepMerge(existingValue, fieldValue, fmt.Sprintf("%s.%s", meta.Schema, fieldName))
+				if err != nil {
+					return nil, fmt.Errorf("failed to merge field '%s' in schema '%s': %w",
+						fieldName, meta.Schema, err)
+				}
+				schemaFieldData[meta.Schema][fieldName] = mergedValue
+			} else {
+				schemaFieldData[meta.Schema][fieldName] = fieldValue
 			}
-			g.schemaFieldData[meta.Schema][fieldName] = mergedValue
-		} else {
-			g.schemaFieldData[meta.Schema][fieldName] = fieldValue
 		}
 	}
-
-	return nil
+	return generateSchema(schemaFieldData)
 }
 
 func deepMergeMap(existingMap, newMap map[string]interface{}, fieldPath string) (map[string]interface{}, error) {
@@ -165,25 +163,22 @@ func deepMerge(existing, new interface{}, fieldPath string) (interface{}, error)
 }
 
 // GenerateFBCSchema generates a complete GraphQL schema from accumulated data - Phase 2: Schema Generation
-func (g *graphQLSchemaGenerator) GenerateFBCSchema() (*graphql.Schema, error) {
-	if len(g.schemaFieldData) == 0 {
+func generateSchema(schemaFieldData map[string]map[string]interface{}) (*graphql.Schema, error) {
+	if len(schemaFieldData) == 0 {
 		return nil, fmt.Errorf("no schema data available - no Meta objects have been processed")
 	}
 
 	// Build GraphQL types for each schema
-	namer := newNamer()
-	rootFields := make(graphql.Fields, len(g.schemaFieldData))
-	for schema, protoObj := range g.schemaFieldData {
+	graphqlNamer := newNamer()
+	rootFields := make(graphql.Fields, len(schemaFieldData))
+	for schema, protoObj := range schemaFieldData {
 		// Create GraphQL type for this schema using accumulated field data
-		gqlType, err := generateTypeForSchema(schema, protoObj, namer)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate type for schema %s: %w", schema, err)
-		}
+		gqlType := generateTypeForSchema(schema, protoObj, graphqlNamer)
 
 		// Create field name from schema (e.g., "olm.package" -> "olmPackage")
-		fieldName := namer.FieldNameForSchema(schema)
+		fieldName := graphqlNamer.FieldNameForSchema(schema)
 
-		// Add field to root query with filtering arguments
+		// Add field to root query
 		rootFields[fieldName] = &graphql.Field{
 			Type: graphql.NewList(gqlType),
 			Args: graphql.FieldConfigArgument{
@@ -197,15 +192,22 @@ func (g *graphQLSchemaGenerator) GenerateFBCSchema() (*graphql.Schema, error) {
 				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				file, err := fileFromContext(p.Context)
+				if err != nil {
+					return nil, err
+				}
+
+				idx, err := indexFromContext(p.Context)
+				if err != nil {
+					return nil, err
+				}
+
 				// Get filter arguments
 				nameFilter, _ := p.Args["name"].(string)
 				packageFilter, _ := p.Args["package"].(string)
 
 				// Parse the data using streaming JSON decoder
-				reader, err := g.resolver.Lookup(schema, packageFilter, nameFilter)
-				if err != nil {
-					return nil, err
-				}
+				reader := idx.Get(file, schema, packageFilter, nameFilter)
 				decoder := json.NewDecoder(reader)
 				result := make([]map[string]interface{}, 0)
 
@@ -243,7 +245,7 @@ func (g *graphQLSchemaGenerator) GenerateFBCSchema() (*graphql.Schema, error) {
 }
 
 // generateTypeForSchema creates a GraphQL type for a specific schema using stored field information
-func generateTypeForSchema(schema string, schemaFields map[string]interface{}, namer *namer) (*graphql.Object, error) {
+func generateTypeForSchema(schema string, schemaFields map[string]interface{}, namer *namer) *graphql.Object {
 	typeName := namer.TypeNameForSchema(schema)
 
 	// Create GraphQL fields based on discovered fields
@@ -284,7 +286,7 @@ func generateTypeForSchema(schema string, schemaFields map[string]interface{}, n
 		Fields: gqlFields,
 	})
 
-	return objectType, nil
+	return objectType
 }
 
 // isPropertiesPattern checks if a value matches the OLM properties pattern.
@@ -373,7 +375,6 @@ func hasAllValidGraphQLFields(mapValue map[string]interface{}) bool {
 
 // inferGraphQLTypeFromValueWithContext infers a GraphQL type from a value with context
 func inferGraphQLTypeFromValueWithContext(parentName, name string, value interface{}, namer *namer) graphql.Type {
-
 	switch v := value.(type) {
 	case string:
 		return graphql.String
