@@ -1,0 +1,18 @@
+# Default values for operator-controller.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+features:
+  apiV1MetasHandler:
+    enabled: true
+  webhookProviderCertManager:
+    enabled: true
+  singleOwnNamespaceInstallSupport:
+    enabled: true
+  preflightPermissions:
+    enabled: true
+  helmChartSupport:
+    enabled: true
+  
+# This can be one of: standard, standard-e2e, experimental, or experimental-e2e
+featureSet: experimental
