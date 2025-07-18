@@ -168,11 +168,16 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_OVERLAY) > $(EXPERIMENTAL_MANIFEST)
 	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY) > $(EXPERIMENTAL_E2E_MANIFEST)
 
+BASE_COPY := helm/olmv1/base
 helm-manifests: #EXHELP WIP: Make manifests via helm
-	helm template olmv1 helm/olmv1 --values helm/standard.yaml > $(STANDARD_MANIFEST)
-	helm template olmv1 helm/olmv1 --values helm/standard-e2e.yaml > $(STANDARD_E2E_MANIFEST)
-	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
-	helm template olmv1 helm/olmv1 --values helm/experimental-e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
+	rm -rf $(BASE_COPY)
+	mkdir -p $(BASE_COPY)
+	cp -r config/base/* $(BASE_COPY)
+	helm template olmv1 helm/olmv1 --values helm/standard.yaml > $(STANDARD_MANIFEST:.yaml=-helm.yaml)
+	helm template olmv1 helm/olmv1 --values helm/standard-e2e.yaml > $(STANDARD_E2E_MANIFEST:.yaml=-helm.yaml)
+	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST:.yaml=-helm.yaml)
+	helm template olmv1 helm/olmv1 --values helm/experimental-e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST:.yaml=-helm.yaml)
+	rm -rf $(BASE_COPY)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
