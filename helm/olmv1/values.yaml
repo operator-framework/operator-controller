@@ -10,12 +10,22 @@ components:
       repository: quay.io/operator-framework/operator-controller
       pullPolicy: IfNotPresent
       tag: devel
+    volumeMounts: {}
+    volumes: {}
+    affinity: {}
+    nodeSelector: {}
+    tolerations: {}
   catalogd:
     enabled: true
     image:
       repository: quay.io/operator-framework/catalogd
       pullPolicy: IfNotPresent
       tag: devel
+    volumeMounts: {}
+    volumes: {}
+    affinity: {}
+    nodeSelector: {}
+    tolerations: {}
   certManager:
     enabled: true
   e2e:
@@ -38,8 +48,14 @@ featureSet: standard
 
 # The set of namespaces
 namespaces:
-  olmv1: olmv1-system
-  certManager: cert-manager
+  olmv1:
+    name: olmv1-system
+    labels:
+      pod-security.kubernetes.io/enforce: restricted
+      pod-security.kubernetes.io/enforce-version: latest
+    annotations: {}
+  certManager:
+    name: cert-manager
 
 # Pod-level security context
 podSecurityContext:

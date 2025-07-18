@@ -8,12 +8,12 @@ metadata:
     app.kubernetes.io/name: catalogd
     {{- include "olmv1.labels" . | nindent 4 }}
   name: catalogd-service-cert
-  namespace: {{ .Values.namespaces.olmv1 }}
+  namespace: {{ .Values.namespaces.olmv1.name }}
 spec:
   dnsNames:
     - localhost
-    - catalogd-service.{{ .Values.namespaces.olmv1 }}.svc
-    - catalogd-service.{{ .Values.namespaces.olmv1 }}.svc.cluster.local
+    - catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc
+    - catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc.cluster.local
   issuerRef:
     group: cert-manager.io
     kind: ClusterIssuer

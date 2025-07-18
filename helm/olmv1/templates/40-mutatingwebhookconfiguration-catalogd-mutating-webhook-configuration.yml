@@ -4,7 +4,7 @@ kind: MutatingWebhookConfiguration
 metadata:
   annotations:
     {{- if .Values.components.certManager.enabled }}
-    cert-manager.io/inject-ca-from-secret: {{ .Values.namespaces.certManager }}/olmv1-ca
+    cert-manager.io/inject-ca-from-secret: {{ .Values.namespaces.certManager.name }}/olmv1-ca
     {{- end }}
     {{- include "olmv1.annotations" . | nindent 4 }}
   labels:
@@ -17,7 +17,7 @@ webhooks:
     clientConfig:
       service:
         name: catalogd-service
-        namespace: {{ .Values.namespaces.olmv1 }}
+        namespace: {{ .Values.namespaces.olmv1.name }}
         path: /mutate-olm-operatorframework-io-v1-clustercatalog
         port: 9443
     failurePolicy: Fail

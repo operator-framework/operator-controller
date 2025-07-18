@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: olmv1
     {{- include "olmv1.labels" . | nindent 4 }}
   name: olmv1-ca
-  namespace: {{ .Values.namespaces.certManager }}
+  namespace: {{ .Values.namespaces.certManager.name }}
 spec:
   commonName: olmv1-ca
   isCA: true
