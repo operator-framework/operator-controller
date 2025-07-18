@@ -1,0 +1,24 @@
+{{/* this is a common component */}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+    {{- if .Values.options.openshift.enabled }}
+    openshift.io/node-selector: ""
+    workload.openshift.io/allowed: management
+    {{- end }}
+  labels:
+    {{- $psProfile := ternary "privileged" "restricted" .Values.options.openshift.enabled }}
+    app.kubernetes.io/name: {{ include "olmv1.label.name" . }}
+    pod-security.kubernetes.io/audit: {{ $psProfile }}
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/enforce: {{ $psProfile }}
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: {{ $psProfile }}
+    pod-security.kubernetes.io/warn-version: latest
+    {{- include "olmv1.labels" . | nindent 4 }}
+    {{- if .Values.options.openshift.enabled }}
+    openshift.io/cluster-monitoring: "true"
+    {{- end }}
+  name: {{ .Values.namespaces.olmv1.name }}

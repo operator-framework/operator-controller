@@ -1,0 +1,32 @@
+{{- $options := list }}
+{{- if .Values.options.catalogd.enabled }}
+{{- $options = append $options "catalogd" }}
+{{- end }}
+{{- if .Values.options.operatorController.enabled }}
+{{- $options = append $options "operator-controller" }}
+{{- end }}
+{{- range $index, $name := $options }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" $ | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "olmv1.labels" $ | nindent 4 }}
+  name: {{ $name -}}-proxy-role
+rules:
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
+{{- end }}
