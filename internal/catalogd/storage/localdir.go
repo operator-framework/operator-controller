@@ -200,9 +200,9 @@ func (s *LocalDirV1) StorageServerHandler() http.Handler {
 	allowedMethodsHandler := func(next http.Handler, allowedMethods ...string) http.Handler {
 		allowedMethodSet := sets.New[string](allowedMethods...)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Allow POST requests for GraphQL endpoint
-			if r.URL.Path != "" && r.URL.Path[len(r.URL.Path)-7:] == "graphql" && r.Method == http.MethodPost {
-				next.ServeHTTP(w, r)
+			// Allow POST requests only for GraphQL endpoint
+			if r.URL.Path != "" && r.URL.Path[len(r.URL.Path)-7:] != "graphql" && r.Method == http.MethodPost {
+				http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				return
 			}
 			if !allowedMethodSet.Has(r.Method) {
@@ -212,7 +212,7 @@ func (s *LocalDirV1) StorageServerHandler() http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-	return allowedMethodsHandler(mux, http.MethodGet, http.MethodHead)
+	return allowedMethodsHandler(mux, http.MethodGet, http.MethodHead, http.MethodPost)
 }
 
 func (s *LocalDirV1) handleV1All(w http.ResponseWriter, r *http.Request) {
