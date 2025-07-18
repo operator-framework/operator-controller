@@ -1,0 +1,42 @@
+{{- if .Values.components.operatorController.enabled }}
+{{/* Probably want to include this as a file somehow */}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4}}
+  name: operator-controller-leader-election-role
+  namespace: {{ .Values.namespaces.olmv1 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+{{- end }}

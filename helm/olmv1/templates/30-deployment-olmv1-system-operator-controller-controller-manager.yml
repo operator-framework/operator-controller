@@ -1,0 +1,138 @@
+{{- if .Values.components.operatorController.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kubectl.kubernetes.io/default-logs-container: manager
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    control-plane: operator-controller-controller-manager
+  name: operator-controller-controller-manager
+  namespace: {{ .Values.namespaces.olmv1 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: operator-controller-controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+        {{- include "olmv1.annotations" . | nindent 8 }}
+      labels:
+        control-plane: operator-controller-controller-manager
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+                      - arm64
+                      - ppc64le
+                      - s390x
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      containers:
+        - args:
+            - --health-probe-bind-address=:8081
+            - --metrics-bind-address=:8443
+            - --leader-elect
+            {{- if .Values.features.apiV1MetasHandler.enabled }}
+            - --feature-gates=WebhookProviderCertManager=true
+            {{- end }}
+            {{- if .Values.features.singleOwnNamespaceInstallSupport.enabled }}
+            - --feature-gates=SingleOwnNamespaceInstallSupport=true
+            {{- end }}
+            {{- if .Values.features.preflightPermissions.enabled }}
+            - --feature-gates=PreflightPermissions=true
+            {{- end }}
+            {{- if .Values.features.helmChartSupport.enabled }}
+            - --feature-gates=HelmChartSupport=true
+            {{- end }}
+            - --catalogd-cas-dir=/var/certs
+            - --pull-cas-dir=/var/certs
+            - --tls-cert=/var/certs/tls.cert
+            - --tls-key=/var/certs/tls.key
+          command:
+            - /operator-controller
+          {{- if .Values.components.e2e.enabled }}
+          env:
+            - name: GOCOVERDIR
+              value: /e2e-coverage
+          {{- end }}
+          image: "{{ .Values.components.operatorController.image.repository }}:{{ .Values.components.operatorController.image.tag | default .Chart.AppVersion }}"
+          image: quay.io/operator-framework/operator-controller:devel
+          imagePullPolicy: {{ .Values.components.operatorController.image.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: manager
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            {{- if .Values.components.e2e.enabled }}
+            - mountPath: /etc/containers
+              name: e2e-registries-conf
+            - mountPath: /e2e-coverage
+              name: e2e-coverage-volume
+            {{- end }}
+            - mountPath: /var/cache
+              name: cache
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /var/certs/
+              name: olmv1-certificate
+              readOnly: true
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: operator-controller-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+        {{- if .Values.components.e2e.enabled }}
+        - configMap:
+            name: e2e-registries-conf
+          name: e2e-registries-conf
+        - name: e2e-coverage-volume
+          persistentVolumeClaim:
+            claimName: e2e-coverage
+        {{- end }}
+        - emptyDir: {}
+          name: cache
+        - emptyDir: {}
+          name: tmp
+        - name: olmv1-certificate
+          secret:
+            items:
+              - key: ca.crt
+                path: olm-ca.crt
+              - key: tls.crt
+                path: tls.cert
+              - key: tls.key
+                path: tls.key
+            optional: false
+            secretName: olmv1-cert
+{{- end }}
