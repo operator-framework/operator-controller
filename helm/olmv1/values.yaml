@@ -1,0 +1,56 @@
+# Default values for operator-controller.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# List of components to include
+components:
+  operatorController:
+    enabled: true
+    image:
+      repository: quay.io/operator-framework/operator-controller
+      pullPolicy: IfNotPresent
+      tag: devel
+  catalogd:
+    enabled: true
+    image:
+      repository: quay.io/operator-framework/catalogd
+      pullPolicy: IfNotPresent
+      tag: devel
+  certManager:
+    enabled: true
+  e2e:
+    enabled: false
+
+features:
+  apiV1MetasHandler:
+    enabled: false
+  webhookProviderCertManager:
+    enabled: false
+  singleOwnNamespaceInstallSupport:
+    enabled: false
+  preflightPermissions:
+    enabled: false
+  helmChartSupport:
+    enabled: false
+  
+# This can be one of: standard, standard-e2e, experimental, or experimental-e2e
+featureSet: standard
+
+# The set of namespaces
+namespaces:
+  olmv1: olmv1-system
+  certManager: cert-manager
+
+# Pod-level security context
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container-level security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
