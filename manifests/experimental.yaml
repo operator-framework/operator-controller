@@ -1621,6 +1621,7 @@ spec:
         - --metrics-bind-address=:7443
         - --external-address=catalogd-service.$(POD_NAMESPACE).svc
         - --feature-gates=APIV1MetasHandler=true
+        - --feature-gates=APIV1GraphQLHandler=true
         - --tls-cert=/var/certs/tls.crt
         - --tls-key=/var/certs/tls.key
         - --pull-cas-dir=/var/ca-certs
