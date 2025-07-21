@@ -64,21 +64,21 @@ func NewInstances(opts ...InstancesOption) *Instances {
 
 func (i *Instances) Files() Files {
 	if i.files == nil {
-		panic("files data was not initialized")
+		panic("files data was not initialized. Ensure that the 'WithFiles' option is used when creating the Instances object.")
 	}
 	return i.files
 }
 
 func (i *Instances) Indices() Indices {
 	if i.indices == nil {
-		panic("indices data was not initialized")
+		panic("indices data was not initialized. Ensure that the 'WithIndices' option is used when creating the Instances object.")
 	}
 	return i.indices
 }
 
 func (i *Instances) GraphQLSchemas() GraphQLSchemas {
 	if i.graphQLSchemas == nil {
-		panic("graphQLSchemas data was not initialized")
+		panic("graphQLSchemas data was not initialized. Ensure that the 'WithGraphQLSchemas' option is used when creating the Instances object.")
 	}
 	return i.graphQLSchemas
 }
