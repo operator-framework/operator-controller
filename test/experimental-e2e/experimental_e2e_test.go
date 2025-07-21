@@ -132,11 +132,12 @@ func TestWebhookSupport(t *testing.T) {
 
 	t.Log("By waiting for the catalog to serve its metadata")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(t, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.GetName()}, extensionCatalog))
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.GetName()}, extensionCatalog))
 		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, ocv1.TypeServing)
-		assert.NotNil(t, cond)
-		assert.Equal(t, metav1.ConditionTrue, cond.Status)
-		assert.Equal(t, ocv1.ReasonAvailable, cond.Reason)
+		if assert.NotNil(ct, cond) {
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+			assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
+		}
 	}, pollDuration, pollInterval)
 
 	t.Log("By installing the webhook-operator ClusterExtension")
@@ -173,6 +174,8 @@ func TestWebhookSupport(t *testing.T) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 			assert.Contains(ct, cond.Message, "Installed bundle")
+		}
+		if assert.NotNil(ct, clusterExtension.Status.Install) {
 			assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
 		}
 	}, pollDuration, pollInterval)
@@ -197,21 +200,29 @@ func TestWebhookSupport(t *testing.T) {
 	}
 	v1Client := dynamicClient.Resource(v1Gvr).Namespace(namespace.GetName())
 
-	t.Log("By checking an invalid CR is rejected by the validating webhook")
-	obj := getWebhookOperatorResource("invalid-test-cr", namespace.GetName(), false)
-	_, err := v1Client.Create(t.Context(), obj, metav1.CreateOptions{})
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "Invalid value: false: Spec.Valid must be true")
+	t.Log("By eventually seeing that invalid CR creation is rejected by the validating webhook")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		obj := getWebhookOperatorResource("invalid-test-cr", namespace.GetName(), false)
+		_, err := v1Client.Create(t.Context(), obj, metav1.CreateOptions{})
+		assert.Error(ct, err)
+		assert.Contains(ct, err.Error(), "Invalid value: false: Spec.Valid must be true")
+	}, pollDuration, pollInterval)
 
-	t.Log("By checking a valid CR is mutated by the mutating webhook")
-	obj = getWebhookOperatorResource("valid-test-cr", namespace.GetName(), true)
-	_, err = v1Client.Create(t.Context(), obj, metav1.CreateOptions{})
-	require.NoError(t, err)
+	var (
+		res *unstructured.Unstructured
+		err error
+		obj = getWebhookOperatorResource("valid-test-cr", namespace.GetName(), true)
+	)
+
+	t.Log("By eventually creating a valid CR")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		res, err = v1Client.Create(t.Context(), obj, metav1.CreateOptions{})
+		assert.NoError(ct, err)
+	}, pollDuration, pollInterval)
 	t.Cleanup(func() {
-		require.NoError(t, dynamicClient.Resource(v1Gvr).Namespace(namespace.GetName()).Delete(context.Background(), obj.GetName(), metav1.DeleteOptions{}))
+		require.NoError(t, v1Client.Delete(context.Background(), obj.GetName(), metav1.DeleteOptions{}))
 	})
-	res, err := v1Client.Get(t.Context(), obj.GetName(), metav1.GetOptions{})
-	require.NoError(t, err)
+
 	require.Equal(t, map[string]interface{}{
 		"valid":  true,
 		"mutate": true,
@@ -225,8 +236,13 @@ func TestWebhookSupport(t *testing.T) {
 	}
 	v2Client := dynamicClient.Resource(v2Gvr).Namespace(namespace.GetName())
 
-	res, err = v2Client.Get(t.Context(), obj.GetName(), metav1.GetOptions{})
-	require.NoError(t, err)
+	t.Log("By eventually getting the valid CR with a v2 client")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		res, err = v2Client.Get(t.Context(), obj.GetName(), metav1.GetOptions{})
+		assert.NoError(ct, err)
+	}, pollDuration, pollInterval)
+
+	t.Log("and verifying that the CR is correctly converted")
 	require.Equal(t, map[string]interface{}{
 		"conversion": map[string]interface{}{
 			"valid":  true,
