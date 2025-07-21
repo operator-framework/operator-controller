@@ -1,8 +1,7 @@
 {{- if .Values.components.operatorController.enabled }}
-{{- if or (eq .Values.featureSet "standard") (eq .Values.featureSet "standard-e2e") }}
+{{- if (eq .Values.featureSet "standard") }}
 {{ tpl (.Files.Get "base/operator-controller/rbac/standard/role.yaml") . }}
-{{- end }}
-{{- if or (eq .Values.featureSet "experimental") (eq .Values.featureSet "experimental-e2e") }}
+{{- else if (eq .Values.featureSet "experimental") }}
 {{ tpl (.Files.Get "base/operator-controller/rbac/experimental/role.yaml") . }}
 {{- end }}
 {{- end }}
