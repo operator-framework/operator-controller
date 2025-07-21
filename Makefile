@@ -149,13 +149,6 @@ KUSTOMIZE_OPCON_RBAC_DIR := helm/olmv1/base/operator-controller/rbac
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
 manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
-	mkdir -p helm/olmv1/base/catalogd/rbac
-	mkdir -p helm/olmv1/base/catalogd/crd/standard
-	mkdir -p helm/olmv1/base/catalogd/crd/experimental
-	mkdir -p helm/olmv1/base/catalogd/webhook
-	mkdir -p helm/olmv1/base/operator-controller/rbac
-	mkdir -p helm/olmv1/base/operator-controller/crd/standard
-	mkdir -p helm/olmv1/base/operator-controller/crd/experimental
 	# Generate CRDs via our own generator
 	hack/tools/update-crds.sh
 	# Generate the remaining operator-controller standard manifests
