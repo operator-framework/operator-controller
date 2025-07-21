@@ -52,6 +52,9 @@ spec:
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             - --pull-cas-dir=/var/ca-certs
+            {{- with .Values.components.operatorController.podArguments }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           command:
             - ./catalogd
           {{- if .Values.components.e2e.enabled }}
