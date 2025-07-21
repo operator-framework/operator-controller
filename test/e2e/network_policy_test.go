@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -144,19 +143,19 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 	// Validate justifications have min length in the allowedNetworkPolicies definition
 	for name, policyDef := range allowedNetworkPolicies {
 		for i, pwj := range policyDef.ingressRule.ports {
-			assert.GreaterOrEqualf(t, len(pwj.justification), minJustificationLength,
+			require.GreaterOrEqualf(t, len(pwj.justification), minJustificationLength,
 				"Justification for ingress PortWithJustification entry %d in policy %q is too short: %q", i, name, pwj.justification)
 		}
 		for i, pwj := range policyDef.egressRule.ports { // Corrected variable name from 'rule' to 'pwj'
-			assert.GreaterOrEqualf(t, len(pwj.justification), minJustificationLength,
+			require.GreaterOrEqualf(t, len(pwj.justification), minJustificationLength,
 				"Justification for egress PortWithJustification entry %d in policy %q is too short: %q", i, name, pwj.justification)
 		}
 		if policyDef.denyAllIngressJustification != "" {
-			assert.GreaterOrEqualf(t, len(policyDef.denyAllIngressJustification), minJustificationLength,
+			require.GreaterOrEqualf(t, len(policyDef.denyAllIngressJustification), minJustificationLength,
 				"DenyAllIngressJustification for policy %q is too short: %q", name, policyDef.denyAllIngressJustification)
 		}
 		if policyDef.denyAllEgressJustification != "" {
-			assert.GreaterOrEqualf(t, len(policyDef.denyAllEgressJustification), minJustificationLength,
+			require.GreaterOrEqualf(t, len(policyDef.denyAllEgressJustification), minJustificationLength,
 				"DenyAllEgressJustification for policy %q is too short: %q", name, policyDef.denyAllEgressJustification)
 		}
 	}
@@ -197,7 +196,7 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 			validatedRegistryPolicies[policy.Name] = true
 
 			// 1. Compare PodSelector
-			assert.True(t, equality.Semantic.DeepEqual(expectedPolicy.selector, policy.Spec.PodSelector),
+			require.True(t, equality.Semantic.DeepEqual(expectedPolicy.selector, policy.Spec.PodSelector),
 				"PodSelector mismatch for policy %q. Expected: %+v, Got: %+v", policy.Name, expectedPolicy.selector, policy.Spec.PodSelector)
 
 			// 2. Compare PolicyTypes
@@ -220,7 +219,7 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 				case 1:
 					validateSingleIngressRule(t, policy.Name, policy.Spec.Ingress[0], expectedPolicy)
 				default:
-					assert.Failf(t, "Policy %q in cluster has %d ingress rules. Allowed definition supports at most 1 explicit ingress rule.", policy.Name, len(policy.Spec.Ingress))
+					require.Failf(t, "Policy %q in cluster has %d ingress rules. Allowed definition supports at most 1 explicit ingress rule.", policy.Name, len(policy.Spec.Ingress))
 				}
 			} else {
 				validateNoIngress(t, policy.Name, policy, expectedPolicy)
@@ -242,7 +241,7 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 				case 1:
 					validateSingleEgressRule(t, policy.Name, policy.Spec.Egress[0], expectedPolicy)
 				default:
-					assert.Failf(t, "Policy %q in cluster has %d egress rules. Allowed definition supports at most 1 explicit egress rule.", policy.Name, len(policy.Spec.Egress))
+					require.Failf(t, "Policy %q in cluster has %d egress rules. Allowed definition supports at most 1 explicit egress rule.", policy.Name, len(policy.Spec.Egress))
 				}
 			} else {
 				validateNoEgress(t, policy, expectedPolicy)
@@ -251,7 +250,7 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 	}
 
 	// 5. Ensure all policies in the registry were found in the cluster
-	assert.Len(t, validatedRegistryPolicies, len(allowedNetworkPolicies),
+	require.Len(t, validatedRegistryPolicies, len(allowedNetworkPolicies),
 		"Mismatch between number of expected policies in registry (%d) and number of policies found & validated in cluster (%d). Missing policies from registry: %v", len(allowedNetworkPolicies), len(validatedRegistryPolicies), missingPolicies(allowedNetworkPolicies, validatedRegistryPolicies))
 }
 
@@ -310,14 +309,14 @@ func validateSingleEgressRule(t *testing.T, policyName string, clusterEgressRule
 		require.Lenf(t, expectedEgressRule.ports, 1,
 			"Policy %q (allow-all egress): Expected EgressRule.Ports to have 1 justification entry, got %d", policyName, len(expectedEgressRule.ports))
 		if len(expectedEgressRule.ports) == 1 { // Guard against panic
-			assert.Nilf(t, expectedEgressRule.ports[0].port,
+			require.Nilf(t, expectedEgressRule.ports[0].port,
 				"Policy %q (allow-all egress): Expected EgressRule.Ports[0].Port to be nil, got %+v", policyName, expectedEgressRule.ports[0].port)
 		}
-		assert.Conditionf(t, func() bool { return len(expectedEgressRule.to) == 0 },
+		require.Conditionf(t, func() bool { return len(expectedEgressRule.to) == 0 },
 			"Policy %q (allow-all egress): Expected EgressRule.To to be empty for allow-all peers, got %+v", policyName, expectedEgressRule.to)
 	} else {
 		// Specific egress rule (not the simple allow-all ports and allow-all peers)
-		assert.True(t, equality.Semantic.DeepEqual(expectedEgressRule.to, clusterEgressRule.To),
+		require.True(t, equality.Semantic.DeepEqual(expectedEgressRule.to, clusterEgressRule.To),
 			"Policy %q, Egress Rule: 'To' mismatch.\nExpected: %+v\nGot:      %+v", policyName, expectedEgressRule.to, clusterEgressRule.To)
 
 		var allExpectedPortsFromPwJ []networkingv1.NetworkPolicyPort
@@ -367,7 +366,7 @@ func validateSingleIngressRule(t *testing.T, policyName string, clusterIngressRu
 		"Policy %q: Cluster has a specific Ingress rule. Registry's DenyAllIngressJustification should be empty.", policyName)
 
 	// Compare 'From'
-	assert.True(t, equality.Semantic.DeepEqual(expectedIngressRule.from, clusterIngressRule.From),
+	require.True(t, equality.Semantic.DeepEqual(expectedIngressRule.from, clusterIngressRule.From),
 		"Policy %q, Ingress Rule: 'From' mismatch.\nExpected: %+v\nGot:      %+v", policyName, expectedIngressRule.from, clusterIngressRule.From)
 
 	// Compare 'Ports' by aggregating the ports from our justified structure

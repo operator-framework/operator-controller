@@ -200,13 +200,11 @@ func TestExtensionDeveloper(t *testing.T) {
 	t.Log("It should have a status condition type of Installed with a status of True and a reason of Success")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		ext := &ocv1.ClusterExtension{}
-		assert.NoError(ct, c.Get(context.Background(), client.ObjectKeyFromObject(clusterExtension), ext))
+		require.NoError(ct, c.Get(context.Background(), client.ObjectKeyFromObject(clusterExtension), ext))
 		cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
-		if !assert.NotNil(ct, cond) {
-			return
-		}
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 	}, 2*time.Minute, time.Second)
 	require.NoError(t, c.Delete(context.Background(), catalog))
 	require.NoError(t, c.Delete(context.Background(), clusterExtension))

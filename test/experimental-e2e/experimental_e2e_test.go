@@ -132,12 +132,11 @@ func TestWebhookSupport(t *testing.T) {
 
 	t.Log("By waiting for the catalog to serve its metadata")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.GetName()}, extensionCatalog))
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.GetName()}, extensionCatalog))
 		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, ocv1.TypeServing)
-		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
-		}
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
 	}, pollDuration, pollInterval)
 
 	t.Log("By installing the webhook-operator ClusterExtension")
@@ -168,29 +167,27 @@ func TestWebhookSupport(t *testing.T) {
 
 	t.Log("By waiting for webhook-operator extension to be installed successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(t.Context(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
-		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-			assert.Contains(ct, cond.Message, "Installed bundle")
-		}
-		if assert.NotNil(ct, clusterExtension.Status.Install) {
-			assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
-		}
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Contains(ct, cond.Message, "Installed bundle")
+		require.NotNil(ct, clusterExtension.Status.Install)
+		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
 	}, pollDuration, pollInterval)
 
 	t.Log("By waiting for webhook-operator deployment to be available")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		deployment := &appsv1.Deployment{}
-		assert.NoError(ct, c.Get(t.Context(), types.NamespacedName{Namespace: namespace.GetName(), Name: "webhook-operator-webhook"}, deployment))
+		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Namespace: namespace.GetName(), Name: "webhook-operator-webhook"}, deployment))
 		available := false
 		for _, cond := range deployment.Status.Conditions {
 			if cond.Type == appsv1.DeploymentAvailable {
 				available = cond.Status == corev1.ConditionTrue
 			}
 		}
-		assert.True(ct, available)
+		require.True(ct, available)
 	}, pollDuration, pollInterval)
 
 	v1Gvr := schema.GroupVersionResource{
@@ -204,8 +201,8 @@ func TestWebhookSupport(t *testing.T) {
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		obj := getWebhookOperatorResource("invalid-test-cr", namespace.GetName(), false)
 		_, err := v1Client.Create(t.Context(), obj, metav1.CreateOptions{})
-		assert.Error(ct, err)
-		assert.Contains(ct, err.Error(), "Invalid value: false: Spec.Valid must be true")
+		require.Error(ct, err)
+		require.Contains(ct, err.Error(), "Invalid value: false: Spec.Valid must be true")
 	}, pollDuration, pollInterval)
 
 	var (
@@ -217,7 +214,7 @@ func TestWebhookSupport(t *testing.T) {
 	t.Log("By eventually creating a valid CR")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		res, err = v1Client.Create(t.Context(), obj, metav1.CreateOptions{})
-		assert.NoError(ct, err)
+		require.NoError(ct, err)
 	}, pollDuration, pollInterval)
 	t.Cleanup(func() {
 		require.NoError(t, v1Client.Delete(context.Background(), obj.GetName(), metav1.DeleteOptions{}))
@@ -239,7 +236,7 @@ func TestWebhookSupport(t *testing.T) {
 	t.Log("By eventually getting the valid CR with a v2 client")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		res, err = v2Client.Get(t.Context(), obj.GetName(), metav1.GetOptions{})
-		assert.NoError(ct, err)
+		require.NoError(ct, err)
 	}, pollDuration, pollInterval)
 
 	t.Log("and verifying that the CR is correctly converted")
