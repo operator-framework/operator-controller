@@ -143,13 +143,19 @@ tidy:
 	go mod tidy
 
 .PHONY: manifests
-KUSTOMIZE_CATD_RBAC_DIR := config/base/catalogd/rbac
-KUSTOMIZE_CATD_WEBHOOKS_DIR := config/base/catalogd/webhook
-KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
-BASE_COPY := helm/olmv1/base
+KUSTOMIZE_CATD_RBAC_DIR := helm/olmv1/base/catalogd/rbac
+KUSTOMIZE_CATD_WEBHOOKS_DIR := helm/olmv1/base/catalogd/webhook
+KUSTOMIZE_OPCON_RBAC_DIR := helm/olmv1/base/operator-controller/rbac
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
 manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
+	mkdir -p helm/olmv1/base/catalogd/rbac
+	mkdir -p helm/olmv1/base/catalogd/crd/standard
+	mkdir -p helm/olmv1/base/catalogd/crd/experimental
+	mkdir -p helm/olmv1/base/catalogd/webhook
+	mkdir -p helm/olmv1/base/operator-controller/rbac
+	mkdir -p helm/olmv1/base/operator-controller/crd/standard
+	mkdir -p helm/olmv1/base/operator-controller/crd/experimental
 	# Generate CRDs via our own generator
 	hack/tools/update-crds.sh
 	# Generate the remaining operator-controller standard manifests
@@ -162,16 +168,14 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	# Generate the remaining catalogd experimental manifests
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)/experimental
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)/experimental
+	# Update base config to include helm templates
+	./hack/tools/update-yaml-labels-annotations.sh
 	# Generate manifests stored in source-control
 	mkdir -p $(MANIFEST_HOME)
-	rm -rf $(BASE_COPY)
-	mkdir -p $(BASE_COPY)
-	cp -r config/base/* $(BASE_COPY)
 	helm template olmv1 helm/olmv1 --values helm/standard.yaml > $(STANDARD_MANIFEST)
 	helm template olmv1 helm/olmv1 --values helm/standard-e2e.yaml > $(STANDARD_E2E_MANIFEST)
 	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
 	helm template olmv1 helm/olmv1 --values helm/experimental-e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
-	rm -rf $(BASE_COPY)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
