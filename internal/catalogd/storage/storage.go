@@ -87,7 +87,7 @@ func (i *Instances) Store(ctx context.Context, catalog string, seq iter.Seq2[*de
 	activeInstances := i.activeInstances()
 	numActiveInstances := len(activeInstances)
 
-	// copy the sequence `len(i.instances)` times.
+	// copy the sequence `len(activeInstances)` times.
 	copiedSeqs, cancel := copySequence(seq, numActiveInstances)
 	defer cancel()
 
