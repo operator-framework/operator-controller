@@ -1,4 +1,4 @@
-# Default values for operator-controller.
+# e2e values for OLMv1.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -6,6 +6,3 @@
 components:
   e2e:
     enabled: true
-
-# This can be one of: standard or  experimental
-featureSet: standard

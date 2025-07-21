@@ -165,10 +165,10 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	./hack/tools/patch-base-for-helm.sh
 	# Generate manifests stored in source-control
 	mkdir -p $(MANIFEST_HOME)
-	helm template olmv1 helm/olmv1 --values helm/standard.yaml > $(STANDARD_MANIFEST)
-	helm template olmv1 helm/olmv1 --values helm/standard-e2e.yaml > $(STANDARD_E2E_MANIFEST)
+	helm template olmv1 helm/olmv1 > $(STANDARD_MANIFEST)
+	helm template olmv1 helm/olmv1 --values helm/e2e.yaml > $(STANDARD_E2E_MANIFEST)
 	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
-	helm template olmv1 helm/olmv1 --values helm/experimental-e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
+	helm template olmv1 helm/olmv1 --values helm/experimental.yaml --values helm/e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
