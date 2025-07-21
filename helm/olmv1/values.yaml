@@ -49,7 +49,7 @@ features:
   helmChartSupport:
     enabled: false
   
-# This can be one of: standard, standard-e2e, experimental, or experimental-e2e
+# This can be one of: standard or experimental
 featureSet: standard
 
 # The set of namespaces

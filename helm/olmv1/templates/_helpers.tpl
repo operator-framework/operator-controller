@@ -29,5 +29,5 @@ app.kubernetes.io/part-of: olm
 Common annoations
 */}}
 {{- define "olmv1.annotations" -}}
-olm.operatorframework.io/feature-set: {{ .Values.featureSet }}
+olm.operatorframework.io/feature-set: {{ .Values.featureSet -}}{{- if .Values.components.e2e.enabled -}}-e2e{{- end -}}
 {{- end }}
