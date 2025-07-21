@@ -1,8 +1,8 @@
 {{- if .Values.components.catalogd.enabled }}
 {{- if or (eq .Values.featureSet "standard") (eq .Values.featureSet "standard-e2e") }}
-{{ .Files.Get "base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml" }}
+{{ tpl (.Files.Get "base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml") . }}
 {{- end }}
 {{- if or (eq .Values.featureSet "experimental") (eq .Values.featureSet "experimental-e2e") }}
-{{ .Files.Get "base/catalogd/crd/experimental/olm.operatorframework.io_clustercatalogs.yaml" }}
+{{ tpl (.Files.Get "base/catalogd/crd/experimental/olm.operatorframework.io_clustercatalogs.yaml") . }}
 {{- end }}
 {{- end }}

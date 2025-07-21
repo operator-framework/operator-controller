@@ -1,8 +1,8 @@
 {{- if .Values.components.operatorController.enabled }}
 {{- if or (eq .Values.featureSet "standard") (eq .Values.featureSet "standard-e2e") }}
-{{ .Files.Get "base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml" }}
+{{ tpl (.Files.Get "base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml") . }}
 {{- end }}
 {{- if or (eq .Values.featureSet "experimental") (eq .Values.featureSet "experimental-e2e") }}
-{{ .Files.Get "base/operator-controller/crd/experimental/olm.operatorframework.io_clusterextensions.yaml" }}
+{{ tpl (.Files.Get "base/operator-controller/crd/experimental/olm.operatorframework.io_clusterextensions.yaml") . }}
 {{- end }}
 {{- end }}
