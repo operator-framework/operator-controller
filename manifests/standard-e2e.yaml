@@ -1325,7 +1325,7 @@ metadata:
   annotations:
     olm.operatorframework.io/feature-set: standard-e2e
   labels:
-    app.kubernetes.io/name: operator-controller06
+    app.kubernetes.io/name: operator-controller
     helm.sh/chart: olmv1-0.1.0
     app.kubernetes.io/instance: olmv1
     app.kubernetes.io/version: "1.3.0"
