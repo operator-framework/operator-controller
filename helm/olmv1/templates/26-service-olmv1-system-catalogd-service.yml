@@ -4,6 +4,9 @@ kind: Service
 metadata:
   annotations:
     {{- include "olmv1.annotations" . | nindent 4 }}
+    {{- with .Values.components.catalogd.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   labels:
     control-plane: catalogd-controller-manager
     app.kubernetes.io/name: catalogd
