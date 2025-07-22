@@ -1,5 +1,4 @@
 approvers:
-   - operator-controller-approvers
+   - olmv1-approvers
 reviewers:
-   - operator-controller-approvers
-   - operator-controller-reviewers
+   - olmv1-reviewers
