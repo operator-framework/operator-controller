@@ -36,13 +36,13 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var managerDeployments appsv1.DeploymentList
 		err := c.List(ctx, &managerDeployments, client.MatchingLabels(managerLabelSelector), client.InNamespace("olmv1-system"))
-		assert.NoError(ct, err)
-		assert.Len(ct, managerDeployments.Items, 1)
+		require.NoError(ct, err)
+		require.Len(ct, managerDeployments.Items, 1)
 		managerDeployment = managerDeployments.Items[0]
-		assert.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.UpdatedReplicas)
-		assert.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.Replicas)
-		assert.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.AvailableReplicas)
-		assert.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.ReadyReplicas)
+		require.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.UpdatedReplicas)
+		require.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.Replicas)
+		require.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.AvailableReplicas)
+		require.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.ReadyReplicas)
 	}, time.Minute, time.Second)
 
 	var managerPod corev1.Pod
@@ -50,8 +50,8 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var managerPods corev1.PodList
 		err := c.List(ctx, &managerPods, client.MatchingLabels(managerLabelSelector))
-		assert.NoError(ct, err)
-		assert.Len(ct, managerPods.Items, 1)
+		require.NoError(ct, err)
+		require.Len(ct, managerPods.Items, 1)
 		managerPod = managerPods.Items[0]
 	}, time.Minute, time.Second)
 
@@ -78,21 +78,21 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == True, reason == Succeeded")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
-		assert.NoError(ct, err)
+		require.NoError(ct, err)
 		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeProgressing)
-		assert.NotNil(ct, cond)
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 	}, time.Minute, time.Second)
 
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Serving with a status == True, reason == Available")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
-		assert.NoError(ct, err)
+		require.NoError(ct, err)
 		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeServing)
-		assert.NotNil(ct, cond)
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
 	}, time.Minute, time.Second)
 }
 
@@ -135,13 +135,13 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Checking that the ClusterCatalog is unpacked")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var clusterCatalog ocv1.ClusterCatalog
-		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, &clusterCatalog))
+		require.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, &clusterCatalog))
 
 		// check serving condition
 		cond := apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, ocv1.TypeServing)
-		assert.NotNil(ct, cond)
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
 
 		// mitigation for upgrade-e2e flakiness caused by the following bug
 		// https://github.com/operator-framework/operator-controller/issues/1626
@@ -150,24 +150,23 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		if cond == nil {
 			return
 		}
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 
-		assert.True(ct, clusterCatalog.Status.LastUnpacked.After(catalogdManagerPod.CreationTimestamp.Time))
+		require.True(ct, clusterCatalog.Status.LastUnpacked.After(catalogdManagerPod.CreationTimestamp.Time))
 	}, time.Minute, time.Second)
 
 	t.Log("Checking that the ClusterExtension is installed")
 	var clusterExtension ocv1.ClusterExtension
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterExtensionName}, &clusterExtension))
+		require.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterExtensionName}, &clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
-		assert.NotNil(ct, cond)
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-		assert.Contains(ct, cond.Message, "Installed bundle")
-		if assert.NotNil(ct, clusterExtension.Status.Install) {
-			assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle.Version)
-		}
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Contains(ct, cond.Message, "Installed bundle")
+		require.NotNil(ct, clusterExtension.Status.Install)
+		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle.Version)
 	}, time.Minute, time.Second)
 
 	previousVersion := clusterExtension.Status.Install.Bundle.Version
@@ -179,13 +178,13 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 
 	t.Log("Checking that the ClusterExtension installs successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterExtensionName}, &clusterExtension))
+		require.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterExtensionName}, &clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
-		assert.NotNil(ct, cond)
-		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-		assert.Contains(ct, cond.Message, "Installed bundle")
-		assert.Equal(ct, ocv1.BundleMetadata{Name: "test-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
-		assert.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
+		require.NotNil(ct, cond)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Contains(ct, cond.Message, "Installed bundle")
+		require.Equal(ct, ocv1.BundleMetadata{Name: "test-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
+		require.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
 	}, time.Minute, time.Second)
 }
 
@@ -200,11 +199,11 @@ func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel stri
 	var desiredNumReplicas int32
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var managerDeployments appsv1.DeploymentList
-		assert.NoError(ct, c.List(ctx, &managerDeployments, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
-		assert.Len(ct, managerDeployments.Items, 1)
+		require.NoError(ct, c.List(ctx, &managerDeployments, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
+		require.Len(ct, managerDeployments.Items, 1)
 		managerDeployment := managerDeployments.Items[0]
 
-		assert.True(ct,
+		require.True(ct,
 			managerDeployment.Status.UpdatedReplicas == *managerDeployment.Spec.Replicas &&
 				managerDeployment.Status.Replicas == *managerDeployment.Spec.Replicas &&
 				managerDeployment.Status.AvailableReplicas == *managerDeployment.Spec.Replicas &&
@@ -216,8 +215,8 @@ func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel stri
 	var managerPods corev1.PodList
 	t.Logf("Ensure the number of remaining pods equal the desired number of replicas (%d)", desiredNumReplicas)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.List(ctx, &managerPods, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
-		assert.Len(ct, managerPods.Items, 1)
+		require.NoError(ct, c.List(ctx, &managerPods, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
+		require.Len(ct, managerPods.Items, 1)
 	}, time.Minute, time.Second)
 	return &managerPods.Items[0]
 }
