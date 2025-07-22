@@ -172,14 +172,8 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: k8s-pin kind-verify-versions fmt generate manifests crd-ref-docs generate-test-data #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
+verify: k8s-pin kind-verify-versions fmt generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
 	git diff --exit-code
-
-# Renders registry+v1 bundles in test/convert
-# Used by CI in verify to catch regressions in the registry+v1 -> plain conversion code
-.PHONY: generate-test-data
-generate-test-data:
-	go run test/convert/generate-manifests.go
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
@@ -209,7 +203,7 @@ verify-crd-compatibility: $(CRD_DIFF) manifests
 #SECTION Test
 
 .PHONY: test
-test: manifests generate fmt lint test-unit test-e2e #HELP Run all tests.
+test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run all tests.
 
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
@@ -251,6 +245,12 @@ test-unit: $(SETUP_ENVTEST) envtest-k8s-bins #HELP Run the unit tests
                 -count=1 -race -short \
                 $(UNIT_TEST_DIRS) \
                 -test.gocoverdir=$(COVERAGE_UNIT_DIR)
+
+COVERAGE_REGRESSION_DIR := $(ROOT_DIR)/coverage/regression
+.PHONY: test-regression
+test-regression: #HELP Run regression test
+	rm -rf $(COVERAGE_REGRESSION_DIR) && mkdir -p $(COVERAGE_REGRESSION_DIR)
+	go test -count=1 -v ./test/regression/... -cover -coverprofile ${ROOT_DIR}/coverage/regression.out -test.gocoverdir=$(COVERAGE_REGRESSION_DIR)
 
 .PHONY: image-registry
 E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel

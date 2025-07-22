@@ -1,0 +1,31 @@
+name: test-regression
+
+on:
+  workflow_dispatch:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+    - main
+
+jobs:
+  test-regression:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Run regression tests
+      run: |
+        make test-regression
+
+    - uses: codecov/codecov-action@v5.4.3
+      with:
+        disable_search: true
+        files: coverage/regression.out
+        flags: unit
+        token: ${{ secrets.CODECOV_TOKEN }}

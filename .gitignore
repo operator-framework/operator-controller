@@ -42,3 +42,6 @@ site
 .tiltbuild/
 .catalogd-tmp/
 .vscode
+
+# Tmporary files and directories
+/test/regression/convert/testdata/tmp/*

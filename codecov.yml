@@ -1,6 +1,8 @@
 codecov:
   notify:
-    after_n_builds: 3
+    # Configure the 4 builds to wait before sending a notification.
+    # test-unit, test-regression, test-e2e and test-experimental-e2e.
+    after_n_builds: 4
 
 # Configure the paths to include in coverage reports.
 # Exclude documentation, YAML configurations, and test files.
