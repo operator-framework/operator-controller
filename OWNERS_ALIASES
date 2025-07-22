@@ -42,3 +42,8 @@ aliases:
 
    docs-approvers:
    - michaelryanpeter
+
+   docs-draft-approvers:
+   - camilamacedo86
+   - grokspawn
+   - thetechnick
