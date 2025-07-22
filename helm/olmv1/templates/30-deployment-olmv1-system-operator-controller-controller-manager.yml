@@ -71,9 +71,9 @@ spec:
             - name: GOCOVERDIR
               value: /e2e-coverage
           {{- end }}
-          image: "{{ .Values.components.operatorController.image.repository }}:{{ .Values.components.operatorController.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.components.operatorController.deployment.image.repository }}:{{ .Values.components.operatorController.deployment.image.tag | default .Chart.AppVersion }}"
           image: quay.io/operator-framework/operator-controller:devel
-          imagePullPolicy: {{ .Values.components.operatorController.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.components.operatorController.deployment.image.pullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -112,7 +112,7 @@ spec:
               name: olmv1-certificate
               readOnly: true
             {{- end }}
-            {{- with .Values.components.operatorController.volumeMounts }}
+            {{- with .Values.components.operatorController.deployment.volumeMounts }}
               {{- toYaml . | nindent }}
             {{- end }}
       {{- with .Values.podSecurityContext }}
@@ -147,18 +147,18 @@ spec:
             optional: false
             secretName: olmv1-cert
         {{- end }}
-        {{- with .Values.components.operatorController.volumes }}
+        {{- with .Values.components.operatorController.deployment.volumes }}
           {{- toYaml . | indent 8 }}
         {{- end }}
-      {{- with .Values.components.operatorController.nodeSelector }}
+      {{- with .Values.components.operatorController.deployment.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.components.operatorController.affinity }}
+      {{- with .Values.components.operatorController.deployment.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.components.operatorController.tolerations }}
+      {{- with .Values.components.operatorController.deployment.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
