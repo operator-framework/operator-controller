@@ -31,3 +31,30 @@ Common annoations
 {{- define "olmv1.annotations" -}}
 olm.operatorframework.io/feature-set: {{ .Values.featureSet -}}{{- if .Values.components.e2e.enabled -}}-e2e{{- end -}}
 {{- end }}
+
+{{/*
+Insertion of additional rules for RBAC
+*/}}
+{{- define "olmv1.catalogd.role.rules" -}}
+{{- with .Values.components.catalogd.rules }}
+{{- toYamlPretty . }}
+{{- end }}
+{{- end }}
+
+{{- define "olmv1.catalogd.clusterRole.rules" -}}
+{{- with .Values.components.catalogd.clusterRole.rules }}
+{{- toYamlPretty . }}
+{{- end }}
+{{- end }}
+
+{{- define "olmv1.operatorController.role.rules" -}}
+{{- with .Values.components.operatorController.role.rules }}
+{{- toYamlPretty . }}
+{{- end }}
+{{- end }}
+
+{{- define "olmv1.operatorController.clusterRole.rules" -}}
+{{- with .Values.components.operatorController.clusterRole.rules }}
+{{- toYamlPretty . }}
+{{- end }}
+{{- end }}
