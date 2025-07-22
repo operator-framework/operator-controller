@@ -18,6 +18,10 @@ components:
     podArguments: {}
     service:
       annotations: {}
+    clusterRole:
+      rules: {}
+    role:
+      rules: {}
   catalogd:
     enabled: true
     image:
@@ -32,6 +36,10 @@ components:
     podArguments: {}
     service:
       annotations: {}
+    clusterRole:
+      rules: {}
+    role:
+      rules: {}
   certManager:
     enabled: true
   e2e:

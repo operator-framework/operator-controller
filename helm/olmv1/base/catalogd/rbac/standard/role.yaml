@@ -35,6 +35,7 @@ rules:
       - get
       - patch
       - update
+  {{- include "olmv1.catalogd.clusterRole.rules" . | nindent 2 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -56,3 +57,4 @@ rules:
       - get
       - list
       - watch
+  {{- include "olmv1.catalogd.role.rules" . | nindent 2 }}
