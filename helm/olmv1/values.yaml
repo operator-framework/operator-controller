@@ -6,16 +6,17 @@
 components:
   operatorController:
     enabled: true
-    image:
-      repository: quay.io/operator-framework/operator-controller
-      pullPolicy: IfNotPresent
-      tag: devel
-    volumeMounts: {}
-    volumes: {}
-    affinity: {}
-    nodeSelector: {}
-    tolerations: {}
-    podArguments: {}
+    deployment:
+      image:
+        repository: quay.io/operator-framework/operator-controller
+        pullPolicy: IfNotPresent
+        tag: devel
+      volumeMounts: {}
+      volumes: {}
+      affinity: {}
+      nodeSelector: {}
+      tolerations: {}
+      podArguments: {}
     service:
       annotations: {}
     clusterRole:
@@ -24,16 +25,17 @@ components:
       rules: {}
   catalogd:
     enabled: true
-    image:
-      repository: quay.io/operator-framework/catalogd
-      pullPolicy: IfNotPresent
-      tag: devel
-    volumeMounts: {}
-    volumes: {}
-    affinity: {}
-    nodeSelector: {}
-    tolerations: {}
-    podArguments: {}
+    deployment:
+      image:
+        repository: quay.io/operator-framework/catalogd
+        pullPolicy: IfNotPresent
+        tag: devel
+      volumeMounts: {}
+      volumes: {}
+      affinity: {}
+      nodeSelector: {}
+      tolerations: {}
+      podArguments: {}
     service:
       annotations: {}
     clusterRole:

@@ -52,7 +52,7 @@ spec:
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             - --pull-cas-dir=/var/ca-certs
-            {{- with .Values.components.operatorController.podArguments }}
+            {{- with .Values.components.catalogd.deployment.podArguments }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           command:
@@ -62,8 +62,8 @@ spec:
             - name: GOCOVERDIR
               value: /e2e-coverage
           {{- end }}
-          image: "{{ .Values.components.catalogd.image.repository }}:{{ .Values.components.catalogd.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.components.catalogd.image.pullPolicy }}
+          image: "{{ .Values.components.catalogd.deployment.image.repository }}:{{ .Values.components.catalogd.deployment.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.components.catalogd.deployment.image.pullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -102,7 +102,7 @@ spec:
               name: olmv1-certificate
               readOnly: true
             {{- end }}
-            {{- with .Values.components.catalogd.volumeMounts }}
+            {{- with .Values.components.catalogd.deployment.volumeMounts }}
               {{- toYaml . | nindent }}
             {{- end }}
       {{- with .Values.podSecurityContext }}
@@ -133,18 +133,18 @@ spec:
             optional: false
             secretName: catalogd-service-cert-git-version
         {{- end }}
-        {{- with .Values.components.catalogd.volumes }}
+        {{- with .Values.components.catalogd.deployment.volumes }}
           {{- toYaml . | indent 8 }}
         {{- end }}
-      {{- with .Values.components.catalogd.nodeSelector }}
+      {{- with .Values.components.catalogd.deployment.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.components.catalogd.affinity }}
+      {{- with .Values.components.catalogd.deployment.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.components.catalogd.tolerations }}
+      {{- with .Values.components.catalogd.deployment.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
