@@ -19,6 +19,7 @@ spec:
     annotations:
       cert-manager.io/allow-direct-injection: "true"
   privateKey:
+    rotationPolicy: Always
     algorithm: ECDSA
     size: 256
   issuerRef:

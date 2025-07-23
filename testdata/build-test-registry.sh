@@ -45,6 +45,7 @@ spec:
     - ${name}-controller-manager-metrics-service.${namespace}.svc
     - ${name}-controller-manager-metrics-service.${namespace}.svc.cluster.local
   privateKey:
+    rotationPolicy: Always
     algorithm: ECDSA
     size: 256
   issuerRef:
