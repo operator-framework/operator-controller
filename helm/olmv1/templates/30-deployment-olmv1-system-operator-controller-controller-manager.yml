@@ -62,18 +62,23 @@ spec:
             - --tls-cert=/var/certs/tls.cert
             - --tls-key=/var/certs/tls.key
             {{- with .Values.components.catalogd.podArguments }}
-            {{- toYaml . | nindent 12 }}
+            {{- toYamlPretty . | nindent 12 }}
             {{- end }}
           command:
             - /operator-controller
-          {{- if .Values.components.e2e.enabled }}
+          {{- if or .Values.components.e2e.enabled .Values.components.operatorController.deployment.env }}
           env:
+          {{- end }}
+          {{- if .Values.components.e2e.enabled }}
             - name: GOCOVERDIR
               value: /e2e-coverage
           {{- end }}
-          image: "{{ .Values.components.operatorController.deployment.image.repository }}:{{ .Values.components.operatorController.deployment.image.tag | default .Chart.AppVersion }}"
+          {{- with .Values.components.operatorController.deployment.env }}
+          {{- toYamlPretty . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.components.operatorController.deployment.image }}"
           image: quay.io/operator-framework/operator-controller:devel
-          imagePullPolicy: {{ .Values.components.operatorController.deployment.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.components.operatorController.deployment.imagePullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
