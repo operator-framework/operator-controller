@@ -31,14 +31,19 @@ import (
 	"github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/discovery"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
+	"pkg.package-operator.run/boxcutter/managedcache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
@@ -219,6 +224,12 @@ func run() error {
 		DefaultLabelSelector: k8slabels.Nothing(),
 	}
 
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		cacheOptions.ByObject[&ocv1.ClusterExtensionRevision{}] = crcache.ByObject{
+			Label: k8slabels.Everything(),
+		}
+	}
+
 	saKey, err := sautil.GetServiceAccount()
 	if err != nil {
 		setupLog.Error(err, "Failed to extract serviceaccount from JWT")
@@ -272,7 +283,8 @@ func run() error {
 			"Metrics will not be served since the TLS certificate and key file are not provided.")
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme.Scheme,
 		Metrics:                       metricsServerOptions,
 		PprofBindAddress:              cfg.pprofAddr,
@@ -427,28 +439,38 @@ func run() error {
 		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
 	}
 
-	// determine if a certificate provider should be set in the bundle renderer and feature support for the provider
-	// based on the feature flag
-	var certProvider render.CertificateProvider
-	var isWebhookSupportEnabled bool
-	if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
-		certProvider = certproviders.CertManagerCertificateProvider{}
-		isWebhookSupportEnabled = true
-	} else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
-		certProvider = certproviders.OpenshiftServiceCaCertificateProvider{}
-		isWebhookSupportEnabled = true
-	}
+	// create applier
+	var ctrlBuilderOpts []controllers.ControllerBuilderOption
+	var extApplier controllers.Applier
 
-	// now initialize the helmApplier, assigning the potentially nil preAuth
-	helmApplier := &applier.Helm{
-		ActionClientGetter: acg,
-		Preflights:         preflights,
-		BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
-			BundleRenderer:          registryv1.Renderer,
-			CertificateProvider:     certProvider,
-			IsWebhookSupportEnabled: isWebhookSupportEnabled,
-		},
-		PreAuthorizer: preAuth,
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		// TODO: add support for preflight checks
+		// TODO: better scheme handling - which types do we want to support?
+		_ = apiextensionsv1.AddToScheme(mgr.GetScheme())
+		extApplier = &applier.Boxcutter{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+			RevisionGenerator: &applier.SimpleRevisionGenerator{
+				Scheme: mgr.GetScheme(),
+				BundleRenderer: &applier.RegistryV1BundleRenderer{
+					BundleRenderer: registryv1.Renderer,
+				},
+			},
+		}
+		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterExtensionRevision{}))
+	} else {
+		// now initialize the helmApplier, assigning the potentially nil preAuth
+		certProvider := getCertificateProvider()
+		extApplier = &applier.Helm{
+			ActionClientGetter: acg,
+			Preflights:         preflights,
+			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
+				BundleRenderer:          registryv1.Renderer,
+				CertificateProvider:     certProvider,
+				IsWebhookSupportEnabled: certProvider != nil,
+			},
+			PreAuthorizer: preAuth,
+		}
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
@@ -467,13 +489,68 @@ func run() error {
 		Resolver:              resolver,
 		ImageCache:            imageCache,
 		ImagePuller:           imagePuller,
-		Applier:               helmApplier,
+		Applier:               extApplier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
 		Manager:               cm,
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, ctrlBuilderOpts...); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		return err
+	}
+
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		// Boxcutter
+		discoveryClient, err := discovery.NewDiscoveryClientForConfig(restConfig)
+		if err != nil {
+			setupLog.Error(err, "unable to create discovery client")
+			return err
+		}
+		mapFunc := func(ctx context.Context, ce *ocv1.ClusterExtension, c *rest.Config, o crcache.Options) (*rest.Config, crcache.Options, error) {
+			saKey := client.ObjectKey{
+				Name:      ce.Spec.ServiceAccount.Name,
+				Namespace: ce.Spec.Namespace,
+			}
+			saConfig := rest.AnonymousClientConfig(c)
+			saConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+				return &authentication.TokenInjectingRoundTripper{
+					Tripper:     rt,
+					TokenGetter: tokenGetter,
+					Key:         saKey,
+				}
+			})
+
+			// Cache scoping
+			req1, err := k8slabels.NewRequirement(
+				controllers.ClusterExtensionRevisionOwnerLabel, selection.Equals, []string{ce.Name})
+			if err != nil {
+				return nil, o, err
+			}
+			o.DefaultLabelSelector = k8slabels.NewSelector().Add(*req1)
+
+			return saConfig, o, nil
+		}
+
+		accessManager := managedcache.NewObjectBoundAccessManager(
+			ctrl.Log.WithName("accessmanager"), mapFunc, restConfig, crcache.Options{
+				Scheme: mgr.GetScheme(), Mapper: mgr.GetRESTMapper(),
+			})
+		if err := mgr.Add(accessManager); err != nil {
+			setupLog.Error(err, "unable to register AccessManager")
+			return err
+		}
+
+		if err = (&controllers.ClusterExtensionRevisionReconciler{
+			Client: cl,
+			RevisionManager: &controllers.OLMRevisionEngineGetter{
+				AccessManager:   accessManager,
+				Scheme:          mgr.GetScheme(),
+				RestMapper:      mgr.GetRESTMapper(),
+				DiscoveryClient: discoveryClient,
+			},
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
+			return err
+		}
 	}
 
 	if err = (&controllers.ClusterCatalogReconciler{
@@ -517,6 +594,15 @@ func run() error {
 	if err := os.Remove(authFilePath); err != nil {
 		setupLog.Error(err, "failed to cleanup temporary auth file")
 		return err
+	}
+	return nil
+}
+
+func getCertificateProvider() render.CertificateProvider {
+	if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
+		return certproviders.CertManagerCertificateProvider{}
+	} else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
+		return certproviders.OpenshiftServiceCaCertificateProvider{}
 	}
 	return nil
 }
