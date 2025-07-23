@@ -62,7 +62,7 @@ metadata:
     app.kubernetes.io/version: "1.3.0"
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: olm
-  name: default-deny-all-traffic
+  name: operator-controller-default-deny-all-traffic
   namespace: olmv1-system
 spec:
   podSelector: {}
@@ -1898,6 +1898,11 @@ spec:
         olm.operatorframework.io/feature-set: standard-e2e
       labels:
         control-plane: catalogd-controller-manager
+        helm.sh/chart: olmv1-0.1.0
+        app.kubernetes.io/instance: olmv1
+        app.kubernetes.io/version: "1.3.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: olm
     spec:
       affinity:
         nodeAffinity:
@@ -2020,6 +2025,11 @@ spec:
         olm.operatorframework.io/feature-set: standard-e2e
       labels:
         control-plane: operator-controller-controller-manager
+        helm.sh/chart: olmv1-0.1.0
+        app.kubernetes.io/instance: olmv1
+        app.kubernetes.io/version: "1.3.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: olm
     spec:
       affinity:
         nodeAffinity:

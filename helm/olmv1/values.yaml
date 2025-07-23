@@ -15,6 +15,8 @@ components:
       nodeSelector: {}
       tolerations: []
       podArguments: []
+      podLabels: {}
+      priorityClassName: ""
       env: []
     service:
       annotations: {}
@@ -33,6 +35,8 @@ components:
       nodeSelector: {}
       tolerations: []
       podArguments: []
+      podLabels: {}
+      priorityClassName: ""
       env: []
     service:
       annotations: {}
