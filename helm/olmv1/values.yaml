@@ -7,41 +7,39 @@ components:
   operatorController:
     enabled: true
     deployment:
-      image:
-        repository: quay.io/operator-framework/operator-controller
-        pullPolicy: IfNotPresent
-        tag: devel
-      volumeMounts: {}
-      volumes: {}
+      image: quay.io/operator-framework/operator-controller:devel
+      imagePullPolicy: IfNotPresent
+      volumeMounts: []
+      volumes: []
       affinity: {}
       nodeSelector: {}
-      tolerations: {}
-      podArguments: {}
+      tolerations: []
+      podArguments: []
+      env: []
     service:
       annotations: {}
     clusterRole:
-      rules: {}
+      rules: []
     role:
-      rules: {}
+      rules: []
   catalogd:
     enabled: true
     deployment:
-      image:
-        repository: quay.io/operator-framework/catalogd
-        pullPolicy: IfNotPresent
-        tag: devel
-      volumeMounts: {}
-      volumes: {}
+      image: quay.io/operator-framework/catalogd:devel
+      imagePullPolicy: IfNotPresent
+      volumeMounts: []
+      volumes: []
       affinity: {}
       nodeSelector: {}
-      tolerations: {}
-      podArguments: {}
+      tolerations: []
+      podArguments: []
+      env: []
     service:
       annotations: {}
     clusterRole:
-      rules: {}
+      rules: []
     role:
-      rules: {}
+      rules: []
   certManager:
     enabled: true
   e2e:

@@ -57,13 +57,18 @@ spec:
             {{- end }}
           command:
             - ./catalogd
-          {{- if .Values.components.e2e.enabled }}
+          {{- if or .Values.components.e2e.enabled .Values.components.catalogd.deployment.env }}
           env:
+          {{- end }}
+          {{- if .Values.components.e2e.enabled }}
             - name: GOCOVERDIR
               value: /e2e-coverage
           {{- end }}
-          image: "{{ .Values.components.catalogd.deployment.image.repository }}:{{ .Values.components.catalogd.deployment.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.components.catalogd.deployment.image.pullPolicy }}
+          {{- with .Values.components.catalogd.deployment.env}}
+          {{- toYamlPretty . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.components.catalogd.deployment.image }}"
+          imagePullPolicy: {{ .Values.components.catalogd.deployment.imagePullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
