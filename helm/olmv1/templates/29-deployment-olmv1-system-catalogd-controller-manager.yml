@@ -60,9 +60,11 @@ spec:
             {{- if .Values.features.apiV1MetasHandler.enabled }}
             - --feature-gates=APIV1MetasHandler=true
             {{- end }}
+            {{- if .Values.components.certManager.enabled }}
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             - --pull-cas-dir=/var/ca-certs
+            {{- end }}
             {{- with .Values.components.catalogd.deployment.podArguments }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

@@ -68,11 +68,13 @@ spec:
             {{- if .Values.features.helmChartSupport.enabled }}
             - --feature-gates=HelmChartSupport=true
             {{- end }}
+            {{- if .Values.components.certManager.enabled }}
             - --catalogd-cas-dir=/var/certs
             - --pull-cas-dir=/var/certs
             - --tls-cert=/var/certs/tls.cert
             - --tls-key=/var/certs/tls.key
-            {{- with .Values.components.catalogd.podArguments }}
+            {{- end }}
+            {{- with .Values.components.operatorController.deployment.podArguments }}
             {{- toYamlPretty . | nindent 12 }}
             {{- end }}
           command:
