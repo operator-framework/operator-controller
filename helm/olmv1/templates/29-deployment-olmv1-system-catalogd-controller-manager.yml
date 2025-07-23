@@ -22,8 +22,12 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: manager
         {{- include "olmv1.annotations" . | nindent 8 }}
+        {{- with .Values.components.catalogd.deployment.podAnnotations }}
+        {{- toYamlPretty . | nindent 8 }}
+        {{- end }}
       labels:
         control-plane: catalogd-controller-manager
+        app.kubernetes.io/name: catalogd
         {{- include "olmv1.labels" . | nindent 8 }}
         {{- with .Values.components.catalogd.deployment.podLabels }}
         {{- toYamlPretty . | nindent 8 }}
