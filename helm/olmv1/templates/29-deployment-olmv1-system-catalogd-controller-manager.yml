@@ -108,7 +108,7 @@ spec:
               readOnly: true
             {{- end }}
             {{- with .Values.components.catalogd.deployment.volumeMounts }}
-              {{- toYaml . | nindent }}
+              {{- toYaml . | nindent 12 }}
             {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
@@ -139,7 +139,7 @@ spec:
             secretName: catalogd-service-cert-git-version
         {{- end }}
         {{- with .Values.components.catalogd.deployment.volumes }}
-          {{- toYaml . | indent 8 }}
+          {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- with .Values.components.catalogd.deployment.nodeSelector }}
       nodeSelector:
