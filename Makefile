@@ -148,7 +148,7 @@ KUSTOMIZE_CATD_WEBHOOKS_DIR := helm/olmv1/base/catalogd/webhook
 KUSTOMIZE_OPCON_RBAC_DIR := helm/olmv1/base/operator-controller/rbac
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
-manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) $(HELM) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	# Generate CRDs via our own generator
 	hack/tools/update-crds.sh
 	# Generate the remaining operator-controller standard manifests
@@ -166,10 +166,10 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	# Generate manifests stored in source-control
 	mkdir -p $(MANIFEST_HOME)
 	hack/tools/helm-version-check.sh
-	helm template olmv1 helm/olmv1 > $(STANDARD_MANIFEST)
-	helm template olmv1 helm/olmv1 --values helm/e2e.yaml > $(STANDARD_E2E_MANIFEST)
-	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
-	helm template olmv1 helm/olmv1 --values helm/experimental.yaml --values helm/e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 > $(STANDARD_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/e2e.yaml > $(STANDARD_E2E_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/experimental.yaml --values helm/e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
