@@ -36,8 +36,7 @@ catalogd_webhook_filelist=(
 for f in "${catalogd_webhook_filelist[@]}"; do
     yq -i '.metadata.labels["app.kubernetes.io/name"] = "catalogd"' "${f}"
     yq -i '.metadata.name = "catalogd-mutating-webhook-configuration"' "${f}"
-    # This really only applies to cert-manager configs, but it's an annotation
-    yq -i '.metadata.annotations["cert-manager.io/inject-ca-from-secret"] = "cert-manager/olmv1-ca"' "${f}"
+    yq -i '.metadata.annotations["catalogd-webhook-annotations"] = "replaceMe"' "${f}"
     yq -i '.webhooks[0].clientConfig.service.namespace = "olmv1-system"' "${f}"
     yq -i '.webhooks[0].clientConfig.service.name = "catalogd-service"' "${f}"
     yq -i '.webhooks[0].clientConfig.service.port = 9443' "${f}"
@@ -65,6 +64,7 @@ for f in "${filelist[@]}"; do
     yq -i '.metadata.labels.replaceMe = "labels"' "${f}"
     # Replace with helm template - must be done last or yq will complain about the file format
     sed -i.bak 's/replaceMe: annotations/{{- include "olmv1.annotations" . | nindent 4 }}/g' "${f}"
+    sed -i.bak 's/catalogd-webhook-annotations: replaceMe/{{- include "olmv1.catalogd.webhook.annotations" . | nindent 4 }}/g' "${f}"
     sed -i.bak 's/replaceMe: labels/{{- include "olmv1.labels" . | nindent 4 }}/g' "${f}"
     sed -i.bak 's/olmv1-system/{{ .Values.namespaces.olmv1.name }}/g' "${f}"
     sed -i.bak 's/- replaceMe: catalogd-role-rules/{{- include "olmv1.catalogd.role.rules" . | nindent 2 }}/g' "${f}"
