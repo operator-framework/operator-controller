@@ -165,6 +165,7 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration,
 	./hack/tools/patch-base-for-helm.sh
 	# Generate manifests stored in source-control
 	mkdir -p $(MANIFEST_HOME)
+	hack/tools/helm-version-check.sh
 	helm template olmv1 helm/olmv1 > $(STANDARD_MANIFEST)
 	helm template olmv1 helm/olmv1 --values helm/e2e.yaml > $(STANDARD_E2E_MANIFEST)
 	helm template olmv1 helm/olmv1 --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
