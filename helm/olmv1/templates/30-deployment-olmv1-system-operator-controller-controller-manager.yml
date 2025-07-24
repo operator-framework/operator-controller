@@ -55,7 +55,9 @@ spec:
         - args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=:8443
+            {{- if not .Values.features.tilt.enabled }}
             - --leader-elect
+            {{- end }}
             {{- if .Values.features.apiV1MetasHandler.enabled }}
             - --feature-gates=WebhookProviderCertManager=true
             {{- end }}
@@ -92,19 +94,23 @@ spec:
           image: "{{ .Values.components.operatorController.deployment.image }}"
           image: quay.io/operator-framework/operator-controller:devel
           imagePullPolicy: {{ .Values.components.operatorController.deployment.imagePullPolicy }}
+          {{- if not .Values.features.tilt.enabled }}
           livenessProbe:
             httpGet:
               path: /healthz
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
+          {{- end }}
           name: manager
+          {{- if not .Values.features.tilt.enabled }}
           readinessProbe:
             httpGet:
               path: /readyz
               port: 8081
             initialDelaySeconds: 5
             periodSeconds: 10
+          {{- end }}
           resources:
             requests:
               cpu: 10m

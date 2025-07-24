@@ -1,0 +1,20 @@
+# experimental values for OLMv1.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+features:
+  tilt:
+    enabled: true
+  apiV1MetasHandler:
+    enabled: true
+  webhookProviderCertManager:
+    enabled: true
+  singleOwnNamespaceInstallSupport:
+    enabled: true
+  preflightPermissions:
+    enabled: true
+  helmChartSupport:
+    enabled: true
+
+# This can be one of: standard or experimental
+featureSet: experimental

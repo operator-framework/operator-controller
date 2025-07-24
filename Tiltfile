@@ -17,7 +17,7 @@ olmv1 = {
             'starting_debug_port': 30000,
         },
     },
-    'yaml': 'config/overlays/tilt-local-dev',
+    'yaml': 'helm/tilt.yaml',
 }
 
 deploy_repo(olmv1, '-tags containers_image_openpgp')

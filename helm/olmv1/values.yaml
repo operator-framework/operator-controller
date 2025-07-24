@@ -52,6 +52,8 @@ components:
     enabled: false
 
 features:
+  tilt:
+    enabled: false
   apiV1MetasHandler:
     enabled: false
   webhookProviderCertManager:
