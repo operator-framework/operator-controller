@@ -13,6 +13,17 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
+Return the name of the active component for a prefix, but _only_ if one is enabled
+*/}}
+{{- define "component.name.prefix" -}}
+{{- if and (.Values.components.operatorController.enabled) (not .Values.components.catalogd.enabled) }}
+operator-controller-
+{{- else if and (not .Values.components.operatorController.enabled) (.Values.components.catalogd.enabled) }}
+catalogd-
+{{- end }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "olmv1.labels" -}}
