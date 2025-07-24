@@ -62,7 +62,7 @@ metadata:
     app.kubernetes.io/version: "1.3.0"
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: olm
-  name: operator-controller-default-deny-all-traffic
+  name: default-deny-all-traffic
   namespace: olmv1-system
 spec:
   podSelector: {}
