@@ -182,7 +182,7 @@ func TestNetworkPolicyJustifications(t *testing.T) {
 		allowedNetworkPolicies["operator-controller-default-deny-all-traffic"] = denyAllPolicySpec
 	} else {
 		t.Log("Detected single-namespace configuration, expecting one 'default-deny-all-traffic' policy.")
-		allowedNetworkPolicies["operator-controller-default-deny-all-traffic"] = denyAllPolicySpec
+		allowedNetworkPolicies["default-deny-all-traffic"] = denyAllPolicySpec
 		t.Log("Detected single-namespace configuration, expecting 'prometheus' policy.")
 		allowedNetworkPolicies["prometheus"] = prometheuSpec
 	}
