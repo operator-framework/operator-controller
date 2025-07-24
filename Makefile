@@ -288,7 +288,7 @@ test-experimental-e2e: run image-registry prometheus experimental-e2e e2e e2e-co
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
 prometheus: PROMETHEUS_VERSION := v0.83.0
-prometheus: #EXHELP Deploy Prometheus into specified namespace
+prometheus: $(KUSTOMIZE) #EXHELP Deploy Prometheus into specified namespace
 	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE) $(VERSION)
 
 .PHONY: test-extension-developer-e2e
