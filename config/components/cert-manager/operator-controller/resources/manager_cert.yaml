@@ -9,6 +9,7 @@ spec:
     - operator-controller-service.olmv1-system.svc
     - operator-controller-service.olmv1-system.svc.cluster.local
   privateKey:
+    rotationPolicy: Always
     algorithm: ECDSA
     size: 256
   issuerRef:

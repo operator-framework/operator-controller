@@ -10,6 +10,7 @@ spec:
     - catalogd-service.olmv1-system.svc
     - catalogd-service.olmv1-system.svc.cluster.local
   privateKey:
+    rotationPolicy: Always
     algorithm: ECDSA
     size: 256
   issuerRef:
