@@ -1,0 +1,10 @@
+# Default values for OLMv1.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# List of components to include
+components:
+  catalogd:
+    webhook:
+      annotations:
+        cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
