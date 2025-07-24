@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: catalogd
     {{- include "olmv1.labels" . | nindent 4 }}
   annotations:
-    cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
+    {{- include "olmv1.catalogd.webhook.annotations" . | nindent 4 }}
     {{- include "olmv1.annotations" . | nindent 4 }}
 webhooks:
   - admissionReviewVersions:

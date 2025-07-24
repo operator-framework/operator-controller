@@ -44,6 +44,13 @@ olm.operatorframework.io/feature-set: {{ .Values.featureSet -}}{{- if .Values.co
 {{- end }}
 
 {{/*
+Annotations for Catalogd Webhooks
+*/}}
+{{- define "olmv1.catalogd.webhook.annotations" -}}
+cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
+{{- end }}
+
+{{/*
 Insertion of additional rules for RBAC
 */}}
 {{- define "olmv1.catalogd.role.rules" -}}
