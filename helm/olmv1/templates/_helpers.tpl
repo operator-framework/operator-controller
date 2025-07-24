@@ -47,7 +47,9 @@ olm.operatorframework.io/feature-set: {{ .Values.featureSet -}}{{- if .Values.co
 Annotations for Catalogd Webhooks
 */}}
 {{- define "olmv1.catalogd.webhook.annotations" -}}
-cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
+{{- with .Values.components.catalogd.webhook.annotations }}
+{{- toYamlPretty . }}
+{{- end }}
 {{- end }}
 
 {{/*
