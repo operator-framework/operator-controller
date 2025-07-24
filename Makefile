@@ -223,14 +223,14 @@ E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
 
 export REG_PKG_NAME := registry-operator
-export LOCAL_REGISTRY_HOST := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
-export CLUSTER_REGISTRY_HOST := localhost:30000
+export CLUSTER_REGISTRY_HOST := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
+export LOCAL_REGISTRY_HOST := localhost:30000
 export E2E_TEST_CATALOG_V1 := e2e/test-catalog:v1
 export E2E_TEST_CATALOG_V2 := e2e/test-catalog:v2
-export CATALOG_IMG := $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
+export CATALOG_IMG := $(CLUSTER_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
 .PHONY: test-ext-dev-e2e
-test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
-	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
+test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) #HELP Run extension create, upgrade and delete tests.
+	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) ${LOCAL_REGISTRY_HOST} ${CLUSTER_REGISTRY_HOST}
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
 UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)

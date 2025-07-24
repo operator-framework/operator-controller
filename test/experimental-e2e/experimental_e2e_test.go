@@ -119,7 +119,7 @@ func TestWebhookSupport(t *testing.T) {
 			Source: ocv1.CatalogSource{
 				Type: ocv1.SourceTypeImage,
 				Image: &ocv1.ImageSource{
-					Ref:                 fmt.Sprintf("%s/e2e/test-catalog:v1", os.Getenv("LOCAL_REGISTRY_HOST")),
+					Ref:                 fmt.Sprintf("%s/e2e/test-catalog:v1", os.Getenv("CLUSTER_REGISTRY_HOST")),
 					PollIntervalMinutes: ptr.To(1),
 				},
 			},
