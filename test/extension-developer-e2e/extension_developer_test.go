@@ -32,6 +32,9 @@ func TestExtensionDeveloper(t *testing.T) {
 	require.NoError(t, corev1.AddToScheme(scheme))
 	require.NoError(t, rbacv1.AddToScheme(scheme))
 
+	require.NotEmpty(t, os.Getenv("CATALOG_IMG"), "environment variable CATALOG_IMG must be set")
+	require.NotEmpty(t, os.Getenv("REG_PKG_NAME"), "environment variable REG_PKG_NAME must be set")
+
 	c, err := client.New(cfg, client.Options{Scheme: scheme})
 	require.NoError(t, err)
 

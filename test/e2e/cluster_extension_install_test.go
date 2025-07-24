@@ -730,7 +730,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 
 	// patch imageRef tag on test-catalog image with v2 image
 	t.Log("By patching the catalog ImageRef to point to the v2 catalog")
-	updatedCatalogImage := fmt.Sprintf("%s/e2e/test-catalog:v2", os.Getenv("LOCAL_REGISTRY_HOST"))
+	updatedCatalogImage := fmt.Sprintf("%s/e2e/test-catalog:v2", os.Getenv("CLUSTER_REGISTRY_HOST"))
 	err := patchTestCatalog(context.Background(), testCatalogName, updatedCatalogImage)
 	require.NoError(t, err)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -759,12 +759,12 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 
 	// Tag the image with the new tag
 	var err error
-	v1Image := fmt.Sprintf("%s/%s", os.Getenv("CLUSTER_REGISTRY_HOST"), os.Getenv("E2E_TEST_CATALOG_V1"))
+	v1Image := fmt.Sprintf("%s/%s", os.Getenv("LOCAL_REGISTRY_HOST"), os.Getenv("E2E_TEST_CATALOG_V1"))
 	err = crane.Tag(v1Image, latestImageTag, crane.Insecure)
 	require.NoError(t, err)
 
 	// create a test-catalog with latest image tag
-	latestCatalogImage := fmt.Sprintf("%s/e2e/test-catalog:latest", os.Getenv("LOCAL_REGISTRY_HOST"))
+	latestCatalogImage := fmt.Sprintf("%s/e2e/test-catalog:latest", os.Getenv("CLUSTER_REGISTRY_HOST"))
 	extensionCatalog, err := createTestCatalog(context.Background(), testCatalogName, latestCatalogImage)
 	require.NoError(t, err)
 	clusterExtensionName := fmt.Sprintf("clusterextension-%s", rand.String(8))
@@ -810,7 +810,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 
 	// update tag on test-catalog image with v2 image
 	t.Log("By updating the catalog tag to point to the v2 catalog")
-	v2Image := fmt.Sprintf("%s/%s", os.Getenv("CLUSTER_REGISTRY_HOST"), os.Getenv("E2E_TEST_CATALOG_V2"))
+	v2Image := fmt.Sprintf("%s/%s", os.Getenv("LOCAL_REGISTRY_HOST"), os.Getenv("E2E_TEST_CATALOG_V2"))
 	err = crane.Tag(v2Image, latestImageTag, crane.Insecure)
 	require.NoError(t, err)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {

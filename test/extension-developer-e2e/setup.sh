@@ -11,39 +11,32 @@ following bundle formats:
 This script will ensure that all images built are loaded onto
 a KinD cluster with the name specified in the arguments.
 The following environment variables are required for configuring this script:
-- \$CATALOG_IMG - the tag for the catalog image that contains the registry+v1 bundle.
+- \$E2E_TEST_CATALOG_V1 - the tag for the catalog image that contains the registry+v1 bundle.
 - \$REG_PKG_NAME - the name of the package for the extension that uses the registry+v1 bundle format.
-- \$LOCAL_REGISTRY_HOST - hostname:port of the local docker-registry
 setup.sh also takes 5 arguments.
 
 Usage:
-  setup.sh [OPERATOR_SDK] [CONTAINER_RUNTIME] [KUSTOMIZE] [KIND] [KIND_CLUSTER_NAME] [NAMESPACE]
+  setup.sh [OPERATOR_SDK] [CONTAINER_RUNTIME] [KUSTOMIZE] [LOCAL_REGISTRY_HOST] [CLUSTER_REGISTRY_HOST]
 "
 
 ########################################
 # Input validation
 ########################################
 
-if [[ "$#" -ne 6 ]]; then
+if [[ "$#" -ne 5 ]]; then
   echo "Illegal number of arguments passed"
   echo "${help}"
   exit 1
 fi
 
-if [[ -z "${CATALOG_IMG}" ]]; then
-  echo "\$CATALOG_IMG is required to be set"
+if [[ -z "${E2E_TEST_CATALOG_V1}" ]]; then
+  echo "\$E2E_TEST_CATALOG_V1 is required to be set"
   echo "${help}"
   exit 1
 fi
 
 if [[ -z "${REG_PKG_NAME}" ]]; then
   echo "\$REG_PKG_NAME is required to be set"
-  echo "${help}"
-  exit 1
-fi
-
-if [[ -z "${LOCAL_REGISTRY_HOST}" ]]; then
-  echo "\$LOCAL_REGISTRY_HOST is required to be set"
   echo "${help}"
   exit 1
 fi
@@ -64,15 +57,25 @@ mkdir -p "${REG_DIR}"
 operator_sdk=$1
 container_tool=$2
 kustomize=$3
-kind=$4
-kcluster_name=$5
-namespace=$6
+# The path we use to push the image from _outside_ the cluster
+local_registry_host=$4
+# The path we use _inside_ the cluster
+cluster_registry_host=$5
+
+tls_flag=""
+if [[ "$container_tool" == "podman" ]]; then
+  echo "Using podman container runtime; adding tls disable flag"
+  tls_flag="--tls-verify=false"
+fi
+
+catalog_push_tag="${local_registry_host}/${E2E_TEST_CATALOG_V1}"
+reg_pkg_name="${REG_PKG_NAME}"
 
 reg_img="${DOMAIN}/registry:v0.0.1"
-reg_bundle_img="${LOCAL_REGISTRY_HOST}/bundles/registry-v1/registry-bundle:v0.0.1"
+reg_bundle_path="bundles/registry-v1/registry-bundle:v0.0.1"
 
-catalog_img="${CATALOG_IMG}"
-reg_pkg_name="${REG_PKG_NAME}"
+reg_bundle_img="${cluster_registry_host}/${reg_bundle_path}"
+reg_bundle_push_tag="${local_registry_host}/${reg_bundle_path}"
 
 ########################################
 # Create the registry+v1 based extension
@@ -84,7 +87,7 @@ reg_pkg_name="${REG_PKG_NAME}"
 # NOTE: This is a rough edge that users will experience
 
 # The Makefile in the project scaffolded by operator-sdk uses an SDK binary
-# in the path path if it is present. Override via `export` to ensure we use
+# in the path if it is present. Override via `export` to ensure we use
 # the same version that we scaffolded with.
 # NOTE: this is a rough edge that users will experience
 
@@ -102,7 +105,8 @@ reg_pkg_name="${REG_PKG_NAME}"
   make docker-build IMG="${reg_img}" && \
   sed -i -e 's/$(OPERATOR_SDK) generate kustomize manifests -q/$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false/g' Makefile && \
   make bundle IMG="${reg_img}" VERSION=0.0.1 && \
-  make bundle-build BUNDLE_IMG="${reg_bundle_img}"
+  make bundle-build BUNDLE_IMG="${reg_bundle_push_tag}"
+  ${container_tool} push ${reg_bundle_push_tag} ${tls_flag}
 )
 
 ###############################
@@ -149,107 +153,5 @@ cat <<EOF > "${TMP_ROOT}"/catalog/index.yaml
 }
 EOF
 
-# Add a .indexignore to make catalogd ignore
-# reading the symlinked ..* files that are created when
-# mounting a ConfigMap
-cat <<EOF > "${TMP_ROOT}"/catalog/.indexignore
-..*
-EOF
-
-kubectl create configmap -n "${namespace}" --from-file="${TMP_ROOT}"/catalog.Dockerfile extension-dev-e2e.dockerfile
-kubectl create configmap -n "${namespace}" --from-file="${TMP_ROOT}"/catalog extension-dev-e2e.build-contents
-
-kubectl apply -f - << EOF
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: kaniko
-  namespace: "${namespace}"
-spec:
-  template:
-    spec:
-      containers:
-      - name: kaniko
-        image: gcr.io/kaniko-project/executor:latest
-        args: ["--dockerfile=/workspace/catalog.Dockerfile",
-                "--context=/workspace/",
-                "--destination=${catalog_img}",
-                "--skip-tls-verify"]
-        volumeMounts:
-          - name: dockerfile
-            mountPath: /workspace/
-          - name: build-contents
-            mountPath: /workspace/catalog/
-      restartPolicy: Never
-      volumes:
-        - name: dockerfile
-          configMap:
-            name: extension-dev-e2e.dockerfile
-            items:
-              - key: catalog.Dockerfile
-                path: catalog.Dockerfile
-        - name: build-contents
-          configMap:
-            name: extension-dev-e2e.build-contents
-EOF
-
-kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko --timeout=60s
-
-# Make sure all files are removable. This is necessary because
-# the Makefiles generated by the Operator-SDK have targets
-# that install binaries under the bin/ directory. Those binaries
-# don't have write permissions so they can't be removed unless
-# we ensure they have the write permissions
-chmod -R +w "${REG_DIR}/bin"
-
-# Load the bundle image into the docker-registry
-
-kubectl create configmap -n "${namespace}" --from-file="${REG_DIR}/bundle.Dockerfile" operator-controller-e2e-${reg_pkg_name}.root
-
-tgz="${REG_DIR}/manifests.tgz"
-tar czf "${tgz}" -C "${REG_DIR}" bundle
-kubectl create configmap -n "${namespace}" --from-file="${tgz}" operator-controller-${reg_pkg_name}.manifests
-
-kubectl apply -f - << EOF
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: "kaniko-${reg_pkg_name}"
-  namespace: "${namespace}"
-spec:
-  template:
-    spec:
-      initContainers:
-        - name: copy-manifests
-          image: busybox
-          command: ['sh', '-c', 'cp /manifests-data/* /manifests']
-          volumeMounts:
-            - name: manifests
-              mountPath: /manifests
-            - name: manifests-data
-              mountPath: /manifests-data
-      containers:
-      - name: kaniko
-        image: gcr.io/kaniko-project/executor:latest
-        args: ["--dockerfile=/workspace/bundle.Dockerfile",
-                "--context=tar:///workspace/manifests/manifests.tgz",
-                "--destination=${reg_bundle_img}",
-                "--skip-tls-verify"]
-        volumeMounts:
-          - name: dockerfile
-            mountPath: /workspace/
-          - name: manifests
-            mountPath: /workspace/manifests/
-      restartPolicy: Never
-      volumes:
-        - name: dockerfile
-          configMap:
-            name: operator-controller-e2e-${reg_pkg_name}.root
-        - name: manifests
-          emptyDir: {}
-        - name: manifests-data
-          configMap:
-            name: operator-controller-${reg_pkg_name}.manifests
-EOF
-
-kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko-${reg_pkg_name} --timeout=60s
+${container_tool} build -f "${TMP_ROOT}/catalog.Dockerfile" -t "${catalog_push_tag}" "${TMP_ROOT}/"
+${container_tool} push ${catalog_push_tag} ${tls_flag}
