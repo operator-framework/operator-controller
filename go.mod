@@ -44,7 +44,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/controller-tools v0.18.0
 	sigs.k8s.io/crdify v0.4.1-0.20250613143457-398e4483fb58
-	sigs.k8s.io/yaml v1.5.0
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
