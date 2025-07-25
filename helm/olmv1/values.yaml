@@ -49,7 +49,7 @@ components:
     webhook:
       annotations: {}
   certManager:
-    enabled: true
+    enabled: false
   e2e:
     enabled: false
 
