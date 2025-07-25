@@ -8,3 +8,5 @@ components:
     webhook:
       annotations:
         cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
+  certManager:
+    enabled: true
