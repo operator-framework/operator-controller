@@ -17,14 +17,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/discovery"
-	"k8s.io/utils/ptr"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
-	"pkg.package-operator.run/boxcutter/managedcache"
-	"pkg.package-operator.run/boxcutter/ownerhandling"
-	"pkg.package-operator.run/boxcutter/validation"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,66 +34,19 @@ import (
 
 const (
 	ClusterExtensionRevisionOwnerLabel        = "olm.operatorframework.io/owner"
-	boxcutterSystemPrefixFieldOwner           = "olm.operatorframework.io"
 	clusterExtensionRevisionTeardownFinalizer = "olm.operatorframework.io/teardown"
 )
 
 // ClusterExtensionRevisionReconciler actions individual snapshots of ClusterExtensions,
 // as part of the boxcutter integration.
 type ClusterExtensionRevisionReconciler struct {
-	Client          client.Client
-	RevisionManager RevisionManager
-}
-
-type AccessManager interface {
-	GetWithUser(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (managedcache.Accessor, error)
-	FreeWithUser(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error
-	Source(handler.EventHandler, ...predicate.Predicate) source.Source
+	Client         client.Client
+	RevisionEngine RevisionEngine
 }
 
 type RevisionEngine interface {
 	Teardown(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error)
 	Reconcile(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error)
-}
-
-type RevisionManager interface {
-	GetScopedRevisionEngine(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (RevisionEngine, error)
-	HandleDeletion(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error
-	Source(handler.EventHandler, ...predicate.Predicate) source.Source
-}
-
-type OLMRevisionEngineGetter struct {
-	DiscoveryClient discovery.DiscoveryInterface
-	Scheme          *runtime.Scheme
-	RestMapper      meta.RESTMapper
-	AccessManager   AccessManager
-}
-
-func (r *OLMRevisionEngineGetter) GetScopedRevisionEngine(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (RevisionEngine, error) {
-	accessor, err := r.AccessManager.GetWithUser(ctx, owner, user, usedFor)
-	if err != nil {
-		return nil, fmt.Errorf("get cache: %w", err)
-	}
-	return machinery.NewRevisionEngine(
-		machinery.NewPhaseEngine(
-			machinery.NewObjectEngine(
-				r.Scheme, accessor, accessor,
-				ownerhandling.NewNative(r.Scheme),
-				machinery.NewComparator(ownerhandling.NewNative(r.Scheme), r.DiscoveryClient, r.Scheme, boxcutterSystemPrefixFieldOwner),
-				boxcutterSystemPrefixFieldOwner, boxcutterSystemPrefixFieldOwner,
-			),
-			validation.NewClusterPhaseValidator(r.RestMapper, accessor),
-		),
-		validation.NewRevisionValidator(), accessor,
-	), nil
-}
-
-func (r *OLMRevisionEngineGetter) HandleDeletion(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-	return r.AccessManager.FreeWithUser(ctx, owner, user)
-}
-
-func (r *OLMRevisionEngineGetter) Source(eventHandler handler.EventHandler, p ...predicate.Predicate) source.Source {
-	return r.AccessManager.Source(eventHandler, p...)
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions,verbs=get;list;watch;update;patch;create;delete
@@ -120,18 +68,7 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 
 	controller, ok := getControllingClusterExtension(rev)
 	if !ok {
-		// ClusterExtension revisions can't exist without a ClusterExtension in control.
-		// This situation can only appear if the ClusterExtension object has been deleted with --cascade=Orphan.
-		// To not leave unactionable resources on the cluster, we are going to just
-		// reap the revision reverences and propagate the Orphan deletion.
-		if rev.DeletionTimestamp.IsZero() {
-			return ctrl.Result{}, client.IgnoreNotFound(
-				c.Client.Delete(ctx, rev, client.PropagationPolicy(metav1.DeletePropagationOrphan), client.Preconditions{
-					UID:             ptr.To(rev.GetUID()),
-					ResourceVersion: ptr.To(rev.GetResourceVersion()),
-				}),
-			)
-		}
+		// TODO: clean up all the deletion logic for the case where orphaned CEV are created for reasons
 		return ctrl.Result{}, c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer)
 	}
 
@@ -143,46 +80,19 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, ce *
 
 	revision, opts, previous := toBoxcutterRevision(ce.Name, rev)
 
-	var objects []client.Object
-	for _, phase := range revision.GetPhases() {
-		for _, pobj := range phase.GetObjects() {
-			objects = append(objects, &pobj)
-		}
-	}
-
-	// THIS IS STUPID, PLEASE FIX!
-	// Revisions need individual finalizers on the ClusterExtension to prevent its premature deletion.
-	if rev.DeletionTimestamp.IsZero() &&
-		rev.Spec.LifecycleState != ocv1.ClusterExtensionRevisionLifecycleStateArchived {
-		// We can't lookup the complete ClusterExtension when it's already deleted.
-		// This only works when the controller-manager is not restarted during teardown.
-		if err := c.Client.Get(ctx, client.ObjectKeyFromObject(ce), ce); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
-	re, err := c.RevisionManager.GetScopedRevisionEngine(ctx, ce, rev, objects)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
 	if !rev.DeletionTimestamp.IsZero() ||
 		rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
 		//
 		// Teardown
 		//
-		tres, err := re.Teardown(ctx, *revision)
+		tres, err := c.RevisionEngine.Teardown(ctx, *revision)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("revision teardown: %w", err)
 		}
 
 		l.Info("teardown report", "report", tres.String())
-
 		if !tres.IsComplete() {
 			return ctrl.Result{}, nil
-		}
-		if err := c.RevisionManager.HandleDeletion(ctx, ce, rev); err != nil {
-			return ctrl.Result{}, fmt.Errorf("get cache: %w", err)
 		}
 		return ctrl.Result{}, c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer)
 	}
@@ -193,7 +103,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, ce *
 	if err := c.ensureFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 		return ctrl.Result{}, err
 	}
-	rres, err := re.Reconcile(ctx, *revision, opts...)
+	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %w", err)
 	}
@@ -294,14 +204,18 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, ce *
 	return ctrl.Result{}, c.Client.Status().Update(ctx, rev)
 }
 
-func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+type Sourcerer interface {
+	Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source
+}
+
+func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager, sourcerer Sourcerer) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&ocv1.ClusterExtensionRevision{},
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
 		WatchesRawSource(
-			c.RevisionManager.Source(
+			sourcerer.Source(
 				handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtensionRevision{}),
 				predicate.ResourceVersionChangedPredicate{},
 			),

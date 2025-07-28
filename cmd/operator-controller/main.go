@@ -34,16 +34,17 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/discovery"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
+	"pkg.package-operator.run/boxcutter/machinery"
 	"pkg.package-operator.run/boxcutter/managedcache"
+	"pkg.package-operator.run/boxcutter/ownerhandling"
+	"pkg.package-operator.run/boxcutter/validation"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
@@ -500,55 +501,43 @@ func run() error {
 
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		// Boxcutter
+		const (
+			boxcutterSystemPrefixFieldOwner = "olm.operatorframework.io"
+		)
+
 		discoveryClient, err := discovery.NewDiscoveryClientForConfig(restConfig)
 		if err != nil {
 			setupLog.Error(err, "unable to create discovery client")
 			return err
 		}
-		mapFunc := func(ctx context.Context, ce *ocv1.ClusterExtension, c *rest.Config, o crcache.Options) (*rest.Config, crcache.Options, error) {
-			saKey := client.ObjectKey{
-				Name:      ce.Spec.ServiceAccount.Name,
-				Namespace: ce.Spec.Namespace,
-			}
-			saConfig := rest.AnonymousClientConfig(c)
-			saConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
-				return &authentication.TokenInjectingRoundTripper{
-					Tripper:     rt,
-					TokenGetter: tokenGetter,
-					Key:         saKey,
-				}
-			})
 
-			// Cache scoping
-			req1, err := k8slabels.NewRequirement(
-				controllers.ClusterExtensionRevisionOwnerLabel, selection.Equals, []string{ce.Name})
-			if err != nil {
-				return nil, o, err
-			}
-			o.DefaultLabelSelector = k8slabels.NewSelector().Add(*req1)
-
-			return saConfig, o, nil
-		}
-
-		accessManager := managedcache.NewObjectBoundAccessManager(
-			ctrl.Log.WithName("accessmanager"), mapFunc, restConfig, crcache.Options{
+		trackingCache, err := managedcache.NewTrackingCache(
+			ctrl.Log.WithName("accessmanager"),
+			restConfig,
+			crcache.Options{
 				Scheme: mgr.GetScheme(), Mapper: mgr.GetRESTMapper(),
-			})
-		if err := mgr.Add(accessManager); err != nil {
-			setupLog.Error(err, "unable to register AccessManager")
-			return err
+			},
+		)
+		if err != nil {
+			setupLog.Error(err, "unable to create boxcutter tracking cache")
 		}
 
 		if err = (&controllers.ClusterExtensionRevisionReconciler{
 			Client: cl,
-			RevisionManager: &controllers.OLMRevisionEngineGetter{
-				AccessManager:   accessManager,
-				Scheme:          mgr.GetScheme(),
-				RestMapper:      mgr.GetRESTMapper(),
-				DiscoveryClient: discoveryClient,
-			},
-		}).SetupWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
+			RevisionEngine: machinery.NewRevisionEngine(
+				machinery.NewPhaseEngine(
+					machinery.NewObjectEngine(
+						mgr.GetScheme(), trackingCache, mgr.GetClient(),
+						ownerhandling.NewNative(mgr.GetScheme()),
+						machinery.NewComparator(ownerhandling.NewNative(mgr.GetScheme()), discoveryClient, mgr.GetScheme(), boxcutterSystemPrefixFieldOwner),
+						boxcutterSystemPrefixFieldOwner, boxcutterSystemPrefixFieldOwner,
+					),
+					validation.NewClusterPhaseValidator(mgr.GetRESTMapper(), mgr.GetClient()),
+				),
+				validation.NewRevisionValidator(), mgr.GetClient(),
+			),
+		}).SetupWithManager(mgr, trackingCache); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "ClusterExtensionRevision")
 			return err
 		}
 	}

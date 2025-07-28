@@ -14,19 +14,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/discovery"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
-	"pkg.package-operator.run/boxcutter/managedcache"
 	"pkg.package-operator.run/boxcutter/validation"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
@@ -311,13 +306,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			// reconcile cluster extension revision
 			result, err := (&controllers.ClusterExtensionRevisionReconciler{
 				Client: testClient,
-				RevisionManager: mockRevisionManager{
-					getScopedRevisionEngine: func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (controllers.RevisionEngine, error) {
-						return &mockRevisionEngine{
-							reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
-								return tc.revisionResult, nil
-							},
-						}, nil
+				RevisionEngine: &mockRevisionEngine{
+					reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+						return tc.revisionResult, nil
 					},
 				},
 			}).Reconcile(t.Context(), ctrl.Request{
@@ -430,13 +421,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 			// reconcile cluster extension revision
 			result, err := (&controllers.ClusterExtensionRevisionReconciler{
 				Client: testClient,
-				RevisionManager: mockRevisionManager{
-					getScopedRevisionEngine: func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (controllers.RevisionEngine, error) {
-						return &mockRevisionEngine{
-							reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
-								return tc.revisionResult, nil
-							},
-						}, nil
+				RevisionEngine: &mockRevisionEngine{
+					reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+						return tc.revisionResult, nil
 					},
 				},
 			}).Reconcile(t.Context(), ctrl.Request{
@@ -468,7 +455,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 		revisionResult           machinery.RevisionResult
 		revisionEngineTeardownFn func(*testing.T) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error)
 		validate                 func(*testing.T, client.Client)
-		handleDeletionFn         func(t *testing.T) func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error
 		expectedErr              string
 	}{
 		{
@@ -488,50 +474,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				}, rev)
 				require.NoError(t, err)
 				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
-			},
-			handleDeletionFn: func(t *testing.T) func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-				return nil
-			},
-			revisionEngineTeardownFn: func(t *testing.T) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-				return nil
-			},
-		},
-		{
-			name:           "delete with propagation orphan if parent ClusterExtension does not exist",
-			revisionResult: mockRevisionResult{},
-			existingObjs: func() []client.Object {
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
-				configMap := &corev1.ConfigMap{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "my-configmap",
-						Namespace: "my-namespace",
-					},
-					Data: map[string]string{
-						"some": "data",
-					},
-				}
-				require.NoError(t, controllerutil.SetControllerReference(rev1, configMap, testScheme))
-				return []client.Object{rev1, configMap}
-			},
-			validate: func(t *testing.T, c client.Client) {
-				t.Log("checking if ClusterExtensionRevision is deleted")
-				rev := &ocv1.ClusterExtensionRevision{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
-				}, rev)
-				require.Error(t, err)
-				require.True(t, errors.IsNotFound(err))
-				t.Log("checking if ConfigMap still exists")
-				cm := &corev1.ConfigMap{}
-				err = c.Get(t.Context(), client.ObjectKey{
-					Name:      "my-configmap",
-					Namespace: "my-namespace",
-				}, cm)
-				require.NoError(t, err)
-				require.NotNil(t, cm)
-			},
-			handleDeletionFn: func(t *testing.T) func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-				return nil
 			},
 			revisionEngineTeardownFn: func(t *testing.T) func(context.Context, machinerytypes.Revision, ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
 				return nil
@@ -555,14 +497,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 					return &mockRevisionTeardownResult{
 						isComplete: true,
 					}, nil
-				}
-			},
-			handleDeletionFn: func(t *testing.T) func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-				return func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-					t.Log("check owner is cluster extension and user is cluster extension revision")
-					require.Equal(t, "test-ext", owner.GetName())
-					require.Equal(t, "test-ext-1", user.GetName())
-					return nil
 				}
 			},
 			validate: func(t *testing.T, c client.Client) {
@@ -603,9 +537,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				require.NoError(t, err)
 				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
 			},
-			handleDeletionFn: func(t *testing.T) func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-				return nil
-			},
 		},
 		{
 			name:           "revision is torn down when in archived state and finalizer is removed",
@@ -634,14 +565,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				}, rev)
 				require.NoError(t, err)
 				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
-			},
-			handleDeletionFn: func(t *testing.T) func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-				return func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-					t.Log("check owner is cluster extension and user is cluster extension revision")
-					require.Equal(t, "test-ext", owner.GetName())
-					require.Equal(t, "test-ext-1", user.GetName())
-					return nil
-				}
 			},
 		},
 		{
@@ -672,9 +595,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				require.NoError(t, err)
 				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
 			},
-			handleDeletionFn: func(t *testing.T) func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-				return nil
-			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -688,16 +608,11 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			// reconcile cluster extension revision
 			result, err := (&controllers.ClusterExtensionRevisionReconciler{
 				Client: testClient,
-				RevisionManager: mockRevisionManager{
-					getScopedRevisionEngine: func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (controllers.RevisionEngine, error) {
-						return &mockRevisionEngine{
-							reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
-								return tc.revisionResult, nil
-							},
-							teardown: tc.revisionEngineTeardownFn(t),
-						}, nil
+				RevisionEngine: &mockRevisionEngine{
+					reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+						return tc.revisionResult, nil
 					},
-					handleDeletion: tc.handleDeletionFn(t),
+					teardown: tc.revisionEngineTeardownFn(t),
 				},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
@@ -717,72 +632,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			tc.validate(t, testClient)
 		})
 	}
-}
-
-func Test_OLMRevisionGetter_AccessManager_Integration(t *testing.T) {
-	expectedCtx := t.Context()
-	expectedOwner := &ocv1.ClusterExtension{}
-	expectedUser := &ocv1.ClusterExtensionRevision{}
-	expectedUsedFor := []client.Object{
-		&corev1.ConfigMap{},
-		&corev1.ServiceAccount{},
-	}
-	expectedHandler := handler.EnqueueRequestsFromMapFunc(nil)
-	expectedPredicates := []predicate.Predicate{
-		predicate.AnnotationChangedPredicate{},
-		predicate.GenerationChangedPredicate{},
-	}
-
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
-	require.NoError(t, err)
-
-	g := controllers.OLMRevisionEngineGetter{
-		DiscoveryClient: discoveryClient,
-		AccessManager: mockAccessManager{
-			getWithUser: func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (managedcache.Accessor, error) {
-				require.Equal(t, expectedCtx, ctx)
-				require.Equal(t, expectedOwner, owner)
-				require.Equal(t, expectedUser, user)
-				require.Equal(t, expectedUsedFor, usedFor)
-				return nil, nil
-			},
-			freeWithUser: func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-				require.Equal(t, expectedCtx, ctx)
-				require.Equal(t, expectedOwner, owner)
-				require.Equal(t, expectedUser, user)
-				return nil
-			},
-			sourceFn: func(eventHandler handler.EventHandler, p ...predicate.Predicate) source.Source {
-				require.Equal(t, expectedHandler, eventHandler)
-				require.Equal(t, expectedPredicates, p)
-				return nil
-			},
-		},
-	}
-
-	_, _ = g.GetScopedRevisionEngine(expectedCtx, expectedOwner, expectedUser, expectedUsedFor)
-	_ = g.HandleDeletion(expectedCtx, expectedOwner, expectedUser)
-	_ = g.Source(expectedHandler, expectedPredicates...)
-}
-
-func Test_OLMRevisionGetter_AccessManager_Errors(t *testing.T) {
-	g := controllers.OLMRevisionEngineGetter{
-		AccessManager: mockAccessManager{
-			getWithUser: func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (managedcache.Accessor, error) {
-				return nil, fmt.Errorf("some error")
-			},
-			freeWithUser: func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-				return fmt.Errorf("some error")
-			},
-		},
-	}
-
-	_, err := g.GetScopedRevisionEngine(t.Context(), nil, nil, nil)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "some error")
-	err = g.HandleDeletion(t.Context(), nil, nil)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "some error")
 }
 
 func newTestClusterExtension() *ocv1.ClusterExtension {
@@ -834,44 +683,6 @@ func newTestClusterExtensionRevision(name string) *ocv1.ClusterExtensionRevision
 			},
 		},
 	}
-}
-
-type mockAccessManager struct {
-	getWithUser  func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (managedcache.Accessor, error)
-	freeWithUser func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error
-	sourceFn     func(eventHandler handler.EventHandler, p ...predicate.Predicate) source.Source
-}
-
-func (m mockAccessManager) GetWithUser(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (managedcache.Accessor, error) {
-	return m.getWithUser(ctx, owner, user, usedFor)
-}
-
-func (m mockAccessManager) FreeWithUser(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-	return m.freeWithUser(ctx, owner, user)
-}
-
-func (m mockAccessManager) Source(eventHandler handler.EventHandler, p ...predicate.Predicate) source.Source {
-	return m.sourceFn(eventHandler, p...)
-}
-
-var _ controllers.AccessManager = &mockAccessManager{}
-
-type mockRevisionManager struct {
-	getScopedRevisionEngine func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (controllers.RevisionEngine, error)
-	handleDeletion          func(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error
-	source                  func(eventHandler handler.EventHandler, p ...predicate.Predicate) source.Source
-}
-
-func (m mockRevisionManager) HandleDeletion(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object) error {
-	return m.handleDeletion(ctx, owner, user)
-}
-
-func (m mockRevisionManager) Source(eventHandler handler.EventHandler, p ...predicate.Predicate) source.Source {
-	return m.source(eventHandler, p...)
-}
-
-func (m mockRevisionManager) GetScopedRevisionEngine(ctx context.Context, owner *ocv1.ClusterExtension, user client.Object, usedFor []client.Object) (controllers.RevisionEngine, error) {
-	return m.getScopedRevisionEngine(ctx, owner, user, usedFor)
 }
 
 type mockRevisionEngine struct {
