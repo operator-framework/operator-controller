@@ -1,23 +1,2 @@
 approvers:
-   # contributors who can approve any docs PRs in the repo
-   - michaelryanpeter
-reviewers:
-   # contributors who can review/lgtm any docs PRs in the repo
-   - anik120
-   - ankitathomas
-   - bentito
-   - camilamacedo86
-   - dtfranz
-   - gallettilance
-   - gavinmbell
-   - grokspawn
-   - joelanford
-   - kevinrizza
-   - LalatenduMohanty
-   - oceanc80
-   - OchiengEd
-   - perdasilva
-   - rashmigottipati
-   - thetechnick
-   - tmshort
-   - trgeiger
+   - docs-approvers

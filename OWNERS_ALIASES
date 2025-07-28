@@ -1,25 +1,49 @@
-
 aliases:
-   # contributors who can approve any PRs in the repo
-   operator-controller-approvers:
-   - camilamacedo86
-   - grokspawn
+   olmv1-approvers:
    - joelanford
    - kevinrizza
    - perdasilva
-   - thetechnick
    - tmshort
 
-   # contributors who can review/lgtm any PRs in the repo
-   operator-controller-reviewers:
+   olmv1-reviewers:
    - anik120
    - ankitathomas
    - bentito
+   - camilamacedo86
    - dtfranz
-   - gallettilance
-   - gavinmbell
-   - LalatenduMohanty
+   - grokspawn
+   - joelanford
    - oceanc80
    - OchiengEd
+   - perdasilva
    - rashmigottipati
+   - thetechnick
+   - tmshort
    - trgeiger
+
+   api-approvers:
+   - grokspawn
+   - thetechnick
+
+   catalogd-approvers:
+   - grokspawn
+
+   operator-controller-approvers:
+   - thetechnick
+
+   cmd-approvers:
+   - grokspawn
+
+   manifest-approvers:
+   - camilamacedo86
+
+   ci-approvers:
+   - camilamacedo86
+
+   docs-approvers:
+   - michaelryanpeter
+
+   docs-draft-approvers:
+   - camilamacedo86
+   - grokspawn
+   - thetechnick
