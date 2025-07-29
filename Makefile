@@ -151,16 +151,6 @@ KUSTOMIZE_OPCON_RBAC_DIR := helm/olmv1/base/operator-controller/rbac
 manifests: $(CONTROLLER_GEN) $(HELM) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	# Generate CRDs via our own generator
 	hack/tools/update-crds.sh
-	# Generate the remaining operator-controller standard manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard rbac:roleName=operator-controller-manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)/standard
-	# Generate the remaining operator-controller experimental manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=operator-controller-manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)/experimental
-	# Generate the remaining catalogd standard manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard rbac:roleName=catalogd-manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)/standard
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)/standard
-	# Generate the remaining catalogd experimental manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=catalogd-manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)/experimental
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)/experimental
 	# Update base config to include helm templates
 	./hack/tools/patch-base-for-helm.sh
 	# Generate manifests stored in source-control
