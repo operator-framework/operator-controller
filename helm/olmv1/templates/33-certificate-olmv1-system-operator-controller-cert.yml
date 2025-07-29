@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: olmv1
     {{- include "olmv1.labels" . | nindent 4 }}
-  name: olmv1-cert
+  name: operator-controller-cert
   namespace: {{ .Values.namespaces.olmv1.name }}
 spec:
   dnsNames:
@@ -21,5 +21,5 @@ spec:
     algorithm: ECDSA
     rotationPolicy: Always
     size: 256
-  secretName: olmv1-cert
+  secretName: operator-controller-cert
 {{- end }}

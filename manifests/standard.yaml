@@ -1729,8 +1729,8 @@ spec:
               name: tmp
             - mountPath: /var/certs
               name: catalogserver-certs
-            - mountPath: /var/ca-certs/
-              name: olmv1-certificate
+            - mountPath: /var/ca-certs
+              name: ca-certs
               readOnly: true
           imagePullPolicy: IfNotPresent
           securityContext:
@@ -1748,8 +1748,14 @@ spec:
           name: tmp
         - name: catalogserver-certs
           secret:
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+            optional: false
             secretName: catalogd-service-cert-git-version
-        - name: olmv1-certificate
+        - name: ca-certs
           secret:
             items:
               - key: ca.crt
@@ -1826,9 +1832,9 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=:8443
             - --leader-elect
-            - --catalogd-cas-dir=/var/certs
-            - --pull-cas-dir=/var/certs
-            - --tls-cert=/var/certs/tls.cert
+            - --catalogd-cas-dir=/var/ca-certs
+            - --pull-cas-dir=/var/ca-certs
+            - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
           command:
             - /operator-controller
@@ -1855,8 +1861,11 @@ spec:
               name: cache
             - mountPath: /tmp
               name: tmp
-            - mountPath: /var/certs/
-              name: olmv1-certificate
+            - mountPath: /var/certs
+              name: operator-controller-certs
+              readOnly: true
+            - mountPath: /var/ca-certs
+              name: ca-certs
               readOnly: true
           imagePullPolicy: IfNotPresent
           securityContext:
@@ -1872,17 +1881,22 @@ spec:
           name: cache
         - emptyDir: {}
           name: tmp
-        - name: olmv1-certificate
+        - name: operator-controller-certs
+          secret:
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+            optional: false
+            secretName: operator-controller-cert
+        - name: ca-certs
           secret:
             items:
               - key: ca.crt
                 path: olm-ca.crt
-              - key: tls.crt
-                path: tls.cert
-              - key: tls.key
-                path: tls.key
             optional: false
-            secretName: olmv1-cert
+            secretName: operator-controller-cert
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -1973,7 +1987,7 @@ spec:
     size: 256
   secretName: catalogd-service-cert-git-version
 ---
-# Source: olmv1/templates/33-certificate-olmv1-system-olmv1-cert.yml
+# Source: olmv1/templates/33-certificate-olmv1-system-operator-controller-cert.yml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -1982,7 +1996,7 @@ metadata:
   labels:
     app.kubernetes.io/name: olmv1
     app.kubernetes.io/part-of: olm
-  name: olmv1-cert
+  name: operator-controller-cert
   namespace: olmv1-system
 spec:
   dnsNames:
@@ -1996,7 +2010,7 @@ spec:
     algorithm: ECDSA
     rotationPolicy: Always
     size: 256
-  secretName: olmv1-cert
+  secretName: operator-controller-cert
 ---
 # Source: olmv1/templates/34-clusterissuer-olmv1-ca.yml
 apiVersion: cert-manager.io/v1
