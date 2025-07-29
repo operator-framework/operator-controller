@@ -38,7 +38,7 @@ func newMockPreflight(crd *apiextensionsv1.CustomResourceDefinition, err error) 
 	}, preflightOpts...)
 }
 
-const crdFolder string = "../../../../../testdata/manifests"
+const crdFolder string = "testdata/manifests"
 
 func getCrdFromManifestFile(t *testing.T, oldCrdFile string) *apiextensionsv1.CustomResourceDefinition {
 	if oldCrdFile == "" {
