@@ -97,8 +97,8 @@ spec:
             {{- if .Values.components.certManager.enabled }}
             - mountPath: /var/certs
               name: catalogserver-certs
-            - mountPath: /var/ca-certs/
-              name: olmv1-certificate
+            - mountPath: /var/ca-certs
+              name: ca-certs
               readOnly: true
             {{- end }}
             {{- with .Values.components.catalogd.deployment.volumeMounts }}
@@ -121,8 +121,14 @@ spec:
         {{- if .Values.components.certManager.enabled }}
         - name: catalogserver-certs
           secret:
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+            optional: false
             secretName: catalogd-service-cert-git-version
-        - name: olmv1-certificate
+        - name: ca-certs
           secret:
             items:
               - key: ca.crt
