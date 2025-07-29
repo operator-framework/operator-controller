@@ -2,19 +2,17 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-features:
-  tilt:
-    enabled: true
-  apiV1MetasHandler:
-    enabled: true
-  webhookProviderCertManager:
-    enabled: true
-  singleOwnNamespaceInstallSupport:
-    enabled: true
-  preflightPermissions:
-    enabled: true
-  helmChartSupport:
-    enabled: true
+tilt:
+  enabled: true
+
+operatorControllerFeatures:
+  - WebhookProviderCertManager
+  - SingleOwnNamespaceInstallSupport
+  - PreflightPermissions
+  - HelmChartSupport
+
+catalogdFeatures:
+  - APIV1MetasHandler
 
 # This can be one of: standard or experimental
 featureSet: experimental
