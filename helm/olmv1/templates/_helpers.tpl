@@ -44,15 +44,6 @@ olm.operatorframework.io/feature-set: {{ .Values.featureSet -}}{{- if .Values.co
 {{- end }}
 
 {{/*
-Annotations for Catalogd Webhooks
-*/}}
-{{- define "olmv1.catalogd.webhook.annotations" -}}
-{{- with .Values.components.catalogd.webhook.annotations }}
-{{- toYamlPretty . }}
-{{- end }}
-{{- end }}
-
-{{/*
 Insertion of additional rules for RBAC
 */}}
 {{- define "olmv1.catalogd.role.rules" -}}
