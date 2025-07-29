@@ -1,7 +1,35 @@
 {{- if .Values.components.operatorController.enabled }}
-{{- if (eq .Values.featureSet "standard") }}
-{{ tpl (.Files.Get "base/operator-controller/rbac/standard/role.yaml") . }}
-{{- else if (eq .Values.featureSet "experimental") }}
-{{ tpl (.Files.Get "base/operator-controller/rbac/experimental/role.yaml") . }}
-{{- end }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: operator-controller-manager-role
+  namespace: {{ .Values.namespaces.olmv1.name }}
+  labels:
+    app.kubernetes.io/name: operator-controller
+    {{- include "olmv1.labels" . | nindent 4 }}
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+  {{- include "olmv1.operatorController.role.rules" . | nindent 2 }}
 {{- end }}

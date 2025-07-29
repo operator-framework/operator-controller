@@ -1,4 +1,4 @@
----
+{{- if .Values.components.catalogd.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -36,25 +36,4 @@ rules:
       - patch
       - update
   {{- include "olmv1.catalogd.clusterRole.rules" . | nindent 2 }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: catalogd-manager-role
-  namespace: {{ .Values.namespaces.olmv1.name }}
-  labels:
-    app.kubernetes.io/name: catalogd
-    {{- include "olmv1.labels" . | nindent 4 }}
-  annotations:
-    {{- include "olmv1.annotations" . | nindent 4 }}
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-      - serviceaccounts
-    verbs:
-      - get
-      - list
-      - watch
-  {{- include "olmv1.catalogd.role.rules" . | nindent 2 }}
+{{- end }}
