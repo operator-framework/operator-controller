@@ -8,16 +8,11 @@ components:
     enabled: true
     deployment:
       image: quay.io/operator-framework/operator-controller:devel
-      imagePullPolicy: IfNotPresent
       volumeMounts: []
       volumes: []
-      affinity: {}
-      nodeSelector: {}
-      tolerations: []
       podArguments: []
       podLabels: {}
       podAnnotations: {}
-      priorityClassName: ""
       env: []
     service:
       annotations: {}
@@ -29,22 +24,15 @@ components:
     enabled: true
     deployment:
       image: quay.io/operator-framework/catalogd:devel
-      imagePullPolicy: IfNotPresent
       volumeMounts: []
       volumes: []
-      affinity: {}
-      nodeSelector: {}
-      tolerations: []
       podArguments: []
       podLabels: {}
       podAnnotations: {}
-      priorityClassName: ""
       env: []
     service:
       annotations: {}
     clusterRole:
-      rules: []
-    role:
       rules: []
     webhook:
       annotations: {}
@@ -74,23 +62,57 @@ featureSet: standard
 namespaces:
   olmv1:
     name: olmv1-system
-    labels:
-      pod-security.kubernetes.io/enforce: restricted
-      pod-security.kubernetes.io/enforce-version: latest
+    podSecurityProfile: restricted
+    labels: {}
     annotations: {}
   certManager:
     name: cert-manager
 
-# Pod-level security context
-podSecurityContext:
-  runAsNonRoot: true
-  seccompProfile:
-    type: RuntimeDefault
-
-# Container-level security context
-securityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
-  readOnlyRootFilesystem: true
+# Common deployment values for operator-controller and catalogd
+deployments:
+  templateSpec:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
+                    - ppc64le
+                    - s390x
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                    - linux
+    nodeSelector:
+      kubernetes.io/os: linux
+      node-role.kubernetes.io/control-plane: ""
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    terminationGracePeriodSeconds: 10
+    tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+        tolerationSeconds: 120
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+        tolerationSeconds: 120
+  containerSpec:
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+    terminationMessagePolicy: FallbackToLogsOnError

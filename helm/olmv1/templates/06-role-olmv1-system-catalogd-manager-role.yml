@@ -19,5 +19,4 @@ rules:
       - get
       - list
       - watch
-  {{- include "olmv1.catalogd.role.rules" . | nindent 2 }}
 {{- end }}
