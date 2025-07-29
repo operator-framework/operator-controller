@@ -13,10 +13,6 @@ metadata:
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/warn-version: latest
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: olmv1-system
 ---
@@ -28,10 +24,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-controller-manager
   namespace: olmv1-system
@@ -61,10 +53,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: olmv1
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: default-deny-all-traffic
   namespace: olmv1-system
@@ -82,10 +70,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-controller-manager
   namespace: olmv1-system
@@ -111,10 +95,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-controller-manager
   namespace: olmv1-system
@@ -127,10 +107,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-controller-manager
   namespace: olmv1-system
@@ -148,10 +124,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: e2e
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: e2e-registries-conf
   namespace: olmv1-system
@@ -164,10 +136,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: e2e
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: e2e-coverage
   namespace: olmv1-system
@@ -188,10 +156,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   name: clustercatalogs.olm.operatorframework.io
   labels:
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
 spec:
   group: olm.operatorframework.io
@@ -594,10 +558,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   name: clusterextensions.olm.operatorframework.io
   labels:
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
 spec:
   group: olm.operatorframework.io
@@ -1170,10 +1130,6 @@ metadata:
   name: catalogd-manager-role
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   annotations:
     olm.operatorframework.io/feature-set: experimental-e2e
@@ -1213,10 +1169,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-metrics-reader
 rules:
@@ -1233,10 +1185,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-proxy-role
 rules:
@@ -1261,10 +1209,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-clusterextension-editor-role
 rules:
@@ -1289,10 +1233,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-clusterextension-viewer-role
 rules:
@@ -1312,10 +1252,6 @@ metadata:
   name: operator-controller-manager-role
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   annotations:
     olm.operatorframework.io/feature-set: experimental-e2e
@@ -1382,10 +1318,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-metrics-reader
 rules:
@@ -1402,10 +1334,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-proxy-role
 rules:
@@ -1430,10 +1358,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-manager-rolebinding
 roleRef:
@@ -1453,10 +1377,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-proxy-rolebinding
 roleRef:
@@ -1476,10 +1396,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-manager-rolebinding
 roleRef:
@@ -1499,10 +1415,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-proxy-rolebinding
 roleRef:
@@ -1522,10 +1434,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-leader-election-role
   namespace: olmv1-system
@@ -1570,10 +1478,6 @@ metadata:
   namespace: olmv1-system
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   annotations:
     olm.operatorframework.io/feature-set: experimental-e2e
@@ -1596,10 +1500,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-leader-election-role
   namespace: olmv1-system
@@ -1644,10 +1544,6 @@ metadata:
   namespace: olmv1-system
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   annotations:
     olm.operatorframework.io/feature-set: experimental-e2e
@@ -1682,10 +1578,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-leader-election-rolebinding
   namespace: olmv1-system
@@ -1706,10 +1598,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-manager-rolebinding
   namespace: olmv1-system
@@ -1730,10 +1618,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-leader-election-rolebinding
   namespace: olmv1-system
@@ -1754,10 +1638,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-manager-rolebinding
   namespace: olmv1-system
@@ -1779,10 +1659,6 @@ metadata:
   labels:
     control-plane: catalogd-controller-manager
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-service
   namespace: olmv1-system
@@ -1812,10 +1688,6 @@ metadata:
   labels:
     control-plane: operator-controller-controller-manager
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-service
   namespace: olmv1-system
@@ -1836,10 +1708,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: e2e
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: e2e-coverage-copy-pod
   namespace: olmv1-system
@@ -1882,10 +1750,6 @@ metadata:
   labels:
     control-plane: catalogd-controller-manager
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-controller-manager
   namespace: olmv1-system
@@ -1903,10 +1767,6 @@ spec:
       labels:
         control-plane: catalogd-controller-manager
         app.kubernetes.io/name: catalogd
-        
-        
-        
-        
         app.kubernetes.io/part-of: olm
     spec:
       containers:
@@ -2027,10 +1887,6 @@ metadata:
   labels:
     control-plane: operator-controller-controller-manager
     app.kubernetes.io/name: operator-controller
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: operator-controller-controller-manager
   namespace: olmv1-system
@@ -2047,10 +1903,6 @@ spec:
       labels:
         control-plane: operator-controller-controller-manager
         app.kubernetes.io/name: operator-controller
-        
-        
-        
-        
         app.kubernetes.io/part-of: olm
     spec:
       containers:
@@ -2177,10 +2029,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: olmv1
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: olmv1-ca
   namespace: cert-manager
@@ -2208,10 +2056,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: catalogd-service-cert
   namespace: olmv1-system
@@ -2238,10 +2082,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: olmv1
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: olmv1-cert
   namespace: olmv1-system
@@ -2267,10 +2107,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: olmv1
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: olmv1-ca
 spec:
@@ -2285,10 +2121,6 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
   labels:
     app.kubernetes.io/name: olmv1
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   name: self-sign-issuer
   namespace: cert-manager
@@ -2302,10 +2134,6 @@ metadata:
   name: catalogd-mutating-webhook-configuration
   labels:
     app.kubernetes.io/name: catalogd
-    
-    
-    
-    
     app.kubernetes.io/part-of: olm
   annotations:
     cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
