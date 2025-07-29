@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/crdify/pkg/config"
 	"sigs.k8s.io/crdify/pkg/runner"
 	"sigs.k8s.io/crdify/pkg/validations"
+	"sigs.k8s.io/crdify/pkg/validations/property"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
@@ -129,6 +130,13 @@ func defaultConfig() *config.Config {
 			{
 				Name:        "description",
 				Enforcement: config.EnforcementPolicyNone,
+			},
+			{
+				Name:        "enum",
+				Enforcement: config.EnforcementPolicyError,
+				Configuration: map[string]interface{}{
+					"additionPolicy": property.AdditionPolicyAllow,
+				},
 			},
 		},
 	}

@@ -22,7 +22,8 @@
                                         "type":"integer"
                                     },
                                     "enum": {
-                                        "type":"integer"
+                                        "type": "string",
+                                        "enum": ["a", "b", "c", "adding-enum-is-allowed"]
                                     },
                                     "minMaxValue": {
                                         "type":"integer"
@@ -69,7 +70,8 @@
                                         "type":"integer"
                                     },
                                     "enum": {
-                                        "type":"integer"
+                                        "type": "string",
+                                        "enum": ["a", "b", "c", "adding-enum-is-allowed"]
                                     },
                                     "minMaxValue": {
                                         "type":"integer"
@@ -116,7 +118,8 @@
                                         "type":"integer"
                                     },
                                     "enum": {
-                                        "type":"integer"
+                                        "type": "string",
+                                        "enum": ["a", "b", "c", "adding-enum-is-allowed"]
                                     },
                                     "minMaxValue": {
                                         "type":"integer"
