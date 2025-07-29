@@ -7,10 +7,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: olmv1
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
@@ -24,10 +24,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-controller-manager
   namespace: olmv1-system
@@ -57,10 +57,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: olmv1
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: default-deny-all-traffic
   namespace: olmv1-system
@@ -78,10 +78,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-controller-manager
   namespace: olmv1-system
@@ -107,10 +107,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-controller-manager
   namespace: olmv1-system
@@ -123,10 +123,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-controller-manager
   namespace: olmv1-system
@@ -141,10 +141,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   name: clustercatalogs.olm.operatorframework.io
   labels:
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
 spec:
   group: olm.operatorframework.io
@@ -547,10 +547,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   name: clusterextensions.olm.operatorframework.io
   labels:
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
 spec:
   group: olm.operatorframework.io
@@ -1123,10 +1123,10 @@ metadata:
   name: catalogd-manager-role
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   annotations:
     olm.operatorframework.io/feature-set: experimental
@@ -1165,10 +1165,10 @@ metadata:
   name: operator-controller-manager-role
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   annotations:
     olm.operatorframework.io/feature-set: experimental
@@ -1235,10 +1235,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-metrics-reader
 rules:
@@ -1255,10 +1255,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-proxy-role
 rules:
@@ -1283,10 +1283,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-clusterextension-editor-role
 rules:
@@ -1311,10 +1311,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-clusterextension-viewer-role
 rules:
@@ -1335,10 +1335,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-metrics-reader
 rules:
@@ -1355,10 +1355,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-proxy-role
 rules:
@@ -1383,10 +1383,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-manager-rolebinding
 roleRef:
@@ -1406,10 +1406,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-proxy-rolebinding
 roleRef:
@@ -1429,10 +1429,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-manager-rolebinding
 roleRef:
@@ -1452,10 +1452,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-proxy-rolebinding
 roleRef:
@@ -1475,10 +1475,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-leader-election-role
   namespace: olmv1-system
@@ -1523,10 +1523,10 @@ metadata:
   namespace: olmv1-system
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   annotations:
     olm.operatorframework.io/feature-set: experimental
@@ -1549,10 +1549,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-leader-election-role
   namespace: olmv1-system
@@ -1597,10 +1597,10 @@ metadata:
   namespace: olmv1-system
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   annotations:
     olm.operatorframework.io/feature-set: experimental
@@ -1635,10 +1635,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-leader-election-rolebinding
   namespace: olmv1-system
@@ -1659,10 +1659,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-manager-rolebinding
   namespace: olmv1-system
@@ -1683,10 +1683,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-leader-election-rolebinding
   namespace: olmv1-system
@@ -1707,10 +1707,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-manager-rolebinding
   namespace: olmv1-system
@@ -1732,10 +1732,10 @@ metadata:
   labels:
     control-plane: catalogd-controller-manager
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-service
   namespace: olmv1-system
@@ -1765,10 +1765,10 @@ metadata:
   labels:
     control-plane: operator-controller-controller-manager
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-service
   namespace: olmv1-system
@@ -1791,10 +1791,10 @@ metadata:
   labels:
     control-plane: catalogd-controller-manager
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-controller-manager
   namespace: olmv1-system
@@ -1812,10 +1812,10 @@ spec:
       labels:
         control-plane: catalogd-controller-manager
         app.kubernetes.io/name: catalogd
-        helm.sh/chart: olmv1-0.1.0
-        app.kubernetes.io/instance: olmv1
-        app.kubernetes.io/version: "1.3.0"
-        app.kubernetes.io/managed-by: Helm
+        
+        
+        
+        
         app.kubernetes.io/part-of: olm
     spec:
       affinity:
@@ -1913,10 +1913,10 @@ metadata:
   labels:
     control-plane: operator-controller-controller-manager
     app.kubernetes.io/name: operator-controller
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: operator-controller-controller-manager
   namespace: olmv1-system
@@ -1933,10 +1933,10 @@ spec:
       labels:
         control-plane: operator-controller-controller-manager
         app.kubernetes.io/name: operator-controller
-        helm.sh/chart: olmv1-0.1.0
-        app.kubernetes.io/instance: olmv1
-        app.kubernetes.io/version: "1.3.0"
-        app.kubernetes.io/managed-by: Helm
+        
+        
+        
+        
         app.kubernetes.io/part-of: olm
     spec:
       affinity:
@@ -2036,10 +2036,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: olmv1
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: olmv1-ca
   namespace: cert-manager
@@ -2052,7 +2052,6 @@ spec:
     name: self-sign-issuer
   privateKey:
     algorithm: ECDSA
-    rotationPolicy: Always
     size: 256
   secretName: olmv1-ca
   secretTemplate:
@@ -2067,10 +2066,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: catalogd-service-cert
   namespace: olmv1-system
@@ -2085,7 +2084,6 @@ spec:
     name: olmv1-ca
   privateKey:
     algorithm: ECDSA
-    rotationPolicy: Always
     size: 256
   secretName: catalogd-service-cert-git-version
 ---
@@ -2097,10 +2095,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: olmv1
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: olmv1-cert
   namespace: olmv1-system
@@ -2114,7 +2112,6 @@ spec:
     name: olmv1-ca
   privateKey:
     algorithm: ECDSA
-    rotationPolicy: Always
     size: 256
   secretName: olmv1-cert
 ---
@@ -2126,10 +2123,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: olmv1
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: olmv1-ca
 spec:
@@ -2144,10 +2141,10 @@ metadata:
     olm.operatorframework.io/feature-set: experimental
   labels:
     app.kubernetes.io/name: olmv1
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   name: self-sign-issuer
   namespace: cert-manager
@@ -2161,10 +2158,10 @@ metadata:
   name: catalogd-mutating-webhook-configuration
   labels:
     app.kubernetes.io/name: catalogd
-    helm.sh/chart: olmv1-0.1.0
-    app.kubernetes.io/instance: olmv1
-    app.kubernetes.io/version: "1.3.0"
-    app.kubernetes.io/managed-by: Helm
+    
+    
+    
+    
     app.kubernetes.io/part-of: olm
   annotations:
     cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
