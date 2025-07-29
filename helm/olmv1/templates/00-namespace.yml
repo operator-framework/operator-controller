@@ -5,12 +5,18 @@ metadata:
   annotations:
     {{- include "olmv1.annotations" . | nindent 4 }}
     {{- with .Values.namespaces.olmv1.annotations }}
-      {{- toYaml . | nindent 4 }}
+      {{- toYamlPretty . | nindent 4 }}
     {{- end }}
   labels:
     app.kubernetes.io/name: olmv1
+    pod-security.kubernetes.io/audit: {{ .Values.namespaces.olmv1.podSecurityProfile }}
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/enforce: {{ .Values.namespaces.olmv1.podSecurityProfile }}
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: {{ .Values.namespaces.olmv1.podSecurityProfile }}
+    pod-security.kubernetes.io/warn-version: latest
     {{- include "olmv1.labels" . | nindent 4 }}
     {{- with .Values.namespaces.olmv1.labels }}
-      {{- toYaml . | nindent 4 }}
+      {{- toYamlPretty . | nindent 4 }}
     {{- end }}
   name: {{ .Values.namespaces.olmv1.name }}

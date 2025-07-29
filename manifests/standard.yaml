@@ -7,13 +7,17 @@ metadata:
     olm.operatorframework.io/feature-set: standard
   labels:
     app.kubernetes.io/name: olmv1
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
     
     
     
     
     app.kubernetes.io/part-of: olm
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: latest
   name: olmv1-system
 ---
 # Source: olmv1/templates/36-networkpolicy-olmv1-system-catalogd-controller-manager.yml
@@ -1818,22 +1822,6 @@ spec:
         
         app.kubernetes.io/part-of: olm
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/arch
-                    operator: In
-                    values:
-                      - amd64
-                      - arm64
-                      - ppc64le
-                      - s390x
-                  - key: kubernetes.io/os
-                    operator: In
-                    values:
-                      - linux
       containers:
         - args:
             - --leader-elect
@@ -1845,7 +1833,6 @@ spec:
           command:
             - ./catalogd
           image: "quay.io/operator-framework/catalogd:devel"
-          imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
               path: /healthz
@@ -1863,13 +1850,6 @@ spec:
             requests:
               cpu: 100m
               memory: 200Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            readOnlyRootFilesystem: true
-          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
             - mountPath: /var/cache/
               name: cache
@@ -1880,12 +1860,15 @@ spec:
             - mountPath: /var/ca-certs/
               name: olmv1-certificate
               readOnly: true
-      securityContext:
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          terminationMessagePolicy: FallbackToLogsOnError
       serviceAccountName: catalogd-controller-manager
-      terminationGracePeriodSeconds: 10
       volumes:
         - emptyDir: {}
           name: cache
@@ -1901,6 +1884,42 @@ spec:
                 path: olm-ca.crt
             optional: false
             secretName: catalogd-service-cert-git-version
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+                      - arm64
+                      - ppc64le
+                      - s390x
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      nodeSelector:
+        kubernetes.io/os: linux
+        node-role.kubernetes.io/control-plane: ""
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 10
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 120
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 120
 ---
 # Source: olmv1/templates/30-deployment-olmv1-system-operator-controller-controller-manager.yml
 apiVersion: apps/v1
@@ -1938,22 +1957,6 @@ spec:
         
         app.kubernetes.io/part-of: olm
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/arch
-                    operator: In
-                    values:
-                      - amd64
-                      - arm64
-                      - ppc64le
-                      - s390x
-                  - key: kubernetes.io/os
-                    operator: In
-                    values:
-                      - linux
       containers:
         - args:
             - --health-probe-bind-address=:8081
@@ -1966,8 +1969,6 @@ spec:
           command:
             - /operator-controller
           image: "quay.io/operator-framework/operator-controller:devel"
-          image: quay.io/operator-framework/operator-controller:devel
-          imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
               path: /healthz
@@ -1985,13 +1986,6 @@ spec:
             requests:
               cpu: 10m
               memory: 64Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            readOnlyRootFilesystem: true
-          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
             - mountPath: /var/cache
               name: cache
@@ -2000,12 +1994,15 @@ spec:
             - mountPath: /var/certs/
               name: olmv1-certificate
               readOnly: true
-      securityContext:
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          terminationMessagePolicy: FallbackToLogsOnError
       serviceAccountName: operator-controller-controller-manager
-      terminationGracePeriodSeconds: 10
       volumes:
         - emptyDir: {}
           name: cache
@@ -2022,6 +2019,42 @@ spec:
                 path: tls.key
             optional: false
             secretName: olmv1-cert
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+                      - arm64
+                      - ppc64le
+                      - s390x
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      nodeSelector:
+        kubernetes.io/os: linux
+        node-role.kubernetes.io/control-plane: ""
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 10
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 120
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 120
 ---
 # Source: olmv1/templates/31-certificate-cert-manager-olmv1-ca.yml
 apiVersion: cert-manager.io/v1

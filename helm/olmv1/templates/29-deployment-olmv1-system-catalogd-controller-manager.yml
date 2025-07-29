@@ -33,25 +33,6 @@ spec:
         {{- toYamlPretty . | nindent 8 }}
         {{- end }}
     spec:
-      {{- if .Values.components.catalogd.deployment.priorityClassName }}
-      priorityClassName: {{ .Values.components.catalogd.deployment.priorityClassName }}
-      {{- end }}
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/arch
-                    operator: In
-                    values:
-                      - amd64
-                      - arm64
-                      - ppc64le
-                      - s390x
-                  - key: kubernetes.io/os
-                    operator: In
-                    values:
-                      - linux
       containers:
         - args:
             {{- if not .Values.features.tilt.enabled }}
@@ -83,7 +64,6 @@ spec:
           {{- toYamlPretty . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.components.catalogd.deployment.image }}"
-          imagePullPolicy: {{ .Values.components.catalogd.deployment.imagePullPolicy }}
           {{- if not .Values.features.tilt.enabled }}
           livenessProbe:
             httpGet:
@@ -105,11 +85,6 @@ spec:
             requests:
               cpu: 100m
               memory: 200Mi
-          {{- with .Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
             {{- if .Values.components.e2e.enabled }}
             - mountPath: /e2e-coverage
@@ -127,14 +102,12 @@ spec:
               readOnly: true
             {{- end }}
             {{- with .Values.components.catalogd.deployment.volumeMounts }}
-              {{- toYaml . | nindent 12 }}
+              {{- toYamlPretty . | nindent 12 }}
             {{- end }}
-      {{- with .Values.podSecurityContext }}
-      securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+          {{- with .Values.deployments.containerSpec }}
+          {{- toYamlPretty . | nindent 10 }}
+          {{- end }}
       serviceAccountName: catalogd-controller-manager
-      terminationGracePeriodSeconds: 10
       volumes:
         {{- if .Values.components.e2e.enabled }}
         - name: e2e-coverage-volume
@@ -160,16 +133,7 @@ spec:
         {{- with .Values.components.catalogd.deployment.volumes }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.components.catalogd.deployment.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.components.catalogd.deployment.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.components.catalogd.deployment.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
+      {{- with .Values.deployments.templateSpec }}
+      {{- toYamlPretty . | nindent 6 }}
       {{- end }}
 {{- end }}
