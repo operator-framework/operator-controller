@@ -41,19 +41,12 @@ components:
   e2e:
     enabled: false
 
-features:
-  tilt:
-    enabled: false
-  apiV1MetasHandler:
-    enabled: false
-  webhookProviderCertManager:
-    enabled: false
-  singleOwnNamespaceInstallSupport:
-    enabled: false
-  preflightPermissions:
-    enabled: false
-  helmChartSupport:
-    enabled: false
+      
+tilt:
+  enabled: false
+
+operatorControllerFeatures: []
+catalogdFeatures: []
   
 # This can be one of: standard or experimental
 featureSet: standard

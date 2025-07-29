@@ -35,13 +35,13 @@ spec:
     spec:
       containers:
         - args:
-            {{- if not .Values.features.tilt.enabled }}
+            {{- if not .Values.tilt.enabled }}
             - --leader-elect
             {{- end }}
             - --metrics-bind-address=:7443
             - --external-address=catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc
-            {{- if .Values.features.apiV1MetasHandler.enabled }}
-            - --feature-gates=APIV1MetasHandler=true
+            {{- range .Values.catalogdFeatures }}
+            - --feature-gates={{- . -}}=true
             {{- end }}
             {{- if .Values.components.certManager.enabled }}
             - --tls-cert=/var/certs/tls.crt
@@ -64,7 +64,7 @@ spec:
           {{- toYamlPretty . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.components.catalogd.deployment.image }}"
-          {{- if not .Values.features.tilt.enabled }}
+          {{- if not .Values.tilt.enabled }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -73,7 +73,7 @@ spec:
             periodSeconds: 20
           {{- end }}
           name: manager
-          {{- if not .Values.features.tilt.enabled }}
+          {{- if not .Values.tilt.enabled }}
           readinessProbe:
             httpGet:
               path: /readyz
