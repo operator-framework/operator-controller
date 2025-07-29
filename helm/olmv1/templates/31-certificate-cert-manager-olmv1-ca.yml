@@ -18,6 +18,7 @@ spec:
     name: self-sign-issuer
   privateKey:
     algorithm: ECDSA
+    rotationPolicy: Always
     size: 256
   secretName: olmv1-ca
   secretTemplate:

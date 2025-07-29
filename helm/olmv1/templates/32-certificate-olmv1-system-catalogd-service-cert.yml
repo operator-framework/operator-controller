@@ -20,6 +20,7 @@ spec:
     name: olmv1-ca
   privateKey:
     algorithm: ECDSA
+    rotationPolicy: Always
     size: 256
   secretName: catalogd-service-cert-git-version
 {{- end }}
