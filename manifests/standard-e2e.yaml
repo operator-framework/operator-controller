@@ -1755,7 +1755,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: catalogd
+      control-plane: catalogd-controller-manager
   template:
     metadata:
       annotations:
@@ -1763,6 +1763,7 @@ spec:
         olm.operatorframework.io/feature-set: standard-e2e
       labels:
         app.kubernetes.io/name: catalogd
+        control-plane: catalogd-controller-manager
         app.kubernetes.io/part-of: olm
     spec:
       containers:
@@ -1894,7 +1895,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: operator-controller
+      control-plane: operator-controller-controller-manager
   template:
     metadata:
       annotations:
@@ -1902,6 +1903,7 @@ spec:
         olm.operatorframework.io/feature-set: standard-e2e
       labels:
         app.kubernetes.io/name: operator-controller
+        control-plane: operator-controller-controller-manager
         app.kubernetes.io/part-of: olm
     spec:
       containers:
