@@ -40,7 +40,7 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      control-plane: catalogd-controller-manager
+      app.kubernetes.io/name: catalogd
   policyTypes:
     - Ingress
     - Egress
@@ -82,7 +82,7 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      control-plane: operator-controller-controller-manager
+      app.kubernetes.io/name: operator-controller
   policyTypes:
     - Ingress
     - Egress
@@ -1622,7 +1622,6 @@ metadata:
   annotations:
     olm.operatorframework.io/feature-set: experimental
   labels:
-    control-plane: catalogd-controller-manager
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
   name: catalogd-service
@@ -1642,7 +1641,7 @@ spec:
       protocol: TCP
       targetPort: 7443
   selector:
-    control-plane: catalogd-controller-manager
+    app.kubernetes.io/name: catalogd
 ---
 # Source: olmv1/templates/27-service-olmv1-system-operator-controller-service.yml
 apiVersion: v1
@@ -1651,7 +1650,6 @@ metadata:
   annotations:
     olm.operatorframework.io/feature-set: experimental
   labels:
-    control-plane: operator-controller-controller-manager
     app.kubernetes.io/name: operator-controller
     app.kubernetes.io/part-of: olm
   name: operator-controller-service
@@ -1663,7 +1661,7 @@ spec:
       protocol: TCP
       targetPort: 8443
   selector:
-    control-plane: operator-controller-controller-manager
+    app.kubernetes.io/name: operator-controller
 ---
 # Source: olmv1/templates/29-deployment-olmv1-system-catalogd-controller-manager.yml
 apiVersion: apps/v1
@@ -1673,7 +1671,6 @@ metadata:
     kubectl.kubernetes.io/default-logs-container: manager
     olm.operatorframework.io/feature-set: experimental
   labels:
-    control-plane: catalogd-controller-manager
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
   name: catalogd-controller-manager
@@ -1683,14 +1680,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      control-plane: catalogd-controller-manager
+      app.kubernetes.io/name: catalogd
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
         olm.operatorframework.io/feature-set: experimental
       labels:
-        control-plane: catalogd-controller-manager
         app.kubernetes.io/name: catalogd
         app.kubernetes.io/part-of: olm
     spec:
@@ -1808,7 +1804,6 @@ metadata:
     kubectl.kubernetes.io/default-logs-container: manager
     olm.operatorframework.io/feature-set: experimental
   labels:
-    control-plane: operator-controller-controller-manager
     app.kubernetes.io/name: operator-controller
     app.kubernetes.io/part-of: olm
   name: operator-controller-controller-manager
@@ -1817,14 +1812,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      control-plane: operator-controller-controller-manager
+      app.kubernetes.io/name: operator-controller
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
         olm.operatorframework.io/feature-set: experimental
       labels:
-        control-plane: operator-controller-controller-manager
         app.kubernetes.io/name: operator-controller
         app.kubernetes.io/part-of: olm
     spec:
