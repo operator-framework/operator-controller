@@ -15,7 +15,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: catalogd
+      control-plane: catalogd-controller-manager
   template:
     metadata:
       annotations:
@@ -26,6 +26,7 @@ spec:
         {{- end }}
       labels:
         app.kubernetes.io/name: catalogd
+        control-plane: catalogd-controller-manager
         {{- include "olmv1.labels" . | nindent 8 }}
         {{- with .Values.components.catalogd.deployment.podLabels }}
         {{- toYamlPretty . | nindent 8 }}
