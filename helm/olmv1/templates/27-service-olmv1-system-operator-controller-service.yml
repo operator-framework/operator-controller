@@ -1,10 +1,10 @@
-{{- if .Values.components.operatorController.enabled }}
+{{- if .Values.options.operatorController.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
   annotations:
     {{- include "olmv1.annotations" . | nindent 4 }}
-    {{- with .Values.components.operatorController.service.annotations }}
+    {{- with .Values.options.operatorController.service.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   labels:

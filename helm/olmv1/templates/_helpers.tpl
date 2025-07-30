@@ -16,9 +16,9 @@ Create chart name and version as used by the chart label.
 Return the name of the active component for a prefix, but _only_ if one is enabled
 */}}
 {{- define "component.name.prefix" -}}
-{{- if and (.Values.components.operatorController.enabled) (not .Values.components.catalogd.enabled) -}}
+{{- if and (.Values.options.operatorController.enabled) (not .Values.options.catalogd.enabled) -}}
 operator-controller-
-{{- else if and (not .Values.components.operatorController.enabled) (.Values.components.catalogd.enabled) -}}
+{{- else if and (not .Values.options.operatorController.enabled) (.Values.options.catalogd.enabled) -}}
 catalogd-
 {{- end -}}
 {{- end -}}
@@ -34,7 +34,7 @@ app.kubernetes.io/part-of: olm
 Common annoations
 */}}
 {{- define "olmv1.annotations" -}}
-olm.operatorframework.io/feature-set: {{ .Values.featureSet -}}{{- if .Values.components.e2e.enabled -}}-e2e{{- end -}}
+olm.operatorframework.io/feature-set: {{ .Values.options.featureSet -}}{{- if .Values.options.e2e.enabled -}}-e2e{{- end -}}
 {{- end }}
 
 {{/*
@@ -42,13 +42,13 @@ Insertion of additional rules for RBAC
 */}}
 
 {{- define "olmv1.catalogd.clusterRole.rules" -}}
-{{- with .Values.components.catalogd.clusterRole.rules }}
+{{- with .Values.options.catalogd.clusterRole.rules }}
 {{- toYamlPretty . }}
 {{- end }}
 {{- end }}
 
 {{- define "olmv1.operatorController.clusterRole.rules" -}}
-{{- with .Values.components.operatorController.clusterRole.rules }}
+{{- with .Values.options.operatorController.clusterRole.rules }}
 {{- toYamlPretty . }}
 {{- end }}
 {{- end }}
@@ -57,9 +57,9 @@ Insertion of additional rules for RBAC
 Returns "operator-controller", "catalogd" or "olmv1" depending on enabled components
 */}}
 {{- define "olmv1.label.name" -}}
-{{- if (and .Values.components.operatorController.enabled (not .Values.components.catalogd.enabled)) -}}
+{{- if (and .Values.options.operatorController.enabled (not .Values.options.catalogd.enabled)) -}}
 operator-controller
-{{- else if (and (not .Values.components.operatorController.enabled) .Values.components.catalogd.enabled) -}}
+{{- else if (and (not .Values.options.operatorController.enabled) .Values.options.catalogd.enabled) -}}
 catalogd
 {{- else -}}
 olmv1

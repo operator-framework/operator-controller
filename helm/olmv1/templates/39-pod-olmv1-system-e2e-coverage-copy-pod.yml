@@ -1,4 +1,4 @@
-{{- if .Values.components.e2e.enabled }}
+{{- if .Values.options.e2e.enabled }}
 apiVersion: v1
 kind: Pod
 metadata:

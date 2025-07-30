@@ -3,6 +3,6 @@
 # Declare variables to be passed into your templates.
 
 # List of components to include
-components:
+options:
   certManager:
     enabled: true

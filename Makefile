@@ -159,6 +159,7 @@ manifests: $(CONTROLLER_GEN) $(HELM) #EXHELP Generate WebhookConfiguration, Clus
 	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/e2e.yaml > $(STANDARD_E2E_MANIFEST)
 	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
 	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/experimental.yaml --values helm/e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
+	$(HELM) template olmv1 helm/olmv1 --values helm/tilt.yaml > /dev/null
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.

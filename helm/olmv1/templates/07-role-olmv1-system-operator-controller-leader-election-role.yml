@@ -1,4 +1,4 @@
-{{- if .Values.components.operatorController.enabled }}
+{{- if .Values.options.operatorController.enabled }}
 {{/* Probably want to include this as a file somehow */}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role

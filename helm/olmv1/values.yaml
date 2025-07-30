@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 # List of components to include
-components:
+options:
   operatorController:
     enabled: true
     deployment:
@@ -40,16 +40,14 @@ components:
     enabled: false
   e2e:
     enabled: false
-
-      
-tilt:
-  enabled: false
+  tilt:
+    enabled: false
+  featureSet: standard
 
 operatorControllerFeatures: []
 catalogdFeatures: []
   
 # This can be one of: standard or experimental
-featureSet: standard
 
 # The set of namespaces
 namespaces:
