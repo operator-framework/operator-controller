@@ -8,7 +8,6 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
   labels:
-    control-plane: catalogd-controller-manager
     app.kubernetes.io/name: catalogd
     {{- include "olmv1.labels" . | nindent 4 }}
   name: catalogd-service
@@ -28,5 +27,5 @@ spec:
       protocol: TCP
       targetPort: 7443
   selector:
-    control-plane: catalogd-controller-manager
+    app.kubernetes.io/name: catalogd
 {{- end }}

@@ -31,7 +31,7 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 	ctx := context.Background()
 
 	t.Log("Checking that the controller-manager deployment is updated")
-	managerLabelSelector := labels.Set{"control-plane": "catalogd-controller-manager"}
+	managerLabelSelector := labels.Set{"app.kubernetes.io/name": "catalogd"}
 	var managerDeployment appsv1.Deployment
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var managerDeployments appsv1.DeploymentList
@@ -103,11 +103,11 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 
 	// wait for catalogd deployment to finish
 	t.Log("Wait for catalogd deployment to be ready")
-	catalogdManagerPod := waitForDeployment(t, ctx, "catalogd-controller-manager")
+	catalogdManagerPod := waitForDeployment(t, ctx, "catalogd")
 
 	// wait for operator-controller deployment to finish
 	t.Log("Wait for operator-controller deployment to be ready")
-	managerPod := waitForDeployment(t, ctx, "operator-controller-controller-manager")
+	managerPod := waitForDeployment(t, ctx, "operator-controller")
 
 	t.Log("Wait for acquired leader election")
 	// Average case is under 1 minute but in the worst case: (previous leader crashed)
@@ -188,12 +188,12 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	}, time.Minute, time.Second)
 }
 
-// waitForDeployment checks that the updated deployment with the given control-plane label
+// waitForDeployment checks that the updated deployment with the given app.kubernetes.io/name label
 // has reached the desired number of replicas and that the number pods matches that number
 // i.e. no old pods remain. It will return a pointer to the first pod. This is only necessary
 // to facilitate the mitigation put in place for https://github.com/operator-framework/operator-controller/issues/1626
 func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel string) *corev1.Pod {
-	deploymentLabelSelector := labels.Set{"control-plane": controlPlaneLabel}.AsSelector()
+	deploymentLabelSelector := labels.Set{"app.kubernetes.io/name": controlPlaneLabel}.AsSelector()
 
 	t.Log("Checking that the deployment is updated")
 	var desiredNumReplicas int32

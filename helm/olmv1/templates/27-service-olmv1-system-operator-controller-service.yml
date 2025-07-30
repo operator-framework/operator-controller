@@ -8,7 +8,6 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
   labels:
-    control-plane: operator-controller-controller-manager
     app.kubernetes.io/name: operator-controller
     {{- include "olmv1.labels" . | nindent 4 }}
   name: operator-controller-service
@@ -20,5 +19,5 @@ spec:
       protocol: TCP
       targetPort: 8443
   selector:
-    control-plane: operator-controller-controller-manager
+    app.kubernetes.io/name: operator-controller
 {{- end }}

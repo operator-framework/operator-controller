@@ -18,7 +18,7 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      control-plane: operator-controller-controller-manager
+      app.kubernetes.io/name: operator-controller
   policyTypes:
     - Ingress
     - Egress
