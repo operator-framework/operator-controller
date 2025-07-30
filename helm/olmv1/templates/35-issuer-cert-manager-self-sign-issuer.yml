@@ -5,7 +5,7 @@ metadata:
   annotations:
     {{- include "olmv1.annotations" . | nindent 4 }}
   labels:
-    app.kubernetes.io/name: olmv1
+    app.kubernetes.io/name: {{ include "olmv1.label.name" . }}
     {{- include "olmv1.labels" . | nindent 4 }}
   name: self-sign-issuer
   namespace: {{ .Values.namespaces.certManager.name }}

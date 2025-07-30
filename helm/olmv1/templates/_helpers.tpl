@@ -52,3 +52,16 @@ Insertion of additional rules for RBAC
 {{- toYamlPretty . }}
 {{- end }}
 {{- end }}
+
+{{/*
+Returns "operator-controller", "catalogd" or "olmv1" depending on enabled components
+*/}}
+{{- define "olmv1.label.name" -}}
+{{- if (and .Values.components.operatorController.enabled (not .Values.components.catalogd.enabled)) -}}
+operator-controller
+{{- else if (and (not .Values.components.operatorController.enabled) .Values.components.catalogd.enabled) -}}
+catalogd
+{{- else -}}
+olmv1
+{{- end -}}
+{{- end -}}

@@ -8,7 +8,7 @@ metadata:
       {{- toYamlPretty . | nindent 4 }}
     {{- end }}
   labels:
-    app.kubernetes.io/name: olmv1
+    app.kubernetes.io/name: {{ include "olmv1.label.name" . }}
     pod-security.kubernetes.io/audit: {{ .Values.namespaces.olmv1.podSecurityProfile }}
     pod-security.kubernetes.io/audit-version: latest
     pod-security.kubernetes.io/enforce: {{ .Values.namespaces.olmv1.podSecurityProfile }}
