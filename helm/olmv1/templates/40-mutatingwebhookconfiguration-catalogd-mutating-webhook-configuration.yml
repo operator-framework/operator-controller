@@ -10,6 +10,9 @@ metadata:
     {{- if .Values.components.certManager.enabled }}
     cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
     {{- end }}
+    {{- with .Values.components.catalogd.webhook.annotations }}
+    {{- toYamlPretty . | nindent 4 }}
+    {{- end }}
     {{- include "olmv1.annotations" . | nindent 4 }}
 webhooks:
   - admissionReviewVersions:
