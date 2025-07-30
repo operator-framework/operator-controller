@@ -96,8 +96,20 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 		os.Exit(1)
 	}
 
-	// Convert RegistryV1 to plain manifests
-	objs, err := registryv1.Renderer.Render(regv1, installNamespace, render.WithTargetNamespaces(watchNamespace))
+	// load optional configuration for registry+v1 bundle if present
+	cfg := map[string]interface{}{}
+	configFile := filepath.Join(bundleDir, "config.yaml")
+	if data, err := os.ReadFile(configFile); err == nil {
+		if err := yaml.Unmarshal(data, &cfg); err != nil {
+			return fmt.Errorf("error unmarshalling config file %q: %w", configFile, err)
+		}
+	}
+	// Convert RegistryV1 to plain manifests, applying any configuration
+	opts := []render.Option{render.WithTargetNamespaces(watchNamespace)}
+	if cfg != nil {
+		opts = append(opts, render.WithConfig(cfg))
+	}
+	objs, err := registryv1.Renderer.Render(regv1, installNamespace, opts...)
 	if err != nil {
 		return fmt.Errorf("error converting registry+v1 bundle: %w", err)
 	}

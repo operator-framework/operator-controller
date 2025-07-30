@@ -93,6 +93,11 @@ type ClusterExtensionSpec struct {
 	//
 	// +optional
 	Install *ClusterExtensionInstallConfig `json:"install,omitempty"`
+
+	// config contains arbitrary configuration values to be applied at render time.
+	// These values will be merged into the bundle manifests during rendering.
+	// +optional
+	Config map[string]interface{} `json:"config,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"

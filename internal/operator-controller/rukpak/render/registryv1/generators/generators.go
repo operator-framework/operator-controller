@@ -13,6 +13,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
@@ -295,6 +296,30 @@ func BundleAdditionalResourcesGenerator(rv1 *bundle.RegistryV1, opts render.Opti
 		}
 
 		objs = append(objs, obj)
+	}
+	// apply overrides from configuration, if present
+	if opts.Config != nil {
+		for _, obj := range objs {
+			if obj.GetObjectKind().GroupVersionKind().Kind == "ConfigMap" {
+				u, ok := obj.(*unstructured.Unstructured)
+				if !ok {
+					continue
+				}
+				data, found, err := unstructured.NestedStringMap(u.Object, "data")
+				if err != nil {
+					return nil, err
+				}
+				if !found {
+					data = map[string]string{}
+				}
+				for k, v := range opts.Config {
+					data[k] = fmt.Sprintf("%v", v)
+				}
+				if err := unstructured.SetNestedStringMap(u.Object, data, "data"); err != nil {
+					return nil, err
+				}
+			}
+		}
 	}
 	return objs, nil
 }
