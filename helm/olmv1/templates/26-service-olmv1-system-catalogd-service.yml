@@ -1,10 +1,10 @@
-{{- if .Values.components.catalogd.enabled }}
+{{- if .Values.options.catalogd.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
   annotations:
     {{- include "olmv1.annotations" . | nindent 4 }}
-    {{- with .Values.components.catalogd.service.annotations }}
+    {{- with .Values.options.catalogd.service.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   labels:

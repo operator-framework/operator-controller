@@ -18,4 +18,5 @@ catalogdFeatures:
   - APIV1MetasHandler
 
 # This can be one of: standard or experimental
-featureSet: experimental
+options:
+  featureSet: experimental

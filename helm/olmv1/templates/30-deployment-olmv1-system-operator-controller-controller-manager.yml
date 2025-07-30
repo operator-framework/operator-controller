@@ -1,4 +1,4 @@
-{{- if .Values.components.operatorController.enabled }}
+{{- if .Values.options.operatorController.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,14 +20,14 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: manager
         {{- include "olmv1.annotations" . | nindent 8 }}
-        {{- with .Values.components.operatorController.deployment.podAnnotations }}
+        {{- with .Values.options.operatorController.deployment.podAnnotations }}
         {{- toYamlPretty . | nindent 8 }}
         {{- end }}
       labels:
         app.kubernetes.io/name: operator-controller
         control-plane: operator-controller-controller-manager
         {{- include "olmv1.labels" . | nindent 8 }}
-        {{- with .Values.components.operatorController.deployment.podLabels }}
+        {{- with .Values.options.operatorController.deployment.podLabels }}
         {{- toYamlPretty . | nindent 8 }}
         {{- end }}
     spec:
@@ -35,35 +35,35 @@ spec:
         - args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=:8443
-            {{- if not .Values.tilt.enabled }}
+            {{- if not .Values.options.tilt.enabled }}
             - --leader-elect
             {{- end }}
             {{- range .Values.operatorControllerFeatures }}
             - --feature-gates={{- . -}}=true
             {{- end }}
-            {{- if .Values.components.certManager.enabled }}
+            {{- if .Values.options.certManager.enabled }}
             - --catalogd-cas-dir=/var/ca-certs
             - --pull-cas-dir=/var/ca-certs
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             {{- end }}
-            {{- with .Values.components.operatorController.deployment.podArguments }}
+            {{- with .Values.options.operatorController.deployment.podArguments }}
             {{- toYamlPretty . | nindent 12 }}
             {{- end }}
           command:
             - /operator-controller
-          {{- if or .Values.components.e2e.enabled .Values.components.operatorController.deployment.env }}
+          {{- if or .Values.options.e2e.enabled .Values.options.operatorController.deployment.env }}
           env:
           {{- end }}
-          {{- if .Values.components.e2e.enabled }}
+          {{- if .Values.options.e2e.enabled }}
             - name: GOCOVERDIR
               value: /e2e-coverage
           {{- end }}
-          {{- with .Values.components.operatorController.deployment.env }}
+          {{- with .Values.options.operatorController.deployment.env }}
           {{- toYamlPretty . | nindent 12 }}
           {{- end }}
-          image: "{{ .Values.components.operatorController.deployment.image }}"
-          {{- if not .Values.tilt.enabled }}
+          image: "{{ .Values.options.operatorController.deployment.image }}"
+          {{- if not .Values.options.tilt.enabled }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -72,7 +72,7 @@ spec:
             periodSeconds: 20
           {{- end }}
           name: manager
-          {{- if not .Values.tilt.enabled }}
+          {{- if not .Values.options.tilt.enabled }}
           readinessProbe:
             httpGet:
               path: /readyz
@@ -85,7 +85,7 @@ spec:
               cpu: 10m
               memory: 64Mi
           volumeMounts:
-            {{- if .Values.components.e2e.enabled }}
+            {{- if .Values.options.e2e.enabled }}
             - mountPath: /etc/containers
               name: e2e-registries-conf
             - mountPath: /e2e-coverage
@@ -95,7 +95,7 @@ spec:
               name: cache
             - mountPath: /tmp
               name: tmp
-            {{- if .Values.components.certManager.enabled }}
+            {{- if .Values.options.certManager.enabled }}
             - mountPath: /var/certs
               name: operator-controller-certs
               readOnly: true
@@ -103,7 +103,7 @@ spec:
               name: ca-certs
               readOnly: true
             {{- end }}
-            {{- with .Values.components.operatorController.deployment.volumeMounts }}
+            {{- with .Values.options.operatorController.deployment.volumeMounts }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.deployments.containerSpec }}
@@ -111,7 +111,7 @@ spec:
           {{- end }}
       serviceAccountName: operator-controller-controller-manager
       volumes:
-        {{- if .Values.components.e2e.enabled }}
+        {{- if .Values.options.e2e.enabled }}
         - configMap:
             name: e2e-registries-conf
           name: e2e-registries-conf
@@ -123,7 +123,7 @@ spec:
           name: cache
         - emptyDir: {}
           name: tmp
-        {{- if .Values.components.certManager.enabled }}
+        {{- if .Values.options.certManager.enabled }}
         - name: operator-controller-certs
           secret:
             items:
@@ -141,7 +141,7 @@ spec:
             optional: false
             secretName: operator-controller-cert
         {{- end }}
-        {{- with .Values.components.operatorController.deployment.volumes }}
+        {{- with .Values.options.operatorController.deployment.volumes }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- with .Values.deployments.templateSpec }}

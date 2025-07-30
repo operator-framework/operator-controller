@@ -1,4 +1,4 @@
-{{- if .Values.components.catalogd.enabled }}
+{{- if .Values.options.catalogd.enabled }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -7,10 +7,10 @@ metadata:
     app.kubernetes.io/name: catalogd
     {{- include "olmv1.labels" . | nindent 4 }}
   annotations:
-    {{- if .Values.components.certManager.enabled }}
+    {{- if .Values.options.certManager.enabled }}
     cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
     {{- end }}
-    {{- with .Values.components.catalogd.webhook.annotations }}
+    {{- with .Values.options.catalogd.webhook.annotations }}
     {{- toYamlPretty . | nindent 4 }}
     {{- end }}
     {{- include "olmv1.annotations" . | nindent 4 }}
