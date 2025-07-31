@@ -223,7 +223,8 @@ type BundleRenderer interface {
 }
 
 type RegistryV1BundleRenderer struct {
-	BundleRenderer render.BundleRenderer
+	BundleRenderer      render.BundleRenderer
+	CertificateProvider render.CertificateProvider
 }
 
 func (r *RegistryV1BundleRenderer) Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -231,9 +232,14 @@ func (r *RegistryV1BundleRenderer) Render(bundleFS fs.FS, ext *ocv1.ClusterExten
 	if err != nil {
 		return nil, err
 	}
+
+	if len(reg.CSV.Spec.WebhookDefinitions) > 0 && r.CertificateProvider == nil {
+		return nil, fmt.Errorf("unsupported bundle: webhookDefinitions are not supported")
+	}
+
 	watchNamespace, err := GetWatchNamespace(ext)
 	if err != nil {
 		return nil, err
 	}
-	return r.BundleRenderer.Render(reg, ext.Spec.Namespace, render.WithTargetNamespaces(watchNamespace))
+	return r.BundleRenderer.Render(reg, ext.Spec.Namespace, render.WithTargetNamespaces(watchNamespace), render.WithCertificateProvider(r.CertificateProvider))
 }

@@ -443,7 +443,7 @@ func run() error {
 	// create applier
 	var ctrlBuilderOpts []controllers.ControllerBuilderOption
 	var extApplier controllers.Applier
-
+	certProvider := getCertificateProvider()
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		// TODO: add support for preflight checks
 		// TODO: better scheme handling - which types do we want to support?
@@ -454,14 +454,14 @@ func run() error {
 			RevisionGenerator: &applier.SimpleRevisionGenerator{
 				Scheme: mgr.GetScheme(),
 				BundleRenderer: &applier.RegistryV1BundleRenderer{
-					BundleRenderer: registryv1.Renderer,
+					BundleRenderer:      registryv1.Renderer,
+					CertificateProvider: certProvider,
 				},
 			},
 		}
 		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterExtensionRevision{}))
 	} else {
 		// now initialize the helmApplier, assigning the potentially nil preAuth
-		certProvider := getCertificateProvider()
 		extApplier = &applier.Helm{
 			ActionClientGetter: acg,
 			Preflights:         preflights,
