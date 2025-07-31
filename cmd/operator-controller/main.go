@@ -512,7 +512,7 @@ func run() error {
 		}
 
 		trackingCache, err := managedcache.NewTrackingCache(
-			ctrl.Log.WithName("accessmanager"),
+			ctrl.Log.WithName("trackingCache"),
 			restConfig,
 			crcache.Options{
 				Scheme: mgr.GetScheme(), Mapper: mgr.GetRESTMapper(),
@@ -520,6 +520,9 @@ func run() error {
 		)
 		if err != nil {
 			setupLog.Error(err, "unable to create boxcutter tracking cache")
+		}
+		if err := mgr.Add(trackingCache); err != nil {
+			setupLog.Error(err, "unable to set up tracking cache")
 		}
 
 		if err = (&controllers.ClusterExtensionRevisionReconciler{
