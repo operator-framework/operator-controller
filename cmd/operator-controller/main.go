@@ -458,6 +458,7 @@ func run() error {
 					CertificateProvider: certProvider,
 				},
 			},
+			Preflights: preflights,
 		}
 		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterExtensionRevision{}))
 	} else {
@@ -470,7 +471,8 @@ func run() error {
 				CertificateProvider:     certProvider,
 				IsWebhookSupportEnabled: certProvider != nil,
 			},
-			PreAuthorizer: preAuth,
+			PreAuthorizer:                 preAuth,
+			HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
 		}
 	}
 

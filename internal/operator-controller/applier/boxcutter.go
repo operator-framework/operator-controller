@@ -97,11 +97,22 @@ type Boxcutter struct {
 	Client            client.Client
 	Scheme            *runtime.Scheme
 	RevisionGenerator ClusterExtensionRevisionGenerator
+	Preflights        []Preflight
 }
 
 func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, storageLabels map[string]string) ([]client.Object, string, error) {
 	objs, err := bc.apply(ctx, contentFS, ext, objectLabels, storageLabels)
 	return objs, "", err
+}
+
+func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Object {
+	var objs []client.Object
+	for _, phase := range rev.Spec.Phases {
+		for _, phaseObject := range phase.Objects {
+			objs = append(objs, &phaseObject.Object)
+		}
+	}
+	return objs
 }
 
 func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, _ map[string]string) ([]client.Object, error) {
@@ -122,12 +133,34 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	var (
 		currentRevision *ocv1.ClusterExtensionRevision
 	)
+	state := StateNeedsInstall
 	if len(existingRevisions) > 0 {
 		maybeCurrentRevision := existingRevisions[len(existingRevisions)-1]
 		annotations := maybeCurrentRevision.GetAnnotations()
 		if annotations != nil {
 			if revisionHash, ok := annotations[RevisionHashAnnotation]; ok && revisionHash == desiredHash {
 				currentRevision = &maybeCurrentRevision
+			}
+		}
+		state = StateNeedsUpgrade
+	}
+
+	// Preflights
+	plainObjs := bc.getObjects(desiredRevision)
+	for _, preflight := range bc.Preflights {
+		if shouldSkipPreflight(ctx, preflight, ext, state) {
+			continue
+		}
+		switch state {
+		case StateNeedsInstall:
+			err := preflight.Install(ctx, plainObjs)
+			if err != nil {
+				return nil, err
+			}
+		case StateNeedsUpgrade:
+			err := preflight.Upgrade(ctx, plainObjs)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -164,13 +197,7 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	// TODO: Read status from revision.
 
 	// Collect objects
-	var plain []client.Object
-	for _, phase := range desiredRevision.Spec.Phases {
-		for _, phaseObject := range phase.Objects {
-			plain = append(plain, &phaseObject.Object)
-		}
-	}
-	return plain, nil
+	return bc.getObjects(desiredRevision), nil
 }
 
 // getExistingRevisions returns the list of ClusterExtensionRevisions for a ClusterExtension with name extName in revision order (oldest to newest)
