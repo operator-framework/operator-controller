@@ -30,7 +30,7 @@ const (
 )
 
 type ClusterExtensionRevisionGenerator interface {
-	GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error)
+	GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error)
 }
 
 type SimpleRevisionGenerator struct {
@@ -38,7 +38,7 @@ type SimpleRevisionGenerator struct {
 	BundleRenderer BundleRenderer
 }
 
-func (r *SimpleRevisionGenerator) GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+func (r *SimpleRevisionGenerator) GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 	// extract plain manifests
 	plain, err := r.BundleRenderer.Render(bundleFS, ext)
 	if err != nil {
@@ -74,10 +74,14 @@ func (r *SimpleRevisionGenerator) GenerateRevision(bundleFS fs.FS, ext *ocv1.Clu
 		})
 	}
 
+	if revisionAnnotations == nil {
+		revisionAnnotations = map[string]string{}
+	}
+
 	// Build desired revision
 	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
-			Annotations: map[string]string{},
+			Annotations: revisionAnnotations,
 			Labels: map[string]string{
 				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 			},
@@ -100,8 +104,8 @@ type Boxcutter struct {
 	Preflights        []Preflight
 }
 
-func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, storageLabels map[string]string) ([]client.Object, string, error) {
-	objs, err := bc.apply(ctx, contentFS, ext, objectLabels, storageLabels)
+func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) ([]client.Object, string, error) {
+	objs, err := bc.apply(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	return objs, "", err
 }
 
@@ -115,9 +119,9 @@ func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Obj
 	return objs
 }
 
-func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, _ map[string]string) ([]client.Object, error) {
+func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) ([]client.Object, error) {
 	// Generate desired revision
-	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(contentFS, ext, objectLabels)
+	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
 		return nil, err
 	}

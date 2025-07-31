@@ -1485,7 +1485,7 @@ func (mag *MockActionGetter) Reconcile(rel *release.Release) error {
 }
 
 func TestGetInstalledBundleHistory(t *testing.T) {
-	getter := controllers.DefaultInstalledBundleGetter{}
+	getter := controllers.HelmInstalledBundleGetter{}
 
 	ext := ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{

@@ -17,10 +17,12 @@ limitations under the License.
 package controllers
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -485,7 +487,7 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
-type DefaultInstalledBundleGetter struct {
+type HelmInstalledBundleGetter struct {
 	helmclient.ActionClientGetter
 }
 
@@ -494,7 +496,7 @@ type InstalledBundle struct {
 	Image string
 }
 
-func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*InstalledBundle, error) {
+func (d *HelmInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*InstalledBundle, error) {
 	cl, err := d.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
@@ -518,6 +520,50 @@ func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, e
 					Version: rel.Labels[labels.BundleVersionKey],
 				},
 				Image: rel.Labels[labels.BundleReferenceKey],
+			}, nil
+		}
+	}
+	return nil, nil
+}
+
+type BoxcutterInstalledBundleGetter struct {
+	client.Reader
+}
+
+func (d *BoxcutterInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*InstalledBundle, error) {
+	// TODO: boxcutter applier has a nearly identical bit of code for listing and sorting revisions
+	//   only difference here is that it sorts in reverse order to start iterating with the most
+	//   recent revisions. We should consolidate to avoid code duplication.
+	existingRevisionList := &ocv1.ClusterExtensionRevisionList{}
+	if err := d.Reader.List(ctx, existingRevisionList, client.MatchingLabels{
+		ClusterExtensionRevisionOwnerLabel: ext.Name,
+	}); err != nil {
+		return nil, fmt.Errorf("listing revisions: %w", err)
+	}
+	slices.SortFunc(existingRevisionList.Items, func(a, b ocv1.ClusterExtensionRevision) int {
+		return cmp.Compare(b.Spec.Revision, a.Spec.Revision)
+	})
+
+	for _, rev := range existingRevisionList.Items {
+		if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateActive {
+			// TODO: we should make constants for the ClusterExtensionRevision condition types.
+			if installedCondition := apimeta.FindStatusCondition(rev.Status.Conditions, "Succeeded"); installedCondition == nil || installedCondition.Status != metav1.ConditionTrue {
+				// TODO: It's not great to return this error in a completely normal situation. This currently cascades
+				//   into Installed=False, Failed and Progressing=True, Retrying conditions that give the impression
+				//   that something is wrong. We should probably refactor the InstalledBundleGetter interface to better
+				//   handle the async nature of ClusterExtensionRevision rollouts.
+				return nil, fmt.Errorf("most recent active revision %s is still rolling out", rev.Name)
+			}
+
+			// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "storageLabels")
+			//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
+			//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
+			return &InstalledBundle{
+				BundleMetadata: ocv1.BundleMetadata{
+					Name:    rev.Annotations[labels.BundleNameKey],
+					Version: rev.Annotations[labels.BundleVersionKey],
+				},
+				Image: rev.Annotations[labels.BundleReferenceKey],
 			}, nil
 		}
 	}

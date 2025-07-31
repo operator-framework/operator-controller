@@ -441,8 +441,11 @@ func run() error {
 	}
 
 	// create applier
-	var ctrlBuilderOpts []controllers.ControllerBuilderOption
-	var extApplier controllers.Applier
+	var (
+		ctrlBuilderOpts       []controllers.ControllerBuilderOption
+		extApplier            controllers.Applier
+		installedBundleGetter controllers.InstalledBundleGetter
+	)
 	certProvider := getCertificateProvider()
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
 		// TODO: add support for preflight checks
@@ -460,6 +463,7 @@ func run() error {
 			},
 			Preflights: preflights,
 		}
+		installedBundleGetter = &controllers.BoxcutterInstalledBundleGetter{Reader: mgr.GetClient()}
 		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterExtensionRevision{}))
 	} else {
 		// now initialize the helmApplier, assigning the potentially nil preAuth
@@ -474,6 +478,7 @@ func run() error {
 			PreAuthorizer:                 preAuth,
 			HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
 		}
+		installedBundleGetter = &controllers.HelmInstalledBundleGetter{ActionClientGetter: acg}
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
@@ -493,7 +498,7 @@ func run() error {
 		ImageCache:            imageCache,
 		ImagePuller:           imagePuller,
 		Applier:               extApplier,
-		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
+		InstalledBundleGetter: installedBundleGetter,
 		Finalizers:            clusterExtensionFinalizers,
 		Manager:               cm,
 	}).SetupWithManager(mgr, ctrlBuilderOpts...); err != nil {
