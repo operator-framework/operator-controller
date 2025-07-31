@@ -65,3 +65,13 @@ catalogd
 olmv1
 {{- end -}}
 {{- end -}}
+
+{{/*
+When rendering with OpenShift, only one of the main components (catalogd, operatorController)
+should be enabled
+*/}}
+{{- if .Values.options.openshift.enabled -}}
+{{- if and .Values.options.catalogd.enabled .Values.options.operatorController.enabled -}}
+{{- fail "When rendering Openshift, only one of {catalogd, operatorController} should also be enabled" -}}
+{{- end -}}
+{{- end -}}

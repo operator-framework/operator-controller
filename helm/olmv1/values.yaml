@@ -42,6 +42,8 @@ options:
     enabled: false
   tilt:
     enabled: false
+  openshift:
+    enabled: false
   featureSet: standard
 
 operatorControllerFeatures: []
