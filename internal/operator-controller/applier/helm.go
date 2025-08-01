@@ -126,7 +126,8 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	if err != nil {
 		return nil, "", err
 	}
-	values := chartutil.Values{}
+	// merge in any user-provided config values as Helm values
+	values := chartutil.Values{"Values": ext.Spec.Config}
 
 	post := &postrenderer{
 		labels: objectLabels,
