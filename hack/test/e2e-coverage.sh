@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-COVERAGE_OUTPUT="${COVERAGE_OUTPUT:-${ROOT_DIR}/coverage/e2e.out}"
+COVERAGE_NAME="${COVERAGE_NAME:-e2e}"
 
 OPERATOR_CONTROLLER_NAMESPACE="olmv1-system"
 OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME="operator-controller-controller-manager"
@@ -13,7 +13,8 @@ CATALOGD_MANAGER_DEPLOYMENT_NAME="catalogd-controller-manager"
 COPY_POD_NAME="e2e-coverage-copy-pod"
 
 # Create a temporary directory for coverage
-COVERAGE_DIR=${ROOT_DIR}/coverage/e2e
+COVERAGE_OUTPUT=${ROOT_DIR}/coverage/${COVERAGE_NAME}.out
+COVERAGE_DIR=${ROOT_DIR}/coverage/${COVERAGE_NAME}
 rm -rf ${COVERAGE_DIR} && mkdir -p ${COVERAGE_DIR}
 
 # Coverage-instrumented binary produces coverage on termination,

@@ -271,12 +271,14 @@ image-registry: ## Build the testdata catalog used for e2e tests and push it to 
 test-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
+test-e2e: COVERAGE_NAME := e2e
 test-e2e: run image-registry prometheus e2e e2e-metrics e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: test-experimental-e2e
 test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
 test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
+test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: run image-registry prometheus experimental-e2e e2e e2e-metrics e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
@@ -316,7 +318,7 @@ test-upgrade-e2e: kind-cluster run-latest-release image-registry pre-upgrade-set
 
 .PHONY: e2e-coverage
 e2e-coverage:
-	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/test/e2e-coverage.sh
+	COVERAGE_NAME=$(COVERAGE_NAME) ./hack/test/e2e-coverage.sh
 
 #SECTION KIND Cluster Operations
 
