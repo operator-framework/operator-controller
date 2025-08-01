@@ -20,8 +20,9 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: manager
         {{- include "olmv1.annotations" . | nindent 8 }}
-        {{- with .Values.options.operatorController.deployment.podAnnotations }}
-        {{- toYamlPretty . | nindent 8 }}
+        {{- if .Values.options.openshift.enabled }}
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
+        openshift.io/required-scc: privileged
         {{- end }}
       labels:
         app.kubernetes.io/name: operator-controller
@@ -46,23 +47,28 @@ spec:
             - --pull-cas-dir=/var/ca-certs
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
-            {{- end }}
-            {{- with .Values.options.operatorController.deployment.podArguments }}
-            {{- toYamlPretty . | nindent 12 }}
+            {{- else if .Values.options.openshift.enabled }}
+            - --tls-cert=/var/certs/tls.crt
+            - --tls-key=/var/certs/tls.key
+            - --catalogd-cas-dir=/var/ca-certs
+            - --v=${LOG_VERBOSITY}
+            - --global-pull-secret=openshift-config/pull-secret
             {{- end }}
           command:
             - /operator-controller
-          {{- if or .Values.options.e2e.enabled .Values.options.operatorController.deployment.env }}
+          {{- if or .Values.options.e2e.enabled .Values.options.openshift.enabled }}
           env:
-          {{- end }}
           {{- if .Values.options.e2e.enabled }}
             - name: GOCOVERDIR
               value: /e2e-coverage
           {{- end }}
-          {{- with .Values.options.operatorController.deployment.env }}
-          {{- toYamlPretty . | nindent 12 }}
+          {{- if .Values.options.openshift.enabled }}
+            - name: SSL_CERT_DIR
+              value: /var/ca-certs
+          {{- end }}
           {{- end }}
           image: "{{ .Values.options.operatorController.deployment.image }}"
+          name: manager
           {{- if not .Values.options.tilt.enabled }}
           livenessProbe:
             httpGet:
@@ -70,9 +76,6 @@ spec:
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
-          {{- end }}
-          name: manager
-          {{- if not .Values.options.tilt.enabled }}
           readinessProbe:
             httpGet:
               path: /readyz
@@ -102,9 +105,18 @@ spec:
             - mountPath: /var/ca-certs
               name: ca-certs
               readOnly: true
-            {{- end }}
-            {{- with .Values.options.operatorController.deployment.volumeMounts }}
-              {{- toYaml . | nindent 12 }}
+            {{- else if .Values.options.openshift.enabled }}
+            - mountPath: /var/certs
+              name: operator-controller-certs
+            - mountPath: /var/ca-certs
+              name: ca-certs
+              readOnly: true
+            - mountPath: /etc/containers
+              name: etc-containers
+              readOnly: true
+            - mountPath: /etc/docker
+              name: etc-docker
+              readOnly: true
             {{- end }}
           {{- with .Values.deployments.containerSpec }}
           {{- toYaml . | nindent 10 }}
@@ -140,9 +152,39 @@ spec:
                 path: olm-ca.crt
             optional: false
             secretName: operator-controller-cert
-        {{- end }}
-        {{- with .Values.options.operatorController.deployment.volumes }}
-          {{- toYaml . | nindent 8 }}
+        {{- else if .Values.options.openshift.enabled }}
+        - name: operator-controller-certs
+          secret:
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+            optional: false
+            secretName: operator-controller-cert
+        - name: ca-certs
+          projected:
+            sources:
+              - configMap:
+                  items:
+                    - key: ca-bundle.crt
+                      path: ca-bundle.crt
+                  name: operator-controller-trusted-ca-bundle
+                  optional: false
+              - configMap:
+                  items:
+                    - key: service-ca.crt
+                      path: service-ca.crt
+                  name: openshift-service-ca.crt
+                  optional: false
+        - hostPath:
+            path: /etc/containers
+            type: Directory
+          name: etc-containers
+        - hostPath:
+            path: /etc/docker
+            type: Directory
+          name: etc-docker
         {{- end }}
       {{- with .Values.deployments.templateSpec }}
       {{- toYamlPretty . | nindent 6 }}

@@ -1781,13 +1781,13 @@ spec:
             - name: GOCOVERDIR
               value: /e2e-coverage
           image: "quay.io/operator-framework/catalogd:devel"
+          name: manager
           livenessProbe:
             httpGet:
               path: /healthz
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
-          name: manager
           readinessProbe:
             httpGet:
               path: /readyz
@@ -1926,13 +1926,13 @@ spec:
             - name: GOCOVERDIR
               value: /e2e-coverage
           image: "quay.io/operator-framework/operator-controller:devel"
+          name: manager
           livenessProbe:
             httpGet:
               path: /healthz
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
-          name: manager
           readinessProbe:
             httpGet:
               path: /readyz

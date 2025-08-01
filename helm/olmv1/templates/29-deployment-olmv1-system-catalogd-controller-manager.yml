@@ -21,8 +21,9 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: manager
         {{- include "olmv1.annotations" . | nindent 8 }}
-        {{- with .Values.options.catalogd.deployment.podAnnotations }}
-        {{- toYamlPretty . | nindent 8 }}
+        {{- if .Values.options.openshift.enabled }}
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
+        openshift.io/required-scc: privileged
         {{- end }}
       labels:
         app.kubernetes.io/name: catalogd
@@ -46,23 +47,27 @@ spec:
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             - --pull-cas-dir=/var/ca-certs
-            {{- end }}
-            {{- with .Values.options.catalogd.deployment.podArguments }}
-            {{- toYaml . | nindent 12 }}
+            {{- else if .Values.options.openshift.enabled }}
+            - --tls-cert=/var/certs/tls.crt
+            - --tls-key=/var/certs/tls.key
+            - --v=${LOG_VERBOSITY}
+            - --global-pull-secret=openshift-config/pull-secret
             {{- end }}
           command:
             - ./catalogd
-          {{- if or .Values.options.e2e.enabled .Values.options.catalogd.deployment.env }}
+          {{- if or .Values.options.e2e.enabled .Values.options.openshift.enabled }}
           env:
-          {{- end }}
           {{- if .Values.options.e2e.enabled }}
             - name: GOCOVERDIR
               value: /e2e-coverage
           {{- end }}
-          {{- with .Values.options.catalogd.deployment.env }}
-          {{- toYamlPretty . | nindent 12 }}
+          {{- with .Values.options.openshift.enabled }}
+            - name: SSL_CERT_DIR
+              value: /var/ca-certs
+          {{- end }}
           {{- end }}
           image: "{{ .Values.options.catalogd.deployment.image }}"
+          name: manager
           {{- if not .Values.options.tilt.enabled }}
           livenessProbe:
             httpGet:
@@ -70,9 +75,6 @@ spec:
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
-          {{- end }}
-          name: manager
-          {{- if not .Values.options.tilt.enabled }}
           readinessProbe:
             httpGet:
               path: /readyz
@@ -99,13 +101,22 @@ spec:
             - mountPath: /var/ca-certs
               name: ca-certs
               readOnly: true
+            {{- else if .Values.options.openshift.enabled }}
+            - mountPath: /var/certs
+              name: catalogserver-certs
+            - mountPath: /var/ca-certs
+              name: ca-certs
+              readOnly: true
+            - mountPath: /etc/containers
+              name: etc-containers
+              readOnly: true
+            - mountPath: /etc/docker
+              name: etc-docker
+              readOnly: true
             {{- end }}
-            {{- with .Values.options.catalogd.deployment.volumeMounts }}
-              {{- toYamlPretty . | nindent 12 }}
-            {{- end }}
-          {{- with .Values.deployments.containerSpec }}
-          {{- toYamlPretty . | nindent 10 }}
-          {{- end }}
+         {{- with .Values.deployments.containerSpec }}
+         {{- toYamlPretty . | nindent 10 }}
+         {{- end }}
       serviceAccountName: catalogd-controller-manager
       volumes:
         {{- if .Values.options.e2e.enabled }}
@@ -134,9 +145,39 @@ spec:
                 path: olm-ca.crt
             optional: false
             secretName: catalogd-service-cert-git-version
-        {{- end }}
-        {{- with .Values.options.catalogd.deployment.volumes }}
-          {{- toYaml . | nindent 8 }}
+        {{- else if .Values.options.openshift.enabled }}
+        - name: catalogserver-certs
+          secret:
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+            optional: false
+            secretName: catalogserver-cert
+        - name: ca-certs
+          projected:
+            sources:
+              - configMap:
+                  items:
+                    - key: ca-bundle.crt
+                      path: ca-bundle.crt
+                  name: catalogd-trusted-ca-bundle
+                  optional: false
+              - configMap:
+                  items:
+                    - key: service-ca.crt
+                      path: service-ca.crt
+                  name: openshift-service-ca.crt
+                  optional: false
+        - hostPath:
+            path: /etc/containers
+            type: Directory
+          name: etc-containers
+        - hostPath:
+            path: /etc/docker
+            type: Directory
+          name: etc-docker
         {{- end }}
       {{- with .Values.deployments.templateSpec }}
       {{- toYamlPretty . | nindent 6 }}

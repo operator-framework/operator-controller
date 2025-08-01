@@ -10,8 +10,8 @@ metadata:
     {{- if .Values.options.certManager.enabled }}
     cert-manager.io/inject-ca-from-secret: cert-manager/olmv1-ca
     {{- end }}
-    {{- with .Values.options.catalogd.webhook.annotations }}
-    {{- toYamlPretty . | nindent 4 }}
+    {{- if .Values.options.openshift.enabled }}
+    service.beta.openshift.io/inject-cabundle: "true"
     {{- end }}
     {{- include "olmv1.annotations" . | nindent 4 }}
 webhooks:

@@ -41,18 +41,6 @@ olm.operatorframework.io/feature-set: {{ .Values.options.featureSet -}}{{- if .V
 Insertion of additional rules for RBAC
 */}}
 
-{{- define "olmv1.catalogd.clusterRole.rules" -}}
-{{- with .Values.options.catalogd.clusterRole.rules }}
-{{- toYamlPretty . }}
-{{- end }}
-{{- end }}
-
-{{- define "olmv1.operatorController.clusterRole.rules" -}}
-{{- with .Values.options.operatorController.clusterRole.rules }}
-{{- toYamlPretty . }}
-{{- end }}
-{{- end }}
-
 {{/*
 Returns "operator-controller", "catalogd" or "olmv1" depending on enabled components
 */}}

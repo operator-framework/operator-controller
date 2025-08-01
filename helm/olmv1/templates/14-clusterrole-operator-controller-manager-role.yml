@@ -62,5 +62,14 @@ rules:
     verbs:
       - list
       - watch
-  {{- include "olmv1.operatorController.clusterRole.rules" . | nindent 2 }}
+  {{- if .Values.options.openshift.enabled }}
+  - apiGroups:
+      - security.openshift.io
+    resources:
+      - securitycontextconstraints
+    resourceNames:
+      - privileged
+    verbs:
+      - use
+  {{- end }}
 {{- end }}
