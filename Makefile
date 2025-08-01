@@ -151,8 +151,6 @@ KUSTOMIZE_OPCON_RBAC_DIR := helm/olmv1/base/operator-controller/rbac
 manifests: $(CONTROLLER_GEN) $(HELM) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
 	# Generate CRDs via our own generator
 	hack/tools/update-crds.sh
-	# Update base config to include helm templates
-	./hack/tools/patch-base-for-helm.sh
 	# Generate manifests stored in source-control
 	mkdir -p $(MANIFEST_HOME)
 	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml > $(STANDARD_MANIFEST)
