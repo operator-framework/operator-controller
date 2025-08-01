@@ -452,7 +452,7 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 		cache: &MockManagedContentCache{},
 	}
 	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		bundle: &controllers.InstalledBundle{
+		bundle: &controllers.RevisionMetadata{
 			BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
 			Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
 		},
@@ -788,7 +788,7 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 		cache: &MockManagedContentCache{},
 	}
 	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		bundle: &controllers.InstalledBundle{
+		bundle: &controllers.RevisionMetadata{
 			BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
 			Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
 		},
@@ -1451,7 +1451,7 @@ type MockActionGetter struct {
 	description    string
 	rels           []*release.Release
 	err            error
-	expectedBundle *controllers.InstalledBundle
+	expectedBundle *controllers.RevisionMetadata
 	expectedError  error
 }
 
@@ -1525,7 +1525,7 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 				},
 			},
 			nil,
-			&controllers.InstalledBundle{
+			&controllers.RevisionMetadata{
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    "test-ext",
 					Version: "1.0",
@@ -1560,7 +1560,7 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 				},
 			},
 			nil,
-			&controllers.InstalledBundle{
+			&controllers.RevisionMetadata{
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    "test-ext",
 					Version: "1.0",

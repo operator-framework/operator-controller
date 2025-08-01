@@ -52,7 +52,7 @@ func SetStatusCondition(conditions *[]metav1.Condition, condition metav1.Conditi
 }
 
 // setInstalledStatusFromBundle sets the installed status based on the given installedBundle.
-func setInstalledStatusFromBundle(ext *ocv1.ClusterExtension, installedBundle *InstalledBundle) {
+func setInstalledStatusFromBundle(ext *ocv1.ClusterExtension, installedBundle *RevisionMetadata) {
 	// Nothing is installed
 	if installedBundle == nil {
 		setInstallStatus(ext, nil)

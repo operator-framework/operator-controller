@@ -442,9 +442,9 @@ func run() error {
 
 	// create applier
 	var (
-		ctrlBuilderOpts       []controllers.ControllerBuilderOption
-		extApplier            controllers.Applier
-		installedBundleGetter controllers.InstalledBundleGetter
+		ctrlBuilderOpts      []controllers.ControllerBuilderOption
+		extApplier           controllers.Applier
+		revisionStatesGetter controllers.RevisionStatesGetter
 	)
 	certProvider := getCertificateProvider()
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
@@ -463,7 +463,7 @@ func run() error {
 			},
 			Preflights: preflights,
 		}
-		installedBundleGetter = &controllers.BoxcutterInstalledBundleGetter{Reader: mgr.GetClient()}
+		revisionStatesGetter = &controllers.BoxcutterRevisionStatesGetter{Reader: mgr.GetClient()}
 		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterExtensionRevision{}))
 	} else {
 		// now initialize the helmApplier, assigning the potentially nil preAuth
@@ -478,7 +478,7 @@ func run() error {
 			PreAuthorizer:                 preAuth,
 			HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
 		}
-		installedBundleGetter = &controllers.HelmInstalledBundleGetter{ActionClientGetter: acg}
+		revisionStatesGetter = &controllers.HelmRevisionStatesGetter{ActionClientGetter: acg}
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
@@ -493,14 +493,14 @@ func run() error {
 	}
 
 	if err = (&controllers.ClusterExtensionReconciler{
-		Client:                cl,
-		Resolver:              resolver,
-		ImageCache:            imageCache,
-		ImagePuller:           imagePuller,
-		Applier:               extApplier,
-		InstalledBundleGetter: installedBundleGetter,
-		Finalizers:            clusterExtensionFinalizers,
-		Manager:               cm,
+		Client:               cl,
+		Resolver:             resolver,
+		ImageCache:           imageCache,
+		ImagePuller:          imagePuller,
+		Applier:              extApplier,
+		RevisionStatesGetter: revisionStatesGetter,
+		Finalizers:           clusterExtensionFinalizers,
+		Manager:              cm,
 	}).SetupWithManager(mgr, ctrlBuilderOpts...); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		return err

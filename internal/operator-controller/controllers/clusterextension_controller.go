@@ -72,12 +72,12 @@ type ClusterExtensionReconciler struct {
 	ImageCache  imageutil.Cache
 	ImagePuller imageutil.Puller
 
-	Applier               Applier
-	Manager               contentmanager.Manager
-	controller            crcontroller.Controller
-	cache                 cache.Cache
-	InstalledBundleGetter InstalledBundleGetter
-	Finalizers            crfinalizer.Finalizers
+	Applier              Applier
+	Manager              contentmanager.Manager
+	controller           crcontroller.Controller
+	cache                cache.Cache
+	RevisionStatesGetter RevisionStatesGetter
+	Finalizers           crfinalizer.Finalizers
 }
 
 type Applier interface {
@@ -87,8 +87,8 @@ type Applier interface {
 	Apply(context.Context, fs.FS, *ocv1.ClusterExtension, map[string]string, map[string]string) ([]client.Object, string, error)
 }
 
-type InstalledBundleGetter interface {
-	GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*InstalledBundle, error)
+type RevisionStatesGetter interface {
+	GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error)
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch;update;patch
@@ -215,7 +215,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	}
 
 	l.Info("getting installed bundle")
-	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
+	revisionStates, err := r.RevisionStatesGetter.GetRevisionStates(ctx, ext)
 	if err != nil {
 		setInstallStatus(ext, nil)
 		var saerr *authentication.ServiceAccountNotFoundError
@@ -229,47 +229,54 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		return ctrl.Result{}, err
 	}
 
-	// run resolution
-	l.Info("resolving bundle")
-	var bm *ocv1.BundleMetadata
-	if installedBundle != nil {
-		bm = &installedBundle.BundleMetadata
-	}
-	resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolver.Resolve(ctx, ext, bm)
-	if err != nil {
-		// Note: We don't distinguish between resolution-specific errors and generic errors
-		setStatusProgressing(ext, err)
-		setInstalledStatusFromBundle(ext, installedBundle)
-		ensureAllConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
-		return ctrl.Result{}, err
-	}
+	var resolvedRevisionMetadata *RevisionMetadata
+	if len(revisionStates.RollingOut) == 0 {
+		l.Info("resolving bundle")
+		var bm *ocv1.BundleMetadata
+		if revisionStates.Installed != nil {
+			bm = &revisionStates.Installed.BundleMetadata
+		}
+		resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolver.Resolve(ctx, ext, bm)
+		if err != nil {
+			// Note: We don't distinguish between resolution-specific errors and generic errors
+			setStatusProgressing(ext, err)
+			setInstalledStatusFromBundle(ext, revisionStates.Installed)
+			ensureAllConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
+			return ctrl.Result{}, err
+		}
 
-	// set deprecation status after _successful_ resolution
-	// TODO:
-	//  1. It seems like deprecation status should reflect the currently installed bundle, not the resolved
-	//     bundle. So perhaps we should set package and channel deprecations directly after resolution, but
-	//     defer setting the bundle deprecation until we successfully install the bundle.
-	//  2. If resolution fails because it can't find a bundle, that doesn't mean we wouldn't be able to find
-	//     a deprecation for the ClusterExtension's spec.packageName. Perhaps we should check for a non-nil
-	//     resolvedDeprecation even if resolution returns an error. If present, we can still update some of
-	//     our deprecation status.
-	//       - Open question though: what if different catalogs have different opinions of what's deprecated.
-	//         If we can't resolve a bundle, how do we know which catalog to trust for deprecation information?
-	//         Perhaps if the package shows up in multiple catalogs and deprecations don't match, we can set
-	//         the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
-	//         all catalogs?
-	SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
-
-	resolvedBundleMetadata := bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
+		// set deprecation status after _successful_ resolution
+		// TODO:
+		//  1. It seems like deprecation status should reflect the currently installed bundle, not the resolved
+		//     bundle. So perhaps we should set package and channel deprecations directly after resolution, but
+		//     defer setting the bundle deprecation until we successfully install the bundle.
+		//  2. If resolution fails because it can't find a bundle, that doesn't mean we wouldn't be able to find
+		//     a deprecation for the ClusterExtension's spec.packageName. Perhaps we should check for a non-nil
+		//     resolvedDeprecation even if resolution returns an error. If present, we can still update some of
+		//     our deprecation status.
+		//       - Open question though: what if different catalogs have different opinions of what's deprecated.
+		//         If we can't resolve a bundle, how do we know which catalog to trust for deprecation information?
+		//         Perhaps if the package shows up in multiple catalogs and deprecations don't match, we can set
+		//         the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
+		//         all catalogs?
+		SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
+		resolvedRevisionMetadata = &RevisionMetadata{
+			Package:        resolvedBundle.Package,
+			Image:          resolvedBundle.Image,
+			BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
+		}
+	} else {
+		resolvedRevisionMetadata = revisionStates.RollingOut[0]
+	}
 
 	l.Info("unpacking resolved bundle")
-	imageFS, _, _, err := r.ImagePuller.Pull(ctx, ext.GetName(), resolvedBundle.Image, r.ImageCache)
+	imageFS, _, _, err := r.ImagePuller.Pull(ctx, ext.GetName(), resolvedRevisionMetadata.Image, r.ImageCache)
 	if err != nil {
 		// Wrap the error passed to this with the resolution information until we have successfully
 		// installed since we intend for the progressing condition to replace the resolved condition
 		// and will be removing the .status.resolution field from the ClusterExtension status API
-		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
-		setInstalledStatusFromBundle(ext, installedBundle)
+		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedRevisionMetadata.BundleMetadata, err))
+		setInstalledStatusFromBundle(ext, revisionStates.Installed)
 		return ctrl.Result{}, err
 	}
 
@@ -279,10 +286,10 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	}
 
 	storeLbls := map[string]string{
-		labels.BundleNameKey:      resolvedBundle.Name,
-		labels.PackageNameKey:     resolvedBundle.Package,
-		labels.BundleVersionKey:   resolvedBundleVersion.String(),
-		labels.BundleReferenceKey: resolvedBundle.Image,
+		labels.BundleNameKey:      resolvedRevisionMetadata.Name,
+		labels.PackageNameKey:     resolvedRevisionMetadata.Package,
+		labels.BundleVersionKey:   resolvedRevisionMetadata.Version,
+		labels.BundleReferenceKey: resolvedRevisionMetadata.Image,
 	}
 
 	l.Info("applying bundle contents")
@@ -297,18 +304,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	//     The only way to eventually recover from permission errors is to keep retrying).
 	managedObjs, _, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
 	if err != nil {
-		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
+		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedRevisionMetadata.BundleMetadata, err))
 		// Now that we're actually trying to install, use the error
-		setInstalledStatusFromBundle(ext, installedBundle)
+		setInstalledStatusFromBundle(ext, revisionStates.Installed)
 		return ctrl.Result{}, err
 	}
 
-	newInstalledBundle := &InstalledBundle{
-		BundleMetadata: resolvedBundleMetadata,
-		Image:          resolvedBundle.Image,
-	}
 	// Successful install
-	setInstalledStatusFromBundle(ext, newInstalledBundle)
+	setInstalledStatusFromBundle(ext, resolvedRevisionMetadata)
 
 	l.Info("watching managed objects")
 	cache, err := r.Manager.Get(ctx, ext)
@@ -487,16 +490,22 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
-type HelmInstalledBundleGetter struct {
+type RevisionMetadata struct {
+	Package string
+	Image   string
+	ocv1.BundleMetadata
+}
+
+type RevisionStates struct {
+	Installed  *RevisionMetadata
+	RollingOut []*RevisionMetadata
+}
+
+type HelmRevisionStatesGetter struct {
 	helmclient.ActionClientGetter
 }
 
-type InstalledBundle struct {
-	ocv1.BundleMetadata
-	Image string
-}
-
-func (d *HelmInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*InstalledBundle, error) {
+func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
 	cl, err := d.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
@@ -506,31 +515,34 @@ func (d *HelmInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext 
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, err
 	}
+	rs := &RevisionStates{}
 	if len(relhis) == 0 {
-		return nil, nil
+		return rs, nil
 	}
 
 	// relhis[0].Info.Status is the status of the most recent install attempt.
 	// But we need to look for the most-recent _Deployed_ release
 	for _, rel := range relhis {
 		if rel.Info != nil && rel.Info.Status == release.StatusDeployed {
-			return &InstalledBundle{
+			rs.Installed = &RevisionMetadata{
+				Package: rel.Labels[labels.PackageNameKey],
+				Image:   rel.Labels[labels.BundleReferenceKey],
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    rel.Labels[labels.BundleNameKey],
 					Version: rel.Labels[labels.BundleVersionKey],
 				},
-				Image: rel.Labels[labels.BundleReferenceKey],
-			}, nil
+			}
+			break
 		}
 	}
-	return nil, nil
+	return rs, nil
 }
 
-type BoxcutterInstalledBundleGetter struct {
+type BoxcutterRevisionStatesGetter struct {
 	client.Reader
 }
 
-func (d *BoxcutterInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*InstalledBundle, error) {
+func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
 	// TODO: boxcutter applier has a nearly identical bit of code for listing and sorting revisions
 	//   only difference here is that it sorts in reverse order to start iterating with the most
 	//   recent revisions. We should consolidate to avoid code duplication.
@@ -544,28 +556,30 @@ func (d *BoxcutterInstalledBundleGetter) GetInstalledBundle(ctx context.Context,
 		return cmp.Compare(b.Spec.Revision, a.Spec.Revision)
 	})
 
+	rs := &RevisionStates{}
 	for _, rev := range existingRevisionList.Items {
 		if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateActive {
-			// TODO: we should make constants for the ClusterExtensionRevision condition types.
-			if installedCondition := apimeta.FindStatusCondition(rev.Status.Conditions, "Succeeded"); installedCondition == nil || installedCondition.Status != metav1.ConditionTrue {
-				// TODO: It's not great to return this error in a completely normal situation. This currently cascades
-				//   into Installed=False, Failed and Progressing=True, Retrying conditions that give the impression
-				//   that something is wrong. We should probably refactor the InstalledBundleGetter interface to better
-				//   handle the async nature of ClusterExtensionRevision rollouts.
-				return nil, fmt.Errorf("most recent active revision %s is still rolling out", rev.Name)
-			}
 
 			// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "storageLabels")
 			//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
 			//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
-			return &InstalledBundle{
+			rm := &RevisionMetadata{
+				Package: rev.Labels[labels.PackageNameKey],
+				Image:   rev.Annotations[labels.BundleReferenceKey],
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    rev.Annotations[labels.BundleNameKey],
 					Version: rev.Annotations[labels.BundleVersionKey],
 				},
-				Image: rev.Annotations[labels.BundleReferenceKey],
-			}, nil
+			}
+
+			// TODO: we should make constants for the ClusterExtensionRevision condition types.
+			if installedCondition := apimeta.FindStatusCondition(rev.Status.Conditions, "Succeeded"); installedCondition == nil || installedCondition.Status != metav1.ConditionTrue {
+				rs.RollingOut = append(rs.RollingOut, rm)
+			} else {
+				rs.Installed = rm
+				break
+			}
 		}
 	}
-	return nil, nil
+	return rs, nil
 }
