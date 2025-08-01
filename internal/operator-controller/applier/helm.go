@@ -3,6 +3,7 @@ package applier
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -126,8 +127,14 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	if err != nil {
 		return nil, "", err
 	}
-	// merge in any user-provided config values as Helm values
-	values := chartutil.Values{"Values": ext.Spec.Config}
+	// merge in any user-provided config JSON as Helm values
+	valuesMap := map[string]interface{}{}
+	if ext.Spec.Config != nil && ext.Spec.Config.Raw != nil {
+		if err := json.Unmarshal(ext.Spec.Config.Raw, &valuesMap); err != nil {
+			return nil, "", fmt.Errorf("invalid JSON in spec.config: %w", err)
+		}
+	}
+	values := chartutil.Values{"Values": valuesMap}
 
 	post := &postrenderer{
 		labels: objectLabels,

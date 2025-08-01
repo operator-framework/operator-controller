@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -93,10 +94,12 @@ type ClusterExtensionSpec struct {
 	// +optional
 	Install *ClusterExtensionInstallConfig `json:"install,omitempty"`
 
-	// config contains arbitrary configuration values to be applied at render time.
+	// config contains arbitrary JSON configuration values to be applied at render time.
 	// These values will be merged into the bundle manifests during rendering.
 	// +optional
-	Config map[string]interface{} `json:"config,omitempty"`
+	// +kubebuilder:validation:Type=object
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config *apiextensionsv1.JSON `json:"config,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"
