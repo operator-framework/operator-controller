@@ -35,5 +35,14 @@ rules:
       - get
       - patch
       - update
-  {{- include "olmv1.catalogd.clusterRole.rules" . | nindent 2 }}
+  {{- if .Values.options.openshift.enabled }}
+  - apiGroups:
+      - security.openshift.io
+    resources:
+      - securitycontextconstraints
+    resourceNames:
+      - privileged
+    verbs:
+      - use
+  {{- end }}
 {{- end }}

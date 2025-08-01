@@ -4,8 +4,8 @@ kind: Service
 metadata:
   annotations:
     {{- include "olmv1.annotations" . | nindent 4 }}
-    {{- with .Values.options.operatorController.service.annotations }}
-    {{- toYaml . | nindent 4 }}
+    {{- if .Values.options.openshift.enabled }}
+    service.beta.openshift.io/serving-cert-secret-name: operator-controller-cert
     {{- end }}
   labels:
     app.kubernetes.io/name: operator-controller

@@ -8,34 +8,10 @@ options:
     enabled: true
     deployment:
       image: quay.io/operator-framework/operator-controller:devel
-      volumeMounts: []
-      volumes: []
-      podArguments: []
-      podLabels: {}
-      podAnnotations: {}
-      env: []
-    service:
-      annotations: {}
-    clusterRole:
-      rules: []
-    role:
-      rules: []
   catalogd:
     enabled: true
     deployment:
       image: quay.io/operator-framework/catalogd:devel
-      volumeMounts: []
-      volumes: []
-      podArguments: []
-      podLabels: {}
-      podAnnotations: {}
-      env: []
-    service:
-      annotations: {}
-    clusterRole:
-      rules: []
-    webhook:
-      annotations: {}
   certManager:
     enabled: false
   e2e:
@@ -44,20 +20,17 @@ options:
     enabled: false
   openshift:
     enabled: false
+  # This can be one of: standard or experimental
   featureSet: standard
 
 operatorControllerFeatures: []
 catalogdFeatures: []
-  
-# This can be one of: standard or experimental
+
 
 # The set of namespaces
 namespaces:
   olmv1:
     name: olmv1-system
-    podSecurityProfile: restricted
-    labels: {}
-    annotations: {}
   certManager:
     name: cert-manager
 
