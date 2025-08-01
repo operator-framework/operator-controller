@@ -12,6 +12,7 @@ import (
 	"slices"
 
 	"github.com/davecgh/go-spew/spew"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -104,9 +105,8 @@ type Boxcutter struct {
 	Preflights        []Preflight
 }
 
-func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) ([]client.Object, string, error) {
-	objs, err := bc.apply(ctx, contentFS, ext, objectLabels, revisionAnnotations)
-	return objs, "", err
+func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
+	return bc.apply(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 }
 
 func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Object {
@@ -119,17 +119,17 @@ func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Obj
 	return objs
 }
 
-func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) ([]client.Object, error) {
+func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
 	// Generate desired revision
 	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
-		return nil, err
+		return false, "", err
 	}
 
 	// List all existing revisions
 	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
 	if err != nil {
-		return nil, err
+		return false, "", err
 	}
 	desiredHash := computeSHA256Hash(desiredRevision.Spec.Phases)
 
@@ -159,12 +159,16 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		case StateNeedsInstall:
 			err := preflight.Install(ctx, plainObjs)
 			if err != nil {
-				return nil, err
+				return false, "", err
 			}
+		// TODO: jlanford's IDE says that "StateNeedsUpgrade" condition is always true, but
+		//   it isn't immediately obvious why that is. Perhaps len(existingRevisions) is
+		//   always greater than 0 (seems unlikely), or shouldSkipPreflight always returns
+		//   true (and we continue) when state == StateNeedsInstall?
 		case StateNeedsUpgrade:
 			err := preflight.Upgrade(ctx, plainObjs)
 			if err != nil {
-				return nil, err
+				return false, "", err
 			}
 		}
 	}
@@ -189,19 +193,24 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		}
 
 		if err := controllerutil.SetControllerReference(ext, newRevision, bc.Scheme); err != nil {
-			return nil, fmt.Errorf("set ownerref: %w", err)
+			return false, "", fmt.Errorf("set ownerref: %w", err)
 		}
 		if err := bc.Client.Create(ctx, newRevision); err != nil {
-			return nil, fmt.Errorf("creating new Revision: %w", err)
+			return false, "", fmt.Errorf("creating new Revision: %w", err)
 		}
+		currentRevision = newRevision
 	}
 
 	// TODO: Delete archived previous revisions over a certain revision limit
 
-	// TODO: Read status from revision.
-
-	// Collect objects
-	return bc.getObjects(desiredRevision), nil
+	// TODO: Define constants for the ClusterExtensionRevision condition types.
+	installedCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, "Succeeded")
+	if installedCondition == nil {
+		return false, "New revision created", nil
+	} else if installedCondition.Status != metav1.ConditionTrue {
+		return false, installedCondition.Message, nil
+	}
+	return true, "", nil
 }
 
 // getExistingRevisions returns the list of ClusterExtensionRevisions for a ClusterExtension with name extName in revision order (oldest to newest)

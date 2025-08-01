@@ -35,7 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -53,7 +52,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -73,9 +71,6 @@ type ClusterExtensionReconciler struct {
 	ImagePuller imageutil.Puller
 
 	Applier              Applier
-	Manager              contentmanager.Manager
-	controller           crcontroller.Controller
-	cache                cache.Cache
 	RevisionStatesGetter RevisionStatesGetter
 	Finalizers           crfinalizer.Finalizers
 }
@@ -84,7 +79,7 @@ type Applier interface {
 	// Apply applies the content in the provided fs.FS using the configuration of the provided ClusterExtension.
 	// It also takes in a map[string]string to be applied to all applied resources as labels and another
 	// map[string]string used to create a unique identifier for a stored reference to the resources created.
-	Apply(context.Context, fs.FS, *ocv1.ClusterExtension, map[string]string, map[string]string) ([]client.Object, string, error)
+	Apply(context.Context, fs.FS, *ocv1.ClusterExtension, map[string]string, map[string]string) (bool, string, error)
 }
 
 type RevisionStatesGetter interface {
@@ -240,7 +235,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		if err != nil {
 			// Note: We don't distinguish between resolution-specific errors and generic errors
 			setStatusProgressing(ext, err)
-			setInstalledStatusFromBundle(ext, revisionStates.Installed)
+			setInstalledStatusFromRevisionStates(ext, revisionStates)
 			ensureAllConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
 			return ctrl.Result{}, err
 		}
@@ -276,7 +271,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		// installed since we intend for the progressing condition to replace the resolved condition
 		// and will be removing the .status.resolution field from the ClusterExtension status API
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedRevisionMetadata.BundleMetadata, err))
-		setInstalledStatusFromBundle(ext, revisionStates.Installed)
+		setInstalledStatusFromRevisionStates(ext, revisionStates)
 		return ctrl.Result{}, err
 	}
 
@@ -302,37 +297,32 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	managedObjs, _, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
+	rolloutSucceeded, rolloutStatus, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
+
+	// Set installed status
+	if rolloutSucceeded {
+		revisionStates = &RevisionStates{Installed: resolvedRevisionMetadata}
+	} else if revisionStates.Installed == nil && len(revisionStates.RollingOut) == 0 {
+		revisionStates = &RevisionStates{RollingOut: []*RevisionMetadata{resolvedRevisionMetadata}}
+	}
+	setInstalledStatusFromRevisionStates(ext, revisionStates)
+
+	// If there was an error applying the resolved bundle,
+	// report the error via the Progressing condition.
 	if err != nil {
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedRevisionMetadata.BundleMetadata, err))
-		// Now that we're actually trying to install, use the error
-		setInstalledStatusFromBundle(ext, revisionStates.Installed)
 		return ctrl.Result{}, err
+	} else if !rolloutSucceeded {
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:               ocv1.TypeProgressing,
+			Status:             metav1.ConditionTrue,
+			Reason:             ocv1.ReasonRolloutInProgress,
+			Message:            rolloutStatus,
+			ObservedGeneration: ext.GetGeneration(),
+		})
+	} else {
+		setStatusProgressing(ext, nil)
 	}
-
-	// Successful install
-	setInstalledStatusFromBundle(ext, resolvedRevisionMetadata)
-
-	l.Info("watching managed objects")
-	cache, err := r.Manager.Get(ctx, ext)
-	if err != nil {
-		// No need to wrap error with resolution information here (or beyond) since the
-		// bundle was successfully installed and the information will be present in
-		// the .status.installed field
-		setStatusProgressing(ext, err)
-		return ctrl.Result{}, err
-	}
-
-	if err := cache.Watch(ctx, r.controller, managedObjs...); err != nil {
-		setStatusProgressing(ext, err)
-		return ctrl.Result{}, err
-	}
-
-	// If we made it here, we have successfully reconciled the ClusterExtension
-	// and have reached the desired state. Since the Progressing status should reflect
-	// our progress towards the desired state, we also set it when we have reached
-	// the desired state by providing a nil error value.
-	setStatusProgressing(ext, nil)
 	return ctrl.Result{}, nil
 }
 
@@ -424,7 +414,7 @@ func WithOwns(obj client.Object) ControllerBuilderOption {
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager, opts ...ControllerBuilderOption) error {
+func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager, opts ...ControllerBuilderOption) (crcontroller.Controller, error) {
 	ctrlBuilder := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1.ClusterExtension{}).
 		Named("controller-operator-cluster-extension-controller").
@@ -452,14 +442,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager, opts ...
 		applyOpt(ctrlBuilder)
 	}
 
-	controller, err := ctrlBuilder.Build(r)
-	if err != nil {
-		return err
-	}
-	r.controller = controller
-	r.cache = mgr.GetCache()
-
-	return nil
+	return ctrlBuilder.Build(r)
 }
 
 func wrapErrorWithResolutionInfo(resolved ocv1.BundleMetadata, err error) error {

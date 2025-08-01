@@ -20,12 +20,18 @@ const (
 	TypeInstalled   = "Installed"
 	TypeProgressing = "Progressing"
 
-	// Progressing reasons
-	ReasonSucceeded = "Succeeded"
-	ReasonRetrying  = "Retrying"
-	ReasonBlocked   = "Blocked"
+	// Installed reasons
+	ReasonAbsent = "Absent"
 
-	// Terminal reasons
+	// Progressing reasons
+	ReasonRolloutInProgress = "RolloutInProgress"
+	ReasonRetrying          = "Retrying"
+	ReasonBlocked           = "Blocked"
+
+	// Deprecation reasons
 	ReasonDeprecated = "Deprecated"
-	ReasonFailed     = "Failed"
+
+	// Common reasons
+	ReasonSucceeded = "Succeeded"
+	ReasonFailed    = "Failed"
 )
