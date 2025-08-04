@@ -31,9 +31,9 @@ For information on determining the ServiceAccount's permission, please see [Deri
 
 ## Procedure
 
-1. Create a CR for the Kubernetes extension you want to install:
+1. Create a CR for the Kubernetes extension you want to install. You can also specify arbitrary configuration values under `spec.config` (per [RFC: Registry+v1 Configuration Support](../../RFC_Config_registry+v1_bundle_config.md)):
 
-    ``` yaml title="Example CR"
+    ```yaml title="Example CR"
     apiVersion: olm.operatorframework.io/v1
     kind: ClusterExtension
     metadata:
@@ -46,8 +46,11 @@ For information on determining the ServiceAccount's permission, please see [Deri
         sourceType: Catalog
         catalog:
           packageName: <package_name>
-          channels: [<channel1>,<channel2]
+          channels: [<channel1>,<channel2>]
           version: "<version>"
+      config:
+        version: "v2.0.0-demo"
+        name:    "demo-configmap"
     ```
 
      `extension_name`

@@ -511,6 +511,12 @@ spec:
             description: spec is an optional field that defines the desired state
               of the ClusterExtension.
             properties:
+              config:
+                description: |-
+                  config contains arbitrary JSON configuration values to be applied at render time.
+                  These values will be merged into the bundle manifests during rendering.
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
               install:
                 description: |-
                   install is an optional field used to configure the installation options
