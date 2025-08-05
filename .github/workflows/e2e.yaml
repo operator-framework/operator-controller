@@ -33,22 +33,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Run e2e tests
-        run: ARTIFACT_PATH=/tmp/artifacts make test-e2e
-
-      - name: alerts-check
-        # Grab all current alerts, filtering out pending, and print the GH actions warning string
-        # containing the alert name and description.
-        #
-        # NOTE: Leaving this as annotating-only instead of failing the run until we have some more
-        # finely-tuned alerts.
-        run: |
-          if [[ -s /tmp/artifacts/alerts.out ]]; then \
-            jq -r 'if .state=="firing" then
-              "::error title=Prometheus Alert Firing::\(.labels.alertname): \(.annotations.description)"
-            elif .state=="pending" then
-              "::warning title=Prometheus Alert Pending::\(.labels.alertname): \(.annotations.description)"
-            end' /tmp/artifacts/alerts.out
-          fi
+        run: ARTIFACT_PATH=/tmp/artifacts E2E_SUMMARY_OUTPUT=$GITHUB_STEP_SUMMARY make test-e2e
 
       - uses: actions/upload-artifact@v4
         if: failure()
@@ -75,7 +60,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Run e2e tests
-        run: ARTIFACT_PATH=/tmp/artifacts make test-experimental-e2e
+        run: ARTIFACT_PATH=/tmp/artifacts E2E_SUMMARY_OUTPUT=$GITHUB_STEP_SUMMARY make test-experimental-e2e
 
       - uses: actions/upload-artifact@v4
         if: failure()

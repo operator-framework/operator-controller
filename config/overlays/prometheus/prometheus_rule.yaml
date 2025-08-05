@@ -57,3 +57,15 @@ spec:
       keep_firing_for: 1d
       annotations:
         description: "catalogd using high cpu resources for 5 minutes: {{ $value | printf \"%.2f\" }}%"
+    - alert: operator-controller-api-call-rate
+      expr: sum(rate(rest_client_requests_total{job=~"operator-controller-service"}[5m])) > 10
+      for: 5m
+      keep_firing_for: 1d
+      annotations:
+        description: "operator-controller making excessive API calls for 5 minutes: {{ $value | printf \"%.2f\" }}/sec"
+    - alert: catalogd-api-call-rate
+      expr: sum(rate(rest_client_requests_total{job=~"catalogd-service"}[5m])) > 5
+      for: 5m
+      keep_firing_for: 1d
+      annotations:
+        description: "catalogd making excessive API calls for 5 minutes: {{ $value | printf \"%.2f\" }}/sec"

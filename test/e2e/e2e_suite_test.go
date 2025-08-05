@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -24,7 +25,7 @@ var (
 )
 
 const (
-	testSummaryOutputEnvVar = "GITHUB_STEP_SUMMARY"
+	testSummaryOutputEnvVar = "E2E_SUMMARY_OUTPUT"
 	testCatalogRefEnvVar    = "CATALOG_IMG"
 	testCatalogName         = "test-catalog"
 	latestImageTag          = "latest"
@@ -39,8 +40,18 @@ func TestMain(m *testing.M) {
 	utilruntime.Must(err)
 
 	res := m.Run()
-	err = utils.PrintSummary(testSummaryOutputEnvVar)
-	utilruntime.Must(err)
+
+	path := os.Getenv(testSummaryOutputEnvVar)
+	if path == "" {
+		fmt.Printf("Note: E2E_SUMMARY_OUTPUT is unset; skipping summary generation")
+	} else {
+		err = utils.PrintSummary(path)
+		if err != nil {
+			// Fail the run if alerts are found
+			fmt.Printf("%s", err)
+			os.Exit(1)
+		}
+	}
 	os.Exit(res)
 }
 
