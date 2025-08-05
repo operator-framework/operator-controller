@@ -302,7 +302,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// Set installed status
 	if rolloutSucceeded {
 		revisionStates = &RevisionStates{Installed: resolvedRevisionMetadata}
-	} else if revisionStates.Installed == nil && len(revisionStates.RollingOut) == 0 {
+	} else if err == nil && revisionStates.Installed == nil && len(revisionStates.RollingOut) == 0 {
 		revisionStates = &RevisionStates{RollingOut: []*RevisionMetadata{resolvedRevisionMetadata}}
 	}
 	setInstalledStatusFromRevisionStates(ext, revisionStates)

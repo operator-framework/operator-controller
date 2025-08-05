@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/meta"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
@@ -33,11 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
-	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 )
 
@@ -56,88 +51,46 @@ func newClient(t *testing.T) client.Client {
 	return cl
 }
 
-type MockInstalledBundleGetter struct {
-	bundle *controllers.RevisionMetadata
-	err    error
+var _ controllers.RevisionStatesGetter = (*MockRevisionStatesGetter)(nil)
+
+type MockRevisionStatesGetter struct {
+	*controllers.RevisionStates
+	Err error
 }
 
-func (m *MockInstalledBundleGetter) SetBundle(bundle *controllers.RevisionMetadata) {
-	m.bundle = bundle
-}
-
-func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*controllers.RevisionMetadata, error) {
-	return m.bundle, m.err
+func (m *MockRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*controllers.RevisionStates, error) {
+	if m.Err != nil {
+		return nil, m.Err
+	}
+	return m.RevisionStates, nil
 }
 
 var _ controllers.Applier = (*MockApplier)(nil)
 
 type MockApplier struct {
-	err   error
-	objs  []client.Object
-	state string
+	installCompleted bool
+	installStatus    string
+	err              error
 }
 
-func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string) ([]client.Object, string, error) {
-	if m.err != nil {
-		return nil, m.state, m.err
-	}
-
-	return m.objs, m.state, nil
-}
-
-var _ contentmanager.Manager = (*MockManagedContentCacheManager)(nil)
-
-type MockManagedContentCacheManager struct {
-	err   error
-	cache cmcache.Cache
-}
-
-func (m *MockManagedContentCacheManager) Get(_ context.Context, _ *ocv1.ClusterExtension) (cmcache.Cache, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	return m.cache, nil
-}
-
-func (m *MockManagedContentCacheManager) Delete(_ *ocv1.ClusterExtension) error {
-	return m.err
-}
-
-type MockManagedContentCache struct {
-	err error
-}
-
-var _ cmcache.Cache = (*MockManagedContentCache)(nil)
-
-func (m *MockManagedContentCache) Close() error {
-	if m.err != nil {
-		return m.err
-	}
-	return nil
-}
-
-func (m *MockManagedContentCache) Watch(_ context.Context, _ cmcache.Watcher, _ ...client.Object) error {
-	if m.err != nil {
-		return m.err
-	}
-	return nil
+func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string) (bool, string, error) {
+	return m.installCompleted, m.installStatus, m.err
 }
 
 func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 
 	reconciler := &controllers.ClusterExtensionReconciler{
-		Client:                cl,
-		InstalledBundleGetter: &MockInstalledBundleGetter{},
-		Finalizers:            crfinalizer.NewFinalizers(),
+		Client: cl,
+		RevisionStatesGetter: &MockRevisionStatesGetter{
+			RevisionStates: &controllers.RevisionStates{},
+		},
+		Finalizers: crfinalizer.NewFinalizers(),
 	}
 	return cl, reconciler
 }
 
-var (
-	config           *rest.Config
-	helmClientGetter helmclient.ActionClientGetter
-)
+var config *rest.Config
 
 func TestMain(m *testing.M) {
 	testEnv := &envtest.Environment{
@@ -168,12 +121,6 @@ func TestMain(m *testing.M) {
 	if config == nil {
 		log.Panic("expected cfg to not be nil")
 	}
-
-	rm := meta.NewDefaultRESTMapper(nil)
-	cfgGetter, err := helmclient.NewActionConfigGetter(config, rm)
-	utilruntime.Must(err)
-	helmClientGetter, err = helmclient.NewActionClientGetter(cfgGetter)
-	utilruntime.Must(err)
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

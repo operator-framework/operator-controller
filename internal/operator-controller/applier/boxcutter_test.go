@@ -108,7 +108,7 @@ func Test_SimpleRevisionGenerator_Success(t *testing.T) {
 		},
 	}
 
-	rev, err := b.GenerateRevision(fstest.MapFS{}, ext, map[string]string{})
+	rev, err := b.GenerateRevision(fstest.MapFS{}, ext, map[string]string{}, map[string]string{})
 	require.NoError(t, err)
 
 	t.Log("by checking the olm.operatorframework.io/owner label is set to the name of the ClusterExtension")
@@ -188,11 +188,11 @@ func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
 		BundleRenderer: r,
 	}
 
-	_, err := b.GenerateRevision(bundleFS, ext, map[string]string{})
+	_, err := b.GenerateRevision(bundleFS, ext, map[string]string{}, map[string]string{})
 	require.NoError(t, err)
 }
 
-func Test_SimpleRevisionGenerator_AppliesObjectLabels(t *testing.T) {
+func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *testing.T) {
 	renderedObjs := []client.Object{
 		&corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
@@ -219,9 +219,13 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabels(t *testing.T) {
 		BundleRenderer: r,
 	}
 
+	revAnnotations := map[string]string{
+		"other": "value",
+	}
+
 	rev, err := b.GenerateRevision(fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{
 		"some": "value",
-	})
+	}, revAnnotations)
 	require.NoError(t, err)
 	t.Log("by checking the rendered objects contain the given object labels")
 	for _, phase := range rev.Spec.Phases {
@@ -232,6 +236,8 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabels(t *testing.T) {
 			}, revObj.Object.GetLabels())
 		}
 	}
+	t.Log("by checking the generated revision contain the given annotations")
+	require.Equal(t, revAnnotations, rev.Annotations)
 }
 
 func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
@@ -243,7 +249,7 @@ func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
 		BundleRenderer: r,
 	}
 
-	rev, err := b.GenerateRevision(fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{})
+	rev, err := b.GenerateRevision(fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{}, map[string]string{})
 	require.Nil(t, rev)
 	t.Log("by checking rendering errors are propagated")
 	require.Error(t, err)
@@ -298,20 +304,19 @@ func TestBoxcutter_Apply(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name                   string
-		mockBuilder            applier.ClusterExtensionRevisionGenerator
-		existingObjs           []client.Object
-		expectedErr            string
-		validate               func(t *testing.T, c client.Client)
-		expectedObjectsInPhase int
+		name         string
+		mockBuilder  applier.ClusterExtensionRevisionGenerator
+		existingObjs []client.Object
+		expectedErr  string
+		validate     func(t *testing.T, c client.Client)
 	}{
 		{
 			name: "first revision",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{},
+							Annotations: revisionAnnotations,
 							Labels: map[string]string{
 								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 							},
@@ -353,15 +358,14 @@ func TestBoxcutter_Apply(t *testing.T) {
 				assert.Equal(t, ext.Name, rev.OwnerReferences[0].Name)
 				assert.Equal(t, ext.UID, rev.OwnerReferences[0].UID)
 			},
-			expectedObjectsInPhase: 1,
 		},
 		{
 			name: "no change, revision exists",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{},
+							Annotations: revisionAnnotations,
 							Labels: map[string]string{
 								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 							},
@@ -400,15 +404,14 @@ func TestBoxcutter_Apply(t *testing.T) {
 				require.Len(t, revList.Items, 1)
 				assert.Equal(t, "test-ext-1", revList.Items[0].Name)
 			},
-			expectedObjectsInPhase: 1,
 		},
 		{
 			name: "new revision created when hash differs",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{},
+							Annotations: revisionAnnotations,
 							Labels: map[string]string{
 								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 							},
@@ -462,12 +465,11 @@ func TestBoxcutter_Apply(t *testing.T) {
 				assert.Equal(t, "test-ext-1", newRev.Spec.Previous[0].Name)
 				assert.Equal(t, types.UID("rev-uid-1"), newRev.Spec.Previous[0].UID)
 			},
-			expectedObjectsInPhase: 1,
 		},
 		{
 			name: "error from GenerateRevision",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return nil, errors.New("render boom")
 				},
 			},
@@ -497,15 +499,18 @@ func TestBoxcutter_Apply(t *testing.T) {
 			testFS := fstest.MapFS{}
 
 			// Execute
-			objs, _, err := boxcutter.Apply(t.Context(), testFS, ext, nil, nil)
+			installSucceeded, installStatus, err := boxcutter.Apply(t.Context(), testFS, ext, nil, nil)
 
 			// Assert
 			if tc.expectedErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.expectedErr)
+				assert.False(t, installSucceeded)
+				assert.Empty(t, installStatus)
 			} else {
 				require.NoError(t, err)
-				assert.Len(t, objs, tc.expectedObjectsInPhase)
+				assert.False(t, installSucceeded)
+				assert.Equal(t, installStatus, "New revision created")
 			}
 
 			if tc.validate != nil {
@@ -522,11 +527,11 @@ func TestBoxcutter_Apply(t *testing.T) {
 
 // mockBundleRevisionBuilder is a mock implementation of the ClusterExtensionRevisionGenerator for testing.
 type mockBundleRevisionBuilder struct {
-	makeRevisionFunc func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error)
+	makeRevisionFunc func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1.ClusterExtensionRevision, error)
 }
 
-func (m *mockBundleRevisionBuilder) GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string) (*ocv1.ClusterExtensionRevision, error) {
-	return m.makeRevisionFunc(bundleFS, ext, objectLabels)
+func (m *mockBundleRevisionBuilder) GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+	return m.makeRevisionFunc(bundleFS, ext, objectLabels, revisionAnnotations)
 }
 
 type mockBundleRenderer func(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)

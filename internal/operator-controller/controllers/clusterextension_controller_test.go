@@ -51,12 +51,12 @@ func TestClusterExtensionDoesNotExist(t *testing.T) {
 func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
 
-	installedBundleGetterCalledErr := errors.New("installed bundle getter called")
+	installedBundleGetterCalledErr := errors.New("revision states getter called")
 	checkInstalledBundleGetterCalled := func(t require.TestingT, err error, args ...interface{}) {
 		require.Equal(t, installedBundleGetterCalledErr, err)
 	}
-	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		err: installedBundleGetterCalledErr,
+	reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+		Err: installedBundleGetterCalledErr,
 	}
 
 	type testCase struct {
@@ -348,8 +348,8 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 
 func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
-	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		err: &authentication.ServiceAccountNotFoundError{
+	reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+		Err: &authentication.ServiceAccountNotFoundError{
 			ServiceAccountName:      "missing-sa",
 			ServiceAccountNamespace: "default",
 		}}
@@ -448,17 +448,16 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 		}, &v, nil, nil
 	})
 
-	reconciler.Manager = &MockManagedContentCacheManager{
-		cache: &MockManagedContentCache{},
-	}
-	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		bundle: &controllers.RevisionMetadata{
-			BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
-			Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
+	reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+		RevisionStates: &controllers.RevisionStates{
+			Installed: &controllers.RevisionMetadata{
+				BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
+				Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
+			},
 		},
 	}
 	reconciler.Applier = &MockApplier{
-		objs: []client.Object{},
+		installCompleted: true,
 	}
 
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
@@ -544,10 +543,8 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 		}, &v, nil, nil
 	})
 	reconciler.Applier = &MockApplier{
-		objs: []client.Object{},
-	}
-	reconciler.Manager = &MockManagedContentCacheManager{
-		err: errors.New("manager fail"),
+		installCompleted: true,
+		err:              errors.New("manager fail"),
 	}
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
@@ -623,12 +620,8 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 		}, &v, nil, nil
 	})
 	reconciler.Applier = &MockApplier{
-		objs: []client.Object{},
-	}
-	reconciler.Manager = &MockManagedContentCacheManager{
-		cache: &MockManagedContentCache{
-			err: errors.New("watch error"),
-		},
+		installCompleted: true,
+		err:              errors.New("watch error"),
 	}
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
@@ -703,10 +696,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 		}, &v, nil, nil
 	})
 	reconciler.Applier = &MockApplier{
-		objs: []client.Object{},
-	}
-	reconciler.Manager = &MockManagedContentCacheManager{
-		cache: &MockManagedContentCache{},
+		installCompleted: true,
 	}
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
@@ -782,15 +772,14 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 	fakeFinalizer := "fake.testfinalizer.io"
 	finalizersMessage := "still have finalizers"
 	reconciler.Applier = &MockApplier{
-		objs: []client.Object{},
+		installCompleted: true,
 	}
-	reconciler.Manager = &MockManagedContentCacheManager{
-		cache: &MockManagedContentCache{},
-	}
-	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		bundle: &controllers.RevisionMetadata{
-			BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
-			Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
+	reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+		RevisionStates: &controllers.RevisionStates{
+			Installed: &controllers.RevisionMetadata{
+				BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
+				Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
+			},
 		},
 	}
 	err = reconciler.Finalizers.Register(fakeFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
@@ -1448,11 +1437,11 @@ func TestSetDeprecationStatus(t *testing.T) {
 }
 
 type MockActionGetter struct {
-	description    string
-	rels           []*release.Release
-	err            error
-	expectedBundle *controllers.RevisionMetadata
-	expectedError  error
+	description       string
+	rels              []*release.Release
+	err               error
+	expectedInstalled *controllers.RevisionMetadata
+	expectedError     error
 }
 
 func (mag *MockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
@@ -1485,7 +1474,7 @@ func (mag *MockActionGetter) Reconcile(rel *release.Release) error {
 }
 
 func TestGetInstalledBundleHistory(t *testing.T) {
-	getter := controllers.HelmInstalledBundleGetter{}
+	getter := controllers.HelmRevisionStatesGetter{}
 
 	ext := ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1573,8 +1562,14 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 	for _, tst := range mag {
 		t.Log(tst.description)
 		getter.ActionClientGetter = &tst
-		md, err := getter.GetInstalledBundle(context.Background(), &ext)
-		require.Equal(t, tst.expectedError, err)
-		require.Equal(t, tst.expectedBundle, md)
+		md, err := getter.GetRevisionStates(context.Background(), &ext)
+		if tst.expectedError != nil {
+			require.Equal(t, tst.expectedError, err)
+			require.Nil(t, md)
+		} else {
+			require.NoError(t, err)
+			require.Equal(t, tst.expectedInstalled, md.Installed)
+			require.Nil(t, md.RollingOut)
+		}
 	}
 }
