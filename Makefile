@@ -222,8 +222,8 @@ export LOCAL_REGISTRY_HOST := localhost:30000
 export E2E_TEST_CATALOG_V1 := e2e/test-catalog:v1
 export E2E_TEST_CATALOG_V2 := e2e/test-catalog:v2
 export CATALOG_IMG := $(CLUSTER_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
-.PHONY: test-ext-dev-e2e
-test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) #HELP Run extension create, upgrade and delete tests.
+.PHONY: extension-developer-e2e
+extension-developer-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) #EXHELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) ${LOCAL_REGISTRY_HOST} ${CLUSTER_REGISTRY_HOST}
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
@@ -287,10 +287,10 @@ prometheus: PROMETHEUS_VERSION := v0.83.0
 prometheus: #EXHELP Deploy Prometheus into specified namespace
 	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE) $(VERSION)
 
-.PHONY: extension-developer-e2e
-extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
-extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
-extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP Run extension-developer e2e on local kind cluster
+.PHONY: test-extension-developer-e2e
+test-extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
+test-extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
+test-extension-developer-e2e: run image-registry extension-developer-e2e kind-clean #HELP Run extension-developer e2e on local kind cluster
 
 .PHONY: run-latest-release
 run-latest-release:

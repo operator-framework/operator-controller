@@ -19,7 +19,7 @@ jobs:
         go-version-file: go.mod
 
     - name: Run the extension developer e2e test
-      run: make extension-developer-e2e
+      run: make test-extension-developer-e2e
 
   e2e-kind:
     runs-on: ubuntu-latest
