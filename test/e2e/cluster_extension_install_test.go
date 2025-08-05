@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -20,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -204,20 +206,32 @@ func createClusterRoleAndBindingForSA(ctx context.Context, name string, sa *core
 }
 
 func testInit(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog, *corev1.ServiceAccount, *corev1.Namespace) {
-	var err error
+	ce, cc := testInitClusterExtensionClusterCatalog(t)
+	sa, ns := testInitServiceAccountNamespace(t, ce.Name)
+	return ce, cc, sa, ns
+}
 
-	clusterExtensionName := fmt.Sprintf("clusterextension-%s", rand.String(8))
+func testInitClusterExtensionClusterCatalog(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog) {
+	ceName := fmt.Sprintf("clusterextension-%s", rand.String(8))
 
-	ns, err := createNamespace(context.Background(), clusterExtensionName)
-	require.NoError(t, err)
-
-	clusterExtension := &ocv1.ClusterExtension{
+	ce := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterExtensionName,
+			Name: ceName,
 		},
 	}
 
-	extensionCatalog, err := createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
+	cc, err := createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
+	require.NoError(t, err)
+
+	validateCatalogUnpack(t)
+
+	return ce, cc
+}
+
+func testInitServiceAccountNamespace(t *testing.T, clusterExtensionName string) (*corev1.ServiceAccount, *corev1.Namespace) {
+	var err error
+
+	ns, err := createNamespace(context.Background(), clusterExtensionName)
 	require.NoError(t, err)
 
 	name := types.NamespacedName{
@@ -228,9 +242,7 @@ func testInit(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog, *core
 	sa, err := createServiceAccount(context.Background(), name, clusterExtensionName)
 	require.NoError(t, err)
 
-	validateCatalogUnpack(t)
-
-	return clusterExtension, extensionCatalog, sa, ns
+	return sa, ns
 }
 
 func validateCatalogUnpack(t *testing.T) {
@@ -292,35 +304,42 @@ func ensureNoExtensionResources(t *testing.T, clusterExtensionName string) {
 }
 
 func testCleanup(t *testing.T, cat *ocv1.ClusterCatalog, clusterExtension *ocv1.ClusterExtension, sa *corev1.ServiceAccount, ns *corev1.Namespace) {
-	t.Logf("By deleting ClusterCatalog %q", cat.Name)
-	require.NoError(t, c.Delete(context.Background(), cat))
-	require.Eventually(t, func() bool {
-		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &ocv1.ClusterCatalog{})
-		return errors.IsNotFound(err)
-	}, pollDuration, pollInterval)
+	if cat != nil {
+		t.Logf("By deleting ClusterCatalog %q", cat.Name)
+		require.NoError(t, c.Delete(context.Background(), cat))
+		require.Eventually(t, func() bool {
+			err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &ocv1.ClusterCatalog{})
+			return errors.IsNotFound(err)
+		}, pollDuration, pollInterval)
+	}
 
-	t.Logf("By deleting ClusterExtension %q", clusterExtension.Name)
-	require.NoError(t, c.Delete(context.Background(), clusterExtension))
-	require.Eventually(t, func() bool {
-		err := c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, &ocv1.ClusterExtension{})
-		return errors.IsNotFound(err)
-	}, pollDuration, pollInterval)
+	if clusterExtension != nil {
+		t.Logf("By deleting ClusterExtension %q", clusterExtension.Name)
+		require.NoError(t, c.Delete(context.Background(), clusterExtension))
+		require.Eventually(t, func() bool {
+			err := c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, &ocv1.ClusterExtension{})
+			return errors.IsNotFound(err)
+		}, pollDuration, pollInterval)
+		ensureNoExtensionResources(t, clusterExtension.Name)
+	}
 
-	t.Logf("By deleting ServiceAccount %q", sa.Name)
-	require.NoError(t, c.Delete(context.Background(), sa))
-	require.Eventually(t, func() bool {
-		err := c.Get(context.Background(), types.NamespacedName{Name: sa.Name, Namespace: sa.Namespace}, &corev1.ServiceAccount{})
-		return errors.IsNotFound(err)
-	}, pollDuration, pollInterval)
+	if sa != nil {
+		t.Logf("By deleting ServiceAccount %q", sa.Name)
+		require.NoError(t, c.Delete(context.Background(), sa))
+		require.Eventually(t, func() bool {
+			err := c.Get(context.Background(), types.NamespacedName{Name: sa.Name, Namespace: sa.Namespace}, &corev1.ServiceAccount{})
+			return errors.IsNotFound(err)
+		}, pollDuration, pollInterval)
+	}
 
-	ensureNoExtensionResources(t, clusterExtension.Name)
-
-	t.Logf("By deleting Namespace %q", ns.Name)
-	require.NoError(t, c.Delete(context.Background(), ns))
-	require.Eventually(t, func() bool {
-		err := c.Get(context.Background(), types.NamespacedName{Name: ns.Name}, &corev1.Namespace{})
-		return errors.IsNotFound(err)
-	}, pollDuration, pollInterval)
+	if ns != nil {
+		t.Logf("By deleting Namespace %q", ns.Name)
+		require.NoError(t, c.Delete(context.Background(), ns))
+		require.Eventually(t, func() bool {
+			err := c.Get(context.Background(), types.NamespacedName{Name: ns.Name}, &corev1.Namespace{})
+			return errors.IsNotFound(err)
+		}, pollDuration, pollInterval)
+	}
 }
 
 func TestClusterExtensionInstallRegistry(t *testing.T) {
@@ -882,21 +901,90 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	}, pollDuration, pollInterval)
 }
 
-func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *testing.T) {
+func TestClusterExtensionRecoversFromNoNamespaceWhenFailureFixed(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When the extension bundle format is registry+v1")
 
-	clusterExtension, extensionCatalog, _, ns := testInit(t)
+	t.Log("By not creating the Namespace and ServiceAccount")
+	clusterExtension, extensionCatalog := testInitClusterExtensionClusterCatalog(t)
 
-	name := rand.String(10)
-	sa := &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns.Name,
+	defer testCleanup(t, extensionCatalog, clusterExtension, nil, nil)
+	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1.CatalogFilter{
+				PackageName: "test",
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
+				},
+			},
+		},
+		Namespace: clusterExtension.Name,
+		ServiceAccount: ocv1.ServiceAccountReference{
+			Name: clusterExtension.Name,
 		},
 	}
-	err := c.Create(context.Background(), sa)
-	require.NoError(t, err)
+
+	t.Log("It resolves the specified package with correct bundle path")
+	t.Log("By creating the ClusterExtension resource")
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+
+	t.Log("By eventually reporting Progressing == True with Reason Retrying")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonRetrying, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually failing to install the package successfully due to no namespace")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionUnknown, cond.Status)
+		require.Equal(ct, ocv1.ReasonFailed, cond.Reason)
+		require.Contains(ct, cond.Message, fmt.Sprintf("service account %q not found in namespace %q: unable to authenticate with the Kubernetes cluster.", clusterExtension.Name, clusterExtension.Name))
+	}, pollDuration, pollInterval)
+
+	t.Log("By creating the Namespace and ServiceAccount")
+	sa, ns := testInitServiceAccountNamespace(t, clusterExtension.Name)
+	defer testCleanup(t, nil, nil, sa, ns)
+
+	// NOTE: In order to ensure predictable results we need to ensure we have a single
+	// known failure with a singular fix operation. Additionally, due to the exponential
+	// backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
+	// after creating int the Namespace and ServiceAccount.
+	t.Log("By eventually installing the package successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Contains(ct, cond.Message, "Installed bundle")
+		require.NotEmpty(ct, clusterExtension.Status.Install)
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually reporting Progressing == True with Reason Success")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+	}, pollDuration, pollInterval)
+}
+
+func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testing.T) {
+	t.Log("When a cluster extension is installed from a catalog")
+	t.Log("When the extension bundle format is registry+v1")
+
+	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
 
@@ -910,19 +998,49 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 				},
 			},
 		},
-		Namespace: ns.Name,
+		Namespace: clusterExtension.Name,
 		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
+			Name: clusterExtension.Name,
 		},
 	}
+
+	t.Log("By creating a new Deployment that can not be adopted")
+	newDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-operator",
+			Namespace: clusterExtension.Name,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: ptr.To(int32(1)),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": "test-operator"},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{"app": "test-operator"},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Command:         []string{"sleep", "1000"},
+							Image:           "busybox",
+							ImagePullPolicy: corev1.PullAlways,
+							Name:            "busybox",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsNonRoot: ptr.To(true),
+								RunAsUser:    ptr.To(int64(1000)),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	require.NoError(t, c.Create(context.Background(), newDeployment))
+
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
-
-	t.Log("By eventually reporting a successful resolution and bundle path")
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-	}, pollDuration, pollInterval)
 
 	t.Log("By eventually reporting Progressing == True with Reason Retrying")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -933,23 +1051,23 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		require.Equal(ct, ocv1.ReasonRetrying, cond.Reason)
 	}, pollDuration, pollInterval)
 
-	t.Log("By eventually failing to install the package successfully due to insufficient ServiceAccount permissions")
+	t.Log("By eventually failing to install the package successfully due to no adoption support")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionFalse, cond.Status)
 		require.Equal(ct, ocv1.ReasonFailed, cond.Reason)
-		require.Equal(ct, "No bundle installed", cond.Message)
+		require.Contains(ct, cond.Message, "No bundle installed")
 	}, pollDuration, pollInterval)
 
-	t.Log("By fixing the ServiceAccount permissions")
-	require.NoError(t, createClusterRoleAndBindingForSA(context.Background(), name, sa, clusterExtension.Name))
+	t.Log("By deleting the new Deployment")
+	require.NoError(t, c.Delete(context.Background(), newDeployment))
 
 	// NOTE: In order to ensure predictable results we need to ensure we have a single
 	// known failure with a singular fix operation. Additionally, due to the exponential
 	// backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
-	// after creating and binding the needed permissions to the ServiceAccount.
+	// after deleting the Deployment.
 	t.Log("By eventually installing the package successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
