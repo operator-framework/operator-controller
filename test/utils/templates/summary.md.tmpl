@@ -1,0 +1,22 @@
+
+{{- /* ------------ Performance Statistics Template ------------ */ -}}
+{{define "performanceStatistics" -}}
+{{ range $index, $pod := .Pods }}
+### {{$pod}}
+#### Memory Usage
+{{$.PerformanceQuery "Memory Usage" $pod `container_memory_working_set_bytes{pod=~"%s.*",container="manager"}[5m]` "MB" .000001}}
+
+#### Memory Growth Rate
+{{$.PerformanceQuery "Memory Growth Rate" $pod `deriv(sum(container_memory_working_set_bytes{pod=~"%s.*",container="manager"})[5m:])[5m:]` "KB/s" .001}}
+
+#### CPU Usage
+{{$.PerformanceQuery "CPU Usage" $pod `rate(container_cpu_usage_seconds_total{pod=~"%s.*",container="manager"}[5m])[5m:]` "mCPU" 1000}}
+{{end}}
+{{- end}}
+
+{{- /* ----------------- E2E Summary Markdown ------------------ */ -}}
+# E2E Summary
+## Alerts
+{{.Alerts}}
+## Performance
+{{ template "performanceStatistics" . -}}

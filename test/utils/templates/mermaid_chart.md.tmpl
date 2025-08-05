@@ -1,0 +1,17 @@
+<details>
+
+```mermaid
+---
+config:
+  xyChart:
+    showDataLabel: true
+    xAxis:
+      showLabel: false
+---
+xychart-beta
+title "{{ .Title }}"
+y-axis "{{ .YLabel }}"  {{printf "%f" .YMin}} --> {{printf "%f" .YMax}}
+x-axis "time (start of test to end)"
+line {{.Data}}
+```
+</details>

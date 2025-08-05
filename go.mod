@@ -23,6 +23,7 @@ require (
 	github.com/operator-framework/helm-operator-plugins v0.8.0
 	github.com/operator-framework/operator-registry v1.56.0
 	github.com/prometheus/client_golang v1.23.0
+	github.com/prometheus/common v0.65.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
@@ -177,7 +178,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/proglottis/gpgme v0.1.4 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rubenv/sql-migrate v1.8.0 // indirect
