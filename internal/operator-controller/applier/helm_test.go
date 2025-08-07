@@ -347,7 +347,7 @@ func TestApply_Installation(t *testing.T) {
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
-		require.Equal(t, "", installStatus)
+		require.Empty(t, installStatus)
 		require.True(t, installSucceeded)
 	})
 }
@@ -483,7 +483,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
-		require.Equal(t, "", installStatus)
+		require.Empty(t, installStatus)
 		require.True(t, installSucceeded)
 	})
 }

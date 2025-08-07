@@ -522,7 +522,7 @@ func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *o
 }
 
 type BoxcutterRevisionStatesGetter struct {
-	client.Reader
+	Reader client.Reader
 }
 
 func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
@@ -542,7 +542,6 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 	rs := &RevisionStates{}
 	for _, rev := range existingRevisionList.Items {
 		if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateActive {
-
 			// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "storageLabels")
 			//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
 			//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.

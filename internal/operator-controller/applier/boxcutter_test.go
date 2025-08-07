@@ -510,7 +510,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.False(t, installSucceeded)
-				assert.Equal(t, installStatus, "New revision created")
+				assert.Equal(t, "New revision created", installStatus)
 			}
 
 			if tc.validate != nil {
