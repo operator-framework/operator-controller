@@ -3,5 +3,5 @@ kind: Kustomization
 namespace: olmv1-system
 namePrefix: operator-controller-
 resources:
-- ../common
-- role.yaml
+  - ../common
+  - role.yaml
