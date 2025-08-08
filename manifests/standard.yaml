@@ -87,7 +87,7 @@ spec:
     - Ingress
     - Egress
 ---
-# Source: olmv1/templates/serviceaccount-olmv1-system-catalogd-controller-manager.yml
+# Source: olmv1/templates/serviceaccount-olmv1-system-common-controller-manager.yml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -99,7 +99,7 @@ metadata:
   name: catalogd-controller-manager
   namespace: olmv1-system
 ---
-# Source: olmv1/templates/serviceaccount-olmv1-system-operator-controller-controller-manager.yml
+# Source: olmv1/templates/serviceaccount-olmv1-system-common-controller-manager.yml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1183,7 +1183,7 @@ rules:
       - patch
       - update
 ---
-# Source: olmv1/templates/clusterrole-catalogd-metrics-reader.yml
+# Source: olmv1/templates/clusterrole-common-metrics-reader.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1199,7 +1199,23 @@ rules:
     verbs:
       - get
 ---
-# Source: olmv1/templates/clusterrole-catalogd-proxy-role.yml
+# Source: olmv1/templates/clusterrole-common-metrics-reader.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
+  labels:
+    app.kubernetes.io/name: operator-controller
+    app.kubernetes.io/part-of: olm
+  name: operator-controller-metrics-reader
+rules:
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+---
+# Source: olmv1/templates/clusterrole-common-proxy-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1209,6 +1225,30 @@ metadata:
     app.kubernetes.io/name: catalogd
     app.kubernetes.io/part-of: olm
   name: catalogd-proxy-role
+rules:
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
+---
+# Source: olmv1/templates/clusterrole-common-proxy-role.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
+  labels:
+    app.kubernetes.io/name: operator-controller
+    app.kubernetes.io/part-of: olm
+  name: operator-controller-proxy-role
 rules:
   - apiGroups:
       - authentication.k8s.io
@@ -1332,47 +1372,7 @@ rules:
       - list
       - watch
 ---
-# Source: olmv1/templates/clusterrole-operator-controller-metrics-reader.yml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  annotations:
-    olm.operatorframework.io/feature-set: standard
-  labels:
-    app.kubernetes.io/name: operator-controller
-    app.kubernetes.io/part-of: olm
-  name: operator-controller-metrics-reader
-rules:
-  - nonResourceURLs:
-      - /metrics
-    verbs:
-      - get
----
-# Source: olmv1/templates/clusterrole-operator-controller-proxy-role.yml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  annotations:
-    olm.operatorframework.io/feature-set: standard
-  labels:
-    app.kubernetes.io/name: operator-controller
-    app.kubernetes.io/part-of: olm
-  name: operator-controller-proxy-role
-rules:
-  - apiGroups:
-      - authentication.k8s.io
-    resources:
-      - tokenreviews
-    verbs:
-      - create
-  - apiGroups:
-      - authorization.k8s.io
-    resources:
-      - subjectaccessreviews
-    verbs:
-      - create
----
-# Source: olmv1/templates/clusterrolebinding-catalogd-manager-rolebinding.yml
+# Source: olmv1/templates/clusterrolebinding-common-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1391,26 +1391,7 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/clusterrolebinding-catalogd-proxy-rolebinding.yml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  annotations:
-    olm.operatorframework.io/feature-set: standard
-  labels:
-    app.kubernetes.io/name: catalogd
-    app.kubernetes.io/part-of: olm
-  name: catalogd-proxy-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: catalogd-proxy-role
-subjects:
-  - kind: ServiceAccount
-    name: catalogd-controller-manager
-    namespace: olmv1-system
----
-# Source: olmv1/templates/clusterrolebinding-operator-controller-manager-rolebinding.yml
+# Source: olmv1/templates/clusterrolebinding-common-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1429,7 +1410,26 @@ subjects:
     name: operator-controller-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/clusterrolebinding-operator-controller-proxy-rolebinding.yml
+# Source: olmv1/templates/clusterrolebinding-common-proxy-rolebinding.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
+  labels:
+    app.kubernetes.io/name: catalogd
+    app.kubernetes.io/part-of: olm
+  name: catalogd-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: catalogd-proxy-role
+subjects:
+  - kind: ServiceAccount
+    name: catalogd-controller-manager
+    namespace: olmv1-system
+---
+# Source: olmv1/templates/clusterrolebinding-common-proxy-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1448,7 +1448,29 @@ subjects:
     name: operator-controller-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/role-olmv1-system-catalogd-leader-election-role.yml
+# Source: olmv1/templates/role-olmv1-system-catalogd-manager-role.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: catalogd-manager-role
+  namespace: olmv1-system
+  labels:
+    app.kubernetes.io/name: catalogd
+    app.kubernetes.io/part-of: olm
+  annotations:
+    olm.operatorframework.io/feature-set: standard
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+---
+# Source: olmv1/templates/role-olmv1-system-common-leader-election-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -1492,29 +1514,7 @@ rules:
       - create
       - patch
 ---
-# Source: olmv1/templates/role-olmv1-system-catalogd-manager-role.yml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: catalogd-manager-role
-  namespace: olmv1-system
-  labels:
-    app.kubernetes.io/name: catalogd
-    app.kubernetes.io/part-of: olm
-  annotations:
-    olm.operatorframework.io/feature-set: standard
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-      - serviceaccounts
-    verbs:
-      - get
-      - list
-      - watch
----
-# Source: olmv1/templates/role-olmv1-system-operator-controller-leader-election-role.yml
+# Source: olmv1/templates/role-olmv1-system-common-leader-election-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -1592,7 +1592,7 @@ rules:
       - list
       - watch
 ---
-# Source: olmv1/templates/rolebinding-olmv1-system-catalogd-leader-election-rolebinding.yml
+# Source: olmv1/templates/rolebinding-olmv1-system-common-leader-election-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -1612,7 +1612,27 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/rolebinding-olmv1-system-catalogd-manager-rolebinding.yml
+# Source: olmv1/templates/rolebinding-olmv1-system-common-leader-election-rolebinding.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
+  labels:
+    app.kubernetes.io/name: operator-controller
+    app.kubernetes.io/part-of: olm
+  name: operator-controller-leader-election-rolebinding
+  namespace: olmv1-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: operator-controller-leader-election-role
+subjects:
+  - kind: ServiceAccount
+    name: operator-controller-controller-manager
+    namespace: olmv1-system
+---
+# Source: olmv1/templates/rolebinding-olmv1-system-common-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -1632,27 +1652,7 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/rolebinding-olmv1-system-operator-controller-leader-election-rolebinding.yml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  annotations:
-    olm.operatorframework.io/feature-set: standard
-  labels:
-    app.kubernetes.io/name: catalogd
-    app.kubernetes.io/part-of: olm
-  name: operator-controller-leader-election-rolebinding
-  namespace: olmv1-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: operator-controller-leader-election-role
-subjects:
-  - kind: ServiceAccount
-    name: operator-controller-controller-manager
-    namespace: olmv1-system
----
-# Source: olmv1/templates/rolebinding-olmv1-system-operator-controller-manager-rolebinding.yml
+# Source: olmv1/templates/rolebinding-olmv1-system-common-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
