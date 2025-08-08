@@ -1,10 +1,13 @@
-package storage
+package index
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"iter"
+	"os"
 	"slices"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -12,22 +15,86 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 
-// index is an index of sections of an FBC file used to lookup FBC blobs that
-// match any combination of their schema, package, and name fields.
+type Index struct {
+	idx *index
+}
 
-// This index strikes a balance between space and performance. It indexes each field
-// separately, and performs logical set intersections at lookup time in order to implement
-// a multi-parameter query.
-//
-// Note: it is permissible to change the indexing algorithm later if it is necessary to
-// tune the space / performance tradeoff. However care should be taken to ensure
-// that the actual content returned by the index remains identical, as users of the index
-// may be sensitive to differences introduced by index algorithm changes (e.g. if the
-// order of the returned sections changes).
+func (i *Index) Get(r io.ReaderAt, schema, packageName, name string) io.Reader {
+	return i.idx.get(r, schema, packageName, name)
+}
+
+func New(ctx context.Context, metas iter.Seq2[*declcfg.Meta, error]) (*Index, error) {
+	idx, err := newIndex(ctx, metas)
+	if err != nil {
+		return nil, err
+	}
+	return &Index{idx: idx}, nil
+}
+
+func ReadFile(indexFilePath string) (*Index, error) {
+	indexFile, err := os.Open(indexFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	dec := json.NewDecoder(indexFile)
+	var idx index
+	if err := dec.Decode(&idx); err != nil {
+		return nil, err
+	}
+	return &Index{idx: &idx}, nil
+}
+
+var _ io.WriterTo = (*Index)(nil)
+
+func (i *Index) WriteTo(w io.Writer) (int64, error) {
+	data, err := json.Marshal(i.idx)
+	if err != nil {
+		return -1, err
+	}
+	written, err := w.Write(data)
+	return int64(written), err
+}
+
 type index struct {
 	BySchema  map[string][]section `json:"by_schema"`
 	ByPackage map[string][]section `json:"by_package"`
 	ByName    map[string][]section `json:"by_name"`
+}
+
+func newIndex(ctx context.Context, metas iter.Seq2[*declcfg.Meta, error]) (*index, error) {
+	idx := &index{
+		BySchema:  make(map[string][]section),
+		ByPackage: make(map[string][]section),
+		ByName:    make(map[string][]section),
+	}
+	offset := int64(0)
+	for meta, iterErr := range metas {
+		if iterErr != nil {
+			return nil, iterErr
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+		start := offset
+		length := int64(len(meta.Blob))
+		offset += length
+
+		s := section{offset: start, length: length}
+		if meta.Schema != "" {
+			idx.BySchema[meta.Schema] = append(idx.BySchema[meta.Schema], s)
+		}
+		if meta.Package != "" {
+			idx.ByPackage[meta.Package] = append(idx.ByPackage[meta.Package], s)
+		}
+		if meta.Name != "" {
+			idx.ByName[meta.Name] = append(idx.ByName[meta.Name], s)
+		}
+	}
+	return idx, nil
 }
 
 // A section is the byte offset and length of an FBC blob within the file.
@@ -50,7 +117,7 @@ func (s *section) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (i index) Get(r io.ReaderAt, schema, packageName, name string) io.Reader {
+func (i *index) get(r io.ReaderAt, schema, packageName, name string) io.Reader {
 	sectionSet := i.getSectionSet(schema, packageName, name)
 
 	sections := sectionSet.UnsortedList()
@@ -90,30 +157,4 @@ func (i *index) getSectionSet(schema, packageName, name string) sets.Set[section
 	}
 
 	return sectionSet
-}
-
-func newIndex(metasChan <-chan *declcfg.Meta) *index {
-	idx := &index{
-		BySchema:  make(map[string][]section),
-		ByPackage: make(map[string][]section),
-		ByName:    make(map[string][]section),
-	}
-	offset := int64(0)
-	for meta := range metasChan {
-		start := offset
-		length := int64(len(meta.Blob))
-		offset += length
-
-		s := section{offset: start, length: length}
-		if meta.Schema != "" {
-			idx.BySchema[meta.Schema] = append(idx.BySchema[meta.Schema], s)
-		}
-		if meta.Package != "" {
-			idx.ByPackage[meta.Package] = append(idx.ByPackage[meta.Package], s)
-		}
-		if meta.Name != "" {
-			idx.ByName[meta.Name] = append(idx.ByName[meta.Name], s)
-		}
-	}
-	return idx
 }

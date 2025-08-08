@@ -1,11 +1,10 @@
-package core
+package controllers
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
-	"net/http"
+	"iter"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -21,6 +20,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
+
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -32,29 +33,21 @@ type MockStore struct {
 	shouldError bool
 }
 
-func (m MockStore) Store(_ context.Context, _ string, _ fs.FS) error {
+func (m MockStore) Store(_ context.Context, _ string, _ iter.Seq2[*declcfg.Meta, error]) error {
 	if m.shouldError {
 		return errors.New("mockstore store error")
 	}
 	return nil
 }
 
-func (m MockStore) Delete(_ string) error {
+func (m MockStore) Delete(_ context.Context, _ string) error {
 	if m.shouldError {
 		return errors.New("mockstore delete error")
 	}
 	return nil
 }
 
-func (m MockStore) BaseURL(_ string) string {
-	return "URL"
-}
-
-func (m MockStore) StorageServerHandler() http.Handler {
-	panic("not needed")
-}
-
-func (m MockStore) ContentExists(_ string) bool {
+func (m MockStore) Exists(_ string) bool {
 	return true
 }
 
@@ -807,6 +800,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				ImagePuller:    tt.puller,
 				ImageCache:     tt.cache,
 				Storage:        tt.store,
+				GetBaseURL:     func(catalogName string) string { return "URL" },
 				storedCatalogs: map[string]storedCatalogData{},
 			}
 			if reconciler.ImageCache == nil {
@@ -915,7 +909,8 @@ func TestPollingRequeue(t *testing.T) {
 					ImageFS: &fstest.MapFS{},
 					Ref:     ref,
 				},
-				Storage: &MockStore{},
+				Storage:    &MockStore{},
+				GetBaseURL: func(catalogName string) string { return "URL" },
 				storedCatalogs: map[string]storedCatalogData{
 					tc.catalog.Name: {
 						ref:                ref,
@@ -1140,6 +1135,7 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 				Client:         nil,
 				ImagePuller:    &imageutil.MockPuller{Error: errors.New("mockpuller error")},
 				Storage:        &MockStore{},
+				GetBaseURL:     func(catalogName string) string { return "URL" },
 				storedCatalogs: scd,
 			}
 			require.NoError(t, reconciler.setupFinalizers())

@@ -1,20 +1,19 @@
-package serverutil
+package handler_test
 
 import (
 	"compress/gzip"
-	"context"
 	"io"
-	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
+
+	"github.com/operator-framework/operator-controller/internal/catalogd/handler"
 )
 
-func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
+func TestStandardHandler_Gzip(t *testing.T) {
 	var generatedJSON = func(size int) string {
 		return "{\"data\":\"" + strings.Repeat("test data ", size) + "\"}"
 	}
@@ -50,15 +49,11 @@ func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock storage instance that returns our test content
-			mockStorage := &mockStorageInstance{
-				content: tt.responseContent,
-			}
+			baseHandler := handler.NewSubPathHandler("/test", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(tt.responseContent))
+			}))
 
-			cfg := CatalogServerConfig{
-				LocalStorage: mockStorage,
-			}
-			handler := storageServerHandlerWrapped(logr.Logger{}, cfg)
+			standardHandler := handler.NewStandardHandler(baseHandler)
 
 			// Create test request
 			req := httptest.NewRequest("GET", "/test", nil)
@@ -70,7 +65,7 @@ func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
 			rec := httptest.NewRecorder()
 
 			// Handle the request
-			handler.ServeHTTP(rec, req)
+			standardHandler.ServeHTTP(rec, req)
 
 			// Check status code
 			require.Equal(t, tt.expectedStatus, rec.Code)
@@ -96,33 +91,4 @@ func TestStorageServerHandlerWrapped_Gzip(t *testing.T) {
 			require.Equal(t, tt.responseContent, string(responseBody))
 		})
 	}
-}
-
-// mockStorageInstance implements storage.Instance interface for testing
-type mockStorageInstance struct {
-	content string
-}
-
-func (m *mockStorageInstance) StorageServerHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte(m.content))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
-}
-
-func (m *mockStorageInstance) Store(ctx context.Context, catalogName string, fs fs.FS) error {
-	return nil
-}
-
-func (m *mockStorageInstance) Delete(catalogName string) error {
-	return nil
-}
-
-func (m *mockStorageInstance) ContentExists(catalog string) bool {
-	return true
-}
-func (m *mockStorageInstance) BaseURL(catalog string) string {
-	return ""
 }

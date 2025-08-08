@@ -1,15 +1,26 @@
-package storage
+package index
 
 import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"iter"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
+
+func metasSeq(metas []*declcfg.Meta) iter.Seq2[*declcfg.Meta, error] {
+	return func(yield func(*declcfg.Meta, error) bool) {
+		for _, meta := range metas {
+			if !yield(meta, nil) {
+				return
+			}
+		}
+	}
+}
 
 func TestIndexCreation(t *testing.T) {
 	// Create test Meta objects
@@ -28,15 +39,9 @@ func TestIndexCreation(t *testing.T) {
 		},
 	}
 
-	// Create channel and feed Metas
-	metasChan := make(chan *declcfg.Meta, len(metas))
-	for _, meta := range metas {
-		metasChan <- meta
-	}
-	close(metasChan)
-
 	// Create index
-	idx := newIndex(metasChan)
+	idx, err := newIndex(t.Context(), metasSeq(metas))
+	require.NoError(t, err)
 
 	// Verify schema index
 	require.Len(t, idx.BySchema, 2, "Expected 2 schema entries, got %d", len(idx.BySchema))
@@ -158,14 +163,8 @@ func TestIndexGet(t *testing.T) {
 		},
 	}
 
-	// Create and populate the index
-	metasChan := make(chan *declcfg.Meta, len(metas))
-	for _, meta := range metas {
-		metasChan <- meta
-	}
-	close(metasChan)
-
-	idx := newIndex(metasChan)
+	idx, err := newIndex(t.Context(), metasSeq(metas))
+	require.NoError(t, err)
 
 	// Create a reader from the metas
 	var combinedBlob bytes.Buffer
@@ -253,7 +252,7 @@ func TestIndexGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reader := idx.Get(fullData, tt.schema, tt.packageName, tt.blobName)
+			reader := idx.get(fullData, tt.schema, tt.packageName, tt.blobName)
 			content, err := io.ReadAll(reader)
 			require.NoError(t, err, "Failed to read content: %v", err)
 
