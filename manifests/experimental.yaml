@@ -1,5 +1,5 @@
 ---
-# Source: olmv1/templates/00-namespace.yml
+# Source: olmv1/templates/namespace.yml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -16,7 +16,7 @@ metadata:
     app.kubernetes.io/part-of: olm
   name: olmv1-system
 ---
-# Source: olmv1/templates/36-networkpolicy-olmv1-system-catalogd-controller-manager.yml
+# Source: olmv1/templates/networkpolicy-olmv1-system-catalogd-controller-manager.yml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -45,7 +45,7 @@ spec:
     - Ingress
     - Egress
 ---
-# Source: olmv1/templates/37-networkpolicy-olmv1-system-default-deny-all-traffic.yml
+# Source: olmv1/templates/networkpolicy-olmv1-system-default-deny-all-traffic.yml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -62,7 +62,7 @@ spec:
     - Ingress
     - Egress
 ---
-# Source: olmv1/templates/38-networkpolicy-olmv1-system-operator-controller-controller-manager.yml
+# Source: olmv1/templates/networkpolicy-olmv1-system-operator-controller-controller-manager.yml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -87,7 +87,7 @@ spec:
     - Ingress
     - Egress
 ---
-# Source: olmv1/templates/03-serviceaccount-olmv1-system-catalogd-controller-manager.yml
+# Source: olmv1/templates/serviceaccount-olmv1-system-catalogd-controller-manager.yml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -99,7 +99,7 @@ metadata:
   name: catalogd-controller-manager
   namespace: olmv1-system
 ---
-# Source: olmv1/templates/04-serviceaccount-olmv1-system-operator-controller-controller-manager.yml
+# Source: olmv1/templates/serviceaccount-olmv1-system-operator-controller-controller-manager.yml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -111,7 +111,7 @@ metadata:
   name: operator-controller-controller-manager
   namespace: olmv1-system
 ---
-# Source: olmv1/templates/01-customresourcedefinition-clustercatalogs.olm.operatorframework.io.yml
+# Source: olmv1/templates/customresourcedefinition-clustercatalogs.olm.operatorframework.io.yml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -554,7 +554,7 @@ spec:
     subresources:
       status: {}
 ---
-# Source: olmv1/templates/02-customresourcedefinition-clusterextensions.olm.operatorframework.io.yml
+# Source: olmv1/templates/customresourcedefinition-clusterextensions.olm.operatorframework.io.yml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -1145,7 +1145,7 @@ spec:
     subresources:
       status: {}
 ---
-# Source: olmv1/templates/09-clusterrole-catalogd-manager-role.yml
+# Source: olmv1/templates/clusterrole-catalogd-manager-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1183,7 +1183,7 @@ rules:
       - patch
       - update
 ---
-# Source: olmv1/templates/10-clusterrole-catalogd-metrics-reader.yml
+# Source: olmv1/templates/clusterrole-catalogd-metrics-reader.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1199,7 +1199,7 @@ rules:
     verbs:
       - get
 ---
-# Source: olmv1/templates/11-clusterrole-catalogd-proxy-role.yml
+# Source: olmv1/templates/clusterrole-catalogd-proxy-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1223,7 +1223,7 @@ rules:
     verbs:
       - create
 ---
-# Source: olmv1/templates/12-clusterrole-operator-controller-clusterextension-editor-role.yml
+# Source: olmv1/templates/clusterrole-operator-controller-clusterextension-editor-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1247,7 +1247,7 @@ rules:
       - update
       - watch
 ---
-# Source: olmv1/templates/13-clusterrole-operator-controller-clusterextension-viewer-role.yml
+# Source: olmv1/templates/clusterrole-operator-controller-clusterextension-viewer-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1267,7 +1267,7 @@ rules:
       - list
       - watch
 ---
-# Source: olmv1/templates/14-clusterrole-operator-controller-manager-role.yml
+# Source: olmv1/templates/clusterrole-operator-controller-manager-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1332,7 +1332,7 @@ rules:
       - list
       - watch
 ---
-# Source: olmv1/templates/15-clusterrole-operator-controller-metrics-reader.yml
+# Source: olmv1/templates/clusterrole-operator-controller-metrics-reader.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1348,7 +1348,7 @@ rules:
     verbs:
       - get
 ---
-# Source: olmv1/templates/16-clusterrole-operator-controller-proxy-role.yml
+# Source: olmv1/templates/clusterrole-operator-controller-proxy-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1372,7 +1372,7 @@ rules:
     verbs:
       - create
 ---
-# Source: olmv1/templates/21-clusterrolebinding-catalogd-manager-rolebinding.yml
+# Source: olmv1/templates/clusterrolebinding-catalogd-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1391,7 +1391,7 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/22-clusterrolebinding-catalogd-proxy-rolebinding.yml
+# Source: olmv1/templates/clusterrolebinding-catalogd-proxy-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1410,7 +1410,7 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/23-clusterrolebinding-operator-controller-manager-rolebinding.yml
+# Source: olmv1/templates/clusterrolebinding-operator-controller-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1429,7 +1429,7 @@ subjects:
     name: operator-controller-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/24-clusterrolebinding-operator-controller-proxy-rolebinding.yml
+# Source: olmv1/templates/clusterrolebinding-operator-controller-proxy-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1448,7 +1448,7 @@ subjects:
     name: operator-controller-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/05-role-olmv1-system-catalogd-leader-election-role.yml
+# Source: olmv1/templates/role-olmv1-system-catalogd-leader-election-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -1492,7 +1492,7 @@ rules:
       - create
       - patch
 ---
-# Source: olmv1/templates/06-role-olmv1-system-catalogd-manager-role.yml
+# Source: olmv1/templates/role-olmv1-system-catalogd-manager-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -1514,7 +1514,7 @@ rules:
       - list
       - watch
 ---
-# Source: olmv1/templates/07-role-olmv1-system-operator-controller-leader-election-role.yml
+# Source: olmv1/templates/role-olmv1-system-operator-controller-leader-election-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -1558,7 +1558,7 @@ rules:
       - create
       - patch
 ---
-# Source: olmv1/templates/08-role-olmv1-system-operator-controller-manager-role.yml
+# Source: olmv1/templates/role-olmv1-system-operator-controller-manager-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -1592,7 +1592,7 @@ rules:
       - list
       - watch
 ---
-# Source: olmv1/templates/17-rolebinding-olmv1-system-catalogd-leader-election-rolebinding.yml
+# Source: olmv1/templates/rolebinding-olmv1-system-catalogd-leader-election-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -1612,7 +1612,7 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/18-rolebinding-olmv1-system-catalogd-manager-rolebinding.yml
+# Source: olmv1/templates/rolebinding-olmv1-system-catalogd-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -1632,7 +1632,7 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/19-rolebinding-olmv1-system-operator-controller-leader-election-rolebinding.yml
+# Source: olmv1/templates/rolebinding-olmv1-system-operator-controller-leader-election-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -1652,7 +1652,7 @@ subjects:
     name: operator-controller-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/20-rolebinding-olmv1-system-operator-controller-manager-rolebinding.yml
+# Source: olmv1/templates/rolebinding-olmv1-system-operator-controller-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -1672,7 +1672,7 @@ subjects:
     name: operator-controller-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/26-service-olmv1-system-catalogd-service.yml
+# Source: olmv1/templates/service-olmv1-system-catalogd-service.yml
 apiVersion: v1
 kind: Service
 metadata:
@@ -1700,7 +1700,7 @@ spec:
   selector:
     app.kubernetes.io/name: catalogd
 ---
-# Source: olmv1/templates/27-service-olmv1-system-operator-controller-service.yml
+# Source: olmv1/templates/service-olmv1-system-operator-controller-service.yml
 apiVersion: v1
 kind: Service
 metadata:
@@ -1720,7 +1720,7 @@ spec:
   selector:
     app.kubernetes.io/name: operator-controller
 ---
-# Source: olmv1/templates/29-deployment-olmv1-system-catalogd-controller-manager.yml
+# Source: olmv1/templates/deployment-olmv1-system-catalogd-controller-manager.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1854,7 +1854,7 @@ spec:
           operator: Exists
           tolerationSeconds: 120
 ---
-# Source: olmv1/templates/30-deployment-olmv1-system-operator-controller-controller-manager.yml
+# Source: olmv1/templates/deployment-olmv1-system-operator-controller-controller-manager.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1992,7 +1992,7 @@ spec:
           operator: Exists
           tolerationSeconds: 120
 ---
-# Source: olmv1/templates/31-certificate-cert-manager-olmv1-ca.yml
+# Source: olmv1/templates/certificate-cert-manager-olmv1-ca.yml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -2019,7 +2019,7 @@ spec:
     annotations:
       cert-manager.io/allow-direct-injection: "true"
 ---
-# Source: olmv1/templates/32-certificate-olmv1-system-catalogd-service-cert.yml
+# Source: olmv1/templates/certificate-olmv1-system-catalogd-service-cert.yml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -2045,7 +2045,7 @@ spec:
     size: 256
   secretName: catalogd-service-cert-git-version
 ---
-# Source: olmv1/templates/33-certificate-olmv1-system-operator-controller-cert.yml
+# Source: olmv1/templates/certificate-olmv1-system-operator-controller-cert.yml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -2070,7 +2070,7 @@ spec:
     size: 256
   secretName: operator-controller-cert
 ---
-# Source: olmv1/templates/34-clusterissuer-olmv1-ca.yml
+# Source: olmv1/templates/clusterissuer-olmv1-ca.yml
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -2084,7 +2084,7 @@ spec:
   ca:
     secretName: olmv1-ca
 ---
-# Source: olmv1/templates/35-issuer-cert-manager-self-sign-issuer.yml
+# Source: olmv1/templates/issuer-cert-manager-self-sign-issuer.yml
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -2098,7 +2098,7 @@ metadata:
 spec:
   selfSigned: {}
 ---
-# Source: olmv1/templates/40-mutatingwebhookconfiguration-catalogd-mutating-webhook-configuration.yml
+# Source: olmv1/templates/mutatingwebhookconfiguration-catalogd-mutating-webhook-configuration.yml
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
