@@ -439,14 +439,26 @@ func run() error {
 		isWebhookSupportEnabled = true
 	}
 
+	// create and configure chart loaders
+	bundleLoaders := map[applier.BundleType]applier.HelmChartLoader{
+		applier.BundleTypeRegistryV1: &applier.RegistryV1BundleLoader{
+			RegistryV1BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
+				BundleRenderer:          registryv1.Renderer,
+				CertificateProvider:     certProvider,
+				IsWebhookSupportEnabled: isWebhookSupportEnabled,
+			},
+		},
+	}
+	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
+		bundleLoaders[applier.BundleTypeHelm] = &applier.HelmBundleLoader{}
+	}
+
 	// now initialize the helmApplier, assigning the potentially nil preAuth
 	helmApplier := &applier.Helm{
 		ActionClientGetter: acg,
 		Preflights:         preflights,
-		BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
-			BundleRenderer:          registryv1.Renderer,
-			CertificateProvider:     certProvider,
-			IsWebhookSupportEnabled: isWebhookSupportEnabled,
+		HelmChartLoader: applier.BundleFSChartLoader{
+			HelmChartLoaders: bundleLoaders,
 		},
 		PreAuthorizer: preAuth,
 	}
