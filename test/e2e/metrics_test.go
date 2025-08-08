@@ -32,7 +32,7 @@ import (
 func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 	client := utils.FindK8sClient(t)
 	curlNamespace := createRandomNamespace(t, client)
-	componentNamespace := getComponentNamespace(t, client, "control-plane=operator-controller-controller-manager")
+	componentNamespace := getComponentNamespace(t, client, "app.kubernetes.io/name=operator-controller")
 	metricsURL := fmt.Sprintf("https://operator-controller-service.%s.svc.cluster.local:8443/metrics", componentNamespace)
 
 	config := NewMetricsTestConfig(
@@ -52,7 +52,7 @@ func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 	client := utils.FindK8sClient(t)
 	curlNamespace := createRandomNamespace(t, client)
-	componentNamespace := getComponentNamespace(t, client, "control-plane=catalogd-controller-manager")
+	componentNamespace := getComponentNamespace(t, client, "app.kubernetes.io/name=catalogd")
 	metricsURL := fmt.Sprintf("https://catalogd-service.%s.svc.cluster.local:7443/metrics", componentNamespace)
 
 	config := NewMetricsTestConfig(
