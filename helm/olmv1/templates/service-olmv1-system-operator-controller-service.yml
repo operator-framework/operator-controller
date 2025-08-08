@@ -14,7 +14,7 @@ metadata:
   namespace: {{ .Values.namespaces.olmv1.name }}
 spec:
   ports:
-    - name: https
+    - name: metrics
       port: 8443
       protocol: TCP
       targetPort: 8443
