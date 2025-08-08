@@ -5,6 +5,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -115,7 +116,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	}
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("revision reconcile: %w", err)
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               "Available",
+			Status:             metav1.ConditionFalse,
+			Reason:             "ReconcileFailure",
+			Message:            err.Error(),
+			ObservedGeneration: rev.Generation,
+		})
+		return ctrl.Result{}, fmt.Errorf("revision reconcile: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
 	}
 	l.Info("reconcile report", "report", rres.String())
 
@@ -123,12 +131,43 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	// TODO: report status, backoff?
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Info("preflight error, retrying after 10s", "err", verr.String())
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               "Available",
+			Status:             metav1.ConditionFalse,
+			Reason:             "RevisionValidationFailure",
+			Message:            fmt.Sprintf("revision validation error: %s", verr),
+			ObservedGeneration: rev.Generation,
+		})
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, c.Client.Status().Update(ctx, rev)
 	}
-	for _, pres := range rres.GetPhases() {
+	for i, pres := range rres.GetPhases() {
 		if verr := pres.GetValidationError(); verr != nil {
 			l.Info("preflight error, retrying after 10s", "err", verr.String())
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+				Type:               "Available",
+				Status:             metav1.ConditionFalse,
+				Reason:             "PhaseValidationError",
+				Message:            fmt.Sprintf("phase %d validation error: %s", i, verr),
+				ObservedGeneration: rev.Generation,
+			})
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, c.Client.Status().Update(ctx, rev)
+		}
+		var collidingObjs []string
+		for _, ores := range pres.GetObjects() {
+			if ores.Action() == machinery.ActionCollision {
+				collidingObjs = append(collidingObjs, ores.String())
+			}
+		}
+		if len(collidingObjs) > 0 {
+			l.Info("object collision error, retrying after 10s", "collisions", collidingObjs)
+			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+				Type:               "Available",
+				Status:             metav1.ConditionFalse,
+				Reason:             "ObjectCollisions",
+				Message:            fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")),
+				ObservedGeneration: rev.Generation,
+			})
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, c.Client.Status().Update(ctx, rev)
 		}
 	}
 
@@ -201,14 +240,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	}
 	if rres.InTransistion() {
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               "InTransition",
+			Type:               "Progressing",
 			Status:             metav1.ConditionTrue,
-			Reason:             "InTransition",
+			Reason:             "Progressing",
 			Message:            "Rollout in progress.",
 			ObservedGeneration: rev.Generation,
 		})
 	} else {
-		meta.RemoveStatusCondition(&rev.Status.Conditions, "InTransition")
+		meta.RemoveStatusCondition(&rev.Status.Conditions, "Progressing")
 	}
 
 	return ctrl.Result{}, c.Client.Status().Update(ctx, rev)

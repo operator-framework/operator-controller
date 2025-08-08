@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
 	"io/fs"
@@ -204,11 +205,18 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	// TODO: Delete archived previous revisions over a certain revision limit
 
 	// TODO: Define constants for the ClusterExtensionRevision condition types.
-	installedCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, "Succeeded")
-	if installedCondition == nil {
+	progressingCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, "Progressing")
+	availableCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, "Available")
+	succeededCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, "Succeeded")
+
+	if progressingCondition == nil && availableCondition == nil && succeededCondition == nil {
 		return false, "New revision created", nil
-	} else if installedCondition.Status != metav1.ConditionTrue {
-		return false, installedCondition.Message, nil
+	} else if progressingCondition != nil && progressingCondition.Status == metav1.ConditionTrue {
+		return false, progressingCondition.Message, nil
+	} else if availableCondition != nil && availableCondition.Status != metav1.ConditionTrue {
+		return false, "", errors.New(availableCondition.Message)
+	} else if succeededCondition != nil && succeededCondition.Status != metav1.ConditionTrue {
+		return false, succeededCondition.Message, nil
 	}
 	return true, "", nil
 }
@@ -240,6 +248,9 @@ func computeSHA256Hash(obj any) string {
 func deepHashObject(hasher hash.Hash, objectToWrite any) {
 	hasher.Reset()
 
+	// TODO: change this out to `json.Marshal`. Pretty sure we found issues in the past where
+	//   spew would produce different output when internal structures changed without the
+	//   external public API changing.
 	printer := spew.ConfigState{
 		Indent:         " ",
 		SortKeys:       true,

@@ -171,7 +171,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			},
 		},
 		{
-			name: "set InTransition:True:InTransition condition while revision is transitioning",
+			name: "set Progressing:True:Progressing condition while revision is transitioning",
 			revisionResult: mockRevisionResult{
 				inTransition: true,
 			},
@@ -187,16 +187,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, "InTransition")
+				cond := meta.FindStatusCondition(rev.Status.Conditions, "Progressing")
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, "InTransition", cond.Reason)
+				require.Equal(t, "Progressing", cond.Reason)
 				require.Equal(t, "Rollout in progress.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name: "remove InTransition condition once transition rollout is finished",
+			name: "remove Progressing condition once transition rollout is finished",
 			revisionResult: mockRevisionResult{
 				inTransition: false,
 			},
@@ -205,9 +205,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               "InTransition",
+					Type:               "Progressing",
 					Status:             metav1.ConditionTrue,
-					Reason:             "InTransition",
+					Reason:             "Progressing",
 					Message:            "some message",
 					ObservedGeneration: 1,
 				})
@@ -219,7 +219,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, "InTransition")
+				cond := meta.FindStatusCondition(rev.Status.Conditions, "Progressing")
 				require.Nil(t, cond)
 			},
 		},
