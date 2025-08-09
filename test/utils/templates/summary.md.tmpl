@@ -11,6 +11,13 @@
 
 #### CPU Usage
 {{$.PerformanceQuery "CPU Usage" $pod `rate(container_cpu_usage_seconds_total{pod=~"%s.*",container="manager"}[5m])[5m:]` "mCPU" 1000}}
+
+#### API Queries Total
+{{$.PerformanceQuery "API Queries Total" $pod `sum(rest_client_requests_total{job=~"%s.*"})[5m:]` "# queries" 1}}
+
+#### API Query Rate
+{{$.PerformanceQuery "API Queries/sec" $pod `sum(rate(rest_client_requests_total{job=~"%s.*"}[5m]))[5m:]` "per sec" 1}}
+
 {{end}}
 {{- end}}
 
