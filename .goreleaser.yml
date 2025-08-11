@@ -124,8 +124,10 @@ release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
   mode: replace
   extra_files:
-    - glob: '{{ .Env.RELEASE_MANIFEST }}'
-    - glob: '{{ .Env.RELEASE_INSTALL }}'
+    - glob: '{{ .Env.STANDARD_RELEASE_MANIFEST }}'
+    - glob: '{{ .Env.STANDARD_RELEASE_INSTALL }}'
+    - glob: '{{ .Env.EXPERIMENTAL_RELEASE_MANIFEST }}'
+    - glob: '{{ .Env.EXPERIMENTAL_RELEASE_INSTALL }}'
     - glob: '{{ .Env.RELEASE_CATALOGS }}'
   header: |
     ## Installation
