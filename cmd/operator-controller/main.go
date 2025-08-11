@@ -541,7 +541,8 @@ func run() error {
 				),
 				validation.NewRevisionValidator(), mgr.GetClient(),
 			),
-		}).SetupWithManager(mgr, trackingCache); err != nil {
+			TrackingCache: trackingCache,
+		}).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "ClusterExtensionRevision")
 			return err
 		}

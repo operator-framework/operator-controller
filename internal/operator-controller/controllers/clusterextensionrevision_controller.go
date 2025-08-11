@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
@@ -42,6 +43,14 @@ const (
 type ClusterExtensionRevisionReconciler struct {
 	Client         client.Client
 	RevisionEngine RevisionEngine
+	TrackingCache  trackingCache
+}
+
+type trackingCache interface {
+	client.Reader
+	Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source
+	Watch(ctx context.Context, user client.Object, gvks sets.Set[schema.GroupVersionKind]) error
+	Free(ctx context.Context, user client.Object) error
 }
 
 type RevisionEngine interface {
@@ -66,19 +75,13 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 	l.Info("reconcile starting")
 	defer l.Info("reconcile ending")
 
-	controller, ok := getControllingClusterExtension(rev)
-	if !ok {
-		// TODO: clean up all the deletion logic for the case where orphaned CEV are created for reasons
-		return ctrl.Result{}, c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer)
-	}
-
-	return c.reconcile(ctx, controller, rev)
+	return c.reconcile(ctx, rev)
 }
 
-func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, ce *ocv1.ClusterExtension, rev *ocv1.ClusterExtensionRevision) (ctrl.Result, error) {
+func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
-	revision, opts, previous := toBoxcutterRevision(ce.Name, rev)
+	revision, opts, previous := toBoxcutterRevision(rev)
 
 	if !rev.DeletionTimestamp.IsZero() ||
 		rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
@@ -94,6 +97,10 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, ce *
 		if !tres.IsComplete() {
 			return ctrl.Result{}, nil
 		}
+
+		if err := c.TrackingCache.Free(ctx, rev); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer)
 	}
 
@@ -101,6 +108,9 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, ce *
 	// Reconcile
 	//
 	if err := c.ensureFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err := c.establishWatch(ctx, rev, revision); err != nil {
 		return ctrl.Result{}, err
 	}
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
@@ -208,19 +218,33 @@ type Sourcerer interface {
 	Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source
 }
 
-func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager, sourcerer Sourcerer) error {
+func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&ocv1.ClusterExtensionRevision{},
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
 		WatchesRawSource(
-			sourcerer.Source(
+			c.TrackingCache.Source(
 				handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &ocv1.ClusterExtensionRevision{}),
 				predicate.ResourceVersionChangedPredicate{},
 			),
 		).
 		Complete(c)
+}
+
+func (c *ClusterExtensionRevisionReconciler) establishWatch(
+	ctx context.Context, rev *ocv1.ClusterExtensionRevision,
+	boxcutterRev *boxcutter.Revision,
+) error {
+	gvks := sets.New[schema.GroupVersionKind]()
+	for _, phase := range boxcutterRev.Phases {
+		for _, obj := range phase.Objects {
+			gvks.Insert(obj.GroupVersionKind())
+		}
+	}
+
+	return c.TrackingCache.Watch(ctx, rev, gvks)
 }
 
 func (c *ClusterExtensionRevisionReconciler) ensureFinalizer(
@@ -289,7 +313,7 @@ func getControllingClusterExtension(obj client.Object) (*ocv1.ClusterExtension, 
 	return nil, false
 }
 
-func toBoxcutterRevision(clusterExtensionName string, rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revision, []boxcutter.RevisionReconcileOption, []client.Object) {
+func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revision, []boxcutter.RevisionReconcileOption, []client.Object) {
 	r := &boxcutter.Revision{
 		Name:     rev.Name,
 		Owner:    rev,
@@ -304,7 +328,7 @@ func toBoxcutterRevision(clusterExtensionName string, rev *ocv1.ClusterExtension
 			if labels == nil {
 				labels = map[string]string{}
 			}
-			labels[ClusterExtensionRevisionOwnerLabel] = clusterExtensionName
+			labels[ClusterExtensionRevisionOwnerLabel] = rev.Labels[ClusterExtensionRevisionOwnerLabel]
 			obj.SetLabels(labels)
 
 			phase.Objects = append(phase.Objects, obj)
