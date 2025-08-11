@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,6 +38,7 @@ func TestMain(m *testing.M) {
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
 	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	utilruntime.Must(err)
+	ctrl.SetLogger(klog.NewKlogr())
 
 	res := m.Run()
 	err = utils.PrintSummary(testSummaryOutputEnvVar)
