@@ -76,8 +76,10 @@ KUSTOMIZE_STANDARD_E2E_OVERLAY := config/overlays/standard-e2e
 KUSTOMIZE_EXPERIMENTAL_OVERLAY := config/overlays/experimental
 KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY := config/overlays/experimental-e2e
 
-export RELEASE_MANIFEST := operator-controller.yaml
-export RELEASE_INSTALL := install.sh
+export STANDARD_RELEASE_MANIFEST := operator-controller.yaml
+export STANDARD_RELEASE_INSTALL := install.sh
+export EXPERIMENTAL_RELEASE_MANIFEST := operator-controller-experimental.yaml
+export EXPERIMENTAL_RELEASE_INSTALL := install-experimental.sh
 export RELEASE_CATALOGS := default-catalogs.yaml
 
 # List of manifests that are checked in
@@ -294,7 +296,7 @@ extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean #EXHELP 
 
 .PHONY: run-latest-release
 run-latest-release:
-	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/$(notdir $(RELEASE_INSTALL)) | bash -s
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/$(notdir $(STANDARD_RELEASE_INSTALL)) | bash -s
 
 .PHONY: pre-upgrade-setup
 pre-upgrade-setup:
@@ -322,7 +324,7 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 	$(CONTAINER_RUNTIME) save $(CATD_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-deploy
-kind-deploy: export MANIFEST := $(RELEASE_MANIFEST)
+kind-deploy: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 kind-deploy: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
 kind-deploy: manifests
 	@echo -e "\n\U1F4D8 Using $(SOURCE_MANIFEST) as source manifest\n"
@@ -426,13 +428,16 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 	OPCON_IMAGE_REPO=$(OPCON_IMAGE_REPO) CATD_IMAGE_REPO=$(CATD_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
-quickstart: export MANIFEST := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(RELEASE_MANIFEST))"
+quickstart: export STANDARD_MANIFEST_URL := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(STANDARD_RELEASE_MANIFEST))"
+quickstart: export EXPERIMENTAL_MANIFEST_URL := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(EXPERIMENTAL_RELEASE_MANIFEST))"
 quickstart: export DEFAULT_CATALOG := "https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/$(notdir $(RELEASE_CATALOGS))"
 quickstart: manifests #EXHELP Generate the unified installation release manifests and scripts.
 	# Update the stored standard manifests for distribution
-	sed "s/:devel/:$(VERSION)/g" $(STANDARD_MANIFEST) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(RELEASE_MANIFEST)
+	sed "s/:devel/:$(VERSION)/g" $(STANDARD_MANIFEST) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(STANDARD_RELEASE_MANIFEST)
+	sed "s/:devel/:$(VERSION)/g" $(EXPERIMENTAL_MANIFEST) | sed "s/cert-git-version/cert-$(VERSION)/g" > $(EXPERIMENTAL_RELEASE_MANIFEST)
 	cp $(CATALOGS_MANIFEST) $(RELEASE_CATALOGS)
-	envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(RELEASE_INSTALL)
+	MANIFEST=$(STANDARD_MANIFEST_URL) envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(STANDARD_RELEASE_INSTALL)
+	MANIFEST=$(EXPERIMENTAL_MANIFEST_URL) envsubst '$$DEFAULT_CATALOG,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > $(EXPERIMENTAL_RELEASE_INSTALL)
 
 ##@ Docs
 
