@@ -41,12 +41,16 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 )
 
+func newScheme(t *testing.T) *apimachineryruntime.Scheme {
+	sch := apimachineryruntime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(sch))
+	return sch
+}
+
 func newClient(t *testing.T) client.Client {
 	// TODO: this is a live client, which behaves differently than a cache client.
 	//  We may want to use a caching client instead to get closer to real behavior.
-	sch := apimachineryruntime.NewScheme()
-	require.NoError(t, ocv1.AddToScheme(sch))
-	cl, err := client.New(config, client.Options{Scheme: sch})
+	cl, err := client.New(config, client.Options{Scheme: newScheme(t)})
 	require.NoError(t, err)
 	require.NotNil(t, cl)
 	return cl
@@ -138,7 +142,7 @@ var (
 func TestMain(m *testing.M) {
 	testEnv := &envtest.Environment{
 		CRDDirectoryPaths: []string{
-			filepath.Join("..", "..", "..", "config", "base", "operator-controller", "crd", "standard"),
+			filepath.Join("..", "..", "..", "config", "base", "operator-controller", "crd", "experimental"),
 		},
 		ErrorIfCRDPathMissing: true,
 	}
