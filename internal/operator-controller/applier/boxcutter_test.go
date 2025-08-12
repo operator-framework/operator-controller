@@ -122,7 +122,7 @@ func Test_SimpleRevisionGenerator_Success(t *testing.T) {
 	t.Log("by checking the rendered objects are present in the correct phases")
 	require.Equal(t, []ocv1.ClusterExtensionRevisionPhase{
 		{
-			Name: "everything",
+			Name: string(applier.PhaseDeploy),
 			Objects: []ocv1.ClusterExtensionRevisionObject{
 				{
 					Object: unstructured.Unstructured{
@@ -268,7 +268,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			UID:  "test-uid",
 		},
 	}
-	defaultDesiredHash := "2a3d3548913494df7d4cbaef51cb6c36f6f67399cbfe2dc6a3cc49e4db0083ae"
+	defaultDesiredHash := "faaeb52a1cb7c968c96278bc1cd804e50d3ae9faae08807c9279a5e569933ea0"
 	defaultDesiredRevision := &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-ext-1",
@@ -284,7 +284,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			Revision: 1,
 			Phases: []ocv1.ClusterExtensionRevisionPhase{
 				{
-					Name: "everything",
+					Name: string(applier.PhaseDeploy),
 					Objects: []ocv1.ClusterExtensionRevisionObject{
 						{
 							Object: unstructured.Unstructured{
@@ -324,7 +324,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						Spec: ocv1.ClusterExtensionRevisionSpec{
 							Phases: []ocv1.ClusterExtensionRevisionPhase{
 								{
-									Name: "everything",
+									Name: string(applier.PhaseDeploy),
 									Objects: []ocv1.ClusterExtensionRevisionObject{
 										{
 											Object: unstructured.Unstructured{
@@ -373,7 +373,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						Spec: ocv1.ClusterExtensionRevisionSpec{
 							Phases: []ocv1.ClusterExtensionRevisionPhase{
 								{
-									Name: "everything",
+									Name: string(applier.PhaseDeploy),
 									Objects: []ocv1.ClusterExtensionRevisionObject{
 										{
 											Object: unstructured.Unstructured{
@@ -419,7 +419,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						Spec: ocv1.ClusterExtensionRevisionSpec{
 							Phases: []ocv1.ClusterExtensionRevisionPhase{
 								{
-									Name: "everything",
+									Name: string(applier.PhaseDeploy),
 									Objects: []ocv1.ClusterExtensionRevisionObject{
 										{
 											Object: unstructured.Unstructured{
@@ -460,7 +460,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 
 				assert.Equal(t, "test-ext-2", newRev.Name)
 				assert.Equal(t, int64(2), newRev.Spec.Revision)
-				assert.Equal(t, "bc1c7457a476193460747e8223fff9b492f0a2f60057831fb55a88ec8c2387b2", newRev.Annotations[applier.RevisionHashAnnotation])
+				assert.Equal(t, "ec8213d4061a75b55cd67a009d9cdeb1bdd6f503d4b3bb7b6cfea3a5233aad43", newRev.Annotations[applier.RevisionHashAnnotation])
 				require.Len(t, newRev.Spec.Previous, 1)
 				assert.Equal(t, "test-ext-1", newRev.Spec.Previous[0].Name)
 				assert.Equal(t, types.UID("rev-uid-1"), newRev.Spec.Previous[0].UID)

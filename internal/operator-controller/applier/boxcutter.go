@@ -89,12 +89,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(bundleFS fs.FS, ext *ocv1.Clu
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
-			Phases: []ocv1.ClusterExtensionRevisionPhase{
-				{
-					Name:    "everything",
-					Objects: objs,
-				},
-			},
+			Phases: PhaseSort(objs),
 		},
 	}, nil
 }
