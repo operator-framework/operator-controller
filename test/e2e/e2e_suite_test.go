@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -40,7 +41,9 @@ func TestMain(m *testing.M) {
 
 	res := m.Run()
 	err = utils.PrintSummary(testSummaryOutputEnvVar)
-	utilruntime.Must(err)
+	if err != nil {
+		fmt.Println("PrintSummary error", err)
+	}
 	os.Exit(res)
 }
 

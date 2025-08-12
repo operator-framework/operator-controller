@@ -1027,8 +1027,17 @@ func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testi
 							ImagePullPolicy: corev1.PullAlways,
 							Name:            "busybox",
 							SecurityContext: &corev1.SecurityContext{
-								RunAsNonRoot: ptr.To(true),
-								RunAsUser:    ptr.To(int64(1000)),
+								RunAsNonRoot:             ptr.To(true),
+								RunAsUser:                ptr.To(int64(1000)),
+								AllowPrivilegeEscalation: ptr.To(false),
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{
+										"ALL",
+									},
+								},
+								SeccompProfile: &corev1.SeccompProfile{
+									Type: corev1.SeccompProfileTypeRuntimeDefault,
+								},
 							},
 						},
 					},
