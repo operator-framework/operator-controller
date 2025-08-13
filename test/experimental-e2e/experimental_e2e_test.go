@@ -27,7 +27,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
-	"github.com/operator-framework/operator-controller/test/utils"
+	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
 )
 
 const (

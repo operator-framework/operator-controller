@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/rand"
 
-	"github.com/operator-framework/operator-controller/test/utils"
+	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
 )
 
 // TestOperatorControllerMetricsExportedEndpoint verifies that the metrics endpoint for the operator controller
