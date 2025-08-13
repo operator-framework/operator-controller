@@ -42,14 +42,16 @@ type xychart struct {
 }
 
 type githubSummary struct {
-	client api.Client
-	Pods   []string
+	client       api.Client
+	Pods         []string
+	alertsFiring bool
 }
 
 func NewSummary(c api.Client, pods ...string) githubSummary {
 	return githubSummary{
-		client: c,
-		Pods:   pods,
+		client:       c,
+		Pods:         pods,
+		alertsFiring: false,
 	}
 }
 
@@ -60,7 +62,7 @@ func NewSummary(c api.Client, pods ...string) githubSummary {
 // yLabel - Label of the Y axis i.e. "KB/s", "MB", etc.
 // scaler - Constant by which to scale the results. For instance, cpu usage is more human-readable
 // as "mCPU" vs "CPU", so we scale the results by a factor of 1,000.
-func (s githubSummary) PerformanceQuery(title, pod, query string, yLabel string, scaler float64) (string, error) {
+func (s *githubSummary) PerformanceQuery(title, pod, query, yLabel string, scaler float64) (string, error) {
 	v1api := v1.NewAPI(s.client)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -90,8 +92,9 @@ func (s githubSummary) PerformanceQuery(title, pod, query string, yLabel string,
 	formattedData := make([]string, 0)
 	// matrix does not allow [] access, so we just do one iteration for the single result
 	for _, metric := range matrix {
-		if len(metric.Values) < 1 {
-			return "", fmt.Errorf("expected at least one data point; got: %d", len(metric.Values))
+		if len(metric.Values) < 2 {
+			// A graph with one data point means something with the collection was wrong
+			return "", fmt.Errorf("expected at least two data points; got: %d", len(metric.Values))
 		}
 		for _, sample := range metric.Values {
 			floatSample := float64(sample.Value) * scaler
@@ -115,7 +118,7 @@ func (s githubSummary) PerformanceQuery(title, pod, query string, yLabel string,
 
 // Alerts queries the prometheus server for alerts and generates markdown output for anything found.
 // If no alerts are found, the alerts section will contain only "None." in the final output.
-func (s githubSummary) Alerts() (string, error) {
+func (s *githubSummary) Alerts() (string, error) {
 	v1api := v1.NewAPI(s.client)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -136,6 +139,7 @@ func (s githubSummary) Alerts() (string, error) {
 			switch a.State {
 			case v1.AlertStateFiring:
 				firingAlerts = append(firingAlerts, aConv)
+				s.alertsFiring = true
 			case v1.AlertStatePending:
 				pendingAlerts = append(pendingAlerts, aConv)
 				// Ignore AlertStateInactive; the alerts endpoint doesn't return them
@@ -172,28 +176,34 @@ func executeTemplate(templateFile string, obj any) (string, error) {
 // The markdown is template-driven; the summary methods are called from within the
 // template. This allows us to add or change queries (hopefully) without needing to
 // touch code. The summary will be output to a file supplied by the env target.
-func PrintSummary(envTarget string) error {
+func PrintSummary(path string) error {
+	if path == "" {
+		fmt.Printf("No summary output path specified; skipping")
+		return nil
+	}
+
 	client, err := api.NewClient(api.Config{
 		Address: defaultPromUrl,
 	})
 	if err != nil {
-		fmt.Printf("Error creating prometheus client: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("warning: failed to initialize promQL client: %v", err)
+		return nil
 	}
 
 	summary := NewSummary(client, "operator-controller", "catalogd")
-	summaryMarkdown, err := executeTemplate(summaryTemplate, summary)
+	summaryMarkdown, err := executeTemplate(summaryTemplate, &summary)
 	if err != nil {
-		return err
+		fmt.Printf("warning: failed to generate e2e test summary: %v", err)
+		return nil
 	}
-	if path := os.Getenv(envTarget); path != "" {
-		err = os.WriteFile(path, []byte(summaryMarkdown), 0o600)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Test summary output to %s successful\n", envTarget)
-	} else {
-		fmt.Printf("No summary output specified; skipping")
+	err = os.WriteFile(path, []byte(summaryMarkdown), 0o600)
+	if err != nil {
+		fmt.Printf("warning: failed to write e2e test summary output to %s: %v", path, err)
+		return nil
+	}
+	fmt.Printf("Test summary output to %s successful\n", path)
+	if summary.alertsFiring {
+		return fmt.Errorf("performance alerts encountered during test run; please check e2e test summary for details")
 	}
 	return nil
 }
