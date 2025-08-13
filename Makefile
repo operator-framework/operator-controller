@@ -229,7 +229,7 @@ extension-developer-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) #EXHELP Run extension crea
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) ${LOCAL_REGISTRY_HOST} ${CLUSTER_REGISTRY_HOST}
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
-UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
+UNIT_TEST_DIRS := $(shell go list ./... | grep -vE "/test/|/testutils")
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 
 .PHONY: envtest-k8s-bins #HELP Uses setup-envtest to download and install the binaries required to run ENVTEST-test based locally at the project/bin directory.

@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/test/utils"
+	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
 )
 
 const (

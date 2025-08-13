@@ -15,7 +15,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-controller/test/utils"
+	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
 )
 
 const (
