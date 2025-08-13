@@ -83,12 +83,12 @@ export EXPERIMENTAL_RELEASE_INSTALL := install-experimental.sh
 export RELEASE_CATALOGS := default-catalogs.yaml
 
 # List of manifests that are checked in
-MANIFEST_HOME := ./manifests
-STANDARD_MANIFEST := ./manifests/standard.yaml
-STANDARD_E2E_MANIFEST := ./manifests/standard-e2e.yaml
-EXPERIMENTAL_MANIFEST := ./manifests/experimental.yaml
-EXPERIMENTAL_E2E_MANIFEST := ./manifests/experimental-e2e.yaml
-CATALOGS_MANIFEST := ./manifests/default-catalogs.yaml
+MANIFEST_HOME := manifests
+STANDARD_MANIFEST := $(MANIFEST_HOME)/standard.yaml
+STANDARD_E2E_MANIFEST := $(MANIFEST_HOME)/standard-e2e.yaml
+EXPERIMENTAL_MANIFEST := $(MANIFEST_HOME)/experimental.yaml
+EXPERIMENTAL_E2E_MANIFEST := $(MANIFEST_HOME)/experimental-e2e.yaml
+CATALOGS_MANIFEST := $(MANIFEST_HOME)/default-catalogs.yaml
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -139,22 +139,39 @@ k8s-pin: #EXHELP Pin k8s staging modules based on k8s.io/kubernetes version (in 
 tidy:
 	go mod tidy
 
-.PHONY: manifests
-KUSTOMIZE_CATD_RBAC_DIR := helm/olmv1/base/catalogd/rbac
-KUSTOMIZE_CATD_WEBHOOKS_DIR := helm/olmv1/base/catalogd/webhook
-KUSTOMIZE_OPCON_RBAC_DIR := helm/olmv1/base/operator-controller/rbac
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
-manifests: $(CONTROLLER_GEN) $(HELM) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
-	# Generate CRDs via our own generator
+.PHONY: update-crds
+update-crds:
 	hack/tools/update-crds.sh
-	# Generate manifests stored in source-control
-	mkdir -p $(MANIFEST_HOME)
-	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml > $(STANDARD_MANIFEST)
-	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/e2e.yaml > $(STANDARD_E2E_MANIFEST)
-	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/experimental.yaml > $(EXPERIMENTAL_MANIFEST)
-	$(HELM) template olmv1 helm/olmv1 --values helm/cert-manager.yaml --values helm/experimental.yaml --values helm/e2e.yaml > $(EXPERIMENTAL_E2E_MANIFEST)
-	$(HELM) template olmv1 helm/olmv1 --values helm/tilt.yaml > /dev/null
+
+# The filename variables can be overridden on the command line if you want to change the set of values files:
+# e.g. make "manifests/standard.yaml=helm/cert-manager.yaml my-values-file.yaml" manifests
+#
+# The set of MANIFESTS to be generated can be changed; you can generate your own custom manifest
+# e.g. make MANIFESTS=test.yaml "test.yaml=helm/e2e.yaml" manifests
+#
+# Override HELM_SETTINGS on the command line to include additional Helm settings
+# e.g. make HELM_SETTINGS="options.openshift.enabled=true" manifests
+# e.g. make HELM_SETTINGS="operatorControllerFeatures={WebhookProviderCertManager}" manifests
+#
+MANIFESTS ?= $(STANDARD_MANIFEST) $(STANDARD_E2E_MANIFEST) $(EXPERIMENTAL_MANIFEST) $(EXPERIMENTAL_E2E_MANIFEST)
+$(STANDARD_MANIFEST) ?= helm/cert-manager.yaml
+$(STANDARD_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/e2e.yaml
+$(EXPERIMENTAL_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml
+$(EXPERIMENTAL_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml helm/e2e.yaml
+HELM_SETTINGS ?=
+.PHONY: $(MANIFESTS)
+$(MANIFESTS): $(HELM)
+	@mkdir -p $(MANIFEST_HOME)
+	$(HELM) template olmv1 helm/olmv1 $(addprefix --values ,$($@)) $(addprefix --set ,$(HELM_SETTINGS)) > $@
+
+# Generate manifests stored in source-control
+.PHONY: manifests
+manifests: update-crds $(MANIFESTS) $(HELM) #EXHELP Generate OLMv1 manifests
+	# These are testing existing manifest options without saving the results
+	$(HELM) template olmv1 helm/olmv1 --values helm/tilt.yaml $(addprefix --set ,$(HELM_SETTINGS)) > /dev/null
+	$(HELM) template olmv1 helm/olmv1 --set "options.openshift.enabled=true" > /dev/null
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
