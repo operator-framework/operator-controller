@@ -1,0 +1,33 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: catalogd-controller-manager-metrics-monitor
+  namespace: {{ .Values.namespaces.olmv1.name }}
+spec:
+  endpoints:
+    - authorization:
+        credentials:
+          key: token
+          name: prometheus-metrics-token
+      interval: 10s
+      path: /metrics
+      port: metrics
+      scheme: https
+      tlsConfig:
+        ca:
+          secret:
+            key: ca.crt
+            name: catalogd-service-cert-git-version
+        cert:
+          secret:
+            key: tls.crt
+            name: catalogd-service-cert-git-version
+        insecureSkipVerify: false
+        keySecret:
+          key: tls.key
+          name: catalogd-service-cert-git-version
+        serverName: catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: catalogd

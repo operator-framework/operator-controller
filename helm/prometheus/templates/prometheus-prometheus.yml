@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+  namespace: {{ .Values.namespaces.olmv1.name }}
+spec:
+  logLevel: debug
+  ruleSelector: {}
+  scrapeInterval: 1m
+  scrapeTimeout: 30s
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccountName: prometheus
+  serviceDiscoveryRole: EndpointSlice
+  serviceMonitorSelector: {}
