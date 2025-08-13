@@ -1,0 +1,19 @@
+# Default values for OLMv1.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# List of components to include
+options:
+  operatorController:
+    enabled: true
+  catalogd:
+    enabled: true
+
+# The set of namespaces
+namespaces:
+  olmv1:
+    name: olmv1-system
+  prometheus:
+    name: olmv1-system
+  certManager:
+    name: cert-manager
