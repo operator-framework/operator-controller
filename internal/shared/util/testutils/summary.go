@@ -160,7 +160,7 @@ func executeTemplate(templateFile string, obj any) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get working directory: %w", err)
 	}
-	tmpl, err := template.New(templateFile).ParseGlob(filepath.Join(wd, "../utils/templates", templateFile))
+	tmpl, err := template.New(templateFile).ParseGlob(filepath.Join(wd, "../../internal/shared/util/testutils/templates", templateFile))
 	if err != nil {
 		return "", err
 	}
