@@ -92,3 +92,22 @@ jobs:
       with:
         name: upgrade-e2e-artifacts
         path: /tmp/artifacts/
+
+  upgrade-experimental-e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Run the upgrade e2e test
+      run: ARTIFACT_PATH=/tmp/artifacts make test-upgrade-experimental-e2e
+
+    - uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: upgrade-experimental-e2e-artifacts
+        path: /tmp/artifacts/
+

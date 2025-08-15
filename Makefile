@@ -90,9 +90,6 @@ EXPERIMENTAL_MANIFEST := ./manifests/experimental.yaml
 EXPERIMENTAL_E2E_MANIFEST := ./manifests/experimental-e2e.yaml
 CATALOGS_MANIFEST := ./manifests/default-catalogs.yaml
 
-# Manifest used by kind-deploy, which may be overridden by other targets
-SOURCE_MANIFEST := $(STANDARD_MANIFEST)
-
 # Disable -j flag for make
 .NOTPARALLEL:
 
@@ -274,14 +271,16 @@ test-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: COVERAGE_NAME := e2e
-test-e2e: run image-registry prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
+test-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: test-experimental-e2e
 test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
 test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: COVERAGE_NAME := experimental-e2e
-test-experimental-e2e: run image-registry prometheus experimental-e2e e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
+test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+test-experimental-e2e: run-internal image-registry prometheus experimental-e2e e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
@@ -290,13 +289,15 @@ prometheus: #EXHELP Deploy Prometheus into specified namespace
 	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE) $(VERSION)
 
 .PHONY: test-extension-developer-e2e
+test-extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
 test-extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
-test-extension-developer-e2e: run image-registry extension-developer-e2e kind-clean #HELP Run extension-developer e2e on local kind cluster
+test-extension-developer-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
+test-extension-developer-e2e: run-internal image-registry extension-developer-e2e kind-clean #HELP Run extension-developer e2e on local kind cluster
 
 .PHONY: run-latest-release
 run-latest-release:
-	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/$(notdir $(STANDARD_RELEASE_INSTALL)) | bash -s
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/$(notdir $(RELEASE_INSTALL)) | bash -s
 
 .PHONY: pre-upgrade-setup
 pre-upgrade-setup:
@@ -306,11 +307,27 @@ pre-upgrade-setup:
 post-upgrade-checks:
 	go test -count=1 -v ./test/upgrade-e2e/...
 
+
+TEST_UPGRADE_E2E_TASKS := kind-cluster run-latest-release image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean
+
 .PHONY: test-upgrade-e2e
+test-upgrade-e2e: SOURCE_MANIFEST := $(STANDARD_MANIFEST)
+test-upgrade-e2e: RELEASE_INSTALL := $(STANDARD_RELEASE_INSTALL)
 test-upgrade-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-e2e
+test-upgrade-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-upgrade-e2e: kind-cluster run-latest-release image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean #HELP Run upgrade e2e tests on a local kind cluster
+test-upgrade-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade e2e tests on a local kind cluster
+
+.PHONY: test-upgrade-experimental-e2e
+test-upgrade-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
+test-upgrade-experimental-e2e: RELEASE_INSTALL := $(EXPERIMENTAL_RELEASE_INSTALL)
+test-upgrade-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-experimental-e2e
+test-upgrade-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+test-upgrade-experimental-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
+test-upgrade-experimental-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
+test-upgrade-experimental-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade e2e tests on a local kind cluster
+
 
 .PHONY: e2e-coverage
 e2e-coverage:
@@ -324,7 +341,6 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND 
 	$(CONTAINER_RUNTIME) save $(CATD_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-deploy
-kind-deploy: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 kind-deploy: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
 kind-deploy: manifests
 	@echo -e "\n\U1F4D8 Using $(SOURCE_MANIFEST) as source manifest\n"
@@ -395,12 +411,18 @@ go-build-linux: export GOOS=linux
 go-build-linux: export GOARCH=amd64
 go-build-linux: $(BINARIES)
 
+.PHONY: run-internal
+run-internal: docker-build kind-cluster kind-load kind-deploy wait
+
 .PHONY: run
-run: docker-build kind-cluster kind-load kind-deploy wait #HELP Build the operator-controller then deploy it into a new kind cluster.
+run: SOURCE_MANIFEST := $(STANDARD_MANIFEST)
+run: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
+run: run-internal #HELP Build operator-controller then deploy it with the standard manifest into a new kind cluster.
 
 .PHONY: run-experimental
 run-experimental: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
-run-experimental: run #HELP Build the operator-controller then deploy it with the experimental manifest into a new kind cluster.
+run-experimental: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+run-experimental: run-internal #HELP Build the operator-controller then deploy it with the experimental manifest into a new kind cluster.
 
 CATD_NAMESPACE := olmv1-system
 wait:
