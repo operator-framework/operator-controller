@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- example_v1_busybox.yaml
+- example_v2_busybox.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples
