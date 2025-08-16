@@ -44,9 +44,11 @@ require (
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/controller-tools v0.18.0
-	sigs.k8s.io/crdify v0.4.1-0.20250613143457-398e4483fb58
+	sigs.k8s.io/crdify v0.4.1-0.20250724144029-7e14d68ee765
 	sigs.k8s.io/yaml v1.6.0
 )
+
+replace sigs.k8s.io/crdify => github.com/joelanford/crdify v0.4.1-0.20250728172651-d757a012127f
 
 require (
 	k8s.io/component-helpers v0.33.2 // indirect
