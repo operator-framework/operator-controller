@@ -1,0 +1,48 @@
+{{- if .Values.options.catalogd.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: catalogd-manager-role
+  labels:
+    app.kubernetes.io/name: catalogd
+    {{- include "olmv1.labels" . | nindent 4 }}
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clustercatalogs
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clustercatalogs/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clustercatalogs/status
+    verbs:
+      - get
+      - patch
+      - update
+  {{- if .Values.options.openshift.enabled }}
+  - apiGroups:
+      - security.openshift.io
+    resources:
+      - securitycontextconstraints
+    resourceNames:
+      - privileged
+    verbs:
+      - use
+  {{- end }}
+{{- end }}

@@ -45,8 +45,6 @@ type ClusterCatalogReconciler struct {
 	CatalogCachePopulator CatalogCachePopulator
 }
 
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch
-
 func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("cluster-catalog")
 	ctx = log.IntoContext(ctx, l)

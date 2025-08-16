@@ -1,0 +1,20 @@
+# experimental values for OLMv1.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Tilt is an exeption to the multi-values case,
+# as the Tilt runner only accepts a single values fle
+
+options:
+  tilt:
+    enabled: true
+  featureSet: experimental
+
+operatorControllerFeatures:
+  - WebhookProviderCertManager
+  - SingleOwnNamespaceInstallSupport
+  - PreflightPermissions
+  - HelmChartSupport
+
+catalogdFeatures:
+  - APIV1MetasHandler

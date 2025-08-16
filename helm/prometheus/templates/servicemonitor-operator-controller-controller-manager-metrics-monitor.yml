@@ -1,0 +1,33 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: operator-controller-controller-manager-metrics-monitor
+  namespace: {{ .Values.namespaces.olmv1.name }}
+spec:
+  endpoints:
+    - authorization:
+        credentials:
+          key: token
+          name: prometheus-metrics-token
+      interval: 10s
+      path: /metrics
+      port: https
+      scheme: https
+      tlsConfig:
+        ca:
+          secret:
+            key: ca.crt
+            name: olmv1-cert
+        cert:
+          secret:
+            key: tls.crt
+            name: olmv1-cert
+        insecureSkipVerify: false
+        keySecret:
+          key: tls.key
+          name: olmv1-cert
+        serverName: operator-controller-service.{{ .Values.namespaces.olmv1.name }}.svc
+  selector:
+    matchLabels:
+      control-plane: operator-controller-controller-manager

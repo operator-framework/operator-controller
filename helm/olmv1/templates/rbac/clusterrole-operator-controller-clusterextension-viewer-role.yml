@@ -1,0 +1,21 @@
+{{- if .Values.options.operatorController.enabled }}
+{{/* Probably want to include this as a file somehow */}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: operator-controller
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: operator-controller-clusterextension-viewer-role
+rules:
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clusterextensions
+    verbs:
+      - get
+      - list
+      - watch
+{{- end }}
