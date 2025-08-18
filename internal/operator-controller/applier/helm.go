@@ -59,6 +59,7 @@ type Preflight interface {
 
 type BundleToHelmChartConverter interface {
 	ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error)
+	ToHelmChartWithConfig(bundle source.BundleSource, installNamespace string, watchNamespace string, cfg map[string]interface{}) (*chart.Chart, error)
 }
 
 type Helm struct {
@@ -230,7 +231,17 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 		}
 	}
 
-	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace)
+	// Unmarshal any provided configuration on the ClusterExtension and pass it
+	// to the registry+v1 renderer so that static manifests (e.g. ConfigMaps)
+	// can be overridden with values from spec.config.
+	cfg := map[string]interface{}{}
+	if ext.Spec.Config != nil && ext.Spec.Config.Raw != nil {
+		if err := json.Unmarshal(ext.Spec.Config.Raw, &cfg); err != nil {
+			return nil, fmt.Errorf("invalid JSON in spec.config: %w", err)
+		}
+	}
+
+	return h.BundleToHelmChartConverter.ToHelmChartWithConfig(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace, cfg)
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {

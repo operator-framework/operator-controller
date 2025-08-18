@@ -121,3 +121,45 @@ func Test_Renderer_Failure_UnsupportedKind(t *testing.T) {
 	require.Contains(t, err.Error(), "unsupported resource")
 	require.Empty(t, objs)
 }
+
+func Test_Renderer_AppliesConfigToConfigMap(t *testing.T) {
+	cfg := map[string]interface{}{
+		"version": "v2.0.0-demo",
+		"name":    "demo-configmap",
+	}
+
+	bundle := bundle.RegistryV1{
+		PackageName: "test",
+		CSV: MakeCSV(
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+		),
+		Others: []unstructured.Unstructured{
+			*ToUnstructuredT(t, &corev1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ConfigMap",
+					APIVersion: corev1.SchemeGroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test-configmap"},
+				Data: map[string]string{
+					"version": "v2.0.0",
+					"name":    "test-configmap",
+				},
+			}),
+		},
+	}
+
+	objs, err := registryv1.Renderer.Render(bundle, "install-namespace", render.WithConfig(cfg))
+	require.NoError(t, err)
+	require.Len(t, objs, 1)
+
+	cmObj := objs[0]
+	u, ok := cmObj.(*unstructured.Unstructured)
+	require.True(t, ok)
+
+	data, found, err := unstructured.NestedStringMap(u.Object, "data")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "v2.0.0-demo", data["version"])
+	require.Equal(t, "demo-configmap", data["name"])
+	require.Equal(t, "install-namespace", u.GetNamespace())
+}

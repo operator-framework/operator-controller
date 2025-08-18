@@ -628,3 +628,8 @@ type fakeBundleToHelmChartConverter struct {
 func (f fakeBundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
 	return f.fn(bundle, installNamespace, watchNamespace)
 }
+
+func (f fakeBundleToHelmChartConverter) ToHelmChartWithConfig(bundle source.BundleSource, installNamespace string, watchNamespace string, cfg map[string]interface{}) (*chart.Chart, error) {
+	// Tests don't inspect the config here; forward to the underlying function
+	return f.fn(bundle, installNamespace, watchNamespace)
+}
