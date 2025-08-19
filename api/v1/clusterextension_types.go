@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -94,12 +95,26 @@ type ClusterExtensionSpec struct {
 	// +optional
 	Install *ClusterExtensionInstallConfig `json:"install,omitempty"`
 
-	// config contains arbitrary JSON configuration values to be applied at render time.
+	// config contains configuration values to be applied at render time.
+	// +optional
+	Config *ClusterExtensionConfig `json:"config,omitempty"`
+}
+
+// ClusterExtensionConfig provides configuration values to be applied at render time.
+//
+// +kubebuilder:validation:XValidation:rule="has(self.inline) || has(self.secretRef)",message="at least one of [inline, secretRef] is required when config is specified"
+type ClusterExtensionConfig struct {
+	// inline contains arbitrary JSON configuration values to be applied at render time.
 	// These values will be merged into the bundle manifests during rendering.
 	// +optional
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Config *apiextensionsv1.JSON `json:"config,omitempty"`
+	Inline map[string]apiextensionsv1.JSON `json:"inline,omitempty"`
+
+	// secretRef references a Secret containing configuration data.
+	// The secret must exist in the same namespace referenced in the spec.
+	// +optional
+	SecretRef *corev1.SecretKeySelector `json:"secretRef,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"

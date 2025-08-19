@@ -512,11 +512,48 @@ spec:
               of the ClusterExtension.
             properties:
               config:
-                description: |-
-                  config contains arbitrary JSON configuration values to be applied at render time.
-                  These values will be merged into the bundle manifests during rendering.
+                description: config contains configuration values to be applied at
+                  render time.
+                properties:
+                  inline:
+                    additionalProperties:
+                      x-kubernetes-preserve-unknown-fields: true
+                    description: |-
+                      inline contains arbitrary JSON configuration values to be applied at render time.
+                      These values will be merged into the bundle manifests during rendering.
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  secretRef:
+                    description: |-
+                      secretRef references a Secret containing configuration data.
+                      The secret must exist in the same namespace referenced in the spec.
+                    properties:
+                      key:
+                        description: The key of the secret to select from.  Must be
+                          a valid secret key.
+                        type: string
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                      optional:
+                        description: Specify whether the Secret or its key must be
+                          defined
+                        type: boolean
+                    required:
+                    - key
+                    type: object
+                    x-kubernetes-map-type: atomic
                 type: object
-                x-kubernetes-preserve-unknown-fields: true
+                x-kubernetes-validations:
+                - message: at least one of [inline, secretRef] is required when config
+                    is specified
+                  rule: has(self.inline) || has(self.secretRef)
               install:
                 description: |-
                   install is an optional field used to configure the installation options

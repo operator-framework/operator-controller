@@ -283,3 +283,9 @@ spec:
     catalog:
       packageName: argocd-operator
       version: 0.6.0
+  config:
+    inline:
+      exampleKey: exampleValue
+    secretRef:
+      name: argocd-config
+      key: config.yaml
