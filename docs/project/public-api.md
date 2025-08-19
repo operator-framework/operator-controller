@@ -3,7 +3,6 @@ The public API of OLM v1 is as follows:
 
 - Kubernetes APIs. For more information on these APIs, see:
     - [operator-controller API reference](../api-reference/operator-controller-api-reference.md)
-    - [catalogd API reference](../api-reference/catalogd-api-reference.md)
 - `Catalogd` web server. For more information on what this includes, see the [catalogd web server documentation](../api-reference/catalogd-webserver.md)
 
 !!! warning

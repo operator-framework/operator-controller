@@ -50,7 +50,6 @@ nav:
     - Version Ranges: concepts/version-ranges.md
   - API Reference:
     - Operator Controller API reference: api-reference/operator-controller-api-reference.md
-    - CatalogD API reference: api-reference/catalogd-api-reference.md
     - CatalogD Web Server reference: api-reference/catalogd-webserver.md
   - Contribute:
     - Contributing: contribute/contributing.md
