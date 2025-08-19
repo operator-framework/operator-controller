@@ -91,7 +91,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		//
 		tres, err := c.RevisionEngine.Teardown(ctx, *revision)
 		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("revision teardown: %w", err)
+			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+				Type:               "Available",
+				Status:             metav1.ConditionFalse,
+				Reason:             "ReconcileFailure",
+				Message:            err.Error(),
+				ObservedGeneration: rev.Generation,
+			})
+			return ctrl.Result{}, fmt.Errorf("revision teardown: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
 		}
 
 		l.Info("teardown report", "report", tres.String())
@@ -100,7 +107,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		}
 
 		if err := c.TrackingCache.Free(ctx, rev); err != nil {
-			return ctrl.Result{}, err
+			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+				Type:               "Available",
+				Status:             metav1.ConditionFalse,
+				Reason:             "ReconcileFailure",
+				Message:            err.Error(),
+				ObservedGeneration: rev.Generation,
+			})
+			return ctrl.Result{}, fmt.Errorf("free cache informers: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
 		}
 		return ctrl.Result{}, c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer)
 	}
@@ -109,10 +123,24 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	// Reconcile
 	//
 	if err := c.ensureFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
-		return ctrl.Result{}, err
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               "Available",
+			Status:             metav1.ConditionFalse,
+			Reason:             "ReconcileFailure",
+			Message:            err.Error(),
+			ObservedGeneration: rev.Generation,
+		})
+		return ctrl.Result{}, fmt.Errorf("ensure finalizer: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
 	}
 	if err := c.establishWatch(ctx, rev, revision); err != nil {
-		return ctrl.Result{}, err
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               "Available",
+			Status:             metav1.ConditionFalse,
+			Reason:             "ReconcileFailure",
+			Message:            err.Error(),
+			ObservedGeneration: rev.Generation,
+		})
+		return ctrl.Result{}, fmt.Errorf("establish watch: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
 	}
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
 	if err != nil {
@@ -331,25 +359,6 @@ func (c *ClusterExtensionRevisionReconciler) removeFinalizer(ctx context.Context
 		return fmt.Errorf("removing finalizer: %w", err)
 	}
 	return nil
-}
-
-// getControllingClusterExtension checks the objects ownerreferences for a ClusterExtension
-// with the controller flag set to true.
-// Returns a ClusterExtension with metadata recovered from the OwnerRef or nil.
-func getControllingClusterExtension(obj client.Object) (*ocv1.ClusterExtension, bool) {
-	for _, v := range obj.GetOwnerReferences() {
-		if v.Controller != nil && *v.Controller &&
-			v.APIVersion == ocv1.GroupVersion.String() &&
-			v.Kind == "ClusterExtension" {
-			return &ocv1.ClusterExtension{
-				ObjectMeta: metav1.ObjectMeta{
-					UID:  v.UID,
-					Name: v.Name,
-				},
-			}, true
-		}
-	}
-	return nil, false
 }
 
 func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revision, []boxcutter.RevisionReconcileOption, []client.Object) {

@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
@@ -22,6 +23,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
@@ -311,6 +315,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 						return tc.revisionResult, nil
 					},
 				},
+				TrackingCache: &mockTrackingCache{},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -426,6 +431,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 						return tc.revisionResult, nil
 					},
 				},
+				TrackingCache: &mockTrackingCache{},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -614,6 +620,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 					},
 					teardown: tc.revisionEngineTeardownFn(t),
 				},
+				TrackingCache: &mockTrackingCache{},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -829,4 +836,26 @@ func (m mockRevisionTeardownResult) GetGonePhaseNames() []string {
 
 func (m mockRevisionTeardownResult) String() string {
 	return m.string
+}
+
+type mockTrackingCache struct{}
+
+func (m *mockTrackingCache) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	panic("not implemented")
+}
+
+func (m *mockTrackingCache) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	panic("not implemented")
+}
+
+func (m *mockTrackingCache) Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source {
+	panic("not implemented")
+}
+
+func (m *mockTrackingCache) Watch(ctx context.Context, user client.Object, gvks sets.Set[schema.GroupVersionKind]) error {
+	return nil
+}
+
+func (m *mockTrackingCache) Free(ctx context.Context, user client.Object) error {
+	return nil
 }
