@@ -23,7 +23,7 @@ jobs:
       run: |
         make test-unit
 
-    - uses: codecov/codecov-action@v5.4.3
+    - uses: codecov/codecov-action@v5.5.0
       with:
         disable_search: true
         files: coverage/unit.out
