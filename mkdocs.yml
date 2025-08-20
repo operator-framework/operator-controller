@@ -49,8 +49,7 @@ nav:
     - Content Resolution: concepts/controlling-catalog-selection.md
     - Version Ranges: concepts/version-ranges.md
   - API Reference:
-    - Operator Controller API reference: api-reference/operator-controller-api-reference.md
-    - CatalogD API reference: api-reference/catalogd-api-reference.md
+    - OLMv1 API reference: api-reference/olmv1-api-reference.md
     - CatalogD Web Server reference: api-reference/catalogd-webserver.md
   - Contribute:
     - Contributing: contribute/contributing.md
