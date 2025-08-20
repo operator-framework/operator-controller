@@ -17,6 +17,7 @@ const (
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
+	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -68,6 +69,13 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// HelmChartSupport enables support for installing,
 	// updating and uninstalling Helm Charts via Cluster Extensions.
 	HelmChartSupport: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// BoxcutterRuntime configures OLM to use the Boxcutter runtime for extension lifecycling
+	BoxcutterRuntime: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
