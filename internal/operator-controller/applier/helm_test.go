@@ -16,9 +16,11 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	clientfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
@@ -66,6 +68,7 @@ type mockActionGetter struct {
 	reconcileErr       error
 	desiredRel         *release.Release
 	currentRel         *release.Release
+	vals               map[string]interface{}
 }
 
 func (mag *mockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
@@ -87,6 +90,7 @@ func (mag *mockActionGetter) Install(name, namespace string, chrt *chart.Chart, 
 			return nil, err
 		}
 	}
+	mag.vals = vals
 	if i.DryRun {
 		return mag.desiredRel, mag.dryRunInstallErr
 	}
@@ -100,6 +104,7 @@ func (mag *mockActionGetter) Upgrade(name, namespace string, chrt *chart.Chart, 
 			return nil, err
 		}
 	}
+	mag.vals = vals
 	if i.DryRun {
 		return mag.desiredRel, mag.dryRunUpgradeErr
 	}
@@ -619,6 +624,45 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 	})
+}
+
+func TestApply_ConfigMerging(t *testing.T) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "cfg", Namespace: "ns"},
+		Data:       map[string][]byte{"values": []byte("foo:\n  baz: 2\n")},
+	}
+	fakeClient := clientfake.NewClientBuilder().WithObjects(secret).Build()
+
+	mag := &mockActionGetter{
+		getClientErr: driver.ErrReleaseNotFound,
+		desiredRel:   &release.Release{Manifest: "---\n"},
+	}
+	helmApplier := applier.Helm{
+		ActionClientGetter: mag,
+		BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+			return &chart.Chart{}, nil
+		}},
+		Client: fakeClient,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "ns",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "sa"},
+			Source:         ocv1.SourceConfig{SourceType: ocv1.SourceTypeCatalog, Catalog: &ocv1.CatalogFilter{PackageName: "pkg"}},
+			Config: &ocv1.ClusterExtensionConfig{
+				Inline:    &apiextensionsv1.JSON{Raw: []byte("foo:\n  bar: 1\n")},
+				SecretRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "cfg"}, Key: "values"},
+			},
+		},
+	}
+
+	_, _, err := helmApplier.Apply(context.TODO(), validFS, ext, testObjectLabels, testStorageLabels)
+	require.NoError(t, err)
+
+	expected := map[string]any{"foo": map[string]any{"bar": float64(1), "baz": float64(2)}}
+	assert.Equal(t, expected, mag.vals["Values"])
 }
 
 type fakeBundleToHelmChartConverter struct {

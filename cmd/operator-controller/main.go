@@ -449,6 +449,7 @@ func run() error {
 			IsWebhookSupportEnabled: isWebhookSupportEnabled,
 		},
 		PreAuthorizer: preAuth,
+		Client:        mgr.GetClient(),
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())

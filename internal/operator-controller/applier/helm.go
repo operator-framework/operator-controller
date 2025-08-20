@@ -17,8 +17,10 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -67,6 +69,34 @@ type Helm struct {
 	Preflights                 []Preflight
 	PreAuthorizer              authorization.PreAuthorizer
 	BundleToHelmChartConverter BundleToHelmChartConverter
+	Client                     client.Client
+}
+
+func decodeValues(data []byte) (map[string]any, error) {
+	m := map[string]any{}
+	if len(bytes.TrimSpace(data)) == 0 {
+		return m, nil
+	}
+	j, err := apimachyaml.ToJSON(data)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(j, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func mergeValueMaps(dst, src map[string]any) {
+	for k, v := range src {
+		if dstMap, ok := dst[k].(map[string]any); ok {
+			if srcMap, ok2 := v.(map[string]any); ok2 {
+				mergeValueMaps(dstMap, srcMap)
+				continue
+			}
+		}
+		dst[k] = v
+	}
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -128,11 +158,35 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	if err != nil {
 		return nil, "", err
 	}
-	// merge in any user-provided config JSON as Helm values
-	valuesMap := map[string]interface{}{}
-	if ext.Spec.Config != nil && ext.Spec.Config.Raw != nil {
-		if err := json.Unmarshal(ext.Spec.Config.Raw, &valuesMap); err != nil {
-			return nil, "", fmt.Errorf("invalid JSON in spec.config: %w", err)
+	// gather configuration values from the ClusterExtension specification
+	// and any referenced Secrets, merging them into a single map
+	valuesMap := map[string]any{}
+	if ext.Spec.Config != nil {
+		if ext.Spec.Config.Inline != nil && len(ext.Spec.Config.Inline.Raw) > 0 {
+			inlineMap, err := decodeValues(ext.Spec.Config.Inline.Raw)
+			if err != nil {
+				return nil, "", fmt.Errorf("invalid spec.config.inline: %w", err)
+			}
+			mergeValueMaps(valuesMap, inlineMap)
+		}
+		if ext.Spec.Config.SecretRef != nil {
+			if h.Client == nil {
+				return nil, "", errors.New("client is nil")
+			}
+			secret := &corev1.Secret{}
+			nn := apitypes.NamespacedName{Name: ext.Spec.Config.SecretRef.Name, Namespace: ext.Spec.Namespace}
+			if err := h.Client.Get(ctx, nn, secret); err != nil {
+				return nil, "", fmt.Errorf("failed to get config secret: %w", err)
+			}
+			data, ok := secret.Data[ext.Spec.Config.SecretRef.Key]
+			if !ok {
+				return nil, "", fmt.Errorf("secret %q missing key %q", nn.Name, ext.Spec.Config.SecretRef.Key)
+			}
+			secretMap, err := decodeValues(data)
+			if err != nil {
+				return nil, "", fmt.Errorf("invalid config secret %q key %q: %w", nn.Name, ext.Spec.Config.SecretRef.Key, err)
+			}
+			mergeValueMaps(valuesMap, secretMap)
 		}
 	}
 	values := chartutil.Values{"Values": valuesMap}

@@ -95,26 +95,12 @@ type ClusterExtensionSpec struct {
 	// +optional
 	Install *ClusterExtensionInstallConfig `json:"install,omitempty"`
 
-	// config contains configuration values to be applied at render time.
+	// config contains configuration values applied during rendering of the
+	// ClusterExtension's manifests. Values can be specified inline or sourced
+	// from a referenced Secret.
+	//
 	// +optional
 	Config *ClusterExtensionConfig `json:"config,omitempty"`
-}
-
-// ClusterExtensionConfig provides configuration values to be applied at render time.
-//
-// +kubebuilder:validation:XValidation:rule="has(self.inline) || has(self.secretRef)",message="at least one of [inline, secretRef] is required when config is specified"
-type ClusterExtensionConfig struct {
-	// inline contains arbitrary JSON configuration values to be applied at render time.
-	// These values will be merged into the bundle manifests during rendering.
-	// +optional
-	// +kubebuilder:validation:Type=object
-	// +kubebuilder:pruning:PreserveUnknownFields
-	Inline map[string]apiextensionsv1.JSON `json:"inline,omitempty"`
-
-	// secretRef references a Secret containing configuration data.
-	// The secret must exist in the same namespace referenced in the spec.
-	// +optional
-	SecretRef *corev1.SecretKeySelector `json:"secretRef,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"
@@ -159,6 +145,22 @@ type ClusterExtensionInstallConfig struct {
 	//
 	// +optional
 	Preflight *PreflightConfig `json:"preflight,omitempty"`
+}
+
+// ClusterExtensionConfig defines configuration values to be merged into
+// the ClusterExtension's rendered manifests.
+type ClusterExtensionConfig struct {
+	// inline contains JSON or YAML values specified directly in the
+	// ClusterExtension.
+	// +optional
+	Inline *apiextensionsv1.JSON `json:"inline,omitempty"`
+
+	// secretRef references a key in a Secret that contains JSON or YAML
+	// values.
+	// The referenced Secret must exist in the same namespace as the
+	// ClusterExtension.
+	// +optional
+	SecretRef *corev1.SecretKeySelector `json:"secretRef,omitempty"`
 }
 
 // CatalogFilter defines the attributes used to identify and filter content from a catalog.
