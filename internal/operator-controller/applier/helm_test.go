@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	clientfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
@@ -226,6 +226,49 @@ func TestApply_Base(t *testing.T) {
 		require.Nil(t, objs)
 		require.Empty(t, state)
 	})
+}
+
+func TestApply_ConfigMerging(t *testing.T) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "cfg", Namespace: "ns"},
+		Data: map[string][]byte{
+			"config": []byte(`{"secretKey":"secretValue","sharedKey":"secretVal"}`),
+		},
+	}
+	cl := fakeclient.NewClientBuilder().WithObjects(secret).Build()
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "ns"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "ns",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "sa"},
+			Source:         ocv1.SourceConfig{SourceType: ocv1.SourceTypeCatalog, Catalog: &ocv1.CatalogFilter{PackageName: "pkg"}},
+			Config: &ocv1.ClusterExtensionConfig{
+				Inline: map[string]apiextensionsv1.JSON{
+					"inlineKey": {Raw: []byte(`"inlineValue"`)},
+					"sharedKey": {Raw: []byte(`"inlineVal"`)},
+				},
+				SecretRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "cfg"}, Key: "config"},
+			},
+		},
+	}
+
+	mag := &mockActionGetter{desiredRel: &release.Release{Manifest: validManifest}}
+
+	helmApplier := applier.Helm{
+		ActionClientGetter: mag,
+		BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+			return &chart.Chart{}, nil
+		}},
+		Client: cl,
+	}
+
+	_, _, err := helmApplier.Apply(context.TODO(), validFS, ext, testObjectLabels, testStorageLabels)
+	require.NoError(t, err)
+	require.NotNil(t, mag.vals)
+	assert.Equal(t, "inlineValue", mag.vals["inlineKey"])
+	assert.Equal(t, "secretValue", mag.vals["secretKey"])
+	assert.Equal(t, "secretVal", mag.vals["sharedKey"])
 }
 
 func TestApply_Installation(t *testing.T) {
@@ -624,45 +667,6 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 	})
-}
-
-func TestApply_ConfigMerging(t *testing.T) {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "cfg", Namespace: "ns"},
-		Data:       map[string][]byte{"values": []byte("foo:\n  baz: 2\n")},
-	}
-	fakeClient := clientfake.NewClientBuilder().WithObjects(secret).Build()
-
-	mag := &mockActionGetter{
-		getClientErr: driver.ErrReleaseNotFound,
-		desiredRel:   &release.Release{Manifest: "---\n"},
-	}
-	helmApplier := applier.Helm{
-		ActionClientGetter: mag,
-		BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-			return &chart.Chart{}, nil
-		}},
-		Client: fakeClient,
-	}
-
-	ext := &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace:      "ns",
-			ServiceAccount: ocv1.ServiceAccountReference{Name: "sa"},
-			Source:         ocv1.SourceConfig{SourceType: ocv1.SourceTypeCatalog, Catalog: &ocv1.CatalogFilter{PackageName: "pkg"}},
-			Config: &ocv1.ClusterExtensionConfig{
-				Inline:    &apiextensionsv1.JSON{Raw: []byte("foo:\n  bar: 1\n")},
-				SecretRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "cfg"}, Key: "values"},
-			},
-		},
-	}
-
-	_, _, err := helmApplier.Apply(context.TODO(), validFS, ext, testObjectLabels, testStorageLabels)
-	require.NoError(t, err)
-
-	expected := map[string]any{"foo": map[string]any{"bar": float64(1), "baz": float64(2)}}
-	assert.Equal(t, expected, mag.vals["Values"])
 }
 
 type fakeBundleToHelmChartConverter struct {
