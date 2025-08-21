@@ -5,7 +5,7 @@ hide:
 
 # Explore Available Content
 
-After you [add a catalog of extensions](add-catalog.md) to your cluster, you must port forward your catalog as a service.
+After you [add a catalog of extensions](../../tutorials/add-catalog.md) to your cluster, you must port forward your catalog as a service.
 Then you can query the catalog by using `curl` commands and the `jq` CLI tool to find extensions to install.
 
 ## Prerequisites
@@ -144,4 +144,4 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
 
 ### Additional resources
 
-* [Catalog queries](../howto/catalog-queries.md)
+* [Catalog queries](../../howto/catalog-queries.md)

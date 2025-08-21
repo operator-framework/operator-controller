@@ -151,7 +151,7 @@ Please follow this style to make the operator-controller project easier to revie
 
 ### Go version
 
-Our goal is to minimize disruption by requiring the lowest possible Go language version. This means avoiding updaties to the go version specified in [go.mod](go.mod) (and other locations).
+Our goal is to minimize disruption by requiring the lowest possible Go language version. This means avoiding updaties to the go version specified in the project's `go.mod` file (and other locations).
 
 There is a GitHub PR CI job named `go-verdiff` that will inform a PR author if the Go language version has been updated. It is not a required test, but failures should prompt authors and reviewers to have a discussion with the community about the Go language version change. 
 

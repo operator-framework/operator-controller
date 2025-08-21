@@ -477,7 +477,7 @@ VENVDIR := $(abspath docs/.venv)
 .PHONY: build-docs
 build-docs: venv
 	. $(VENV)/activate; \
-	mkdocs build
+	mkdocs build --strict
 
 .PHONY: serve-docs
 serve-docs: venv
@@ -487,7 +487,7 @@ serve-docs: venv
 .PHONY: deploy-docs
 deploy-docs: venv
 	. $(VENV)/activate; \
-	mkdocs gh-deploy --force
+	mkdocs gh-deploy --force --strict
 
 # The demo script requires to install asciinema with: brew install asciinema to run on mac os envs.
 # Please ensure that all demos are named with the demo name and the suffix -demo-script.sh
