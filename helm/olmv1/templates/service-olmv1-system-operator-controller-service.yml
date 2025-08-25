@@ -1,0 +1,23 @@
+{{- if .Values.options.operatorController.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+    {{- if .Values.options.openshift.enabled }}
+    service.beta.openshift.io/serving-cert-secret-name: operator-controller-cert
+    {{- end }}
+  labels:
+    app.kubernetes.io/name: operator-controller
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: operator-controller-service
+  namespace: {{ .Values.namespaces.olmv1.name }}
+spec:
+  ports:
+    - name: metrics
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
+  selector:
+    app.kubernetes.io/name: operator-controller
+{{- end }}

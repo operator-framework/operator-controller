@@ -1,0 +1,24 @@
+{{- $options := list }}
+{{- if .Values.options.catalogd.enabled }}
+{{- $options = append $options "catalogd" }}
+{{- end }}
+{{- if .Values.options.operatorController.enabled }}
+{{- $options = append $options "operator-controller" }}
+{{- end }}
+{{- range $index, $name := $options }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" $ | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "olmv1.labels" $| nindent 4 }}
+  name: {{ $name -}}-metrics-reader
+rules:
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+{{- end }}

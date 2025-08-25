@@ -1,0 +1,52 @@
+{{- $options := list }}
+{{- if .Values.options.catalogd.enabled }}
+{{- $options = append $options "catalogd" }}
+{{- end }}
+{{- if .Values.options.operatorController.enabled }}
+{{- $options = append $options "operator-controller" }}
+{{- end }}
+{{- range $index, $name := $options }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" $ | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "olmv1.labels" $ | nindent 4 }}
+  name: {{ $name -}}-leader-election-role
+  namespace: {{ $.Values.namespaces.olmv1.name }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+{{- end }}
