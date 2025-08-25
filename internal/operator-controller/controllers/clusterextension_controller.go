@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"strings"
 	"time"
 
@@ -50,6 +49,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
@@ -83,7 +83,7 @@ type Applier interface {
 	// Apply applies the content in the provided fs.FS using the configuration of the provided ClusterExtension.
 	// It also takes in a map[string]string to be applied to all applied resources as labels and another
 	// map[string]string used to create a unique identifier for a stored reference to the resources created.
-	Apply(context.Context, fs.FS, *ocv1.ClusterExtension, map[string]string, map[string]string) ([]client.Object, string, error)
+	Apply(context.Context, bundle.Bundle, *ocv1.ClusterExtension, map[string]string, map[string]string) ([]client.Object, string, error)
 }
 
 type InstalledBundleGetter interface {
@@ -296,7 +296,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	managedObjs, _, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
+	managedObjs, _, err := r.Applier.Apply(ctx, bundle.FromFS(imageFS), ext, objLbls, storeLbls)
 	if err != nil {
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
 		// Now that we're actually trying to install, use the error
@@ -338,13 +338,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 // based on the provided bundle
 func SetDeprecationStatus(ext *ocv1.ClusterExtension, bundleName string, deprecation *declcfg.Deprecation) {
 	deprecations := map[string][]declcfg.DeprecationEntry{}
-	channelSet := sets.New[string]()
-	if ext.Spec.Source.Catalog != nil {
-		for _, channel := range ext.Spec.Source.Catalog.Channels {
-			channelSet.Insert(channel)
-		}
-	}
 	if deprecation != nil {
+		channelSet := sets.New[string]()
+		if ext.Spec.Source.Catalog != nil {
+			for _, channel := range ext.Spec.Source.Catalog.Channels {
+				channelSet.Insert(channel)
+			}
+		}
+
 		for _, entry := range deprecation.Entries {
 			switch entry.Reference.Schema {
 			case declcfg.SchemaPackage:

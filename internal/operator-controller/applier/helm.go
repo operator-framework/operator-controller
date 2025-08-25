@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"slices"
 	"strings"
 
@@ -26,6 +25,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
@@ -121,8 +121,8 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 	return nil
 }
 
-func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
-	chrt, err := h.buildHelmChart(contentFS, ext)
+func (h *Helm) Apply(ctx context.Context, bundle bundle.Bundle, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
+	chrt, err := h.buildHelmChart(bundle, ext)
 	if err != nil {
 		return nil, "", err
 	}
@@ -203,10 +203,11 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	return relObjects, state, nil
 }
 
-func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
+func (h *Helm) buildHelmChart(bundle bundle.Bundle, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 	if h.BundleToHelmChartConverter == nil {
 		return nil, errors.New("BundleToHelmChartConverter is nil")
 	}
+	bundleFS := bundle.FS()
 	watchNamespace, err := GetWatchNamespace(ext)
 	if err != nil {
 		return nil, err
