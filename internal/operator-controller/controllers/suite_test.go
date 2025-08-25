@@ -18,7 +18,6 @@ package controllers_test
 
 import (
 	"context"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -36,6 +35,7 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
@@ -73,7 +73,7 @@ type MockApplier struct {
 	state string
 }
 
-func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string) ([]client.Object, string, error) {
+func (m *MockApplier) Apply(_ context.Context, _ bundle.Bundle, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string) ([]client.Object, string, error) {
 	if m.err != nil {
 		return nil, m.state, m.err
 	}
