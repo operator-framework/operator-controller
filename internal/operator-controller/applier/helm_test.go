@@ -16,9 +16,11 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
@@ -66,6 +68,7 @@ type mockActionGetter struct {
 	reconcileErr       error
 	desiredRel         *release.Release
 	currentRel         *release.Release
+	vals               map[string]interface{}
 }
 
 func (mag *mockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
@@ -87,6 +90,7 @@ func (mag *mockActionGetter) Install(name, namespace string, chrt *chart.Chart, 
 			return nil, err
 		}
 	}
+	mag.vals = vals
 	if i.DryRun {
 		return mag.desiredRel, mag.dryRunInstallErr
 	}
@@ -100,6 +104,7 @@ func (mag *mockActionGetter) Upgrade(name, namespace string, chrt *chart.Chart, 
 			return nil, err
 		}
 	}
+	mag.vals = vals
 	if i.DryRun {
 		return mag.desiredRel, mag.dryRunUpgradeErr
 	}
@@ -221,6 +226,49 @@ func TestApply_Base(t *testing.T) {
 		require.Nil(t, objs)
 		require.Empty(t, state)
 	})
+}
+
+func TestApply_ConfigMerging(t *testing.T) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "cfg", Namespace: "ns"},
+		Data: map[string][]byte{
+			"config": []byte(`{"secretKey":"secretValue","sharedKey":"secretVal"}`),
+		},
+	}
+	cl := fakeclient.NewClientBuilder().WithObjects(secret).Build()
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "ns"},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "ns",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "sa"},
+			Source:         ocv1.SourceConfig{SourceType: ocv1.SourceTypeCatalog, Catalog: &ocv1.CatalogFilter{PackageName: "pkg"}},
+			Config: &ocv1.ClusterExtensionConfig{
+				Inline: map[string]apiextensionsv1.JSON{
+					"inlineKey": {Raw: []byte(`"inlineValue"`)},
+					"sharedKey": {Raw: []byte(`"inlineVal"`)},
+				},
+				SecretRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "cfg"}, Key: "config"},
+			},
+		},
+	}
+
+	mag := &mockActionGetter{desiredRel: &release.Release{Manifest: validManifest}}
+
+	helmApplier := applier.Helm{
+		ActionClientGetter: mag,
+		BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+			return &chart.Chart{}, nil
+		}},
+		Client: cl,
+	}
+
+	_, _, err := helmApplier.Apply(context.TODO(), validFS, ext, testObjectLabels, testStorageLabels)
+	require.NoError(t, err)
+	require.NotNil(t, mag.vals)
+	assert.Equal(t, "inlineValue", mag.vals["inlineKey"])
+	assert.Equal(t, "secretValue", mag.vals["secretKey"])
+	assert.Equal(t, "secretVal", mag.vals["sharedKey"])
 }
 
 func TestApply_Installation(t *testing.T) {
@@ -626,5 +674,10 @@ type fakeBundleToHelmChartConverter struct {
 }
 
 func (f fakeBundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+	return f.fn(bundle, installNamespace, watchNamespace)
+}
+
+func (f fakeBundleToHelmChartConverter) ToHelmChartWithConfig(bundle source.BundleSource, installNamespace string, watchNamespace string, cfg map[string]interface{}) (*chart.Chart, error) {
+	// Tests don't inspect the config here; forward to the underlying function
 	return f.fn(bundle, installNamespace, watchNamespace)
 }

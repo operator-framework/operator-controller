@@ -13,3 +13,7 @@ spec:
       selector: {}
       upgradeConstraintPolicy: CatalogProvided
     sourceType: Catalog
+  config:
+    secretRef:
+      name: webhook-config
+      key: config.yaml

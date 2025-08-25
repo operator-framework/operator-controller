@@ -17,6 +17,8 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -92,6 +94,13 @@ type ClusterExtensionSpec struct {
 	//
 	// +optional
 	Install *ClusterExtensionInstallConfig `json:"install,omitempty"`
+
+	// config contains configuration values applied during rendering of the
+	// ClusterExtension's manifests. Values can be specified inline or sourced
+	// from a referenced Secret.
+	//
+	// +optional
+	Config *ClusterExtensionConfig `json:"config,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"
@@ -136,6 +145,22 @@ type ClusterExtensionInstallConfig struct {
 	//
 	// +optional
 	Preflight *PreflightConfig `json:"preflight,omitempty"`
+}
+
+// ClusterExtensionConfig defines configuration values to be merged into
+// the ClusterExtension's rendered manifests.
+type ClusterExtensionConfig struct {
+	// inline contains JSON or YAML values specified directly in the
+	// ClusterExtension.
+	// +optional
+	Inline *apiextensionsv1.JSON `json:"inline,omitempty"`
+
+	// secretRef references a key in a Secret that contains JSON or YAML
+	// values.
+	// The referenced Secret must exist in the same namespace as the
+	// ClusterExtension.
+	// +optional
+	SecretRef *corev1.SecretKeySelector `json:"secretRef,omitempty"`
 }
 
 // CatalogFilter defines the attributes used to identify and filter content from a catalog.
