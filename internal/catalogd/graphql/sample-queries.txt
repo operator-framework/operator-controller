@@ -1,0 +1,412 @@
+GraphQL Query Examples for Catalog Data
+==========================================
+
+This file contains common GraphQL queries for examining catalog objects
+served via the /graphql endpoint. The dynamic schema adapts to your catalog
+structure, so field availability may vary based on your specific data.
+
+Basic Summary Queries
+--------------------
+
+# Get overall catalog summary
+{
+  summary {
+    totalSchemas
+    schemas {
+      name
+      totalObjects
+      totalFields
+    }
+  }
+}
+
+# Get schema information with more details
+{
+  summary {
+    totalSchemas
+    schemas {
+      name
+      totalObjects
+      totalFields
+    }
+  }
+}
+
+Basic Object Queries
+-------------------
+
+# Get first 10 packages
+{
+  packages(limit: 10) {
+    name
+    defaultChannel
+    icon
+    description
+  }
+}
+
+# Get packages with pagination
+{
+  packages(limit: 5, offset: 10) {
+    name
+    defaultChannel
+    description
+  }
+}
+
+# Get first 10 bundles with basic info
+{
+  bundles(limit: 10) {
+    name
+    package
+    version
+    image
+    skipRange
+  }
+}
+
+# Get channels
+{
+  channels(limit: 10) {
+    name
+    package
+    entries
+  }
+}
+
+Bundle Property Queries
+----------------------
+
+# Get bundles with all properties
+{
+  bundles(limit: 5) {
+    name
+    package
+    version
+    properties {
+      type
+      value {
+        ... on PropertyValueFeaturesOperatorsOpenshiftIo {
+          disconnected
+          cnf
+          cni
+          csi
+          fips
+          proxy
+          tlsProfiles
+          tokenAuthentication
+        }
+        ... on PropertyValueOlmGvk {
+          group
+          version
+          kind
+        }
+        ... on PropertyValueOlmPackage {
+          packageName
+          version
+        }
+        ... on PropertyValueOlmSkips {
+          value
+        }
+        ... on PropertyValueOlmSkipRange {
+          value
+        }
+      }
+    }
+  }
+}
+
+# Specific query for OpenShift features properties
+{
+  bundles(limit: 20) {
+    name
+    package
+    version
+    properties {
+      type
+      value {
+        ... on PropertyValueFeaturesOperatorsOpenshiftIo {
+          disconnected
+          cnf
+          cni
+          csi
+          fips
+          proxy
+          tlsProfiles
+          tokenAuthentication
+        }
+      }
+    }
+  }
+}
+
+# Query bundles with GVK properties
+{
+  bundles(limit: 10) {
+    name
+    package
+    properties {
+      type
+      value {
+        ... on PropertyValueOlmGvk {
+          group
+          version
+          kind
+        }
+      }
+    }
+  }
+}
+
+# Query bundles with package requirements
+{
+  bundles(limit: 10) {
+    name
+    package
+    version
+    properties {
+      type
+      value {
+        ... on PropertyValueOlmPackageRequired {
+          packageName
+          versionRange
+        }
+        ... on PropertyValueOlmPackage {
+          packageName
+          version
+        }
+      }
+    }
+  }
+}
+
+Complex Nested Queries
+----------------------
+
+# Comprehensive bundle analysis
+{
+  bundles(limit: 5) {
+    name
+    package
+    version
+    image
+    skipRange
+    replaces
+    properties {
+      type
+      value {
+        ... on PropertyValueFeaturesOperatorsOpenshiftIo {
+          disconnected
+          cnf
+          cni
+          csi
+          fips
+          proxy
+          tlsProfiles
+          tokenAuthentication
+        }
+        ... on PropertyValueOlmGvk {
+          group
+          version
+          kind
+        }
+        ... on PropertyValueOlmPackage {
+          packageName
+          version
+        }
+        ... on PropertyValueOlmSkips {
+          value
+        }
+        ... on PropertyValueOlmSkipRange {
+          value
+        }
+        ... on PropertyValueOlmBundle {
+          name
+          version
+        }
+      }
+    }
+  }
+}
+
+# Search for specific OpenShift capabilities
+{
+  bundles(limit: 50) {
+    name
+    package
+    version
+    properties {
+      type
+      value {
+        ... on PropertyValueFeaturesOperatorsOpenshiftIo {
+          disconnected
+          fips
+          proxy
+          cnf
+        }
+      }
+    }
+  }
+}
+
+Filtering and Analysis Queries
+-----------------------------
+
+# Get packages and their default channels
+{
+  packages(limit: 20) {
+    name
+    defaultChannel
+    description
+  }
+  channels(limit: 30) {
+    name
+    package
+    entries
+  }
+}
+
+# Get bundles with specific fields
+{
+  bundles(limit: 15) {
+    name
+    package
+    version
+    image
+    csvDescription
+    skipRange
+    replaces
+    relatedImages
+  }
+}
+
+# Large dataset exploration
+{
+  bundles(limit: 100, offset: 0) {
+    name
+    package
+    version
+  }
+}
+
+Schema Discovery Queries
+-----------------------
+
+# Explore available schemas and their object counts
+{
+  summary {
+    totalSchemas
+    schemas {
+      name
+      totalObjects
+      totalFields
+    }
+  }
+}
+
+# Minimal query to check endpoint availability
+{
+  summary {
+    totalSchemas
+  }
+}
+
+Property Type Analysis
+---------------------
+
+# Focus on OpenShift features across all bundles
+{
+  bundles(limit: 100) {
+    name
+    package
+    properties {
+      type
+      value {
+        ... on PropertyValueFeaturesOperatorsOpenshiftIo {
+          disconnected
+          cnf
+          cni
+          csi
+          fips
+          proxy
+          tlsProfiles
+          tokenAuthentication
+        }
+      }
+    }
+  }
+}
+
+# Check for specific property types
+{
+  bundles(limit: 50) {
+    name
+    package
+    properties {
+      type
+      # The value will be resolved based on the type
+    }
+  }
+}
+
+Performance Queries
+------------------
+
+# Small result set for quick testing
+{
+  packages(limit: 3) {
+    name
+  }
+  bundles(limit: 3) {
+    name
+    package
+  }
+}
+
+# Larger result set for comprehensive analysis
+{
+  bundles(limit: 200) {
+    name
+    package
+    version
+    properties {
+      type
+      value {
+        ... on PropertyValueFeaturesOperatorsOpenshiftIo {
+          disconnected
+          fips
+        }
+        ... on PropertyValueOlmGvk {
+          group
+          kind
+        }
+      }
+    }
+  }
+}
+
+Notes on Usage
+--------------
+
+1. Property union types are dynamically generated based on your catalog data.
+   The examples above assume common property types like:
+   - features.operators.openshift.io
+   - olm.gvk
+   - olm.package
+   - olm.bundle
+   - olm.skips
+   - olm.skipRange
+
+2. Field names are automatically converted to camelCase for GraphQL compatibility.
+   Original JSON field names like "csv-description" become "csvDescription".
+
+3. Use the summary query first to understand what schemas and fields are
+   available in your specific catalog.
+
+4. Pagination is available on all list endpoints using limit and offset parameters.
+
+5. The property value union types allow type-safe access to different property
+   structures while maintaining flexibility for unknown property types.
+
+6. For large catalogs, start with small limit values and increase as needed
+   to avoid overwhelming responses. 
