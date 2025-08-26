@@ -16,14 +16,15 @@
                         "type": "object",
                         "properties": {
                             "spec": {
-                                "description": "description one",
+                                "description": "description two",
                                 "type": "object",
                                 "properties": {
                                     "removedField": {
                                         "type":"integer"
                                     },
                                     "enum": {
-                                        "type":"integer"
+                                        "type": "string",
+                                        "enum": ["a", "b", "c"]
                                     },
                                     "minMaxValue": {
                                         "type":"integer"
@@ -70,7 +71,8 @@
                                         "type":"integer"
                                     },
                                     "enum": {
-                                        "type":"integer"
+                                        "type": "string",
+                                        "enum": ["a", "b", "c"]
                                     },
                                     "minMaxValue": {
                                         "type":"integer"

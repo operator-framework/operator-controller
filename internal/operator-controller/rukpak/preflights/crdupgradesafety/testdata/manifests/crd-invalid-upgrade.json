@@ -24,11 +24,8 @@
                                         "type":"integer"
                                     },
                                     "enum": {
-                                        "type":"integer",
-                                        "enum":[
-                                            1,
-                                            2
-                                        ]
+                                        "type": "string",
+                                        "enum": ["a", "b"]
                                     },
                                     "minMaxValue": {
                                         "type":"integer",

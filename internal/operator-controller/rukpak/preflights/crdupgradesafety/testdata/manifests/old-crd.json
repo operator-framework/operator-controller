@@ -16,13 +16,15 @@
                         "type": "object",
                         "properties": {
                             "spec": {
+                                "description": "description one",
                                 "type": "object",
                                 "properties": {
                                     "removedField": {
                                         "type":"integer"
                                     },
                                     "enum": {
-                                        "type":"integer"
+                                        "type": "string",
+                                        "enum": ["a", "b", "c"]
                                     },
                                     "minMaxValue": {
                                         "type":"integer"
@@ -57,53 +59,6 @@
             {
                 "name": "v2",
                 "served": true,
-                "storage": false,
-                "schema": {
-                    "openAPIV3Schema": {
-                        "type": "object",
-                        "properties": {
-                            "spec": {
-                                "type": "object",
-                                "properties": {
-                                    "removedField": {
-                                        "type":"integer"
-                                    },
-                                    "enum": {
-                                        "type":"integer"
-                                    },
-                                    "minMaxValue": {
-                                        "type":"integer"
-                                    },
-                                    "required": {
-                                        "type":"integer"
-                                    },
-                                    "minMaxItems": {
-                                        "type":"array",
-                                        "items": {
-                                            "type":"string"
-                                        }
-                                    },
-                                    "minMaxLength": {
-                                        "type":"string"
-                                    },
-                                    "defaultVal": {
-                                        "type": "string"
-                                    },
-                                    "requiredVal": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "required": [
-                            "requiredVal"
-                        ]
-                    }
-                }
-            },
-            {
-                "name": "v3",
-                "served": true,
                 "storage": true,
                 "schema": {
                     "openAPIV3Schema": {
@@ -116,7 +71,8 @@
                                         "type":"integer"
                                     },
                                     "enum": {
-                                        "type":"integer"
+                                        "type": "string",
+                                        "enum": ["a", "b", "c"]
                                     },
                                     "minMaxValue": {
                                         "type":"integer"
@@ -158,5 +114,11 @@
                 "ct"
             ]
         }
+    },
+    "status": {
+        "storedVersions": [
+            "v1",
+            "v2"
+        ]
     }
 }
