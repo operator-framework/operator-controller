@@ -31,7 +31,7 @@ As an example, to access only the [package schema](https://olm.operatorframework
 
 the URL to access the service would be `https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/api/v1/metas?schema=olm.package`
 
-For more examples of valid queries that can be made to the `api/v1/metas` service endpoint, please see [Catalog Queries](../howto/catalog-queries.md).
+For more examples of valid queries that can be made to the `api/v1/metas` service endpoint, please see [Catalog Queries](../../howto/catalog-queries.md).
 
 !!! note
 
