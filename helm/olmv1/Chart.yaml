@@ -1,7 +1,7 @@
 apiVersion: v2
 name: olmv1
 description: A Helm chart for OLMv1
-
+icon: https://raw.githubusercontent.com/operator-framework/operator-framework.io/refs/heads/master/static/tile70x70.png
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives
