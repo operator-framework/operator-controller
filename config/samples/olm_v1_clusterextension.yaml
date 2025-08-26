@@ -33,6 +33,10 @@ rules:
   resources: [clusterextensions/finalizers]
   verbs: [update]
   resourceNames: [argocd]
+# Allow ClusterExtensionRevisions to set blockOwnerDeletion ownerReferences
+- apiGroups: [olm.operatorframework.io]
+  resources: [clusterextensionrevisions/finalizers]
+  verbs: [update]
 # Manage ArgoCD CRDs
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]

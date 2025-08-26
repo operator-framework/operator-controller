@@ -8,7 +8,6 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -25,10 +24,50 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
+	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 )
+
+var _ contentmanager.Manager = (*mockManagedContentCacheManager)(nil)
+
+type mockManagedContentCacheManager struct {
+	err   error
+	cache cmcache.Cache
+}
+
+func (m *mockManagedContentCacheManager) Get(_ context.Context, _ *ocv1.ClusterExtension) (cmcache.Cache, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.cache, nil
+}
+
+func (m *mockManagedContentCacheManager) Delete(_ *ocv1.ClusterExtension) error {
+	return m.err
+}
+
+type mockManagedContentCache struct {
+	err error
+}
+
+var _ cmcache.Cache = (*mockManagedContentCache)(nil)
+
+func (m *mockManagedContentCache) Close() error {
+	if m.err != nil {
+		return m.err
+	}
+	return nil
+}
+
+func (m *mockManagedContentCache) Watch(_ context.Context, _ cmcache.Watcher, _ ...client.Object) error {
+	if m.err != nil {
+		return m.err
+	}
+	return nil
+}
 
 type mockPreflight struct {
 	installErr error
@@ -48,12 +87,19 @@ func (p *mockPreAuthorizer) PreAuthorize(
 	return p.missingRules, p.returnError
 }
 
-func (mp *mockPreflight) Install(context.Context, *release.Release) error {
+func (mp *mockPreflight) Install(context.Context, []client.Object) error {
 	return mp.installErr
 }
 
-func (mp *mockPreflight) Upgrade(context.Context, *release.Release) error {
+func (mp *mockPreflight) Upgrade(context.Context, []client.Object) error {
 	return mp.upgradeErr
+}
+
+type mockHelmReleaseToObjectsConverter struct {
+}
+
+func (mockHelmReleaseToObjectsConverter) GetObjectsFromRelease(*release.Release) ([]client.Object, error) {
+	return nil, nil
 }
 
 type mockActionGetter struct {
@@ -188,10 +234,10 @@ func TestApply_Base(t *testing.T) {
 	t.Run("fails converting content FS to helm chart", func(t *testing.T) {
 		helmApplier := applier.Helm{}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), os.DirFS("/"), testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), os.DirFS("/"), testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
-		require.Nil(t, objs)
-		require.Empty(t, state)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails trying to obtain an action client", func(t *testing.T) {
@@ -201,11 +247,11 @@ func TestApply_Base(t *testing.T) {
 			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "getting action client")
-		require.Nil(t, objs)
-		require.Empty(t, state)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails getting current release and !driver.ErrReleaseNotFound", func(t *testing.T) {
@@ -215,11 +261,11 @@ func TestApply_Base(t *testing.T) {
 			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "getting current release")
-		require.Nil(t, objs)
-		require.Empty(t, state)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 }
 
@@ -234,11 +280,11 @@ func TestApply_Installation(t *testing.T) {
 			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "attempting to dry-run install chart")
-		require.Nil(t, objs)
-		require.Empty(t, state)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails during pre-flight installation", func(t *testing.T) {
@@ -248,16 +294,17 @@ func TestApply_Installation(t *testing.T) {
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
 		helmApplier := applier.Helm{
-			ActionClientGetter:         mockAcg,
-			Preflights:                 []applier.Preflight{mockPf},
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			ActionClientGetter:            mockAcg,
+			Preflights:                    []applier.Preflight{mockPf},
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "install pre-flight check")
-		require.Equal(t, applier.StateNeedsInstall, state)
-		require.Nil(t, objs)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails during installation", func(t *testing.T) {
@@ -266,15 +313,16 @@ func TestApply_Installation(t *testing.T) {
 			installErr:   errors.New("failed installing chart"),
 		}
 		helmApplier := applier.Helm{
-			ActionClientGetter:         mockAcg,
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			ActionClientGetter:            mockAcg,
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "installing chart")
-		require.Equal(t, applier.StateNeedsInstall, state)
-		require.Nil(t, objs)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("successful installation", func(t *testing.T) {
@@ -286,16 +334,18 @@ func TestApply_Installation(t *testing.T) {
 			},
 		}
 		helmApplier := applier.Helm{
-			ActionClientGetter:         mockAcg,
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			ActionClientGetter:            mockAcg,
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			Manager: &mockManagedContentCacheManager{
+				cache: &mockManagedContentCache{},
+			},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
-		require.Equal(t, applier.StateNeedsInstall, state)
-		require.NotNil(t, objs)
-		assert.Equal(t, "service-a", objs[0].GetName())
-		assert.Equal(t, "service-b", objs[1].GetName())
+		require.Empty(t, installStatus)
+		require.True(t, installSucceeded)
 	})
 }
 
@@ -310,11 +360,11 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "attempting to dry-run install chart")
-		require.Nil(t, objs)
-		require.Empty(t, state)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails during pre-flight installation", func(t *testing.T) {
@@ -328,17 +378,18 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
 		helmApplier := applier.Helm{
-			ActionClientGetter:         mockAcg,
-			Preflights:                 []applier.Preflight{mockPf},
-			PreAuthorizer:              &mockPreAuthorizer{nil, nil},
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			ActionClientGetter:            mockAcg,
+			Preflights:                    []applier.Preflight{mockPf},
+			PreAuthorizer:                 &mockPreAuthorizer{nil, nil},
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "install pre-flight check")
-		require.Equal(t, applier.StateNeedsInstall, state)
-		require.Nil(t, objs)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails during installation because of pre-authorization failure", func(t *testing.T) {
@@ -363,11 +414,11 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 				},
 			},
 		}
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "problem running preauthorization")
-		require.Empty(t, state)
-		require.Nil(t, objs)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails during installation due to missing RBAC rules", func(t *testing.T) {
@@ -392,11 +443,11 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 				},
 			},
 		}
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, errMissingRBAC)
-		require.Empty(t, state)
-		require.Nil(t, objs)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("successful installation", func(t *testing.T) {
@@ -408,9 +459,13 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			},
 		}
 		helmApplier := applier.Helm{
-			ActionClientGetter:         mockAcg,
-			PreAuthorizer:              &mockPreAuthorizer{nil, nil},
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			ActionClientGetter:            mockAcg,
+			PreAuthorizer:                 &mockPreAuthorizer{nil, nil},
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			Manager: &mockManagedContentCacheManager{
+				cache: &mockManagedContentCache{},
+			},
 		}
 
 		// Use a ClusterExtension with valid Spec fields.
@@ -423,12 +478,10 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
-		require.Equal(t, applier.StateNeedsInstall, state)
-		require.NotNil(t, objs)
-		assert.Equal(t, "service-a", objs[0].GetName())
-		assert.Equal(t, "service-b", objs[1].GetName())
+		require.Empty(t, installStatus)
+		require.True(t, installSucceeded)
 	})
 }
 
@@ -446,11 +499,11 @@ func TestApply_Upgrade(t *testing.T) {
 			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "attempting to dry-run upgrade chart")
-		require.Nil(t, objs)
-		require.Empty(t, state)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails during pre-flight upgrade", func(t *testing.T) {
@@ -464,16 +517,17 @@ func TestApply_Upgrade(t *testing.T) {
 		}
 		mockPf := &mockPreflight{upgradeErr: errors.New("failed during upgrade pre-flight check")}
 		helmApplier := applier.Helm{
-			ActionClientGetter:         mockAcg,
-			Preflights:                 []applier.Preflight{mockPf},
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			ActionClientGetter:            mockAcg,
+			Preflights:                    []applier.Preflight{mockPf},
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "upgrade pre-flight check")
-		require.Equal(t, applier.StateNeedsUpgrade, state)
-		require.Nil(t, objs)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails during upgrade", func(t *testing.T) {
@@ -488,14 +542,15 @@ func TestApply_Upgrade(t *testing.T) {
 		mockPf := &mockPreflight{}
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg, Preflights: []applier.Preflight{mockPf},
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "upgrading chart")
-		require.Equal(t, applier.StateNeedsUpgrade, state)
-		require.Nil(t, objs)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("fails during upgrade reconcile (StateUnchanged)", func(t *testing.T) {
@@ -509,16 +564,17 @@ func TestApply_Upgrade(t *testing.T) {
 		}
 		mockPf := &mockPreflight{}
 		helmApplier := applier.Helm{
-			ActionClientGetter:         mockAcg,
-			Preflights:                 []applier.Preflight{mockPf},
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			ActionClientGetter:            mockAcg,
+			Preflights:                    []applier.Preflight{mockPf},
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "reconciling charts")
-		require.Equal(t, applier.StateUnchanged, state)
-		require.Nil(t, objs)
+		require.False(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 
 	t.Run("successful upgrade", func(t *testing.T) {
@@ -530,16 +586,18 @@ func TestApply_Upgrade(t *testing.T) {
 			desiredRel: &testDesiredRelease,
 		}
 		helmApplier := applier.Helm{
-			ActionClientGetter:         mockAcg,
-			BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{},
+			ActionClientGetter:            mockAcg,
+			BundleToHelmChartConverter:    &convert.BundleToHelmChartConverter{},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			Manager: &mockManagedContentCacheManager{
+				cache: &mockManagedContentCache{},
+			},
 		}
 
-		objs, state, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
 		require.NoError(t, err)
-		require.Equal(t, applier.StateNeedsUpgrade, state)
-		require.NotNil(t, objs)
-		assert.Equal(t, "service-a", objs[0].GetName())
-		assert.Equal(t, "service-b", objs[1].GetName())
+		require.True(t, installSucceeded)
+		require.Empty(t, installStatus)
 	})
 }
 
@@ -561,6 +619,10 @@ func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testin
 					require.Equal(t, expectedWatchNamespace, watchNamespace)
 					return nil, nil
 				},
+			},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			Manager: &mockManagedContentCacheManager{
+				cache: &mockManagedContentCache{},
 			},
 		}
 
@@ -595,6 +657,10 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 					return nil, nil
 				},
 			},
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+			Manager: &mockManagedContentCacheManager{
+				cache: &mockManagedContentCache{},
+			},
 		}
 
 		_, _, _ = helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
@@ -614,10 +680,13 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 					return nil, errors.New("some error")
 				},
 			},
+			Manager: &mockManagedContentCacheManager{
+				cache: &mockManagedContentCache{},
+			},
 		}
 
 		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
-		require.Error(t, err)
+		require.ErrorContains(t, err, "some error")
 	})
 }
 

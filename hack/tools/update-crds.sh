@@ -7,11 +7,12 @@ set -e
 # The names of the generated CRDs
 CE="olm.operatorframework.io_clusterextensions.yaml"
 CC="olm.operatorframework.io_clustercatalogs.yaml"
+CR="olm.operatorframework.io_clusterextensionrevisions.yaml"
 
 # order for modules and crds must match
 # each item in crds must be unique, and should be associated with a module
-modules=("operator-controller" "catalogd")
-crds=("${CE}" "${CC}")
+modules=("operator-controller" "catalogd" "operator-controller")
+crds=("${CE}" "${CC}" "${CR}")
 
 # Channels must much those in the generator
 channels=("standard" "experimental")
