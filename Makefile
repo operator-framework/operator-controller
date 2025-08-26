@@ -123,6 +123,10 @@ help-extended: #HELP Display extended help.
 lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
 	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
+lint-helm: $(HELM) #HELP Run helm linter
+	helm lint helm/olmv1
+	helm lint helm/prometheus
+
 .PHONY: custom-linter-build
 custom-linter-build: #EXHELP Build custom linter
 	go build -tags $(GO_BUILD_TAGS) -o ./bin/custom-linter ./hack/ci/custom-linters/cmd
