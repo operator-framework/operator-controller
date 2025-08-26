@@ -239,6 +239,40 @@ _Appears in:_
 | `status` _[ClusterExtensionStatus](#clusterextensionstatus)_ | status is an optional field that defines the observed state of the ClusterExtension. |  |  |
 
 
+#### ClusterExtensionConfig
+
+
+
+ClusterExtensionConfig is a discriminated union which selects the source configuration values to be merged into
+the ClusterExtension's rendered manifests.
+
+
+
+_Appears in:_
+- [ClusterExtensionSpec](#clusterextensionspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `configType` _[ClusterExtensionConfigType](#clusterextensionconfigtype)_ | configType is a required reference to the type of configuration source.<br /><br />Allowed values are "Inline"<br /><br />When this field is set to "Inline", the cluster extension configuration is defined inline within the<br />ClusterExtension resource. |  | Enum: [Inline] <br />Required: \{\} <br /> |
+| `inline` _[JSON](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#json-v1-apiextensions-k8s-io)_ | inline contains JSON or YAML values specified directly in the<br />ClusterExtension.<br /><br />inline must be set if configType is 'Inline'. |  | Type: object <br /> |
+
+
+#### ClusterExtensionConfigType
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ClusterExtensionConfig](#clusterextensionconfig)
+
+| Field | Description |
+| --- | --- |
+| `Inline` |  |
+
+
 #### ClusterExtensionInstallConfig
 
 
@@ -309,6 +343,7 @@ _Appears in:_
 | `serviceAccount` _[ServiceAccountReference](#serviceaccountreference)_ | serviceAccount is a reference to a ServiceAccount used to perform all interactions<br />with the cluster that are required to manage the extension.<br />The ServiceAccount must be configured with the necessary permissions to perform these interactions.<br />The ServiceAccount must exist in the namespace referenced in the spec.<br />serviceAccount is required. |  | Required: \{\} <br /> |
 | `source` _[SourceConfig](#sourceconfig)_ | source is a required field which selects the installation source of content<br />for this ClusterExtension. Selection is performed by setting the sourceType.<br /><br />Catalog is currently the only implemented sourceType, and setting the<br />sourcetype to "Catalog" requires the catalog field to also be defined.<br /><br />Below is a minimal example of a source definition (in yaml):<br /><br />source:<br />  sourceType: Catalog<br />  catalog:<br />    packageName: example-package |  | Required: \{\} <br /> |
 | `install` _[ClusterExtensionInstallConfig](#clusterextensioninstallconfig)_ | install is an optional field used to configure the installation options<br />for the ClusterExtension such as the pre-flight check configuration. |  |  |
+| `config` _[ClusterExtensionConfig](#clusterextensionconfig)_ | config contains optional configuration values applied during rendering of the<br />ClusterExtension's manifests. Values can be specified inline.<br /><br />config is optional. When not specified, the default configuration of the resolved bundle will be used.<br /><br /><opcon:experimental> |  |  |
 
 
 #### ClusterExtensionStatus
