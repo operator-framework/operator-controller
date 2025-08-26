@@ -1,3 +1,7 @@
+[![unit-test](https://github.com/operator-framework/operator-controller/actions/workflows/unit-test.yaml/badge.svg)](https://github.com/operator-framework/operator-controller/actions/workflows/unit-test.yaml)
+[![e2e](https://github.com/operator-framework/operator-controller/actions/workflows/e2e.yaml/badge.svg)](https://github.com/operator-framework/operator-controller/actions/workflows/e2e.yaml)
+[![codecov](https://codecov.io/gh/operator-framework/operator-controller/graph/badge.svg?token=5f34zaWaN7)](https://codecov.io/gh/operator-framework/operator-controller)
+
 # operator-controller
 The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1.
 It extends Kubernetes with an API through which users can install extensions.
