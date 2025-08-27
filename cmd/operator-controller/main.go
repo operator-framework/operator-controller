@@ -489,22 +489,50 @@ func getCertificateProvider() render.CertificateProvider {
 func setupBoxcutter(mgr manager.Manager, ceReconciler *controllers.ClusterExtensionReconciler, preflights []applier.Preflight) error {
 	certProvider := getCertificateProvider()
 
+	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("unable to create core client: %w", err)
+	}
+	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
+		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
+		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
+			ext := obj.(*ocv1.ClusterExtension)
+			return ext.Spec.Namespace, nil
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create helm action config getter: %w", err)
+	}
+
+	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
+		helmclient.WithFailureRollbacks(false),
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create helm action client getter: %w", err)
+	}
+
 	// TODO: add support for preflight checks
 	// TODO: better scheme handling - which types do we want to support?
 	_ = apiextensionsv1.AddToScheme(mgr.GetScheme())
-	ceReconciler.Applier = &applier.Boxcutter{
-		Client: mgr.GetClient(),
+	rg := &applier.SimpleRevisionGenerator{
 		Scheme: mgr.GetScheme(),
-		RevisionGenerator: &applier.SimpleRevisionGenerator{
-			Scheme: mgr.GetScheme(),
-			BundleRenderer: &applier.RegistryV1BundleRenderer{
-				BundleRenderer:      registryv1.Renderer,
-				CertificateProvider: certProvider,
-			},
+		BundleRenderer: &applier.RegistryV1BundleRenderer{
+			BundleRenderer:      registryv1.Renderer,
+			CertificateProvider: certProvider,
 		},
-		Preflights: preflights,
+	}
+	ceReconciler.Applier = &applier.Boxcutter{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		RevisionGenerator: rg,
+		Preflights:        preflights,
 	}
 	ceReconciler.RevisionStatesGetter = &controllers.BoxcutterRevisionStatesGetter{Reader: mgr.GetClient()}
+	ceReconciler.StorageMigrator = &applier.BoxcutterStorageMigrator{
+		Client:             mgr.GetClient(),
+		ActionClientGetter: acg,
+		RevisionGenerator:  rg,
+	}
 
 	// Boxcutter
 	const (

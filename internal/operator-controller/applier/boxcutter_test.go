@@ -9,7 +9,10 @@ import (
 	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +26,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	testutils "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
@@ -81,7 +85,88 @@ func Test_RegistryV1BundleRenderer_Render_Failure(t *testing.T) {
 	require.Contains(t, err.Error(), "some-error")
 }
 
-func Test_SimpleRevisionGenerator_Success(t *testing.T) {
+func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) {
+	g := &applier.SimpleRevisionGenerator{}
+
+	helmRelease := &release.Release{
+		Name:     "test-123",
+		Manifest: `{"apiVersion":"v1","kind":"ConfigMap"}` + "\n" + `{"apiVersion":"v1","kind":"Secret"}` + "\n",
+		Labels: map[string]string{
+			labels.BundleNameKey:      "my-bundle",
+			labels.PackageNameKey:     "my-package",
+			labels.BundleVersionKey:   "1.2.0",
+			labels.BundleReferenceKey: "bundle-ref",
+		},
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-123",
+		},
+	}
+
+	objectLabels := map[string]string{
+		"my-label": "my-value",
+	}
+
+	rev, err := g.GenerateRevisionFromHelmRelease(helmRelease, ext, objectLabels)
+	require.NoError(t, err)
+
+	assert.Equal(t, &ocv1.ClusterExtensionRevision{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-123-1",
+			Annotations: map[string]string{
+				"olm.operatorframework.io/bundle-name":      "my-bundle",
+				"olm.operatorframework.io/bundle-reference": "bundle-ref",
+				"olm.operatorframework.io/bundle-version":   "1.2.0",
+				"olm.operatorframework.io/package-name":     "my-package",
+			},
+			Labels: map[string]string{
+				"olm.operatorframework.io/owner": "test-123",
+			},
+		},
+		Spec: ocv1.ClusterExtensionRevisionSpec{
+			Revision: 1,
+			Phases: []ocv1.ClusterExtensionRevisionPhase{
+				{
+					Name: "deploy",
+					Objects: []ocv1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"labels": map[string]interface{}{
+											"my-label": "my-value",
+										},
+									},
+								},
+							},
+							CollisionProtection: ocv1.CollisionProtectionNone,
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "Secret",
+									"metadata": map[string]interface{}{
+										"labels": map[string]interface{}{
+											"my-label": "my-value",
+										},
+									},
+								},
+							},
+							CollisionProtection: ocv1.CollisionProtectionNone,
+						},
+					},
+				},
+			},
+		},
+	}, rev)
+}
+
+func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	var r mockBundleRenderer = func(_ fs.FS, _ *ocv1.ClusterExtension) ([]client.Object, error) {
 		return []client.Object{
 			&corev1.Service{
@@ -268,7 +353,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			UID:  "test-uid",
 		},
 	}
-	defaultDesiredHash := "faaeb52a1cb7c968c96278bc1cd804e50d3ae9faae08807c9279a5e569933ea0"
+	defaultDesiredHash := "705ada5296ab26f74d94bfa497295a0cbccdb140623bbe704a3506cd1dfba4eb"
 	defaultDesiredRevision := &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-ext-1",
@@ -460,7 +545,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 
 				assert.Equal(t, "test-ext-2", newRev.Name)
 				assert.Equal(t, int64(2), newRev.Spec.Revision)
-				assert.Equal(t, "ec8213d4061a75b55cd67a009d9cdeb1bdd6f503d4b3bb7b6cfea3a5233aad43", newRev.Annotations[applier.RevisionHashAnnotation])
+				assert.Equal(t, "9d0e48f6830fce1be5f510eb996f2876719fdb8bcffcfe1dfd3fd60e56316424", newRev.Annotations[applier.RevisionHashAnnotation])
 				require.Len(t, newRev.Spec.Previous, 1)
 				assert.Equal(t, "test-ext-1", newRev.Spec.Previous[0].Name)
 				assert.Equal(t, types.UID("rev-uid-1"), newRev.Spec.Previous[0].UID)
@@ -525,6 +610,92 @@ func TestBoxcutter_Apply(t *testing.T) {
 	}
 }
 
+func TestBoxcutterStorageMigrator(t *testing.T) {
+	t.Run("creates revision", func(t *testing.T) {
+		brb := &mockBundleRevisionBuilder{}
+		mag := &mockActionGetter{}
+		client := &clientMock{}
+		sm := &applier.BoxcutterStorageMigrator{
+			RevisionGenerator:  brb,
+			ActionClientGetter: mag,
+			Client:             client,
+		}
+
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+
+		client.
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			Return(nil)
+		client.
+			On("Create", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevision"), mock.Anything).
+			Once().
+			Return(nil)
+
+		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
+		require.NoError(t, err)
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("does not create revision when revisions exist", func(t *testing.T) {
+		brb := &mockBundleRevisionBuilder{}
+		mag := &mockActionGetter{}
+		client := &clientMock{}
+		sm := &applier.BoxcutterStorageMigrator{
+			RevisionGenerator:  brb,
+			ActionClientGetter: mag,
+			Client:             client,
+		}
+
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+
+		client.
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			Run(func(args mock.Arguments) {
+				list := args.Get(1).(*ocv1.ClusterExtensionRevisionList)
+				list.Items = []ocv1.ClusterExtensionRevision{
+					{}, {}, // Existing revisions.
+				}
+			}).
+			Return(nil)
+
+		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
+		require.NoError(t, err)
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("does not create revision when no helm release", func(t *testing.T) {
+		brb := &mockBundleRevisionBuilder{}
+		mag := &mockActionGetter{
+			getClientErr: driver.ErrReleaseNotFound,
+		}
+		client := &clientMock{}
+		sm := &applier.BoxcutterStorageMigrator{
+			RevisionGenerator:  brb,
+			ActionClientGetter: mag,
+			Client:             client,
+		}
+
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
+		}
+
+		client.
+			On("List", mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevisionList"), mock.Anything).
+			Return(nil)
+
+		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
+		require.NoError(t, err)
+
+		client.AssertExpectations(t)
+	})
+}
+
 // mockBundleRevisionBuilder is a mock implementation of the ClusterExtensionRevisionGenerator for testing.
 type mockBundleRevisionBuilder struct {
 	makeRevisionFunc func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1.ClusterExtensionRevision, error)
@@ -534,8 +705,29 @@ func (m *mockBundleRevisionBuilder) GenerateRevision(bundleFS fs.FS, ext *ocv1.C
 	return m.makeRevisionFunc(bundleFS, ext, objectLabels, revisionAnnotations)
 }
 
+func (m *mockBundleRevisionBuilder) GenerateRevisionFromHelmRelease(
+	helmRelease *release.Release, ext *ocv1.ClusterExtension,
+	objectLabels map[string]string,
+) (*ocv1.ClusterExtensionRevision, error) {
+	return nil, nil
+}
+
 type mockBundleRenderer func(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
 
 func (f mockBundleRenderer) Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
 	return f(bundleFS, ext)
+}
+
+type clientMock struct {
+	mock.Mock
+}
+
+func (m *clientMock) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	args := m.Called(ctx, list, opts)
+	return args.Error(0)
+}
+
+func (m *clientMock) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+	args := m.Called(ctx, obj, opts)
+	return args.Error(0)
 }

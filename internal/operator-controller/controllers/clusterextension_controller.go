@@ -70,9 +70,14 @@ type ClusterExtensionReconciler struct {
 	ImageCache  imageutil.Cache
 	ImagePuller imageutil.Puller
 
+	StorageMigrator      StorageMigrator
 	Applier              Applier
 	RevisionStatesGetter RevisionStatesGetter
 	Finalizers           crfinalizer.Finalizers
+}
+
+type StorageMigrator interface {
+	Migrate(context.Context, *ocv1.ClusterExtension, map[string]string) error
 }
 
 type Applier interface {
@@ -209,6 +214,17 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		return ctrl.Result{}, nil
 	}
 
+	objLbls := map[string]string{
+		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+		labels.OwnerNameKey: ext.GetName(),
+	}
+
+	if r.StorageMigrator != nil {
+		if err := r.StorageMigrator.Migrate(ctx, ext, objLbls); err != nil {
+			return ctrl.Result{}, fmt.Errorf("migrating storage: %w", err)
+		}
+	}
+
 	l.Info("getting installed bundle")
 	revisionStates, err := r.RevisionStatesGetter.GetRevisionStates(ctx, ext)
 	if err != nil {
@@ -273,11 +289,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedRevisionMetadata.BundleMetadata, err))
 		setInstalledStatusFromRevisionStates(ext, revisionStates)
 		return ctrl.Result{}, err
-	}
-
-	objLbls := map[string]string{
-		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
-		labels.OwnerNameKey: ext.GetName(),
 	}
 
 	storeLbls := map[string]string{
@@ -536,31 +547,37 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
 	slices.SortFunc(existingRevisionList.Items, func(a, b ocv1.ClusterExtensionRevision) int {
-		return cmp.Compare(b.Spec.Revision, a.Spec.Revision)
+		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
 	})
 
 	rs := &RevisionStates{}
 	for _, rev := range existingRevisionList.Items {
-		if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateActive {
-			// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "storageLabels")
-			//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
-			//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
-			rm := &RevisionMetadata{
-				Package: rev.Labels[labels.PackageNameKey],
-				Image:   rev.Annotations[labels.BundleReferenceKey],
-				BundleMetadata: ocv1.BundleMetadata{
-					Name:    rev.Annotations[labels.BundleNameKey],
-					Version: rev.Annotations[labels.BundleVersionKey],
-				},
-			}
+		switch rev.Spec.LifecycleState {
+		case ocv1.ClusterExtensionRevisionLifecycleStateActive,
+			ocv1.ClusterExtensionRevisionLifecycleStatePaused:
+		default:
+			// Skip anything not active or paused, which should only be "Archived".
+			continue
+		}
 
-			if installedCondition := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded); installedCondition == nil || installedCondition.Status != metav1.ConditionTrue {
-				rs.RollingOut = append(rs.RollingOut, rm)
-			} else {
-				rs.Installed = rm
-				break
-			}
+		// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "storageLabels")
+		//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
+		//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
+		rm := &RevisionMetadata{
+			Package: rev.Labels[labels.PackageNameKey],
+			Image:   rev.Annotations[labels.BundleReferenceKey],
+			BundleMetadata: ocv1.BundleMetadata{
+				Name:    rev.Annotations[labels.BundleNameKey],
+				Version: rev.Annotations[labels.BundleVersionKey],
+			},
+		}
+
+		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
+			rs.Installed = rm
+		} else {
+			rs.RollingOut = append(rs.RollingOut, rm)
 		}
 	}
+
 	return rs, nil
 }

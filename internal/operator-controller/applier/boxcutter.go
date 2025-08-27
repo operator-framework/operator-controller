@@ -11,8 +11,11 @@ import (
 	"io/fs"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,9 +23,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
+
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
@@ -33,6 +40,10 @@ const (
 
 type ClusterExtensionRevisionGenerator interface {
 	GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error)
+	GenerateRevisionFromHelmRelease(
+		helmRelease *release.Release, ext *ocv1.ClusterExtension,
+		objectLabels map[string]string,
+	) (*ocv1.ClusterExtensionRevision, error)
 }
 
 type SimpleRevisionGenerator struct {
@@ -40,7 +51,47 @@ type SimpleRevisionGenerator struct {
 	BundleRenderer BundleRenderer
 }
 
-func (r *SimpleRevisionGenerator) GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
+	helmRelease *release.Release, ext *ocv1.ClusterExtension,
+	objectLabels map[string]string,
+) (*ocv1.ClusterExtensionRevision, error) {
+	docs := splitManifestDocuments(helmRelease.Manifest)
+	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(docs))
+	for _, doc := range docs {
+		obj := unstructured.Unstructured{}
+		if err := yaml.Unmarshal([]byte(doc), &obj); err != nil {
+			return nil, err
+		}
+
+		labels := maps.Clone(obj.GetLabels())
+		if labels == nil {
+			labels = map[string]string{}
+		}
+		maps.Copy(labels, objectLabels)
+		obj.SetLabels(labels)
+		obj.SetOwnerReferences(nil) // reset OwnerReferences for migration.
+
+		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
+			Object:              obj,
+			CollisionProtection: ocv1.CollisionProtectionNone, // allow to adopt objects from previous release
+		})
+	}
+
+	rev := r.buildClusterExtensionRevision(objs, ext, map[string]string{
+		labels.BundleNameKey:      helmRelease.Labels[labels.BundleNameKey],
+		labels.PackageNameKey:     helmRelease.Labels[labels.PackageNameKey],
+		labels.BundleVersionKey:   helmRelease.Labels[labels.BundleVersionKey],
+		labels.BundleReferenceKey: helmRelease.Labels[labels.BundleReferenceKey],
+	})
+	rev.Name = fmt.Sprintf("%s-1", ext.Name)
+	rev.Spec.Revision = 1
+	return rev, nil
+}
+
+func (r *SimpleRevisionGenerator) GenerateRevision(
+	bundleFS fs.FS, ext *ocv1.ClusterExtension,
+	objectLabels, revisionAnnotations map[string]string,
+) (*ocv1.ClusterExtensionRevision, error) {
 	// extract plain manifests
 	plain, err := r.BundleRenderer.Render(bundleFS, ext)
 	if err != nil {
@@ -50,14 +101,12 @@ func (r *SimpleRevisionGenerator) GenerateRevision(bundleFS fs.FS, ext *ocv1.Clu
 	// objectLabels
 	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
 	for _, obj := range plain {
-		if len(obj.GetLabels()) > 0 {
-			labels := maps.Clone(obj.GetLabels())
-			if labels == nil {
-				labels = map[string]string{}
-			}
-			maps.Copy(labels, objectLabels)
-			obj.SetLabels(labels)
+		labels := maps.Clone(obj.GetLabels())
+		if labels == nil {
+			labels = map[string]string{}
 		}
+		maps.Copy(labels, objectLabels)
+		obj.SetLabels(labels)
 
 		gvk, err := apiutil.GVKForObject(obj, r.Scheme)
 		if err != nil {
@@ -80,18 +129,73 @@ func (r *SimpleRevisionGenerator) GenerateRevision(bundleFS fs.FS, ext *ocv1.Clu
 		revisionAnnotations = map[string]string{}
 	}
 
-	// Build desired revision
+	return r.buildClusterExtensionRevision(objs, ext, revisionAnnotations), nil
+}
+
+func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
+	objects []ocv1.ClusterExtensionRevisionObject,
+	ext *ocv1.ClusterExtension,
+	annotations map[string]string,
+) *ocv1.ClusterExtensionRevision {
 	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
-			Annotations: revisionAnnotations,
+			Annotations: annotations,
 			Labels: map[string]string{
 				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
-			Phases: PhaseSort(objs),
+			Phases: PhaseSort(objects),
 		},
-	}, nil
+	}
+}
+
+type BoxcutterStorageMigrator struct {
+	ActionClientGetter helmclient.ActionClientGetter
+	RevisionGenerator  ClusterExtensionRevisionGenerator
+	Client             boxcutterStorageMigratorClient
+}
+
+type boxcutterStorageMigratorClient interface {
+	List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
+	Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
+}
+
+func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) error {
+	existingRevisionList := ocv1.ClusterExtensionRevisionList{}
+	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingLabels{
+		controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+	}); err != nil {
+		return fmt.Errorf("listing ClusterExtensionRevisions before attempting migration: %w", err)
+	}
+	if len(existingRevisionList.Items) != 0 {
+		// No migration needed.
+		return nil
+	}
+
+	ac, err := m.ActionClientGetter.ActionClientFor(ctx, ext)
+	if err != nil {
+		return err
+	}
+
+	helmRelease, err := ac.Get(ext.GetName())
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		// no Helm Release -> no prior installation.
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	rev, err := m.RevisionGenerator.GenerateRevisionFromHelmRelease(helmRelease, ext, objectLabels)
+	if err != nil {
+		return err
+	}
+
+	if err := m.Client.Create(ctx, rev); err != nil {
+		return err
+	}
+	return nil
 }
 
 type Boxcutter struct {
@@ -287,4 +391,17 @@ func (r *RegistryV1BundleRenderer) Render(bundleFS fs.FS, ext *ocv1.ClusterExten
 		return nil, err
 	}
 	return r.BundleRenderer.Render(reg, ext.Spec.Namespace, render.WithTargetNamespaces(watchNamespace), render.WithCertificateProvider(r.CertificateProvider))
+}
+
+func splitManifestDocuments(file string) []string {
+	//nolint:prealloc
+	var docs []string
+	for _, manifest := range strings.Split(file, "\n") {
+		manifest = strings.TrimSpace(manifest)
+		if len(manifest) == 0 {
+			continue
+		}
+		docs = append(docs, manifest)
+	}
+	return docs
 }

@@ -44,16 +44,28 @@ const (
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
 type ClusterExtensionRevisionSpec struct {
 	// Specifies the lifecycle state of the ClusterExtensionRevision.
+	//
 	// +kubebuilder:default="Active"
 	// +kubebuilder:validation:Enum=Active;Paused;Archived
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Paused' || oldSelf == 'Archived' && oldSelf == self", message="can not un-archive"
 	LifecycleState ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
+	// Revision number orders changes over time, must always be previous revision +1.
+	//
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision"`
+	// Phases are groups of objects that will be applied at the same time.
+	// All objects in the a phase will have to pass their probes in order to progress to the next phase.
+	//
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
+	// +patchMergeKey=name
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=name
 	Phases []ClusterExtensionRevisionPhase `json:"phases"`
+	// Previous references previous revisions that objects can be adopted from.
+	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="previous is immutable"
 	Previous []ClusterExtensionRevisionPrevious `json:"previous,omitempty"`
 }
@@ -73,17 +85,46 @@ const (
 	ClusterExtensionRevisionLifecycleStateArchived ClusterExtensionRevisionLifecycleState = "Archived"
 )
 
+// ClusterExtensionRevisionPhase are groups of objects that will be applied at the same time.
+// All objects in the a phase will have to pass their probes in order to progress to the next phase.
 type ClusterExtensionRevisionPhase struct {
-	Name    string                           `json:"name"`
+	// Name identifies this phase.
+	//
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:validation:Pattern=`^[a-z]([-a-z0-9]*[a-z0-9])?$`
+	Name string `json:"name"`
+	// Objects are a list of all the objects within this phase.
 	Objects []ClusterExtensionRevisionObject `json:"objects"`
-	Slices  []string                         `json:"slices,omitempty"`
 }
 
+// ClusterExtensionRevisionObject contains an object and settings for it.
 type ClusterExtensionRevisionObject struct {
 	// +kubebuilder:validation:EmbeddedResource
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Object unstructured.Unstructured `json:"object"`
+	// CollisionProtection controls whether OLM can adopt and modify objects
+	// already existing on the cluster or even owned by another controller.
+	//
+	// +kubebuilder:default="Prevent"
+	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
+
+// CollisionProtection specifies if and how ownership collisions are prevented.
+type CollisionProtection string
+
+const (
+	// CollisionProtectionPrevent prevents owner collisions entirely
+	// by only allowing to work with objects itself has created.
+	CollisionProtectionPrevent CollisionProtection = "Prevent"
+	// CollisionProtectionIfNoController allows to patch and override
+	// objects already present if they are not owned by another controller.
+	CollisionProtectionIfNoController CollisionProtection = "IfNoController"
+	// CollisionProtectionNone allows to patch and override objects
+	// already present and owned by other controllers.
+	// Be careful! This setting may cause multiple controllers to fight over a resource,
+	// causing load on the API server and etcd.
+	CollisionProtectionNone CollisionProtection = "None"
+)
 
 type ClusterExtensionRevisionPrevious struct {
 	// +kubebuilder:validation:Required

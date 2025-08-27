@@ -516,11 +516,17 @@ spec:
                     objects:
                       items:
                         properties:
+                          collisionProtection:
+                            default: Prevent
+                            description: CollisionProtection specifies if and how
+                              ownership collisions are prevented.
+                            type: string
                           object:
                             type: object
                             x-kubernetes-embedded-resource: true
                             x-kubernetes-preserve-unknown-fields: true
                         required:
+                        - collisionProtection
                         - object
                         type: object
                       type: array

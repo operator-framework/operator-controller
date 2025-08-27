@@ -11,13 +11,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	kubeclient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/utils/env"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
@@ -25,6 +25,7 @@ import (
 // CollectTestArtifacts gets all the artifacts from the test run and saves them to the artifact path.
 // Currently, it saves:
 // - clusterextensions
+// - clusterextensionrevisions
 // - pods logs
 // - deployments
 // - catalogsources
@@ -54,7 +55,7 @@ func CollectTestArtifacts(t *testing.T, artifactName string, c client.Client, cf
 
 	// get all cluster extensions save them to the artifact path.
 	clusterExtensions := ocv1.ClusterExtensionList{}
-	if err := c.List(context.Background(), &clusterExtensions, client.InNamespace("")); err != nil {
+	if err := c.List(context.Background(), &clusterExtensions); err != nil {
 		fmt.Printf("Failed to list cluster extensions: %v", err)
 	}
 	for _, clusterExtension := range clusterExtensions.Items {
@@ -65,6 +66,23 @@ func CollectTestArtifacts(t *testing.T, artifactName string, c client.Client, cf
 			continue
 		}
 		if err := os.WriteFile(filepath.Join(artifactPath, clusterExtension.Name+"-clusterextension.yaml"), clusterExtensionYaml, 0600); err != nil {
+			fmt.Printf("Failed to write cluster extension to file: %v", err)
+		}
+	}
+
+	// get all cluster extension revisions save them to the artifact path.
+	clusterExtensionRevisions := ocv1.ClusterExtensionRevisionList{}
+	if err := c.List(context.Background(), &clusterExtensionRevisions); err != nil {
+		fmt.Printf("Failed to list cluster extensions: %v", err)
+	}
+	for _, cer := range clusterExtensionRevisions.Items {
+		// Save cluster extension to artifact path
+		clusterExtensionYaml, err := yaml.Marshal(cer)
+		if err != nil {
+			fmt.Printf("Failed to marshal cluster extension: %v", err)
+			continue
+		}
+		if err := os.WriteFile(filepath.Join(artifactPath, cer.Name+"-clusterextensionrevision.yaml"), clusterExtensionYaml, 0600); err != nil {
 			fmt.Printf("Failed to write cluster extension to file: %v", err)
 		}
 	}
@@ -114,6 +132,23 @@ func CollectTestArtifacts(t *testing.T, artifactName string, c client.Client, cf
 			}
 			if err := os.WriteFile(filepath.Join(namespacedArtifactPath, deployment.Name+"-deployment.yaml"), deploymentYaml, 0600); err != nil {
 				fmt.Printf("Failed to write deployment to file: %v", err)
+			}
+		}
+
+		// Get secrets in all namespaces
+		secrets := corev1.SecretList{}
+		if err := c.List(context.Background(), &secrets, client.InNamespace(namespace.Name)); err != nil {
+			fmt.Printf("Failed to list secrets %v in namespace: %q", err, namespace.Name)
+		}
+		for _, secret := range secrets.Items {
+			// Save secret to artifact path
+			secretYaml, err := yaml.Marshal(secret)
+			if err != nil {
+				fmt.Printf("Failed to marshal secret: %v", err)
+				continue
+			}
+			if err := os.WriteFile(filepath.Join(namespacedArtifactPath, secret.Name+"-secret.yaml"), secretYaml, 0600); err != nil {
+				fmt.Printf("Failed to write secret to file: %v", err)
 			}
 		}
 

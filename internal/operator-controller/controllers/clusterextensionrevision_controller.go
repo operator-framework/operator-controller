@@ -362,28 +362,6 @@ func (c *ClusterExtensionRevisionReconciler) removeFinalizer(ctx context.Context
 }
 
 func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revision, []boxcutter.RevisionReconcileOption, []client.Object) {
-	r := &boxcutter.Revision{
-		Name:     rev.Name,
-		Owner:    rev,
-		Revision: rev.Spec.Revision,
-	}
-	for _, specPhase := range rev.Spec.Phases {
-		phase := boxcutter.Phase{Name: specPhase.Name}
-		for _, specObj := range specPhase.Objects {
-			obj := specObj.Object
-
-			labels := obj.GetLabels()
-			if labels == nil {
-				labels = map[string]string{}
-			}
-			labels[ClusterExtensionRevisionOwnerLabel] = rev.Labels[ClusterExtensionRevisionOwnerLabel]
-			obj.SetLabels(labels)
-
-			phase.Objects = append(phase.Objects, obj)
-		}
-		r.Phases = append(r.Phases, phase)
-	}
-
 	previous := make([]client.Object, 0, len(rev.Spec.Previous))
 	for _, specPrevious := range rev.Spec.Previous {
 		prev := &unstructured.Unstructured{}
@@ -421,6 +399,35 @@ func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revisio
 			return false, []string{"not available or not fully updated"}
 		})),
 	}
+
+	r := &boxcutter.Revision{
+		Name:     rev.Name,
+		Owner:    rev,
+		Revision: rev.Spec.Revision,
+	}
+	for _, specPhase := range rev.Spec.Phases {
+		phase := boxcutter.Phase{Name: specPhase.Name}
+		for _, specObj := range specPhase.Objects {
+			obj := specObj.Object
+
+			labels := obj.GetLabels()
+			if labels == nil {
+				labels = map[string]string{}
+			}
+			labels[ClusterExtensionRevisionOwnerLabel] = rev.Labels[ClusterExtensionRevisionOwnerLabel]
+			obj.SetLabels(labels)
+
+			switch specObj.CollisionProtection {
+			case ocv1.CollisionProtectionIfNoController, ocv1.CollisionProtectionNone:
+				opts = append(opts, boxcutter.WithObjectReconcileOptions(
+					&obj, boxcutter.WithCollisionProtection(specObj.CollisionProtection)))
+			}
+
+			phase.Objects = append(phase.Objects, obj)
+		}
+		r.Phases = append(r.Phases, phase)
+	}
+
 	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStatePaused {
 		opts = append(opts, boxcutter.WithPaused{})
 	}
