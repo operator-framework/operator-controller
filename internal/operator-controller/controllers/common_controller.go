@@ -27,6 +27,31 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
+const (
+	// maxConditionMessageLength is the Kubernetes API limit (32768) minus truncation suffix length (25 characters)
+	// This ensures final message with suffix never exceeds the API limit: 32768 - 25 = 32743
+	maxConditionMessageLength = 32743
+	// truncationSuffix is added when messages are too long
+	truncationSuffix = "\n\n... [message truncated]"
+)
+
+// truncateMessage cuts long messages to fit Kubernetes condition limits
+func truncateMessage(message string) string {
+	if len(message) <= maxConditionMessageLength {
+		return message
+	}
+
+	maxContent := maxConditionMessageLength - len(truncationSuffix)
+	return message[:maxContent] + truncationSuffix
+}
+
+// SetStatusCondition wraps apimeta.SetStatusCondition and ensures the message is always truncated
+// This should be used throughout the codebase instead of apimeta.SetStatusCondition directly
+func SetStatusCondition(conditions *[]metav1.Condition, condition metav1.Condition) {
+	condition.Message = truncateMessage(condition.Message)
+	apimeta.SetStatusCondition(conditions, condition)
+}
+
 // setInstalledStatusFromBundle sets the installed status based on the given installedBundle.
 func setInstalledStatusFromBundle(ext *ocv1.ClusterExtension, installedBundle *InstalledBundle) {
 	// Nothing is installed
@@ -45,7 +70,7 @@ func setInstalledStatusFromBundle(ext *ocv1.ClusterExtension, installedBundle *I
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
 func setInstalledStatusConditionSuccess(ext *ocv1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1.TypeInstalled,
 		Status:             metav1.ConditionTrue,
 		Reason:             ocv1.ReasonSucceeded,
@@ -56,7 +81,7 @@ func setInstalledStatusConditionSuccess(ext *ocv1.ClusterExtension, message stri
 
 // setInstalledStatusConditionFailed sets the installed status condition to failed.
 func setInstalledStatusConditionFailed(ext *ocv1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1.TypeInstalled,
 		Status:             metav1.ConditionFalse,
 		Reason:             ocv1.ReasonFailed,
@@ -67,7 +92,7 @@ func setInstalledStatusConditionFailed(ext *ocv1.ClusterExtension, message strin
 
 // setInstalledStatusConditionUnknown sets the installed status condition to unknown.
 func setInstalledStatusConditionUnknown(ext *ocv1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1.TypeInstalled,
 		Status:             metav1.ConditionUnknown,
 		Reason:             ocv1.ReasonFailed,
@@ -99,5 +124,5 @@ func setStatusProgressing(ext *ocv1.ClusterExtension, err error) {
 		progressingCond.Reason = ocv1.ReasonBlocked
 	}
 
-	apimeta.SetStatusCondition(&ext.Status.Conditions, progressingCond)
+	SetStatusCondition(&ext.Status.Conditions, progressingCond)
 }
