@@ -77,10 +77,10 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, "Available")
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, "Incomplete", cond.Reason)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonIncomplete, cond.Reason)
 				require.Equal(t, "Revision has not been rolled out completely.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
@@ -166,10 +166,10 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, "Available")
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, "ProbeFailure", cond.Reason)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbeFailure, cond.Reason)
 				require.Equal(t, "Object Service.v1 my-namespace/my-service: something bad happened and something worse happened\nObject ConfigMap.v1 my-namespace/my-configmap: we have a problem", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
@@ -191,10 +191,10 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, "Progressing")
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, "Progressing", cond.Reason)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProgressing, cond.Reason)
 				require.Equal(t, "Rollout in progress.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
@@ -209,9 +209,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               "Progressing",
+					Type:               ocv1.TypeProgressing,
 					Status:             metav1.ConditionTrue,
-					Reason:             "Progressing",
+					Reason:             ocv1.ClusterExtensionRevisionReasonProgressing,
 					Message:            "some message",
 					ObservedGeneration: 1,
 				})
@@ -223,7 +223,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, "Progressing")
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
 				require.Nil(t, cond)
 			},
 		},
@@ -244,17 +244,17 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, "Available")
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, "Available", cond.Reason)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonAvailable, cond.Reason)
 				require.Equal(t, "Object is available and passes all probes.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
-				cond = meta.FindStatusCondition(rev.Status.Conditions, "Succeeded")
+				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, "RolloutSuccess", cond.Reason)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRolloutSuccess, cond.Reason)
 				require.Equal(t, "Revision succeeded rolling out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},

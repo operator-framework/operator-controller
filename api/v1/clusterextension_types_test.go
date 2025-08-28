@@ -14,6 +14,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 )
 
+// TODO Expand these tests to cover Types/Reasons/etc. from other APIs as well
+
 func TestClusterExtensionTypeRegistration(t *testing.T) {
 	types, err := parseConstants("Type")
 	if err != nil {

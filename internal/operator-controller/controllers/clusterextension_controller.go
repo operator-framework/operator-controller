@@ -554,8 +554,7 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 				},
 			}
 
-			// TODO: we should make constants for the ClusterExtensionRevision condition types.
-			if installedCondition := apimeta.FindStatusCondition(rev.Status.Conditions, "Succeeded"); installedCondition == nil || installedCondition.Status != metav1.ConditionTrue {
+			if installedCondition := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded); installedCondition == nil || installedCondition.Status != metav1.ConditionTrue {
 				rs.RollingOut = append(rs.RollingOut, rm)
 			} else {
 				rs.Installed = rm

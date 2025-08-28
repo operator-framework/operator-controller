@@ -22,7 +22,24 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const ClusterExtensionRevisionKind = "ClusterExtensionRevision"
+const (
+	ClusterExtensionRevisionKind = "ClusterExtensionRevision"
+
+	// Condition Types
+	ClusterExtensionRevisionTypeAvailable = "Available"
+	ClusterExtensionRevisionTypeSucceeded = "Succeeded"
+
+	// Condition Reasons
+	ClusterExtensionRevisionReasonAvailable                 = "Available"
+	ClusterExtensionRevisionReasonReconcileFailure          = "ReconcileFailure"
+	ClusterExtensionRevisionReasonRevisionValidationFailure = "RevisionValidationFailure"
+	ClusterExtensionRevisionReasonPhaseValidationError      = "PhaseValidationError"
+	ClusterExtensionRevisionReasonObjectCollisions          = "ObjectCollisions"
+	ClusterExtensionRevisionReasonRolloutSuccess            = "RolloutSuccess"
+	ClusterExtensionRevisionReasonProbeFailure              = "ProbeFailure"
+	ClusterExtensionRevisionReasonIncomplete                = "Incomplete"
+	ClusterExtensionRevisionReasonProgressing               = "Progressing"
+)
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
 type ClusterExtensionRevisionSpec struct {

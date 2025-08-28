@@ -199,10 +199,9 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 
 	// TODO: Delete archived previous revisions over a certain revision limit
 
-	// TODO: Define constants for the ClusterExtensionRevision condition types.
-	progressingCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, "Progressing")
-	availableCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, "Available")
-	succeededCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, "Succeeded")
+	progressingCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.TypeProgressing)
+	availableCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+	succeededCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
 
 	if progressingCondition == nil && availableCondition == nil && succeededCondition == nil {
 		return false, "New revision created", nil
