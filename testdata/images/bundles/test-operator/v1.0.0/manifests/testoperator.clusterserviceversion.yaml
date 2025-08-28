@@ -130,7 +130,7 @@ spec:
   installModes:
   - supported: false
     type: OwnNamespace
-  - supported: false
+  - supported: true
     type: SingleNamespace
   - supported: false
     type: MultiNamespace

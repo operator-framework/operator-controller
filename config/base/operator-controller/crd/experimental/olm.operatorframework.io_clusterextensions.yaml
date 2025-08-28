@@ -57,6 +57,40 @@ spec:
             description: spec is an optional field that defines the desired state
               of the ClusterExtension.
             properties:
+              config:
+                description: |-
+                  config contains optional configuration values applied during rendering of the
+                  ClusterExtension's manifests. Values can be specified inline.
+
+                  config is optional. When not specified, the default configuration of the resolved bundle will be used.
+                properties:
+                  configType:
+                    description: |-
+                      configType is a required reference to the type of configuration source.
+
+                      Allowed values are "Inline"
+
+                      When this field is set to "Inline", the cluster extension configuration is defined inline within the
+                      ClusterExtension resource.
+                    enum:
+                    - Inline
+                    type: string
+                  inline:
+                    description: |-
+                      inline contains JSON or YAML values specified directly in the
+                      ClusterExtension.
+
+                      inline must be set if configType is 'Inline'.
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                required:
+                - configType
+                type: object
+                x-kubernetes-validations:
+                - message: inline is required when configType is Inline, and forbidden
+                    otherwise
+                  rule: 'has(self.configType) && self.configType == ''Inline'' ?has(self.inline)
+                    : !has(self.inline)'
               install:
                 description: |-
                   install is an optional field used to configure the installation options

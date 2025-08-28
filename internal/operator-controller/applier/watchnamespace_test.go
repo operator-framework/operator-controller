@@ -5,26 +5,31 @@ import (
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 
-	v1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
 func TestGetWatchNamespacesWhenFeatureGateIsDisabled(t *testing.T) {
-	watchNamespace, err := applier.GetWatchNamespace(&v1.ClusterExtension{
+	watchNamespace, err := applier.GetWatchNamespace(&ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "extension",
-			Annotations: map[string]string{
-				"olm.operatorframework.io/watch-namespace": "watch-namespace",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Config: &ocv1.ClusterExtensionConfig{
+				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+				Inline: &apiextensionsv1.JSON{
+					Raw: []byte(`{"watchNamespace":"watch-namespace"}`),
+				},
 			},
 		},
-		Spec: v1.ClusterExtensionSpec{},
 	})
 	require.NoError(t, err)
-	t.Log("Check watchNamespace is '' even if the annotation is set")
+	t.Log("Check watchNamespace is '' even if the configuration is set")
 	require.Equal(t, corev1.NamespaceAll, watchNamespace)
 }
 
@@ -34,57 +39,140 @@ func TestGetWatchNamespace(t *testing.T) {
 	for _, tt := range []struct {
 		name        string
 		want        string
-		csv         *v1.ClusterExtension
+		csv         *ocv1.ClusterExtension
 		expectError bool
 	}{
 		{
-			name: "cluster extension does not have watch namespace annotation",
+			name: "cluster extension does not configure a watch namespace",
 			want: corev1.NamespaceAll,
-			csv: &v1.ClusterExtension{
+			csv: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        "extension",
 					Annotations: nil,
 				},
-				Spec: v1.ClusterExtensionSpec{},
+				Spec: ocv1.ClusterExtensionSpec{},
 			},
 			expectError: false,
 		}, {
-			name: "cluster extension has valid namespace annotation",
+			name: "cluster extension configures a watch namespace",
 			want: "watch-namespace",
-			csv: &v1.ClusterExtension{
+			csv: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "extension",
+				},
+				Spec: ocv1.ClusterExtensionSpec{
+					Config: &ocv1.ClusterExtensionConfig{
+						ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+						Inline: &apiextensionsv1.JSON{
+							Raw: []byte(`{"watchNamespace":"watch-namespace"}`),
+						},
+					},
+				},
+			},
+			expectError: false,
+		}, {
+			name: "cluster extension configures a watch namespace through annotation",
+			want: "watch-namespace",
+			csv: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "extension",
 					Annotations: map[string]string{
 						"olm.operatorframework.io/watch-namespace": "watch-namespace",
 					},
 				},
-				Spec: v1.ClusterExtensionSpec{},
 			},
 			expectError: false,
 		}, {
-			name: "cluster extension has invalid namespace annotation: multiple watch namespaces",
-			want: "",
-			csv: &v1.ClusterExtension{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "extension",
-					Annotations: map[string]string{
-						"olm.operatorframework.io/watch-namespace": "watch-namespace,watch-namespace2,watch-namespace3",
-					},
-				},
-				Spec: v1.ClusterExtensionSpec{},
-			},
-			expectError: true,
-		}, {
-			name: "cluster extension has invalid namespace annotation: invalid name",
-			want: "",
-			csv: &v1.ClusterExtension{
+			name: "cluster extension configures a watch namespace through annotation with invalid ns",
+			csv: &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "extension",
 					Annotations: map[string]string{
 						"olm.operatorframework.io/watch-namespace": "watch-namespace-",
 					},
 				},
-				Spec: v1.ClusterExtensionSpec{},
+			},
+			expectError: true,
+		}, {
+			name: "cluster extension configures a watch namespace through annotation with empty ns",
+			csv: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "extension",
+					Annotations: map[string]string{
+						"olm.operatorframework.io/watch-namespace": "",
+					},
+				},
+			},
+			expectError: true,
+		}, {
+			name: "cluster extension configures a watch namespace through annotation and config (take config)",
+			want: "watch-namespace",
+			csv: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "extension",
+					Annotations: map[string]string{
+						"olm.operatorframework.io/watch-namespace": "dont-use-this-watch-namespace",
+					},
+				},
+				Spec: ocv1.ClusterExtensionSpec{
+					Config: &ocv1.ClusterExtensionConfig{
+						ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+						Inline: &apiextensionsv1.JSON{
+							Raw: []byte(`{"watchNamespace":"watch-namespace"}`),
+						},
+					},
+				},
+			},
+			expectError: false,
+		}, {
+			name: "cluster extension configures an invalid watchNamespace: multiple watch namespaces",
+			want: "",
+			csv: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "extension",
+				},
+				Spec: ocv1.ClusterExtensionSpec{
+					Config: &ocv1.ClusterExtensionConfig{
+						ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+						Inline: &apiextensionsv1.JSON{
+							Raw: []byte(`{"watchNamespace":"watch-namespace,watch-namespace2,watch-namespace3"}`),
+						},
+					},
+				},
+			},
+			expectError: true,
+		}, {
+			name: "cluster extension configures an invalid watchNamespace: invalid name",
+			want: "",
+			csv: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "extension",
+				},
+				Spec: ocv1.ClusterExtensionSpec{
+					Config: &ocv1.ClusterExtensionConfig{
+						ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+						Inline: &apiextensionsv1.JSON{
+							Raw: []byte(`{"watchNamespace":"watch-namespace-"}`),
+						},
+					},
+				},
+			},
+			expectError: true,
+		}, {
+			name: "cluster extension configures an invalid watchNamespace: invalid json",
+			want: "",
+			csv: &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "extension",
+				},
+				Spec: ocv1.ClusterExtensionSpec{
+					Config: &ocv1.ClusterExtensionConfig{
+						ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+						Inline: &apiextensionsv1.JSON{
+							Raw: []byte(`invalid json`),
+						},
+					},
+				},
 			},
 			expectError: true,
 		},

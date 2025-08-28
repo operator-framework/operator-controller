@@ -248,6 +248,147 @@ func TestWebhookSupport(t *testing.T) {
 	}, res.Object["spec"])
 }
 
+func TestClusterExtensionConfigSupport(t *testing.T) {
+	t.Log("Test support for cluster extension config")
+	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+
+	t.Log("By creating install namespace, watch namespace and necessary rbac resources")
+	namespace := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-operator",
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), &namespace))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), &namespace))
+	})
+
+	watchNamespace := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-operator-watch",
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), &watchNamespace))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), &watchNamespace))
+	})
+
+	serviceAccount := corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-operator-installer",
+			Namespace: namespace.GetName(),
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), &serviceAccount))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), &serviceAccount))
+	})
+
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-operator-installer",
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				APIGroup:  corev1.GroupName,
+				Name:      serviceAccount.GetName(),
+				Namespace: serviceAccount.GetNamespace(),
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: rbacv1.GroupName,
+			Kind:     "ClusterRole",
+			Name:     "cluster-admin",
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), clusterRoleBinding))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), clusterRoleBinding))
+	})
+
+	t.Log("By creating the test-operator ClusterCatalog")
+	extensionCatalog := &ocv1.ClusterCatalog{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-operator-catalog",
+		},
+		Spec: ocv1.ClusterCatalogSpec{
+			Source: ocv1.CatalogSource{
+				Type: ocv1.SourceTypeImage,
+				Image: &ocv1.ImageSource{
+					Ref:                 fmt.Sprintf("%s/e2e/test-catalog:v1", os.Getenv("CLUSTER_REGISTRY_HOST")),
+					PollIntervalMinutes: ptr.To(1),
+				},
+			},
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), extensionCatalog))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), extensionCatalog))
+	})
+
+	t.Log("By waiting for the catalog to serve its metadata")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.GetName()}, extensionCatalog))
+		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, ocv1.TypeServing)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By installing the test-operator ClusterExtension configured in SingleNamespace mode")
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-operator-extension",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "test",
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
+					},
+				},
+			},
+			Namespace: namespace.GetName(),
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: serviceAccount.GetName(),
+			},
+			Config: &ocv1.ClusterExtensionConfig{
+				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+				Inline: &apiextensionsv1.JSON{
+					Raw: []byte(fmt.Sprintf(`{"watchNamespace": "%s"}`, watchNamespace.GetName())),
+				},
+			},
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), clusterExtension))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), clusterExtension))
+	})
+
+	t.Log("By waiting for test-operator extension to be installed successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Contains(ct, cond.Message, "Installed bundle")
+		require.NotNil(ct, clusterExtension.Status.Install)
+		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
+	}, pollDuration, pollInterval)
+
+	t.Log("By ensuring the test-operator deployment is correctly configured to watch the watch namespace")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		deployment := &appsv1.Deployment{}
+		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Namespace: namespace.GetName(), Name: "test-operator"}, deployment))
+		require.NotNil(ct, deployment.Spec.Template.GetAnnotations())
+		require.Equal(ct, watchNamespace.GetName(), deployment.Spec.Template.GetAnnotations()["olm.targetNamespaces"])
+	}, pollDuration, pollInterval)
+}
+
 func getWebhookOperatorResource(name string, namespace string, valid bool) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{

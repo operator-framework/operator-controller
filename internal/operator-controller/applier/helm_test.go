@@ -3,6 +3,7 @@ package applier_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -567,8 +569,13 @@ func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testin
 		testExt := &ocv1.ClusterExtension{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "testExt",
-				Annotations: map[string]string{
-					applier.AnnotationClusterExtensionWatchNamespace: expectedWatchNamespace,
+			},
+			Spec: ocv1.ClusterExtensionSpec{
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(fmt.Sprintf(`{"watchNamespace":"%s"}`, expectedWatchNamespace)),
+					},
 				},
 			},
 		}
