@@ -3,6 +3,7 @@ package applier
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -58,6 +60,7 @@ type Preflight interface {
 
 type BundleToHelmChartConverter interface {
 	ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error)
+	ToHelmChartWithConfig(bundle source.BundleSource, installNamespace string, watchNamespace string, cfg map[string]interface{}) (*chart.Chart, error)
 }
 
 type Helm struct {
@@ -65,6 +68,7 @@ type Helm struct {
 	Preflights                 []Preflight
 	PreAuthorizer              authorization.PreAuthorizer
 	BundleToHelmChartConverter BundleToHelmChartConverter
+	Client                     client.Client
 }
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
@@ -121,12 +125,57 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 	return nil
 }
 
+func (h *Helm) configValues(ctx context.Context, ext *ocv1.ClusterExtension) (map[string]interface{}, error) {
+	cfg := map[string]interface{}{}
+	if ext.Spec.Config == nil {
+		return cfg, nil
+	}
+	if ext.Spec.Config.Inline != nil {
+		for k, v := range ext.Spec.Config.Inline {
+			if len(v.Raw) == 0 {
+				cfg[k] = nil
+				continue
+			}
+			var val interface{}
+			if err := json.Unmarshal(v.Raw, &val); err != nil {
+				return nil, fmt.Errorf("invalid JSON in spec.config.inline[%s]: %w", k, err)
+			}
+			cfg[k] = val
+		}
+	}
+	if ext.Spec.Config.SecretRef != nil {
+		if h.Client == nil {
+			return nil, fmt.Errorf("secretRef specified but Helm client is nil")
+		}
+		secret := &corev1.Secret{}
+		if err := h.Client.Get(ctx, client.ObjectKey{Name: ext.Spec.Config.SecretRef.Name, Namespace: ext.Spec.Namespace}, secret); err != nil {
+			return nil, fmt.Errorf("failed to get config secret: %w", err)
+		}
+		data, ok := secret.Data[ext.Spec.Config.SecretRef.Key]
+		if !ok {
+			return nil, fmt.Errorf("missing key %s in secret %s", ext.Spec.Config.SecretRef.Key, ext.Spec.Config.SecretRef.Name)
+		}
+		var secretCfg map[string]interface{}
+		if err := json.Unmarshal(data, &secretCfg); err != nil {
+			return nil, fmt.Errorf("invalid JSON in secret %s/%s: %w", ext.Spec.Namespace, ext.Spec.Config.SecretRef.Name, err)
+		}
+		for k, v := range secretCfg {
+			cfg[k] = v
+		}
+	}
+	return cfg, nil
+}
+
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
-	chrt, err := h.buildHelmChart(contentFS, ext)
+	chrt, err := h.buildHelmChart(ctx, contentFS, ext)
 	if err != nil {
 		return nil, "", err
 	}
-	values := chartutil.Values{}
+	valuesMap, err := h.configValues(ctx, ext)
+	if err != nil {
+		return nil, "", err
+	}
+	values := chartutil.Values{"Values": valuesMap}
 
 	post := &postrenderer{
 		labels: objectLabels,
@@ -203,7 +252,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	return relObjects, state, nil
 }
 
-func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
+func (h *Helm) buildHelmChart(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 	if h.BundleToHelmChartConverter == nil {
 		return nil, errors.New("BundleToHelmChartConverter is nil")
 	}
@@ -222,7 +271,12 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 		}
 	}
 
-	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace)
+	cfg, err := h.configValues(ctx, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.BundleToHelmChartConverter.ToHelmChartWithConfig(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace, cfg)
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {

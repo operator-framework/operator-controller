@@ -61,6 +61,8 @@ type Options struct {
 	TargetNamespaces    []string
 	UniqueNameGenerator UniqueNameGenerator
 	CertificateProvider CertificateProvider
+	// Config holds arbitrary configuration values provided at render time
+	Config map[string]interface{}
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -91,6 +93,13 @@ type Option func(*Options)
 func WithTargetNamespaces(namespaces ...string) Option {
 	return func(o *Options) {
 		o.TargetNamespaces = namespaces
+	}
+}
+
+// WithConfig supplies configuration values to be used during bundle rendering
+func WithConfig(cfg map[string]interface{}) Option {
+	return func(o *Options) {
+		o.Config = cfg
 	}
 }
 

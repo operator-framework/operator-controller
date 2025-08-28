@@ -17,7 +17,14 @@ type BundleToHelmChartConverter struct {
 	IsWebhookSupportEnabled bool
 }
 
+// ToHelmChart is retained for compatibility and forwards to ToHelmChartWithConfig with a nil config.
 func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+	return r.ToHelmChartWithConfig(bundle, installNamespace, watchNamespace, nil)
+}
+
+// ToHelmChartWithConfig converts a registry+v1 bundle into a Helm chart and accepts
+// an optional configuration map that will be supplied to the render pipeline.
+func (r *BundleToHelmChartConverter) ToHelmChartWithConfig(bundle source.BundleSource, installNamespace string, watchNamespace string, cfg map[string]interface{}) (*chart.Chart, error) {
 	rv1, err := bundle.GetBundle()
 	if err != nil {
 		return nil, err
@@ -43,6 +50,7 @@ func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, ins
 		rv1, installNamespace,
 		render.WithTargetNamespaces(watchNamespace),
 		render.WithCertificateProvider(r.CertificateProvider),
+		render.WithConfig(cfg),
 	)
 
 	if err != nil {
