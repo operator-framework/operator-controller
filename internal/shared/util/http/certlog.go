@@ -122,7 +122,16 @@ func logFile(filename, path, action string, log logr.Logger) {
 		log.Error(err, "error in os.ReadFile()", "file", filepath)
 		return
 	}
-	logPem(data, filename, path, action, log)
+	if len(data) > 0 {
+		logPem(data, filename, path, action, log)
+		return
+	}
+	// Indicate that the file is empty
+	args := []any{"file", filename, "empty", "true"}
+	if path != "" {
+		args = append(args, "directory", path)
+	}
+	log.V(defaultLogLevel).Info(action, args...)
 }
 
 func logPem(data []byte, filename, path, action string, log logr.Logger) {

@@ -35,7 +35,7 @@ func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 			log.V(defaultLogLevel).Info("skip directory", "name", e.Name())
 			continue
 		}
-		log.V(defaultLogLevel).Info("load certificate", "name", e.Name(), "size", fi.Size(), "modtime", fi.ModTime())
+		log.V(defaultLogLevel).Info("reading certificate file", "name", e.Name(), "size", fi.Size(), "modtime", fi.ModTime())
 		data, err := os.ReadFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("error reading cert file %q: %w", file, err)
@@ -44,7 +44,7 @@ func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 		if caCertPool.AppendCertsFromPEM(data) {
 			count++
 		}
-		logPem(data, e.Name(), caDir, "loading certificate file", log)
+		logPem(data, e.Name(), caDir, "loading certificate", log)
 	}
 
 	// Found no certs!
