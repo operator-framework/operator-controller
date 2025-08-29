@@ -559,8 +559,8 @@ func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testin
 				},
 			},
 			BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{
-				fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-					require.Equal(t, expectedWatchNamespace, watchNamespace)
+				fn: func(bundle source.BundleSource, config map[string]interface{}) (*chart.Chart, error) {
+					require.Equal(t, expectedWatchNamespace, config["watchNamespace"])
 					return nil, nil
 				},
 			},
@@ -597,8 +597,8 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 				},
 			},
 			BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{
-				fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-					require.Equal(t, expectedWatchNamespace, watchNamespace)
+				fn: func(bundle source.BundleSource, config map[string]interface{}) (*chart.Chart, error) {
+					require.Equal(t, expectedWatchNamespace, config["watchNamespace"])
 					return nil, nil
 				},
 			},
@@ -617,7 +617,7 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 				},
 			},
 			BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{
-				fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+				fn: func(bundle source.BundleSource, config map[string]interface{}) (*chart.Chart, error) {
 					return nil, errors.New("some error")
 				},
 			},
@@ -629,9 +629,9 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 }
 
 type fakeBundleToHelmChartConverter struct {
-	fn func(source.BundleSource, string, string) (*chart.Chart, error)
+	fn func(source.BundleSource, map[string]interface{}) (*chart.Chart, error)
 }
 
-func (f fakeBundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-	return f.fn(bundle, installNamespace, watchNamespace)
+func (f fakeBundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, config map[string]interface{}) (*chart.Chart, error) {
+	return f.fn(bundle, config)
 }

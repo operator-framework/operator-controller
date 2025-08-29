@@ -97,7 +97,7 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 	}
 
 	// Convert RegistryV1 to plain manifests
-	objs, err := registryv1.Renderer.Render(regv1, installNamespace, render.WithTargetNamespaces(watchNamespace))
+	objs, err := registryv1.Renderer.Render(regv1, render.WithInstallNamespace(installNamespace), render.WithTargetNamespaces(watchNamespace))
 	if err != nil {
 		return fmt.Errorf("error converting registry+v1 bundle: %w", err)
 	}

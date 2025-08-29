@@ -7,6 +7,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 
+	bundlepkg "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
@@ -17,11 +18,23 @@ type BundleToHelmChartConverter struct {
 	IsWebhookSupportEnabled bool
 }
 
-func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, config map[string]interface{}) (*chart.Chart, error) {
 	rv1, err := bundle.GetBundle()
 	if err != nil {
 		return nil, err
 	}
+
+	// Convert config map to render options
+	var opts []render.Option
+	if config != nil {
+		if installNs, ok := config[bundlepkg.BundleConfigInstallNamespaceKey].(string); ok {
+			opts = append(opts, render.WithInstallNamespace(installNs))
+		}
+		if watchNs, ok := config[bundlepkg.BundleConfigWatchNamespaceKey].(string); ok {
+			opts = append(opts, render.WithTargetNamespaces(watchNs))
+		}
+	}
+	opts = append(opts, render.WithCertificateProvider(r.CertificateProvider))
 
 	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
 		return nil, fmt.Errorf("unsupported bundle: apiServiceDefintions are not supported")
@@ -39,11 +52,7 @@ func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, ins
 		return nil, fmt.Errorf("unsupported bundle: webhookDefinitions are not supported")
 	}
 
-	objs, err := r.BundleRenderer.Render(
-		rv1, installNamespace,
-		render.WithTargetNamespaces(watchNamespace),
-		render.WithCertificateProvider(r.CertificateProvider),
-	)
+	objs, err := r.BundleRenderer.Render(rv1, opts...)
 
 	if err != nil {
 		return nil, fmt.Errorf("error rendering bundle: %w", err)

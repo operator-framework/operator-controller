@@ -74,19 +74,32 @@ func (o *Options) apply(opts ...Option) *Options {
 
 func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 	var errs []error
+	if o.InstallNamespace == "" {
+		errs = append(errs, errors.New("install namespace must be specified"))
+	}
 	if len(o.TargetNamespaces) == 0 {
 		errs = append(errs, errors.New("at least one target namespace must be specified"))
 	}
 	if o.UniqueNameGenerator == nil {
 		errs = append(errs, errors.New("unique name generator must be specified"))
 	}
-	if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
-		errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
+	// Only validate target namespaces if install namespace is provided
+	// so that only one error is returned when install namespace is not provided
+	if o.InstallNamespace != "" {
+		if err := validateTargetNamespaces(rv1, o.InstallNamespace, o.TargetNamespaces); err != nil {
+			errs = append(errs, fmt.Errorf("invalid target namespaces %v: %w", o.TargetNamespaces, err))
+		}
 	}
 	return o, errs
 }
 
 type Option func(*Options)
+
+func WithInstallNamespace(namespace string) Option {
+	return func(o *Options) {
+		o.InstallNamespace = namespace
+	}
+}
 
 func WithTargetNamespaces(namespaces ...string) Option {
 	return func(o *Options) {
@@ -111,7 +124,7 @@ type BundleRenderer struct {
 	ResourceGenerators []ResourceGenerator
 }
 
-func (r BundleRenderer) Render(rv1 bundle.RegistryV1, installNamespace string, opts ...Option) ([]client.Object, error) {
+func (r BundleRenderer) Render(rv1 bundle.RegistryV1, opts ...Option) ([]client.Object, error) {
 	// validate bundle
 	if err := r.BundleValidator.Validate(&rv1); err != nil {
 		return nil, err
@@ -120,7 +133,6 @@ func (r BundleRenderer) Render(rv1 bundle.RegistryV1, installNamespace string, o
 	// generate bundle objects
 	genOpts, errs := (&Options{
 		// default options
-		InstallNamespace:    installNamespace,
 		TargetNamespaces:    []string{metav1.NamespaceAll},
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
 		CertificateProvider: nil,
