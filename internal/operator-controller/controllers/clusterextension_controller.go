@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
-	"time"
 
 	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/release"
@@ -156,15 +155,13 @@ func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.C
 		cond := apimeta.FindStatusCondition(ext.Status.Conditions, condType)
 		if cond == nil {
 			// Create a new condition with a valid reason and add it
-			newCond := metav1.Condition{
+			SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 				Type:               condType,
 				Status:             metav1.ConditionFalse,
 				Reason:             string(reason),
 				Message:            message,
 				ObservedGeneration: ext.GetGeneration(),
-				LastTransitionTime: metav1.NewTime(time.Now()),
-			}
-			ext.Status.Conditions = append(ext.Status.Conditions, newCond)
+			})
 		}
 	}
 }
@@ -381,7 +378,7 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, bundleName string, depreca
 	if len(deprecationMessages) > 0 {
 		status, reason, message = metav1.ConditionTrue, ocv1.ReasonDeprecated, strings.Join(deprecationMessages, ";")
 	}
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1.TypeDeprecated,
 		Reason:             reason,
 		Status:             status,
@@ -403,7 +400,7 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, bundleName string, depreca
 				message = fmt.Sprintf("%s\n%s", message, entry.Message)
 			}
 		}
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 			Type:               conditionType,
 			Reason:             reason,
 			Status:             status,
