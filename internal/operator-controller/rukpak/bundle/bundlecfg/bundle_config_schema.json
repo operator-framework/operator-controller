@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/config",
+    "properties":
+    {
+        "watchNamespace":
+        {
+            "type": "string"
+        }
+    },
+    "additionalProperties": false,
+    "type": "object"
+}
