@@ -20,8 +20,8 @@ import (
 
 const (
 	minJustificationLength        = 40
-	catalogdManagerSelector       = "control-plane=catalogd-controller-manager"
-	operatorManagerSelector       = "control-plane=operator-controller-controller-manager"
+	catalogdManagerSelector       = "app.kubernetes.io/name=catalogd"
+	operatorManagerSelector       = "app.kubernetes.io/name=operator-controller"
 	catalogdMetricsPort           = 7443
 	catalogdWebhookPort           = 9443
 	catalogServerPort             = 8443
@@ -88,7 +88,7 @@ var prometheuSpec = allowedPolicyDefinition{
 // Ref: https://docs.google.com/document/d/1bHEEWzA65u-kjJFQRUY1iBuMIIM1HbPy4MeDLX4NI3o/edit?usp=sharing
 var allowedNetworkPolicies = map[string]allowedPolicyDefinition{
 	"catalogd-controller-manager": {
-		selector:    metav1.LabelSelector{MatchLabels: map[string]string{"control-plane": "catalogd-controller-manager"}},
+		selector:    metav1.LabelSelector{MatchLabels: map[string]string{"app.kubernetes.io/name": "catalogd"}},
 		policyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
 		ingressRule: ingressRule{
 			ports: []portWithJustification{
@@ -116,7 +116,7 @@ var allowedNetworkPolicies = map[string]allowedPolicyDefinition{
 		},
 	},
 	"operator-controller-controller-manager": {
-		selector:    metav1.LabelSelector{MatchLabels: map[string]string{"control-plane": "operator-controller-controller-manager"}},
+		selector:    metav1.LabelSelector{MatchLabels: map[string]string{"app.kubernetes.io/name": "operator-controller"}},
 		policyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
 		ingressRule: ingressRule{
 			ports: []portWithJustification{
