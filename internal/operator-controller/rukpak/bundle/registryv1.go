@@ -7,6 +7,10 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
+const (
+	BundleConfigWatchNamespaceKey = "watchNamespace"
+)
+
 type RegistryV1 struct {
 	PackageName string
 	CSV         v1alpha1.ClusterServiceVersion

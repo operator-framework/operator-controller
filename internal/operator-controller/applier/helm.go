@@ -27,6 +27,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
@@ -57,7 +58,7 @@ type Preflight interface {
 }
 
 type BundleToHelmChartConverter interface {
-	ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error)
+	ToHelmChart(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error)
 }
 
 type Helm struct {
@@ -222,7 +223,10 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 		}
 	}
 
-	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, watchNamespace)
+	bundleConfig := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: watchNamespace,
+	}
+	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, bundleConfig)
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {
