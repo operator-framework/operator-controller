@@ -28,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
+	registryv1Bundle "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 )
@@ -559,8 +560,8 @@ func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testin
 				},
 			},
 			BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{
-				fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-					require.Equal(t, expectedWatchNamespace, watchNamespace)
+				fn: func(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error) {
+					require.Equal(t, expectedWatchNamespace, config[registryv1Bundle.BundleConfigWatchNamespaceKey])
 					return nil, nil
 				},
 			},
@@ -574,7 +575,7 @@ func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testin
 				Config: &ocv1.ClusterExtensionConfig{
 					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
 					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(fmt.Sprintf(`{"watchNamespace":"%s"}`, expectedWatchNamespace)),
+						Raw: []byte(fmt.Sprintf(`{"%s":"%s"}`, registryv1Bundle.BundleConfigWatchNamespaceKey, expectedWatchNamespace)),
 					},
 				},
 			},
@@ -597,8 +598,8 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 				},
 			},
 			BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{
-				fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-					require.Equal(t, expectedWatchNamespace, watchNamespace)
+				fn: func(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error) {
+					require.Equal(t, expectedWatchNamespace, config[registryv1Bundle.BundleConfigWatchNamespaceKey])
 					return nil, nil
 				},
 			},
@@ -617,7 +618,7 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 				},
 			},
 			BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{
-				fn: func(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
+				fn: func(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error) {
 					return nil, errors.New("some error")
 				},
 			},
@@ -629,9 +630,9 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 }
 
 type fakeBundleToHelmChartConverter struct {
-	fn func(source.BundleSource, string, string) (*chart.Chart, error)
+	fn func(source.BundleSource, string, map[string]interface{}) (*chart.Chart, error)
 }
 
-func (f fakeBundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, watchNamespace string) (*chart.Chart, error) {
-	return f.fn(bundle, installNamespace, watchNamespace)
+func (f fakeBundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error) {
+	return f.fn(bundle, installNamespace, config)
 }

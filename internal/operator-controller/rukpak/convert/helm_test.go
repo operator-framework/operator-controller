@@ -24,7 +24,10 @@ func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleSourceFailures(t *
 	var failingBundleSource FakeBundleSource = func() (bundle.RegistryV1, error) {
 		return bundle.RegistryV1{}, errors.New("some error")
 	}
-	_, err := converter.ToHelmChart(failingBundleSource, "install-namespace", "watch-namespace")
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: "watch-namespace",
+	}
+	_, err := converter.ToHelmChart(failingBundleSource, "install-namespace", config)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "some error")
 }
@@ -46,7 +49,10 @@ func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleRendererFailures(t
 		},
 	)
 
-	_, err := converter.ToHelmChart(b, "install-namespace", "")
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: "",
+	}
+	_, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "some error")
 }
@@ -60,7 +66,10 @@ func Test_BundleToHelmChartConverter_ToHelmChart_NoAPIServiceDefinitions(t *test
 		},
 	)
 
-	_, err := converter.ToHelmChart(b, "install-namespace", "")
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: "",
+	}
+	_, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported bundle: apiServiceDefintions are not supported")
 }
@@ -76,7 +85,10 @@ func Test_BundleToHelmChartConverter_ToHelmChart_NoWebhooksWithoutCertProvider(t
 		},
 	)
 
-	_, err := converter.ToHelmChart(b, "install-namespace", "")
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: "",
+	}
+	_, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 }
@@ -92,7 +104,10 @@ func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksSupportDisabled(t *test
 		},
 	)
 
-	_, err := converter.ToHelmChart(b, "install-namespace", "")
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: "",
+	}
+	_, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 }
@@ -112,7 +127,10 @@ func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksWithCertProvider(t *tes
 		},
 	)
 
-	_, err := converter.ToHelmChart(b, "install-namespace", "")
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: "",
+	}
+	_, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.NoError(t, err)
 }
 
@@ -142,7 +160,10 @@ func Test_BundleToHelmChartConverter_ToHelmChart_BundleRendererIntegration(t *te
 		},
 	)
 
-	_, err := converter.ToHelmChart(b, expectedInstallNamespace, expectedWatchNamespace)
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: expectedWatchNamespace,
+	}
+	_, err := converter.ToHelmChart(b, expectedInstallNamespace, config)
 	require.NoError(t, err)
 }
 
@@ -181,7 +202,10 @@ func Test_BundleToHelmChartConverter_ToHelmChart_Success(t *testing.T) {
 		},
 	)
 
-	chart, err := converter.ToHelmChart(b, "install-namespace", "")
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: "",
+	}
+	chart, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.NoError(t, err)
 	require.NotNil(t, chart)
 	require.NotNil(t, chart.Metadata)
