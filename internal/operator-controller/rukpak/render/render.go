@@ -159,10 +159,13 @@ func validateTargetNamespaces(rv1 *bundle.RegistryV1, installNamespace string, t
 		}
 		return fmt.Errorf("supported install modes %v do not support targeting all namespaces", sets.List(supportedInstallModes))
 	case set.Len() == 1 && !set.Has(""):
-		if supportedInstallModes.Has(v1alpha1.InstallModeTypeSingleNamespace) {
+		if targetNamespaces[0] == installNamespace {
+			if !supportedInstallModes.Has(v1alpha1.InstallModeTypeOwnNamespace) {
+				return fmt.Errorf("supported install modes %v do not support targeting own namespace", sets.List(supportedInstallModes))
+			}
 			return nil
 		}
-		if supportedInstallModes.Has(v1alpha1.InstallModeTypeOwnNamespace) && targetNamespaces[0] == installNamespace {
+		if supportedInstallModes.Has(v1alpha1.InstallModeTypeSingleNamespace) {
 			return nil
 		}
 	default:

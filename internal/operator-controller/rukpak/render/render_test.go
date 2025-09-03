@@ -213,7 +213,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 			opts: []render.Option{
 				render.WithTargetNamespaces("install-namespace"),
 			},
-			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [AllNamespaces] do not support target namespaces [install-namespace]"),
+			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [AllNamespaces] do not support targeting own namespace"),
 		}, {
 			name:             "rejects install out of own namespace if only OwnNamespace install mode is supported",
 			installNamespace: "install-namespace",
@@ -266,6 +266,14 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 			opts: []render.Option{
 				render.WithTargetNamespaces("some-namespace"),
 			},
+		}, {
+			name:             "rejects single namespace render if OwnNamespace install mode is unsupported and targets own namespace",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("install-namespace"),
+			},
+			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [SingleNamespace] do not support targeting own namespace"),
 		}, {
 			name:             "accepts multi namespace render if MultiNamespace install mode is supported",
 			installNamespace: "install-namespace",
