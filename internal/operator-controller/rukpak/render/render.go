@@ -85,9 +85,14 @@ func (o *Options) validate(rv1 *bundle.RegistryV1) (*Options, []error) {
 
 type Option func(*Options)
 
+// WithTargetNamespaces sets the target namespaces to be used when rendering the bundle
+// The value will only be used if len(namespaces) > 0. Otherwise, the default value for the bundle
+// derived from its install mode support will be used (if such a value can be defined).
 func WithTargetNamespaces(namespaces ...string) Option {
 	return func(o *Options) {
-		o.TargetNamespaces = namespaces
+		if len(namespaces) > 0 {
+			o.TargetNamespaces = namespaces
+		}
 	}
 }
 
@@ -149,6 +154,14 @@ func validateTargetNamespaces(rv1 *bundle.RegistryV1, installNamespace string, t
 	set := sets.New[string](targetNamespaces...)
 	switch {
 	case set.Len() == 0:
+		// Note: this function generally expects targetNamespace to contain at least one value set by default
+		// in case the user does not specify the value. The option to set the targetNamespace is a no-op if it is empty.
+		// The only case for which a default targetNamespace is undefined is in the case of a bundle that only
+		// supports SingleNamespace install mode. The if statement here is added to provide a more friendly error
+		// message than just the generic (at least one target namespace must be specified) which would occur
+		// in case only the MultiNamespace install mode is supported by the bundle.
+		// If AllNamespaces mode is supported, the default will be [""] -> watch all namespaces
+		// If only OwnNamespace is supported, the default will be [install-namespace] -> only watch the install/own namespace
 		if supportedInstallModes.Len() == 1 && supportedInstallModes.Has(v1alpha1.InstallModeTypeSingleNamespace) {
 			return errors.New("exactly one target namespace must be specified")
 		}
@@ -169,6 +182,9 @@ func validateTargetNamespaces(rv1 *bundle.RegistryV1, installNamespace string, t
 			return nil
 		}
 	default:
+		if !supportedInstallModes.Has(v1alpha1.InstallModeTypeOwnNamespace) && set.Has(installNamespace) {
+			return fmt.Errorf("supported install modes %v do not support targeting own namespace", sets.List(supportedInstallModes))
+		}
 		if supportedInstallModes.Has(v1alpha1.InstallModeTypeMultiNamespace) && !set.Has("") {
 			return nil
 		}

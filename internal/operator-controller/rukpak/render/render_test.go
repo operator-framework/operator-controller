@@ -42,136 +42,23 @@ func Test_BundleRenderer_ValidatesBundle(t *testing.T) {
 	require.Contains(t, err.Error(), "this bundle is invalid")
 }
 
-func Test_BundleRenderer_CreatesCorrectRenderOptions_WithDefaults(t *testing.T) {
-	const (
-		expectedInstallNamespace = "install-namespace"
-	)
+func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
+	expectedInstallNamespace := "install-namespace"
+	expectedTargetNamespaces := []string{""}
+	expectedUniqueNameGenerator := render.DefaultUniqueNameGenerator
 
-	for _, tc := range []struct {
-		name                   string
-		csv                    v1alpha1.ClusterServiceVersion
-		validate               func(t *testing.T, opts render.Options)
-		expectedErrMsgFragment string
-	}{
-		{
-			name: "sets install-namespace correctly",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
-			validate: func(t *testing.T, opts render.Options) {
+	renderer := render.BundleRenderer{
+		ResourceGenerators: []render.ResourceGenerator{
+			func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 				require.Equal(t, expectedInstallNamespace, opts.InstallNamespace)
+				require.Equal(t, expectedTargetNamespaces, opts.TargetNamespaces)
+				require.Equal(t, reflect.ValueOf(expectedUniqueNameGenerator).Pointer(), reflect.ValueOf(render.DefaultUniqueNameGenerator).Pointer(), "options has unexpected default unique name generator")
+				return nil, nil
 			},
-		}, {
-			name: "uses DefaultUniqueNameGenerator by default",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, reflect.ValueOf(render.DefaultUniqueNameGenerator).Pointer(), reflect.ValueOf(opts.UniqueNameGenerator).Pointer(), "options has unexpected default unique name generator")
-			},
-		}, {
-			name: "sets target namespaces to [corev1.NamespaceAll] by default if bundle supports install modes [AllNamespaces]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{corev1.NamespaceAll}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [corev1.NamespaceAll] by default if bundle supports install modes [AllNamespaces, SingleNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{corev1.NamespaceAll}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [corev1.NamespaceAll] by default if bundle supports install modes [AllNamespaces, OwnNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{corev1.NamespaceAll}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [corev1.NamespaceAll] by default if bundle supports install modes [AllNamespaces, MultiNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeMultiNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{corev1.NamespaceAll}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [corev1.NamespaceAll] by default if bundle supports install modes [AllNamespaces, OwnNamespace, SingleNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeSingleNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{corev1.NamespaceAll}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [corev1.NamespaceAll] by default if bundle supports install modes [AllNamespaces, OwnNamespace, MultiNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{corev1.NamespaceAll}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [corev1.NamespaceAll] by default if bundle supports install modes [AllNamespaces, SingleNamespace, MultiNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{corev1.NamespaceAll}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [corev1.NamespaceAll] by default if bundle supports install modes [AllNamespaces, SingleNamespace, OwnNamespace, MultiNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{corev1.NamespaceAll}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [install-namespace] by default if bundle supports install modes [OwnNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{expectedInstallNamespace}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [install-namespace] by default if bundle supports install modes [OwnNamespace, SingleNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeSingleNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{expectedInstallNamespace}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [install-namespace] by default if bundle supports install modes [OwnNamespace, MultiNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{expectedInstallNamespace}, opts.TargetNamespaces)
-			},
-		}, {
-			name: "sets target namespaces to [install-namespace] by default if bundle supports install modes [OwnNamespace, SingleNamespace, MultiNamespace]",
-			csv:  MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace)),
-			validate: func(t *testing.T, opts render.Options) {
-				require.Equal(t, []string{expectedInstallNamespace}, opts.TargetNamespaces)
-			},
-		}, {
-			name:                   "returns error if target namespaces is not set bundle supports install modes [SingleNamespace]",
-			csv:                    MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
-			expectedErrMsgFragment: "exactly one target namespace must be specified",
-		}, {
-			name:                   "returns error if target namespaces is not set bundle supports install modes [MultiNamespace]",
-			csv:                    MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace)),
-			expectedErrMsgFragment: "at least one target namespace must be specified",
-		}, {
-			name:                   "returns error if target namespaces is not set bundle supports install modes [SingleNamespace, MultiNamespace]",
-			csv:                    MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace)),
-			expectedErrMsgFragment: "at least one target namespace must be specified",
 		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			renderer := render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						tc.validate(t, opts)
-						return nil, nil
-					},
-				},
-			}
-
-			_, err := renderer.Render(bundle.RegistryV1{
-				CSV: tc.csv,
-			}, expectedInstallNamespace)
-			if tc.expectedErrMsgFragment == "" {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.expectedErrMsgFragment)
-			}
-		})
 	}
+
+	_, _ = renderer.Render(bundle.RegistryV1{}, expectedInstallNamespace)
 }
 
 func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
@@ -183,13 +70,12 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		err              error
 	}{
 		{
-			name:             "rejects empty targetNamespaces",
+			name:             "accepts empty targetNamespaces (because it is ignored)",
 			installNamespace: "install-namespace",
 			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
 			opts: []render.Option{
 				render.WithTargetNamespaces(),
 			},
-			err: errors.New("invalid option(s): invalid target namespaces []: at least one target namespace must be specified"),
 		}, {
 			name:             "rejects nil unique name generator",
 			installNamespace: "install-namespace",
@@ -267,20 +153,20 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 				render.WithTargetNamespaces("some-namespace"),
 			},
 		}, {
-			name:             "rejects single namespace render if OwnNamespace install mode is unsupported and targets own namespace",
-			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
-			opts: []render.Option{
-				render.WithTargetNamespaces("install-namespace"),
-			},
-			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [SingleNamespace] do not support targeting own namespace"),
-		}, {
 			name:             "accepts multi namespace render if MultiNamespace install mode is supported",
 			installNamespace: "install-namespace",
 			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace)),
 			opts: []render.Option{
 				render.WithTargetNamespaces("n1", "n2", "n3"),
 			},
+		}, {
+			name:             "reject multi namespace render if OwnNamespace install mode is not supported and target namespaces include install namespace",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("n1", "n2", "n3", "install-namespace"),
+			},
+			err: errors.New("invalid option(s): invalid target namespaces [n1 n2 n3 install-namespace]: supported install modes [MultiNamespace] do not support targeting own namespace"),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
