@@ -1,24 +1,30 @@
-package util_test
+package hash_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
+	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
+
+type unmarshalable struct{}
+
+func (u *unmarshalable) MarshalJSON() ([]byte, error) {
+	return nil, errors.New("unmarshalable")
+}
 
 func TestDeepHashObject(t *testing.T) {
 	tests := []struct {
 		name         string
-		wantErr      bool
+		wantPanic    bool
 		obj          interface{}
 		expectedHash string
 	}{
 		{
-			name:    "populated obj with exported fields",
-			wantErr: false,
+			name: "populated obj with exported fields",
 			obj: struct {
 				Str string
 				Num int
@@ -37,8 +43,7 @@ func TestDeepHashObject(t *testing.T) {
 			expectedHash: "gta1bt5sybll5qjqxdiekmjm7py93glrinmnrfb31fj",
 		},
 		{
-			name:    "modified populated obj with exported fields",
-			wantErr: false,
+			name: "modified populated obj with exported fields",
 			obj: struct {
 				Str string
 				Num int
@@ -57,8 +62,7 @@ func TestDeepHashObject(t *testing.T) {
 			expectedHash: "1ftn1z2ieih8hsmi2a8c6mkoef6uodrtn4wtt1qapioh",
 		},
 		{
-			name:    "populated obj with unexported fields",
-			wantErr: false,
+			name: "populated obj with unexported fields",
 			obj: struct {
 				str string
 				num int
@@ -80,37 +84,41 @@ func TestDeepHashObject(t *testing.T) {
 			// The JSON encoder requires exported fields or it will generate
 			// the same hash as a completely empty object
 			name:         "empty obj",
-			wantErr:      false,
 			obj:          struct{}{},
 			expectedHash: "16jfjhihxbzhfhs1k5mimq740kvioi98pfbea9q6qtf9",
 		},
 		{
 			name:         "string a",
-			wantErr:      false,
 			obj:          "a",
 			expectedHash: "1lu1qv1451mq7gv9upu1cx8ffffi07rel5xvbvvc44dh",
 		},
 		{
 			name:         "string b",
-			wantErr:      false,
 			obj:          "b",
 			expectedHash: "1ija85ah4gd0beltpfhszipkxfyqqxhp94tf2mjfgq61",
 		},
 		{
 			name:         "nil obj",
-			wantErr:      false,
 			obj:          nil,
 			expectedHash: "2im0kl1kwvzn46sr4cdtkvmdzrlurvj51xdzhwdht8l0",
+		},
+		{
+			name:      "unmarshalable obj",
+			obj:       &unmarshalable{},
+			wantPanic: true,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			hash, err := util.DeepHashObject(tc.obj)
-			if tc.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+			test := func() {
+				hash := hashutil.DeepHashObject(tc.obj)
 				assert.Equal(t, tc.expectedHash, hash)
+			}
+
+			if tc.wantPanic {
+				require.Panics(t, test)
+			} else {
+				require.NotPanics(t, test)
 			}
 		})
 	}

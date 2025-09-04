@@ -12,6 +12,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
+	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
 
 // BundleValidator validates a RegistryV1 bundle by executing a series of
@@ -54,7 +55,7 @@ func (r ResourceGenerators) ResourceGenerator() ResourceGenerator {
 	return r.GenerateResources
 }
 
-type UniqueNameGenerator func(string, interface{}) (string, error)
+type UniqueNameGenerator func(string, interface{}) string
 
 type Options struct {
 	InstallNamespace    string
@@ -140,12 +141,9 @@ func (r BundleRenderer) Render(rv1 bundle.RegistryV1, installNamespace string, o
 	return objs, nil
 }
 
-func DefaultUniqueNameGenerator(base string, o interface{}) (string, error) {
-	hashStr, err := util.DeepHashObject(o)
-	if err != nil {
-		return "", err
-	}
-	return util.ObjectNameForBaseAndSuffix(base, hashStr), nil
+func DefaultUniqueNameGenerator(base string, o interface{}) string {
+	hashStr := hashutil.DeepHashObject(o)
+	return util.ObjectNameForBaseAndSuffix(base, hashStr)
 }
 
 func validateTargetNamespaces(rv1 *bundle.RegistryV1, installNamespace string, targetNamespaces []string) error {

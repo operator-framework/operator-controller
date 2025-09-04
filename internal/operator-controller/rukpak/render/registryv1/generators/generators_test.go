@@ -352,8 +352,8 @@ func Test_BundleCSVDeploymentGenerator_FailsOnNil(t *testing.T) {
 }
 
 func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
-	fakeUniqueNameGenerator := func(base string, _ interface{}) (string, error) {
-		return base, nil
+	fakeUniqueNameGenerator := func(base string, _ interface{}) string {
+		return base
 	}
 
 	for _, tc := range []struct {
@@ -786,8 +786,8 @@ func Test_BundleCSVPermissionGenerator_FailsOnNil(t *testing.T) {
 }
 
 func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
-	fakeUniqueNameGenerator := func(base string, _ interface{}) (string, error) {
-		return base, nil
+	fakeUniqueNameGenerator := func(base string, _ interface{}) string {
+		return base
 	}
 
 	for _, tc := range []struct {
