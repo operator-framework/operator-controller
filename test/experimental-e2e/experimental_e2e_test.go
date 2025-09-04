@@ -180,7 +180,7 @@ func TestWebhookSupport(t *testing.T) {
 	t.Log("By waiting for webhook-operator deployment to be available")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		deployment := &appsv1.Deployment{}
-		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Namespace: namespace.GetName(), Name: "webhook-operator-webhook"}, deployment))
+		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Namespace: namespace.GetName(), Name: "webhook-operator-controller-manager"}, deployment))
 		available := false
 		for _, cond := range deployment.Status.Conditions {
 			if cond.Type == appsv1.DeploymentAvailable {
