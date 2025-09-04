@@ -70,13 +70,12 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		err              error
 	}{
 		{
-			name:             "rejects empty targetNamespaces",
+			name:             "accepts empty targetNamespaces (because it is ignored)",
 			installNamespace: "install-namespace",
 			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
 			opts: []render.Option{
 				render.WithTargetNamespaces(),
 			},
-			err: errors.New("invalid option(s): at least one target namespace must be specified"),
 		}, {
 			name:             "rejects nil unique name generator",
 			installNamespace: "install-namespace",
@@ -100,7 +99,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 			opts: []render.Option{
 				render.WithTargetNamespaces("install-namespace"),
 			},
-			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [AllNamespaces] do not support target namespaces [install-namespace]"),
+			err: errors.New("invalid option(s): invalid target namespaces [install-namespace]: supported install modes [AllNamespaces] do not support targeting own namespace"),
 		}, {
 			name:             "rejects install out of own namespace if only OwnNamespace install mode is supported",
 			installNamespace: "install-namespace",
@@ -160,6 +159,14 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 			opts: []render.Option{
 				render.WithTargetNamespaces("n1", "n2", "n3"),
 			},
+		}, {
+			name:             "reject multi namespace render if OwnNamespace install mode is not supported and target namespaces include install namespace",
+			installNamespace: "install-namespace",
+			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace)),
+			opts: []render.Option{
+				render.WithTargetNamespaces("n1", "n2", "n3", "install-namespace"),
+			},
+			err: errors.New("invalid option(s): invalid target namespaces [n1 n2 n3 install-namespace]: supported install modes [MultiNamespace] do not support targeting own namespace"),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
