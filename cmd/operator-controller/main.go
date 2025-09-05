@@ -336,9 +336,26 @@ func run() error {
 		return err
 	}
 
-	certPoolWatcher, err := httputil.NewCertPoolWatcher(cfg.catalogdCasDir, ctrl.Log.WithName("cert-pool"))
+	cpwCatalogd, err := httputil.NewCertPoolWatcher(cfg.catalogdCasDir, ctrl.Log.WithName("catalogd-ca-pool"))
 	if err != nil {
-		setupLog.Error(err, "unable to create CA certificate pool")
+		setupLog.Error(err, "unable to create catalogd-ca-pool watcher")
+		return err
+	}
+	cpwCatalogd.Restart(os.Exit)
+	if err = mgr.Add(cpwCatalogd); err != nil {
+		setupLog.Error(err, "unable to add catalogd-ca-pool watcher to manager")
+		return err
+	}
+
+	// This watches the pullCasDir and the SSL_CERT_DIR, and SSL_CERT_FILE for changes
+	cpwPull, err := httputil.NewCertPoolWatcher(cfg.pullCasDir, ctrl.Log.WithName("pull-ca-pool"))
+	if err != nil {
+		setupLog.Error(err, "unable to create pull-ca-pool watcher")
+		return err
+	}
+	cpwPull.Restart(os.Exit)
+	if err = mgr.Add(cpwPull); err != nil {
+		setupLog.Error(err, "unable to add pull-ca-pool watcher to manager")
 		return err
 	}
 
@@ -392,7 +409,7 @@ func run() error {
 	}
 	catalogClientBackend := cache.NewFilesystemCache(catalogsCachePath)
 	catalogClient := catalogclient.New(catalogClientBackend, func() (*http.Client, error) {
-		return httputil.BuildHTTPClient(certPoolWatcher)
+		return httputil.BuildHTTPClient(cpwCatalogd)
 	})
 
 	resolver := &resolve.CatalogResolver{

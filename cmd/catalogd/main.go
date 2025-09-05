@@ -60,6 +60,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogd/webhook"
 	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
+	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 	"github.com/operator-framework/operator-controller/internal/shared/util/pullsecretcache"
 	sautil "github.com/operator-framework/operator-controller/internal/shared/util/sa"
@@ -288,6 +289,18 @@ func run(ctx context.Context) error {
 	err = mgr.Add(cw)
 	if err != nil {
 		setupLog.Error(err, "unable to add certificate watcher to manager")
+		return err
+	}
+
+	// This watches the pullCasDir and the SSL_CERT_DIR, and SSL_CERT_FILE for changes
+	cpwPull, err := httputil.NewCertPoolWatcher(cfg.pullCasDir, ctrl.Log.WithName("pull-ca-pool"))
+	if err != nil {
+		setupLog.Error(err, "unable to create pull-ca-pool watcher")
+		return err
+	}
+	cpwPull.Restart(os.Exit)
+	if err = mgr.Add(cpwPull); err != nil {
+		setupLog.Error(err, "unable to add pull-ca-pool watcher to manager")
 		return err
 	}
 
