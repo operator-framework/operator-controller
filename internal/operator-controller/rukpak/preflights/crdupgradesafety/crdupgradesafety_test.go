@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 )
@@ -194,7 +195,10 @@ func TestInstall(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			preflight := newMockPreflight(getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr)
-			err := preflight.Install(context.Background(), tc.release)
+			objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(tc.release)
+			if err == nil {
+				err = preflight.Install(context.Background(), objs)
+			}
 			if tc.requireErr != nil {
 				tc.requireErr(t, err)
 			} else {
@@ -370,7 +374,10 @@ func TestUpgrade(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			preflight := newMockPreflight(getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr)
-			err := preflight.Upgrade(context.Background(), tc.release)
+			objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(tc.release)
+			if err == nil {
+				err = preflight.Upgrade(context.Background(), objs)
+			}
 			if tc.requireErr != nil {
 				tc.requireErr(t, err)
 			} else {
