@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containers/image/v5/docker/reference"
+	"go.podman.io/image/v5/docker/reference"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
