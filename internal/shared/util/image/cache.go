@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/archive"
-	"github.com/containers/image/v5/docker/reference"
 	"github.com/google/renameio/v2"
 	"github.com/opencontainers/go-digest"
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/image/v5/docker/reference"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/registry"
 	"sigs.k8s.io/controller-runtime/pkg/log"
