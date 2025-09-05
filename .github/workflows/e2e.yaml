@@ -41,7 +41,7 @@ jobs:
           name: e2e-artifacts
           path: /tmp/artifacts/
 
-      - uses: codecov/codecov-action@v5.5.0
+      - uses: codecov/codecov-action@v5.5.1
         with:
           disable_search: true
           files: coverage/e2e.out
@@ -68,7 +68,7 @@ jobs:
           name: experimental-e2e-artifacts
           path: /tmp/artifacts/
 
-      - uses: codecov/codecov-action@v5.5.0
+      - uses: codecov/codecov-action@v5.5.1
         with:
           disable_search: true
           files: coverage/experimental-e2e.out
