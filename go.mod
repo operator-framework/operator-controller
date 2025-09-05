@@ -22,7 +22,7 @@ require (
 	github.com/operator-framework/api v0.34.0
 	github.com/operator-framework/helm-operator-plugins v0.8.0
 	github.com/operator-framework/operator-registry v1.57.0
-	github.com/prometheus/client_golang v1.23.1
+	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.66.1
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
