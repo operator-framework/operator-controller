@@ -363,6 +363,8 @@ _Appears in:_
 | `install` _[ClusterExtensionInstallStatus](#clusterextensioninstallstatus)_ | install is a representation of the current installation status for this ClusterExtension. |  |  |
 
 
+
+
 #### ImageSource
 
 

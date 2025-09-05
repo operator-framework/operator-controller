@@ -156,6 +156,11 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		require.True(ct, clusterCatalog.Status.LastUnpacked.After(catalogdManagerPod.CreationTimestamp.Time))
 	}, time.Minute, time.Second)
 
+	// TODO: if we change the underlying revision storage mechanism, the new version
+	//   will not detect any installed versions, we need to make sure that the upgrade
+	//   test fails across revision storage mechanism changes that are not also accompanied
+	//   by code that automatically migrates the revision storage.
+
 	t.Log("Checking that the ClusterExtension is installed")
 	var clusterExtension ocv1.ClusterExtension
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {

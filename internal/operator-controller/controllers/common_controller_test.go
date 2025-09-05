@@ -31,7 +31,7 @@ func TestSetStatusProgressing(t *testing.T) {
 				Type:    ocv1.TypeProgressing,
 				Status:  metav1.ConditionTrue,
 				Reason:  ocv1.ReasonSucceeded,
-				Message: "desired state reached",
+				Message: "Desired state reached",
 			},
 		},
 		{
@@ -162,7 +162,7 @@ func TestClusterExtensionInstallationFailureTruncation(t *testing.T) {
 		strings.Repeat("resource 'deployments/argocd-server' missing required label 'app.kubernetes.io/name', resource 'services/argocd-server-metrics' has invalid port configuration, resource 'configmaps/argocd-cm' contains invalid YAML in data field 'application.yaml'\n", 400)
 
 	ext := &ocv1.ClusterExtension{ObjectMeta: metav1.ObjectMeta{Name: "argocd-operator"}}
-	setInstalledStatusConditionFailed(ext, installError)
+	setInstalledStatusConditionFalse(ext, ocv1.ReasonFailed, installError)
 
 	cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
 	require.NotNil(t, cond)
