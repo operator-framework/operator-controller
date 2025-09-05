@@ -1,0 +1,15 @@
+{{- if .Values.options.openshift.enabled -}}
+{{- if or .Values.options.catalogd.enabled .Values.options.operatorController.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    config.openshift.io/inject-trusted-cabundle: "true"
+    app.kubernetes.io/name: {{ include "olmv1.label.name" . }}
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: {{ include "olmv1.label.name" . -}}-trusted-ca-bundle
+  namespace: {{ .Values.namespaces.olmv1.name }}
+{{- end -}}
+{{- end -}}

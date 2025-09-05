@@ -1,0 +1,590 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+    olm.operatorframework.io/generator: standard
+  name: clusterextensions.olm.operatorframework.io
+spec:
+  group: olm.operatorframework.io
+  names:
+    kind: ClusterExtension
+    listKind: ClusterExtensionList
+    plural: clusterextensions
+    singular: clusterextension
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.install.bundle.name
+      name: Installed Bundle
+      type: string
+    - jsonPath: .status.install.bundle.version
+      name: Version
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Installed')].status
+      name: Installed
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Progressing')].status
+      name: Progressing
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: ClusterExtension is the Schema for the clusterextensions API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec is an optional field that defines the desired state
+              of the ClusterExtension.
+            properties:
+              install:
+                description: |-
+                  install is an optional field used to configure the installation options
+                  for the ClusterExtension such as the pre-flight check configuration.
+                properties:
+                  preflight:
+                    description: |-
+                      preflight is an optional field that can be used to configure the checks that are
+                      run before installation or upgrade of the content for the package specified in the packageName field.
+
+                      When specified, it replaces the default preflight configuration for install/upgrade actions.
+                      When not specified, the default configuration will be used.
+                    properties:
+                      crdUpgradeSafety:
+                        description: |-
+                          crdUpgradeSafety is used to configure the CRD Upgrade Safety pre-flight
+                          checks that run prior to upgrades of installed content.
+
+                          The CRD Upgrade Safety pre-flight check safeguards from unintended
+                          consequences of upgrading a CRD, such as data loss.
+                        properties:
+                          enforcement:
+                            description: |-
+                              enforcement is a required field, used to configure the state of the CRD Upgrade Safety pre-flight check.
+
+                              Allowed values are "None" or "Strict". The default value is "Strict".
+
+                              When set to "None", the CRD Upgrade Safety pre-flight check will be skipped
+                              when performing an upgrade operation. This should be used with caution as
+                              unintended consequences such as data loss can occur.
+
+                              When set to "Strict", the CRD Upgrade Safety pre-flight check will be run when
+                              performing an upgrade operation.
+                            enum:
+                            - None
+                            - Strict
+                            type: string
+                        required:
+                        - enforcement
+                        type: object
+                    required:
+                    - crdUpgradeSafety
+                    type: object
+                    x-kubernetes-validations:
+                    - message: at least one of [crdUpgradeSafety] are required when
+                        preflight is specified
+                      rule: has(self.crdUpgradeSafety)
+                type: object
+                x-kubernetes-validations:
+                - message: at least one of [preflight] are required when install is
+                    specified
+                  rule: has(self.preflight)
+              namespace:
+                description: |-
+                  namespace is a reference to a Kubernetes namespace.
+                  This is the namespace in which the provided ServiceAccount must exist.
+                  It also designates the default namespace where namespace-scoped resources
+                  for the extension are applied to the cluster.
+                  Some extensions may contain namespace-scoped resources to be applied in other namespaces.
+                  This namespace must exist.
+
+                  namespace is required, immutable, and follows the DNS label standard
+                  as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),
+                  start and end with an alphanumeric character, and be no longer than 63 characters
+
+                  [RFC 1123]: https://tools.ietf.org/html/rfc1123
+                maxLength: 63
+                type: string
+                x-kubernetes-validations:
+                - message: namespace is immutable
+                  rule: self == oldSelf
+                - message: namespace must be a valid DNS1123 label
+                  rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+              serviceAccount:
+                description: |-
+                  serviceAccount is a reference to a ServiceAccount used to perform all interactions
+                  with the cluster that are required to manage the extension.
+                  The ServiceAccount must be configured with the necessary permissions to perform these interactions.
+                  The ServiceAccount must exist in the namespace referenced in the spec.
+                  serviceAccount is required.
+                properties:
+                  name:
+                    description: |-
+                      name is a required, immutable reference to the name of the ServiceAccount
+                      to be used for installation and management of the content for the package
+                      specified in the packageName field.
+
+                      This ServiceAccount must exist in the installNamespace.
+
+                      name follows the DNS subdomain standard as defined in [RFC 1123].
+                      It must contain only lowercase alphanumeric characters,
+                      hyphens (-) or periods (.), start and end with an alphanumeric character,
+                      and be no longer than 253 characters.
+
+                      Some examples of valid values are:
+                        - some-serviceaccount
+                        - 123-serviceaccount
+                        - 1-serviceaccount-2
+                        - someserviceaccount
+                        - some.serviceaccount
+
+                      Some examples of invalid values are:
+                        - -some-serviceaccount
+                        - some-serviceaccount-
+
+                      [RFC 1123]: https://tools.ietf.org/html/rfc1123
+                    maxLength: 253
+                    type: string
+                    x-kubernetes-validations:
+                    - message: name is immutable
+                      rule: self == oldSelf
+                    - message: name must be a valid DNS1123 subdomain. It must contain
+                        only lowercase alphanumeric characters, hyphens (-) or periods
+                        (.), start and end with an alphanumeric character, and be
+                        no longer than 253 characters
+                      rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
+                required:
+                - name
+                type: object
+              source:
+                description: |-
+                  source is a required field which selects the installation source of content
+                  for this ClusterExtension. Selection is performed by setting the sourceType.
+
+                  Catalog is currently the only implemented sourceType, and setting the
+                  sourcetype to "Catalog" requires the catalog field to also be defined.
+
+                  Below is a minimal example of a source definition (in yaml):
+
+                  source:
+                    sourceType: Catalog
+                    catalog:
+                      packageName: example-package
+                properties:
+                  catalog:
+                    description: |-
+                      catalog is used to configure how information is sourced from a catalog.
+                      This field is required when sourceType is "Catalog", and forbidden otherwise.
+                    properties:
+                      channels:
+                        description: |-
+                          channels is an optional reference to a set of channels belonging to
+                          the package specified in the packageName field.
+
+                          A "channel" is a package-author-defined stream of updates for an extension.
+
+                          Each channel in the list must follow the DNS subdomain standard
+                          as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
+                          hyphens (-) or periods (.), start and end with an alphanumeric character,
+                          and be no longer than 253 characters. No more than 256 channels can be specified.
+
+                          When specified, it is used to constrain the set of installable bundles and
+                          the automated upgrade path. This constraint is an AND operation with the
+                          version field. For example:
+                            - Given channel is set to "foo"
+                            - Given version is set to ">=1.0.0, <1.5.0"
+                            - Only bundles that exist in channel "foo" AND satisfy the version range comparison will be considered installable
+                            - Automatic upgrades will be constrained to upgrade edges defined by the selected channel
+
+                          When unspecified, upgrade edges across all channels will be used to identify valid automatic upgrade paths.
+
+                          Some examples of valid values are:
+                            - 1.1.x
+                            - alpha
+                            - stable
+                            - stable-v1
+                            - v1-stable
+                            - dev-preview
+                            - preview
+                            - community
+
+                          Some examples of invalid values are:
+                            - -some-channel
+                            - some-channel-
+                            - thisisareallylongchannelnamethatisgreaterthanthemaximumlength
+                            - original_40
+                            - --default-channel
+
+                          [RFC 1123]: https://tools.ietf.org/html/rfc1123
+                        items:
+                          maxLength: 253
+                          type: string
+                          x-kubernetes-validations:
+                          - message: channels entries must be valid DNS1123 subdomains
+                            rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
+                        maxItems: 256
+                        type: array
+                      packageName:
+                        description: |-
+                          packageName is a reference to the name of the package to be installed
+                          and is used to filter the content from catalogs.
+
+                          packageName is required, immutable, and follows the DNS subdomain standard
+                          as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
+                          hyphens (-) or periods (.), start and end with an alphanumeric character,
+                          and be no longer than 253 characters.
+
+                          Some examples of valid values are:
+                            - some-package
+                            - 123-package
+                            - 1-package-2
+                            - somepackage
+
+                          Some examples of invalid values are:
+                            - -some-package
+                            - some-package-
+                            - thisisareallylongpackagenamethatisgreaterthanthemaximumlength
+                            - some.package
+
+                          [RFC 1123]: https://tools.ietf.org/html/rfc1123
+                        maxLength: 253
+                        type: string
+                        x-kubernetes-validations:
+                        - message: packageName is immutable
+                          rule: self == oldSelf
+                        - message: packageName must be a valid DNS1123 subdomain.
+                            It must contain only lowercase alphanumeric characters,
+                            hyphens (-) or periods (.), start and end with an alphanumeric
+                            character, and be no longer than 253 characters
+                          rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
+                      selector:
+                        description: |-
+                          selector is an optional field that can be used
+                          to filter the set of ClusterCatalogs used in the bundle
+                          selection process.
+
+                          When unspecified, all ClusterCatalogs will be used in
+                          the bundle selection process.
+                        properties:
+                          matchExpressions:
+                            description: matchExpressions is a list of label selector
+                              requirements. The requirements are ANDed.
+                            items:
+                              description: |-
+                                A label selector requirement is a selector that contains values, a key, and an operator that
+                                relates the key and values.
+                              properties:
+                                key:
+                                  description: key is the label key that the selector
+                                    applies to.
+                                  type: string
+                                operator:
+                                  description: |-
+                                    operator represents a key's relationship to a set of values.
+                                    Valid operators are In, NotIn, Exists and DoesNotExist.
+                                  type: string
+                                values:
+                                  description: |-
+                                    values is an array of string values. If the operator is In or NotIn,
+                                    the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                    the values array must be empty. This array is replaced during a strategic
+                                    merge patch.
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                              required:
+                              - key
+                              - operator
+                              type: object
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          matchLabels:
+                            additionalProperties:
+                              type: string
+                            description: |-
+                              matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                              map is equivalent to an element of matchExpressions, whose key field is "key", the
+                              operator is "In", and the values array contains only "value". The requirements are ANDed.
+                            type: object
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      upgradeConstraintPolicy:
+                        default: CatalogProvided
+                        description: |-
+                          upgradeConstraintPolicy is an optional field that controls whether
+                          the upgrade path(s) defined in the catalog are enforced for the package
+                          referenced in the packageName field.
+
+                          Allowed values are: "CatalogProvided" or "SelfCertified", or omitted.
+
+                          When this field is set to "CatalogProvided", automatic upgrades will only occur
+                          when upgrade constraints specified by the package author are met.
+
+                          When this field is set to "SelfCertified", the upgrade constraints specified by
+                          the package author are ignored. This allows for upgrades and downgrades to
+                          any version of the package. This is considered a dangerous operation as it
+                          can lead to unknown and potentially disastrous outcomes, such as data
+                          loss. It is assumed that users have independently verified changes when
+                          using this option.
+
+                          When this field is omitted, the default value is "CatalogProvided".
+                        enum:
+                        - CatalogProvided
+                        - SelfCertified
+                        type: string
+                      version:
+                        description: |-
+                          version is an optional semver constraint (a specific version or range of versions). When unspecified, the latest version available will be installed.
+
+                          Acceptable version ranges are no longer than 64 characters.
+                          Version ranges are composed of comma- or space-delimited values and one or
+                          more comparison operators, known as comparison strings. Additional
+                          comparison strings can be added using the OR operator (||).
+
+                          # Range Comparisons
+
+                          To specify a version range, you can use a comparison string like ">=3.0,
+                          <3.6". When specifying a range, automatic updates will occur within that
+                          range. The example comparison string means "install any version greater than
+                          or equal to 3.0.0 but less than 3.6.0.". It also states intent that if any
+                          upgrades are available within the version range after initial installation,
+                          those upgrades should be automatically performed.
+
+                          # Pinned Versions
+
+                          To specify an exact version to install you can use a version range that
+                          "pins" to a specific version. When pinning to a specific version, no
+                          automatic updates will occur. An example of a pinned version range is
+                          "0.6.0", which means "only install version 0.6.0 and never
+                          upgrade from this version".
+
+                          # Basic Comparison Operators
+
+                          The basic comparison operators and their meanings are:
+                            - "=", equal (not aliased to an operator)
+                            - "!=", not equal
+                            - "<", less than
+                            - ">", greater than
+                            - ">=", greater than OR equal to
+                            - "<=", less than OR equal to
+
+                          # Wildcard Comparisons
+
+                          You can use the "x", "X", and "*" characters as wildcard characters in all
+                          comparison operations. Some examples of using the wildcard characters:
+                            - "1.2.x", "1.2.X", and "1.2.*" is equivalent to ">=1.2.0, < 1.3.0"
+                            - ">= 1.2.x", ">= 1.2.X", and ">= 1.2.*" is equivalent to ">= 1.2.0"
+                            - "<= 2.x", "<= 2.X", and "<= 2.*" is equivalent to "< 3"
+                            - "x", "X", and "*" is equivalent to ">= 0.0.0"
+
+                          # Patch Release Comparisons
+
+                          When you want to specify a minor version up to the next major version you
+                          can use the "~" character to perform patch comparisons. Some examples:
+                            - "~1.2.3" is equivalent to ">=1.2.3, <1.3.0"
+                            - "~1" and "~1.x" is equivalent to ">=1, <2"
+                            - "~2.3" is equivalent to ">=2.3, <2.4"
+                            - "~1.2.x" is equivalent to ">=1.2.0, <1.3.0"
+
+                          # Major Release Comparisons
+
+                          You can use the "^" character to make major release comparisons after a
+                          stable 1.0.0 version is published. If there is no stable version published, // minor versions define the stability level. Some examples:
+                            - "^1.2.3" is equivalent to ">=1.2.3, <2.0.0"
+                            - "^1.2.x" is equivalent to ">=1.2.0, <2.0.0"
+                            - "^2.3" is equivalent to ">=2.3, <3"
+                            - "^2.x" is equivalent to ">=2.0.0, <3"
+                            - "^0.2.3" is equivalent to ">=0.2.3, <0.3.0"
+                            - "^0.2" is equivalent to ">=0.2.0, <0.3.0"
+                            - "^0.0.3" is equvalent to ">=0.0.3, <0.0.4"
+                            - "^0.0" is equivalent to ">=0.0.0, <0.1.0"
+                            - "^0" is equivalent to ">=0.0.0, <1.0.0"
+
+                          # OR Comparisons
+                          You can use the "||" character to represent an OR operation in the version
+                          range. Some examples:
+                            - ">=1.2.3, <2.0.0 || >3.0.0"
+                            - "^0 || ^3 || ^5"
+
+                          For more information on semver, please see https://semver.org/
+                        maxLength: 64
+                        type: string
+                        x-kubernetes-validations:
+                        - message: invalid version expression
+                          rule: self.matches("^(\\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\\^)\\s*(v?(0|[1-9]\\d*|[x|X|\\*])(\\.(0|[1-9]\\d*|x|X|\\*]))?(\\.(0|[1-9]\\d*|x|X|\\*))?(-([0-9A-Za-z\\-]+(\\.[0-9A-Za-z\\-]+)*))?(\\+([0-9A-Za-z\\-]+(\\.[0-9A-Za-z\\-]+)*))?)\\s*)((?:\\s+|,\\s*|\\s*\\|\\|\\s*)(=||!=|>|<|>=|=>|<=|=<|~|~>|\\^)\\s*(v?(0|[1-9]\\d*|x|X|\\*])(\\.(0|[1-9]\\d*|x|X|\\*))?(\\.(0|[1-9]\\d*|x|X|\\*]))?(-([0-9A-Za-z\\-]+(\\.[0-9A-Za-z\\-]+)*))?(\\+([0-9A-Za-z\\-]+(\\.[0-9A-Za-z\\-]+)*))?)\\s*)*$")
+                    required:
+                    - packageName
+                    type: object
+                  sourceType:
+                    description: |-
+                      sourceType is a required reference to the type of install source.
+
+                      Allowed values are "Catalog"
+
+                      When this field is set to "Catalog", information for determining the
+                      appropriate bundle of content to install will be fetched from
+                      ClusterCatalog resources existing on the cluster.
+                      When using the Catalog sourceType, the catalog field must also be set.
+                    enum:
+                    - Catalog
+                    type: string
+                required:
+                - sourceType
+                type: object
+                x-kubernetes-validations:
+                - message: catalog is required when sourceType is Catalog, and forbidden
+                    otherwise
+                  rule: 'has(self.sourceType) && self.sourceType == ''Catalog'' ?
+                    has(self.catalog) : !has(self.catalog)'
+            required:
+            - namespace
+            - serviceAccount
+            - source
+            type: object
+          status:
+            description: status is an optional field that defines the observed state
+              of the ClusterExtension.
+            properties:
+              conditions:
+                description: |-
+                  The set of condition types which apply to all spec.source variations are Installed and Progressing.
+
+                  The Installed condition represents whether or not the bundle has been installed for this ClusterExtension.
+                  When Installed is True and the Reason is Succeeded, the bundle has been successfully installed.
+                  When Installed is False and the Reason is Failed, the bundle has failed to install.
+
+                  The Progressing condition represents whether or not the ClusterExtension is advancing towards a new state.
+                  When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.
+                  When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
+                  When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
+
+                  When the ClusterExtension is sourced from a catalog, if may also communicate a deprecation condition.
+                  These are indications from a package owner to guide users away from a particular package, channel, or bundle.
+                  BundleDeprecated is set if the requested bundle version is marked deprecated in the catalog.
+                  ChannelDeprecated is set if the requested channel is marked deprecated in the catalog.
+                  PackageDeprecated is set if the requested package is marked deprecated in the catalog.
+                  Deprecated is a rollup condition that is present when any of the deprecated conditions are present.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              install:
+                description: install is a representation of the current installation
+                  status for this ClusterExtension.
+                properties:
+                  bundle:
+                    description: |-
+                      bundle is a required field which represents the identifying attributes of a bundle.
+
+                      A "bundle" is a versioned set of content that represents the resources that
+                      need to be applied to a cluster to install a package.
+                    properties:
+                      name:
+                        description: |-
+                          name is required and follows the DNS subdomain standard
+                          as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
+                          hyphens (-) or periods (.), start and end with an alphanumeric character,
+                          and be no longer than 253 characters.
+                        type: string
+                        x-kubernetes-validations:
+                        - message: packageName must be a valid DNS1123 subdomain.
+                            It must contain only lowercase alphanumeric characters,
+                            hyphens (-) or periods (.), start and end with an alphanumeric
+                            character, and be no longer than 253 characters
+                          rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
+                      version:
+                        description: |-
+                          version is a required field and is a reference to the version that this bundle represents
+                          version follows the semantic versioning standard as defined in https://semver.org/.
+                        type: string
+                        x-kubernetes-validations:
+                        - message: version must be well-formed semver
+                          rule: self.matches("^([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([-0-9A-Za-z]+(\\.[-0-9A-Za-z]+)*))?(\\+([-0-9A-Za-z]+(-\\.[-0-9A-Za-z]+)*))?")
+                    required:
+                    - name
+                    - version
+                    type: object
+                required:
+                - bundle
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

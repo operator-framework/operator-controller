@@ -1,0 +1,34 @@
+{{- if .Values.options.operatorController.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: operator-controller-manager-role
+  namespace: {{ .Values.namespaces.olmv1.name }}
+  labels:
+    app.kubernetes.io/name: operator-controller
+    {{- include "olmv1.labels" . | nindent 4 }}
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - delete
+      - deletecollection
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+{{- end }}

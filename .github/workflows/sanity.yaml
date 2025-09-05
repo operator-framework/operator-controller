@@ -30,3 +30,15 @@ jobs:
 
       - name: Run golangci linting checks
         run: make lint
+
+  lint-helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: Run helm linting checks
+        run: make lint-helm

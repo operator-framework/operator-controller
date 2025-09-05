@@ -1,0 +1,13 @@
+{{- if and .Values.options.openshift.enabled .Values.options.catalogd.enabled -}}
+apiVersion: olm.operatorframework.io/v1
+kind: ClusterCatalog
+metadata:
+  name: openshift-certified-operators
+spec:
+  priority: -200
+  source:
+    type: Image
+    image:
+      pollIntervalMinutes: 10
+      ref: registry.redhat.io/redhat/certified-operator-index:v4.19
+{{- end -}}

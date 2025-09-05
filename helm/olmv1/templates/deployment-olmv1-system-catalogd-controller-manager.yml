@@ -1,0 +1,185 @@
+{{- if .Values.options.catalogd.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kubectl.kubernetes.io/default-logs-container: manager
+    {{- include "olmv1.annotations" . | nindent 4 }}
+  labels:
+    app.kubernetes.io/name: catalogd
+    {{- include "olmv1.labels" . | nindent 4 }}
+  name: catalogd-controller-manager
+  namespace: {{ .Values.namespaces.olmv1.name }}
+spec:
+  minReadySeconds: 5
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: catalogd-controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+        {{- include "olmv1.annotations" . | nindent 8 }}
+        {{- if .Values.options.openshift.enabled }}
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
+        openshift.io/required-scc: privileged
+        {{- end }}
+      labels:
+        app.kubernetes.io/name: catalogd
+        control-plane: catalogd-controller-manager
+        {{- include "olmv1.labels" . | nindent 8 }}
+        {{- with .Values.options.catalogd.deployment.podLabels }}
+        {{- toYamlPretty . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+        - args:
+            {{- if not .Values.options.tilt.enabled }}
+            - --leader-elect
+            {{- end }}
+            - --metrics-bind-address=:7443
+            - --external-address=catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc
+            {{- range .Values.catalogdFeatures }}
+            - --feature-gates={{- . -}}=true
+            {{- end }}
+            {{- if .Values.options.certManager.enabled }}
+            - --tls-cert=/var/certs/tls.crt
+            - --tls-key=/var/certs/tls.key
+            - --pull-cas-dir=/var/ca-certs
+            {{- else if .Values.options.openshift.enabled }}
+            - --tls-cert=/var/certs/tls.crt
+            - --tls-key=/var/certs/tls.key
+            - --v=${LOG_VERBOSITY}
+            - --global-pull-secret=openshift-config/pull-secret
+            {{- end }}
+          command:
+            - ./catalogd
+          {{- if or .Values.options.e2e.enabled .Values.options.openshift.enabled }}
+          env:
+          {{- if .Values.options.e2e.enabled }}
+            - name: GOCOVERDIR
+              value: /e2e-coverage
+          {{- end }}
+          {{- if .Values.options.openshift.enabled }}
+            - name: SSL_CERT_DIR
+              value: /var/ca-certs
+          {{- end }}
+          {{- end }}
+          image: "{{ .Values.options.catalogd.deployment.image }}"
+          name: manager
+          {{- if not .Values.options.tilt.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- end }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+          volumeMounts:
+            {{- if .Values.options.e2e.enabled }}
+            - mountPath: /e2e-coverage
+              name: e2e-coverage-volume
+            {{- end }}
+            - mountPath: /var/cache/
+              name: cache
+            - mountPath: /tmp
+              name: tmp
+            {{- if .Values.options.certManager.enabled }}
+            - mountPath: /var/certs
+              name: catalogserver-certs
+            - mountPath: /var/ca-certs
+              name: ca-certs
+              readOnly: true
+            {{- else if .Values.options.openshift.enabled }}
+            - mountPath: /var/certs
+              name: catalogserver-certs
+            - mountPath: /var/ca-certs
+              name: ca-certs
+              readOnly: true
+            - mountPath: /etc/containers
+              name: etc-containers
+              readOnly: true
+            - mountPath: /etc/docker
+              name: etc-docker
+              readOnly: true
+            {{- end }}
+         {{- with .Values.deployments.containerSpec }}
+         {{- toYamlPretty . | nindent 10 }}
+         {{- end }}
+      serviceAccountName: catalogd-controller-manager
+      volumes:
+        {{- if .Values.options.e2e.enabled }}
+        - name: e2e-coverage-volume
+          persistentVolumeClaim:
+            claimName: e2e-coverage
+        {{- end }}
+        - emptyDir: {}
+          name: cache
+        - emptyDir: {}
+          name: tmp
+        {{- if .Values.options.certManager.enabled }}
+        - name: catalogserver-certs
+          secret:
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+            optional: false
+            secretName: catalogd-service-cert-git-version
+        - name: ca-certs
+          secret:
+            items:
+              - key: ca.crt
+                path: olm-ca.crt
+            optional: false
+            secretName: catalogd-service-cert-git-version
+        {{- else if .Values.options.openshift.enabled }}
+        - name: catalogserver-certs
+          secret:
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+            optional: false
+            secretName: catalogserver-cert
+        - name: ca-certs
+          projected:
+            sources:
+              - configMap:
+                  items:
+                    - key: ca-bundle.crt
+                      path: ca-bundle.crt
+                  name: catalogd-trusted-ca-bundle
+                  optional: false
+              - configMap:
+                  items:
+                    - key: service-ca.crt
+                      path: service-ca.crt
+                  name: openshift-service-ca.crt
+                  optional: false
+        - hostPath:
+            path: /etc/containers
+            type: Directory
+          name: etc-containers
+        - hostPath:
+            path: /etc/docker
+            type: Directory
+          name: etc-docker
+        {{- end }}
+      {{- with .Values.deployments.templateSpec }}
+      {{- toYamlPretty . | nindent 6 }}
+      {{- end }}
+{{- end }}
