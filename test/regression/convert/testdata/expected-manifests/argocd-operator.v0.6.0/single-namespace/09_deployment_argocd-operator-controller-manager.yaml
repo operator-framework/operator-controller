@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  creationTimestamp: null
   name: argocd-operator-controller-manager
   namespace: argocd-system
 spec:
@@ -150,7 +149,6 @@ spec:
         operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
         repository: https://github.com/argoproj-labs/argocd-operator
         support: Argo CD
-      creationTimestamp: null
       labels:
         control-plane: controller-manager
     spec:
