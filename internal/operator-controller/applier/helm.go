@@ -217,8 +217,9 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 		}
 	}
 
-	bundleConfig := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: watchNamespace,
+	bundleConfig := map[string]interface{}{}
+	if watchNamespace != "" {
+		bundleConfig[bundle.BundleConfigWatchNamespaceKey] = watchNamespace
 	}
 	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, bundleConfig)
 }

@@ -32,6 +32,21 @@ func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleSourceFailures(t *
 	require.Contains(t, err.Error(), "some error")
 }
 
+func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleConfigFailures(t *testing.T) {
+	converter := convert.BundleToHelmChartConverter{}
+	b := source.FromBundle(
+		bundle.RegistryV1{
+			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+		},
+	)
+	config := map[string]interface{}{
+		bundle.BundleConfigWatchNamespaceKey: "some-namespace",
+	}
+	_, err := converter.ToHelmChart(b, "install-namespace", config)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "'watchNamespace' not allowed")
+}
+
 func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleRendererFailures(t *testing.T) {
 	converter := convert.BundleToHelmChartConverter{
 		BundleRenderer: render.BundleRenderer{
@@ -45,12 +60,12 @@ func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleRendererFailures(t
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
 		},
 	)
 
 	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+		bundle.BundleConfigWatchNamespaceKey: "some-namespace",
 	}
 	_, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.Error(t, err)
@@ -121,14 +136,14 @@ func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksWithCertProvider(t *tes
 	b := source.FromBundle(
 		bundle.RegistryV1{
 			CSV: MakeCSV(
-				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace),
 				WithWebhookDefinitions(v1alpha1.WebhookDescription{}),
 			),
 		},
 	)
 
 	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+		bundle.BundleConfigWatchNamespaceKey: "some-namespace",
 	}
 	_, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.NoError(t, err)
@@ -136,7 +151,7 @@ func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksWithCertProvider(t *tes
 
 func Test_BundleToHelmChartConverter_ToHelmChart_BundleRendererIntegration(t *testing.T) {
 	expectedInstallNamespace := "install-namespace"
-	expectedWatchNamespace := ""
+	expectedWatchNamespace := "some-namespaces"
 	expectedCertProvider := FakeCertProvider{}
 
 	converter := convert.BundleToHelmChartConverter{
@@ -156,7 +171,7 @@ func Test_BundleToHelmChartConverter_ToHelmChart_BundleRendererIntegration(t *te
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
 		},
 	)
 
@@ -186,7 +201,7 @@ func Test_BundleToHelmChartConverter_ToHelmChart_Success(t *testing.T) {
 		bundle.RegistryV1{
 			CSV: MakeCSV(
 				WithAnnotations(map[string]string{"foo": "bar"}),
-				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
 			),
 			Others: []unstructured.Unstructured{
 				*ToUnstructuredT(t, &corev1.Service{
@@ -203,7 +218,7 @@ func Test_BundleToHelmChartConverter_ToHelmChart_Success(t *testing.T) {
 	)
 
 	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+		bundle.BundleConfigWatchNamespaceKey: "some-namespace",
 	}
 	chart, err := converter.ToHelmChart(b, "install-namespace", config)
 	require.NoError(t, err)

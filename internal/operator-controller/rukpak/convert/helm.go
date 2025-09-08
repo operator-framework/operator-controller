@@ -7,7 +7,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 
-	bundlepkg "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/bundlecfg"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
@@ -24,15 +24,6 @@ func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, ins
 		return nil, err
 	}
 
-	opts := []render.Option{
-		render.WithCertificateProvider(r.CertificateProvider),
-	}
-	if config != nil {
-		if watchNs, ok := config[bundlepkg.BundleConfigWatchNamespaceKey].(string); ok {
-			opts = append(opts, render.WithTargetNamespaces(watchNs))
-		}
-	}
-
 	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
 		return nil, fmt.Errorf("unsupported bundle: apiServiceDefintions are not supported")
 	}
@@ -47,6 +38,18 @@ func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, ins
 
 	if r.CertificateProvider == nil && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
 		return nil, fmt.Errorf("unsupported bundle: webhookDefinitions are not supported")
+	}
+
+	opts := []render.Option{
+		render.WithCertificateProvider(r.CertificateProvider),
+	}
+
+	bundleConfig, err := bundlecfg.Unmarshall(rv1, installNamespace, config)
+	if err != nil {
+		return nil, err
+	}
+	if bundleConfig != nil && bundleConfig.WatchNamespace != "" {
+		opts = append(opts, render.WithTargetNamespaces(bundleConfig.WatchNamespace))
 	}
 
 	objs, err := r.BundleRenderer.Render(rv1, installNamespace, opts...)
