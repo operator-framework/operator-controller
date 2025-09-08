@@ -1,6 +1,5 @@
 {{- if .Values.options.openshift.enabled -}}
 {{- if or .Values.options.catalogd.enabled .Values.options.operatorController.enabled -}}
-# permissions to do leader election.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
