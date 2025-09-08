@@ -1,0 +1,7 @@
+{{- if .Values.options.operatorController.enabled }}
+{{- if (eq .Values.options.featureSet "standard") }}
+{{ # Add when GA: tpl (.Files.Get "base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensionrevisionss.yaml") . }}
+{{- else if (eq .Values.options.featureSet "experimental") }}
+{{ tpl (.Files.Get "base/operator-controller/crd/experimental/olm.operatorframework.io_clusterextensionrevisions.yaml") . }}
+{{- end }}
+{{- end }}

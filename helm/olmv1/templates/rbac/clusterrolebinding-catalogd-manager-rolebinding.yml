@@ -1,11 +1,4 @@
-{{- $options := list }}
 {{- if .Values.options.catalogd.enabled }}
-{{- $options = append $options "catalogd" }}
-{{- end }}
-{{- if .Values.options.operatorController.enabled }}
-{{- $options = append $options "operator-controller" }}
-{{- end }}
-{{- range $index, $name := $options }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -13,15 +6,15 @@ metadata:
   annotations:
     {{- include "olmv1.annotations" $ | nindent 4 }}
   labels:
-    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/name: catalogd
     {{- include "olmv1.labels" $ | nindent 4 }}
-  name: {{ $name -}}-manager-rolebinding
+  name: catalogd-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ $name -}}-manager-role
+  name: catalogd-manager-role
 subjects:
   - kind: ServiceAccount
-    name: {{ $name -}}-controller-manager
+    name: catalogd-controller-manager
     namespace: {{ $.Values.namespaces.olmv1.name }}
 {{- end }}

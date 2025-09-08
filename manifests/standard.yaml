@@ -1372,7 +1372,7 @@ rules:
       - list
       - watch
 ---
-# Source: olmv1/templates/rbac/clusterrolebinding-common-manager-rolebinding.yml
+# Source: olmv1/templates/rbac/clusterrolebinding-catalogd-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1391,7 +1391,7 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/rbac/clusterrolebinding-common-manager-rolebinding.yml
+# Source: olmv1/templates/rbac/clusterrolebinding-operator-controller-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

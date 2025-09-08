@@ -3,16 +3,17 @@
 # Declare variables to be passed into your templates.
 
 # List of enabled experimental features for operator-controller
-# Use with {{- if has "FeatureGate" .Value.operatorControllerFeatures }}
+# Use with {{- if has "FeatureGate" .Values.operatorControllerFeatures }}
 # to pull in resources or additions
 operatorControllerFeatures:
   - WebhookProviderCertManager
   - SingleOwnNamespaceInstallSupport
   - PreflightPermissions
   - HelmChartSupport
+  - BoxcutterRuntime
 
 # List of enabled experimental features for catalogd
-# Use with {{- if has "FeatureGate" .Value.catalogdFeatures }}
+# Use with {{- if has "FeatureGate" .Values.catalogdFeatures }}
 # to pull in resources or additions
 catalogdFeatures:
   - APIV1MetasHandler
