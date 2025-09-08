@@ -10,14 +10,11 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
+	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
 const (
 	olmProperties = "olm.properties"
-
-	bundlePathAnnotations = "metadata/annotations.yaml"
-	bundlePathProperties  = "metadata/properties.yaml"
-	bundlePathCSV         = "manifests/csv.yaml"
 )
 
 func Test_FromBundle_Success(t *testing.T) {
@@ -30,7 +27,7 @@ func Test_FromBundle_Success(t *testing.T) {
 }
 
 func Test_FromFS_Success(t *testing.T) {
-	rv1, err := source.FromFS(newBundleFS()).GetBundle()
+	rv1, err := source.FromFS(NewBundleFS()).GetBundle()
 	require.NoError(t, err)
 
 	t.Log("Check package name is correctly taken from metadata/annotations.yaml")
@@ -47,55 +44,22 @@ func Test_FromFS_Fails(t *testing.T) {
 	}{
 		{
 			name: "bundle missing ClusterServiceVersion manifest",
-			FS:   removePaths(newBundleFS(), bundlePathCSV),
+			FS:   removePaths(NewBundleFS(), BundlePathCSV),
 		}, {
 			name: "bundle missing metadata/annotations.yaml",
-			FS:   removePaths(newBundleFS(), bundlePathAnnotations),
+			FS:   removePaths(NewBundleFS(), BundlePathAnnotations),
 		}, {
 			name: "bundle missing metadata/ directory",
-			FS:   removePaths(newBundleFS(), "metadata/"),
+			FS:   removePaths(NewBundleFS(), "metadata/"),
 		}, {
 			name: "bundle missing manifests/ directory",
-			FS:   removePaths(newBundleFS(), "manifests/"),
+			FS:   removePaths(NewBundleFS(), "manifests/"),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := source.FromFS(tt.FS).GetBundle()
 			require.Error(t, err)
 		})
-	}
-}
-
-func newBundleFS() fstest.MapFS {
-	annotationsYml := `
-annotations:
-  operators.operatorframework.io.bundle.mediatype.v1: registry+v1
-  operators.operatorframework.io.bundle.package.v1: test
-`
-
-	propertiesYml := `
-properties:
-  - type: "from-file-key"
-    value: "from-file-value"
-`
-
-	csvYml := `
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: ClusterServiceVersion
-metadata:
-  name: test.v1.0.0
-  annotations:
-    olm.properties: '[{"type":"from-csv-annotations-key", "value":"from-csv-annotations-value"}]'
-spec:
-  installModes:
-    - type: AllNamespaces
-      supported: true
-`
-
-	return fstest.MapFS{
-		bundlePathAnnotations: &fstest.MapFile{Data: []byte(strings.Trim(annotationsYml, "\n"))},
-		bundlePathProperties:  &fstest.MapFile{Data: []byte(strings.Trim(propertiesYml, "\n"))},
-		bundlePathCSV:         &fstest.MapFile{Data: []byte(strings.Trim(csvYml, "\n"))},
 	}
 }
 

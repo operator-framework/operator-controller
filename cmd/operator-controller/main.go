@@ -31,21 +31,29 @@ import (
 	"github.com/containers/image/v5/types"
 	"github.com/spf13/cobra"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/discovery"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
+	"pkg.package-operator.run/boxcutter/machinery"
+	"pkg.package-operator.run/boxcutter/managedcache"
+	"pkg.package-operator.run/boxcutter/ownerhandling"
+	"pkg.package-operator.run/boxcutter/validation"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
@@ -219,6 +227,12 @@ func run() error {
 		DefaultLabelSelector: k8slabels.Nothing(),
 	}
 
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		cacheOptions.ByObject[&ocv1.ClusterExtensionRevision{}] = crcache.ByObject{
+			Label: k8slabels.Everything(),
+		}
+	}
+
 	saKey, err := sautil.GetServiceAccount()
 	if err != nil {
 		setupLog.Error(err, "Failed to extract serviceaccount from JWT")
@@ -272,7 +286,8 @@ func run() error {
 			"Metrics will not be served since the TLS certificate and key file are not provided.")
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme.Scheme,
 		Metrics:                       metricsServerOptions,
 		PprofBindAddress:              cfg.pprofAddr,
@@ -301,38 +316,6 @@ func run() error {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
-		return err
-	}
-
-	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
-	if err != nil {
-		setupLog.Error(err, "unable to create core client")
-		return err
-	}
-	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
-	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
-	if features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions) {
-		clientRestConfigMapper = action.SyntheticUserRestConfigMapper(clientRestConfigMapper)
-	}
-
-	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
-		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
-		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
-			ext := obj.(*ocv1.ClusterExtension)
-			return ext.Spec.Namespace, nil
-		}),
-		helmclient.ClientRestConfigMapper(clientRestConfigMapper),
-	)
-	if err != nil {
-		setupLog.Error(err, "unable to config for creating helm client")
-		return err
-	}
-
-	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
-		helmclient.WithFailureRollbacks(false),
-	)
-	if err != nil {
-		setupLog.Error(err, "unable to create helm client")
 		return err
 	}
 
@@ -421,58 +404,31 @@ func run() error {
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
 	}
 
-	// determine if PreAuthorizer should be enabled based on feature gate
-	var preAuth authorization.PreAuthorizer
-	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
+	var ctrlBuilderOpts []controllers.ControllerBuilderOption
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		ctrlBuilderOpts = append(ctrlBuilderOpts, controllers.WithOwns(&ocv1.ClusterExtensionRevision{}))
 	}
 
-	// determine if a certificate provider should be set in the bundle renderer and feature support for the provider
-	// based on the feature flag
-	var certProvider render.CertificateProvider
-	var isWebhookSupportEnabled bool
-	if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
-		certProvider = certproviders.CertManagerCertificateProvider{}
-		isWebhookSupportEnabled = true
-	} else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
-		certProvider = certproviders.OpenshiftServiceCaCertificateProvider{}
-		isWebhookSupportEnabled = true
+	ceReconciler := &controllers.ClusterExtensionReconciler{
+		Client:      cl,
+		Resolver:    resolver,
+		ImageCache:  imageCache,
+		ImagePuller: imagePuller,
+		Finalizers:  clusterExtensionFinalizers,
 	}
-
-	// now initialize the helmApplier, assigning the potentially nil preAuth
-	helmApplier := &applier.Helm{
-		ActionClientGetter: acg,
-		Preflights:         preflights,
-		BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
-			BundleRenderer:          registryv1.Renderer,
-			CertificateProvider:     certProvider,
-			IsWebhookSupportEnabled: isWebhookSupportEnabled,
-		},
-		PreAuthorizer: preAuth,
-	}
-
-	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
-	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		ext := obj.(*ocv1.ClusterExtension)
-		err := cm.Delete(ext)
-		return crfinalizer.Result{}, err
-	}))
+	ceController, err := ceReconciler.SetupWithManager(mgr, ctrlBuilderOpts...)
 	if err != nil {
-		setupLog.Error(err, "unable to register content manager cleanup finalizer")
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		return err
 	}
 
-	if err = (&controllers.ClusterExtensionReconciler{
-		Client:                cl,
-		Resolver:              resolver,
-		ImageCache:            imageCache,
-		ImagePuller:           imagePuller,
-		Applier:               helmApplier,
-		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
-		Finalizers:            clusterExtensionFinalizers,
-		Manager:               cm,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
+	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
+		err = setupBoxcutter(mgr, ceReconciler, preflights)
+	} else {
+		err = setupHelm(mgr, ceReconciler, preflights, ceController, clusterExtensionFinalizers)
+	}
+	if err != nil {
+		setupLog.Error(err, "unable to setup lifecycler")
 		return err
 	}
 
@@ -518,6 +474,181 @@ func run() error {
 		setupLog.Error(err, "failed to cleanup temporary auth file")
 		return err
 	}
+	return nil
+}
+
+func getCertificateProvider() render.CertificateProvider {
+	if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderCertManager) {
+		return certproviders.CertManagerCertificateProvider{}
+	} else if features.OperatorControllerFeatureGate.Enabled(features.WebhookProviderOpenshiftServiceCA) {
+		return certproviders.OpenshiftServiceCaCertificateProvider{}
+	}
+	return nil
+}
+
+func setupBoxcutter(mgr manager.Manager, ceReconciler *controllers.ClusterExtensionReconciler, preflights []applier.Preflight) error {
+	certProvider := getCertificateProvider()
+
+	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("unable to create core client: %w", err)
+	}
+	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
+		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
+		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
+			ext := obj.(*ocv1.ClusterExtension)
+			return ext.Spec.Namespace, nil
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create helm action config getter: %w", err)
+	}
+
+	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
+		helmclient.WithFailureRollbacks(false),
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create helm action client getter: %w", err)
+	}
+
+	// TODO: add support for preflight checks
+	// TODO: better scheme handling - which types do we want to support?
+	_ = apiextensionsv1.AddToScheme(mgr.GetScheme())
+	rg := &applier.SimpleRevisionGenerator{
+		Scheme: mgr.GetScheme(),
+		BundleRenderer: &applier.RegistryV1BundleRenderer{
+			BundleRenderer:      registryv1.Renderer,
+			CertificateProvider: certProvider,
+		},
+	}
+	ceReconciler.Applier = &applier.Boxcutter{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		RevisionGenerator: rg,
+		Preflights:        preflights,
+	}
+	ceReconciler.RevisionStatesGetter = &controllers.BoxcutterRevisionStatesGetter{Reader: mgr.GetClient()}
+	ceReconciler.StorageMigrator = &applier.BoxcutterStorageMigrator{
+		Client:             mgr.GetClient(),
+		ActionClientGetter: acg,
+		RevisionGenerator:  rg,
+	}
+
+	// Boxcutter
+	const (
+		boxcutterSystemPrefixFieldOwner = "olm.operatorframework.io"
+	)
+
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("unable to create discovery client: %w", err)
+	}
+
+	trackingCache, err := managedcache.NewTrackingCache(
+		ctrl.Log.WithName("trackingCache"),
+		mgr.GetConfig(),
+		crcache.Options{
+			Scheme: mgr.GetScheme(), Mapper: mgr.GetRESTMapper(),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create boxcutter tracking cache: %v", err)
+	}
+	if err := mgr.Add(trackingCache); err != nil {
+		return fmt.Errorf("unable to add tracking cache to manager: %v", err)
+	}
+
+	if err = (&controllers.ClusterExtensionRevisionReconciler{
+		Client: mgr.GetClient(),
+		RevisionEngine: machinery.NewRevisionEngine(
+			machinery.NewPhaseEngine(
+				machinery.NewObjectEngine(
+					mgr.GetScheme(), trackingCache, mgr.GetClient(),
+					ownerhandling.NewNative(mgr.GetScheme()),
+					machinery.NewComparator(ownerhandling.NewNative(mgr.GetScheme()), discoveryClient, mgr.GetScheme(), boxcutterSystemPrefixFieldOwner),
+					boxcutterSystemPrefixFieldOwner, boxcutterSystemPrefixFieldOwner,
+				),
+				validation.NewClusterPhaseValidator(mgr.GetRESTMapper(), mgr.GetClient()),
+			),
+			validation.NewRevisionValidator(), mgr.GetClient(),
+		),
+		TrackingCache: trackingCache,
+	}).SetupWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to setup ClusterExtensionRevision controller: %w", err)
+	}
+	return nil
+}
+
+func setupHelm(
+	mgr manager.Manager,
+	ceReconciler *controllers.ClusterExtensionReconciler,
+	preflights []applier.Preflight,
+	ceController crcontroller.Controller,
+	clusterExtensionFinalizers crfinalizer.Registerer,
+) error {
+	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("unable to create core client: %w", err)
+	}
+	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
+	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
+	if features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions) {
+		clientRestConfigMapper = action.SyntheticUserRestConfigMapper(clientRestConfigMapper)
+	}
+
+	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
+		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
+		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
+			ext := obj.(*ocv1.ClusterExtension)
+			return ext.Spec.Namespace, nil
+		}),
+		helmclient.ClientRestConfigMapper(clientRestConfigMapper),
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create helm action config getter: %w", err)
+	}
+
+	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
+		helmclient.WithFailureRollbacks(false),
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create helm action client getter: %w", err)
+	}
+
+	// determine if PreAuthorizer should be enabled based on feature gate
+	var preAuth authorization.PreAuthorizer
+	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
+	}
+
+	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
+	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		ext := obj.(*ocv1.ClusterExtension)
+		err := cm.Delete(ext)
+		return crfinalizer.Result{}, err
+	}))
+	if err != nil {
+		setupLog.Error(err, "unable to register content manager cleanup finalizer")
+		return err
+	}
+
+	certProvider := getCertificateProvider()
+
+	// now initialize the helmApplier, assigning the potentially nil preAuth
+	ceReconciler.Applier = &applier.Helm{
+		ActionClientGetter: acg,
+		Preflights:         preflights,
+		BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
+			BundleRenderer:          registryv1.Renderer,
+			CertificateProvider:     certProvider,
+			IsWebhookSupportEnabled: certProvider != nil,
+		},
+		HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
+		PreAuthorizer:                 preAuth,
+		Watcher:                       ceController,
+		Manager:                       cm,
+	}
+	ceReconciler.RevisionStatesGetter = &controllers.HelmRevisionStatesGetter{ActionClientGetter: acg}
 	return nil
 }
 

@@ -19,73 +19,54 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
-
-const (
-	StateNeedsInstall     string = "NeedsInstall"
-	StateNeedsUpgrade     string = "NeedsUpgrade"
-	StateUnchanged        string = "Unchanged"
-	StateError            string = "Error"
-	maxHelmReleaseHistory        = 10
-)
-
-// Preflight is a check that should be run before making any changes to the cluster
-type Preflight interface {
-	// Install runs checks that should be successful prior
-	// to installing the Helm release. It is provided
-	// a Helm release and returns an error if the
-	// check is unsuccessful
-	Install(context.Context, *release.Release) error
-
-	// Upgrade runs checks that should be successful prior
-	// to upgrading the Helm release. It is provided
-	// a Helm release and returns an error if the
-	// check is unsuccessful
-	Upgrade(context.Context, *release.Release) error
-}
 
 type BundleToHelmChartConverter interface {
 	ToHelmChart(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error)
 }
 
-type Helm struct {
-	ActionClientGetter         helmclient.ActionClientGetter
-	Preflights                 []Preflight
-	PreAuthorizer              authorization.PreAuthorizer
-	BundleToHelmChartConverter BundleToHelmChartConverter
+type HelmReleaseToObjectsConverter struct {
 }
 
-// shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
-// if it is set to enforcement None.
-func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.ClusterExtension, state string) bool {
-	l := log.FromContext(ctx)
-	hasCRDUpgradeSafety := ext.Spec.Install != nil && ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil
-	_, isCRDUpgradeSafetyInstance := preflight.(*crdupgradesafety.Preflight)
+type HelmReleaseToObjectsConverterInterface interface {
+	GetObjectsFromRelease(rel *release.Release) ([]client.Object, error)
+}
 
-	if hasCRDUpgradeSafety && isCRDUpgradeSafetyInstance {
-		if state == StateNeedsInstall || state == StateNeedsUpgrade {
-			l.Info("crdUpgradeSafety ", "policy", ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement)
-		}
-		if ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement == ocv1.CRDUpgradeSafetyEnforcementNone {
-			// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
-			// policy is set to None
-			return true
-		}
+func (h HelmReleaseToObjectsConverter) GetObjectsFromRelease(rel *release.Release) ([]client.Object, error) {
+	if rel == nil {
+		return nil, nil
 	}
-	return false
+
+	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
+	if err != nil {
+		return nil, fmt.Errorf("parsing release %q objects: %w", rel.Name, err)
+	}
+	return relObjects, nil
+}
+
+type Helm struct {
+	ActionClientGetter            helmclient.ActionClientGetter
+	Preflights                    []Preflight
+	PreAuthorizer                 authorization.PreAuthorizer
+	BundleToHelmChartConverter    BundleToHelmChartConverter
+	HelmReleaseToObjectsConverter HelmReleaseToObjectsConverterInterface
+
+	Manager contentmanager.Manager
+	Watcher crcontroller.Controller
 }
 
 // runPreAuthorizationChecks performs pre-authorization checks for a Helm release
@@ -122,10 +103,10 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 	return nil
 }
 
-func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
+func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) (bool, string, error) {
 	chrt, err := h.buildHelmChart(contentFS, ext)
 	if err != nil {
-		return nil, "", err
+		return false, "", err
 	}
 	values := chartutil.Values{}
 
@@ -137,18 +118,22 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		err := h.runPreAuthorizationChecks(ctx, ext, chrt, values, post)
 		if err != nil {
 			// Return the pre-authorization error directly
-			return nil, "", err
+			return false, "", err
 		}
 	}
 
 	ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
 	if err != nil {
-		return nil, "", err
+		return false, "", err
 	}
 
 	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, post)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to get release state using server-side dry-run: %w", err)
+		return false, "", fmt.Errorf("failed to get release state using server-side dry-run: %w", err)
+	}
+	objs, err := h.HelmReleaseToObjectsConverter.GetObjectsFromRelease(desiredRel)
+	if err != nil {
+		return false, "", err
 	}
 
 	for _, preflight := range h.Preflights {
@@ -157,14 +142,14 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		}
 		switch state {
 		case StateNeedsInstall:
-			err := preflight.Install(ctx, desiredRel)
+			err := preflight.Install(ctx, objs)
 			if err != nil {
-				return nil, state, err
+				return false, "", err
 			}
 		case StateNeedsUpgrade:
-			err := preflight.Upgrade(ctx, desiredRel)
+			err := preflight.Upgrade(ctx, objs)
 			if err != nil {
-				return nil, state, err
+				return false, "", err
 			}
 		}
 	}
@@ -177,7 +162,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {
-			return nil, state, err
+			return false, "", err
 		}
 	case StateNeedsUpgrade:
 		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
@@ -186,22 +171,31 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 			return nil
 		}, helmclient.AppendUpgradePostRenderer(post))
 		if err != nil {
-			return nil, state, err
+			return false, "", err
 		}
 	case StateUnchanged:
 		if err := ac.Reconcile(rel); err != nil {
-			return nil, state, err
+			return false, "", err
 		}
 	default:
-		return nil, state, fmt.Errorf("unexpected release state %q", state)
+		return false, "", fmt.Errorf("unexpected release state %q", state)
 	}
 
 	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
 	if err != nil {
-		return nil, state, err
+		return true, "", err
+	}
+	klog.FromContext(ctx).Info("watching managed objects")
+	cache, err := h.Manager.Get(ctx, ext)
+	if err != nil {
+		return true, "", err
 	}
 
-	return relObjects, state, nil
+	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
+		return true, "", err
+	}
+
+	return true, "", nil
 }
 
 func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
