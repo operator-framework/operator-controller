@@ -1263,30 +1263,6 @@ rules:
     verbs:
       - create
 ---
-# Source: olmv1/templates/rbac/clusterrole-operator-controller-clusterextension-editor-role.yml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  annotations:
-    olm.operatorframework.io/feature-set: standard
-  labels:
-    app.kubernetes.io/name: operator-controller
-    app.kubernetes.io/part-of: olm
-  name: operator-controller-clusterextension-editor-role
-rules:
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
----
 # Source: olmv1/templates/rbac/clusterrole-operator-controller-clusterextension-viewer-role.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -1391,25 +1367,6 @@ subjects:
     name: catalogd-controller-manager
     namespace: olmv1-system
 ---
-# Source: olmv1/templates/rbac/clusterrolebinding-operator-controller-manager-rolebinding.yml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  annotations:
-    olm.operatorframework.io/feature-set: standard
-  labels:
-    app.kubernetes.io/name: operator-controller
-    app.kubernetes.io/part-of: olm
-  name: operator-controller-manager-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: operator-controller-manager-role
-subjects:
-  - kind: ServiceAccount
-    name: operator-controller-controller-manager
-    namespace: olmv1-system
----
 # Source: olmv1/templates/rbac/clusterrolebinding-common-proxy-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1443,6 +1400,25 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: operator-controller-proxy-role
+subjects:
+  - kind: ServiceAccount
+    name: operator-controller-controller-manager
+    namespace: olmv1-system
+---
+# Source: olmv1/templates/rbac/clusterrolebinding-operator-controller-manager-rolebinding.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    olm.operatorframework.io/feature-set: standard
+  labels:
+    app.kubernetes.io/name: operator-controller
+    app.kubernetes.io/part-of: olm
+  name: operator-controller-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: operator-controller-manager-role
 subjects:
   - kind: ServiceAccount
     name: operator-controller-controller-manager
