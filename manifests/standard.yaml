@@ -1459,18 +1459,6 @@ metadata:
   namespace: olmv1-system
 rules:
   - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
       - coordination.k8s.io
     resources:
       - leases
@@ -1502,18 +1490,6 @@ metadata:
   name: operator-controller-leader-election-role
   namespace: olmv1-system
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
   - apiGroups:
       - coordination.k8s.io
     resources:

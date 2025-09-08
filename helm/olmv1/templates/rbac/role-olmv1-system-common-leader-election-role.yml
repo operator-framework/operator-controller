@@ -19,18 +19,6 @@ metadata:
   namespace: {{ $.Values.namespaces.olmv1.name }}
 rules:
   - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
       - coordination.k8s.io
     resources:
       - leases
