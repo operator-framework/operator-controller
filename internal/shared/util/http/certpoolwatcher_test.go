@@ -11,6 +11,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -61,7 +62,100 @@ func createCert(t *testing.T, name string) {
 	// ignore the key
 }
 
-func TestCertPoolWatcher(t *testing.T) {
+func createTempCaDir(t *testing.T) string {
+	tmpCaDir, err := os.MkdirTemp("", "ca-dir")
+	require.NoError(t, err)
+	createCert(t, filepath.Join(tmpCaDir, "test1.pem"))
+	return tmpCaDir
+}
+
+func TestCertPoolWatcherCaDir(t *testing.T) {
+	// create a temporary CA directory
+	tmpCaDir := createTempCaDir(t)
+	defer os.RemoveAll(tmpCaDir)
+
+	os.Unsetenv("SSL_CERT_FILE")
+	os.Unsetenv("SSL_CERT_DIR")
+
+	// Create the cert pool watcher
+	cpw, err := httputil.NewCertPoolWatcher(tmpCaDir, log.FromContext(context.Background()))
+	require.NoError(t, err)
+	require.NotNil(t, cpw)
+	defer cpw.Done()
+	restarted := &atomic.Bool{}
+	restarted.Store(false)
+	cpw.Restart(func(int) { restarted.Store(true) })
+	err = cpw.Start(context.Background())
+	require.NoError(t, err)
+
+	// Get the original pool
+	firstPool, firstGen, err := cpw.Get()
+	require.NoError(t, err)
+	require.NotNil(t, firstPool)
+
+	// Create a second cert in the CA directory
+	certName := filepath.Join(tmpCaDir, "test2.pem")
+	t.Logf("Create cert file at %q\n", certName)
+	createCert(t, certName)
+
+	require.Eventually(t, func() bool {
+		secondPool, secondGen, err := cpw.Get()
+		if err != nil {
+			return false
+		}
+		// Should NOT restart, because this is not SSL_CERT_DIR nor SSL_CERT_FILE
+		return secondGen != firstGen && !firstPool.Equal(secondPool) && !restarted.Load()
+	}, 10*time.Second, time.Second)
+}
+
+func TestCertPoolWatcherSslCertDir(t *testing.T) {
+	// create a temporary CA directory for SSL_CERT_DIR
+	tmpSslDir := createTempCaDir(t)
+	defer os.RemoveAll(tmpSslDir)
+
+	// Update environment variables for the watcher - some of these should not exist
+	os.Unsetenv("SSL_CERT_FILE")
+	os.Setenv("SSL_CERT_DIR", tmpSslDir+":/tmp/does-not-exist.dir")
+	defer os.Unsetenv("SSL_CERT_DIR")
+
+	// Create a different CaDir
+	tmpCaDir := createTempCaDir(t)
+	defer os.RemoveAll(tmpCaDir)
+
+	// Create the cert pool watcher
+	cpw, err := httputil.NewCertPoolWatcher(tmpCaDir, log.FromContext(context.Background()))
+	require.NoError(t, err)
+	restarted := &atomic.Bool{}
+	restarted.Store(false)
+	cpw.Restart(func(int) { restarted.Store(true) })
+	err = cpw.Start(context.Background())
+	require.NoError(t, err)
+	defer cpw.Done()
+
+	// Get the original pool
+	firstPool, firstGen, err := cpw.Get()
+	require.NoError(t, err)
+	require.NotNil(t, firstPool)
+
+	// Create a second cert in SSL_CIR_DIR
+	certName := filepath.Join(tmpSslDir, "test2.pem")
+	t.Logf("Create cert file at %q\n", certName)
+	createCert(t, certName)
+
+	require.Eventually(t, func() bool {
+		_, secondGen, err := cpw.Get()
+		if err != nil {
+			return false
+		}
+		// Because SSL_CERT_DIR is part of the SystemCertPool:
+		// 1. CPW only watches: it doesn't actually load it, that's the SystemCertPool's responsibility
+		// 2. Because the SystemCertPool never changes, we can't directly compare the pools
+		// 3. If SSL_CERT_DIR changes, we should expect a restart
+		return secondGen != firstGen && restarted.Load()
+	}, 10*time.Second, time.Second)
+}
+
+func TestCertPoolWatcherSslCertFile(t *testing.T) {
 	// create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "cert-pool")
 	require.NoError(t, err)
@@ -72,30 +166,78 @@ func TestCertPoolWatcher(t *testing.T) {
 	t.Logf("Create cert file at %q\n", certName)
 	createCert(t, certName)
 
-	// Update environment variables for the watcher - some of these should not exist
-	os.Setenv("SSL_CERT_DIR", tmpDir+":/tmp/does-not-exist.dir")
-	os.Setenv("SSL_CERT_FILE", "/tmp/does-not-exist.file")
+	// Update environment variables for the watcher
+	os.Unsetenv("SSL_CERT_DIR")
+	os.Setenv("SSL_CERT_FILE", certName)
+	defer os.Unsetenv("SSL_CERT_FILE")
+
+	// Create a different CaDir
+	tmpCaDir := createTempCaDir(t)
+	defer os.RemoveAll(tmpCaDir)
 
 	// Create the cert pool watcher
-	cpw, err := httputil.NewCertPoolWatcher(tmpDir, log.FromContext(context.Background()))
+	cpw, err := httputil.NewCertPoolWatcher(tmpCaDir, log.FromContext(context.Background()))
 	require.NoError(t, err)
+	require.NotNil(t, cpw)
 	defer cpw.Done()
+	restarted := &atomic.Bool{}
+	restarted.Store(false)
+	cpw.Restart(func(int) { restarted.Store(true) })
+	err = cpw.Start(context.Background())
+	require.NoError(t, err)
 
 	// Get the original pool
 	firstPool, firstGen, err := cpw.Get()
 	require.NoError(t, err)
 	require.NotNil(t, firstPool)
 
-	// Create a second cert
-	certName = filepath.Join(tmpDir, "test2.pem")
+	// Update the SSL_CERT_FILE
 	t.Logf("Create cert file at %q\n", certName)
 	createCert(t, certName)
 
 	require.Eventually(t, func() bool {
-		secondPool, secondGen, err := cpw.Get()
+		_, secondGen, err := cpw.Get()
 		if err != nil {
 			return false
 		}
-		return secondGen != firstGen && !firstPool.Equal(secondPool)
-	}, 30*time.Second, time.Second)
+		// Because SSL_CERT_FILE is part of the SystemCertPool:
+		// 1. CPW only watches: it doesn't actually load it, that's the SystemCertPool's responsibility
+		// 2. Because the SystemCertPool never changes, we can't directly compare the pools
+		// 3. If SSL_CERT_FILE changes, we should expect a restart
+		return secondGen != firstGen && restarted.Load()
+	}, 10*time.Second, time.Second)
+}
+
+func TestCertPoolWatcherEmpty(t *testing.T) {
+	os.Unsetenv("SSL_CERT_FILE")
+	os.Unsetenv("SSL_CERT_DIR")
+
+	// Create the empty cert pool watcher
+	cpw, err := httputil.NewCertPoolWatcher("", log.FromContext(context.Background()))
+	require.NoError(t, err)
+	require.NotNil(t, cpw)
+	defer cpw.Done()
+	err = cpw.Start(context.Background())
+	require.NoError(t, err)
+
+	pool, _, err := cpw.Get()
+	require.NoError(t, err)
+	require.NotNil(t, pool)
+}
+
+func TestCertPoolInvalidPath(t *testing.T) {
+	os.Unsetenv("SSL_CERT_FILE")
+	os.Unsetenv("SSL_CERT_DIR")
+
+	// Create an invalid cert pool watcher
+	cpw, err := httputil.NewCertPoolWatcher("/this/path/should/not/exist", log.FromContext(context.Background()))
+	require.NoError(t, err)
+	require.NotNil(t, cpw)
+	defer cpw.Done()
+	err = cpw.Start(context.Background())
+	require.Error(t, err)
+
+	pool, _, err := cpw.Get()
+	require.Error(t, err)
+	require.Nil(t, pool)
 }
