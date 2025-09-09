@@ -1,0 +1,9 @@
+{{- if .Values.options.catalogd.enabled }}
+{{- if (eq .Values.options.featureSet "standard") }}
+{{ tpl (.Files.Get "base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml") . }}
+{{- else if (eq .Values.options.featureSet "experimental") }}
+{{ tpl (.Files.Get "base/catalogd/crd/experimental/olm.operatorframework.io_clustercatalogs.yaml") . }}
+{{- else }}
+{{- fail "options.featureSet must be set to one of: {standard,experimental}" }}
+{{- end }}
+{{- end }}

@@ -43,7 +43,7 @@ for b in ${!modules[@]}; do
         # will not be generated for the standard channel - so we check the expected generated
         # file exists before copying it.
         FILE="${CRD_TMP}/${c}/${crds[${b}]}"
-        [[ -e "${FILE}" ]] && cp "${FILE}" config/base/${modules[${b}]}/crd/${c}
+        [[ -e "${FILE}" ]] && cp "${FILE}" helm/olmv1/base/${modules[${b}]}/crd/${c}
     done
 done
 

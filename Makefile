@@ -83,12 +83,12 @@ export EXPERIMENTAL_RELEASE_INSTALL := install-experimental.sh
 export RELEASE_CATALOGS := default-catalogs.yaml
 
 # List of manifests that are checked in
-MANIFEST_HOME := ./manifests
-STANDARD_MANIFEST := ./manifests/standard.yaml
-STANDARD_E2E_MANIFEST := ./manifests/standard-e2e.yaml
-EXPERIMENTAL_MANIFEST := ./manifests/experimental.yaml
-EXPERIMENTAL_E2E_MANIFEST := ./manifests/experimental-e2e.yaml
-CATALOGS_MANIFEST := ./manifests/default-catalogs.yaml
+MANIFEST_HOME := manifests
+STANDARD_MANIFEST := $(MANIFEST_HOME)/standard.yaml
+STANDARD_E2E_MANIFEST := $(MANIFEST_HOME)/standard-e2e.yaml
+EXPERIMENTAL_MANIFEST := $(MANIFEST_HOME)/experimental.yaml
+EXPERIMENTAL_E2E_MANIFEST := $(MANIFEST_HOME)/experimental-e2e.yaml
+CATALOGS_MANIFEST := $(MANIFEST_HOME)/default-catalogs.yaml
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -123,6 +123,10 @@ help-extended: #HELP Display extended help.
 lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
 	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
+lint-helm: $(HELM) #HELP Run helm linter
+	helm lint helm/olmv1
+	helm lint helm/prometheus
+
 .PHONY: custom-linter-build
 custom-linter-build: #EXHELP Build custom linter
 	go build -tags $(GO_BUILD_TAGS) -o ./bin/custom-linter ./hack/ci/custom-linters/cmd
@@ -139,31 +143,39 @@ k8s-pin: #EXHELP Pin k8s staging modules based on k8s.io/kubernetes version (in 
 tidy:
 	go mod tidy
 
-.PHONY: manifests
-KUSTOMIZE_CATD_RBAC_DIR := config/base/catalogd/rbac
-KUSTOMIZE_CATD_WEBHOOKS_DIR := config/base/catalogd/webhook
-KUSTOMIZE_OPCON_RBAC_DIR := config/base/operator-controller/rbac
 # Due to https://github.com/kubernetes-sigs/controller-tools/issues/837 we can't specify individual files
 # So we have to generate them together and then move them into place
-manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
-	# Generate CRDs via our own generator
+.PHONY: update-crds
+update-crds:
 	hack/tools/update-crds.sh
-	# Generate the remaining operator-controller standard manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)/standard
-	# Generate the remaining operator-controller experimental manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/operator-controller/..." output:rbac:artifacts:config=$(KUSTOMIZE_OPCON_RBAC_DIR)/experimental
-	# Generate the remaining catalogd standard manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)/standard
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS),standard webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)/standard
-	# Generate the remaining catalogd experimental manifests
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) rbac:roleName=manager-role paths="./internal/catalogd/..." output:rbac:artifacts:config=$(KUSTOMIZE_CATD_RBAC_DIR)/experimental
-	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) webhook paths="./internal/catalogd/..." output:webhook:artifacts:config=$(KUSTOMIZE_CATD_WEBHOOKS_DIR)/experimental
-	# Generate manifests stored in source-control
-	mkdir -p $(MANIFEST_HOME)
-	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_OVERLAY) > $(STANDARD_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_STANDARD_E2E_OVERLAY) > $(STANDARD_E2E_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_OVERLAY) > $(EXPERIMENTAL_MANIFEST)
-	$(KUSTOMIZE) build $(KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY) > $(EXPERIMENTAL_E2E_MANIFEST)
+
+# The filename variables can be overridden on the command line if you want to change the set of values files:
+# e.g. make "manifests/standard.yaml=helm/cert-manager.yaml my-values-file.yaml" manifests
+#
+# The set of MANIFESTS to be generated can be changed; you can generate your own custom manifest
+# e.g. make MANIFESTS=test.yaml "test.yaml=helm/e2e.yaml" manifests
+#
+# Override HELM_SETTINGS on the command line to include additional Helm settings
+# e.g. make HELM_SETTINGS="options.openshift.enabled=true" manifests
+# e.g. make HELM_SETTINGS="operatorControllerFeatures={WebhookProviderCertManager}" manifests
+#
+MANIFESTS ?= $(STANDARD_MANIFEST) $(STANDARD_E2E_MANIFEST) $(EXPERIMENTAL_MANIFEST) $(EXPERIMENTAL_E2E_MANIFEST)
+$(STANDARD_MANIFEST) ?= helm/cert-manager.yaml
+$(STANDARD_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/e2e.yaml
+$(EXPERIMENTAL_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml
+$(EXPERIMENTAL_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml helm/e2e.yaml
+HELM_SETTINGS ?=
+.PHONY: $(MANIFESTS)
+$(MANIFESTS): $(HELM)
+	@mkdir -p $(MANIFEST_HOME)
+	$(HELM) template olmv1 helm/olmv1 $(addprefix --values ,$($@)) $(addprefix --set ,$(HELM_SETTINGS)) > $@
+
+# Generate manifests stored in source-control
+.PHONY: manifests
+manifests: update-crds $(MANIFESTS) $(HELM) #EXHELP Generate OLMv1 manifests
+	# These are testing existing manifest options without saving the results
+	$(HELM) template olmv1 helm/olmv1 --values helm/tilt.yaml $(addprefix --set ,$(HELM_SETTINGS)) > /dev/null
+	$(HELM) template olmv1 helm/olmv1 --set "options.openshift.enabled=true" > /dev/null
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -285,8 +297,8 @@ test-experimental-e2e: run-internal image-registry prometheus experimental-e2e e
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
 prometheus: PROMETHEUS_VERSION := v0.83.0
-prometheus: #EXHELP Deploy Prometheus into specified namespace
-	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(KUSTOMIZE) $(VERSION)
+prometheus: $(KUSTOMIZE) #EXHELP Deploy Prometheus into specified namespace
+	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(VERSION)
 
 .PHONY: test-extension-developer-e2e
 test-extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)

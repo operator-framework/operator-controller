@@ -19,8 +19,8 @@ NetworkPolicy is implemented for both catalogd and operator-controller component
 
 Each component has a dedicated NetworkPolicy that applies to its respective pod through label selectors:
 
-* For catalogd: `control-plane=catalogd-controller-manager`
-* For operator-controller: `control-plane=operator-controller-controller-manager`
+* For catalogd: `app.kubernetes.io/name=catalogd`
+* For operator-controller: `app.kubernetes.io/name=operator-controller`
 
 ### Catalogd NetworkPolicy
 
@@ -78,10 +78,10 @@ If you encounter network connectivity issues after deploying OLMv1, consider the
 
 ```bash
 # Verify catalogd pod labels
-kubectl get pods -n olmv1-system --selector=control-plane=catalogd-controller-manager
+kubectl get pods -n olmv1-system --selector=apps.kubernetes.io/name=catalogd
 
 # Verify operator-controller pod labels
-kubectl get pods -n olmv1-system --selector=control-plane=operator-controller-controller-manager
+kubectl get pods -n olmv1-system --selector=apps.kubernetes.io/name=operator-controller
 
 # Compare with actual pod names
 kubectl get pods -n olmv1-system | grep -E 'catalogd|operator-controller'

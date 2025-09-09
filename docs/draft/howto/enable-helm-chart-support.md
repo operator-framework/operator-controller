@@ -24,7 +24,7 @@ To enable the Helm Chart support feature gate, you need to patch the `operator-c
 2.  **Wait for the controller manager pods to be ready:**
 
     ```bash
-    $ kubectl -n olmv1-system wait --for condition=ready pods -l control-plane=operator-controller-controller-manager
+    $ kubectl -n olmv1-system wait --for condition=ready pods -l apps.kubernetes.io/name=operator-controller
     ```
 
 Once the above wait condition is met, the `HelmChartSupport` feature gate should be enabled in operator controller.

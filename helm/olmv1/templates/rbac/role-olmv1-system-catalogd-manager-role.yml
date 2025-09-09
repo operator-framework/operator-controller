@@ -1,0 +1,22 @@
+{{- if .Values.options.catalogd.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: catalogd-manager-role
+  namespace: {{ .Values.namespaces.olmv1.name }}
+  labels:
+    app.kubernetes.io/name: catalogd
+    {{- include "olmv1.labels" . | nindent 4 }}
+  annotations:
+    {{- include "olmv1.annotations" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+{{- end }}
