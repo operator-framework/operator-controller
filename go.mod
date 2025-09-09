@@ -245,6 +245,8 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
 )
 
+retract v1.5.0 // contains filename with ':' which causes failure creating module zip file
+
 replace k8s.io/api => k8s.io/api v0.33.2
 
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.33.2
@@ -304,5 +306,3 @@ replace k8s.io/mount-utils => k8s.io/mount-utils v0.33.2
 replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.33.2
 
 replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.33.2
-
-retract v1.5.0 // contains filename with ':' which causes failure creating module zip file
