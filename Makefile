@@ -351,12 +351,14 @@ kind-deploy: manifests
 .PHONY: kind-cluster
 kind-cluster: $(KIND) kind-verify-versions #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
+	./hack/setup-e2e-registry-config.sh
 	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config ./kind-config.yaml
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-clean
 kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
+	./hack/cleanup-e2e-registry-config.sh
 
 .PHONY: kind-verify-versions
 kind-verify-versions:

@@ -108,6 +108,16 @@ if [ -f "${olmv1_manifest}" ]; then
 fi
 
 curl -L -s "${olmv1_manifest}" | sed "s/olmv1-system/${olmv1_namespace}/g" | kubectl apply -f -
+
+# Wait for registry to be available if it exists (for e2e tests)
+if kubectl get namespace operator-controller-e2e >/dev/null 2>&1; then
+    echo "Waiting for e2e registry to be available..."
+    if ! kubectl_wait "operator-controller-e2e" "deployment/docker-registry" "60s"; then
+        echo "Error: E2E registry is not ready, cannot proceed with deployment"
+        exit 1
+    fi
+fi
+
 # Wait for the rollout, and then wait for the deployment to be Available
 kubectl_wait_rollout "${olmv1_namespace}" "deployment/catalogd-controller-manager" "60s"
 kubectl_wait "${olmv1_namespace}" "deployment/catalogd-controller-manager" "60s"
