@@ -3,5 +3,7 @@
 {{ tpl (.Files.Get "base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml") . }}
 {{- else if (eq .Values.options.featureSet "experimental") }}
 {{ tpl (.Files.Get "base/operator-controller/crd/experimental/olm.operatorframework.io_clusterextensions.yaml") . }}
+{{- else }}
+{{- fail "options.featureSet must be set to one of: {standard,experimental}" }}
 {{- end }}
 {{- end }}
