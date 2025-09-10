@@ -1,4 +1,4 @@
-package convert
+package applier
 
 import (
 	"crypto/sha256"
@@ -7,19 +7,24 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 
-	bundlepkg "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 )
 
-type BundleToHelmChartConverter struct {
+type RegistryV1HelmChartProvider struct {
 	BundleRenderer          render.BundleRenderer
 	CertificateProvider     render.CertificateProvider
 	IsWebhookSupportEnabled bool
 }
 
-func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error) {
+func (r *RegistryV1HelmChartProvider) HelmChart(bundle source.BundleSource, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 	rv1, err := bundle.GetBundle()
+	if err != nil {
+		return nil, err
+	}
+
+	watchNamespace, err := GetWatchNamespace(ext)
 	if err != nil {
 		return nil, err
 	}
@@ -27,10 +32,8 @@ func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, ins
 	opts := []render.Option{
 		render.WithCertificateProvider(r.CertificateProvider),
 	}
-	if config != nil {
-		if watchNs, ok := config[bundlepkg.BundleConfigWatchNamespaceKey].(string); ok {
-			opts = append(opts, render.WithTargetNamespaces(watchNs))
-		}
+	if watchNamespace != "" {
+		opts = append(opts, render.WithTargetNamespaces(watchNamespace))
 	}
 
 	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
@@ -49,7 +52,7 @@ func (r *BundleToHelmChartConverter) ToHelmChart(bundle source.BundleSource, ins
 		return nil, fmt.Errorf("unsupported bundle: webhookDefinitions are not supported")
 	}
 
-	objs, err := r.BundleRenderer.Render(rv1, installNamespace, opts...)
+	objs, err := r.BundleRenderer.Render(rv1, ext.Spec.Namespace, opts...)
 
 	if err != nil {
 		return nil, fmt.Errorf("error rendering bundle: %w", err)

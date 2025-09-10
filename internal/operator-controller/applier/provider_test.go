@@ -1,4 +1,4 @@
-package convert_test
+package applier_test
 
 import (
 	"errors"
@@ -6,34 +6,38 @@ import (
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
 func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleSourceFailures(t *testing.T) {
-	converter := convert.BundleToHelmChartConverter{}
+	provider := applier.RegistryV1HelmChartProvider{}
 	var failingBundleSource FakeBundleSource = func() (bundle.RegistryV1, error) {
 		return bundle.RegistryV1{}, errors.New("some error")
 	}
-	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "watch-namespace",
+	ext := &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "install-namespace",
+		},
 	}
-	_, err := converter.ToHelmChart(failingBundleSource, "install-namespace", config)
+	_, err := provider.HelmChart(failingBundleSource, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "some error")
 }
 
 func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleRendererFailures(t *testing.T) {
-	converter := convert.BundleToHelmChartConverter{
+	provider := applier.RegistryV1HelmChartProvider{
 		BundleRenderer: render.BundleRenderer{
 			ResourceGenerators: []render.ResourceGenerator{
 				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
@@ -49,16 +53,18 @@ func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleRendererFailures(t
 		},
 	)
 
-	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+	ext := &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "install-namespace",
+		},
 	}
-	_, err := converter.ToHelmChart(b, "install-namespace", config)
+	_, err := provider.HelmChart(b, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "some error")
 }
 
 func Test_BundleToHelmChartConverter_ToHelmChart_NoAPIServiceDefinitions(t *testing.T) {
-	converter := convert.BundleToHelmChartConverter{}
+	provider := applier.RegistryV1HelmChartProvider{}
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
@@ -66,16 +72,19 @@ func Test_BundleToHelmChartConverter_ToHelmChart_NoAPIServiceDefinitions(t *test
 		},
 	)
 
-	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+	ext := &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "install-namespace",
+		},
 	}
-	_, err := converter.ToHelmChart(b, "install-namespace", config)
+
+	_, err := provider.HelmChart(b, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported bundle: apiServiceDefintions are not supported")
 }
 
 func Test_BundleToHelmChartConverter_ToHelmChart_NoWebhooksWithoutCertProvider(t *testing.T) {
-	converter := convert.BundleToHelmChartConverter{
+	provider := applier.RegistryV1HelmChartProvider{
 		IsWebhookSupportEnabled: true,
 	}
 
@@ -85,16 +94,19 @@ func Test_BundleToHelmChartConverter_ToHelmChart_NoWebhooksWithoutCertProvider(t
 		},
 	)
 
-	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+	ext := &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "install-namespace",
+		},
 	}
-	_, err := converter.ToHelmChart(b, "install-namespace", config)
+
+	_, err := provider.HelmChart(b, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 }
 
 func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksSupportDisabled(t *testing.T) {
-	converter := convert.BundleToHelmChartConverter{
+	provider := applier.RegistryV1HelmChartProvider{
 		IsWebhookSupportEnabled: false,
 	}
 
@@ -104,16 +116,19 @@ func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksSupportDisabled(t *test
 		},
 	)
 
-	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+	ext := &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "install-namespace",
+		},
 	}
-	_, err := converter.ToHelmChart(b, "install-namespace", config)
+
+	_, err := provider.HelmChart(b, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 }
 
 func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksWithCertProvider(t *testing.T) {
-	converter := convert.BundleToHelmChartConverter{
+	provider := applier.RegistryV1HelmChartProvider{
 		CertificateProvider:     FakeCertProvider{},
 		IsWebhookSupportEnabled: true,
 	}
@@ -127,10 +142,13 @@ func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksWithCertProvider(t *tes
 		},
 	)
 
-	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+	ext := &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "install-namespace",
+		},
 	}
-	_, err := converter.ToHelmChart(b, "install-namespace", config)
+
+	_, err := provider.HelmChart(b, ext)
 	require.NoError(t, err)
 }
 
@@ -139,7 +157,7 @@ func Test_BundleToHelmChartConverter_ToHelmChart_BundleRendererIntegration(t *te
 	expectedWatchNamespace := ""
 	expectedCertProvider := FakeCertProvider{}
 
-	converter := convert.BundleToHelmChartConverter{
+	provider := applier.RegistryV1HelmChartProvider{
 		BundleRenderer: render.BundleRenderer{
 			ResourceGenerators: []render.ResourceGenerator{
 				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
@@ -160,15 +178,24 @@ func Test_BundleToHelmChartConverter_ToHelmChart_BundleRendererIntegration(t *te
 		},
 	)
 
-	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: expectedWatchNamespace,
+	ext := &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "install-namespace",
+			Config: &ocv1.ClusterExtensionConfig{
+				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+				Inline: &apiextensionsv1.JSON{
+					Raw: []byte(`{"watchNamespace": "` + expectedWatchNamespace + `"}`),
+				},
+			},
+		},
 	}
-	_, err := converter.ToHelmChart(b, expectedInstallNamespace, config)
+
+	_, err := provider.HelmChart(b, ext)
 	require.NoError(t, err)
 }
 
 func Test_BundleToHelmChartConverter_ToHelmChart_Success(t *testing.T) {
-	converter := convert.BundleToHelmChartConverter{
+	provider := applier.RegistryV1HelmChartProvider{
 		BundleRenderer: render.BundleRenderer{
 			ResourceGenerators: []render.ResourceGenerator{
 				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
@@ -202,10 +229,13 @@ func Test_BundleToHelmChartConverter_ToHelmChart_Success(t *testing.T) {
 		},
 	)
 
-	config := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: "",
+	ext := &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "install-namespace",
+		},
 	}
-	chart, err := converter.ToHelmChart(b, "install-namespace", config)
+
+	chart, err := provider.HelmChart(b, ext)
 	require.NoError(t, err)
 	require.NotNil(t, chart)
 	require.NotNil(t, chart.Metadata)
