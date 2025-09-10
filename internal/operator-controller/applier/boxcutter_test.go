@@ -15,6 +15,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -565,6 +566,218 @@ func TestBoxcutter_Apply(t *testing.T) {
 				err := c.List(context.Background(), revList, client.MatchingLabels{controllers.ClusterExtensionRevisionOwnerLabel: ext.Name})
 				require.NoError(t, err)
 				assert.Empty(t, revList.Items)
+			},
+		},
+		{
+			name: "sixth revision",
+			mockBuilder: &mockBundleRevisionBuilder{
+				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+					return &ocv1.ClusterExtensionRevision{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: revisionAnnotations,
+							Labels: map[string]string{
+								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							},
+						},
+						Spec: ocv1.ClusterExtensionRevisionSpec{},
+					}, nil
+				},
+			},
+			existingObjs: []client.Object{
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-1",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-2",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-3",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-4",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-5",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-6",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					},
+				},
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev1 := &ocv1.ClusterExtensionRevision{}
+				err := c.Get(t.Context(), client.ObjectKey{Name: "rev-1"}, rev1)
+				require.Error(t, err)
+				assert.True(t, apierrors.IsNotFound(err))
+
+				latest := &ocv1.ClusterExtensionRevision{}
+				err = c.Get(t.Context(), client.ObjectKey{Name: "test-ext-1"}, latest)
+				require.NoError(t, err)
+				assert.Len(t, latest.Spec.Previous, applier.ClusterExtensionRevisionPreviousLimit)
+			},
+		},
+		{
+			name: "len([]revisions) > limit but contains active revisions with index beyond limit",
+			mockBuilder: &mockBundleRevisionBuilder{
+				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+					return &ocv1.ClusterExtensionRevision{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: revisionAnnotations,
+							Labels: map[string]string{
+								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							},
+						},
+						Spec: ocv1.ClusterExtensionRevisionSpec{},
+					}, nil
+				},
+			},
+			existingObjs: []client.Object{
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-1",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-2",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						// index beyond the retention limit but active; should be preserved
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-3",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-4",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						// archived but should be preserved since it is within the limit
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-5",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-6",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					},
+				},
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "rev-7",
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+					},
+				},
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev1 := &ocv1.ClusterExtensionRevision{}
+				err := c.Get(t.Context(), client.ObjectKey{Name: "rev-1"}, rev1)
+				require.Error(t, err)
+				assert.True(t, apierrors.IsNotFound(err))
+
+				rev2 := &ocv1.ClusterExtensionRevision{}
+				err = c.Get(t.Context(), client.ObjectKey{Name: "rev-2"}, rev2)
+				require.NoError(t, err)
+
+				rev4 := &ocv1.ClusterExtensionRevision{}
+				err = c.Get(t.Context(), client.ObjectKey{Name: "rev-4"}, rev4)
+				require.NoError(t, err)
+
+				latest := &ocv1.ClusterExtensionRevision{}
+				err = c.Get(t.Context(), client.ObjectKey{Name: "test-ext-1"}, latest)
+				require.NoError(t, err)
+				assert.Len(t, latest.Spec.Previous, 6)
+				assert.Contains(t, latest.Spec.Previous, ocv1.ClusterExtensionRevisionPrevious{Name: "rev-4"})
 			},
 		},
 	}
