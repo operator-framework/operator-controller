@@ -1688,7 +1688,7 @@ metadata:
   labels:
     app.kubernetes.io/name: operator-controller
     app.kubernetes.io/part-of: olm
-  name: operator-controller-manager-rolebinding
+  name: operator-controller-manager-admin-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
