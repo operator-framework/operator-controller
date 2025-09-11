@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/pkg/blobinfocache/none"
-	"github.com/containers/image/v5/types"
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/pkg/blobinfocache/none"
+	"go.podman.io/image/v5/types"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/registry"

@@ -18,10 +18,10 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/archive"
-	"github.com/containers/image/v5/docker/reference"
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/docker/reference"
 	"helm.sh/helm/v3/pkg/registry"
 
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"

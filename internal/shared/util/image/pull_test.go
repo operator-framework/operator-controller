@@ -15,15 +15,15 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/containerd/containerd/archive"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/pkg/sysregistriesv2"
-	"github.com/containers/image/v5/types"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/opencontainers/go-digest"
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/pkg/sysregistriesv2"
+	"go.podman.io/image/v5/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
