@@ -14,7 +14,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -648,9 +647,7 @@ func TestApply_InstallationWithSingleOwnNamespaceInstallSupportEnabled(t *testin
 }
 
 func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
-	t.Run("generates bundle resources in AllNamespaces install mode", func(t *testing.T) {
-		var expectedWatchNamespace = corev1.NamespaceAll
-
+	t.Run("generates bundle resources without configuration when no bundle config is defined", func(t *testing.T) {
 		helmApplier := applier.Helm{
 			ActionClientGetter: &mockActionGetter{
 				getClientErr: driver.ErrReleaseNotFound,
@@ -661,7 +658,8 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 			},
 			BundleToHelmChartConverter: &fakeBundleToHelmChartConverter{
 				fn: func(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error) {
-					require.Equal(t, expectedWatchNamespace, config[registryv1Bundle.BundleConfigWatchNamespaceKey])
+					// no config is passed
+					require.Empty(t, config)
 					return nil, nil
 				},
 			},
