@@ -199,8 +199,8 @@ bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := git://main?path=
 CRD_DIFF_UPDATED_REF := file://
-CRD_DIFF_OPCON_SOURCE := config/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml
-CRD_DIFF_CATD_SOURCE := config/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml
+CRD_DIFF_OPCON_SOURCE := helm/olmv1/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml
+CRD_DIFF_CATD_SOURCE := helm/olmv1/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml
 CRD_DIFF_CONFIG := crd-diff-config.yaml
 verify-crd-compatibility: $(CRD_DIFF) manifests
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "${CRD_DIFF_ORIGINAL_REF}${CRD_DIFF_OPCON_SOURCE}" ${CRD_DIFF_UPDATED_REF}${CRD_DIFF_OPCON_SOURCE}
