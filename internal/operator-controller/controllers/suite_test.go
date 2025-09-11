@@ -95,7 +95,7 @@ var config *rest.Config
 func TestMain(m *testing.M) {
 	testEnv := &envtest.Environment{
 		CRDDirectoryPaths: []string{
-			filepath.Join("..", "..", "..", "config", "base", "operator-controller", "crd", "experimental"),
+			filepath.Join("..", "..", "..", "helm", "olmv1", "base", "operator-controller", "crd", "experimental"),
 		},
 		ErrorIfCRDPathMissing: true,
 	}
