@@ -71,11 +71,6 @@ else
 $(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
-KUSTOMIZE_STANDARD_OVERLAY := config/overlays/standard
-KUSTOMIZE_STANDARD_E2E_OVERLAY := config/overlays/standard-e2e
-KUSTOMIZE_EXPERIMENTAL_OVERLAY := config/overlays/experimental
-KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY := config/overlays/experimental-e2e
-
 export STANDARD_RELEASE_MANIFEST := operator-controller.yaml
 export STANDARD_RELEASE_INSTALL := install.sh
 export EXPERIMENTAL_RELEASE_MANIFEST := operator-controller-experimental.yaml

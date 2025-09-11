@@ -4,8 +4,8 @@
 
 OLMv1 uses [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/) to secure communication between components, restricting network traffic to only what's necessary for proper functionality. 
 
-* The catalogd NetworkPolicy is implemented [here](https://github.com/operator-framework/operator-controller/blob/main/config/base/catalogd/manager/network_policy.yaml).
-* The operator-controller is implemented [here](https://github.com/operator-framework/operator-controller/blob/main/config/base/operator-controller/manager/network_policy.yaml).
+* The catalogd NetworkPolicy is implemented [here](https://github.com/operator-framework/operator-controller/blob/main/helm/olmv1/templates/networkpolicy/networkpolicy-olmv1-system-catalogd-controller-manager.yml).
+* The operator-controller is implemented [here](https://github.com/operator-framework/operator-controller/blob/main/helm/olmv1/templates/networkpolicy/networkpolicy-olmv1-system-operator-controller-controller-manager.yml).
 
 This document explains the details of `NetworkPolicy` implementation for the core components.
 

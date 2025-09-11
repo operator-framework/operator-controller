@@ -1,4 +1,0 @@
-resources:
-- prometheus_service_account.yaml
-- prometheus_cluster_role.yaml
-- prometheus_cluster_rolebinding.yaml

@@ -1,3 +1,0 @@
-resources:
-- olm.operatorframework.io_clusterextensions.yaml
-- olm.operatorframework.io_clusterextensionrevisions.yaml
