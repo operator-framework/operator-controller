@@ -16,6 +16,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -35,7 +36,8 @@ import (
 )
 
 const (
-	RevisionHashAnnotation = "olm.operatorframework.io/hash"
+	RevisionHashAnnotation                = "olm.operatorframework.io/hash"
+	ClusterExtensionRevisionPreviousLimit = 5
 )
 
 type ClusterExtensionRevisionGenerator interface {
@@ -285,11 +287,9 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		}
 		newRevision.Annotations[RevisionHashAnnotation] = desiredHash
 		newRevision.Spec.Revision = revisionNumber
-		for _, prevRevision := range prevRevisions {
-			newRevision.Spec.Previous = append(newRevision.Spec.Previous, ocv1.ClusterExtensionRevisionPrevious{
-				Name: prevRevision.Name,
-				UID:  prevRevision.UID,
-			})
+
+		if err = bc.setPreviousRevisions(ctx, newRevision, prevRevisions); err != nil {
+			return false, "", fmt.Errorf("garbage collecting old Revisions: %w", err)
 		}
 
 		if err := controllerutil.SetControllerReference(ext, newRevision, bc.Scheme); err != nil {
@@ -300,8 +300,6 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		}
 		currentRevision = newRevision
 	}
-
-	// TODO: Delete archived previous revisions over a certain revision limit
 
 	progressingCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.TypeProgressing)
 	availableCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
@@ -317,6 +315,30 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		return false, succeededCondition.Message, nil
 	}
 	return true, "", nil
+}
+
+// setPreviousRevisions populates spec.previous of latestRevision, trimming the list of previous _archived_ revisions down to
+// ClusterExtensionRevisionPreviousLimit or to the first _active_ revision and deletes trimmed revisions from the cluster.
+// NOTE: revisionList must be sorted in chronographical order, from oldest to latest.
+func (bc *Boxcutter) setPreviousRevisions(ctx context.Context, latestRevision *ocv1.ClusterExtensionRevision, revisionList []ocv1.ClusterExtensionRevision) error {
+	trimmedPrevious := make([]ocv1.ClusterExtensionRevisionPrevious, 0)
+	for index, r := range revisionList {
+		if index < len(revisionList)-ClusterExtensionRevisionPreviousLimit && r.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
+			// Delete oldest CREs from the cluster and list to reach ClusterExtensionRevisionPreviousLimit or latest active revision
+			if err := bc.Client.Delete(ctx, &ocv1.ClusterExtensionRevision{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: r.Name,
+				},
+			}); err != nil && !apierrors.IsNotFound(err) {
+				return fmt.Errorf("deleting previous archived Revision: %w", err)
+			}
+		} else {
+			// All revisions within the limit or still active are preserved
+			trimmedPrevious = append(trimmedPrevious, ocv1.ClusterExtensionRevisionPrevious{Name: r.Name, UID: r.GetUID()})
+		}
+	}
+	latestRevision.Spec.Previous = trimmedPrevious
+	return nil
 }
 
 // getExistingRevisions returns the list of ClusterExtensionRevisions for a ClusterExtension with name extName in revision order (oldest to newest)
