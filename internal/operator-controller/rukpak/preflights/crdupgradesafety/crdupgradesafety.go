@@ -99,8 +99,9 @@ func (p *Preflight) runPreflight(ctx context.Context, relObjects []client.Object
 			resultErrs := crdWideErrors(results)
 			resultErrs = append(resultErrs, sameVersionErrors(results)...)
 			resultErrs = append(resultErrs, servedVersionErrors(results)...)
-
-			validateErrors = append(validateErrors, fmt.Errorf("validating upgrade for CRD %q: %w", newCrd.Name, errors.Join(resultErrs...)))
+			if len(resultErrs) > 0 {
+				validateErrors = append(validateErrors, fmt.Errorf("validating upgrade for CRD %q: %w", newCrd.Name, errors.Join(resultErrs...)))
+			}
 		}
 	}
 
@@ -162,7 +163,11 @@ func sameVersionErrors(results *runner.Results) []error {
 		for property, comparisonResults := range propertyResults {
 			for _, result := range comparisonResults {
 				for _, err := range result.Errors {
-					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", version, property, result.Name, err))
+					msg := err
+					if result.Name == "unhandled" {
+						msg = "unhandled changes found"
+					}
+					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", version, property, result.Name, msg))
 				}
 			}
 		}
@@ -181,7 +186,11 @@ func servedVersionErrors(results *runner.Results) []error {
 		for property, comparisonResults := range propertyResults {
 			for _, result := range comparisonResults {
 				for _, err := range result.Errors {
-					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", version, property, result.Name, err))
+					msg := err
+					if result.Name == "unhandled" {
+						msg = "unhandled changes found"
+					}
+					errs = append(errs, fmt.Errorf("%s: %s: %s: %s", version, property, result.Name, msg))
 				}
 			}
 		}
