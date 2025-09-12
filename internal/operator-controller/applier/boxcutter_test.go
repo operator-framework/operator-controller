@@ -354,7 +354,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			UID:  "test-uid",
 		},
 	}
-	defaultDesiredHash := "705ada5296ab26f74d94bfa497295a0cbccdb140623bbe704a3506cd1dfba4eb"
+	defaultDesiredHash := "gvvp8nzq5sbila80hkiv69am8hdr7o68qkk8n084gdn"
 	defaultDesiredRevision := &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-ext-1",
@@ -546,7 +546,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 
 				assert.Equal(t, "test-ext-2", newRev.Name)
 				assert.Equal(t, int64(2), newRev.Spec.Revision)
-				assert.Equal(t, "9d0e48f6830fce1be5f510eb996f2876719fdb8bcffcfe1dfd3fd60e56316424", newRev.Annotations[applier.RevisionHashAnnotation])
+				assert.Equal(t, "1fqrim12vefkogp3pwxwhcs7c0pi1z1t2fw4roxu81sv", newRev.Annotations[applier.RevisionHashAnnotation])
 				require.Len(t, newRev.Spec.Previous, 1)
 				assert.Equal(t, "test-ext-1", newRev.Spec.Previous[0].Name)
 				assert.Equal(t, types.UID("rev-uid-1"), newRev.Spec.Previous[0].UID)

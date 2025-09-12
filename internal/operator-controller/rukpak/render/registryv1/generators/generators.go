@@ -122,10 +122,7 @@ func BundleCSVPermissionsGenerator(rv1 *bundle.RegistryV1, opts render.Options) 
 	for _, ns := range opts.TargetNamespaces {
 		for _, permission := range permissions {
 			saName := saNameOrDefault(permission.ServiceAccountName)
-			name, err := opts.UniqueNameGenerator(fmt.Sprintf("%s-%s", rv1.CSV.Name, saName), permission)
-			if err != nil {
-				return nil, err
-			}
+			name := opts.UniqueNameGenerator(fmt.Sprintf("%s-%s", rv1.CSV.Name, saName), permission)
 
 			objs = append(objs,
 				CreateRoleResource(name, ns, WithRules(permission.Rules...)),
@@ -167,10 +164,7 @@ func BundleCSVClusterPermissionsGenerator(rv1 *bundle.RegistryV1, opts render.Op
 	objs := make([]client.Object, 0, 2*len(clusterPermissions))
 	for _, permission := range clusterPermissions {
 		saName := saNameOrDefault(permission.ServiceAccountName)
-		name, err := opts.UniqueNameGenerator(fmt.Sprintf("%s-%s", rv1.CSV.Name, saName), permission)
-		if err != nil {
-			return nil, err
-		}
+		name := opts.UniqueNameGenerator(fmt.Sprintf("%s-%s", rv1.CSV.Name, saName), permission)
 		objs = append(objs,
 			CreateClusterRoleResource(name, WithRules(permission.Rules...)),
 			CreateClusterRoleBindingResource(

@@ -206,10 +206,10 @@ func Test_WithUniqueNameGenerator(t *testing.T) {
 	opts := &render.Options{
 		UniqueNameGenerator: render.DefaultUniqueNameGenerator,
 	}
-	render.WithUniqueNameGenerator(func(s string, i interface{}) (string, error) {
-		return "a man needs a name", nil
+	render.WithUniqueNameGenerator(func(s string, i interface{}) string {
+		return "a man needs a name"
 	})(opts)
-	generatedName, _ := opts.UniqueNameGenerator("", nil)
+	generatedName := opts.UniqueNameGenerator("", nil)
 	require.Equal(t, "a man needs a name", generatedName)
 }
 

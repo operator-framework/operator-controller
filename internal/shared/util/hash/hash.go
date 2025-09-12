@@ -1,4 +1,4 @@
-package util
+package hash
 
 import (
 	"crypto/sha256"
@@ -7,10 +7,10 @@ import (
 	"math/big"
 )
 
-// DeepHashObject writes specified object to hash using the spew library
-// which follows pointers and prints actual values of the nested objects
-// ensuring the hash does not change when a pointer changes.
-func DeepHashObject(obj interface{}) (string, error) {
+// DeepHashObject writes specified object to hash based on the object's
+// JSON representation. If the object fails JSON marshaling, DeepHashObject
+// panics.
+func DeepHashObject(obj interface{}) string {
 	// While the most accurate encoding we could do for Kubernetes objects (runtime.Object)
 	// would use the API machinery serializers, those operate over entire objects - and
 	// we often need to operate on snippets. Checking with the experts and the implementation,
@@ -22,18 +22,19 @@ func DeepHashObject(obj interface{}) (string, error) {
 	//     will be encoded
 
 	hasher := sha256.New224()
-	hasher.Reset()
 	encoder := json.NewEncoder(hasher)
 	if err := encoder.Encode(obj); err != nil {
-		return "", fmt.Errorf("couldn't encode object: %w", err)
+		panic(fmt.Sprintf("couldn't encode object: %v", err))
 	}
 
-	// base62(sha224(bytes)) is a useful hash and encoding for adding the contents of this
+	// TODO: Investigate whether we can change this to base62(sha224(bytes))
+	//   The main concern with changing the base is that it will cause the hash
+	//   function output to change, which may cause issues with consumers expecting
+	//   a consistent hash.
+	//
+	// base36(sha224(bytes)) is a useful hash and encoding for adding the contents of this
 	// to a Kubernetes identifier or other field which has length and character set requirements
-	var hash []byte
-	hash = hasher.Sum(hash)
-
 	var i big.Int
-	i.SetBytes(hash[:])
-	return i.Text(36), nil
+	i.SetBytes(hasher.Sum(nil))
+	return i.Text(36)
 }

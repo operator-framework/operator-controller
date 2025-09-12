@@ -3,17 +3,13 @@ package applier
 import (
 	"cmp"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"hash"
 	"io/fs"
 	"maps"
 	"slices"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,6 +29,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
 
 const (
@@ -233,7 +230,7 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	if err != nil {
 		return false, "", err
 	}
-	desiredHash := computeSHA256Hash(desiredRevision.Spec.Phases)
+	desiredHash := hashutil.DeepHashObject(desiredRevision.Spec.Phases)
 
 	// Sort into current and previous revisions.
 	var (
@@ -353,33 +350,6 @@ func (bc *Boxcutter) getExistingRevisions(ctx context.Context, extName string) (
 		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
 	})
 	return existingRevisionList.Items, nil
-}
-
-// computeSHA256Hash returns a sha236 hash value calculated from object.
-func computeSHA256Hash(obj any) string {
-	hasher := sha256.New()
-	deepHashObject(hasher, obj)
-	return hex.EncodeToString(hasher.Sum(nil))
-}
-
-// deepHashObject writes specified object to hash using the spew library
-// which follows pointers and prints actual values of the nested objects
-// ensuring the hash does not change when a pointer changes.
-func deepHashObject(hasher hash.Hash, objectToWrite any) {
-	hasher.Reset()
-
-	// TODO: change this out to `json.Marshal`. Pretty sure we found issues in the past where
-	//   spew would produce different output when internal structures changed without the
-	//   external public API changing.
-	printer := spew.ConfigState{
-		Indent:         " ",
-		SortKeys:       true,
-		DisableMethods: true,
-		SpewKeys:       true,
-	}
-	if _, err := printer.Fprintf(hasher, "%#v", objectToWrite); err != nil {
-		panic(err)
-	}
 }
 
 func latestRevisionNumber(prevRevisions []ocv1.ClusterExtensionRevision) int64 {
