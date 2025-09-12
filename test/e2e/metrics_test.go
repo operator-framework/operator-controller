@@ -32,7 +32,7 @@ import (
 func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 	client := utils.FindK8sClient(t)
 	curlNamespace := createRandomNamespace(t, client)
-	componentNamespace := getComponentNamespace(t, client, operatorManagerSelector)
+	componentNamespace := getComponentNamespace(t, client, "control-plane=operator-controller-controller-manager")
 	metricsURL := fmt.Sprintf("https://operator-controller-service.%s.svc.cluster.local:8443/metrics", componentNamespace)
 
 	config := NewMetricsTestConfig(
@@ -52,7 +52,7 @@ func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 	client := utils.FindK8sClient(t)
 	curlNamespace := createRandomNamespace(t, client)
-	componentNamespace := getComponentNamespace(t, client, catalogdManagerSelector)
+	componentNamespace := getComponentNamespace(t, client, "control-plane=catalogd-controller-manager")
 	metricsURL := fmt.Sprintf("https://catalogd-service.%s.svc.cluster.local:7443/metrics", componentNamespace)
 
 	config := NewMetricsTestConfig(
@@ -231,20 +231,16 @@ func createRandomNamespace(t *testing.T, client string) string {
 }
 
 // getComponentNamespace returns the namespace where operator-controller or catalogd is running
-func getComponentNamespace(t *testing.T, client string, selectors []string) string {
-	for _, selector := range selectors {
-		cmd := exec.Command(client, "get", "pods", "--all-namespaces", "--selector="+selector, "--output=jsonpath={.items[0].metadata.namespace}")
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			continue
-		}
-		namespace := string(bytes.TrimSpace(output))
-		if namespace != "" {
-			return namespace
-		}
+func getComponentNamespace(t *testing.T, client, selector string) string {
+	cmd := exec.Command(client, "get", "pods", "--all-namespaces", "--selector="+selector, "--output=jsonpath={.items[0].metadata.namespace}")
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Error determining namespace: %s", string(output))
+
+	namespace := string(bytes.TrimSpace(output))
+	if namespace == "" {
+		t.Fatal("No namespace found for selector " + selector)
 	}
-	t.Fatalf("No namespace found for selectors: %v", selectors)
-	return ""
+	return namespace
 }
 
 func stdoutAndCombined(cmd *exec.Cmd) ([]byte, []byte, error) {
