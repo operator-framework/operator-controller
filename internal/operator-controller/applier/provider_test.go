@@ -9,19 +9,21 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
-func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleSourceFailures(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Get_ReturnsBundleSourceFailures(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{}
 	var failingBundleSource FakeBundleSource = func() (bundle.RegistryV1, error) {
 		return bundle.RegistryV1{}, errors.New("some error")
@@ -31,12 +33,12 @@ func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleSourceFailures(t *
 			Namespace: "install-namespace",
 		},
 	}
-	_, err := provider.HelmChart(failingBundleSource, ext)
+	_, err := provider.Get(failingBundleSource, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "some error")
 }
 
-func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleRendererFailures(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Get_ReturnsBundleRendererFailures(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{
 		BundleRenderer: render.BundleRenderer{
 			ResourceGenerators: []render.ResourceGenerator{
@@ -58,12 +60,12 @@ func Test_BundleToHelmChartConverter_ToHelmChart_ReturnsBundleRendererFailures(t
 			Namespace: "install-namespace",
 		},
 	}
-	_, err := provider.HelmChart(b, ext)
+	_, err := provider.Get(b, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "some error")
 }
 
-func Test_BundleToHelmChartConverter_ToHelmChart_NoAPIServiceDefinitions(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Get_NoAPIServiceDefinitions(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{}
 
 	b := source.FromBundle(
@@ -78,12 +80,12 @@ func Test_BundleToHelmChartConverter_ToHelmChart_NoAPIServiceDefinitions(t *test
 		},
 	}
 
-	_, err := provider.HelmChart(b, ext)
+	_, err := provider.Get(b, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported bundle: apiServiceDefintions are not supported")
 }
 
-func Test_BundleToHelmChartConverter_ToHelmChart_NoWebhooksWithoutCertProvider(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Get_NoWebhooksWithoutCertProvider(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{
 		IsWebhookSupportEnabled: true,
 	}
@@ -100,12 +102,12 @@ func Test_BundleToHelmChartConverter_ToHelmChart_NoWebhooksWithoutCertProvider(t
 		},
 	}
 
-	_, err := provider.HelmChart(b, ext)
+	_, err := provider.Get(b, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 }
 
-func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksSupportDisabled(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Get_WebhooksSupportDisabled(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{
 		IsWebhookSupportEnabled: false,
 	}
@@ -122,12 +124,12 @@ func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksSupportDisabled(t *test
 		},
 	}
 
-	_, err := provider.HelmChart(b, ext)
+	_, err := provider.Get(b, ext)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
 }
 
-func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksWithCertProvider(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Get_WebhooksWithCertProvider(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{
 		CertificateProvider:     FakeCertProvider{},
 		IsWebhookSupportEnabled: true,
@@ -148,35 +150,14 @@ func Test_BundleToHelmChartConverter_ToHelmChart_WebhooksWithCertProvider(t *tes
 		},
 	}
 
-	_, err := provider.HelmChart(b, ext)
+	_, err := provider.Get(b, ext)
 	require.NoError(t, err)
 }
 
-func Test_BundleToHelmChartConverter_ToHelmChart_BundleRendererIntegration(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Get_BundleRendererIntegration(t *testing.T) {
 	expectedInstallNamespace := "install-namespace"
-	expectedWatchNamespace := ""
 	expectedCertProvider := FakeCertProvider{}
-
-	provider := applier.RegistryV1HelmChartProvider{
-		BundleRenderer: render.BundleRenderer{
-			ResourceGenerators: []render.ResourceGenerator{
-				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-					// ensure correct options are being passed down to the bundle renderer
-					require.Equal(t, expectedInstallNamespace, opts.InstallNamespace)
-					require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
-					require.Equal(t, expectedCertProvider, opts.CertificateProvider)
-					return nil, nil
-				},
-			},
-		},
-		CertificateProvider: expectedCertProvider,
-	}
-
-	b := source.FromBundle(
-		bundle.RegistryV1{
-			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
-		},
-	)
+	watchNamespace := "some-namespace"
 
 	ext := &ocv1.ClusterExtension{
 		Spec: ocv1.ClusterExtensionSpec{
@@ -184,17 +165,68 @@ func Test_BundleToHelmChartConverter_ToHelmChart_BundleRendererIntegration(t *te
 			Config: &ocv1.ClusterExtensionConfig{
 				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
 				Inline: &apiextensionsv1.JSON{
-					Raw: []byte(`{"watchNamespace": "` + expectedWatchNamespace + `"}`),
+					Raw: []byte(`{"watchNamespace": "` + watchNamespace + `"}`),
 				},
 			},
 		},
 	}
 
-	_, err := provider.HelmChart(b, ext)
-	require.NoError(t, err)
+	b := source.FromBundle(
+		bundle.RegistryV1{
+			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace)),
+		},
+	)
+
+	t.Run("SingleOwnNamespace install mode support off", func(t *testing.T) {
+		provider := applier.RegistryV1HelmChartProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						// ensure correct options are being passed down to the bundle renderer
+						require.Equal(t, expectedInstallNamespace, opts.InstallNamespace)
+						require.Equal(t, expectedCertProvider, opts.CertificateProvider)
+
+						// target namespaces should not set to {""} (AllNamespaces) if the SingleOwnNamespace feature flag is off
+						t.Log("check that targetNamespaces option is set to AllNamespaces")
+						require.Equal(t, []string{""}, opts.TargetNamespaces)
+						return nil, nil
+					},
+				},
+			},
+			CertificateProvider: expectedCertProvider,
+		}
+
+		_, err := provider.Get(b, ext)
+		require.NoError(t, err)
+	})
+
+	t.Run("feature on", func(t *testing.T) {
+		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
+
+		provider := applier.RegistryV1HelmChartProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						// ensure correct options are being passed down to the bundle renderer
+						require.Equal(t, expectedInstallNamespace, opts.InstallNamespace)
+						require.Equal(t, expectedCertProvider, opts.CertificateProvider)
+
+						// targetNamespace must be set if the feature flag is on
+						t.Log("check that targetNamespaces option is set")
+						require.Equal(t, []string{watchNamespace}, opts.TargetNamespaces)
+						return nil, nil
+					},
+				},
+			},
+			CertificateProvider: expectedCertProvider,
+		}
+
+		_, err := provider.Get(b, ext)
+		require.NoError(t, err)
+	})
 }
 
-func Test_BundleToHelmChartConverter_ToHelmChart_Success(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Get_Success(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{
 		BundleRenderer: render.BundleRenderer{
 			ResourceGenerators: []render.ResourceGenerator{
@@ -235,7 +267,7 @@ func Test_BundleToHelmChartConverter_ToHelmChart_Success(t *testing.T) {
 		},
 	}
 
-	chart, err := provider.HelmChart(b, ext)
+	chart, err := provider.Get(b, ext)
 	require.NoError(t, err)
 	require.NotNil(t, chart)
 	require.NotNil(t, chart.Metadata)

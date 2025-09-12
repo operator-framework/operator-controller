@@ -18,7 +18,7 @@ type RegistryV1HelmChartProvider struct {
 	IsWebhookSupportEnabled bool
 }
 
-func (r *RegistryV1HelmChartProvider) HelmChart(bundle source.BundleSource, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
+func (r *RegistryV1HelmChartProvider) Get(bundle source.BundleSource, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 	rv1, err := bundle.GetBundle()
 	if err != nil {
 		return nil, err

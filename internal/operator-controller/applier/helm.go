@@ -36,7 +36,7 @@ import (
 
 // HelmChartProvider provides helm charts from bundle sources and cluster extensions
 type HelmChartProvider interface {
-	HelmChart(bundle source.BundleSource, clusterExtension *ocv1.ClusterExtension) (*chart.Chart, error)
+	Get(bundle source.BundleSource, clusterExtension *ocv1.ClusterExtension) (*chart.Chart, error)
 }
 
 type HelmReleaseToObjectsConverter struct {
@@ -212,7 +212,7 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 			)
 		}
 	}
-	return h.HelmChartProvider.HelmChart(source.FromFS(bundleFS), ext)
+	return h.HelmChartProvider.Get(source.FromFS(bundleFS), ext)
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {

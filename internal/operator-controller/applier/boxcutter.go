@@ -372,6 +372,7 @@ func latestRevisionNumber(prevRevisions []ocv1.ClusterExtensionRevision) int64 {
 type BundleRenderer interface {
 	Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
 }
+
 type RegistryV1BundleRenderer struct {
 	BundleRenderer      render.BundleRenderer
 	CertificateProvider render.CertificateProvider

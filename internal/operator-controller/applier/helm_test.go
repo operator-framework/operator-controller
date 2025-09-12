@@ -649,6 +649,6 @@ type fakeRegistryV1HelmChartProvider struct {
 	fn func(source.BundleSource, *ocv1.ClusterExtension) (*chart.Chart, error)
 }
 
-func (f fakeRegistryV1HelmChartProvider) HelmChart(bundle source.BundleSource, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
+func (f fakeRegistryV1HelmChartProvider) Get(bundle source.BundleSource, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 	return f.fn(bundle, ext)
 }
