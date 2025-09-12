@@ -1,4 +1,0 @@
-# This kustomization picks the standard CRD by default
-# If the experimental CRD is desired, select that directory explicitly
-resources:
-- standard
