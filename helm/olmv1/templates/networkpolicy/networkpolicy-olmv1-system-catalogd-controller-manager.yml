@@ -22,7 +22,7 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: catalogd
+      control-plane: catalogd-controller-manager
   policyTypes:
     - Ingress
     - Egress

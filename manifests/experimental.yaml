@@ -40,7 +40,7 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: catalogd
+      control-plane: catalogd-controller-manager
   policyTypes:
     - Ingress
     - Egress
@@ -82,7 +82,7 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: operator-controller
+      control-plane: operator-controller-controller-manager
   policyTypes:
     - Ingress
     - Egress
