@@ -12,17 +12,18 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
+	"pkg.package-operator.run/boxcutter/probing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -430,31 +431,9 @@ func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revisio
 
 	opts := []boxcutter.RevisionReconcileOption{
 		boxcutter.WithPreviousOwners(previous),
-		boxcutter.WithProbe(boxcutter.ProgressProbeType, boxcutter.ProbeFunc(func(obj client.Object) (bool, []string) {
-			deployGK := schema.GroupKind{
-				Group: "apps", Kind: "Deployment",
-			}
-			if obj.GetObjectKind().GroupVersionKind().GroupKind() != deployGK {
-				return true, nil
-			}
-			ustrObj := obj.(*unstructured.Unstructured)
-			depl := &appsv1.Deployment{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(ustrObj.Object, depl); err != nil {
-				return false, []string{err.Error()}
-			}
-
-			if depl.Status.ObservedGeneration != depl.Generation {
-				return false, []string{".status.observedGeneration outdated"}
-			}
-			for _, cond := range depl.Status.Conditions {
-				if cond.Type == ocv1.ClusterExtensionRevisionTypeAvailable &&
-					cond.Status == corev1.ConditionTrue &&
-					depl.Status.UpdatedReplicas == *depl.Spec.Replicas {
-					return true, nil
-				}
-			}
-			return false, []string{"not available or not fully updated"}
-		})),
+		boxcutter.WithProbe(boxcutter.ProgressProbeType, probing.And{
+			deploymentProbe, statefulSetProbe, crdProbe, issuerProbe, certProbe,
+		}),
 	}
 
 	r := &boxcutter.Revision{
@@ -490,3 +469,64 @@ func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revisio
 	}
 	return r, opts, previous
 }
+
+var (
+	deploymentProbe = &probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: appsv1.GroupName, Kind: "Deployment"},
+		Prober:    deplStatefulSetProbe,
+	}
+	statefulSetProbe = &probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: appsv1.GroupName, Kind: "StatefulSet"},
+		Prober:    deplStatefulSetProbe,
+	}
+	crdProbe = &probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: "apiextensions.k8s.io", Kind: "CustomResourceDefinition"},
+		Prober: &probing.ObservedGenerationProbe{
+			Prober: &probing.ConditionProbe{ // "Available" == "True"
+				Type:   string(apiextensions.Established),
+				Status: string(corev1.ConditionTrue),
+			},
+		},
+	}
+	certProbe = &probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: "acme.cert-manager.io", Kind: "Certificate"},
+		Prober: &probing.ObservedGenerationProbe{
+			Prober: readyConditionProbe,
+		},
+	}
+	issuerProbe = &probing.GroupKindSelector{
+		GroupKind: schema.GroupKind{Group: "acme.cert-manager.io", Kind: "Issuer"},
+		Prober: &probing.ObservedGenerationProbe{
+			Prober: readyConditionProbe,
+		},
+	}
+
+	// deplStaefulSetProbe probes Deployment, StatefulSet objects.
+	deplStatefulSetProbe = &probing.ObservedGenerationProbe{
+		Prober: probing.And{
+			availableConditionProbe,
+			replicasUpdatedProbe,
+		},
+	}
+
+	// Checks if the Type: "Available" Condition is "True".
+	availableConditionProbe = &probing.ConditionProbe{ // "Available" == "True"
+		Type:   string(appsv1.DeploymentAvailable),
+		Status: string(corev1.ConditionTrue),
+	}
+
+	// Checks if the Type: "Ready" Condition is "True"
+	readyConditionProbe = &probing.ObservedGenerationProbe{
+		Prober: &probing.ConditionProbe{
+			Type:   "Ready",
+			Status: "True",
+		},
+	}
+
+	// Checks if .status.updatedReplicas == .status.replicas.
+	// Works for StatefulSts, Deployments and ReplicaSets.
+	replicasUpdatedProbe = &probing.FieldsEqualProbe{
+		FieldA: ".status.updatedReplicas",
+		FieldB: ".status.replicas",
+	}
+)
