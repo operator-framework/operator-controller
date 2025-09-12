@@ -97,13 +97,13 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	l := log.FromContext(ctx).WithName("cluster-extension")
 	ctx = log.IntoContext(ctx, l)
 
-	l.Info("reconcile starting")
-	defer l.Info("reconcile ending")
-
 	existingExt := &ocv1.ClusterExtension{}
 	if err := r.Get(ctx, req.NamespacedName, existingExt); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	l.Info("reconcile starting")
+	defer l.Info("reconcile ending")
 
 	reconciledExt := existingExt.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledExt)
@@ -113,7 +113,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	updateFinalizers := !equality.Semantic.DeepEqual(existingExt.Finalizers, reconciledExt.Finalizers)
 
 	// If any unexpected fields have changed, panic before updating the resource
-	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingExt, *reconciledExt)
+	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionFieldChange(*existingExt, *reconciledExt)
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
 	}
@@ -158,7 +158,7 @@ func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.C
 }
 
 // Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedFieldChange(a, b ocv1.ClusterExtension) bool {
+func checkForUnexpectedClusterExtensionFieldChange(a, b ocv1.ClusterExtension) bool {
 	a.Status, b.Status = ocv1.ClusterExtensionStatus{}, ocv1.ClusterExtensionStatus{}
 	a.Finalizers, b.Finalizers = []string{}, []string{}
 	return !equality.Semantic.DeepEqual(a, b)

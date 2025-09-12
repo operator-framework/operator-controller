@@ -12,6 +12,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -67,16 +68,48 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 	l := log.FromContext(ctx).WithName("cluster-extension-revision")
 	ctx = log.IntoContext(ctx, l)
 
-	rev := &ocv1.ClusterExtensionRevision{}
-	if err := c.Client.Get(ctx, req.NamespacedName, rev); err != nil {
+	existingRev := &ocv1.ClusterExtensionRevision{}
+	if err := c.Client.Get(ctx, req.NamespacedName, existingRev); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	l = l.WithValues("key", req.String())
 	l.Info("reconcile starting")
 	defer l.Info("reconcile ending")
 
-	return c.reconcile(ctx, rev)
+	reconciledRev := existingRev.DeepCopy()
+	res, reconcileErr := c.reconcile(ctx, reconciledRev)
+
+	// Do checks before any Update()s, as Update() may modify the resource structure!
+	updateStatus := !equality.Semantic.DeepEqual(existingRev.Status, reconciledRev.Status)
+
+	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionRevisionFieldChange(*existingRev, *reconciledRev)
+	if unexpectedFieldsChanged {
+		panic("spec or metadata changed by reconciler")
+	}
+
+	// NOTE: finalizer updates are performed during c.reconcile as patches, so that reconcile can
+	//   continue performing logic after successfully setting the finalizer. therefore we only need
+	//   to set status here.
+
+	if updateStatus {
+		if err := c.Client.Status().Update(ctx, reconciledRev); err != nil {
+			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating status: %v", err))
+		}
+	}
+
+	return res, reconcileErr
+}
+
+// Compare resources - ignoring status & metadata.finalizers
+func checkForUnexpectedClusterExtensionRevisionFieldChange(a, b ocv1.ClusterExtensionRevision) bool {
+	a.Status, b.Status = ocv1.ClusterExtensionRevisionStatus{}, ocv1.ClusterExtensionRevisionStatus{}
+
+	// when finalizers are updated during reconcile, we expect finalizers, managedFields, and resourceVersion
+	// to be updated, so we ignore changes in these fields.
+	a.Finalizers, b.Finalizers = []string{}, []string{}
+	a.ManagedFields, b.ManagedFields = nil, nil
+	a.ResourceVersion, b.ResourceVersion = "", ""
+	return !equality.Semantic.DeepEqual(a.Spec, b.Spec)
 }
 
 func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (ctrl.Result, error) {
@@ -98,11 +131,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 				Message:            err.Error(),
 				ObservedGeneration: rev.Generation,
 			})
-			return ctrl.Result{}, fmt.Errorf("revision teardown: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
+			return ctrl.Result{}, fmt.Errorf("revision teardown: %v", err)
 		}
 
 		l.Info("teardown report", "report", tres.String())
 		if !tres.IsComplete() {
+			// TODO: If it is not complete, it seems like it would be good to update
+			//  the status in some way to tell the user that the teardown is still
+			//  in progress.
 			return ctrl.Result{}, nil
 		}
 
@@ -114,9 +150,19 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 				Message:            err.Error(),
 				ObservedGeneration: rev.Generation,
 			})
-			return ctrl.Result{}, fmt.Errorf("free cache informers: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
+			return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 		}
-		return ctrl.Result{}, c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer)
+		if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+				Type:               "Available",
+				Status:             metav1.ConditionFalse,
+				Reason:             "ReconcileFailure",
+				Message:            err.Error(),
+				ObservedGeneration: rev.Generation,
+			})
+			return ctrl.Result{}, fmt.Errorf("error removing teardown finalizer: %v", err)
+		}
+		return ctrl.Result{}, nil
 	}
 
 	//
@@ -130,8 +176,9 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			Message:            err.Error(),
 			ObservedGeneration: rev.Generation,
 		})
-		return ctrl.Result{}, fmt.Errorf("ensure finalizer: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
+		return ctrl.Result{}, fmt.Errorf("error ensuring teardown finalizer: %v", err)
 	}
+
 	if err := c.establishWatch(ctx, rev, revision); err != nil {
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
@@ -140,8 +187,9 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			Message:            err.Error(),
 			ObservedGeneration: rev.Generation,
 		})
-		return ctrl.Result{}, fmt.Errorf("establish watch: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
+		return ctrl.Result{}, fmt.Errorf("establish watch: %v", err)
 	}
+
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
 	if err != nil {
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
@@ -151,7 +199,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			Message:            err.Error(),
 			ObservedGeneration: rev.Generation,
 		})
-		return ctrl.Result{}, fmt.Errorf("revision reconcile: %w", errors.Join(err, c.Client.Status().Update(ctx, rev)))
+		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 	l.Info("reconcile report", "report", rres.String())
 
@@ -159,6 +207,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	// TODO: report status, backoff?
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Info("preflight error, retrying after 10s", "err", verr.String())
+
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionFalse,
@@ -166,11 +215,13 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			Message:            fmt.Sprintf("revision validation error: %s", verr),
 			ObservedGeneration: rev.Generation,
 		})
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, c.Client.Status().Update(ctx, rev)
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
+
 	for i, pres := range rres.GetPhases() {
 		if verr := pres.GetValidationError(); verr != nil {
 			l.Info("preflight error, retrying after 10s", "err", verr.String())
+
 			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 				Status:             metav1.ConditionFalse,
@@ -178,16 +229,19 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 				Message:            fmt.Sprintf("phase %d validation error: %s", i, verr),
 				ObservedGeneration: rev.Generation,
 			})
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, c.Client.Status().Update(ctx, rev)
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
+
 		var collidingObjs []string
 		for _, ores := range pres.GetObjects() {
 			if ores.Action() == machinery.ActionCollision {
 				collidingObjs = append(collidingObjs, ores.String())
 			}
 		}
+
 		if len(collidingObjs) > 0 {
 			l.Info("object collision error, retrying after 10s", "collisions", collidingObjs)
+
 			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 				Status:             metav1.ConditionFalse,
@@ -195,7 +249,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 				Message:            fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")),
 				ObservedGeneration: rev.Generation,
 			})
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, c.Client.Status().Update(ctx, rev)
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	}
 
@@ -203,8 +257,11 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	if rres.IsComplete() {
 		// Archive other revisions.
 		for _, a := range previous {
-			if err := c.Client.Patch(ctx, a, client.RawPatch(
-				types.MergePatchType, []byte(`{"spec":{"lifecycleState":"Archived"}}`))); err != nil {
+			patch := []byte(`{"spec":{"lifecycleState":"Archived"}}`)
+			if err := c.Client.Patch(ctx, a, client.RawPatch(types.MergePatchType, patch)); err != nil {
+				// TODO: It feels like an error here needs to propagate to a status _somewhere_.
+				//   Not sure the current CER makes sense? But it also feels off to set the CE
+				//   status from outside the CE reconciler.
 				return ctrl.Result{}, fmt.Errorf("archive previous Revision: %w", err)
 			}
 		}
@@ -278,7 +335,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		meta.RemoveStatusCondition(&rev.Status.Conditions, ocv1.TypeProgressing)
 	}
 
-	return ctrl.Result{}, c.Client.Status().Update(ctx, rev)
+	return ctrl.Result{}, nil
 }
 
 type Sourcerer interface {
@@ -408,7 +465,7 @@ func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revisio
 	for _, specPhase := range rev.Spec.Phases {
 		phase := boxcutter.Phase{Name: specPhase.Name}
 		for _, specObj := range specPhase.Objects {
-			obj := specObj.Object
+			obj := specObj.Object.DeepCopy()
 
 			labels := obj.GetLabels()
 			if labels == nil {
@@ -420,10 +477,10 @@ func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revisio
 			switch specObj.CollisionProtection {
 			case ocv1.CollisionProtectionIfNoController, ocv1.CollisionProtectionNone:
 				opts = append(opts, boxcutter.WithObjectReconcileOptions(
-					&obj, boxcutter.WithCollisionProtection(specObj.CollisionProtection)))
+					obj, boxcutter.WithCollisionProtection(specObj.CollisionProtection)))
 			}
 
-			phase.Objects = append(phase.Objects, obj)
+			phase.Objects = append(phase.Objects, *obj)
 		}
 		r.Phases = append(r.Phases, phase)
 	}
