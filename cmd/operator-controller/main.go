@@ -71,7 +71,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/certproviders"
@@ -655,7 +654,7 @@ func setupHelm(
 	ceReconciler.Applier = &applier.Helm{
 		ActionClientGetter: acg,
 		Preflights:         preflights,
-		BundleToHelmChartConverter: &convert.BundleToHelmChartConverter{
+		HelmChartProvider: &applier.RegistryV1HelmChartProvider{
 			BundleRenderer:          registryv1.Renderer,
 			CertificateProvider:     certProvider,
 			IsWebhookSupportEnabled: certProvider != nil,

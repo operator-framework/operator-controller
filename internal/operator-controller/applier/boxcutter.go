@@ -389,6 +389,8 @@ func latestRevisionNumber(prevRevisions []ocv1.ClusterExtensionRevision) int64 {
 	return prevRevisions[len(prevRevisions)-1].Spec.Revision
 }
 
+// TODO: in the next refactor iteration BundleRenderer and RegistryV1BundleRenderer into the RegistryV1ChartProvider
+
 type BundleRenderer interface {
 	Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
 }

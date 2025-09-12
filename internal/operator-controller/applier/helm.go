@@ -29,14 +29,14 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
-type BundleToHelmChartConverter interface {
-	ToHelmChart(bundle source.BundleSource, installNamespace string, config map[string]interface{}) (*chart.Chart, error)
+// HelmChartProvider provides helm charts from bundle sources and cluster extensions
+type HelmChartProvider interface {
+	Get(bundle source.BundleSource, clusterExtension *ocv1.ClusterExtension) (*chart.Chart, error)
 }
 
 type HelmReleaseToObjectsConverter struct {
@@ -62,7 +62,7 @@ type Helm struct {
 	ActionClientGetter            helmclient.ActionClientGetter
 	Preflights                    []Preflight
 	PreAuthorizer                 authorization.PreAuthorizer
-	BundleToHelmChartConverter    BundleToHelmChartConverter
+	HelmChartProvider             HelmChartProvider
 	HelmReleaseToObjectsConverter HelmReleaseToObjectsConverterInterface
 
 	Manager contentmanager.Manager
@@ -199,12 +199,8 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 }
 
 func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
-	if h.BundleToHelmChartConverter == nil {
-		return nil, errors.New("BundleToHelmChartConverter is nil")
-	}
-	watchNamespace, err := GetWatchNamespace(ext)
-	if err != nil {
-		return nil, err
+	if h.HelmChartProvider == nil {
+		return nil, errors.New("HelmChartProvider is nil")
 	}
 	if features.OperatorControllerFeatureGate.Enabled(features.HelmChartSupport) {
 		meta := new(chart.Metadata)
@@ -216,11 +212,7 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 			)
 		}
 	}
-
-	bundleConfig := map[string]interface{}{
-		bundle.BundleConfigWatchNamespaceKey: watchNamespace,
-	}
-	return h.BundleToHelmChartConverter.ToHelmChart(source.FromFS(bundleFS), ext.Spec.Namespace, bundleConfig)
+	return h.HelmChartProvider.Get(source.FromFS(bundleFS), ext)
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {
