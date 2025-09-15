@@ -6,8 +6,8 @@ import (
 	"iter"
 	"time"
 
-	"github.com/containers/image/v5/docker/reference"
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/image/v5/docker/reference"
 )
 
 var _ Puller = (*MockPuller)(nil)
