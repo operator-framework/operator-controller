@@ -216,8 +216,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 							"apiVersion": "v1",
 							"kind":       "Service",
 							"metadata": map[string]interface{}{
-								"creationTimestamp": nil,
-								"name":              "test-service",
+								"name": "test-service",
 							},
 							"spec": map[string]interface{}{},
 							"status": map[string]interface{}{
@@ -232,15 +231,12 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 							"apiVersion": "apps/v1",
 							"kind":       "Deployment",
 							"metadata": map[string]interface{}{
-								"creationTimestamp": nil,
-								"name":              "test-deployment",
+								"name": "test-deployment",
 							},
 							"spec": map[string]interface{}{
 								"selector": nil,
 								"template": map[string]interface{}{
-									"metadata": map[string]interface{}{
-										"creationTimestamp": nil,
-									},
+									"metadata": map[string]interface{}{},
 									"spec": map[string]interface{}{
 										"containers": nil,
 									},
