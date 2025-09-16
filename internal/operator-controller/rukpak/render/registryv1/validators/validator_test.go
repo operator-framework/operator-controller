@@ -250,32 +250,6 @@ func Test_CheckWebhookSupport(t *testing.T) {
 		expectedErrs []error
 	}{
 		{
-			name: "accepts bundles with validating webhook definitions when they only support AllNamespaces install mode",
-			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
-					WithWebhookDefinitions(
-						v1alpha1.WebhookDescription{
-							Type: v1alpha1.ValidatingAdmissionWebhook,
-						},
-					),
-				),
-			},
-		},
-		{
-			name: "accepts bundles with mutating webhook definitions when they only support AllNamespaces install mode",
-			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
-					WithWebhookDefinitions(
-						v1alpha1.WebhookDescription{
-							Type: v1alpha1.MutatingAdmissionWebhook,
-						},
-					),
-				),
-			},
-		},
-		{
 			name: "accepts bundles with conversion webhook definitions when they only support AllNamespaces install mode",
 			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
@@ -289,7 +263,7 @@ func Test_CheckWebhookSupport(t *testing.T) {
 			},
 		},
 		{
-			name: "rejects bundles with validating webhook definitions when they support more modes than AllNamespaces install mode",
+			name: "accepts bundles with validating webhook definitions when they support more modes than AllNamespaces install mode",
 			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
@@ -300,7 +274,6 @@ func Test_CheckWebhookSupport(t *testing.T) {
 					),
 				),
 			},
-			expectedErrs: []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")},
 		},
 		{
 			name: "accepts bundles with mutating webhook definitions when they support more modes than AllNamespaces install mode",
@@ -314,10 +287,9 @@ func Test_CheckWebhookSupport(t *testing.T) {
 					),
 				),
 			},
-			expectedErrs: []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")},
 		},
 		{
-			name: "accepts bundles with conversion webhook definitions when they support more modes than AllNamespaces install mode",
+			name: "rejects bundles with conversion webhook definitions when they support more modes than AllNamespaces install mode",
 			bundle: &bundle.RegistryV1{
 				CSV: MakeCSV(
 					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
@@ -328,11 +300,11 @@ func Test_CheckWebhookSupport(t *testing.T) {
 					),
 				),
 			},
-			expectedErrs: []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")},
+			expectedErrs: []error{errors.New("bundle contains conversion webhooks and supports install modes [AllNamespaces SingleNamespace] - conversion webhooks are only supported for bundles that only support AllNamespaces install mode")},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			errs := validators.CheckWebhookSupport(tc.bundle)
+			errs := validators.CheckConversionWebhookSupport(tc.bundle)
 			require.Equal(t, tc.expectedErrs, errs)
 		})
 	}
