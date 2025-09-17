@@ -116,7 +116,9 @@ func CheckConversionWebhookSupport(rv1 *bundle.RegistryV1) []error {
 	if hasConversionWebhooks {
 		supportedInstallModes := sets.Set[v1alpha1.InstallModeType]{}
 		for _, mode := range rv1.CSV.Spec.InstallModes {
-			supportedInstallModes.Insert(mode.Type)
+			if mode.Supported {
+				supportedInstallModes.Insert(mode.Type)
+			}
 		}
 		if len(supportedInstallModes) != 1 || !supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
 			sortedModes := slices.Sorted(slices.Values(supportedInstallModes.UnsortedList()))
