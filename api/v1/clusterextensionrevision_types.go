@@ -59,8 +59,6 @@ type ClusterExtensionRevisionSpec struct {
 	//
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
-	// +patchMergeKey=name
-	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=name
 	Phases []ClusterExtensionRevisionPhase `json:"phases"`
@@ -135,12 +133,10 @@ type ClusterExtensionRevisionPrevious struct {
 
 // ClusterExtensionRevisionStatus defines the observed state of a ClusterExtensionRevision.
 type ClusterExtensionRevisionStatus struct {
-	// +patchMergeKey=type
-	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
 	// +optional
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
