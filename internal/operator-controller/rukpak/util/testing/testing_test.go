@@ -209,6 +209,14 @@ func Test_MakeCSV_WithInstallModeSupportFor(t *testing.T) {
 					Type:      v1alpha1.InstallModeTypeSingleNamespace,
 					Supported: true,
 				},
+				{
+					Type:      v1alpha1.InstallModeTypeMultiNamespace,
+					Supported: false,
+				},
+				{
+					Type:      v1alpha1.InstallModeTypeOwnNamespace,
+					Supported: false,
+				},
 			},
 		},
 	}, csv)
