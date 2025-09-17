@@ -91,8 +91,6 @@ apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd
-  annotations:
-    olm.operatorframework.io/watch-namespace: argocd
 spec:
   namespace: argocd
   serviceAccount:

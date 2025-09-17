@@ -3,7 +3,14 @@
 #
 # Welcome to the OwnNamespace install mode demo
 #
-trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+set -e
+trap 'echo "Demo ran into error"; trap - SIGTERM && kill -- -$$; exit 1' ERR SIGINT SIGTERM EXIT
+
+# install experimental CRDs with config field support
+kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/experimental.yaml"
+
+# wait for experimental CRDs to be available
+kubectl wait --for condition=established --timeout=60s crd/clusterextensions.olm.operatorframework.io
 
 # enable 'SingleOwnNamespaceInstallSupport' feature gate
 kubectl patch deployment -n olmv1-system operator-controller-controller-manager --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--feature-gates=SingleOwnNamespaceInstallSupport=true"}]'
@@ -41,3 +48,27 @@ kubectl get deployments -n argocd-system argocd-operator-controller-manager -o j
 # check service account for role binding is the same as controller service-account
 rolebinding=$(kubectl get rolebindings -n argocd-system -o name | grep 'argocd-operator' | head -n 1)
 kubectl get -n argocd-system $rolebinding -o jsonpath='{.subjects}' | jq .[0]
+
+echo "Demo completed successfully!"
+
+# cleanup resources
+echo "Cleaning up demo resources..."
+kubectl delete clusterextension argocd-operator --ignore-not-found=true
+kubectl delete namespace argocd-system --ignore-not-found=true
+kubectl delete clusterrolebinding argocd-installer-crb --ignore-not-found=true
+
+# remove feature gate from deployment
+echo "Removing feature gate from operator-controller..."
+kubectl patch deployment -n olmv1-system operator-controller-controller-manager --type='json' -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/args", "value": "--feature-gates=SingleOwnNamespaceInstallSupport=true"}]' || true
+
+# restore standard CRDs
+echo "Restoring standard CRDs..."
+kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/base.yaml"
+
+# wait for standard CRDs to be available
+kubectl wait --for condition=established --timeout=60s crd/clusterextensions.olm.operatorframework.io
+
+# wait for operator-controller to become available with standard config
+kubectl rollout status -n olmv1-system deployment/operator-controller-controller-manager
+
+echo "Demo cleanup completed!"
