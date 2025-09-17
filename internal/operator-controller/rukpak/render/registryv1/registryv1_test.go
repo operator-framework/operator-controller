@@ -26,6 +26,7 @@ func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
 		validators.CheckCRDResourceUniqueness,
 		validators.CheckOwnedCRDExistence,
 		validators.CheckPackageNameNotEmpty,
+		validators.CheckConversionWebhookSupport,
 		validators.CheckWebhookDeploymentReferentialIntegrity,
 		validators.CheckWebhookNameUniqueness,
 		validators.CheckWebhookNameIsDNS1123SubDomain,
