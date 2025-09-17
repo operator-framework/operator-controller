@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -333,6 +334,315 @@ func Test_CheckWebhookSupport(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := validators.CheckWebhookSupport(tc.bundle)
+			require.Equal(t, tc.expectedErrs, errs)
+		})
+	}
+}
+
+func Test_CheckWebhookRules(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		bundle       *bundle.RegistryV1
+		expectedErrs []error
+	}{
+		{
+			name: "accepts bundles with webhook definitions without rules",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.ValidatingAdmissionWebhook,
+						},
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.MutatingAdmissionWebhook,
+						},
+					),
+				),
+			},
+		},
+		{
+			name: "accepts bundles with webhook definitions with supported rules",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.ValidatingAdmissionWebhook,
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"appsv1"},
+										Resources: []string{"deployments", "replicasets", "statefulsets"},
+									},
+								},
+							},
+						},
+						v1alpha1.WebhookDescription{
+							Type: v1alpha1.MutatingAdmissionWebhook,
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{""},
+										Resources: []string{"services"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing '*' api group",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-z",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"*"},
+									},
+								},
+							},
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"*"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-z\" contains forbidden rule: admission webhook rules cannot reference API group \"*\""),
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference API group \"*\""),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing 'olm.operatorframework.io' api group",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-z",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"olm.operatorframework.io"},
+									},
+								},
+							},
+						},
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.MutatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"olm.operatorframework.io"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-z\" contains forbidden rule: admission webhook rules cannot reference API group \"olm.operatorframework.io\""),
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference API group \"olm.operatorframework.io\""),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and '*' resource",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"admissionregistration.k8s.io"},
+										Resources: []string{"*"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"*\" for API group \"admissionregistration.k8s.io\""),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'MutatingWebhookConfiguration' resource",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"admissionregistration.k8s.io"},
+										Resources: []string{"MutatingWebhookConfiguration"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"MutatingWebhookConfiguration\" for API group \"admissionregistration.k8s.io\""),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'mutatingwebhookconfiguration' resource",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"admissionregistration.k8s.io"},
+										Resources: []string{"mutatingwebhookconfiguration"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"mutatingwebhookconfiguration\" for API group \"admissionregistration.k8s.io\""),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'mutatingwebhookconfigurations' resource",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"admissionregistration.k8s.io"},
+										Resources: []string{"mutatingwebhookconfigurations"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"mutatingwebhookconfigurations\" for API group \"admissionregistration.k8s.io\""),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'ValidatingWebhookConfiguration' resource",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"admissionregistration.k8s.io"},
+										Resources: []string{"ValidatingWebhookConfiguration"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"ValidatingWebhookConfiguration\" for API group \"admissionregistration.k8s.io\""),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'validatingwebhookconfiguration' resource",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"admissionregistration.k8s.io"},
+										Resources: []string{"validatingwebhookconfiguration"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"validatingwebhookconfiguration\" for API group \"admissionregistration.k8s.io\""),
+			},
+		},
+		{
+			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'validatingwebhookconfigurations' resource",
+			bundle: &bundle.RegistryV1{
+				CSV: MakeCSV(
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+					WithWebhookDefinitions(
+						v1alpha1.WebhookDescription{
+							Type:         v1alpha1.ValidatingAdmissionWebhook,
+							GenerateName: "webhook-a",
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups: []string{"admissionregistration.k8s.io"},
+										Resources: []string{"validatingwebhookconfigurations"},
+									},
+								},
+							},
+						},
+					),
+				),
+			},
+			expectedErrs: []error{
+				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"validatingwebhookconfigurations\" for API group \"admissionregistration.k8s.io\""),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := validators.CheckWebhookRules(tc.bundle)
 			require.Equal(t, tc.expectedErrs, errs)
 		})
 	}

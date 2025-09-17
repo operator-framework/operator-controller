@@ -264,3 +264,45 @@ func CheckWebhookNameIsDNS1123SubDomain(rv1 *bundle.RegistryV1) []error {
 	}
 	return errs
 }
+
+// unsupportedWebhookRuleAPIGroups contain the API groups that are unsupported for webhook configuration rules in OLMv1
+var unsupportedWebhookRuleAPIGroups = sets.New("olm.operatorframework.io", "*")
+
+// unsupportedAdmissionRegistrationResources contain the resources that are unsupported for webhook configuration rules
+// for the admissionregistration.k8s.io api group
+var unsupportedAdmissionRegistrationResources = sets.New(
+	"*",
+	"mutatingwebhookconfiguration",
+	"mutatingwebhookconfigurations",
+	"validatingwebhookconfiguration",
+	"validatingwebhookconfigurations",
+)
+
+// CheckWebhookRules ensures webhook rules do not reference forbidden API groups or resources in line with OLMv0 behavior
+// See https://github.com/operator-framework/operator-lifecycle-manager/blob/ccf0c4c91f1e7673e87f3a18947f9a1f88d48438/pkg/controller/install/webhook.go#L19
+// for more details
+func CheckWebhookRules(rv1 *bundle.RegistryV1) []error {
+	var errs []error
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		// Rules are not used for conversion webhooks
+		if wh.Type == v1alpha1.ConversionWebhook {
+			continue
+		}
+		webhookName := wh.GenerateName
+		for _, rule := range wh.Rules {
+			for _, apiGroup := range rule.APIGroups {
+				if unsupportedWebhookRuleAPIGroups.Has(apiGroup) {
+					errs = append(errs, fmt.Errorf("webhook %q contains forbidden rule: admission webhook rules cannot reference API group %q", webhookName, apiGroup))
+				}
+				if apiGroup == "admissionregistration.k8s.io" {
+					for _, resource := range rule.Resources {
+						if unsupportedAdmissionRegistrationResources.Has(strings.ToLower(resource)) {
+							errs = append(errs, fmt.Errorf("webhook %q contains forbidden rule: admission webhook rules cannot reference resource %q for API group %q", webhookName, resource, apiGroup))
+						}
+					}
+				}
+			}
+		}
+	}
+	return errs
+}
