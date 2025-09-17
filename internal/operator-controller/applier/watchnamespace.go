@@ -10,10 +10,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
-const (
-	AnnotationClusterExtensionWatchNamespace = "olm.operatorframework.io/watch-namespace"
-)
-
 // GetWatchNamespace determines the watch namespace the ClusterExtension should use
 // Note: this is a temporary artifice to enable gated use of single/own namespace install modes
 // for registry+v1 bundles. This will go away once the ClusterExtension API is updated to include
@@ -32,8 +28,6 @@ func GetWatchNamespace(ext *ocv1.ClusterExtension) (string, error) {
 			return "", fmt.Errorf("invalid bundle configuration: %w", err)
 		}
 		watchNamespace = cfg.WatchNamespace
-	} else if _, ok := ext.Annotations[AnnotationClusterExtensionWatchNamespace]; ok {
-		watchNamespace = ext.Annotations[AnnotationClusterExtensionWatchNamespace]
 	} else {
 		return "", nil
 	}
