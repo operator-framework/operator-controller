@@ -105,24 +105,29 @@ func CheckPackageNameNotEmpty(rv1 *bundle.RegistryV1) []error {
 // that the bundle also only supports AllNamespaces install mode. This keeps parity with OLMv0 behavior for conversion webhooks,
 // https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/install/webhook.go#L193
 func CheckConversionWebhookSupport(rv1 *bundle.RegistryV1) []error {
-	hasConversionWebhooks := false
+	var conversionWebhookNames []string
 	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
 		if wh.Type == v1alpha1.ConversionWebhook {
-			hasConversionWebhooks = true
-			break
+			conversionWebhookNames = append(conversionWebhookNames, wh.GenerateName)
 		}
 	}
 
-	if hasConversionWebhooks {
+	if len(conversionWebhookNames) > 0 {
 		supportedInstallModes := sets.Set[v1alpha1.InstallModeType]{}
 		for _, mode := range rv1.CSV.Spec.InstallModes {
 			if mode.Supported {
 				supportedInstallModes.Insert(mode.Type)
 			}
 		}
+		slices.Sort(conversionWebhookNames)
+
 		if len(supportedInstallModes) != 1 || !supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
 			sortedModes := slices.Sorted(slices.Values(supportedInstallModes.UnsortedList()))
-			return []error{fmt.Errorf("bundle contains conversion webhooks and supports install modes %v - conversion webhooks are only supported for bundles that only support AllNamespaces install mode", sortedModes)}
+			errs := make([]error, len(conversionWebhookNames))
+			for i, webhookName := range conversionWebhookNames {
+				errs[i] = fmt.Errorf("bundle contains conversion webhook %q and supports install modes %v - conversion webhooks are only supported for bundles that only support AllNamespaces install mode", webhookName, sortedModes)
+			}
+			return errs
 		}
 	}
 
