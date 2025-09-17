@@ -2,9 +2,6 @@ apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd-operator
-  annotations:
-    # watch namespace is the same as intall namespace
-    olm.operatorframework.io/watch-namespace: argocd-system
 spec:
   namespace: argocd-system
   serviceAccount:

@@ -2,13 +2,14 @@ apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd-operator
-  annotations:
-    # watch-namespace is different from install namespace
-    olm.operatorframework.io/watch-namespace: argocd
 spec:
   namespace: argocd-system
   serviceAccount:
     name: argocd-installer
+  config:
+    configType: Inline
+    inline:
+      watchNamespace: argocd
   source:
     sourceType: Catalog
     catalog:
