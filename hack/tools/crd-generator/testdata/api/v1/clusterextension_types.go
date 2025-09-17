@@ -457,12 +457,10 @@ type ClusterExtensionStatus struct {
 	// PackageDeprecated is set if the requested package is marked deprecated in the catalog.
 	// Deprecated is a rollup condition that is present when any of the deprecated conditions are present.
 	//
-	// +patchMergeKey=type
-	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
 	// +optional
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
 	// install is a representation of the current installation status for this ClusterExtension.
 	//
