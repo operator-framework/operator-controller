@@ -12,7 +12,7 @@ import (
 )
 
 func TestClusterExtensionSourceConfig(t *testing.T) {
-	sourceTypeEmptyError := "Invalid value: \"null\""
+	sourceTypeEmptyError := "Invalid value: null"
 	sourceTypeMismatchError := "spec.source.sourceType: Unsupported value"
 	sourceConfigInvalidError := "spec.source: Invalid value"
 	// unionField represents the required Catalog or (future) Bundle field required by SourceConfig
