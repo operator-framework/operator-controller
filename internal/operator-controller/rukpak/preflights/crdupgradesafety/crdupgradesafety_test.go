@@ -395,9 +395,12 @@ func TestUpgrade_UnhandledChanges_InSpec_DefaultPolicy(t *testing.T) {
 			Name:     "test-release",
 			Manifest: getManifestString(t, "crd-unhandled-new.json"),
 		}
-		err := preflight.Upgrade(context.Background(), rel)
+		objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(rel)
+		require.NoError(t, err)
+		err = preflight.Upgrade(context.Background(), objs)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "unhandled changes found")
+		require.ErrorContains(t, err, "Format \"\" -> \"email\"")
 		require.NotContains(t, err.Error(), "v1.JSONSchemaProps", "error message should be concise without raw diff")
 	})
 }
@@ -415,8 +418,11 @@ func TestUpgrade_UnhandledChanges_PolicyError(t *testing.T) {
 			Manifest: getManifestString(t, "crd-unhandled-new.json"),
 		}
 
-		err := preflight.Upgrade(context.Background(), rel)
+		objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(rel)
+		require.NoError(t, err)
+		err = preflight.Upgrade(context.Background(), objs)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "unhandled changes found")
+		require.ErrorContains(t, err, "Format \"\" -> \"email\"")
 	})
 }
