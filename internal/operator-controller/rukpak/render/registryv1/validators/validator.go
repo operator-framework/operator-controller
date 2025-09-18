@@ -119,7 +119,6 @@ func CheckConversionWebhookSupport(rv1 *bundle.RegistryV1) []error {
 				supportedInstallModes.Insert(mode.Type)
 			}
 		}
-		slices.Sort(conversionWebhookNames)
 
 		if len(supportedInstallModes) != 1 || !supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
 			sortedModes := slices.Sorted(slices.Values(supportedInstallModes.UnsortedList()))

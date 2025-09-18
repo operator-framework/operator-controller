@@ -306,9 +306,8 @@ func Test_CheckWebhookSupport(t *testing.T) {
 				),
 			},
 			expectedErrs: []error{
-				// Webhook names and install modes are sorted in alphanumerical order
-				errors.New("bundle contains conversion webhook \"webhook-a\" and supports install modes [AllNamespaces SingleNamespace] - conversion webhooks are only supported for bundles that only support AllNamespaces install mode"),
 				errors.New("bundle contains conversion webhook \"webhook-b\" and supports install modes [AllNamespaces SingleNamespace] - conversion webhooks are only supported for bundles that only support AllNamespaces install mode"),
+				errors.New("bundle contains conversion webhook \"webhook-a\" and supports install modes [AllNamespaces SingleNamespace] - conversion webhooks are only supported for bundles that only support AllNamespaces install mode"),
 			},
 		},
 	} {
