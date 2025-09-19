@@ -22,6 +22,7 @@ var BundleValidator = render.BundleValidator{
 	validators.CheckCRDResourceUniqueness,
 	validators.CheckOwnedCRDExistence,
 	validators.CheckPackageNameNotEmpty,
+	validators.CheckConversionWebhookSupport,
 	validators.CheckWebhookDeploymentReferentialIntegrity,
 	validators.CheckWebhookNameUniqueness,
 	validators.CheckWebhookNameIsDNS1123SubDomain,

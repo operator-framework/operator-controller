@@ -101,21 +101,32 @@ func CheckPackageNameNotEmpty(rv1 *bundle.RegistryV1) []error {
 	return nil
 }
 
-// CheckWebhookSupport checks that if the bundle cluster service version declares webhook definitions
-// that it is a singleton operator, i.e. that it only supports AllNamespaces mode. This keeps parity
-// with OLMv0 behavior for conversion webhooks,
+// CheckConversionWebhookSupport checks that if the bundle cluster service version declares conversion webhook definitions,
+// that the bundle also only supports AllNamespaces install mode. This keeps parity with OLMv0 behavior for conversion webhooks,
 // https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/install/webhook.go#L193
-// Since OLMv1 considers APIs to be cluster-scoped, we initially extend this constraint to validating and mutating webhooks.
-// While this might restrict the number of supported bundles, we can tackle the issue of relaxing this constraint in turn
-// after getting the webhook support working.
-func CheckWebhookSupport(rv1 *bundle.RegistryV1) []error {
-	if len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
+func CheckConversionWebhookSupport(rv1 *bundle.RegistryV1) []error {
+	var conversionWebhookNames []string
+	for _, wh := range rv1.CSV.Spec.WebhookDefinitions {
+		if wh.Type == v1alpha1.ConversionWebhook {
+			conversionWebhookNames = append(conversionWebhookNames, wh.GenerateName)
+		}
+	}
+
+	if len(conversionWebhookNames) > 0 {
 		supportedInstallModes := sets.Set[v1alpha1.InstallModeType]{}
 		for _, mode := range rv1.CSV.Spec.InstallModes {
-			supportedInstallModes.Insert(mode.Type)
+			if mode.Supported {
+				supportedInstallModes.Insert(mode.Type)
+			}
 		}
+
 		if len(supportedInstallModes) != 1 || !supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
-			return []error{errors.New("bundle contains webhook definitions but supported install modes beyond AllNamespaces")}
+			sortedModes := slices.Sorted(slices.Values(supportedInstallModes.UnsortedList()))
+			errs := make([]error, len(conversionWebhookNames))
+			for i, webhookName := range conversionWebhookNames {
+				errs[i] = fmt.Errorf("bundle contains conversion webhook %q and supports install modes %v - conversion webhooks are only supported for bundles that only support AllNamespaces install mode", webhookName, sortedModes)
+			}
+			return errs
 		}
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -55,15 +56,22 @@ func WithOwnedCRDs(crdDesc ...v1alpha1.CRDDescription) CSVOption {
 }
 
 func WithInstallModeSupportFor(installModeType ...v1alpha1.InstallModeType) CSVOption {
+	var installModes = []v1alpha1.InstallModeType{
+		v1alpha1.InstallModeTypeAllNamespaces,
+		v1alpha1.InstallModeTypeSingleNamespace,
+		v1alpha1.InstallModeTypeMultiNamespace,
+		v1alpha1.InstallModeTypeOwnNamespace,
+	}
 	return func(csv *v1alpha1.ClusterServiceVersion) {
-		installModes := make([]v1alpha1.InstallMode, 0, len(installModeType))
-		for _, t := range installModeType {
-			installModes = append(installModes, v1alpha1.InstallMode{
+		supportedInstallModes := sets.New(installModeType...)
+		csvInstallModes := make([]v1alpha1.InstallMode, 0, len(installModeType))
+		for _, t := range installModes {
+			csvInstallModes = append(csvInstallModes, v1alpha1.InstallMode{
 				Type:      t,
-				Supported: true,
+				Supported: supportedInstallModes.Has(t),
 			})
 		}
-		csv.Spec.InstallModes = installModes
+		csv.Spec.InstallModes = csvInstallModes
 	}
 }
 
