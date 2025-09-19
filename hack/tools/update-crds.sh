@@ -19,6 +19,9 @@ channels=("standard" "experimental")
 
 # Create the temp output directories
 CRD_TMP=$(mktemp -d)
+# Clean up the temp output directories
+trap "rm -rf ${CRD_TMP}" EXIT
+
 for c in ${channels[@]}; do
     mkdir -p ${CRD_TMP}/${c}
 done
@@ -29,13 +32,6 @@ CONTROLLER_TOOLS_VER=$(go list -m sigs.k8s.io/controller-tools | awk '{print $2}
 # Generate the CRDs
 go run ./hack/tools/crd-generator ${CRD_TMP} ${CONTROLLER_TOOLS_VER}
 
-# Create the destination directories for each base/channel combo
-for c in ${channels[@]}; do
-    for b in ${modules[@]}; do
-        mkdir -p config/base/${b}/crd/${c}
-    done
-done
-
 # Copy the generated files
 for b in ${!modules[@]}; do
     for c in ${channels[@]}; do
@@ -43,9 +39,11 @@ for b in ${!modules[@]}; do
         # will not be generated for the standard channel - so we check the expected generated
         # file exists before copying it.
         FILE="${CRD_TMP}/${c}/${crds[${b}]}"
-        [[ -e "${FILE}" ]] && cp "${FILE}" helm/olmv1/base/${modules[${b}]}/crd/${c}
+        DST="helm/olmv1/base/${modules[${b}]}/crd/${c}"
+        if [ -e "${FILE}" ]; then
+            echo "$(date '+%Y/%m/%d %T') ${FILE} --> ${DST}"
+            mkdir -p "${DST}"
+            cp "${FILE}" "${DST}"
+        fi
     done
 done
-
-# Clean up the temp output directories
-rm -rf ${CRD_TMP}

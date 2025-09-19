@@ -1,8 +1,0 @@
-# kustomization file for based, non-secure OLMv1
-# DO NOT ADD A NAMESPACE HERE
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-commonAnnotations:
-  olm.operatorframework.io/feature-set: basic-olm
-components:
-- ../../components/base/standard
