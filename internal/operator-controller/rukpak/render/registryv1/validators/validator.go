@@ -265,12 +265,12 @@ func CheckWebhookNameIsDNS1123SubDomain(rv1 *bundle.RegistryV1) []error {
 	return errs
 }
 
-// unsupportedWebhookRuleAPIGroups contain the API groups that are unsupported for webhook configuration rules in OLMv1
-var unsupportedWebhookRuleAPIGroups = sets.New("olm.operatorframework.io", "*")
+// forbiddenWebhookRuleAPIGroups contain the API groups that are forbidden for webhook configuration rules in OLMv1
+var forbiddenWebhookRuleAPIGroups = sets.New("olm.operatorframework.io", "*")
 
-// unsupportedAdmissionRegistrationResources contain the resources that are unsupported for webhook configuration rules
+// forbiddenAdmissionRegistrationResources contain the resources that are forbidden for webhook configuration rules
 // for the admissionregistration.k8s.io api group
-var unsupportedAdmissionRegistrationResources = sets.New(
+var forbiddenAdmissionRegistrationResources = sets.New(
 	"*",
 	"mutatingwebhookconfiguration",
 	"mutatingwebhookconfigurations",
@@ -279,6 +279,16 @@ var unsupportedAdmissionRegistrationResources = sets.New(
 )
 
 // CheckWebhookRules ensures webhook rules do not reference forbidden API groups or resources in line with OLMv0 behavior
+// The following are forbidden, rules targeting:
+//   - all API groups (i.e. '*')
+//   - OLMv1 API group (i.e. 'olm.operatorframework.io')
+//   - all resources under the 'admissionregistration.k8s.io' API group
+//   - the 'ValidatingWebhookConfiguration' resource under the 'admissionregistration.k8s.io' API group
+//   - the 'MutatingWebhookConfiguration' resource under the 'admissionregistration.k8s.io' API group
+//
+// These boundaries attempt to reduce the blast radius of faulty webhooks and avoid deadlocks preventing the user
+// from deleting OLMv1 resources installing and managing the faulty webhook, or deleting faulty admission webhook
+// configurations.
 // See https://github.com/operator-framework/operator-lifecycle-manager/blob/ccf0c4c91f1e7673e87f3a18947f9a1f88d48438/pkg/controller/install/webhook.go#L19
 // for more details
 func CheckWebhookRules(rv1 *bundle.RegistryV1) []error {
@@ -291,12 +301,12 @@ func CheckWebhookRules(rv1 *bundle.RegistryV1) []error {
 		webhookName := wh.GenerateName
 		for _, rule := range wh.Rules {
 			for _, apiGroup := range rule.APIGroups {
-				if unsupportedWebhookRuleAPIGroups.Has(apiGroup) {
+				if forbiddenWebhookRuleAPIGroups.Has(apiGroup) {
 					errs = append(errs, fmt.Errorf("webhook %q contains forbidden rule: admission webhook rules cannot reference API group %q", webhookName, apiGroup))
 				}
 				if apiGroup == "admissionregistration.k8s.io" {
 					for _, resource := range rule.Resources {
-						if unsupportedAdmissionRegistrationResources.Has(strings.ToLower(resource)) {
+						if forbiddenAdmissionRegistrationResources.Has(strings.ToLower(resource)) {
 							errs = append(errs, fmt.Errorf("webhook %q contains forbidden rule: admission webhook rules cannot reference resource %q for API group %q", webhookName, resource, apiGroup))
 						}
 					}
