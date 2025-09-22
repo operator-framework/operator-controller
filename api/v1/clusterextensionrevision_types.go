@@ -55,13 +55,13 @@ type ClusterExtensionRevisionSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision"`
 	// Phases are groups of objects that will be applied at the same time.
-	// All objects in the a phase will have to pass their probes in order to progress to the next phase.
+	// All objects in the phase will have to pass their probes in order to progress to the next phase.
 	//
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
 	// +listType=map
 	// +listMapKey=name
-	Phases []ClusterExtensionRevisionPhase `json:"phases"`
+	// +optional
+	Phases []ClusterExtensionRevisionPhase `json:"phases,omitempty"`
 	// Previous references previous revisions that objects can be adopted from.
 	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="previous is immutable"
@@ -104,6 +104,7 @@ type ClusterExtensionRevisionObject struct {
 	// already existing on the cluster or even owned by another controller.
 	//
 	// +kubebuilder:default="Prevent"
+	// +optional
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
