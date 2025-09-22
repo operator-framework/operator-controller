@@ -648,7 +648,7 @@ spec:
               phases:
                 description: |-
                   Phases are groups of objects that will be applied at the same time.
-                  All objects in the a phase will have to pass their probes in order to progress to the next phase.
+                  All objects in the phase will have to pass their probes in order to progress to the next phase.
                 items:
                   description: |-
                     ClusterExtensionRevisionPhase are groups of objects that will be applied at the same time.
@@ -721,7 +721,6 @@ spec:
                 - message: revision is immutable
                   rule: self == oldSelf
             required:
-            - phases
             - revision
             type: object
           status:
