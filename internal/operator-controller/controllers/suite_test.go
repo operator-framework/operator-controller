@@ -21,7 +21,6 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -29,11 +28,11 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/test"
 )
 
 func newScheme(t *testing.T) *apimachineryruntime.Scheme {
@@ -93,27 +92,7 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 var config *rest.Config
 
 func TestMain(m *testing.M) {
-	testEnv := &envtest.Environment{
-		CRDDirectoryPaths: []string{
-			filepath.Join("..", "..", "..", "config", "base", "operator-controller", "crd", "experimental"),
-		},
-		ErrorIfCRDPathMissing: true,
-	}
-
-	// ENVTEST-based tests require specific binaries. By default, these binaries are located
-	// in paths defined by controller-runtime. However, the `BinaryAssetsDirectory` needs
-	// to be explicitly set when running tests directly (e.g., debugging tests in an IDE)
-	// without using the Makefile targets.
-	//
-	// This is equivalent to configuring your IDE to export the `KUBEBUILDER_ASSETS` environment
-	// variable before each test execution. The following function simplifies this process
-	// by handling the configuration for you.
-	//
-	// To ensure the binaries are in the expected path without manual configuration, run:
-	// `make envtest-k8s-bins`
-	if getFirstFoundEnvTestBinaryDir() != "" {
-		testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
-	}
+	testEnv := test.NewEnv()
 
 	var err error
 	config, err = testEnv.Start()
@@ -125,16 +104,4 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())
 	os.Exit(code)
-}
-
-// getFirstFoundEnvTestBinaryDir finds and returns the first directory under the given path.
-func getFirstFoundEnvTestBinaryDir() string {
-	basePath := filepath.Join("..", "..", "bin", "envtest-binaries", "k8s")
-	entries, _ := os.ReadDir(basePath)
-	for _, entry := range entries {
-		if entry.IsDir() {
-			return filepath.Join(basePath, entry.Name())
-		}
-	}
-	return ""
 }
