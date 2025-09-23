@@ -122,9 +122,12 @@ spec:
                 - message: previous is immutable
                   rule: self == oldSelf
               revision:
-                description: Revision number orders changes over time, must always
-                  be previous revision +1.
+                description: |-
+                  Revision is a sequence number representing a specific revision of the ClusterExtension instance.
+                  Must be positive. Each ClusterExtensionRevision of the same parent ClusterExtension needs to have
+                  a unique value assigned. It is immutable after creation. The new revision number must always be previous revision +1.
                 format: int64
+                minimum: 1
                 type: integer
                 x-kubernetes-validations:
                 - message: revision is immutable
