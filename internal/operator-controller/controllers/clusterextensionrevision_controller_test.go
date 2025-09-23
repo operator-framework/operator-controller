@@ -649,9 +649,6 @@ func newTestClusterExtension() *ocv1.ClusterExtension {
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: "some-namespace",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "service-account",
-			},
 			Source: ocv1.SourceConfig{
 				SourceType: ocv1.SourceTypeCatalog,
 				Catalog: &ocv1.CatalogFilter{

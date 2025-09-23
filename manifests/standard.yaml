@@ -668,8 +668,7 @@ spec:
               namespace:
                 description: |-
                   namespace is a reference to a Kubernetes namespace.
-                  This is the namespace in which the provided ServiceAccount must exist.
-                  It also designates the default namespace where namespace-scoped resources
+                  It designates the default namespace where namespace-scoped resources
                   for the extension are applied to the cluster.
                   Some extensions may contain namespace-scoped resources to be applied in other namespaces.
                   This namespace must exist.
@@ -688,14 +687,14 @@ spec:
                   rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
               serviceAccount:
                 description: |-
-                  serviceAccount is a reference to a ServiceAccount used to perform all interactions
+                  Deprecated: ServiceAccount is ignored by OLM and will be removed in a future release.
+                  serviceAccount was a reference to the ServiceAccount used to perform all interactions
                   with the cluster that are required to manage the extension.
-                  The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-                  The ServiceAccount must exist in the namespace referenced in the spec.
-                  serviceAccount is required.
+                  serviceAccount is optional.
                 properties:
                   name:
                     description: |-
+                      Deprecated: ServiceAccount.Name is ignored by OLM and will be removed in a future release.
                       name is a required, immutable reference to the name of the ServiceAccount
                       to be used for installation and management of the content for the package
                       specified in the packageName field.
@@ -1015,7 +1014,6 @@ spec:
                     has(self.catalog) : !has(self.catalog)'
             required:
             - namespace
-            - serviceAccount
             - source
             type: object
           status:
@@ -1283,71 +1281,6 @@ rules:
       - list
       - watch
 ---
-# Source: olmv1/templates/rbac/clusterrole-operator-controller-manager-role.yml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: operator-controller-manager-role
-  labels:
-    app.kubernetes.io/name: operator-controller
-    app.kubernetes.io/part-of: olm
-  annotations:
-    olm.operatorframework.io/feature-set: standard
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts/token
-    verbs:
-      - create
-  - apiGroups:
-      - apiextensions.k8s.io
-    resources:
-      - customresourcedefinitions
-    verbs:
-      - get
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clustercatalogs
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions
-    verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions/status
-    verbs:
-      - patch
-      - update
-  - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
-      - clusterrolebindings
-      - clusterroles
-      - rolebindings
-      - roles
-    verbs:
-      - list
-      - watch
----
 # Source: olmv1/templates/rbac/clusterrolebinding-catalogd-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1418,7 +1351,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: operator-controller-manager-role
+  name: cluster-admin
 subjects:
   - kind: ServiceAccount
     name: operator-controller-controller-manager

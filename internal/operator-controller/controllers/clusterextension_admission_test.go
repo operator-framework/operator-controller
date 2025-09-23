@@ -44,7 +44,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 						},
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
+					ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 						Name: "default",
 					},
 				}))
@@ -55,7 +55,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 						SourceType: tc.sourceType,
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1.ServiceAccountReference{
+					ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 						Name: "default",
 					},
 				}))
@@ -114,7 +114,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 					Name: "default",
 				},
 			}))
@@ -212,7 +212,7 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 					Name: "default",
 				},
 			}))
@@ -267,7 +267,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 					Name: "default",
 				},
 			}))
@@ -320,7 +320,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 					},
 				},
 				Namespace: tc.namespace,
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 					Name: "default",
 				},
 			}))
@@ -348,7 +348,8 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		{"dot-separated", "dotted.name", ""},
 		{"longest valid service account name", strings.Repeat("x", 253), ""},
 		{"too long service account name", strings.Repeat("x", 254), tooLongError},
-		{"no service account name", "", regexMismatchError},
+		// An empty service account name passes since serviceAccount is omitted if zero-valued
+		{"no service account name", "", ""},
 		{"spaces", "spaces spaces", regexMismatchError},
 		{"capitalized", "Capitalized", regexMismatchError},
 		{"camel case", "camelCase", regexMismatchError},
@@ -374,7 +375,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 					Name: tc.serviceAccount,
 				},
 			}))
@@ -433,7 +434,7 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{ //nolint:staticcheck
 					Name: "default",
 				},
 				Install: tc.installConfig,
