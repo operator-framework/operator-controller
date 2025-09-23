@@ -63,13 +63,13 @@ type ClusterExtensionSpec struct {
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 
-	// serviceAccount is a reference to a ServiceAccount used to perform all interactions
+	// serviceAccount is deprecated and ignored by OLM.
 	// with the cluster that are required to manage the extension.
 	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
 	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// serviceAccount is required.
+	// serviceAccount is deprecated and optional.
 	//
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Optional
 	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
 
 	// source is a required field which selects the installation source of content
