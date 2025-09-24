@@ -49,9 +49,12 @@ type ClusterExtensionRevisionSpec struct {
 	// +kubebuilder:validation:Enum=Active;Paused;Archived
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Paused' || oldSelf == 'Archived' && oldSelf == self", message="can not un-archive"
 	LifecycleState ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
-	// Revision number orders changes over time, must always be previous revision +1.
+	// Revision is a sequence number representing a specific revision of the ClusterExtension instance.
+	// Must be positive. Each ClusterExtensionRevision of the same parent ClusterExtension needs to have
+	// a unique value assigned. It is immutable after creation. The new revision number must always be previous revision +1.
 	//
 	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision"`
 	// Phases are groups of objects that will be applied at the same time.
