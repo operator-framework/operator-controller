@@ -71,11 +71,6 @@ else
 $(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
-KUSTOMIZE_STANDARD_OVERLAY := config/overlays/standard
-KUSTOMIZE_STANDARD_E2E_OVERLAY := config/overlays/standard-e2e
-KUSTOMIZE_EXPERIMENTAL_OVERLAY := config/overlays/experimental
-KUSTOMIZE_EXPERIMENTAL_E2E_OVERLAY := config/overlays/experimental-e2e
-
 export STANDARD_RELEASE_MANIFEST := operator-controller.yaml
 export STANDARD_RELEASE_INSTALL := install.sh
 export EXPERIMENTAL_RELEASE_MANIFEST := operator-controller-experimental.yaml
@@ -204,8 +199,8 @@ bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := git://main?path=
 CRD_DIFF_UPDATED_REF := file://
-CRD_DIFF_OPCON_SOURCE := config/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml
-CRD_DIFF_CATD_SOURCE := config/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml
+CRD_DIFF_OPCON_SOURCE := helm/olmv1/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml
+CRD_DIFF_CATD_SOURCE := helm/olmv1/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml
 CRD_DIFF_CONFIG := crd-diff-config.yaml
 verify-crd-compatibility: $(CRD_DIFF) manifests
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "${CRD_DIFF_ORIGINAL_REF}${CRD_DIFF_OPCON_SOURCE}" ${CRD_DIFF_UPDATED_REF}${CRD_DIFF_OPCON_SOURCE}

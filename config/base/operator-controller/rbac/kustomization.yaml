@@ -1,4 +1,0 @@
-# This kustomization picks the standard rbac by default
-# If the experimental rbac is desired, select that directory explicitly
-resources:
-- standard

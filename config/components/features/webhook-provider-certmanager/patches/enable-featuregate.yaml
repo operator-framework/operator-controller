@@ -1,4 +1,0 @@
-# enable cert-manager backed webhook support feature gate
-- op: add
-  path: /spec/template/spec/containers/0/args/-
-  value: "--feature-gates=WebhookProviderCertManager=true"

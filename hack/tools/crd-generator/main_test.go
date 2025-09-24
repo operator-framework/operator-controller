@@ -29,22 +29,22 @@ func TestRunGenerator(t *testing.T) {
 	runGenerator(dir, controllerToolsVersion)
 
 	f1 := filepath.Join(dir, "standard/olm.operatorframework.io_clusterextensions.yaml")
-	f2 := "config/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml"
+	f2 := "helm/olmv1/base/operator-controller/crd/standard/olm.operatorframework.io_clusterextensions.yaml"
 	fmt.Printf("comparing: %s to %s\n", f1, f2)
 	compareFiles(t, f1, f2)
 
 	f1 = filepath.Join(dir, "standard/olm.operatorframework.io_clustercatalogs.yaml")
-	f2 = "config/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml"
+	f2 = "helm/olmv1/base/catalogd/crd/standard/olm.operatorframework.io_clustercatalogs.yaml"
 	fmt.Printf("comparing: %s to %s\n", f1, f2)
 	compareFiles(t, f1, f2)
 
 	f1 = filepath.Join(dir, "experimental/olm.operatorframework.io_clusterextensions.yaml")
-	f2 = "config/base/operator-controller/crd/experimental/olm.operatorframework.io_clusterextensions.yaml"
+	f2 = "helm/olmv1/base/operator-controller/crd/experimental/olm.operatorframework.io_clusterextensions.yaml"
 	fmt.Printf("comparing: %s to %s\n", f1, f2)
 	compareFiles(t, f1, f2)
 
 	f1 = filepath.Join(dir, "experimental/olm.operatorframework.io_clustercatalogs.yaml")
-	f2 = "config/base/catalogd/crd/experimental/olm.operatorframework.io_clustercatalogs.yaml"
+	f2 = "helm/olmv1/base/catalogd/crd/experimental/olm.operatorframework.io_clustercatalogs.yaml"
 	fmt.Printf("comparing: %s to %s\n", f1, f2)
 	compareFiles(t, f1, f2)
 }
