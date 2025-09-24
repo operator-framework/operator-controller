@@ -189,13 +189,6 @@ fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
 fmt: #EXHELP Formats code
 	go fmt ./...
 
-.PHONY: bingo-upgrade
-bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
-	@for pkg in $$($(BINGO) list | awk '{ print $$3 }' | tail -n +3 | sed 's/@.*//'); do \
-		echo -e "Upgrading \033[35m$$pkg\033[0m to latest..."; \
-		$(BINGO) get "$$pkg@latest"; \
-	done
-
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := git://main?path=
 CRD_DIFF_UPDATED_REF := file://
