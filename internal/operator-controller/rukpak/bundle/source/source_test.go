@@ -2,15 +2,19 @@ package source_test
 
 import (
 	"io/fs"
-	"strings"
 	"testing"
-	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
+
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
-	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	testutils "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
 )
 
 const (
@@ -27,7 +31,18 @@ func Test_FromBundle_Success(t *testing.T) {
 }
 
 func Test_FromFS_Success(t *testing.T) {
-	rv1, err := source.FromFS(NewBundleFS()).GetBundle()
+	bundleFS := bundlefs.Builder().
+		WithPackageName("test").
+		WithBundleProperty("from-file-key", "from-file-value").
+		WithBundleResource("csv.yaml", ptr.To(testutils.MakeCSV(
+			testutils.WithName("test.v1.0.0"),
+			testutils.WithAnnotations(map[string]string{
+				"olm.properties": `[{"type":"from-csv-annotations-key", "value":"from-csv-annotations-value"}]`,
+			}),
+			testutils.WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+		)).Build()
+
+	rv1, err := source.FromFS(bundleFS).GetBundle()
 	require.NoError(t, err)
 
 	t.Log("Check package name is correctly taken from metadata/annotations.yaml")
@@ -44,16 +59,30 @@ func Test_FromFS_Fails(t *testing.T) {
 	}{
 		{
 			name: "bundle missing ClusterServiceVersion manifest",
-			FS:   removePaths(NewBundleFS(), BundlePathCSV),
+			FS: bundlefs.Builder().
+				WithPackageName("test").
+				WithBundleProperty("foo", "bar").
+				WithBundleResource("service.yaml", &corev1.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+				}).Build(),
 		}, {
 			name: "bundle missing metadata/annotations.yaml",
-			FS:   removePaths(NewBundleFS(), BundlePathAnnotations),
+			FS: bundlefs.Builder().
+				WithBundleProperty("foo", "bar").
+				WithBundleResource("csv.yaml", ptr.To(testutils.MakeCSV())).Build(),
 		}, {
-			name: "bundle missing metadata/ directory",
-			FS:   removePaths(NewBundleFS(), "metadata/"),
+			name: "metadata/annotations.yaml missing package name annotation",
+			FS: bundlefs.Builder().
+				WithBundleProperty("foo", "bar").
+				WithBundleResource("csv.yaml", ptr.To(testutils.MakeCSV())).Build(),
 		}, {
-			name: "bundle missing manifests/ directory",
-			FS:   removePaths(NewBundleFS(), "manifests/"),
+			name: "bundle missing manifests directory",
+			FS: bundlefs.Builder().
+				WithPackageName("test").
+				WithBundleProperty("foo", "bar").Build(),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,15 +90,4 @@ func Test_FromFS_Fails(t *testing.T) {
 			require.Error(t, err)
 		})
 	}
-}
-
-func removePaths(mapFs fstest.MapFS, paths ...string) fstest.MapFS {
-	for k := range mapFs {
-		for _, path := range paths {
-			if strings.HasPrefix(k, path) {
-				delete(mapFs, k)
-			}
-		}
-	}
-	return mapFs
 }
