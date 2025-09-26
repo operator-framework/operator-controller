@@ -85,6 +85,78 @@ func Test_RegistryV1HelmChartProvider_Get_NoAPIServiceDefinitions(t *testing.T) 
 	require.Contains(t, err.Error(), "unsupported bundle: apiServiceDefintions are not supported")
 }
 
+func Test_RegistryV1HelmChartProvider_Get_SingleOwnNamespace(t *testing.T) {
+	t.Run("rejects bundles without AllNamespaces install mode support if SingleOwnNamespace is not enabled", func(t *testing.T) {
+		provider := applier.RegistryV1HelmChartProvider{}
+
+		b := source.FromBundle(
+			bundle.RegistryV1{
+				CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
+			},
+		)
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+
+		_, err := provider.Get(b, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unsupported bundle: bundle does not support AllNamespaces install mode")
+	})
+	t.Run("accepts bundles with SingleNamespace install mode support if SingleOwnNamespace is enabled", func(t *testing.T) {
+		// TODO: this will be removed in a follow-up PR that will refactor GetWatchNamespace's location
+		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
+		provider := applier.RegistryV1HelmChartProvider{
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		b := source.FromBundle(
+			bundle.RegistryV1{
+				CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+			},
+		)
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{"watchNamespace": "some-namespace"}`),
+					},
+				},
+			},
+		}
+
+		_, err := provider.Get(b, ext)
+		require.NoError(t, err)
+	})
+	t.Run("accepts bundles with OwnNamespace install mode support if SingleOwnNamespace is enabled", func(t *testing.T) {
+		// TODO: this will be removed in a follow-up PR that will refactor GetWatchNamespace's location
+		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
+		provider := applier.RegistryV1HelmChartProvider{
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		b := source.FromBundle(
+			bundle.RegistryV1{
+				CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
+			},
+		)
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+
+		_, err := provider.Get(b, ext)
+		require.NoError(t, err)
+	})
+}
+
 func Test_RegistryV1HelmChartProvider_Get_NoWebhooksWithoutCertProvider(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{
 		IsWebhookSupportEnabled: true,
