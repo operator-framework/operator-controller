@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	crdifyconfig "sigs.k8s.io/crdify/pkg/config"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
@@ -385,4 +386,43 @@ func TestUpgrade(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUpgrade_UnhandledChanges_InSpec_DefaultPolicy(t *testing.T) {
+	t.Run("unhandled spec changes cause error by default", func(t *testing.T) {
+		preflight := newMockPreflight(getCrdFromManifestFile(t, "crd-unhandled-old.json"), nil)
+		rel := &release.Release{
+			Name:     "test-release",
+			Manifest: getManifestString(t, "crd-unhandled-new.json"),
+		}
+		objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(rel)
+		require.NoError(t, err)
+		err = preflight.Upgrade(context.Background(), objs)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "unhandled changes found")
+		require.ErrorContains(t, err, "Format \"\" -> \"email\"")
+		require.NotContains(t, err.Error(), "v1.JSONSchemaProps", "error message should be concise without raw diff")
+	})
+}
+
+func TestUpgrade_UnhandledChanges_PolicyError(t *testing.T) {
+	t.Run("unhandled changes error when policy is Error", func(t *testing.T) {
+		oldCrd := getCrdFromManifestFile(t, "crd-unhandled-old.json")
+		preflight := crdupgradesafety.NewPreflight(&MockCRDGetter{oldCrd: oldCrd}, crdupgradesafety.WithConfig(&crdifyconfig.Config{
+			Conversion:           crdifyconfig.ConversionPolicyIgnore,
+			UnhandledEnforcement: crdifyconfig.EnforcementPolicyError,
+		}))
+
+		rel := &release.Release{
+			Name:     "test-release",
+			Manifest: getManifestString(t, "crd-unhandled-new.json"),
+		}
+
+		objs, err := applier.HelmReleaseToObjectsConverter{}.GetObjectsFromRelease(rel)
+		require.NoError(t, err)
+		err = preflight.Upgrade(context.Background(), objs)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "unhandled changes found")
+		require.ErrorContains(t, err, "Format \"\" -> \"email\"")
+	})
 }
