@@ -24,13 +24,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	testutils "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 )
 
 func Test_RegistryV1BundleRenderer_Render_Success(t *testing.T) {
@@ -52,7 +54,10 @@ func Test_RegistryV1BundleRenderer_Render_Success(t *testing.T) {
 			},
 		},
 	}
-	bundleFS := testutils.NewBundleFS()
+
+	bundleFS := NewBundleFS(
+		WithPackageName("some-package"),
+		WithCSV(MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces))))
 
 	objs, err := r.Render(bundleFS, &ocv1.ClusterExtension{
 		Spec: ocv1.ClusterExtensionSpec{
@@ -74,7 +79,9 @@ func Test_RegistryV1BundleRenderer_Render_Failure(t *testing.T) {
 			},
 		},
 	}
-	bundleFS := testutils.NewBundleFS()
+	bundleFS := NewBundleFS(
+		WithPackageName("some-package"),
+		WithCSV(MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces))))
 
 	objs, err := r.Render(bundleFS, &ocv1.ClusterExtension{
 		Spec: ocv1.ClusterExtensionSpec{
