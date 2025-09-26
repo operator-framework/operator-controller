@@ -29,14 +29,13 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 // HelmChartProvider provides helm charts from bundle sources and cluster extensions
 type HelmChartProvider interface {
-	Get(bundle source.BundleSource, clusterExtension *ocv1.ClusterExtension) (*chart.Chart, error)
+	Get(bundle fs.FS, clusterExtension *ocv1.ClusterExtension) (*chart.Chart, error)
 }
 
 type HelmReleaseToObjectsConverter struct {
@@ -212,7 +211,7 @@ func (h *Helm) buildHelmChart(bundleFS fs.FS, ext *ocv1.ClusterExtension) (*char
 			)
 		}
 	}
-	return h.HelmChartProvider.Get(source.FromFS(bundleFS), ext)
+	return h.HelmChartProvider.Get(bundleFS, ext)
 }
 
 func (h *Helm) renderClientOnlyRelease(ctx context.Context, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, error) {

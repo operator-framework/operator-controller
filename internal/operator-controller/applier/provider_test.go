@@ -2,99 +2,56 @@ package applier_test
 
 import (
 	"errors"
+	"io/fs"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
-func Test_RegistryV1HelmChartProvider_Get_ReturnsBundleSourceFailures(t *testing.T) {
-	provider := applier.RegistryV1HelmChartProvider{}
-	var failingBundleSource FakeBundleSource = func() (bundle.RegistryV1, error) {
-		return bundle.RegistryV1{}, errors.New("some error")
-	}
-	ext := &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "install-namespace",
-		},
-	}
-	_, err := provider.Get(failingBundleSource, ext)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "some error")
-}
+func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
+	t.Run("surfaces bundle source errors", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{}
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+		_, err := provider.Get(fstest.MapFS{}, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "metadata/annotations.yaml: file does not exist")
+	})
 
-func Test_RegistryV1HelmChartProvider_Get_ReturnsBundleRendererFailures(t *testing.T) {
-	provider := applier.RegistryV1HelmChartProvider{
-		BundleRenderer: render.BundleRenderer{
-			ResourceGenerators: []render.ResourceGenerator{
-				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-					return nil, errors.New("some error")
+	t.Run("surfaces bundle renderer errors", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						return nil, errors.New("some error")
+					},
 				},
 			},
-		},
-	}
+		}
 
-	b := source.FromBundle(
-		bundle.RegistryV1{
-			CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
-		},
-	)
-
-	ext := &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "install-namespace",
-		},
-	}
-	_, err := provider.Get(b, ext)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "some error")
-}
-
-func Test_RegistryV1HelmChartProvider_Get_NoAPIServiceDefinitions(t *testing.T) {
-	provider := applier.RegistryV1HelmChartProvider{}
-
-	b := source.FromBundle(
-		bundle.RegistryV1{
-			CSV: clusterserviceversion.Builder().WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{}).Build(),
-		},
-	)
-
-	ext := &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "install-namespace",
-		},
-	}
-
-	_, err := provider.Get(b, ext)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "unsupported bundle: apiServiceDefintions are not supported")
-}
-
-func Test_RegistryV1HelmChartProvider_Get_SingleOwnNamespace(t *testing.T) {
-	t.Run("rejects bundles without AllNamespaces install mode support if SingleOwnNamespace is not enabled", func(t *testing.T) {
-		provider := applier.RegistryV1HelmChartProvider{}
-
-		b := source.FromBundle(
-			bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
-			},
-		)
+		// The contents of the bundle are not important for this tesy, only that it be a valid bundle
+		// to avoid errors in the deserialization process
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
@@ -102,235 +59,270 @@ func Test_RegistryV1HelmChartProvider_Get_SingleOwnNamespace(t *testing.T) {
 			},
 		}
 
-		_, err := provider.Get(b, ext)
+		_, err := provider.Get(bundleFS, ext)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unsupported bundle: bundle does not support AllNamespaces install mode")
+		require.Contains(t, err.Error(), "some error")
 	})
-	t.Run("accepts bundles with SingleNamespace install mode support if SingleOwnNamespace is enabled", func(t *testing.T) {
-		// TODO: this will be removed in a follow-up PR that will refactor GetWatchNamespace's location
-		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
-		provider := applier.RegistryV1HelmChartProvider{
+
+	t.Run("returns rendered manifests", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: registryv1.Renderer,
+		}
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
+			WithBundleResource("service.yaml", &corev1.Service{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: corev1.SchemeGroupVersion.String(),
+					Kind:       "Service",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-service",
+				},
+			}).Build()
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+		objs, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err)
+
+		exp := ToUnstructuredT(t, &corev1.Service{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: corev1.SchemeGroupVersion.String(),
+				Kind:       "Service",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-service",
+				Namespace: "install-namespace",
+			},
+			Status: corev1.ServiceStatus{
+				LoadBalancer: corev1.LoadBalancerStatus{},
+			},
+		})
+
+		require.Equal(t, []client.Object{exp}, objs)
+	})
+}
+
+func Test_RegistryV1ManifestProvider_APIServiceSupport(t *testing.T) {
+	t.Run("rejects registry+v1 bundles with API service definitions", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{Name: "test-apiservice"}).Build()).Build()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+
+		_, err := provider.Get(bundleFS, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unsupported bundle: apiServiceDefintions are not supported")
+	})
+}
+
+func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
+	t.Run("rejects bundles with webhook definitions if support is disabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			IsWebhookSupportEnabled: false,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build()).Build()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+
+		_, err := provider.Get(bundleFS, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "webhookDefinitions are not supported")
+	})
+
+	t.Run("fails if bundle contains webhook definitions, webhook support is enabled, but the certificate provider is undefined", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			IsWebhookSupportEnabled: true,
+			CertificateProvider:     nil,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build()).Build()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+
+		_, err := provider.Get(bundleFS, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "webhookDefinitions are not supported")
+	})
+
+	t.Run("accepts bundles with webhook definitions if support is enabled and a certificate provider is defined", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			CertificateProvider:     FakeCertProvider{},
+			IsWebhookSupportEnabled: true,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(
+				clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
+					WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build()).
+			Build()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+
+		_, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err)
+	})
+}
+
+func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
+	t.Run("rejects bundles without AllNamespaces install mode when Single/OwnNamespace install mode support is disabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			IsSingleOwnNamespaceEnabled: false,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		})
+		require.Equal(t, "unsupported bundle: bundle does not support AllNamespaces install mode", err.Error())
+	})
+
+	t.Run("accepts bundles without AllNamespaces install mode and with SingleNamespace support when Single/OwnNamespace install mode support is enabled", func(t *testing.T) {
+		expectedWatchNamespace := "some-namespace"
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						t.Log("ensure watch namespace is appropriately configured")
+						require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
+						return nil, nil
+					},
+				},
+			},
 			IsSingleOwnNamespaceEnabled: true,
 		}
 
-		b := source.FromBundle(
-			bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
-			},
-		)
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
 
-		ext := &ocv1.ClusterExtension{
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
 				Config: &ocv1.ClusterExtensionConfig{
 					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
 					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{"watchNamespace": "some-namespace"}`),
+						Raw: []byte(`{"watchNamespace": "` + expectedWatchNamespace + `"}`),
 					},
 				},
 			},
-		}
-
-		_, err := provider.Get(b, ext)
+		})
 		require.NoError(t, err)
 	})
-	t.Run("accepts bundles with OwnNamespace install mode support if SingleOwnNamespace is enabled", func(t *testing.T) {
-		// TODO: this will be removed in a follow-up PR that will refactor GetWatchNamespace's location
-		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
-		provider := applier.RegistryV1HelmChartProvider{
+
+	t.Run("accepts bundles without AllNamespaces install mode and with OwnNamespace support when Single/OwnNamespace install mode support is enabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
 			IsSingleOwnNamespaceEnabled: true,
 		}
-
-		b := source.FromBundle(
-			bundle.RegistryV1{
-				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
 			},
-		)
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects bundles without AllNamespaces, SingleNamespace, or OwnNamespace install mode support when Single/OwnNamespace install mode support is enabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			IsSingleOwnNamespaceEnabled: true,
+		}
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build()).Build()
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		})
+		require.Equal(t, "unsupported bundle: bundle must support at least one of [AllNamespaces SingleNamespace OwnNamespace] install modes", err.Error())
+	})
+}
+
+func Test_RegistryV1HelmChartProvider_Integration(t *testing.T) {
+	t.Run("surfaces bundle source errors", func(t *testing.T) {
+		provider := applier.RegistryV1HelmChartProvider{
+			ManifestProvider: DummyManifestProvider,
+		}
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+		_, err := provider.Get(fstest.MapFS{}, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "metadata/annotations.yaml: file does not exist")
+	})
+
+	t.Run("surfaces manifest provider failures", func(t *testing.T) {
+		provider := applier.RegistryV1HelmChartProvider{
+			ManifestProvider: &FakeManifestProvider{
+				GetFn: func(bundle fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
+					return nil, errors.New("some error")
+				},
+			},
+		}
 
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
 			},
 		}
-
-		_, err := provider.Get(b, ext)
-		require.NoError(t, err)
+		_, err := provider.Get(fstest.MapFS{}, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "some error")
 	})
 }
 
-func Test_RegistryV1HelmChartProvider_Get_NoWebhooksWithoutCertProvider(t *testing.T) {
+func Test_RegistryV1HelmChartProvider_Chart(t *testing.T) {
 	provider := applier.RegistryV1HelmChartProvider{
-		IsWebhookSupportEnabled: true,
-	}
-
-	b := source.FromBundle(
-		bundle.RegistryV1{
-			CSV: clusterserviceversion.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build(),
-		},
-	)
-
-	ext := &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "install-namespace",
+		ManifestProvider: &applier.RegistryV1ManifestProvider{
+			BundleRenderer: registryv1.Renderer,
 		},
 	}
 
-	_, err := provider.Get(b, ext)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
-}
-
-func Test_RegistryV1HelmChartProvider_Get_WebhooksSupportDisabled(t *testing.T) {
-	provider := applier.RegistryV1HelmChartProvider{
-		IsWebhookSupportEnabled: false,
-	}
-
-	b := source.FromBundle(
-		bundle.RegistryV1{
-			CSV: clusterserviceversion.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build(),
-		},
-	)
-
-	ext := &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "install-namespace",
-		},
-	}
-
-	_, err := provider.Get(b, ext)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "webhookDefinitions are not supported")
-}
-
-func Test_RegistryV1HelmChartProvider_Get_WebhooksWithCertProvider(t *testing.T) {
-	provider := applier.RegistryV1HelmChartProvider{
-		CertificateProvider:     FakeCertProvider{},
-		IsWebhookSupportEnabled: true,
-	}
-
-	b := source.FromBundle(
-		bundle.RegistryV1{
-			CSV: clusterserviceversion.Builder().
-				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
-				WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build(),
-		},
-	)
-
-	ext := &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "install-namespace",
-		},
-	}
-
-	_, err := provider.Get(b, ext)
-	require.NoError(t, err)
-}
-
-func Test_RegistryV1HelmChartProvider_Get_BundleRendererIntegration(t *testing.T) {
-	expectedInstallNamespace := "install-namespace"
-	expectedCertProvider := FakeCertProvider{}
-	watchNamespace := "some-namespace"
-
-	ext := &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "install-namespace",
-			Config: &ocv1.ClusterExtensionConfig{
-				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
-				Inline: &apiextensionsv1.JSON{
-					Raw: []byte(`{"watchNamespace": "` + watchNamespace + `"}`),
-				},
-			},
-		},
-	}
-
-	b := source.FromBundle(
-		bundle.RegistryV1{
-			CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace).Build(),
-		},
-	)
-
-	t.Run("SingleOwnNamespace install mode support off", func(t *testing.T) {
-		provider := applier.RegistryV1HelmChartProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						// ensure correct options are being passed down to the bundle renderer
-						require.Equal(t, expectedInstallNamespace, opts.InstallNamespace)
-						require.Equal(t, expectedCertProvider, opts.CertificateProvider)
-
-						// target namespaces should not set to {""} (AllNamespaces) if the SingleOwnNamespace feature flag is off
-						t.Log("check that targetNamespaces option is set to AllNamespaces")
-						require.Equal(t, []string{""}, opts.TargetNamespaces)
-						return nil, nil
-					},
-				},
-			},
-			CertificateProvider: expectedCertProvider,
-		}
-
-		_, err := provider.Get(b, ext)
-		require.NoError(t, err)
-	})
-
-	t.Run("feature on", func(t *testing.T) {
-		featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.SingleOwnNamespaceInstallSupport, true)
-
-		provider := applier.RegistryV1HelmChartProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						// ensure correct options are being passed down to the bundle renderer
-						require.Equal(t, expectedInstallNamespace, opts.InstallNamespace)
-						require.Equal(t, expectedCertProvider, opts.CertificateProvider)
-
-						// targetNamespace must be set if the feature flag is on
-						t.Log("check that targetNamespaces option is set")
-						require.Equal(t, []string{watchNamespace}, opts.TargetNamespaces)
-						return nil, nil
-					},
-				},
-			},
-			CertificateProvider: expectedCertProvider,
-		}
-
-		_, err := provider.Get(b, ext)
-		require.NoError(t, err)
-	})
-}
-
-func Test_RegistryV1HelmChartProvider_Get_Success(t *testing.T) {
-	provider := applier.RegistryV1HelmChartProvider{
-		BundleRenderer: render.BundleRenderer{
-			ResourceGenerators: []render.ResourceGenerator{
-				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-					out := make([]client.Object, 0, len(rv1.Others))
-					for i := range rv1.Others {
-						out = append(out, &rv1.Others[i])
-					}
-					return out, nil
-				},
-			},
-		},
-	}
-
-	b := source.FromBundle(
-		bundle.RegistryV1{
-			CSV: clusterserviceversion.Builder().
+	bundleFS := bundlefs.Builder().WithPackageName("test").
+		WithCSV(
+			clusterserviceversion.Builder().
 				WithAnnotations(map[string]string{"foo": "bar"}).
-				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
-			Others: []unstructured.Unstructured{
-				*ToUnstructuredT(t, &corev1.Service{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: corev1.SchemeGroupVersion.String(),
-						Kind:       "Service",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "testService",
-					},
-				}),
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
+				Build()).
+		WithBundleResource("service.yaml", &corev1.Service{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: corev1.SchemeGroupVersion.String(),
+				Kind:       "Service",
 			},
-		},
-	)
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testService",
+			},
+		}).Build()
 
 	ext := &ocv1.ClusterExtension{
 		Spec: ocv1.ClusterExtensionSpec{
@@ -338,7 +330,7 @@ func Test_RegistryV1HelmChartProvider_Get_Success(t *testing.T) {
 		},
 	}
 
-	chart, err := provider.Get(b, ext)
+	chart, err := provider.Get(bundleFS, ext)
 	require.NoError(t, err)
 	require.NotNil(t, chart)
 	require.NotNil(t, chart.Metadata)
@@ -348,4 +340,18 @@ func Test_RegistryV1HelmChartProvider_Get_Success(t *testing.T) {
 
 	t.Log("Check Chart templates have the same number of resources generated by the renderer")
 	require.Len(t, chart.Templates, 1)
+}
+
+var DummyManifestProvider = &FakeManifestProvider{
+	GetFn: func(bundle fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
+		return []client.Object{}, nil
+	},
+}
+
+type FakeManifestProvider struct {
+	GetFn func(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
+}
+
+func (f *FakeManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
+	return f.GetFn(bundleFS, ext)
 }
