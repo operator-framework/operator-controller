@@ -6,6 +6,9 @@ import (
 	"fmt"
 
 	"helm.sh/helm/v3/pkg/chart"
+	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
@@ -13,27 +16,16 @@ import (
 )
 
 type RegistryV1HelmChartProvider struct {
-	BundleRenderer          render.BundleRenderer
-	CertificateProvider     render.CertificateProvider
-	IsWebhookSupportEnabled bool
+	BundleRenderer              render.BundleRenderer
+	CertificateProvider         render.CertificateProvider
+	IsWebhookSupportEnabled     bool
+	IsSingleOwnNamespaceEnabled bool
 }
 
 func (r *RegistryV1HelmChartProvider) Get(bundle source.BundleSource, ext *ocv1.ClusterExtension) (*chart.Chart, error) {
 	rv1, err := bundle.GetBundle()
 	if err != nil {
 		return nil, err
-	}
-
-	watchNamespace, err := GetWatchNamespace(ext)
-	if err != nil {
-		return nil, err
-	}
-
-	opts := []render.Option{
-		render.WithCertificateProvider(r.CertificateProvider),
-	}
-	if watchNamespace != "" {
-		opts = append(opts, render.WithTargetNamespaces(watchNamespace))
 	}
 
 	if len(rv1.CSV.Spec.APIServiceDefinitions.Owned) > 0 {
@@ -48,8 +40,35 @@ func (r *RegistryV1HelmChartProvider) Get(bundle source.BundleSource, ext *ocv1.
 		}
 	}
 
-	if r.CertificateProvider == nil && len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
-		return nil, fmt.Errorf("unsupported bundle: webhookDefinitions are not supported")
+	installModes := sets.New(rv1.CSV.Spec.InstallModes...)
+	if !r.IsSingleOwnNamespaceEnabled && !installModes.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true}) {
+		return nil, fmt.Errorf("unsupported bundle: bundle does not support AllNamespaces install mode")
+	}
+
+	if !installModes.HasAny(
+		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+	) {
+		return nil, fmt.Errorf("unsupported bundle: bundle must support at least one of [AllNamespaces SingleNamespace OwnNamespace] install modes")
+	}
+
+	opts := []render.Option{
+		render.WithCertificateProvider(r.CertificateProvider),
+	}
+
+	// TODO: in a follow up PR we'll split this into two components:
+	//   1. takes a bundle + cluster extension => manifests
+	//   2. takes a bundle + cluster extension => chart (which will use the component in 1. under the hood)
+	// GetWatchNamespace will move under the component in 1. and also be reused by the component that
+	// takes bundle + cluster extension => revision
+	watchNamespace, err := GetWatchNamespace(ext)
+	if err != nil {
+		return nil, err
+	}
+
+	if watchNamespace != "" {
+		opts = append(opts, render.WithTargetNamespaces(watchNamespace))
 	}
 
 	objs, err := r.BundleRenderer.Render(rv1, ext.Spec.Namespace, opts...)
