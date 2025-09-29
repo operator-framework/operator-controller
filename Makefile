@@ -206,11 +206,11 @@ test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run a
 
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
-	go test -count=1 -v ./test/e2e/...
+	go test -count=1 -v $(E2E_TEST_EXTRA_ARGS) ./test/e2e/...
 
 .PHONY: experimental-e2e
 experimental-e2e: #EXHELP Run the experimental e2e tests.
-	go test -count=1 -v ./test/experimental-e2e/...
+	go test -count=1 -v $(E2E_TEST_EXTRA_ARGS) ./test/experimental-e2e/...
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
@@ -224,7 +224,7 @@ export CATALOG_IMG := $(CLUSTER_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
 .PHONY: extension-developer-e2e
 extension-developer-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) #EXHELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) ${LOCAL_REGISTRY_HOST} ${CLUSTER_REGISTRY_HOST}
-	go test -count=1 -v ./test/extension-developer-e2e/...
+	go test -count=1 -v $(E2E_TEST_EXTRA_ARGS) ./test/extension-developer-e2e/...
 
 UNIT_TEST_DIRS := $(shell go list ./... | grep -vE "/test/|/testutils")
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
@@ -272,6 +272,7 @@ test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-e2e: COVERAGE_NAME := e2e
 test-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
+test-e2e: E2E_TEST_EXTRA_ARGS := -skip 'ExampleTestNotToBeExecutedDuringRegularE2E'
 test-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: test-experimental-e2e
@@ -280,6 +281,7 @@ test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+test-experimental-e2e: E2E_TEST_EXTRA_ARGS := -skip 'ExampleTestNotToBeExecutedForExperimentalE2E'
 test-experimental-e2e: run-internal image-registry prometheus experimental-e2e e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
@@ -293,6 +295,7 @@ test-extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)
 test-extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e
 test-extension-developer-e2e: export INSTALL_DEFAULT_CATALOGS := false
 test-extension-developer-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
+test-extension-developer-e2e: E2E_TEST_EXTRA_ARGS :=
 test-extension-developer-e2e: run-internal image-registry extension-developer-e2e kind-clean #HELP Run extension-developer e2e on local kind cluster
 
 .PHONY: run-latest-release
@@ -305,7 +308,7 @@ pre-upgrade-setup:
 
 .PHONY: post-upgrade-checks
 post-upgrade-checks:
-	go test -count=1 -v ./test/upgrade-e2e/...
+	go test -count=1 -v $(E2E_TEST_EXTRA_ARGS) ./test/upgrade-e2e/...
 
 
 TEST_UPGRADE_E2E_TASKS := kind-cluster run-latest-release image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean
