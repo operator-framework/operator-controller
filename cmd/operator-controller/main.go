@@ -655,9 +655,10 @@ func setupHelm(
 		ActionClientGetter: acg,
 		Preflights:         preflights,
 		HelmChartProvider: &applier.RegistryV1HelmChartProvider{
-			BundleRenderer:          registryv1.Renderer,
-			CertificateProvider:     certProvider,
-			IsWebhookSupportEnabled: certProvider != nil,
+			BundleRenderer:              registryv1.Renderer,
+			CertificateProvider:         certProvider,
+			IsWebhookSupportEnabled:     certProvider != nil,
+			IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
 		},
 		HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
 		PreAuthorizer:                 preAuth,
