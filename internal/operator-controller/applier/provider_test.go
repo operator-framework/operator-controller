@@ -21,6 +21,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
 func Test_RegistryV1HelmChartProvider_Get_ReturnsBundleSourceFailures(t *testing.T) {
@@ -51,7 +52,7 @@ func Test_RegistryV1HelmChartProvider_Get_ReturnsBundleRendererFailures(t *testi
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		},
 	)
 
@@ -70,7 +71,7 @@ func Test_RegistryV1HelmChartProvider_Get_NoAPIServiceDefinitions(t *testing.T) 
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{})),
+			CSV: clusterserviceversion.Builder().WithOwnedAPIServiceDescriptions(v1alpha1.APIServiceDescription{}).Build(),
 		},
 	)
 
@@ -91,7 +92,7 @@ func Test_RegistryV1HelmChartProvider_Get_SingleOwnNamespace(t *testing.T) {
 
 		b := source.FromBundle(
 			bundle.RegistryV1{
-				CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
+				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
 			},
 		)
 
@@ -114,7 +115,7 @@ func Test_RegistryV1HelmChartProvider_Get_SingleOwnNamespace(t *testing.T) {
 
 		b := source.FromBundle(
 			bundle.RegistryV1{
-				CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
 			},
 		)
 
@@ -142,7 +143,7 @@ func Test_RegistryV1HelmChartProvider_Get_SingleOwnNamespace(t *testing.T) {
 
 		b := source.FromBundle(
 			bundle.RegistryV1{
-				CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
+				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
 			},
 		)
 
@@ -164,7 +165,7 @@ func Test_RegistryV1HelmChartProvider_Get_NoWebhooksWithoutCertProvider(t *testi
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithWebhookDefinitions(v1alpha1.WebhookDescription{})),
+			CSV: clusterserviceversion.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build(),
 		},
 	)
 
@@ -186,7 +187,7 @@ func Test_RegistryV1HelmChartProvider_Get_WebhooksSupportDisabled(t *testing.T) 
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithWebhookDefinitions(v1alpha1.WebhookDescription{})),
+			CSV: clusterserviceversion.Builder().WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build(),
 		},
 	)
 
@@ -209,10 +210,9 @@ func Test_RegistryV1HelmChartProvider_Get_WebhooksWithCertProvider(t *testing.T)
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(
-				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
-				WithWebhookDefinitions(v1alpha1.WebhookDescription{}),
-			),
+			CSV: clusterserviceversion.Builder().
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
+				WithWebhookDefinitions(v1alpha1.WebhookDescription{}).Build(),
 		},
 	)
 
@@ -245,7 +245,7 @@ func Test_RegistryV1HelmChartProvider_Get_BundleRendererIntegration(t *testing.T
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace)),
+			CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace).Build(),
 		},
 	)
 
@@ -315,10 +315,9 @@ func Test_RegistryV1HelmChartProvider_Get_Success(t *testing.T) {
 
 	b := source.FromBundle(
 		bundle.RegistryV1{
-			CSV: MakeCSV(
-				WithAnnotations(map[string]string{"foo": "bar"}),
-				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
-			),
+			CSV: clusterserviceversion.Builder().
+				WithAnnotations(map[string]string{"foo": "bar"}).
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			Others: []unstructured.Unstructured{
 				*ToUnstructuredT(t, &corev1.Service{
 					TypeMeta: metav1.TypeMeta{

@@ -16,13 +16,14 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
 func Test_BundleRenderer_NoConfig(t *testing.T) {
 	renderer := render.BundleRenderer{}
 	objs, err := renderer.Render(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		}, "", nil)
 	require.NoError(t, err)
 	require.Empty(t, objs)
@@ -72,14 +73,14 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		{
 			name:             "accepts empty targetNamespaces (because it is ignored)",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces(),
 			},
 		}, {
 			name:             "rejects nil unique name generator",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
 				render.WithUniqueNameGenerator(nil),
 			},
@@ -87,7 +88,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		}, {
 			name:             "rejects all namespace install if AllNamespaces install mode is not supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces(corev1.NamespaceAll),
 			},
@@ -95,7 +96,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		}, {
 			name:             "rejects own namespace install if only AllNamespace install mode is supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("install-namespace"),
 			},
@@ -103,7 +104,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		}, {
 			name:             "rejects install out of own namespace if only OwnNamespace install mode is supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("not-install-namespace"),
 			},
@@ -111,7 +112,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		}, {
 			name:             "rejects multi-namespace install if MultiNamespace install mode is not supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("ns1", "ns2", "ns3"),
 			},
@@ -119,7 +120,7 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		}, {
 			name:             "rejects if bundle supports no install modes",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(),
+			csv:              clusterserviceversion.Builder().Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("some-namespace"),
 			},
@@ -127,42 +128,42 @@ func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 		}, {
 			name:             "accepts all namespace render if AllNamespaces install mode is supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces(""),
 			},
 		}, {
 			name:             "accepts install namespace render if SingleNamespace install mode is supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("some-namespace"),
 			},
 		}, {
 			name:             "accepts all install namespace render if OwnNamespace install mode is supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("install-namespace"),
 			},
 		}, {
 			name:             "accepts single namespace render if SingleNamespace install mode is supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("some-namespace"),
 			},
 		}, {
 			name:             "accepts multi namespace render if MultiNamespace install mode is supported",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("n1", "n2", "n3"),
 			},
 		}, {
 			name:             "reject multi namespace render if OwnNamespace install mode is not supported and target namespaces include install namespace",
 			installNamespace: "install-namespace",
-			csv:              MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace)),
+			csv:              clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build(),
 			opts: []render.Option{
 				render.WithTargetNamespaces("n1", "n2", "n3", "install-namespace"),
 			},
@@ -233,7 +234,7 @@ func Test_BundleRenderer_CallsResourceGenerators(t *testing.T) {
 	}
 	objs, err := renderer.Render(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		}, "")
 	require.NoError(t, err)
 	require.Equal(t, []client.Object{&corev1.Namespace{}, &corev1.Service{}, &appsv1.Deployment{}}, objs)
@@ -252,7 +253,7 @@ func Test_BundleRenderer_ReturnsResourceGeneratorErrors(t *testing.T) {
 	}
 	objs, err := renderer.Render(
 		bundle.RegistryV1{
-			CSV: MakeCSV(WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
+			CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		}, "")
 	require.Nil(t, objs)
 	require.Error(t, err)

@@ -13,8 +13,8 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
-	testutils "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
 const (
@@ -34,13 +34,13 @@ func Test_FromFS_Success(t *testing.T) {
 	bundleFS := bundlefs.Builder().
 		WithPackageName("test").
 		WithBundleProperty("from-file-key", "from-file-value").
-		WithBundleResource("csv.yaml", ptr.To(testutils.MakeCSV(
-			testutils.WithName("test.v1.0.0"),
-			testutils.WithAnnotations(map[string]string{
+		WithBundleResource("csv.yaml", ptr.To(clusterserviceversion.Builder().
+			WithName("test.v1.0.0").
+			WithAnnotations(map[string]string{
 				"olm.properties": `[{"type":"from-csv-annotations-key", "value":"from-csv-annotations-value"}]`,
-			}),
-			testutils.WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces)),
-		)).Build()
+			}).
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build())).
+		Build()
 
 	rv1, err := source.FromFS(bundleFS).GetBundle()
 	require.NoError(t, err)
@@ -72,12 +72,12 @@ func Test_FromFS_Fails(t *testing.T) {
 			name: "bundle missing metadata/annotations.yaml",
 			FS: bundlefs.Builder().
 				WithBundleProperty("foo", "bar").
-				WithBundleResource("csv.yaml", ptr.To(testutils.MakeCSV())).Build(),
+				WithBundleResource("csv.yaml", ptr.To(clusterserviceversion.Builder().Build())).Build(),
 		}, {
 			name: "metadata/annotations.yaml missing package name annotation",
 			FS: bundlefs.Builder().
 				WithBundleProperty("foo", "bar").
-				WithBundleResource("csv.yaml", ptr.To(testutils.MakeCSV())).Build(),
+				WithBundleResource("csv.yaml", ptr.To(clusterserviceversion.Builder().Build())).Build(),
 		}, {
 			name: "bundle missing manifests directory",
 			FS: bundlefs.Builder().

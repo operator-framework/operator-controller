@@ -17,6 +17,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/validators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
 func Test_BundleValidatorHasAllValidationFns(t *testing.T) {
@@ -64,12 +65,11 @@ func Test_ResourceGeneratorsHasAllGenerators(t *testing.T) {
 }
 
 func Test_Renderer_Success(t *testing.T) {
-	bundle := bundle.RegistryV1{
+	someBundle := bundle.RegistryV1{
 		PackageName: "my-package",
-		CSV: MakeCSV(
-			WithName("test-bundle"),
-			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
-		),
+		CSV: clusterserviceversion.Builder().
+			WithName("test-bundle").
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		Others: []unstructured.Unstructured{
 			*ToUnstructuredT(t, &corev1.Service{
 				TypeMeta: metav1.TypeMeta{
@@ -83,7 +83,7 @@ func Test_Renderer_Success(t *testing.T) {
 		},
 	}
 
-	objs, err := registryv1.Renderer.Render(bundle, "install-namespace")
+	objs, err := registryv1.Renderer.Render(someBundle, "install-namespace")
 	t.Log("Check renderer returns objects and no errors")
 	require.NoError(t, err)
 	require.NotEmpty(t, objs)
@@ -98,12 +98,11 @@ func Test_Renderer_Success(t *testing.T) {
 }
 
 func Test_Renderer_Failure_UnsupportedKind(t *testing.T) {
-	bundle := bundle.RegistryV1{
+	someBundle := bundle.RegistryV1{
 		PackageName: "my-package",
-		CSV: MakeCSV(
-			WithName("test-bundle"),
-			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
-		),
+		CSV: clusterserviceversion.Builder().
+			WithName("test-bundle").
+			WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
 		Others: []unstructured.Unstructured{
 			*ToUnstructuredT(t, &corev1.Event{
 				TypeMeta: metav1.TypeMeta{
@@ -117,7 +116,7 @@ func Test_Renderer_Failure_UnsupportedKind(t *testing.T) {
 		},
 	}
 
-	objs, err := registryv1.Renderer.Render(bundle, "install-namespace")
+	objs, err := registryv1.Renderer.Render(someBundle, "install-namespace")
 	t.Log("Check renderer returns objects and no errors")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")

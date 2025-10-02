@@ -24,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
 func Test_ResourceGenerators(t *testing.T) {
@@ -67,10 +68,10 @@ func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates deployment resources",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithAnnotations(map[string]string{
 						"csv": "annotation",
-					}),
+					}).
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "deployment-one",
@@ -94,8 +95,7 @@ func Test_BundleCSVDeploymentGenerator_Succeeds(t *testing.T) {
 							Name: "deployment-two",
 							Spec: appsv1.DeploymentSpec{},
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -174,12 +174,12 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 	}
 
 	b := &bundle.RegistryV1{
-		CSV: MakeCSV(
+		CSV: clusterserviceversion.Builder().
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:           v1alpha1.ValidatingAdmissionWebhook,
 					DeploymentName: "deployment-one",
-				}),
+				}).
 			// deployment must have a referencing webhook (or owned apiservice) definition to trigger cert secret
 			WithStrategyDeploymentSpecs(
 				v1alpha1.StrategyDeploymentSpec{
@@ -252,8 +252,7 @@ func Test_BundleCSVDeploymentGenerator_WithCertWithCertProvider_Succeeds(t *test
 						},
 					},
 				},
-			),
-		),
+			).Build(),
 	}
 
 	objs, err := generators.BundleCSVDeploymentGenerator(b, render.Options{
@@ -370,8 +369,8 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
@@ -383,8 +382,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: nil,
 		},
@@ -396,8 +394,8 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
@@ -413,8 +411,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: []client.Object{
 				&rbacv1.Role{
@@ -471,8 +468,8 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
@@ -488,8 +485,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: []client.Object{
 				&rbacv1.Role{
@@ -590,8 +586,8 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
@@ -613,8 +609,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: []client.Object{
 				&rbacv1.Role{
@@ -707,8 +702,8 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "",
@@ -720,8 +715,7 @@ func Test_BundleCSVPermissionsGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: []client.Object{
 				&rbacv1.Role{
@@ -804,8 +798,8 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
@@ -827,8 +821,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: []client.Object{
 				&rbacv1.ClusterRole{
@@ -925,8 +918,8 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-one",
@@ -948,8 +941,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: []client.Object{
 				&rbacv1.ClusterRole{
@@ -1038,8 +1030,8 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 				UniqueNameGenerator: fakeUniqueNameGenerator,
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "",
@@ -1051,8 +1043,7 @@ func Test_BundleCSVClusterPermissionsGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: []client.Object{
 				&rbacv1.ClusterRole{
@@ -1127,8 +1118,8 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 				InstallNamespace: "install-namespace",
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-1",
@@ -1150,7 +1141,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
+					).
 					WithClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "service-account-2",
@@ -1172,8 +1163,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: []client.Object{
 				&corev1.ServiceAccount{
@@ -1214,8 +1204,8 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 				InstallNamespace: "install-namespace",
 			},
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithName("csv"),
+				CSV: clusterserviceversion.Builder().
+					WithName("csv").
 					WithPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "",
@@ -1227,7 +1217,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
+					).
 					WithClusterPermissions(
 						v1alpha1.StrategyDeploymentPermissions{
 							ServiceAccountName: "",
@@ -1239,8 +1229,7 @@ func Test_BundleCSVServiceAccountGenerator_Succeeds(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedResources: nil,
 		},
@@ -1298,7 +1287,7 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Succeeds(t *testing.T) {
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
 		},
-		CSV: MakeCSV(
+		CSV: clusterserviceversion.Builder().
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:                    v1alpha1.ConversionWebhook,
@@ -1316,8 +1305,7 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Succeeds(t *testing.T) {
 					ConversionCRDs:          []string{"crd-two"},
 					DeploymentName:          "some-deployment",
 				},
-			),
-		),
+			).Build(),
 	}
 
 	objs, err := generators.BundleCRDGenerator(bundle, opts)
@@ -1383,7 +1371,7 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Fails(t *testing.T) {
 				},
 			},
 		},
-		CSV: MakeCSV(
+		CSV: clusterserviceversion.Builder().
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:                    v1alpha1.ConversionWebhook,
@@ -1393,8 +1381,7 @@ func Test_BundleCRDGenerator_WithConversionWebhook_Fails(t *testing.T) {
 					ConversionCRDs:          []string{"crd-one"},
 					DeploymentName:          "some-deployment",
 				},
-			),
-		),
+			).Build(),
 	}
 
 	objs, err := generators.BundleCRDGenerator(bundle, opts)
@@ -1424,7 +1411,7 @@ func Test_BundleCRDGenerator_WithCertProvider_Succeeds(t *testing.T) {
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-one"}},
 			{ObjectMeta: metav1.ObjectMeta{Name: "crd-two"}},
 		},
-		CSV: MakeCSV(
+		CSV: clusterserviceversion.Builder().
 			WithWebhookDefinitions(
 				v1alpha1.WebhookDescription{
 					Type:           v1alpha1.ConversionWebhook,
@@ -1433,8 +1420,7 @@ func Test_BundleCRDGenerator_WithCertProvider_Succeeds(t *testing.T) {
 						"crd-one",
 					},
 				},
-			),
-		),
+			).Build(),
 	}
 
 	objs, err := generators.BundleCRDGenerator(bundle, opts)
@@ -1514,7 +1500,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates validating webhook configuration resources described in the bundle's cluster service version",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
@@ -1547,8 +1533,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 							WebhookPath:   ptr.To("/webhook-path"),
 							ContainerPort: 443,
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -1608,7 +1593,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
@@ -1641,8 +1626,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 							WebhookPath:   ptr.To("/webhook-path"),
 							ContainerPort: 443,
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -1710,7 +1694,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates validating webhook configuration resources with certificate provider modifications",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
@@ -1718,8 +1702,7 @@ func Test_BundleValidatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 							DeploymentName: "my-deployment",
 							ContainerPort:  443,
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace:    "install-namespace",
@@ -1797,7 +1780,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates validating webhook configuration resources described in the bundle's cluster service version",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
@@ -1831,8 +1814,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 							ContainerPort:      443,
 							ReinvocationPolicy: ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -1893,7 +1875,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "removes any - suffixes from the webhook name (v0 used GenerateName to allow multiple operator installations - we don't want that in v1)",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
@@ -1927,8 +1909,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 							ContainerPort:      443,
 							ReinvocationPolicy: ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -1997,7 +1978,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates validating webhook configuration resources with certificate provider modifications",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
@@ -2005,8 +1986,7 @@ func Test_BundleMutatingWebhookResourceGenerator_Succeeds(t *testing.T) {
 							DeploymentName: "my-deployment",
 							ContainerPort:  443,
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace:    "install-namespace",
@@ -2084,18 +2064,17 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using container port 443 and target port 443 by default",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
-						}),
+						}).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
 							DeploymentName: "my-deployment",
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -2129,19 +2108,18 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using the given container port and setting target port the same as the container port if not given",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
-						}),
+						}).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
 							DeploymentName: "my-deployment",
 							ContainerPort:  int32(8443),
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -2175,11 +2153,11 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using given container port of 443 and given target port",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
-						}),
+						}).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ConversionWebhook,
@@ -2189,8 +2167,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 								IntVal: 8080,
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -2224,11 +2201,11 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using given container port and target port",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
-						}),
+						}).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ConversionWebhook,
@@ -2239,8 +2216,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 								IntVal: 9099,
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -2274,7 +2250,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "generates webhook services using referenced deployment defined label selector",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2285,7 +2261,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 									},
 								},
 							},
-						}),
+						}).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ConversionWebhook,
@@ -2296,8 +2272,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 								IntVal: 9099,
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -2334,7 +2309,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "aggregates all webhook definitions referencing the same deployment into a single service",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
@@ -2345,7 +2320,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 									},
 								},
 							},
-						}),
+						}).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
@@ -2373,8 +2348,7 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 								IntVal: 9099,
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace: "install-namespace",
@@ -2432,18 +2406,17 @@ func Test_BundleDeploymentServiceResourceGenerator_Succeeds(t *testing.T) {
 		{
 			name: "applies cert provider modifiers to webhook service",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{
 							Name: "my-deployment",
-						}),
+						}).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
 							DeploymentName: "my-deployment",
 						},
-					),
-				),
+					).Build(),
 			},
 			opts: render.Options{
 				InstallNamespace:    "install-namespace",
@@ -2507,14 +2480,14 @@ func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
 	}
 
 	objs, err := generators.CertProviderResourceGenerator(&bundle.RegistryV1{
-		CSV: MakeCSV(
+		CSV: clusterserviceversion.Builder().
 			WithWebhookDefinitions(
 				// only generate resources for deployments referenced by webhook definitions
 				v1alpha1.WebhookDescription{
 					Type:           v1alpha1.MutatingAdmissionWebhook,
 					DeploymentName: "my-deployment",
 				},
-			),
+			).
 			WithStrategyDeploymentSpecs(
 				v1alpha1.StrategyDeploymentSpec{
 					Name: "my-deployment",
@@ -2522,8 +2495,7 @@ func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
 				v1alpha1.StrategyDeploymentSpec{
 					Name: "my-other-deployment",
 				},
-			),
-		),
+			).Build(),
 	}, render.Options{
 		InstallNamespace:    "install-namespace",
 		CertificateProvider: fakeProvider,
