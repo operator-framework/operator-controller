@@ -24,6 +24,10 @@ type BundleSource interface {
 	GetBundle() (bundle.RegistryV1, error)
 }
 
+type RegistryV1Properties struct {
+	Properties []property.Property `json:"properties"`
+}
+
 // identitySource is a bundle source that returns itself
 type identitySource bundle.RegistryV1
 
@@ -158,11 +162,7 @@ func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS
 
 	// Otherwise, we need to parse the properties.yaml file and
 	// append its properties into the CSV annotation.
-	type registryV1Properties struct {
-		Properties []property.Property `json:"properties"`
-	}
-
-	var metadataProperties registryV1Properties
+	var metadataProperties RegistryV1Properties
 	if err := yaml.Unmarshal(metadataPropertiesJSON, &metadataProperties); err != nil {
 		return fmt.Errorf("failed to unmarshal metadata/properties.yaml: %w", err)
 	}
