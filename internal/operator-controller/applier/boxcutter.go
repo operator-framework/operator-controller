@@ -27,7 +27,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
-	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
 
 const (
@@ -200,6 +199,7 @@ type Boxcutter struct {
 	Scheme            *runtime.Scheme
 	RevisionGenerator ClusterExtensionRevisionGenerator
 	Preflights        []Preflight
+	FieldOwner        string
 }
 
 func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
@@ -216,6 +216,21 @@ func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Obj
 	return objs
 }
 
+func (bc *Boxcutter) ensureGVKIsSet(obj client.Object) error {
+	if !obj.GetObjectKind().GroupVersionKind().Empty() {
+		return nil
+	}
+
+	gvk, err := apiutil.GVKForObject(obj, bc.Scheme)
+	if err != nil {
+		return err
+	}
+
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
+
+	return nil
+}
+
 func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
 	// Generate desired revision
 	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(contentFS, ext, objectLabels, revisionAnnotations)
@@ -223,77 +238,85 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		return false, "", err
 	}
 
+	if err := controllerutil.SetControllerReference(ext, desiredRevision, bc.Scheme); err != nil {
+		return false, "", fmt.Errorf("set ownerref: %w", err)
+	}
+
 	// List all existing revisions
 	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
 	if err != nil {
 		return false, "", err
 	}
-	desiredHash := hashutil.DeepHashObject(desiredRevision.Spec.Phases)
 
-	// Sort into current and previous revisions.
-	var (
-		currentRevision *ocv1.ClusterExtensionRevision
-	)
+	currentRevision := &ocv1.ClusterExtensionRevision{}
 	state := StateNeedsInstall
-	if len(existingRevisions) > 0 {
-		maybeCurrentRevision := existingRevisions[len(existingRevisions)-1]
-		annotations := maybeCurrentRevision.GetAnnotations()
-		if annotations != nil {
-			if revisionHash, ok := annotations[RevisionHashAnnotation]; ok && revisionHash == desiredHash {
-				currentRevision = &maybeCurrentRevision
-			}
-		}
-		state = StateNeedsUpgrade
-	}
+	// check if we can update the current revision.
+	if len(existingRevisions) > 0 { // nolint:nestif
+		// try first to update the current revision.
+		currentRevision = &existingRevisions[len(existingRevisions)-1]
+		desiredRevision.Spec.Previous = currentRevision.Spec.Previous
+		desiredRevision.Spec.Revision = currentRevision.Spec.Revision
+		desiredRevision.Name = currentRevision.Name
 
-	// Preflights
-	plainObjs := bc.getObjects(desiredRevision)
-	for _, preflight := range bc.Preflights {
-		if shouldSkipPreflight(ctx, preflight, ext, state) {
-			continue
+		if err := bc.ensureGVKIsSet(desiredRevision); err != nil {
+			return false, "", fmt.Errorf("setting gvk failed: %w", err)
 		}
-		switch state {
-		case StateNeedsInstall:
-			err := preflight.Install(ctx, plainObjs)
-			if err != nil {
-				return false, "", err
+		if err = bc.Client.Patch(ctx, desiredRevision, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership); err != nil {
+			if !apierrors.IsInvalid(err) {
+				return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
 			}
-		// TODO: jlanford's IDE says that "StateNeedsUpgrade" condition is always true, but
-		//   it isn't immediately obvious why that is. Perhaps len(existingRevisions) is
-		//   always greater than 0 (seems unlikely), or shouldSkipPreflight always returns
-		//   true (and we continue) when state == StateNeedsInstall?
-		case StateNeedsUpgrade:
-			err := preflight.Upgrade(ctx, plainObjs)
-			if err != nil {
-				return false, "", err
-			}
+			// We could not update the current revision due to trying to update an immutable field.
+			// Therefore, we need to create a new revision.
+			state = StateNeedsUpgrade
+		} else {
+			// inplace patch was successful, no changes in phases
+			state = StateUnchanged
 		}
 	}
 
-	if currentRevision == nil {
-		// all Revisions are outdated => create a new one.
+	if state != StateUnchanged { // nolint:nestif
+		// Preflights
+		plainObjs := bc.getObjects(desiredRevision)
+		for _, preflight := range bc.Preflights {
+			if shouldSkipPreflight(ctx, preflight, ext, state) {
+				continue
+			}
+			switch state {
+			case StateNeedsInstall:
+				err := preflight.Install(ctx, plainObjs)
+				if err != nil {
+					return false, "", err
+				}
+			// TODO: jlanford's IDE says that "StateNeedsUpgrade" condition is always true, but
+			//   it isn't immediately obvious why that is. Perhaps len(existingRevisions) is
+			//   always greater than 0 (seems unlikely), or shouldSkipPreflight always returns
+			//   true (and we continue) when state == StateNeedsInstall?
+			case StateNeedsUpgrade:
+				err := preflight.Upgrade(ctx, plainObjs)
+				if err != nil {
+					return false, "", err
+				}
+			}
+		}
+
+		// need to create new revision
 		prevRevisions := existingRevisions
 		revisionNumber := latestRevisionNumber(prevRevisions) + 1
 
-		newRevision := desiredRevision
-		newRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
-		if newRevision.GetAnnotations() == nil {
-			newRevision.Annotations = map[string]string{}
-		}
-		newRevision.Annotations[RevisionHashAnnotation] = desiredHash
-		newRevision.Spec.Revision = revisionNumber
+		desiredRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
+		desiredRevision.Spec.Revision = revisionNumber
 
-		if err = bc.setPreviousRevisions(ctx, newRevision, prevRevisions); err != nil {
+		if err = bc.setPreviousRevisions(ctx, desiredRevision, prevRevisions); err != nil {
 			return false, "", fmt.Errorf("garbage collecting old Revisions: %w", err)
 		}
 
-		if err := controllerutil.SetControllerReference(ext, newRevision, bc.Scheme); err != nil {
-			return false, "", fmt.Errorf("set ownerref: %w", err)
+		if err := bc.ensureGVKIsSet(desiredRevision); err != nil {
+			return false, "", fmt.Errorf("setting gvk failed: %w", err)
 		}
-		if err := bc.Client.Create(ctx, newRevision); err != nil {
+		if err := bc.Client.Patch(ctx, desiredRevision, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership); err != nil {
 			return false, "", fmt.Errorf("creating new Revision: %w", err)
 		}
-		currentRevision = newRevision
+		currentRevision = desiredRevision
 	}
 
 	progressingCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.TypeProgressing)
