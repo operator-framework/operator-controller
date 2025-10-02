@@ -64,6 +64,7 @@ import (
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 	"github.com/operator-framework/operator-controller/internal/shared/util/pullsecretcache"
 	sautil "github.com/operator-framework/operator-controller/internal/shared/util/sa"
+	"github.com/operator-framework/operator-controller/internal/shared/util/tlsprofiles"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
 
@@ -142,6 +143,7 @@ func init() {
 	klog.InitFlags(flag.CommandLine)
 	flags.AddGoFlagSet(flag.CommandLine)
 	features.CatalogdFeatureGate.AddFlag(flags)
+	tlsprofiles.AddFlags(flags)
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(ocv1.AddToScheme(scheme))
@@ -216,12 +218,18 @@ func run(ctx context.Context) error {
 		// For details, see: https://github.com/kubernetes/kubernetes/issues/121197
 		config.NextProtos = []string{"http/1.1"}
 	}
+	tlsProfile, err := tlsprofiles.GetTLSConfigFunc()
+	if err != nil {
+		setupLog.Error(err, "failed to get TLS profile")
+		return err
+	}
 
 	// Create webhook server and configure TLS
 	webhookServer := crwebhook.NewServer(crwebhook.Options{
 		Port: cfg.webhookPort,
 		TLSOpts: []func(*tls.Config){
 			tlsOpts,
+			tlsProfile,
 		},
 	})
 
@@ -233,7 +241,7 @@ func run(ctx context.Context) error {
 		metricsServerOptions.SecureServing = true
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 
-		metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, tlsOpts)
+		metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, tlsOpts, tlsProfile)
 	} else {
 		// Note that the metrics server is not serving if the BindAddress is set to "0".
 		// Therefore, the metrics server is disabled by default. It is only enabled

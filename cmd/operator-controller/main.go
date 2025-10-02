@@ -82,6 +82,7 @@ import (
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 	"github.com/operator-framework/operator-controller/internal/shared/util/pullsecretcache"
 	sautil "github.com/operator-framework/operator-controller/internal/shared/util/sa"
+	"github.com/operator-framework/operator-controller/internal/shared/util/tlsprofiles"
 	"github.com/operator-framework/operator-controller/internal/shared/version"
 )
 
@@ -165,6 +166,9 @@ func init() {
 
 	//add feature gate flags to flagset
 	features.OperatorControllerFeatureGate.AddFlag(flags)
+
+	//add TLS flags
+	tlsprofiles.AddFlags(flags)
 
 	ctrl.SetLogger(klog.NewKlogr())
 }
@@ -274,6 +278,12 @@ func run() error {
 			// the risks. More info https://github.com/golang/go/issues/63417
 			config.NextProtos = []string{"http/1.1"}
 		})
+		tlsProfile, err := tlsprofiles.GetTLSConfigFunc()
+		if err != nil {
+			setupLog.Error(err, "failed to get TLS profile")
+			return err
+		}
+		metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, tlsProfile)
 	} else {
 		// Note that the metrics server is not serving if the BindAddress is set to "0".
 		// Therefore, the metrics server is disabled by default. It is only enabled
