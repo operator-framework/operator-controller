@@ -54,6 +54,9 @@ spec:
             - --v=${LOG_VERBOSITY}
             - --global-pull-secret=openshift-config/pull-secret
             {{- end }}
+            {{- if and .Values.options.e2e.enabled (not .Values.options.openshift.enabled) }}
+            - --tls-profile=modern
+            {{- end }}
           command:
             - /operator-controller
           {{- if or .Values.options.e2e.enabled .Values.options.openshift.enabled }}
