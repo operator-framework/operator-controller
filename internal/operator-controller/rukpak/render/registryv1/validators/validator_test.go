@@ -13,7 +13,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/validators"
-	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
 func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
@@ -25,24 +25,22 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 		{
 			name: "accepts bundles with unique deployment strategy spec names",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-two"},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with duplicate deployment strategy spec names",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-two"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("cluster service version contains duplicate strategy deployment spec 'test-deployment-one'"),
@@ -50,15 +48,14 @@ func Test_CheckDeploymentSpecUniqueness(t *testing.T) {
 		}, {
 			name: "errors are ordered by deployment strategy spec name",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-a"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-b"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-c"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-b"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-a"},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("cluster service version contains duplicate strategy deployment spec 'test-deployment-a'"),
@@ -82,24 +79,22 @@ func Test_CheckDeploymentNameIsDNS1123SubDomain(t *testing.T) {
 		{
 			name: "accepts valid deployment strategy spec names",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-two"},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with invalid deployment strategy spec names - errors are sorted by name",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "-bad-name"},
 						v1alpha1.StrategyDeploymentSpec{Name: "b-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long"},
 						v1alpha1.StrategyDeploymentSpec{Name: "a-name-is-waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay-too-long-and-bad-"},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("invalid cluster service version strategy deployment name '-bad-name': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),
@@ -173,21 +168,19 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 					{ObjectMeta: metav1.ObjectMeta{Name: "a.crd.something"}},
 					{ObjectMeta: metav1.ObjectMeta{Name: "b.crd.something"}},
 				},
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "a.crd.something"},
 						v1alpha1.CRDDescription{Name: "b.crd.something"},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{},
 		}, {
 			name: "rejects bundles with missing owned custom resource definition resources",
 			bundle: &bundle.RegistryV1{
 				CRDs: []apiextensionsv1.CustomResourceDefinition{},
-				CSV: MakeCSV(
-					WithOwnedCRDs(v1alpha1.CRDDescription{Name: "a.crd.something"}),
-				),
+				CSV: clusterserviceversion.Builder().
+					WithOwnedCRDs(v1alpha1.CRDDescription{Name: "a.crd.something"}).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("cluster service definition references owned custom resource definition 'a.crd.something' not found in bundle"),
@@ -196,13 +189,12 @@ func Test_CheckOwnedCRDExistence(t *testing.T) {
 			name: "errors are ordered by owned custom resource definition name",
 			bundle: &bundle.RegistryV1{
 				CRDs: []apiextensionsv1.CustomResourceDefinition{},
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "a.crd.something"},
 						v1alpha1.CRDDescription{Name: "c.crd.something"},
 						v1alpha1.CRDDescription{Name: "b.crd.something"},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("cluster service definition references owned custom resource definition 'a.crd.something' not found in bundle"),
@@ -253,47 +245,44 @@ func Test_CheckWebhookSupport(t *testing.T) {
 		{
 			name: "accepts bundles with conversion webhook definitions when they only support AllNamespaces install mode",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type: v1alpha1.ConversionWebhook,
 						},
-					),
-				),
+					).Build(),
 			},
 		},
 		{
 			name: "accepts bundles with validating webhook definitions when they support more modes than AllNamespaces install mode",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type: v1alpha1.ValidatingAdmissionWebhook,
 						},
-					),
-				),
+					).Build(),
 			},
 		},
 		{
 			name: "accepts bundles with mutating webhook definitions when they support more modes than AllNamespaces install mode",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type: v1alpha1.MutatingAdmissionWebhook,
 						},
-					),
-				),
+					).Build(),
 			},
 		},
 		{
 			name: "rejects bundles with conversion webhook definitions when they support more modes than AllNamespaces install mode",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							GenerateName: "webhook-b",
@@ -303,8 +292,7 @@ func Test_CheckWebhookSupport(t *testing.T) {
 							GenerateName: "webhook-a",
 							Type:         v1alpha1.ConversionWebhook,
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("bundle contains conversion webhook \"webhook-b\" and supports install modes [AllNamespaces SingleNamespace] - conversion webhooks are only supported for bundles that only support AllNamespaces install mode"),
@@ -328,8 +316,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "accepts bundles with webhook definitions without rules",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type: v1alpha1.ValidatingAdmissionWebhook,
@@ -337,15 +325,14 @@ func Test_CheckWebhookRules(t *testing.T) {
 						v1alpha1.WebhookDescription{
 							Type: v1alpha1.MutatingAdmissionWebhook,
 						},
-					),
-				),
+					).Build(),
 			},
 		},
 		{
 			name: "accepts bundles with webhook definitions with supported rules",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type: v1alpha1.ValidatingAdmissionWebhook,
@@ -369,15 +356,14 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 		},
 		{
 			name: "reject bundles with webhook definitions with rules containing '*' api group",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -401,8 +387,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-z\" contains forbidden rule: admission webhook rules cannot reference API group \"*\""),
@@ -412,8 +397,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "reject bundles with webhook definitions with rules containing 'olm.operatorframework.io' api group",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -437,8 +422,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-z\" contains forbidden rule: admission webhook rules cannot reference API group \"olm.operatorframework.io\""),
@@ -448,8 +432,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and '*' resource",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -463,8 +447,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"*\" for API group \"admissionregistration.k8s.io\""),
@@ -473,8 +456,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'MutatingWebhookConfiguration' resource",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -488,8 +471,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"MutatingWebhookConfiguration\" for API group \"admissionregistration.k8s.io\""),
@@ -498,8 +480,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'mutatingwebhookconfiguration' resource",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -513,8 +495,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"mutatingwebhookconfiguration\" for API group \"admissionregistration.k8s.io\""),
@@ -523,8 +504,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'mutatingwebhookconfigurations' resource",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -538,8 +519,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"mutatingwebhookconfigurations\" for API group \"admissionregistration.k8s.io\""),
@@ -548,8 +528,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'ValidatingWebhookConfiguration' resource",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -563,8 +543,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"ValidatingWebhookConfiguration\" for API group \"admissionregistration.k8s.io\""),
@@ -573,8 +552,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'validatingwebhookconfiguration' resource",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -588,8 +567,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"validatingwebhookconfiguration\" for API group \"admissionregistration.k8s.io\""),
@@ -598,8 +576,8 @@ func Test_CheckWebhookRules(t *testing.T) {
 		{
 			name: "reject bundles with webhook definitions with rules containing 'admissionregistration.k8s.io' api group and 'validatingwebhookconfigurations' resource",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
-					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces),
+				CSV: clusterserviceversion.Builder().
+					WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -613,8 +591,7 @@ func Test_CheckWebhookRules(t *testing.T) {
 								},
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook \"webhook-a\" contains forbidden rule: admission webhook rules cannot reference resource \"validatingwebhookconfigurations\" for API group \"admissionregistration.k8s.io\""),
@@ -637,35 +614,33 @@ func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 		{
 			name: "accepts bundles where webhook definitions reference existing strategy deployment specs",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-two"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.MutatingAdmissionWebhook,
 							GenerateName:   "test-webhook",
 							DeploymentName: "test-deployment-one",
 						},
-					),
-				),
+					).Build(),
 			},
 		}, {
 			name: "rejects bundles with webhook definitions that reference non-existing strategy deployment specs",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
 							GenerateName:   "test-webhook",
 							DeploymentName: "test-deployment-two",
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook of type 'ValidatingAdmissionWebhook' with name 'test-webhook' references non-existent deployment 'test-deployment-two'"),
@@ -673,10 +648,10 @@ func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 		}, {
 			name: "errors are ordered by deployment strategy spec name, webhook type, and webhook name",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithStrategyDeploymentSpecs(
 						v1alpha1.StrategyDeploymentSpec{Name: "test-deployment-one"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:           v1alpha1.ValidatingAdmissionWebhook,
@@ -706,8 +681,7 @@ func Test_CheckWebhookDeploymentReferentialIntegrity(t *testing.T) {
 							GenerateName:   "test-conv-webhook-c-a",
 							DeploymentName: "test-deployment-c",
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook of type 'MutatingAdmissionWebhook' with name 'test-mute-webhook-a' references non-existent deployment 'test-deployment-a'"),
@@ -735,12 +709,12 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 		{
 			name: "accepts bundles without webhook definitions",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(),
+				CSV: clusterserviceversion.Builder().Build(),
 			},
 		}, {
 			name: "accepts bundles with unique webhook names",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.MutatingAdmissionWebhook,
@@ -761,13 +735,12 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 							Type:         v1alpha1.ConversionWebhook,
 							GenerateName: "test-webhook-six",
 						},
-					),
-				),
+					).Build(),
 			},
 		}, {
 			name: "accepts bundles with webhooks with the same name but different types",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.MutatingAdmissionWebhook,
@@ -779,13 +752,12 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 							Type:         v1alpha1.ConversionWebhook,
 							GenerateName: "test-webhook",
 						},
-					),
-				),
+					).Build(),
 			},
 		}, {
 			name: "rejects bundles with duplicate validating webhook definitions",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -794,8 +766,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
 							GenerateName: "test-webhook",
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("duplicate webhook 'test-webhook' of type 'ValidatingAdmissionWebhook'"),
@@ -803,7 +774,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 		}, {
 			name: "rejects bundles with duplicate mutating webhook definitions",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.MutatingAdmissionWebhook,
@@ -812,8 +783,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 							Type:         v1alpha1.MutatingAdmissionWebhook,
 							GenerateName: "test-webhook",
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("duplicate webhook 'test-webhook' of type 'MutatingAdmissionWebhook'"),
@@ -821,7 +791,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 		}, {
 			name: "rejects bundles with duplicate conversion webhook definitions",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ConversionWebhook,
@@ -830,8 +800,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 							Type:         v1alpha1.ConversionWebhook,
 							GenerateName: "test-webhook",
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("duplicate webhook 'test-webhook' of type 'ConversionWebhook'"),
@@ -839,7 +808,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 		}, {
 			name: "orders errors by webhook type and name",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -882,8 +851,7 @@ func Test_CheckWebhookNameUniqueness(t *testing.T) {
 							Type:         v1alpha1.MutatingAdmissionWebhook,
 							GenerateName: "test-mute-webhook-b",
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("duplicate webhook 'test-conv-webhook-a' of type 'ConversionWebhook'"),
@@ -914,7 +882,7 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 		}, {
 			name: "accepts bundles without conversion webhook definitions",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -924,17 +892,16 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 							Type:         v1alpha1.MutatingAdmissionWebhook,
 							GenerateName: "test-mute-webhook",
 						},
-					),
-				),
+					).Build(),
 			},
 		}, {
 			name: "accepts bundles with conversion webhooks that reference owned CRDs",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "some.crd.something"},
 						v1alpha1.CRDDescription{Name: "another.crd.something"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ConversionWebhook,
@@ -944,16 +911,15 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 								"another.crd.something",
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 		}, {
 			name: "rejects bundles with conversion webhooks that reference existing CRDs that are not owned",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "some.crd.something"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ConversionWebhook,
@@ -963,8 +929,7 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 								"another.crd.something",
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("conversion webhook 'test-webhook' references custom resource definition 'another.crd.something' not owned bundle"),
@@ -972,10 +937,10 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 		}, {
 			name: "errors are ordered by webhook name and CRD name",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "b.crd.something"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ConversionWebhook,
@@ -998,8 +963,7 @@ func Test_CheckConversionWebhooksReferenceOwnedCRDs(t *testing.T) {
 								"d.crd.something",
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("conversion webhook 'test-webhook-a' references custom resource definition 'a.crd.something' not owned bundle"),
@@ -1030,7 +994,7 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 		{
 			name: "accepts bundles without conversion webhook definitions",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -1040,19 +1004,18 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 							Type:         v1alpha1.MutatingAdmissionWebhook,
 							GenerateName: "test-mute-webhook",
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{},
 		},
 		{
 			name: "accepts bundles with conversion webhooks that reference different CRDs",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "some.crd.something"},
 						v1alpha1.CRDDescription{Name: "another.crd.something"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ConversionWebhook,
@@ -1068,18 +1031,17 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 								"another.crd.something",
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{},
 		},
 		{
 			name: "rejects bundles with conversion webhooks that reference the same CRD",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "some.crd.something"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ConversionWebhook,
@@ -1095,8 +1057,7 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 								"some.crd.something",
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("conversion webhooks [test-webhook,test-webhook-two] reference same custom resource definition 'some.crd.something'"),
@@ -1105,10 +1066,10 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 		{
 			name: "errors are ordered by CRD name and webhook names",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithOwnedCRDs(
 						v1alpha1.CRDDescription{Name: "b.crd.something"},
-					),
+					).
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ConversionWebhook,
@@ -1133,8 +1094,7 @@ func Test_CheckConversionWebhookCRDReferenceUniqueness(t *testing.T) {
 								"d.crd.something",
 							},
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("conversion webhooks [test-webhook-a,test-webhook-b] reference same custom resource definition 'a.crd.something'"),
@@ -1159,12 +1119,12 @@ func Test_CheckWebhookNameIsDNS1123SubDomain(t *testing.T) {
 		{
 			name: "accepts bundles without webhook definitions",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(),
+				CSV: clusterserviceversion.Builder().Build(),
 			},
 		}, {
 			name: "rejects bundles with invalid webhook definitions names and orders errors by webhook type and name",
 			bundle: &bundle.RegistryV1{
-				CSV: MakeCSV(
+				CSV: clusterserviceversion.Builder().
 					WithWebhookDefinitions(
 						v1alpha1.WebhookDescription{
 							Type:         v1alpha1.ValidatingAdmissionWebhook,
@@ -1192,8 +1152,7 @@ func Test_CheckWebhookNameIsDNS1123SubDomain(t *testing.T) {
 							Type:         v1alpha1.ConversionWebhook,
 							GenerateName: "a-bad-name-",
 						},
-					),
-				),
+					).Build(),
 			},
 			expectedErrs: []error{
 				errors.New("webhook of type 'ConversionWebhook' has invalid name 'a-bad-name-': a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),

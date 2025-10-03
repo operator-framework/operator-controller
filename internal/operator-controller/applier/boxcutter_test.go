@@ -32,8 +32,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	testutils "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
 func Test_RegistryV1BundleRenderer_Render_Success(t *testing.T) {
@@ -57,8 +57,8 @@ func Test_RegistryV1BundleRenderer_Render_Success(t *testing.T) {
 	}
 	bundleFS := bundlefs.Builder().
 		WithPackageName("some-package").
-		WithCSV(testutils.MakeCSV(testutils.WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces))).Build()
-
+		WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
+		Build()
 	objs, err := r.Render(bundleFS, &ocv1.ClusterExtension{
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: "some-namespace",
@@ -81,8 +81,8 @@ func Test_RegistryV1BundleRenderer_Render_Failure(t *testing.T) {
 	}
 	bundleFS := bundlefs.Builder().
 		WithPackageName("some-package").
-		WithCSV(testutils.MakeCSV(testutils.WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces))).Build()
-
+		WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
+		Build()
 	objs, err := r.Render(bundleFS, &ocv1.ClusterExtension{
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: "some-namespace",

@@ -8,8 +8,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	testutils "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
 func Test_BundleFSBuilder(t *testing.T) {
@@ -85,7 +85,7 @@ status:
 	})
 
 	t.Run("WithCSV adds a csv to the manifests directory", func(t *testing.T) {
-		bundleFs := bundlefs.Builder().WithCSV(testutils.MakeCSV(testutils.WithName("some-csv"))).Build()
+		bundleFs := bundlefs.Builder().WithCSV(clusterserviceversion.Builder().WithName("some-csv").Build()).Build()
 		require.Contains(t, bundleFs, "manifests/csv.yaml")
 		require.Equal(t, []byte(`apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
