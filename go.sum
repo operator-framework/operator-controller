@@ -388,8 +388,8 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/opencontainers/runtime-spec v1.2.1 h1:S4k4ryNgEpxW1dzyqffOmhI1BHYcjzU8lpJfSlR0xww=
 github.com/opencontainers/runtime-spec v1.2.1/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/operator-framework/api v0.34.0 h1:REiEaYhG1CWmDoajdcAdZqtgoljWG+ixMY59vUX5pFI=
-github.com/operator-framework/api v0.34.0/go.mod h1:eGncUNIYvWtfGCCKmLzGXvoi3P0TDf3Yd/Z0Sn9E6SQ=
+github.com/operator-framework/api v0.35.0 h1:xKrffuGEagk3CWy6zqdK5YmIErlBtWUblNNK+q7ld7c=
+github.com/operator-framework/api v0.35.0/go.mod h1:A9UNu/pdcO1RauMHvV54unp4DNm/Y5fMVbGDpnIIF+M=
 github.com/operator-framework/helm-operator-plugins v0.8.0 h1:0f6HOQC5likkf0b/OvGvw7nhDb6h8Cj5twdCNjwNzMc=
 github.com/operator-framework/helm-operator-plugins v0.8.0/go.mod h1:Sc+8bE38xTCgCChBUvtq/PxatEg9fAypr7S5iAw8nlA=
 github.com/operator-framework/operator-lib v0.17.0 h1:cbz51wZ9+GpWR1ZYP4CSKSSBxDlWxmmnseaHVZZjZt4=
