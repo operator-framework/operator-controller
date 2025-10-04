@@ -11,9 +11,7 @@ import (
 const (
 	// Add new feature gates constants (strings)
 	// Ex: SomeFeature featuregate.Feature = "SomeFeature"
-	PreflightPermissions              featuregate.Feature = "PreflightPermissions"
 	SingleOwnNamespaceInstallSupport  featuregate.Feature = "SingleOwnNamespaceInstallSupport"
-	SyntheticPermissions              featuregate.Feature = "SyntheticPermissions"
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
@@ -21,26 +19,10 @@ const (
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
-	// Add new feature gate definitions
-	// Ex: SomeFeature: {...}
-	PreflightPermissions: {
-		Default:       false,
-		PreRelease:    featuregate.Alpha,
-		LockToDefault: false,
-	},
-
 	// SingleOwnNamespaceInstallSupport enables support for installing
 	// registry+v1 cluster extensions with single or own namespaces modes
 	// i.e. with a single watch namespace.
 	SingleOwnNamespaceInstallSupport: {
-		Default:       false,
-		PreRelease:    featuregate.Alpha,
-		LockToDefault: false,
-	},
-
-	// SyntheticPermissions enables support for a synthetic user permission
-	// model to manage operator permission boundaries
-	SyntheticPermissions: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,

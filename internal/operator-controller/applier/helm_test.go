@@ -3,7 +3,6 @@ package applier_test
 import (
 	"context"
 	"errors"
-	"io"
 	"os"
 	"testing"
 	"testing/fstest"
@@ -13,14 +12,12 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
@@ -67,19 +64,6 @@ func (m *mockManagedContentCache) Watch(_ context.Context, _ cmcache.Watcher, _ 
 type mockPreflight struct {
 	installErr error
 	upgradeErr error
-}
-
-type mockPreAuthorizer struct {
-	missingRules []authorization.ScopedPolicyRules
-	returnError  error
-}
-
-func (p *mockPreAuthorizer) PreAuthorize(
-	ctx context.Context,
-	ext *ocv1.ClusterExtension,
-	manifestReader io.Reader,
-) ([]authorization.ScopedPolicyRules, error) {
-	return p.missingRules, p.returnError
 }
 
 func (mp *mockPreflight) Install(context.Context, []client.Object) error {
@@ -196,29 +180,6 @@ spec:
 	testCE            = &ocv1.ClusterExtension{}
 	testObjectLabels  = map[string]string{"object": "label"}
 	testStorageLabels = map[string]string{"storage": "label"}
-	errPreAuth        = errors.New("problem running preauthorization")
-	missingRBAC       = []authorization.ScopedPolicyRules{
-		{
-			Namespace: "",
-			MissingRules: []rbacv1.PolicyRule{
-				{
-					Verbs:           []string{"list", "watch"},
-					APIGroups:       []string{""},
-					Resources:       []string{"services"},
-					ResourceNames:   []string(nil),
-					NonResourceURLs: []string(nil)},
-			},
-		},
-		{
-			Namespace: "test-namespace",
-			MissingRules: []rbacv1.PolicyRule{
-				{
-					Verbs:     []string{"create"},
-					APIGroups: []string{"*"},
-					Resources: []string{"certificates"}},
-			},
-		},
-	}
 
 	errMissingRBAC = `pre-authorization failed: service account requires the following permissions to manage cluster extension:
   Namespace:"" APIGroups:[] Resources:[services] Verbs:[list,watch]
@@ -375,7 +336,6 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		helmApplier := applier.Helm{
 			ActionClientGetter:            mockAcg,
 			Preflights:                    []applier.Preflight{mockPf},
-			PreAuthorizer:                 &mockPreAuthorizer{nil, nil},
 			HelmChartProvider:             &applier.RegistryV1HelmChartProvider{},
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
@@ -397,7 +357,6 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			PreAuthorizer:      &mockPreAuthorizer{nil, errPreAuth},
 			HelmChartProvider:  &applier.RegistryV1HelmChartProvider{},
 		}
 		// Use a ClusterExtension with valid Spec fields.
@@ -426,7 +385,6 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			PreAuthorizer:      &mockPreAuthorizer{missingRBAC, nil},
 			HelmChartProvider:  &applier.RegistryV1HelmChartProvider{},
 		}
 		// Use a ClusterExtension with valid Spec fields.
@@ -455,7 +413,6 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter:            mockAcg,
-			PreAuthorizer:                 &mockPreAuthorizer{nil, nil},
 			HelmChartProvider:             &applier.RegistryV1HelmChartProvider{},
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 			Manager: &mockManagedContentCacheManager{
