@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-configmap
+  annotations:
+    shouldNotTemplate: >
+      The namespace is {{ $labels.namespace }}. The templated
+      $labels.namespace is NOT expected to be processed by OLM's
+      rendering engine for registry+v1 bundles.
+data:
+  version: "v1.2.0"
+  name: "test-configmap"

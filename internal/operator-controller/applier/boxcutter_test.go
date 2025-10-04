@@ -20,9 +20,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -357,14 +359,10 @@ func TestBoxcutter_Apply(t *testing.T) {
 			UID:  "test-uid",
 		},
 	}
-	defaultDesiredHash := "gvvp8nzq5sbila80hkiv69am8hdr7o68qkk8n084gdn"
 	defaultDesiredRevision := &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-ext-1",
 			UID:  "rev-uid-1",
-			Annotations: map[string]string{
-				applier.RevisionHashAnnotation: defaultDesiredHash,
-			},
 			Labels: map[string]string{
 				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 			},
@@ -393,11 +391,12 @@ func TestBoxcutter_Apply(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name         string
-		mockBuilder  applier.ClusterExtensionRevisionGenerator
-		existingObjs []client.Object
-		expectedErr  string
-		validate     func(t *testing.T, c client.Client)
+		name             string
+		mockBuilder      applier.ClusterExtensionRevisionGenerator
+		existingObjs     []client.Object
+		expectedErr      string
+		validate         func(t *testing.T, c client.Client)
+		clientIterceptor *interceptor.Funcs
 	}{
 		{
 			name: "first revision",
@@ -442,7 +441,6 @@ func TestBoxcutter_Apply(t *testing.T) {
 				rev := revList.Items[0]
 				assert.Equal(t, "test-ext-1", rev.Name)
 				assert.Equal(t, int64(1), rev.Spec.Revision)
-				assert.Equal(t, defaultDesiredHash, rev.Annotations[applier.RevisionHashAnnotation])
 				assert.Len(t, rev.OwnerReferences, 1)
 				assert.Equal(t, ext.Name, rev.OwnerReferences[0].Name)
 				assert.Equal(t, ext.UID, rev.OwnerReferences[0].UID)
@@ -528,6 +526,20 @@ func TestBoxcutter_Apply(t *testing.T) {
 					}, nil
 				},
 			},
+			clientIterceptor: &interceptor.Funcs{
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					cer, ok := obj.(*unstructured.Unstructured)
+					if !ok {
+						return fmt.Errorf("expected Unstructured, got %T", obj)
+					}
+					if s, ok := cer.Object["spec"].(map[string]interface{}); ok {
+						if s["revision"] != int64(2) {
+							return apierrors.NewInvalid(cer.GroupVersionKind().GroupKind(), cer.GetName(), field.ErrorList{field.Invalid(field.NewPath("spec.phases"), "immutable", "spec.phases is immutable")})
+						}
+					}
+					return client.Patch(ctx, obj, patch, opts...)
+				},
+			},
 			existingObjs: []client.Object{
 				defaultDesiredRevision,
 			},
@@ -549,7 +561,6 @@ func TestBoxcutter_Apply(t *testing.T) {
 
 				assert.Equal(t, "test-ext-2", newRev.Name)
 				assert.Equal(t, int64(2), newRev.Spec.Revision)
-				assert.Equal(t, "1fqrim12vefkogp3pwxwhcs7c0pi1z1t2fw4roxu81sv", newRev.Annotations[applier.RevisionHashAnnotation])
 				require.Len(t, newRev.Spec.Previous, 1)
 				assert.Equal(t, "test-ext-1", newRev.Spec.Previous[0].Name)
 				assert.Equal(t, types.UID("rev-uid-1"), newRev.Spec.Previous[0].UID)
@@ -572,7 +583,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 		{
-			name: "sixth revision",
+			name: "keep at most 5 past revisions",
 			mockBuilder: &mockBundleRevisionBuilder{
 				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
@@ -596,6 +607,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						Revision:       1,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -607,6 +619,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						Revision:       2,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -618,6 +631,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						Revision:       3,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -629,6 +643,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						Revision:       4,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -640,6 +655,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						Revision:       5,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -651,7 +667,22 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						Revision:       6,
 					},
+				},
+			},
+			clientIterceptor: &interceptor.Funcs{
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					cer, ok := obj.(*unstructured.Unstructured)
+					if !ok {
+						return fmt.Errorf("expected Unstructured, got %T", obj)
+					}
+					if s, ok := cer.Object["spec"].(map[string]interface{}); ok {
+						if s["revision"] != int64(7) {
+							return apierrors.NewInvalid(cer.GroupVersionKind().GroupKind(), cer.GetName(), field.ErrorList{field.Invalid(field.NewPath("spec.phases"), "immutable", "spec.phases is immutable")})
+						}
+					}
+					return client.Patch(ctx, obj, patch, opts...)
 				},
 			},
 			validate: func(t *testing.T, c client.Client) {
@@ -661,13 +692,13 @@ func TestBoxcutter_Apply(t *testing.T) {
 				assert.True(t, apierrors.IsNotFound(err))
 
 				latest := &ocv1.ClusterExtensionRevision{}
-				err = c.Get(t.Context(), client.ObjectKey{Name: "test-ext-1"}, latest)
+				err = c.Get(t.Context(), client.ObjectKey{Name: "test-ext-7"}, latest)
 				require.NoError(t, err)
 				assert.Len(t, latest.Spec.Previous, applier.ClusterExtensionRevisionPreviousLimit)
 			},
 		},
 		{
-			name: "len([]revisions) > limit but contains active revisions with index beyond limit",
+			name: "keep active revisions when they are out of limit",
 			mockBuilder: &mockBundleRevisionBuilder{
 				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
@@ -691,6 +722,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						Revision:       1,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -703,6 +735,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						// index beyond the retention limit but active; should be preserved
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+						Revision:       2,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -714,6 +747,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+						Revision:       3,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -726,6 +760,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						// archived but should be preserved since it is within the limit
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateArchived,
+						Revision:       4,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -737,6 +772,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+						Revision:       5,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -748,6 +784,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+						Revision:       6,
 					},
 				},
 				&ocv1.ClusterExtensionRevision{
@@ -759,7 +796,22 @@ func TestBoxcutter_Apply(t *testing.T) {
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
 						LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+						Revision:       7,
 					},
+				},
+			},
+			clientIterceptor: &interceptor.Funcs{
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					cer, ok := obj.(*unstructured.Unstructured)
+					if !ok {
+						return fmt.Errorf("expected Unstructured, got %T", obj)
+					}
+					if s, ok := cer.Object["spec"].(map[string]interface{}); ok {
+						if s["revision"] != int64(8) {
+							return apierrors.NewInvalid(cer.GroupVersionKind().GroupKind(), cer.GetName(), field.ErrorList{field.Invalid(field.NewPath("spec.phases"), "immutable", "spec.phases is immutable")})
+						}
+					}
+					return client.Patch(ctx, obj, patch, opts...)
 				},
 			},
 			validate: func(t *testing.T, c client.Client) {
@@ -777,7 +829,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				require.NoError(t, err)
 
 				latest := &ocv1.ClusterExtensionRevision{}
-				err = c.Get(t.Context(), client.ObjectKey{Name: "test-ext-1"}, latest)
+				err = c.Get(t.Context(), client.ObjectKey{Name: "test-ext-8"}, latest)
 				require.NoError(t, err)
 				assert.Len(t, latest.Spec.Previous, 6)
 				assert.Contains(t, latest.Spec.Previous, ocv1.ClusterExtensionRevisionPrevious{Name: "rev-4"})
@@ -788,12 +840,17 @@ func TestBoxcutter_Apply(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup
-			fakeClient := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(tc.existingObjs...).Build()
+			cb := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(tc.existingObjs...)
+			if tc.clientIterceptor != nil {
+				cb.WithInterceptorFuncs(*tc.clientIterceptor)
+			}
+			fakeClient := cb.Build()
 
 			boxcutter := &applier.Boxcutter{
 				Client:            fakeClient,
 				Scheme:            testScheme,
 				RevisionGenerator: tc.mockBuilder,
+				FieldOwner:        "test-owner",
 			}
 
 			// We need a dummy fs.FS

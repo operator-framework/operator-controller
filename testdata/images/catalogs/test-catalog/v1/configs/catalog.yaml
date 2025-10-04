@@ -42,7 +42,7 @@ properties:
 schema: olm.bundle
 name: test-operator.1.2.0
 package: test
-image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/test-operator:v1.0.0
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/test-operator:v1.2.0
 properties:
   - type: olm.package
     value:

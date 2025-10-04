@@ -106,7 +106,10 @@ type config struct {
 	globalPullSecret     string
 }
 
-const authFilePrefix = "operator-controller-global-pull-secrets"
+const (
+	authFilePrefix   = "operator-controller-global-pull-secrets"
+	fieldOwnerPrefix = "olm.operatorframework.io"
+)
 
 // podNamespace checks whether the controller is running in a Pod vs.
 // being run locally by inspecting the namespace file that gets mounted
@@ -542,6 +545,7 @@ func setupBoxcutter(mgr manager.Manager, ceReconciler *controllers.ClusterExtens
 		Scheme:            mgr.GetScheme(),
 		RevisionGenerator: rg,
 		Preflights:        preflights,
+		FieldOwner:        fmt.Sprintf("%s/clusterextension-controller", fieldOwnerPrefix),
 	}
 	ceReconciler.RevisionStatesGetter = &controllers.BoxcutterRevisionStatesGetter{Reader: mgr.GetClient()}
 	ceReconciler.StorageMigrator = &applier.BoxcutterStorageMigrator{
@@ -549,11 +553,6 @@ func setupBoxcutter(mgr manager.Manager, ceReconciler *controllers.ClusterExtens
 		ActionClientGetter: acg,
 		RevisionGenerator:  rg,
 	}
-
-	// Boxcutter
-	const (
-		boxcutterSystemPrefixFieldOwner = "olm.operatorframework.io"
-	)
 
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
@@ -581,8 +580,8 @@ func setupBoxcutter(mgr manager.Manager, ceReconciler *controllers.ClusterExtens
 				machinery.NewObjectEngine(
 					mgr.GetScheme(), trackingCache, mgr.GetClient(),
 					ownerhandling.NewNative(mgr.GetScheme()),
-					machinery.NewComparator(ownerhandling.NewNative(mgr.GetScheme()), discoveryClient, mgr.GetScheme(), boxcutterSystemPrefixFieldOwner),
-					boxcutterSystemPrefixFieldOwner, boxcutterSystemPrefixFieldOwner,
+					machinery.NewComparator(ownerhandling.NewNative(mgr.GetScheme()), discoveryClient, mgr.GetScheme(), fieldOwnerPrefix),
+					fieldOwnerPrefix, fieldOwnerPrefix,
 				),
 				validation.NewClusterPhaseValidator(mgr.GetRESTMapper(), mgr.GetClient()),
 			),
