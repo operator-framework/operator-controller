@@ -2025,6 +2025,10 @@ spec:
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             - --pull-cas-dir=/var/ca-certs
+            - --tls-profile=custom
+            - --tls-custom-version=TLSv1.3
+            - --tls-custom-curves=X25519,prime256v1
+            - --tls-custom-ciphers=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384
           command:
             - ./catalogd
           env:
@@ -2171,6 +2175,7 @@ spec:
             - --tls-key=/var/certs/tls.key
             - --catalogd-cas-dir=/var/ca-certs
             - --pull-cas-dir=/var/ca-certs
+            - --tls-profile=modern
           command:
             - /operator-controller
           env:

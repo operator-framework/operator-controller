@@ -53,6 +53,13 @@ spec:
             - --v=${LOG_VERBOSITY}
             - --global-pull-secret=openshift-config/pull-secret
             {{- end }}
+            {{- if .Values.options.e2e.enabled }}
+            {{- /* This is effectively modern with the CHACHA cipher and secp384r1 curve removed */}}
+            - --tls-profile=custom
+            - --tls-custom-version=TLSv1.3
+            - --tls-custom-curves=X25519,prime256v1
+            - --tls-custom-ciphers=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384
+            {{- end }}
           command:
             - ./catalogd
           {{- if or .Values.options.e2e.enabled .Values.options.openshift.enabled }}
