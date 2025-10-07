@@ -407,20 +407,29 @@ func run() error {
 		return httputil.BuildHTTPClient(cpwCatalogd)
 	})
 
-	resolver := &resolve.CatalogResolver{
-		WalkCatalogsFunc: resolve.CatalogWalker(
-			func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
-				var catalogs ocv1.ClusterCatalogList
-				if err := cl.List(ctx, &catalogs, option...); err != nil {
-					return nil, err
-				}
-				return catalogs.Items, nil
+	resolver := &resolve.MultiResolver{
+		CatalogResolver: resolve.CatalogResolver{
+			WalkCatalogsFunc: resolve.CatalogWalker(
+				func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
+					var catalogs ocv1.ClusterCatalogList
+					if err := cl.List(ctx, &catalogs, option...); err != nil {
+						return nil, err
+					}
+					return catalogs.Items, nil
+				},
+				catalogClient.GetPackage,
+			),
+			Validations: []resolve.ValidationFunc{
+				resolve.NoDependencyValidation,
 			},
-			catalogClient.GetPackage,
-		),
-		Validations: []resolve.ValidationFunc{
-			resolve.NoDependencyValidation,
 		},
+	}
+
+	if features.OperatorControllerFeatureGate.Enabled(features.DirectBundleInstall) {
+		resolver.BundleResolver = &resolve.BundleImageRefResolver{
+			ImagePuller: imagePuller,
+			ImageCache:  imageCache,
+		}
 	}
 
 	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
