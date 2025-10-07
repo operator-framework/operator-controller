@@ -258,13 +258,13 @@ func formatDescription(description string, channel string, name string) string {
 	startTag := "<opcon:experimental:description>"
 	endTag := "</opcon:experimental:description>"
 	if channel == StandardChannel && strings.Contains(description, startTag) {
-		regexPattern := `\n*` + regexp.QuoteMeta(startTag) + `(?s:(.*?))` + regexp.QuoteMeta(endTag) + `\n*`
+		regexPattern := regexp.QuoteMeta(startTag) + `(?s:(.*?))` + regexp.QuoteMeta(endTag)
 		re := regexp.MustCompile(regexPattern)
 		match := re.FindStringSubmatch(description)
 		if len(match) != 2 {
 			log.Fatalf("Invalid <opcon:experimental:description> tag for %s", name)
 		}
-		description = re.ReplaceAllString(description, "\n\n")
+		description = re.ReplaceAllString(description, "")
 	} else {
 		description = strings.ReplaceAll(description, startTag, "")
 		description = strings.ReplaceAll(description, endTag, "")

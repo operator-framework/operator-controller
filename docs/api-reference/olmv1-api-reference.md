@@ -50,6 +50,23 @@ _Appears in:_
 | `version` _string_ | version is a required field and is a reference to the version that this bundle represents<br />version follows the semantic versioning standard as defined in https://semver.org/. |  | Required: \{\} <br /> |
 
 
+#### BundleSource
+
+
+
+BundleSource defines the configuration used to retrieve a bundle directly from
+its OCI-based image reference.
+
+
+
+_Appears in:_
+- [SourceConfig](#sourceconfig)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ref` _string_ | ref allows users to define the reference to a container image containing bundle contents.<br />ref is required.<br />ref can not be more than 1000 characters.<br /><br />A reference can be broken down into 3 parts - the domain, name, and identifier.<br /><br />The domain is typically the registry where an image is located.<br />It must be alphanumeric characters (lowercase and uppercase) separated by the "." character.<br />Hyphenation is allowed, but the domain must start and end with alphanumeric characters.<br />Specifying a port to use is also allowed by adding the ":" character followed by numeric values.<br />The port must be the last value in the domain.<br />Some examples of valid domain values are "registry.mydomain.io", "quay.io", "my-registry.io:8080".<br /><br />The name is typically the repository in the registry where an image is located.<br />It must contain lowercase alphanumeric characters separated only by the ".", "_", "__", "-" characters.<br />Multiple names can be concatenated with the "/" character.<br />The domain and name are combined using the "/" character.<br />Some examples of valid name values are "operatorhubio/bundle", "bundle", "my-bundle.prod".<br />An example of the domain and name parts of a reference being combined is "quay.io/operatorhubio/bundle".<br /><br />The identifier is typically the tag or digest for an image reference and is present at the end of the reference.<br />It starts with a separator character used to distinguish the end of the name and beginning of the identifier.<br />For a digest-based reference, the "@" character is the separator.<br />For a tag-based reference, the ":" character is the separator.<br />An identifier is required in the reference.<br /><br />Digest-based references must contain an algorithm reference immediately after the "@" separator.<br />The algorithm reference must be followed by the ":" character and an encoded string.<br />The algorithm must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the "-", "_", "+", and "." characters.<br />Some examples of valid algorithm values are "sha256", "sha256+b64u", "multihash+base58".<br />The encoded string following the algorithm must be hex digits (a-f, A-F, 0-9) and must be a minimum of 32 characters.<br /><br />Tag-based references must begin with a word character (alphanumeric + "_") followed by word characters or ".", and "-" characters.<br />The tag must not be longer than 127 characters.<br /><br />An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"<br />An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest" |  | MaxLength: 1000 <br />Required: \{\} <br /> |
+
+
 #### CRDUpgradeSafetyEnforcement
 
 _Underlying type:_ _string_
@@ -459,13 +476,17 @@ _Appears in:_
 SourceConfig is a discriminated union which selects the installation source.
 
 
+<opcon:experimental:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'Bundle' ? has(self.bundle) : !has(self.bundle)",message="bundle is required when sourceType is Bundle, and forbidden otherwise">
+
+
 
 _Appears in:_
 - [ClusterExtensionSpec](#clusterextensionspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `sourceType` _string_ | sourceType is a required reference to the type of install source.<br /><br />Allowed values are "Catalog"<br /><br />When this field is set to "Catalog", information for determining the<br />appropriate bundle of content to install will be fetched from<br />ClusterCatalog resources existing on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set. |  | Enum: [Catalog] <br />Required: \{\} <br /> |
+| `sourceType` _string_ | sourceType is a required reference to the type of install source.<br /><br />Allowed values are <opcon:experimental:description>"Bundle" or </opcon:experimental:description>"Catalog"<br /><br /><opcon:experimental:description><br />When this field is set to "Bundle", the bundle of content to install<br />is specified directly. In this case, no interaction with ClusterCatalog<br />resources is necessary. When using the Bundle sourceType, the bundle<br />field must also be set.<br /></opcon:experimental:description><br /><br />When this field is set to "Catalog", information for determining the<br />appropriate bundle of content to install will be fetched from<br />ClusterCatalog resources existing on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set.<br /><br /><opcon:experimental:validation:Enum=Bundle;Catalog><br /><opcon:standard:validation:Enum=Catalog> |  | Required: \{\} <br /> |
+| `bundle` _[BundleSource](#bundlesource)_ | bundle is used to configure how information is sourced from a bundle.<br />This field is required when sourceType is "Bundle", and forbidden otherwise.<br /><br /><opcon:experimental> |  |  |
 | `catalog` _[CatalogFilter](#catalogfilter)_ | catalog is used to configure how information is sourced from a catalog.<br />This field is required when sourceType is "Catalog", and forbidden otherwise. |  |  |
 
 

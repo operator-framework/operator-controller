@@ -404,7 +404,8 @@ func run() error {
 		return httputil.BuildHTTPClient(cpwCatalogd)
 	})
 
-	resolver := &resolve.CatalogResolver{
+	resolver := &resolve.MultiResolver{}
+	resolver.RegisterType(ocv1.SourceTypeCatalog, &resolve.CatalogResolver{
 		WalkCatalogsFunc: resolve.CatalogWalker(
 			func(ctx context.Context, option ...client.ListOption) ([]ocv1.ClusterCatalog, error) {
 				var catalogs ocv1.ClusterCatalogList
@@ -418,6 +419,12 @@ func run() error {
 		Validations: []resolve.ValidationFunc{
 			resolve.NoDependencyValidation,
 		},
+	})
+	if features.OperatorControllerFeatureGate.Enabled(features.DirectBundleInstall) {
+		resolver.RegisterType(ocv1.SourceTypeBundle, &resolve.BundleResolver{
+			ImagePuller: imagePuller,
+			ImageCache:  imageCache,
+		})
 	}
 
 	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
