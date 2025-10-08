@@ -24,74 +24,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
-
-func Test_RegistryV1BundleRenderer_Render_Success(t *testing.T) {
-	expectedObjs := []client.Object{
-		&corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-service",
-			},
-		},
-	}
-	r := applier.RegistryV1BundleRenderer{
-		BundleRenderer: render.BundleRenderer{
-			ResourceGenerators: []render.ResourceGenerator{
-				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-					require.Equal(t, []string{""}, opts.TargetNamespaces)
-					require.Equal(t, "some-namespace", opts.InstallNamespace)
-					return expectedObjs, nil
-				},
-			},
-		},
-	}
-	bundleFS := bundlefs.Builder().
-		WithPackageName("some-package").
-		WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
-		Build()
-	objs, err := r.Render(bundleFS, &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "some-namespace",
-		},
-	})
-	require.NoError(t, err)
-	require.Equal(t, expectedObjs, objs)
-}
-
-func Test_RegistryV1BundleRenderer_Render_Failure(t *testing.T) {
-	var expectedObjs []client.Object
-	r := applier.RegistryV1BundleRenderer{
-		BundleRenderer: render.BundleRenderer{
-			ResourceGenerators: []render.ResourceGenerator{
-				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-					return expectedObjs, fmt.Errorf("some-error")
-				},
-			},
-		},
-	}
-	bundleFS := bundlefs.Builder().
-		WithPackageName("some-package").
-		WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).
-		Build()
-	objs, err := r.Render(bundleFS, &ocv1.ClusterExtension{
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: "some-namespace",
-		},
-	})
-	require.Nil(t, objs)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "some-error")
-}
 
 func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) {
 	g := &applier.SimpleRevisionGenerator{}
@@ -175,24 +112,26 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 }
 
 func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
-	var r mockBundleRenderer = func(_ fs.FS, _ *ocv1.ClusterExtension) ([]client.Object, error) {
-		return []client.Object{
-			&corev1.Service{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-service",
+	r := &FakeManifestProvider{
+		GetFn: func(_ fs.FS, _ *ocv1.ClusterExtension) ([]client.Object, error) {
+			return []client.Object{
+				&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-service",
+					},
 				},
-			},
-			&appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-deployment",
+				&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-deployment",
+					},
 				},
-			},
-		}, nil
+			}, nil
+		},
 	}
 
 	b := applier.SimpleRevisionGenerator{
-		Scheme:         k8scheme.Scheme,
-		BundleRenderer: r,
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
 	}
 
 	ext := &ocv1.ClusterExtension{
@@ -266,15 +205,17 @@ func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
 			Name: "test-extension",
 		},
 	}
-	var r mockBundleRenderer = func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
-		t.Log("by checking renderer was called with the correct parameters")
-		require.Equal(t, bundleFS, b)
-		require.Equal(t, ext, e)
-		return nil, nil
+	r := &FakeManifestProvider{
+		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
+			t.Log("by checking renderer was called with the correct parameters")
+			require.Equal(t, bundleFS, b)
+			require.Equal(t, ext, e)
+			return nil, nil
+		},
 	}
 	b := applier.SimpleRevisionGenerator{
-		Scheme:         k8scheme.Scheme,
-		BundleRenderer: r,
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
 	}
 
 	_, err := b.GenerateRevision(bundleFS, ext, map[string]string{}, map[string]string{})
@@ -300,12 +241,15 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 			},
 		},
 	}
-	var r mockBundleRenderer = func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
-		return renderedObjs, nil
+	r := &FakeManifestProvider{
+		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
+			return renderedObjs, nil
+		},
 	}
+
 	b := applier.SimpleRevisionGenerator{
-		Scheme:         k8scheme.Scheme,
-		BundleRenderer: r,
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
 	}
 
 	revAnnotations := map[string]string{
@@ -330,12 +274,14 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 }
 
 func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
-	var r mockBundleRenderer = func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
-		return nil, fmt.Errorf("some-error")
+	r := &FakeManifestProvider{
+		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
+			return nil, fmt.Errorf("some-error")
+		},
 	}
 	b := applier.SimpleRevisionGenerator{
-		Scheme:         k8scheme.Scheme,
-		BundleRenderer: r,
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
 	}
 
 	rev, err := b.GenerateRevision(fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{}, map[string]string{})
@@ -926,12 +872,6 @@ func (m *mockBundleRevisionBuilder) GenerateRevisionFromHelmRelease(
 	objectLabels map[string]string,
 ) (*ocv1.ClusterExtensionRevision, error) {
 	return nil, nil
-}
-
-type mockBundleRenderer func(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
-
-func (f mockBundleRenderer) Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
-	return f(bundleFS, ext)
 }
 
 type clientMock struct {

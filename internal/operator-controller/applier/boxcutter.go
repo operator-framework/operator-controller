@@ -27,8 +27,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
 
@@ -46,8 +44,8 @@ type ClusterExtensionRevisionGenerator interface {
 }
 
 type SimpleRevisionGenerator struct {
-	Scheme         *runtime.Scheme
-	BundleRenderer BundleRenderer
+	Scheme           *runtime.Scheme
+	ManifestProvider ManifestProvider
 }
 
 func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
@@ -92,7 +90,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	objectLabels, revisionAnnotations map[string]string,
 ) (*ocv1.ClusterExtensionRevision, error) {
 	// extract plain manifests
-	plain, err := r.BundleRenderer.Render(bundleFS, ext)
+	plain, err := r.ManifestProvider.Get(bundleFS, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -357,34 +355,6 @@ func latestRevisionNumber(prevRevisions []ocv1.ClusterExtensionRevision) int64 {
 		return 0
 	}
 	return prevRevisions[len(prevRevisions)-1].Spec.Revision
-}
-
-// TODO: in the next refactor iteration BundleRenderer and RegistryV1BundleRenderer into the RegistryV1ChartProvider
-
-type BundleRenderer interface {
-	Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error)
-}
-
-type RegistryV1BundleRenderer struct {
-	BundleRenderer      render.BundleRenderer
-	CertificateProvider render.CertificateProvider
-}
-
-func (r *RegistryV1BundleRenderer) Render(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
-	reg, err := source.FromFS(bundleFS).GetBundle()
-	if err != nil {
-		return nil, err
-	}
-
-	if len(reg.CSV.Spec.WebhookDefinitions) > 0 && r.CertificateProvider == nil {
-		return nil, fmt.Errorf("unsupported bundle: webhookDefinitions are not supported")
-	}
-
-	watchNamespace, err := GetWatchNamespace(ext)
-	if err != nil {
-		return nil, err
-	}
-	return r.BundleRenderer.Render(reg, ext.Spec.Namespace, render.WithTargetNamespaces(watchNamespace), render.WithCertificateProvider(r.CertificateProvider))
 }
 
 func splitManifestDocuments(file string) []string {

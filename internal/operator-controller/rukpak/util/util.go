@@ -41,7 +41,6 @@ func ToUnstructured(obj client.Object) (*unstructured.Unstructured, error) {
 		return nil, fmt.Errorf("convert %s %q to unstructured: %w", gvk.Kind, obj.GetName(), err)
 	}
 	unstructured.RemoveNestedField(uObj, "metadata", "creationTimestamp")
-	unstructured.RemoveNestedField(uObj, "status")
 	u.Object = uObj
 	u.SetGroupVersionKind(gvk)
 	return &u, nil

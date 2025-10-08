@@ -448,10 +448,18 @@ func run() error {
 		return err
 	}
 
+	certProvider := getCertificateProvider()
+	regv1ManifestProvider := &applier.RegistryV1ManifestProvider{
+		BundleRenderer:              registryv1.Renderer,
+		CertificateProvider:         certProvider,
+		IsWebhookSupportEnabled:     certProvider != nil,
+		IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
+	}
+
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		err = setupBoxcutter(mgr, ceReconciler, preflights)
+		err = setupBoxcutter(mgr, ceReconciler, preflights, regv1ManifestProvider)
 	} else {
-		err = setupHelm(mgr, ceReconciler, preflights, ceController, clusterExtensionFinalizers)
+		err = setupHelm(mgr, ceReconciler, preflights, ceController, clusterExtensionFinalizers, regv1ManifestProvider)
 	}
 	if err != nil {
 		setupLog.Error(err, "unable to setup lifecycler")
@@ -512,9 +520,12 @@ func getCertificateProvider() render.CertificateProvider {
 	return nil
 }
 
-func setupBoxcutter(mgr manager.Manager, ceReconciler *controllers.ClusterExtensionReconciler, preflights []applier.Preflight) error {
-	certProvider := getCertificateProvider()
-
+func setupBoxcutter(
+	mgr manager.Manager,
+	ceReconciler *controllers.ClusterExtensionReconciler,
+	preflights []applier.Preflight,
+	regv1ManifestProvider applier.ManifestProvider,
+) error {
 	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		return fmt.Errorf("unable to create core client: %w", err)
@@ -541,11 +552,8 @@ func setupBoxcutter(mgr manager.Manager, ceReconciler *controllers.ClusterExtens
 	// TODO: better scheme handling - which types do we want to support?
 	_ = apiextensionsv1.AddToScheme(mgr.GetScheme())
 	rg := &applier.SimpleRevisionGenerator{
-		Scheme: mgr.GetScheme(),
-		BundleRenderer: &applier.RegistryV1BundleRenderer{
-			BundleRenderer:      registryv1.Renderer,
-			CertificateProvider: certProvider,
-		},
+		Scheme:           mgr.GetScheme(),
+		ManifestProvider: regv1ManifestProvider,
 	}
 	ceReconciler.Applier = &applier.Boxcutter{
 		Client:            mgr.GetClient(),
@@ -611,6 +619,7 @@ func setupHelm(
 	preflights []applier.Preflight,
 	ceController crcontroller.Controller,
 	clusterExtensionFinalizers crfinalizer.Registerer,
+	regv1ManifestProvider applier.ManifestProvider,
 ) error {
 	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
 	if err != nil {
@@ -658,17 +667,12 @@ func setupHelm(
 		return err
 	}
 
-	certProvider := getCertificateProvider()
-
 	// now initialize the helmApplier, assigning the potentially nil preAuth
 	ceReconciler.Applier = &applier.Helm{
 		ActionClientGetter: acg,
 		Preflights:         preflights,
 		HelmChartProvider: &applier.RegistryV1HelmChartProvider{
-			BundleRenderer:              registryv1.Renderer,
-			CertificateProvider:         certProvider,
-			IsWebhookSupportEnabled:     certProvider != nil,
-			IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
+			ManifestProvider: regv1ManifestProvider,
 		},
 		HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
 		PreAuthorizer:                 preAuth,
