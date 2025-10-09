@@ -11,6 +11,7 @@ operatorControllerFeatures:
   - PreflightPermissions
   - HelmChartSupport
   - BoxcutterRuntime
+  - DirectBundleInstall
 
 # List of enabled experimental features for catalogd
 # Use with {{- if has "FeatureGate" .Values.catalogdFeatures }}
