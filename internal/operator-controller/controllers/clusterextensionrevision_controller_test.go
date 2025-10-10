@@ -250,13 +250,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				require.Equal(t, ocv1.ClusterExtensionRevisionReasonAvailable, cond.Reason)
 				require.Equal(t, "Object is available and passes all probes.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
-
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRolloutSuccess, cond.Reason)
-				require.Equal(t, "Revision succeeded rolling out.", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{

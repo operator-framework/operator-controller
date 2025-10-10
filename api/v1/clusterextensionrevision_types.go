@@ -27,7 +27,6 @@ const (
 
 	// Condition Types
 	ClusterExtensionRevisionTypeAvailable = "Available"
-	ClusterExtensionRevisionTypeSucceeded = "Succeeded"
 
 	// Condition Reasons
 	ClusterExtensionRevisionReasonAvailable                 = "Available"
@@ -35,7 +34,6 @@ const (
 	ClusterExtensionRevisionReasonRevisionValidationFailure = "RevisionValidationFailure"
 	ClusterExtensionRevisionReasonPhaseValidationError      = "PhaseValidationError"
 	ClusterExtensionRevisionReasonObjectCollisions          = "ObjectCollisions"
-	ClusterExtensionRevisionReasonRolloutSuccess            = "RolloutSuccess"
 	ClusterExtensionRevisionReasonProbeFailure              = "ProbeFailure"
 	ClusterExtensionRevisionReasonIncomplete                = "Incomplete"
 	ClusterExtensionRevisionReasonProgressing               = "Progressing"

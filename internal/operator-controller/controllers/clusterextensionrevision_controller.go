@@ -275,15 +275,6 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			Message:            "Object is available and passes all probes.",
 			ObservedGeneration: rev.Generation,
 		})
-		if !meta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
-				Status:             metav1.ConditionTrue,
-				Reason:             ocv1.ClusterExtensionRevisionReasonRolloutSuccess,
-				Message:            "Revision succeeded rolling out.",
-				ObservedGeneration: rev.Generation,
-			})
-		}
 	} else {
 		var probeFailureMsgs []string
 		for _, pres := range rres.GetPhases() {
