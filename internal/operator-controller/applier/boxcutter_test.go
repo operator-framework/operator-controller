@@ -343,7 +343,9 @@ func TestBoxcutter_Apply(t *testing.T) {
 				if !ok {
 					return fmt.Errorf("expected ClusterExtensionRevision, got %T", obj)
 				}
+				fmt.Println(cer.Spec.Revision)
 				if cer.Spec.Revision != revNum {
+					fmt.Println("AAA")
 					return apierrors.NewInvalid(cer.GroupVersionKind().GroupKind(), cer.GetName(), field.ErrorList{field.Invalid(field.NewPath("spec.phases"), "immutable", "spec.phases is immutable")})
 				}
 				return client.Patch(ctx, obj, patch, opts...)
@@ -453,7 +455,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 		{
-			name: "new revision created when hash differs",
+			name: "new revision created when objects in new revision are different",
 			mockBuilder: &mockBundleRevisionBuilder{
 				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{

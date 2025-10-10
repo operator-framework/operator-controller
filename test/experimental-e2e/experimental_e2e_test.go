@@ -390,7 +390,7 @@ func TestClusterExtensionConfigSupport(t *testing.T) {
 	}, pollDuration, pollInterval)
 }
 
-func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
+func TestClusterExtensionVersionUpdate(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
@@ -423,7 +423,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	}, pollDuration, pollInterval)
 
 	t.Log("It allows to upgrade the ClusterExtension to a non-successor version")
-	t.Log("By updating the ClusterExtension resource to a non-successor version")
+	t.Log("By forcing update of ClusterExtension resource to a non-successor version")
 	// 1.2.0 does not replace/skip/skipRange 1.0.0.
 	clusterExtension.Spec.Source.Catalog.Version = "1.2.0"
 	clusterExtension.Spec.Source.Catalog.UpgradeConstraintPolicy = ocv1.UpgradeConstraintPolicySelfCertified

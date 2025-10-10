@@ -148,4 +148,4 @@ spec:
   provider:
     name: Simple Bundle
     url: https://simple-bundle.domain
-  version: 1.1.0
+  version: 1.2.0

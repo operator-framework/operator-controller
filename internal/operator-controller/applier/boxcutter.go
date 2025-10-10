@@ -30,7 +30,6 @@ import (
 )
 
 const (
-	RevisionHashAnnotation                = "olm.operatorframework.io/hash"
 	ClusterExtensionRevisionPreviousLimit = 5
 )
 
@@ -216,19 +215,15 @@ func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Obj
 	return objs
 }
 
-func (bc *Boxcutter) ensureGVKIsSet(obj client.Object) error {
-	if !obj.GetObjectKind().GroupVersionKind().Empty() {
-		return nil
+func (bc *Boxcutter) createOrUpdate(ctx context.Context, obj client.Object) error {
+	if obj.GetObjectKind().GroupVersionKind().Empty() {
+		gvk, err := apiutil.GVKForObject(obj, bc.Scheme)
+		if err != nil {
+			return err
+		}
+		obj.GetObjectKind().SetGroupVersionKind(gvk)
 	}
-
-	gvk, err := apiutil.GVKForObject(obj, bc.Scheme)
-	if err != nil {
-		return err
-	}
-
-	obj.GetObjectKind().SetGroupVersionKind(gvk)
-
-	return nil
+	return bc.Client.Patch(ctx, obj, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
 }
 
 func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
@@ -251,54 +246,52 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	currentRevision := &ocv1.ClusterExtensionRevision{}
 	state := StateNeedsInstall
 	// check if we can update the current revision.
-	if len(existingRevisions) > 0 { // nolint:nestif
+	if len(existingRevisions) > 0 {
 		// try first to update the current revision.
 		currentRevision = &existingRevisions[len(existingRevisions)-1]
 		desiredRevision.Spec.Previous = currentRevision.Spec.Previous
 		desiredRevision.Spec.Revision = currentRevision.Spec.Revision
 		desiredRevision.Name = currentRevision.Name
 
-		if err := bc.ensureGVKIsSet(desiredRevision); err != nil {
-			return false, "", fmt.Errorf("setting gvk failed: %w", err)
-		}
-		if err = bc.Client.Patch(ctx, desiredRevision, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership); err != nil {
-			if !apierrors.IsInvalid(err) {
-				return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
-			}
+		err := bc.createOrUpdate(ctx, desiredRevision)
+		switch {
+		case apierrors.IsInvalid(err):
 			// We could not update the current revision due to trying to update an immutable field.
 			// Therefore, we need to create a new revision.
 			state = StateNeedsUpgrade
-		} else {
+		case err == nil:
 			// inplace patch was successful, no changes in phases
 			state = StateUnchanged
+		default:
+			return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
 		}
 	}
 
-	if state != StateUnchanged { // nolint:nestif
-		// Preflights
-		plainObjs := bc.getObjects(desiredRevision)
-		for _, preflight := range bc.Preflights {
-			if shouldSkipPreflight(ctx, preflight, ext, state) {
-				continue
+	// Preflights
+	plainObjs := bc.getObjects(desiredRevision)
+	for _, preflight := range bc.Preflights {
+		if shouldSkipPreflight(ctx, preflight, ext, state) {
+			continue
+		}
+		switch state {
+		case StateNeedsInstall:
+			err := preflight.Install(ctx, plainObjs)
+			if err != nil {
+				return false, "", err
 			}
-			switch state {
-			case StateNeedsInstall:
-				err := preflight.Install(ctx, plainObjs)
-				if err != nil {
-					return false, "", err
-				}
-			// TODO: jlanford's IDE says that "StateNeedsUpgrade" condition is always true, but
-			//   it isn't immediately obvious why that is. Perhaps len(existingRevisions) is
-			//   always greater than 0 (seems unlikely), or shouldSkipPreflight always returns
-			//   true (and we continue) when state == StateNeedsInstall?
-			case StateNeedsUpgrade:
-				err := preflight.Upgrade(ctx, plainObjs)
-				if err != nil {
-					return false, "", err
-				}
+		// TODO: jlanford's IDE says that "StateNeedsUpgrade" condition is always true, but
+		//   it isn't immediately obvious why that is. Perhaps len(existingRevisions) is
+		//   always greater than 0 (seems unlikely), or shouldSkipPreflight always returns
+		//   true (and we continue) when state == StateNeedsInstall?
+		case StateNeedsUpgrade:
+			err := preflight.Upgrade(ctx, plainObjs)
+			if err != nil {
+				return false, "", err
 			}
 		}
+	}
 
+	if state != StateUnchanged {
 		// need to create new revision
 		prevRevisions := existingRevisions
 		revisionNumber := latestRevisionNumber(prevRevisions) + 1
@@ -310,10 +303,7 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 			return false, "", fmt.Errorf("garbage collecting old Revisions: %w", err)
 		}
 
-		if err := bc.ensureGVKIsSet(desiredRevision); err != nil {
-			return false, "", fmt.Errorf("setting gvk failed: %w", err)
-		}
-		if err := bc.Client.Patch(ctx, desiredRevision, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership); err != nil {
+		if err := bc.createOrUpdate(ctx, desiredRevision); err != nil {
 			return false, "", fmt.Errorf("creating new Revision: %w", err)
 		}
 		currentRevision = desiredRevision
