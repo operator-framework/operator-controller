@@ -545,7 +545,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			},
 		},
 		{
-			name:           "revision is torn down when in archived state and finalizer is removed",
+			name:           "set Available condition to Unknown with reason Archived when archiving revision",
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -570,7 +570,48 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonArchived, cond.Reason)
+				require.Equal(t, "revision is archived", cond.Message)
+				require.Equal(t, int64(1), cond.ObservedGeneration)
+			},
+		},
+		{
+			name:           "revision is torn down when in archived state and finalizer is removed",
+			revisionResult: mockRevisionResult{},
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1.Finalizers = []string{
+					"olm.operatorframework.io/teardown",
+				}
+				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
+				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
+					Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+					Status:             metav1.ConditionUnknown,
+					Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
+					Message:            "revision is archived",
+					ObservedGeneration: rev1.Generation,
+				})
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				return []client.Object{rev1, ext}
+			},
+			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+				return func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
+					return &mockRevisionTeardownResult{
+						isComplete: true,
+					}, nil
+				}
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterExtensionRevision{}
+				err := c.Get(t.Context(), client.ObjectKey{
+					Name: clusterExtensionRevisionName,
+				}, rev)
+				require.NoError(t, err)
+				require.NotContains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
 			},
 		},
 		{
