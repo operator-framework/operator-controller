@@ -343,13 +343,6 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 	}
 
 	if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
-			Message:            err.Error(),
-			ObservedGeneration: rev.Generation,
-		})
 		return ctrl.Result{}, fmt.Errorf("error removing teardown finalizer: %v", err)
 	}
 	return ctrl.Result{}, nil
