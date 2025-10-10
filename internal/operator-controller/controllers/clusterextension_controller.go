@@ -561,12 +561,11 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 			},
 		}
 
-		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
+		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable) {
 			rs.Installed = rm
 		} else {
 			rs.RollingOut = append(rs.RollingOut, rm)
 		}
 	}
-
 	return rs, nil
 }
