@@ -15,7 +15,14 @@ spec:
     singular: clusterextensionrevision
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=='Available')].status
+      name: Available
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: ClusterExtensionRevision is the Schema for the clusterextensionrevisions

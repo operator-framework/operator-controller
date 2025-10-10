@@ -118,52 +118,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 	revision, opts, previous := toBoxcutterRevision(rev)
 
-	if !rev.DeletionTimestamp.IsZero() ||
-		rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
-		//
-		// Teardown
-		//
-		tres, err := c.RevisionEngine.Teardown(ctx, *revision)
-		if err != nil {
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-				Status:             metav1.ConditionFalse,
-				Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
-				Message:            err.Error(),
-				ObservedGeneration: rev.Generation,
-			})
-			return ctrl.Result{}, fmt.Errorf("revision teardown: %v", err)
-		}
-
-		l.Info("teardown report", "report", tres.String())
-		if !tres.IsComplete() {
-			// TODO: If it is not complete, it seems like it would be good to update
-			//  the status in some way to tell the user that the teardown is still
-			//  in progress.
-			return ctrl.Result{}, nil
-		}
-
-		if err := c.TrackingCache.Free(ctx, rev); err != nil {
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-				Status:             metav1.ConditionFalse,
-				Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
-				Message:            err.Error(),
-				ObservedGeneration: rev.Generation,
-			})
-			return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
-		}
-		if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               "Available",
-				Status:             metav1.ConditionFalse,
-				Reason:             "ReconcileFailure",
-				Message:            err.Error(),
-				ObservedGeneration: rev.Generation,
-			})
-			return ctrl.Result{}, fmt.Errorf("error removing teardown finalizer: %v", err)
-		}
-		return ctrl.Result{}, nil
+	if !rev.DeletionTimestamp.IsZero() || rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
+		return c.teardown(ctx, rev, revision)
 	}
 
 	//
@@ -336,6 +292,59 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		meta.RemoveStatusCondition(&rev.Status.Conditions, ocv1.TypeProgressing)
 	}
 
+	return ctrl.Result{}, nil
+}
+
+func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *ocv1.ClusterExtensionRevision, revision *boxcutter.Revision) (ctrl.Result, error) {
+	l := log.FromContext(ctx)
+
+	tres, err := c.RevisionEngine.Teardown(ctx, *revision)
+	if err != nil {
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+			Status:             metav1.ConditionFalse,
+			Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
+			Message:            err.Error(),
+			ObservedGeneration: rev.Generation,
+		})
+		return ctrl.Result{}, fmt.Errorf("revision teardown: %v", err)
+	}
+
+	l.Info("teardown report", "report", tres.String())
+	if !tres.IsComplete() {
+		// TODO: If it is not complete, it seems like it would be good to update
+		//  the status in some way to tell the user that the teardown is still
+		//  in progress.
+		return ctrl.Result{}, nil
+	}
+
+	if err := c.TrackingCache.Free(ctx, rev); err != nil {
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+			Status:             metav1.ConditionFalse,
+			Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
+			Message:            err.Error(),
+			ObservedGeneration: rev.Generation,
+		})
+		return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
+	}
+
+	// Ensure Available condition is set to Unknown before removing the finalizer when archiving
+	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived &&
+		!meta.IsStatusConditionPresentAndEqual(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable, metav1.ConditionUnknown) {
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+			Status:             metav1.ConditionUnknown,
+			Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
+			Message:            "revision is archived",
+			ObservedGeneration: rev.Generation,
+		})
+		return ctrl.Result{}, nil
+	}
+
+	if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+		return ctrl.Result{}, fmt.Errorf("error removing teardown finalizer: %v", err)
+	}
 	return ctrl.Result{}, nil
 }
 

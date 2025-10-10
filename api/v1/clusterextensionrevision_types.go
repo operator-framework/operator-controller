@@ -39,6 +39,7 @@ const (
 	ClusterExtensionRevisionReasonProbeFailure              = "ProbeFailure"
 	ClusterExtensionRevisionReasonIncomplete                = "Incomplete"
 	ClusterExtensionRevisionReasonProgressing               = "Progressing"
+	ClusterExtensionRevisionReasonArchived                  = "Archived"
 )
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
@@ -148,6 +149,8 @@ type ClusterExtensionRevisionStatus struct {
 // +kubebuilder:subresource:status
 
 // ClusterExtensionRevision is the Schema for the clusterextensionrevisions API
+// +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
+// +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 type ClusterExtensionRevision struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
