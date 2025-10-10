@@ -62,8 +62,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
@@ -625,11 +623,8 @@ func setupHelm(
 	if err != nil {
 		return fmt.Errorf("unable to create core client: %w", err)
 	}
-	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
-	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
-	if features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions) {
-		clientRestConfigMapper = action.SyntheticUserRestConfigMapper(clientRestConfigMapper)
-	}
+
+	clientRestConfigMapper := action.ClusterAdminRestConfigMapper(mgr.GetConfig())
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
 		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
@@ -648,12 +643,6 @@ func setupHelm(
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create helm action client getter: %w", err)
-	}
-
-	// determine if PreAuthorizer should be enabled based on feature gate
-	var preAuth authorization.PreAuthorizer
-	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
@@ -675,7 +664,6 @@ func setupHelm(
 			ManifestProvider: regv1ManifestProvider,
 		},
 		HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
-		PreAuthorizer:                 preAuth,
 		Watcher:                       ceController,
 		Manager:                       cm,
 	}

@@ -40,7 +40,6 @@ require (
 	k8s.io/client-go v0.34.1
 	k8s.io/component-base v0.34.1
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubernetes v1.34.0
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	pkg.package-operator.run/boxcutter v0.7.1
 	sigs.k8s.io/controller-runtime v0.22.1
@@ -49,10 +48,7 @@ require (
 	sigs.k8s.io/yaml v1.6.0
 )
 
-require (
-	k8s.io/component-helpers v0.34.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
-)
+require k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 
 require (
 	cel.dev/expr v0.24.0 // indirect
@@ -242,7 +238,6 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/controller-manager v0.33.2 // indirect
 	k8s.io/kubectl v0.34.0 // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.33.0 // indirect

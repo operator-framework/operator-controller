@@ -8,7 +8,6 @@
 operatorControllerFeatures:
   - WebhookProviderCertManager
   - SingleOwnNamespaceInstallSupport
-  - PreflightPermissions
   - HelmChartSupport
   - BoxcutterRuntime
 

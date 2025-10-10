@@ -155,9 +155,6 @@ func TestWebhookSupport(t *testing.T) {
 				},
 			},
 			Namespace: namespace.GetName(),
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount.GetName(),
-			},
 		},
 	}
 	require.NoError(t, c.Create(t.Context(), clusterExtension))
@@ -352,9 +349,6 @@ func TestClusterExtensionConfigSupport(t *testing.T) {
 				},
 			},
 			Namespace: namespace.GetName(),
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: serviceAccount.GetName(),
-			},
 			Config: &ocv1.ClusterExtensionConfig{
 				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
 				Inline: &apiextensionsv1.JSON{

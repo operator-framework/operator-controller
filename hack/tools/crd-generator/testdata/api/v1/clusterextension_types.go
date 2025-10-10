@@ -44,8 +44,7 @@ const (
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
 	// namespace is a reference to a Kubernetes namespace.
-	// This is the namespace in which the provided ServiceAccount must exist.
-	// It also designates the default namespace where namespace-scoped resources
+	// It designates the default namespace where namespace-scoped resources
 	// for the extension are applied to the cluster.
 	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
 	// This namespace must exist.
@@ -57,20 +56,18 @@ type ClusterExtensionSpec struct {
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
 	// +kubebuilder:validation:MaxLength:=63
-	// <opcon:standard:validation:XValidation:rule="self == oldSelf",message="namespace is immutable">
-	// <opcon:experimental:validation:XValidation:rule="self == oldSelf",message="namespace really is immutable">
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 
-	// serviceAccount is a reference to a ServiceAccount used to perform all interactions
+	// Deprecated: ServiceAccount is ignored by OLM and will be removed in a future release.
+	// serviceAccount was a reference to the ServiceAccount used to perform all interactions
 	// with the cluster that are required to manage the extension.
-	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// serviceAccount is required.
+	// serviceAccount is optional.
 	//
-	// +kubebuilder:validation:Required
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+	// +kubebuilder:validation:Optional
+	ServiceAccount ServiceAccountReference `json:"serviceAccount,omitzero"`
 
 	// source is a required field which selects the installation source of content
 	// for this ClusterExtension. Selection is performed by setting the sourceType.
@@ -112,28 +109,15 @@ type SourceConfig struct {
 	// When using the Catalog sourceType, the catalog field must also be set.
 	//
 	// +unionDiscriminator
-	// <opcon:standard:validation:Enum=Catalog>
-	// <opcon:experimental:validation:Enum=Catalog;NotCatalog>
+	// +kubebuilder:validation:Enum:="Catalog"
 	// +kubebuilder:validation:Required
 	SourceType string `json:"sourceType"`
 
 	// catalog is used to configure how information is sourced from a catalog.
 	// This field is required when sourceType is "Catalog", and forbidden otherwise.
 	//
-	// <opcon:experimental:description>
-	// This is the experimental description for Catalog
-	// </opcon:experimental:description>
-	//
-	// <opcon:util:excludeFromCRD>
-	// No one should see this!
-	// </opcon:util:excludeFromCRD>
-	//
 	// +optional
 	Catalog *CatalogFilter `json:"catalog,omitempty"`
-
-	// test is a required parameter
-	// <opcon:experimental>
-	Test string `json:"test"`
 }
 
 // ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
@@ -341,8 +325,9 @@ type CatalogFilter struct {
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
-// ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
+// Deprecated: ServiceAccount is ignored by OLM and will be removed in a future release.
 type ServiceAccountReference struct {
+	// Deprecated: ServiceAccount.Name is ignored by OLM and will be removed in a future release.
 	// name is a required, immutable reference to the name of the ServiceAccount
 	// to be used for installation and management of the content for the package
 	// specified in the packageName field.
