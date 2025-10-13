@@ -9,5 +9,5 @@ spec:
     type: Image
     image:
       pollIntervalMinutes: 10
-      ref: registry.redhat.io/redhat/certified-operator-index:v4.20
+      ref: registry.redhat.io/redhat/certified-operator-index:{{- .Values.options.openshift.catalogs.version }}
 {{- end -}}

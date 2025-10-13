@@ -20,6 +20,8 @@ options:
     enabled: false
   openshift:
     enabled: false
+    catalogs:
+      version: v4.20
   # This can be one of: standard or experimental
   featureSet: standard
 
