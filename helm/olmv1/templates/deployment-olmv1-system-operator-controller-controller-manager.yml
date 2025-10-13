@@ -12,6 +12,11 @@ metadata:
   namespace: {{ .Values.namespaces.olmv1.name }}
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # Allow temporary 2 pods (1 + 1) for zero-downtime updates
+      maxUnavailable: 0    # Never allow pods to be unavailable during updates
   selector:
     matchLabels:
       control-plane: operator-controller-controller-manager

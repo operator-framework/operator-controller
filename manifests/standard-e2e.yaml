@@ -1762,6 +1762,11 @@ metadata:
 spec:
   minReadySeconds: 5
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # Allow temporary 2 pods (1 + 1) for zero-downtime updates
+      maxUnavailable: 0    # Never allow pods to be unavailable during updates
   selector:
     matchLabels:
       control-plane: catalogd-controller-manager
@@ -1906,6 +1911,11 @@ metadata:
   namespace: olmv1-system
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # Allow temporary 2 pods (1 + 1) for zero-downtime updates
+      maxUnavailable: 0    # Never allow pods to be unavailable during updates
   selector:
     matchLabels:
       control-plane: operator-controller-controller-manager
