@@ -27,11 +27,9 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
-	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
 )
 
 const (
-	RevisionHashAnnotation                = "olm.operatorframework.io/hash"
 	ClusterExtensionRevisionPreviousLimit = 5
 )
 
@@ -200,6 +198,7 @@ type Boxcutter struct {
 	Scheme            *runtime.Scheme
 	RevisionGenerator ClusterExtensionRevisionGenerator
 	Preflights        []Preflight
+	FieldOwner        string
 }
 
 func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
@@ -216,6 +215,17 @@ func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Obj
 	return objs
 }
 
+func (bc *Boxcutter) createOrUpdate(ctx context.Context, obj client.Object) error {
+	if obj.GetObjectKind().GroupVersionKind().Empty() {
+		gvk, err := apiutil.GVKForObject(obj, bc.Scheme)
+		if err != nil {
+			return err
+		}
+		obj.GetObjectKind().SetGroupVersionKind(gvk)
+	}
+	return bc.Client.Patch(ctx, obj, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
+}
+
 func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
 	// Generate desired revision
 	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(contentFS, ext, objectLabels, revisionAnnotations)
@@ -223,27 +233,38 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		return false, "", err
 	}
 
+	if err := controllerutil.SetControllerReference(ext, desiredRevision, bc.Scheme); err != nil {
+		return false, "", fmt.Errorf("set ownerref: %w", err)
+	}
+
 	// List all existing revisions
 	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
 	if err != nil {
 		return false, "", err
 	}
-	desiredHash := hashutil.DeepHashObject(desiredRevision.Spec.Phases)
 
-	// Sort into current and previous revisions.
-	var (
-		currentRevision *ocv1.ClusterExtensionRevision
-	)
+	currentRevision := &ocv1.ClusterExtensionRevision{}
 	state := StateNeedsInstall
+	// check if we can update the current revision.
 	if len(existingRevisions) > 0 {
-		maybeCurrentRevision := existingRevisions[len(existingRevisions)-1]
-		annotations := maybeCurrentRevision.GetAnnotations()
-		if annotations != nil {
-			if revisionHash, ok := annotations[RevisionHashAnnotation]; ok && revisionHash == desiredHash {
-				currentRevision = &maybeCurrentRevision
-			}
+		// try first to update the current revision.
+		currentRevision = &existingRevisions[len(existingRevisions)-1]
+		desiredRevision.Spec.Previous = currentRevision.Spec.Previous
+		desiredRevision.Spec.Revision = currentRevision.Spec.Revision
+		desiredRevision.Name = currentRevision.Name
+
+		err := bc.createOrUpdate(ctx, desiredRevision)
+		switch {
+		case apierrors.IsInvalid(err):
+			// We could not update the current revision due to trying to update an immutable field.
+			// Therefore, we need to create a new revision.
+			state = StateNeedsUpgrade
+		case err == nil:
+			// inplace patch was successful, no changes in phases
+			state = StateUnchanged
+		default:
+			return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
 		}
-		state = StateNeedsUpgrade
 	}
 
 	// Preflights
@@ -270,30 +291,22 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		}
 	}
 
-	if currentRevision == nil {
-		// all Revisions are outdated => create a new one.
+	if state != StateUnchanged {
+		// need to create new revision
 		prevRevisions := existingRevisions
 		revisionNumber := latestRevisionNumber(prevRevisions) + 1
 
-		newRevision := desiredRevision
-		newRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
-		if newRevision.GetAnnotations() == nil {
-			newRevision.Annotations = map[string]string{}
-		}
-		newRevision.Annotations[RevisionHashAnnotation] = desiredHash
-		newRevision.Spec.Revision = revisionNumber
+		desiredRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
+		desiredRevision.Spec.Revision = revisionNumber
 
-		if err = bc.setPreviousRevisions(ctx, newRevision, prevRevisions); err != nil {
+		if err = bc.setPreviousRevisions(ctx, desiredRevision, prevRevisions); err != nil {
 			return false, "", fmt.Errorf("garbage collecting old Revisions: %w", err)
 		}
 
-		if err := controllerutil.SetControllerReference(ext, newRevision, bc.Scheme); err != nil {
-			return false, "", fmt.Errorf("set ownerref: %w", err)
-		}
-		if err := bc.Client.Create(ctx, newRevision); err != nil {
+		if err := bc.createOrUpdate(ctx, desiredRevision); err != nil {
 			return false, "", fmt.Errorf("creating new Revision: %w", err)
 		}
-		currentRevision = newRevision
+		currentRevision = desiredRevision
 	}
 
 	progressingCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.TypeProgressing)
