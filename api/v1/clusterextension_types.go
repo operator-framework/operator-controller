@@ -102,8 +102,6 @@ type ClusterExtensionSpec struct {
 	// ClusterExtension's manifests. Values can be specified inline.
 	//
 	// config is optional. When not specified, the default configuration of the resolved bundle will be used.
-	//
-	// <opcon:experimental>
 	// +optional
 	Config *ClusterExtensionConfig `json:"config,omitempty"`
 }
