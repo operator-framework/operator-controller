@@ -11,12 +11,16 @@ options:
   tilt:
     enabled: true
   featureSet: experimental
-
-operatorControllerFeatures:
-  - WebhookProviderCertManager
-  - SingleOwnNamespaceInstallSupport
-  - PreflightPermissions
-  - HelmChartSupport
-
-catalogdFeatures:
-  - APIV1MetasHandler
+  operatorController:
+    features:
+      enabled:
+        - WebhookProviderCertManager
+        - SingleOwnNamespaceInstallSupport
+        - PreflightPermissions
+        - HelmChartSupport
+      disabled:
+        - WebhookProviderOpenshiftServiceCA
+  catalogd:
+    features:
+      enabled:
+        - APIV1MetasHandler

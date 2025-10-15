@@ -8,10 +8,18 @@ options:
     enabled: true
     deployment:
       image: quay.io/operator-framework/operator-controller:devel
+      extraArguments: []
+    features:
+      enabled: []
+      disabled: []
   catalogd:
     enabled: true
     deployment:
       image: quay.io/operator-framework/catalogd:devel
+      extraArguments: []
+    features:
+      enabled: []
+      disabled: []
   certManager:
     enabled: false
   e2e:
@@ -25,9 +33,9 @@ options:
   # This can be one of: standard or experimental
   featureSet: standard
 
+# Deprecated: The list of features
 operatorControllerFeatures: []
 catalogdFeatures: []
-
 
 # The set of namespaces
 namespaces:

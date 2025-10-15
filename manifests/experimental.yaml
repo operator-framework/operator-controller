@@ -2101,6 +2101,7 @@ spec:
             - --feature-gates=PreflightPermissions=true
             - --feature-gates=HelmChartSupport=true
             - --feature-gates=BoxcutterRuntime=true
+            - --feature-gates=WebhookProviderOpenshiftServiceCA=false
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
             - --catalogd-cas-dir=/var/ca-certs

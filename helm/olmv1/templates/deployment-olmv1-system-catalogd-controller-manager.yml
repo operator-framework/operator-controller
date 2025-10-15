@@ -48,6 +48,15 @@ spec:
             {{- range .Values.catalogdFeatures }}
             - --feature-gates={{- . -}}=true
             {{- end }}
+            {{- range .Values.options.catalogd.features.enabled }}
+            - --feature-gates={{- . -}}=true
+            {{- end }}
+            {{- range .Values.options.catalogd.features.disabled }}
+            - --feature-gates={{- . -}}=false
+            {{- end }}
+            {{- range .Values.options.catalogd.deployment.extraArguments }}
+            - {{ . -}}
+            {{- end }}
             {{- if .Values.options.certManager.enabled }}
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key

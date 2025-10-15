@@ -47,6 +47,15 @@ spec:
             {{- range .Values.operatorControllerFeatures }}
             - --feature-gates={{- . -}}=true
             {{- end }}
+            {{- range .Values.options.operatorController.features.enabled }}
+            - --feature-gates={{- . -}}=true
+            {{- end }}
+            {{- range .Values.options.operatorController.features.disabled }}
+            - --feature-gates={{- . -}}=false
+            {{- end }}
+            {{- range .Values.options.operatorController.deployment.extraArguments }}
+            - {{ . -}}
+            {{- end }}
             {{- if .Values.options.certManager.enabled }}
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
