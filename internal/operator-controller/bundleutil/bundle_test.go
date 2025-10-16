@@ -12,7 +12,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 )
 
-func TestGetVersion(t *testing.T) {
+func TestGetVersionAndRelease(t *testing.T) {
 	tests := []struct {
 		name        string
 		pkgProperty *property.Property
@@ -22,7 +22,7 @@ func TestGetVersion(t *testing.T) {
 			name: "valid version",
 			pkgProperty: &property.Property{
 				Type:  property.TypePackage,
-				Value: json.RawMessage(`{"version": "1.0.0"}`),
+				Value: json.RawMessage(`{"version": "1.0.0-pre+1.alpha.2"}`),
 			},
 			wantErr: false,
 		},
@@ -31,6 +31,14 @@ func TestGetVersion(t *testing.T) {
 			pkgProperty: &property.Property{
 				Type:  property.TypePackage,
 				Value: json.RawMessage(`{"version": "abcd"}`),
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid release - build metadata with leading zeros",
+			pkgProperty: &property.Property{
+				Type:  property.TypePackage,
+				Value: json.RawMessage(`{"version": "1.0.0+001"}`),
 			},
 			wantErr: true,
 		},
@@ -61,7 +69,7 @@ func TestGetVersion(t *testing.T) {
 				Properties: properties,
 			}
 
-			_, err := bundleutil.GetVersion(bundle)
+			_, err := bundleutil.GetVersionAndRelease(bundle)
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {
