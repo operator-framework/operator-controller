@@ -77,9 +77,6 @@ func TestExtensionDeveloper(t *testing.T) {
 				},
 			},
 			Namespace: installNamespace,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: sa.Name,
-			},
 		},
 	}
 

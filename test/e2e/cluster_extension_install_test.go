@@ -71,9 +71,6 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 					},
 				},
 				Namespace: ns.Name,
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: sa.Name,
-				},
 			}
 			t.Log("It resolves the specified package with correct bundle path")
 			t.Log("By creating the ClusterExtension resource")
@@ -141,9 +138,6 @@ func TestClusterExtensionInstallRegistryDynamic(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
-		},
 	}
 	t.Log("It updates the registries.conf file contents")
 	cm := corev1.ConfigMap{
@@ -218,9 +212,6 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
-		},
 	}
 	t.Log("It resolves to multiple bundle paths")
 	t.Log("By creating the ClusterExtension resource")
@@ -261,9 +252,6 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
-		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful installation")
@@ -321,9 +309,6 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
-		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
@@ -368,9 +353,6 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
-		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
@@ -421,9 +403,6 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
-		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -501,9 +480,6 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
-		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -559,9 +535,6 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: sa.Name,
-		},
 	}
 	t.Log("It installs the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -613,9 +586,6 @@ func TestClusterExtensionRecoversFromNoNamespaceWhenFailureFixed(t *testing.T) {
 			},
 		},
 		Namespace: clusterExtension.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: clusterExtension.Name,
-		},
 	}
 
 	t.Log("It resolves the specified package with correct bundle path")
@@ -688,9 +658,6 @@ func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testi
 			},
 		},
 		Namespace: clusterExtension.Name,
-		ServiceAccount: ocv1.ServiceAccountReference{
-			Name: clusterExtension.Name,
-		},
 	}
 
 	t.Log("By creating a new Deployment that can not be adopted")

@@ -49,8 +49,7 @@ const (
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
 	// namespace is a reference to a Kubernetes namespace.
-	// This is the namespace in which the provided ServiceAccount must exist.
-	// It also designates the default namespace where namespace-scoped resources
+	// It designates the default namespace where namespace-scoped resources
 	// for the extension are applied to the cluster.
 	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
 	// This namespace must exist.
@@ -67,14 +66,13 @@ type ClusterExtensionSpec struct {
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 
-	// serviceAccount is a reference to a ServiceAccount used to perform all interactions
+	// Deprecated: ServiceAccount is ignored by OLM and will be removed in a future release.
+	// serviceAccount was a reference to the ServiceAccount used to perform all interactions
 	// with the cluster that are required to manage the extension.
-	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// serviceAccount is required.
+	// serviceAccount is optional.
 	//
-	// +kubebuilder:validation:Required
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+	// +kubebuilder:validation:Optional
+	ServiceAccount ServiceAccountReference `json:"serviceAccount,omitzero"`
 
 	// source is a required field which selects the installation source of content
 	// for this ClusterExtension. Selection is performed by setting the sourceType.
@@ -369,8 +367,9 @@ type CatalogFilter struct {
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
-// ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
+// Deprecated: ServiceAccount is ignored by OLM and will be removed in a future release.
 type ServiceAccountReference struct {
+	// Deprecated: ServiceAccount.Name is ignored by OLM and will be removed in a future release.
 	// name is a required, immutable reference to the name of the ServiceAccount
 	// to be used for installation and management of the content for the package
 	// specified in the packageName field.
