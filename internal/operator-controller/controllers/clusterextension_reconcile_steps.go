@@ -118,9 +118,13 @@ func ResolveBundle(r resolve.Resolver) ReconcileStepFunc {
 			//         all catalogs?
 			SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 			resolvedRevisionMetadata = &RevisionMetadata{
-				Package:        resolvedBundle.Package,
-				Image:          resolvedBundle.Image,
-				BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
+				Package: resolvedBundle.Package,
+				Image:   resolvedBundle.Image,
+				// TODO: Right now, operator-controller only supports registry+v1 bundles and has no concept
+				//   of a "release" field. If/when we add a release field concept or a new bundle format
+				//   we need to re-evaluate use of `AsLegacyRegistryV1Version` so that we avoid propagating
+				//   registry+v1's semver spec violations of treating build metadata as orderable.
+				BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, resolvedBundleVersion.AsLegacyRegistryV1Version()),
 			}
 		} else {
 			resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
