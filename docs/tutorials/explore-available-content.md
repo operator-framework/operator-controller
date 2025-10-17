@@ -92,7 +92,7 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
         ```
 
     !!! important
-        Currently, OLM 1.0 does not support the installation of extensions that use webhooks or that target a single or specified set of namespaces.
+        OLM 1.0 supports installing extensions that define webhooks. Targeting a single or specified set of namespaces requires enabling the `SingleOwnNamespaceInstallSupport` feature-gate.
 
 3. Return list of packages that support `AllNamespaces` install mode and do not use webhooks:
 
