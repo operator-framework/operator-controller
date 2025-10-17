@@ -9,7 +9,6 @@ options:
   operatorController:
     features:
       enabled:
-        - WebhookProviderCertManager
         - SingleOwnNamespaceInstallSupport
         - PreflightPermissions
         - HelmChartSupport
