@@ -6,8 +6,8 @@ The controller uses the `WebhookProviderCertManager`
 feature-gate unless you override it. To switch to the OpenShift Service CA provider,
 start the controller with `--feature-gates=WebhookProviderCertManager=false` and enable `--feature-gates=WebhookProviderOpenshiftServiceCA=true`.
 
-Webhooks, or more concretely Admission Webhooks, are part of Kubernetes' [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
-feature. Webhooks run as services called by the kube-apiservice in due course of processing a resource related request. They can be used to validate resources, ensure reasonable default values,
+Admission webhooks are part of the Kubernetes suite of [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+plugins. Webhooks run as services called by the kube-apiservice in due course of processing a resource related request. They can be used to validate resources, ensure reasonable default values,
 are set, or aid in the migration to new CustomResourceDefinition schema. The communication with the webhook service is secured by TLS. In OLMv1, the TLS certificate is managed by a 
 certificate provider. Currently, two certificate providers are supported: CertManager and Openshift-ServiceCA. The certificate provider to use given by the feature-gate:
 
