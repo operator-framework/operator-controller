@@ -3,13 +3,16 @@ package applier
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
+	"strings"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -31,6 +34,9 @@ type RegistryV1ManifestProvider struct {
 	CertificateProvider         render.CertificateProvider
 	IsWebhookSupportEnabled     bool
 	IsSingleOwnNamespaceEnabled bool
+}
+type registryV1Config struct {
+	WatchNamespace string `json:"watchNamespace"`
 }
 
 func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -70,7 +76,7 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 
 	watchNamespace, err := r.getWatchNamespace(ext)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid bundle configuration: %w", err)
 	}
 
 	if watchNamespace != "" {
@@ -89,11 +95,12 @@ func (r *RegistryV1ManifestProvider) getWatchNamespace(ext *ocv1.ClusterExtensio
 
 	var watchNamespace string
 	if ext.Spec.Config != nil && ext.Spec.Config.Inline != nil {
-		cfg := struct {
-			WatchNamespace string `json:"watchNamespace"`
-		}{}
-		if err := json.Unmarshal(ext.Spec.Config.Inline.Raw, &cfg); err != nil {
-			return "", fmt.Errorf("invalid bundle configuration: %w", err)
+		cfg := &registryV1Config{}
+		// Using k8s.io/yaml package as that is able to handle both json and yaml
+		// In most cases, at this point we should have a valid JSON/YAML object in the byte slice and failures will
+		// be related to object structure (e.g. additional fields).
+		if err := yaml.UnmarshalStrict(ext.Spec.Config.Inline.Raw, cfg); err != nil {
+			return "", fmt.Errorf("error unmarshalling registry+v1 configuration: %w", formatUnmarshallError(err))
 		}
 		watchNamespace = cfg.WatchNamespace
 	} else {
@@ -152,4 +159,28 @@ func (r *RegistryV1HelmChartProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExten
 	}
 
 	return chrt, nil
+}
+
+func formatUnmarshallError(err error) error {
+	var unmarshalErr *json.UnmarshalTypeError
+	if errors.As(err, &unmarshalErr) {
+		if unmarshalErr.Field == "" {
+			return errors.New("input is not a valid JSON object")
+		} else {
+			return fmt.Errorf("invalid value type for field %q: expected %q but got %q", unmarshalErr.Field, unmarshalErr.Type.String(), unmarshalErr.Value)
+		}
+	}
+
+	// unwrap error until the core and process it
+	for {
+		unwrapped := errors.Unwrap(err)
+		if unwrapped == nil {
+			// usually the errors present in the form json: <message> or yaml: <message>
+			// we want to extract <message> if we can
+			errMessageComponents := strings.Split(err.Error(), ":")
+			coreErrMessage := strings.TrimSpace(errMessageComponents[len(errMessageComponents)-1])
+			return errors.New(coreErrMessage)
+		}
+		err = unwrapped
+	}
 }

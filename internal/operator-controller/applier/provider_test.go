@@ -188,6 +188,77 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 	})
 }
 
+func Test_RegistryV1ManifestProvider_ConfigUnmarshalling(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		configBytes        []byte
+		expectedErrMessage string
+	}{
+		{
+			name:        "accepts json config",
+			configBytes: []byte(`{"watchNamespace": "some-namespace"}`),
+		},
+		{
+			name:        "accepts yaml config",
+			configBytes: []byte(`watchNamespace: some-namespace`),
+		},
+		{
+			name:               "rejects invalid json",
+			configBytes:        []byte(`{"hello`),
+			expectedErrMessage: `invalid bundle configuration: error unmarshalling registry+v1 configuration: found unexpected end of stream`,
+		},
+		{
+			name:               "rejects valid json that isn't of object type",
+			configBytes:        []byte(`true`),
+			expectedErrMessage: `invalid bundle configuration: error unmarshalling registry+v1 configuration: input is not a valid JSON object`,
+		},
+		{
+			name:               "rejects additional fields",
+			configBytes:        []byte(`somekey: somevalue`),
+			expectedErrMessage: `invalid bundle configuration: error unmarshalling registry+v1 configuration: unknown field "somekey"`,
+		},
+		{
+			name:               "rejects valid json but invalid registry+v1",
+			configBytes:        []byte(`{"watchNamespace": {"hello": "there"}}`),
+			expectedErrMessage: `invalid bundle configuration: error unmarshalling registry+v1 configuration: invalid value type for field "watchNamespace": expected "string" but got "object"`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			provider := applier.RegistryV1ManifestProvider{
+				BundleRenderer: render.BundleRenderer{
+					ResourceGenerators: []render.ResourceGenerator{
+						func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+							return nil, nil
+						},
+					},
+				},
+				IsSingleOwnNamespaceEnabled: true,
+			}
+
+			bundleFS := bundlefs.Builder().WithPackageName("test").
+				WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+
+			_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+				Spec: ocv1.ClusterExtensionSpec{
+					Namespace: "install-namespace",
+					Config: &ocv1.ClusterExtensionConfig{
+						ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+						Inline: &apiextensionsv1.JSON{
+							Raw: tc.configBytes,
+						},
+					},
+				},
+			})
+			if tc.expectedErrMessage != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedErrMessage)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 	t.Run("rejects bundles without AllNamespaces install mode when Single/OwnNamespace install mode support is disabled", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
