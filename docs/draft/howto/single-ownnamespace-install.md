@@ -1,8 +1,7 @@
 ## Description
 
 !!! note
-This feature is still in *alpha* the `SingleOwnNamespaceInstallSupport` feature-gate must be enabled to make use of it.
-See the instructions below on how to enable it.
+The `SingleOwnNamespaceInstallSupport` feature-gate is enabled by default. Use this guide to configure bundles that need Single or Own namespace install modes.
 
 ---
 
@@ -30,28 +29,6 @@ include *installModes*.
 ### OwnNamespace Install
 
 [![OwnNamespace Install Demo](https://asciinema.org/a/Rxx6WUwAU016bXFDW74XLcM5i.svg)](https://asciinema.org/a/Rxx6WUwAU016bXFDW74XLcM5i)
-
-## Enabling the Feature-Gate
-
-!!! tip
-
-This guide assumes OLMv1 is already installed. If that is not the case,
-you can follow the [getting started](../../getting-started/olmv1_getting_started.md) guide to install OLMv1.
-
----
-
-Patch the `operator-controller` `Deployment` adding `--feature-gates=SingleOwnNamespaceInstallSupport=true` to the
-controller container arguments:
-
-```terminal title="Enable SingleOwnNamespaceInstallSupport feature-gate"
-kubectl patch deployment -n olmv1-system operator-controller-controller-manager --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--feature-gates=SingleOwnNamespaceInstallSupport=true"}]'
-```
-
-Wait for `Deployment` rollout:
-
-```terminal title="Wait for Deployment rollout"
-kubectl rollout status -n olmv1-system deployment/operator-controller-controller-manager
-```
 
 ## Configuring the `ClusterExtension`
 

@@ -15,7 +15,6 @@ options:
     features:
       enabled:
         - WebhookProviderCertManager
-        - SingleOwnNamespaceInstallSupport
         - PreflightPermissions
         - HelmChartSupport
       disabled:
