@@ -2,9 +2,7 @@
 
 !!! note
 OLMv1 supports the installation of bundles containing webhooks by default.
-The controller uses the `WebhookProviderCertManager`
-feature-gate unless you override it. To switch to the OpenShift Service CA provider,
-start the controller with `--feature-gates=WebhookProviderCertManager=false` and enable `--feature-gates=WebhookProviderOpenshiftServiceCA=true`.
+By default, OLM v1 uses the community Cert Manager package for admission webhook via the feature-gate flag `WebhookProviderCertManager`. To use the OpenShift Service CA provider, set the `--feature-gates=WebhookProviderOpenshiftServiceCA=true` flag at startup.
 
 Admission webhooks are part of the Kubernetes suite of [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
 plugins. Webhooks run as services called by the kube-apiservice in due course of processing a resource related request. They can be used to validate resources, ensure reasonable default values,
