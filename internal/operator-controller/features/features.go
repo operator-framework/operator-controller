@@ -51,8 +51,8 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// mutating, and/or conversion webhooks with CertManager
 	// as the certificate provider.
 	WebhookProviderCertManager: {
-		Default:       false,
-		PreRelease:    featuregate.Alpha,
+		Default:       true,
+		PreRelease:    featuregate.GA,
 		LockToDefault: false,
 	},
 
@@ -61,8 +61,8 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// mutating, and/or conversion webhooks with Openshift Service CA
 	// as the certificate provider.
 	WebhookProviderOpenshiftServiceCA: {
-		Default:       false,
-		PreRelease:    featuregate.Alpha,
+		Default:       true,
+		PreRelease:    featuregate.GA,
 		LockToDefault: false,
 	},
 

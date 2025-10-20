@@ -1,12 +1,11 @@
 ## Installation of Bundles containing Webhooks
 
 !!! note
-This feature is still in *alpha*. Either the `WebhookProviderCertManager`, or the `WebhookProviderOpenshiftServiceCA`, feature-gate 
-must be enabled to make use of it. See the instructions below on how to enable the feature-gate.
+OLMv1 supports the installation of bundles containing webhooks by default.
+By default, OLM v1 uses the community Cert Manager package for admission webhook via the feature-gate flag `WebhookProviderCertManager`. To use the OpenShift Service CA provider, set the `--feature-gates=WebhookProviderOpenshiftServiceCA=true` flag at startup.
 
-OLMv1 currently does not support the installation of bundles containing webhooks. The webhook support feature enables this capability.
-Webhooks, or more concretely Admission Webhooks, are part of Kuberntes' [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
-feature. Webhooks run as services called by the kube-apiservice in due course of processing a resource related request. They can be used to validate resources, ensure reasonable default values,
+Admission webhooks are part of the Kubernetes suite of [Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+plugins. Webhooks run as services called by the kube-apiservice in due course of processing a resource related request. They can be used to validate resources, ensure reasonable default values,
 are set, or aid in the migration to new CustomResourceDefinition schema. The communication with the webhook service is secured by TLS. In OLMv1, the TLS certificate is managed by a 
 certificate provider. Currently, two certificate providers are supported: CertManager and Openshift-ServiceCA. The certificate provider to use given by the feature-gate:
 
@@ -15,13 +14,11 @@ certificate provider. Currently, two certificate providers are supported: CertMa
 
 As CertManager is already installed with OLMv1, we suggest using `WebhookProviderCertManager`.
 
-### Run OLM v1with Experimental Features Enabled
+### Run OLM v1 with Webhook Support
 
-```terminal title=Enable Experimental Features in a New Kind Cluster
-make run-experimental
+```terminal title=Start the controller with webhook support
+make run
 ```
-
-This will enable only the `WebhookProviderCertManager` feature-gate, which works with cert-manager.
 
 Then,
 
