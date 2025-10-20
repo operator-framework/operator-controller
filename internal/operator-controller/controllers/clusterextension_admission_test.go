@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -440,6 +441,54 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for install configuration %v: %w", tc.installConfig, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errMsg)
+			}
+		})
+	}
+}
+
+func Test_ClusterExtensionAdmissionInlineConfig(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name        string
+		configBytes []byte
+		errMsg      string
+	}{
+		{
+			name:        "rejects valid json that is not of an object type",
+			configBytes: []byte(`true`),
+			errMsg:      "spec.config.inline in body must be of type object",
+		},
+		{
+			name:        "accepts valid json object",
+			configBytes: []byte(`{"key": "value"}`),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "package",
+					},
+				},
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
+				},
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: tc.configBytes,
+					},
+				},
+			}))
+			if tc.errMsg == "" {
+				require.NoError(t, err, "unexpected error for inline bundle configuration %q: %w", string(tc.configBytes), err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)
