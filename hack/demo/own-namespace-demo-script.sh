@@ -8,7 +8,7 @@ trap 'echo "Demo ran into error"; trap - SIGTERM && kill -- -$$; exit 1' ERR SIG
 
 # install standard CRDs
 echo "Install standard CRDs..."
-kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/base.yaml"
+kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/standard.yaml"
 
 # wait for standard CRDs to be available
 kubectl wait --for condition=established --timeout=60s crd/clusterextensions.olm.operatorframework.io
