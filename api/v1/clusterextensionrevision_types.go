@@ -26,8 +26,9 @@ const (
 	ClusterExtensionRevisionKind = "ClusterExtensionRevision"
 
 	// Condition Types
-	ClusterExtensionRevisionTypeAvailable = "Available"
-	ClusterExtensionRevisionTypeSucceeded = "Succeeded"
+	ClusterExtensionRevisionTypeAvailable   = "Available"
+	ClusterExtensionRevisionTypeSucceeded   = "Succeeded"
+	ClusterExtensionRevisionTypeProgressing = "Progressing"
 
 	// Condition Reasons
 	ClusterExtensionRevisionReasonAvailable                 = "Available"
@@ -40,6 +41,7 @@ const (
 	ClusterExtensionRevisionReasonIncomplete                = "Incomplete"
 	ClusterExtensionRevisionReasonProgressing               = "Progressing"
 	ClusterExtensionRevisionReasonArchived                  = "Archived"
+	ClusterExtensionRevisionReasonRolloutInProgress         = "RolloutInProgress"
 )
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
