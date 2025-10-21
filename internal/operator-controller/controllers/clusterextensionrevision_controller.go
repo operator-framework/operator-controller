@@ -171,6 +171,9 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
 
+		// if we take Availability as strictly being "all availability probes pass"
+		// we should probably be at an Unknown state (or not posted it at all here)
+		// and post this up in the Progressing condition as False with a failed rollout reason / message
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionFalse,
@@ -185,6 +188,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		if verr := pres.GetValidationError(); verr != nil {
 			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", i)
 
+			// we probably want to either eat this error and leave Progressing as True with a rolling out reason and implement timeout
+			// or surface this error through a Degraded-type condition that can flap as roll out continues
 			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 				Status:             metav1.ConditionFalse,
@@ -204,7 +209,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 		if len(collidingObjs) > 0 {
 			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", i, "collisions", collidingObjs)
-
+			// collisions are probably stickier than phase roll out probe failures - so we'd probably want to set
+			// Progressing to false here due to the collision
 			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 				Status:             metav1.ConditionFalse,
@@ -212,6 +218,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 				Message:            fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")),
 				ObservedGeneration: rev.Generation,
 			})
+
+			// idk if we want to return yet or check the Availability probes on a best-effort basis
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	}
@@ -230,6 +238,9 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		}
 
 		// Report status.
+		// We probably want to set Progressing to False here with a rollout success reason and message
+		// It would be good to understand from Nico how we can distinguish between progression and availability probes
+		// and how to best check that all Availability probes are passing
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionTrue,
@@ -237,6 +248,10 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			Message:            "Object is available and passes all probes.",
 			ObservedGeneration: rev.Generation,
 		})
+
+		// We'll probably only want to remove this once we are done updating the ClusterExtension conditions
+		// as its one of the interfaces between the revision and the extension. If we still have the Succeeded for now
+		// that's fine.
 		if !meta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
 			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 				Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
@@ -253,6 +268,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 				continue
 			}
 			for _, ores := range pres.GetObjects() {
+				// we probably want an AvailabilityProbeType and run through all of them independently of whether
+				// the revision is complete or not
 				pr := ores.Probes()[boxcutter.ProgressProbeType]
 				if pr.Success {
 					continue
@@ -260,6 +277,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 				obj := ores.Object()
 				gvk := obj.GetObjectKind().GroupVersionKind()
+				// I think these can be pretty large and verbose. We may want to
+				// work a little on the formatting...?
 				probeFailureMsgs = append(probeFailureMsgs, fmt.Sprintf(
 					"Object %s.%s %s/%s: %v",
 					gvk.Kind, gvk.GroupVersion().String(),
@@ -277,6 +296,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 				ObservedGeneration: rev.Generation,
 			})
 		} else {
+			// either to nothing or set the Progressing condition to True with rolling out reason / message
 			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 				Status:             metav1.ConditionFalse,
@@ -287,6 +307,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		}
 	}
 	if rres.InTransistion() {
+		// seems to be the right thing XD
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.TypeProgressing,
 			Status:             metav1.ConditionTrue,
@@ -295,6 +316,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			ObservedGeneration: rev.Generation,
 		})
 	} else {
+		// we may not want to remove it but rather set it to False?
 		meta.RemoveStatusCondition(&rev.Status.Conditions, ocv1.TypeProgressing)
 	}
 
