@@ -203,6 +203,27 @@ func Test_UnmarshallConfig(t *testing.T) {
 			expectedErrMessage:    "required field \"watchNamespace\" is missing",
 		},
 		{
+			name:                  "rejects with required field error when install modes {SingleNamespace} and watchNamespace is missing",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+		},
+		{
+			name:                  "rejects with required field error when install modes {SingleNamespace, OwnNamespace} and watchNamespace is missing",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+		},
+		{
+			name:                  "rejects with required field error when install modes {SingleNamespace, MultiNamespace} and watchNamespace is missing",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+		},
+		{
 			name:                  "rejects with required field error when install modes {SingleNamespace, OwnNamespace, MultiNamespace} and watchNamespace is nil",
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
 			rawConfig:             []byte(`{"watchNamespace": null}`),
@@ -222,6 +243,24 @@ func Test_UnmarshallConfig(t *testing.T) {
 			name:                  "accepts null watchNamespace when install modes {AllNamespaces, OwnNamespace, MultiNamespace} and watchNamespace is nil",
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
 			rawConfig:             []byte(`{"watchNamespace": null}`),
+			installNamespace:      "not-some-namespace",
+			expectedConfig: &bundle.Config{
+				WatchNamespace: nil,
+			},
+		},
+		{
+			name:                  "accepts no watchNamespace when install modes {AllNamespaces, OwnNamespace} and watchNamespace is nil",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedConfig: &bundle.Config{
+				WatchNamespace: nil,
+			},
+		},
+		{
+			name:                  "accepts no watchNamespace when install modes {AllNamespaces, OwnNamespace, MultiNamespace} and watchNamespace is nil",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			rawConfig:             []byte(`{}`),
 			installNamespace:      "not-some-namespace",
 			expectedConfig: &bundle.Config{
 				WatchNamespace: nil,
