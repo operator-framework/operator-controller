@@ -83,20 +83,19 @@ func validateConfig(config *Config, installNamespace string, bundleInstallModeSe
 }
 
 // isWatchNamespaceConfigSupported returns true when the bundle exposes a watchNamespace configuration. This happens when:
-// - SingleNamespace install more is supported, or
-// - OwnNamespace and AllNamespaces install modes are supported
+// - SingleNamespace and/or OwnNamespace install modes are supported
 func isWatchNamespaceConfigSupported(bundleInstallModeSet sets.Set[v1alpha1.InstallMode]) bool {
-	return bundleInstallModeSet.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true}) ||
-		bundleInstallModeSet.HasAll(
-			v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-			v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true})
+	return bundleInstallModeSet.HasAny(
+		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+	)
 }
 
 // isWatchNamespaceConfigRequired returns true if the watchNamespace configuration is required. This happens when
-// AllNamespaces install mode is not supported and SingleNamespace is supported
+// AllNamespaces install mode is not supported and SingleNamespace and/or OwnNamespace is supported
 func isWatchNamespaceConfigRequired(bundleInstallModeSet sets.Set[v1alpha1.InstallMode]) bool {
-	return !bundleInstallModeSet.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true}) &&
-		bundleInstallModeSet.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true})
+	return isWatchNamespaceConfigSupported(bundleInstallModeSet) &&
+		!bundleInstallModeSet.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true})
 }
 
 // formatUnmarshallError format JSON unmarshal errors to be more readable
