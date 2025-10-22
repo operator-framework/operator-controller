@@ -535,6 +535,23 @@ type ClusterExtension struct {
 	Status ClusterExtensionStatus `json:"status,omitempty"`
 }
 
+// ExtensionConfigBytes returns the ClusterExtension configuration input by the user
+// through .spec.config as a byte slice
+func (e *ClusterExtension) ExtensionConfigBytes() []byte {
+	if e.Spec.Config == nil {
+		return nil
+	}
+	switch e.Spec.Config.ConfigType {
+	case ClusterExtensionConfigTypeInline:
+		if e.Spec.Config.Inline != nil {
+			return e.Spec.Config.Inline.Raw
+		}
+		return nil
+	default:
+		return nil
+	}
+}
+
 // +kubebuilder:object:root=true
 
 // ClusterExtensionList contains a list of ClusterExtension

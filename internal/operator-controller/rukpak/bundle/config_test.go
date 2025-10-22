@@ -22,9 +22,11 @@ func Test_UnmarshallConfig(t *testing.T) {
 		expectedConfig        *bundle.Config
 	}{
 		{
-			name:           "accepts nil raw config",
-			rawConfig:      nil,
-			expectedConfig: nil,
+			name:                  "treats nil config as {}",
+			rawConfig:             nil,
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
+			expectedConfig:        nil,
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
 		},
 		{
 			name:                  "accepts json config",

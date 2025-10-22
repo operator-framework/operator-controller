@@ -22,10 +22,10 @@ type Config struct {
 // - rv is nil
 // - bytes is not a valid YAML/JSON object
 // - bytes is a valid YAML/JSON object but does not follow the registry+v1 schema
-// if bytes is nil a nil bundle.Config is returned
+// if bytes is nil it will be treated as an empty json object ({})
 func UnmarshallConfig(bytes []byte, rv1 RegistryV1, installNamespace string) (*Config, error) {
 	if bytes == nil {
-		return nil, nil
+		bytes = []byte("{}")
 	}
 
 	bundleConfig := &Config{}
