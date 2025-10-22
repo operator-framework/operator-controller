@@ -41,7 +41,9 @@ const (
 	ClusterExtensionRevisionReasonIncomplete                = "Incomplete"
 	ClusterExtensionRevisionReasonProgressing               = "Progressing"
 	ClusterExtensionRevisionReasonArchived                  = "Archived"
-	ClusterExtensionRevisionReasonRolloutInProgress         = "RolloutInProgress"
+	ClusterExtensionRevisionReasonRolloutInProgress         = "RollingOut"
+	ClusterExtensionRevisionReasonRolloutError              = "RolloutError"
+	ClusterExtensionRevisionReasonRolledOut                 = "RolledOut"
 )
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
@@ -152,6 +154,7 @@ type ClusterExtensionRevisionStatus struct {
 
 // ClusterExtensionRevision is the Schema for the clusterextensionrevisions API
 // +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
+// +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 type ClusterExtensionRevision struct {
 	metav1.TypeMeta   `json:",inline"`
