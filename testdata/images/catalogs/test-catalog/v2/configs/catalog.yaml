@@ -1,4 +1,3 @@
----
 schema: olm.package
 name: test
 defaultChannel: beta

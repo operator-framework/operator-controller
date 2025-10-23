@@ -4,7 +4,7 @@ metadata:
   creationTimestamp: null
   name: webhook-operator-metrics-reader
 rules:
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
