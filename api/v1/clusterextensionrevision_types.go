@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -38,6 +39,7 @@ const (
 	ClusterExtensionRevisionReasonObjectCollisions          = "ObjectCollisions"
 	ClusterExtensionRevisionReasonRolloutSuccess            = "RolloutSuccess"
 	ClusterExtensionRevisionReasonProbeFailure              = "ProbeFailure"
+	ClusterExtensionRevisionReasonProbesSucceeded           = "ProbesSucceeded"
 	ClusterExtensionRevisionReasonIncomplete                = "Incomplete"
 	ClusterExtensionRevisionReasonProgressing               = "Progressing"
 	ClusterExtensionRevisionReasonArchived                  = "Archived"
@@ -167,6 +169,46 @@ type ClusterExtensionRevision struct {
 	// status is an optional field that defines the observed state of the ClusterExtension.
 	// +optional
 	Status ClusterExtensionRevisionStatus `json:"status,omitempty"`
+}
+
+func (cer *ClusterExtensionRevision) MarkAsProgressing(reason, message string) {
+	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ClusterExtensionRevisionTypeProgressing,
+		Status:             metav1.ConditionTrue,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cer.Generation,
+	})
+}
+
+func (cer *ClusterExtensionRevision) MarkAsNotProgressing(reason, message string) {
+	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ClusterExtensionRevisionTypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cer.Generation,
+	})
+}
+
+func (cer *ClusterExtensionRevision) MarkAsAvailable(reason, message string) {
+	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ClusterExtensionRevisionTypeAvailable,
+		Status:             metav1.ConditionTrue,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cer.Generation,
+	})
+}
+
+func (cer *ClusterExtensionRevision) MarkAsUnavailable(reason, message string) {
+	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ClusterExtensionRevisionTypeAvailable,
+		Status:             metav1.ConditionFalse,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cer.Generation,
+	})
 }
 
 // +kubebuilder:object:root=true
