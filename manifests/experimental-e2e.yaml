@@ -1319,14 +1319,6 @@ spec:
                           "0.6.0", which means "only install version 0.6.0 and never
                           upgrade from this version".
 
-                          For registry+v1 bundles that include release information in the build
-                          metadata field (e.g., "1.0.0+20230101"), you can pin to an exact version
-                          including the release by specifying the full version string with build
-                          metadata (e.g., "1.0.0+20230101"). This ensures an exact match of both
-                          the semver version and the release. If you specify a version without build
-                          metadata (e.g., "1.0.0"), it will match all bundles with that version
-                          regardless of their release information.
-
                           # Basic Comparison Operators
 
                           The basic comparison operators and their meanings are:

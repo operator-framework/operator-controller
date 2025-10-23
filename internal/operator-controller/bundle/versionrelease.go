@@ -10,27 +10,40 @@ import (
 	slicesutil "github.com/operator-framework/operator-controller/internal/shared/util/slices"
 )
 
-// NewLegacyRegistryV1VersionRelease parses a registry+v1 bundle version string and returns
-// a VersionRelease. For registry+v1 bundles, the build metadata field of the semver version
-// is treated as release information (a semver spec violation maintained for backward compatibility).
-// The returned VersionRelease has the build metadata extracted into the Release field, and the
-// Version field has its Build metadata cleared.
+// NewLegacyRegistryV1VersionRelease parses a registry+v1 bundle version string and returns a
+// VersionRelease. Some registry+v1 bundles utilize the build metadata field of the semver version
+// as release information (a semver spec violation maintained for backward compatibility). When the
+// bundle version includes build metadata that is parsable as a release, the returned
+// VersionRelease has the build metadata extracted into the Release field, and the Version field
+// has its Build metadata cleared. When the bundle version includes build metadata that is NOT
+// parseable as a release, the returned VersionRelease has its Version set to the full semver
+// version (with build metadata) and its Release left empty.
 func NewLegacyRegistryV1VersionRelease(vStr string) (*VersionRelease, error) {
 	vers, err := bsemver.Parse(vStr)
 	if err != nil {
 		return nil, err
 	}
 
-	rel, err := NewRelease(strings.Join(vers.Build, "."))
-	if err != nil {
-		return nil, err
-	}
-	vers.Build = nil
-
-	return &VersionRelease{
+	vr := &VersionRelease{
 		Version: vers,
-		Release: rel,
-	}, nil
+	}
+
+	rel, err := NewRelease(strings.Join(vr.Version.Build, "."))
+	if err == nil {
+		// If the version build metadata parses successfully as a release
+		// then use it as a release and drop the build metadata
+		//
+		// If we don't parse the build metadata as a release successfully,
+		// that doesn't mean we have an invalid version. It just means
+		// that we have a valid semver version with valid build metadata,
+		// but no release value. In this case, we return a VersionRelease
+		// with:
+		//   - Version: the full version (with build metadata)
+		//   - Release: <empty>
+		vr.Release = rel
+		vr.Version.Build = nil
+	}
+	return vr, nil
 }
 
 type VersionRelease struct {
