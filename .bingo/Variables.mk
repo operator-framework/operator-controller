@@ -95,3 +95,9 @@ $(SETUP_ENVTEST): $(BINGO_DIR)/setup-envtest.mod
 	@echo "(re)installing $(GOBIN)/setup-envtest-v0.0.0-20250620151452-b9a9ca01fd37"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=setup-envtest.mod -o=$(GOBIN)/setup-envtest-v0.0.0-20250620151452-b9a9ca01fd37 "sigs.k8s.io/controller-runtime/tools/setup-envtest"
 
+YAMLFMT := $(GOBIN)/yamlfmt-v0.20.0
+$(YAMLFMT): $(BINGO_DIR)/yamlfmt.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/yamlfmt-v0.20.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=yamlfmt.mod -o=$(GOBIN)/yamlfmt-v0.20.0 "github.com/google/yamlfmt/cmd/yamlfmt"
+

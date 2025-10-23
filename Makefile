@@ -186,8 +186,9 @@ fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
 	$(GOLANGCI_LINT) run --fix --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: fmt
-fmt: #EXHELP Formats code
+fmt: $(YAMLFMT) #EXHELP Formats code
 	go fmt ./...
+	$(YAMLFMT) testdata
 
 .PHONY: update-tls-profiles
 update-tls-profiles: $(GOJQ) #EXHELP Update TLS profiles from the Mozilla wiki
