@@ -12,7 +12,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
-func Test_UnmarshallConfig(t *testing.T) {
+func Test_UnmarshalConfig(t *testing.T) {
 	for _, tc := range []struct {
 		name                  string
 		rawConfig             []byte
@@ -22,7 +22,7 @@ func Test_UnmarshallConfig(t *testing.T) {
 		expectedConfig        *bundle.Config
 	}{
 		{
-			name:           "accepts nil raw config",
+			name:           "returns nil for nil config",
 			rawConfig:      nil,
 			expectedConfig: nil,
 		},
@@ -91,16 +91,28 @@ func Test_UnmarshallConfig(t *testing.T) {
 			expectedErrMessage:    "unknown field \"watchNamespace\"",
 		},
 		{
-			name:                  "reject with unknown field when install modes {OwnNamespace}",
+			name:                  "reject with required field when install modes {OwnNamespace} and watchNamespace is null",
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeOwnNamespace},
-			rawConfig:             []byte(`{"watchNamespace": "some-namespace"}`),
-			expectedErrMessage:    "unknown field \"watchNamespace\"",
+			rawConfig:             []byte(`{"watchNamespace": null}`),
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
 		},
 		{
-			name:                  "reject with unknown field when install modes {MultiNamespace, OwnNamespace}",
+			name:                  "reject with required field when install modes {OwnNamespace} and watchNamespace is missing",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeOwnNamespace},
+			rawConfig:             []byte(`{}`),
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+		},
+		{
+			name:                  "reject with required field when install modes {MultiNamespace, OwnNamespace} and watchNamespace is null",
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeMultiNamespace, v1alpha1.InstallModeTypeOwnNamespace},
-			rawConfig:             []byte(`{"watchNamespace": "some-namespace"}`),
-			expectedErrMessage:    "unknown field \"watchNamespace\"",
+			rawConfig:             []byte(`{"watchNamespace": null}`),
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+		},
+		{
+			name:                  "reject with required field when install modes {MultiNamespace, OwnNamespace} and watchNamespace is missing",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeMultiNamespace, v1alpha1.InstallModeTypeOwnNamespace},
+			rawConfig:             []byte(`{}`),
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
 		},
 		{
 			name:                  "accepts when install modes {SingleNamespace} and watchNamespace != install namespace",
@@ -203,6 +215,27 @@ func Test_UnmarshallConfig(t *testing.T) {
 			expectedErrMessage:    "required field \"watchNamespace\" is missing",
 		},
 		{
+			name:                  "rejects with required field error when install modes {SingleNamespace} and watchNamespace is missing",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+		},
+		{
+			name:                  "rejects with required field error when install modes {SingleNamespace, OwnNamespace} and watchNamespace is missing",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+		},
+		{
+			name:                  "rejects with required field error when install modes {SingleNamespace, MultiNamespace} and watchNamespace is missing",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+		},
+		{
 			name:                  "rejects with required field error when install modes {SingleNamespace, OwnNamespace, MultiNamespace} and watchNamespace is nil",
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
 			rawConfig:             []byte(`{"watchNamespace": null}`),
@@ -228,6 +261,24 @@ func Test_UnmarshallConfig(t *testing.T) {
 			},
 		},
 		{
+			name:                  "accepts no watchNamespace when install modes {AllNamespaces, OwnNamespace} and watchNamespace is nil",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedConfig: &bundle.Config{
+				WatchNamespace: nil,
+			},
+		},
+		{
+			name:                  "accepts no watchNamespace when install modes {AllNamespaces, OwnNamespace, MultiNamespace} and watchNamespace is nil",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			rawConfig:             []byte(`{}`),
+			installNamespace:      "not-some-namespace",
+			expectedConfig: &bundle.Config{
+				WatchNamespace: nil,
+			},
+		},
+		{
 			name:                  "rejects with format error when install modes are {SingleNamespace, OwnNamespace} and watchNamespace is ''",
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace},
 			rawConfig:             []byte(`{"watchNamespace": ""}`),
@@ -246,7 +297,7 @@ func Test_UnmarshallConfig(t *testing.T) {
 				}
 			}
 
-			config, err := bundle.UnmarshallConfig(tc.rawConfig, rv1, tc.installNamespace)
+			config, err := bundle.UnmarshalConfig(tc.rawConfig, rv1, tc.installNamespace)
 			require.Equal(t, tc.expectedConfig, config)
 			if tc.expectedErrMessage != "" {
 				require.Error(t, err)

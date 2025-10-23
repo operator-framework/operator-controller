@@ -107,3 +107,43 @@ properties:
     value:
       packageName: webhook-operator
       version: 0.0.1
+---
+schema: olm.package
+name: own-namespace-operator
+defaultChannel: alpha
+---
+schema: olm.channel
+name: alpha
+package: own-namespace-operator
+entries:
+  - name: own-namespace-operator.1.0.0
+---
+schema: olm.bundle
+name: own-namespace-operator.1.0.0
+package: own-namespace-operator
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/own-namespace-operator:v1.0.0
+properties:
+  - type: olm.package
+    value:
+      packageName: own-namespace-operator
+      version: 1.0.0
+---
+schema: olm.package
+name: single-namespace-operator
+defaultChannel: alpha
+---
+schema: olm.channel
+name: alpha
+package: single-namespace-operator
+entries:
+  - name: single-namespace-operator.1.0.0
+---
+schema: olm.bundle
+name: single-namespace-operator.1.0.0
+package: single-namespace-operator
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/single-namespace-operator:v1.0.0
+properties:
+  - type: olm.package
+    value:
+      packageName: single-namespace-operator
+      version: 1.0.0

@@ -17,20 +17,20 @@ type Config struct {
 	WatchNamespace *string `json:"watchNamespace"`
 }
 
-// UnmarshallConfig returns a deserialized and validated *bundle.Config based on bytes and validated
+// UnmarshalConfig returns a deserialized *bundle.Config based on bytes and validated
 // against rv1 and the desired install namespaces. It will error if:
 // - rv is nil
 // - bytes is not a valid YAML/JSON object
 // - bytes is a valid YAML/JSON object but does not follow the registry+v1 schema
-// if bytes is nil a nil bundle.Config is returned
-func UnmarshallConfig(bytes []byte, rv1 RegistryV1, installNamespace string) (*Config, error) {
+// - if bytes is nil, a nil *bundle.Config is returned with no error
+func UnmarshalConfig(bytes []byte, rv1 RegistryV1, installNamespace string) (*Config, error) {
 	if bytes == nil {
 		return nil, nil
 	}
 
 	bundleConfig := &Config{}
 	if err := yaml.UnmarshalStrict(bytes, bundleConfig); err != nil {
-		return nil, fmt.Errorf("error unmarshalling registry+v1 configuration: %w", formatUnmarshallError(err))
+		return nil, fmt.Errorf("error unmarshalling registry+v1 configuration: %w", formatUnmarshalError(err))
 	}
 
 	// collect bundle install modes
@@ -83,24 +83,23 @@ func validateConfig(config *Config, installNamespace string, bundleInstallModeSe
 }
 
 // isWatchNamespaceConfigSupported returns true when the bundle exposes a watchNamespace configuration. This happens when:
-// - SingleNamespace install more is supported, or
-// - OwnNamespace and AllNamespaces install modes are supported
+// - SingleNamespace and/or OwnNamespace install modes are supported
 func isWatchNamespaceConfigSupported(bundleInstallModeSet sets.Set[v1alpha1.InstallMode]) bool {
-	return bundleInstallModeSet.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true}) ||
-		bundleInstallModeSet.HasAll(
-			v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-			v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true})
+	return bundleInstallModeSet.HasAny(
+		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+		v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+	)
 }
 
 // isWatchNamespaceConfigRequired returns true if the watchNamespace configuration is required. This happens when
-// AllNamespaces install mode is not supported and SingleNamespace is supported
+// AllNamespaces install mode is not supported and SingleNamespace and/or OwnNamespace is supported
 func isWatchNamespaceConfigRequired(bundleInstallModeSet sets.Set[v1alpha1.InstallMode]) bool {
-	return !bundleInstallModeSet.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true}) &&
-		bundleInstallModeSet.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true})
+	return isWatchNamespaceConfigSupported(bundleInstallModeSet) &&
+		!bundleInstallModeSet.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true})
 }
 
-// formatUnmarshallError format JSON unmarshal errors to be more readable
-func formatUnmarshallError(err error) error {
+// formatUnmarshalError format JSON unmarshal errors to be more readable
+func formatUnmarshalError(err error) error {
 	var unmarshalErr *json.UnmarshalTypeError
 	if errors.As(err, &unmarshalErr) {
 		if unmarshalErr.Field == "" {

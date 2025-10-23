@@ -62,6 +62,113 @@ func Test_BundleRenderer_CreatesCorrectDefaultOptions(t *testing.T) {
 	_, _ = renderer.Render(bundle.RegistryV1{}, expectedInstallNamespace)
 }
 
+func Test_BundleRenderer_DefaultTargetNamespaces(t *testing.T) {
+	for _, tc := range []struct {
+		name                     string
+		supportedInstallModes    []v1alpha1.InstallModeType
+		expectedTargetNamespaces []string
+		expectedErrMsg           string
+	}{
+		{
+			name:                     "Default to AllNamespaces when bundle install modes are {AllNamespaces}",
+			supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces},
+			expectedTargetNamespaces: []string{corev1.NamespaceAll},
+		},
+		{
+			name:                     "Default to AllNamespaces when bundle install modes are {AllNamespaces, OwnNamespace}",
+			supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
+			expectedTargetNamespaces: []string{corev1.NamespaceAll},
+		},
+		{
+			name:                     "Default to AllNamespaces when bundle install modes are {AllNamespaces, SingleNamespace}",
+			supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace},
+			expectedTargetNamespaces: []string{corev1.NamespaceAll},
+		},
+		{
+			name:                     "Default to AllNamespaces when bundle install modes are {AllNamespaces, MultiNamespace}",
+			supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeMultiNamespace},
+			expectedTargetNamespaces: []string{corev1.NamespaceAll},
+		},
+		{
+			name:                     "Default to AllNamespaces when bundle install modes are {AllNamespaces, OwnNamespace, SingleNamespace}",
+			supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeSingleNamespace},
+			expectedTargetNamespaces: []string{corev1.NamespaceAll},
+		},
+		{
+			name:                     "Default to AllNamespaces when bundle install modes are {AllNamespaces, OwnNamespace, MultiNamespace}",
+			supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			expectedTargetNamespaces: []string{corev1.NamespaceAll},
+		},
+		{
+			name:                     "Default to AllNamespaces when bundle install modes are {AllNamespaces, SingleNamespace, MultiNamespace}",
+			supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			expectedTargetNamespaces: []string{corev1.NamespaceAll},
+		},
+		{
+			name:                     "Default to AllNamespaces when bundle install modes are {AllNamespaces, SingleNamespace, OwnNamespace, MultiNamespace}",
+			supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			expectedTargetNamespaces: []string{corev1.NamespaceAll},
+		},
+		{
+			name:                  "No default when bundle install modes are {SingleNamespace}",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
+			expectedErrMsg:        "exactly one target namespace must be specified",
+		},
+		{
+			name:                  "No default when bundle install modes are {OwnNamespace}",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeOwnNamespace},
+			expectedErrMsg:        "exactly one target namespace must be specified",
+		},
+		{
+			name:                  "No default when bundle install modes are {MultiNamespace}",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeMultiNamespace},
+			expectedErrMsg:        "at least one target namespace must be specified",
+		},
+		{
+			name:                  "No default when bundle install modes are {SingleNamespace, OwnNamespace}",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace},
+			expectedErrMsg:        "exactly one target namespace must be specified",
+		},
+		{
+			name:                  "No default when bundle install modes are {SingleNamespace, MultiNamespace}",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			expectedErrMsg:        "at least one target namespace must be specified",
+		},
+		{
+			name:                  "No default when bundle install modes are {OwnNamespace, MultiNamespace}",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			expectedErrMsg:        "at least one target namespace must be specified",
+		},
+		{
+			name:                  "No default when bundle install modes are {SingleNamespace, OwnNamespace, MultiNamespace}",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace, v1alpha1.InstallModeTypeMultiNamespace},
+			expectedErrMsg:        "at least one target namespace must be specified",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			renderer := render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						require.Equal(t, tc.expectedTargetNamespaces, opts.TargetNamespaces)
+						return nil, nil
+					},
+				},
+			}
+			_, err := renderer.Render(bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithName("test").
+					WithInstallModeSupportFor(tc.supportedInstallModes...).Build(),
+			}, "some-namespace")
+			if tc.expectedErrMsg != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedErrMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func Test_BundleRenderer_ValidatesRenderOptions(t *testing.T) {
 	for _, tc := range []struct {
 		name             string

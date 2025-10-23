@@ -124,7 +124,7 @@ func (r BundleRenderer) Render(rv1 bundle.RegistryV1, installNamespace string, o
 	genOpts, errs := (&Options{
 		// default options
 		InstallNamespace:    installNamespace,
-		TargetNamespaces:    defaultTargetNamespacesForBundle(&rv1, installNamespace),
+		TargetNamespaces:    defaultTargetNamespacesForBundle(&rv1),
 		UniqueNameGenerator: DefaultUniqueNameGenerator,
 		CertificateProvider: nil,
 	}).apply(opts...).validate(&rv1)
@@ -160,10 +160,10 @@ func validateTargetNamespaces(rv1 *bundle.RegistryV1, installNamespace string, t
 		// in case only the MultiNamespace install mode is supported by the bundle.
 		// If AllNamespaces mode is supported, the default will be [""] -> watch all namespaces
 		// If only OwnNamespace is supported, the default will be [install-namespace] -> only watch the install/own namespace
-		if supportedInstallModes.Len() == 1 && supportedInstallModes.Has(v1alpha1.InstallModeTypeSingleNamespace) {
-			return errors.New("exactly one target namespace must be specified")
+		if supportedInstallModes.Has(v1alpha1.InstallModeTypeMultiNamespace) {
+			return errors.New("at least one target namespace must be specified")
 		}
-		return errors.New("at least one target namespace must be specified")
+		return errors.New("exactly one target namespace must be specified")
 	case set.Len() == 1 && set.Has(""):
 		if supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
 			return nil
@@ -190,15 +190,11 @@ func validateTargetNamespaces(rv1 *bundle.RegistryV1, installNamespace string, t
 	return fmt.Errorf("supported install modes %v do not support target namespaces %v", sets.List[v1alpha1.InstallModeType](supportedInstallModes), targetNamespaces)
 }
 
-func defaultTargetNamespacesForBundle(rv1 *bundle.RegistryV1, installNamespace string) []string {
+func defaultTargetNamespacesForBundle(rv1 *bundle.RegistryV1) []string {
 	supportedInstallModes := supportedBundleInstallModes(rv1)
 
 	if supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
 		return []string{corev1.NamespaceAll}
-	}
-
-	if supportedInstallModes.Has(v1alpha1.InstallModeTypeOwnNamespace) {
-		return []string{installNamespace}
 	}
 
 	return nil

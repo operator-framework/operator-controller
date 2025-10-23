@@ -68,8 +68,14 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		render.WithCertificateProvider(r.CertificateProvider),
 	}
 
-	if r.IsSingleOwnNamespaceEnabled && ext.Spec.Config != nil && ext.Spec.Config.ConfigType == ocv1.ClusterExtensionConfigTypeInline {
-		bundleConfig, err := bundle.UnmarshallConfig(ext.Spec.Config.Inline.Raw, rv1, ext.Spec.Namespace)
+	if r.IsSingleOwnNamespaceEnabled {
+		bundleConfigBytes := extensionConfigBytes(ext)
+		// treat no config as empty to properly validate the configuration
+		// e.g. ensure that validation catches missing required fields
+		if bundleConfigBytes == nil {
+			bundleConfigBytes = []byte(`{}`)
+		}
+		bundleConfig, err := bundle.UnmarshalConfig(bundleConfigBytes, rv1, ext.Spec.Namespace)
 		if err != nil {
 			return nil, fmt.Errorf("invalid bundle configuration: %w", err)
 		}
@@ -127,4 +133,18 @@ func (r *RegistryV1HelmChartProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExten
 	}
 
 	return chrt, nil
+}
+
+// ExtensionConfigBytes returns the ClusterExtension configuration input by the user
+// through .spec.config as a byte slice.
+func extensionConfigBytes(ext *ocv1.ClusterExtension) []byte {
+	if ext.Spec.Config != nil {
+		switch ext.Spec.Config.ConfigType {
+		case ocv1.ClusterExtensionConfigTypeInline:
+			if ext.Spec.Config.Inline != nil {
+				return ext.Spec.Config.Inline.Raw
+			}
+		}
+	}
+	return nil
 }

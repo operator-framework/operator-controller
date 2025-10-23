@@ -56,11 +56,43 @@ kubectl rollout status -n olmv1-system deployment/operator-controller-controller
 ## Configuring the `ClusterExtension`
 
 A `ClusterExtension` can be configured to install bundle in `Single-` or `OwnNamespace` mode through the
-`.spec.config.inline.watchNamespace` property. The *installMode* is inferred in the following way:
+`.spec.config.inline.watchNamespace` property which may or may not be present or required depending on the bundle's
+install mode support, if the bundle:
 
- - *AllNamespaces*: `watchNamespace` is empty, or not set
- - *OwnNamespace*: `watchNamespace` is the install namespace (i.e. `.spec.namespace`)
- - *SingleNamespace*: `watchNamespace` *not* the install namespace
+ - only supports *AllNamespaces* mode => `watchNamespace` is not a configuration
+ - supports *AllNamespaces* and *SingleNamespace* and/or *OwnNamespace* => `watchNamespace` is optional
+ - bundle only supports *SingleNamespace* and/or *OwnNamespace* => `watchNamespace` is required
+
+The `watchNamespace` configuration can only be the install namespace if the bundle supports the *OwnNamespace* install mode, and
+it can only be any other namespace if the bundle supports the *SingleNamespace* install mode.
+
+Examples:
+
+Bundle only supports *AllNamespaces*:
+- `watchNamespace` is not a configuration
+- bundle will be installed in *AllNamespaces* mode
+
+Bundle only supports *OwnNamespace*:
+- `watchNamespace` is required
+- `watchNamespace` must be the install namespace
+- bundle will always be installed in *OwnNamespace* mode
+
+Bundle supports *AllNamespace* and *OwnNamespace*:
+- `watchNamespace` is optional
+- if `watchNamespace` = install namespace => bundle will be installed in *OwnNamespace* mode
+- if `watchNamespace` is null or not set => bundle will be installed in *AllNamespaces* mode
+- if `watchNamespace` != install namespace => error
+
+Bundle only supports *SingleNamespace*:
+- `watchNamespace` is required
+- `watchNamespace` must *NOT* be the install namespace
+- bundle will always be installed in *SingleNamespace* mode
+
+Bundle supports *AllNamespaces*, *SingleNamespace*, and *OwnNamespace* install modes:
+- `watchNamespace` can be optionally configured
+- if `watchNamespace` = install namespace => bundle will be installed in *OwnNamespace* mode
+- if `watchNamespace` != install namespace => bundle will be installed in *SingleNamespace* mode
+- if `watchNamespace` is null or not set => bundle will be installed in *AllNamespaces* mode
 
 ### Examples
 
