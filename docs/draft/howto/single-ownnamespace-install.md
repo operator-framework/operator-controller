@@ -64,7 +64,7 @@ install mode support, if the bundle:
  - bundle only supports *SingleNamespace* and/or *OwnNamespace* => `watchNamespace` is required
 
 The `watchNamespace` configuration can only be the install namespace if the bundle supports the *OwnNamespace* install mode, and
-it can only be any other namespace is the bundle supports the *SingleNamespace* install mode.
+it can only be any other namespace if the bundle supports the *SingleNamespace* install mode.
 
 Examples:
 

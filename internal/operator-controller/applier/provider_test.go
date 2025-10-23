@@ -244,15 +244,6 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 	t.Run("rejects bundles without AllNamespaces install mode and with SingleNamespace support when Single/OwnNamespace install mode support is enabled", func(t *testing.T) {
 		expectedWatchNamespace := "some-namespace"
 		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						t.Log("ensure watch namespace is appropriately configured")
-						require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
-						return nil, nil
-					},
-				},
-			},
 			IsSingleOwnNamespaceEnabled: false,
 		}
 
@@ -322,17 +313,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 	})
 
 	t.Run("rejects bundles with {SingleNamespace} install modes when no configuration is given", func(t *testing.T) {
-		expectedWatchNamespace := "some-namespace"
 		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						t.Log("ensure watch namespace is appropriately configured")
-						require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
-						return nil, nil
-					},
-				},
-			},
 			IsSingleOwnNamespaceEnabled: true,
 		}
 
@@ -349,18 +330,28 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 	})
 
 	t.Run("accepts bundles with {OwnNamespace} install modes when the appropriate configuration is given", func(t *testing.T) {
+		installNamespace := "some-namespace"
 		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						t.Log("ensure watch namespace is appropriately configured")
+						require.Equal(t, []string{installNamespace}, opts.TargetNamespaces)
+						return nil, nil
+					},
+				},
+			},
 			IsSingleOwnNamespaceEnabled: true,
 		}
 		bundleFS := bundlefs.Builder().WithPackageName("test").
 			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
 		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
+				Namespace: installNamespace,
 				Config: &ocv1.ClusterExtensionConfig{
 					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
 					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{"watchNamespace": "install-namespace"}`),
+						Raw: []byte(`{"watchNamespace": "` + installNamespace + `"}`),
 					},
 				},
 			},

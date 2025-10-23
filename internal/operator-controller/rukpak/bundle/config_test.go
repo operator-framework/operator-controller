@@ -12,7 +12,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
 )
 
-func Test_UnmarshallConfig(t *testing.T) {
+func Test_UnmarshalConfig(t *testing.T) {
 	for _, tc := range []struct {
 		name                  string
 		rawConfig             []byte
@@ -22,11 +22,9 @@ func Test_UnmarshallConfig(t *testing.T) {
 		expectedConfig        *bundle.Config
 	}{
 		{
-			name:                  "treats nil config as {}",
-			rawConfig:             nil,
-			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
-			expectedConfig:        nil,
-			expectedErrMessage:    "required field \"watchNamespace\" is missing",
+			name:           "returns nil for nil config",
+			rawConfig:      nil,
+			expectedConfig: nil,
 		},
 		{
 			name:                  "accepts json config",
@@ -299,7 +297,7 @@ func Test_UnmarshallConfig(t *testing.T) {
 				}
 			}
 
-			config, err := bundle.UnmarshallConfig(tc.rawConfig, rv1, tc.installNamespace)
+			config, err := bundle.UnmarshalConfig(tc.rawConfig, rv1, tc.installNamespace)
 			require.Equal(t, tc.expectedConfig, config)
 			if tc.expectedErrMessage != "" {
 				require.Error(t, err)

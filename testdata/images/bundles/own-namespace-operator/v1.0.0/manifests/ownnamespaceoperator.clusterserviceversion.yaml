@@ -27,11 +27,11 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
   owned:
-    - description: A dummy resource for an operator that only supports own namespace install mode
-      displayName: OwnNamespace
-      kind: OwnNamespace
-      name: ownnamespaces.olm.operatorframework.io
-      version: v1
+  - description: A dummy resource for an operator that only supports own namespace install mode
+    displayName: OwnNamespace
+    kind: OwnNamespace
+    name: ownnamespaces.olm.operatorframework.io
+    version: v1
   description: OLM OwnNamespace Testing Operator
   displayName: test-operator
   icon:

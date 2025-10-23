@@ -162,9 +162,8 @@ func validateTargetNamespaces(rv1 *bundle.RegistryV1, installNamespace string, t
 		// If only OwnNamespace is supported, the default will be [install-namespace] -> only watch the install/own namespace
 		if supportedInstallModes.Has(v1alpha1.InstallModeTypeMultiNamespace) {
 			return errors.New("at least one target namespace must be specified")
-		} else {
-			return errors.New("exactly one target namespace must be specified")
 		}
+		return errors.New("exactly one target namespace must be specified")
 	case set.Len() == 1 && set.Has(""):
 		if supportedInstallModes.Has(v1alpha1.InstallModeTypeAllNamespaces) {
 			return nil
