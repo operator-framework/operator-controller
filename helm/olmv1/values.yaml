@@ -33,10 +33,6 @@ options:
   # This can be one of: standard or experimental
   featureSet: standard
 
-# Deprecated: The list of features
-operatorControllerFeatures: []
-catalogdFeatures: []
-
 # The set of namespaces
 namespaces:
   olmv1:
