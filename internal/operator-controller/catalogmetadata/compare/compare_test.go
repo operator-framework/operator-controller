@@ -26,12 +26,12 @@ func TestNewVersionRange(t *testing.T) {
 		{
 			versionRange: "1.0.0+1",
 			inputVersion: bsemver.MustParse("1.0.0"),
-			expect:       false,
+			expect:       true,
 		},
 		{
 			versionRange: "1.0.0+1",
 			inputVersion: bsemver.MustParse("1.0.0+2"),
-			expect:       false,
+			expect:       true,
 		},
 		{
 			versionRange: "1.0.0+1",

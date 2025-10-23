@@ -4,25 +4,37 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/blang/semver/v4"
+	bsemver "github.com/blang/semver/v4"
 	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 )
 
 func TestGetVersionAndRelease(t *testing.T) {
 	tests := []struct {
-		name        string
-		pkgProperty *property.Property
-		wantErr     bool
+		name               string
+		pkgProperty        *property.Property
+		wantVersionRelease *bundle.VersionRelease
+		wantErr            bool
 	}{
 		{
 			name: "valid version",
 			pkgProperty: &property.Property{
 				Type:  property.TypePackage,
 				Value: json.RawMessage(`{"version": "1.0.0-pre+1.alpha.2"}`),
+			},
+			wantVersionRelease: &bundle.VersionRelease{
+				Version: semver.MustParse("1.0.0-pre"),
+				Release: bundle.Release([]bsemver.PRVersion{
+					{VersionNum: 1, IsNum: true},
+					{VersionStr: "alpha"},
+					{VersionNum: 2, IsNum: true},
+				}),
 			},
 			wantErr: false,
 		},
@@ -40,7 +52,10 @@ func TestGetVersionAndRelease(t *testing.T) {
 				Type:  property.TypePackage,
 				Value: json.RawMessage(`{"version": "1.0.0+001"}`),
 			},
-			wantErr: true,
+			wantVersionRelease: &bundle.VersionRelease{
+				Version: semver.MustParse("1.0.0+001"),
+			},
+			wantErr: false,
 		},
 		{
 			name: "invalid json",

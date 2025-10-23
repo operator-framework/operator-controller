@@ -1,7 +1,6 @@
 package compare
 
 import (
-	"slices"
 	"strings"
 
 	mmsemver "github.com/Masterminds/semver/v3"
@@ -18,26 +17,13 @@ import (
 // provided versionRange. The versionRange provided to this function can be any valid semver
 // version string or any range constraint.
 //
-// When the provided version range is a valid semver version that includes build metadata, then the
-// returned function will only match an identical version with the same build metadata.
-//
-// When the provided version range is a valid semver version that does NOT include build metadata,
-// then the returned function will match any version that matches the semver version, ignoring the
-// build metadata of matched versions.
+// When the provided version range is a valid semver version then the returned function will match
+// any version that matches the semver version, ignoring the build metadata of matched versions.
 //
 // This function is intended to be used to parse the ClusterExtension.spec.source.catalog.version
 // field. See the API documentation for more details on the supported syntax.
 func NewVersionRange(versionRange string) (bsemver.Range, error) {
-	if versionPin, err := bsemver.Parse(versionRange); err == nil && len(versionPin.Build) > 0 {
-		return exactVersionMatcher(versionPin), nil
-	}
 	return newMastermindsRange(versionRange)
-}
-
-func exactVersionMatcher(pin bsemver.Version) bsemver.Range {
-	return func(v bsemver.Version) bool {
-		return pin.Compare(v) == 0 && slices.Compare(pin.Build, v.Build) == 0
-	}
 }
 
 func newMastermindsRange(versionRange string) (bsemver.Range, error) {
