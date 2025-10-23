@@ -35,115 +35,115 @@ spec:
   description: OLM E2E Testing Operator
   displayName: test-operator
   icon:
-  - base64data: ""
-    mediatype: ""
+    - base64data: ""
+      mediatype: ""
   install:
     spec:
       deployments:
-      - label:
-          app.kubernetes.io/component: controller
-          app.kubernetes.io/name: test-operator
-          app.kubernetes.io/version: 1.2.0
-        name: test-operator
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              app: olme2etest
-          template:
-            metadata:
-              labels:
+        - label:
+            app.kubernetes.io/component: controller
+            app.kubernetes.io/name: test-operator
+            app.kubernetes.io/version: 1.2.0
+          name: test-operator
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
                 app: olme2etest
-            spec:
-              terminationGracePeriodSeconds: 0
-              containers:
-              - name: busybox
-                image: busybox:1.37
-                command:
-                - 'sleep'
-                - '1000'
-                securityContext:
-                  runAsUser: 1000
-                  runAsNonRoot: true
-                serviceAccountName: simple-bundle-manager
+            template:
+              metadata:
+                labels:
+                  app: olme2etest
+              spec:
+                terminationGracePeriodSeconds: 0
+                containers:
+                  - name: busybox
+                    image: busybox:1.37
+                    command:
+                      - 'sleep'
+                      - '1000'
+                    securityContext:
+                      runAsUser: 1000
+                      runAsNonRoot: true
+                    serviceAccountName: simple-bundle-manager
       clusterPermissions:
-      - rules:
-        - apiGroups:
-          - authentication.k8s.io
-          resources:
-          - tokenreviews
-          verbs:
-          - create
-        - apiGroups:
-          - authorization.k8s.io
-          resources:
-          - subjectaccessreviews
-          verbs:
-          - create
-        serviceAccountName: simple-bundle-manager
+        - rules:
+            - apiGroups:
+                - authentication.k8s.io
+              resources:
+                - tokenreviews
+              verbs:
+                - create
+            - apiGroups:
+                - authorization.k8s.io
+              resources:
+                - subjectaccessreviews
+              verbs:
+                - create
+          serviceAccountName: simple-bundle-manager
       permissions:
-      - rules:
-        - apiGroups:
-          - ""
-          resources:
-          - configmaps
-          - serviceaccounts
-          verbs:
-          - get
-          - list
-          - watch
-          - create
-          - update
-          - patch
-          - delete
-        - apiGroups:
-          - networking.k8s.io
-          resources:
-          - networkpolicies
-          verbs:
-          - get
-          - list
-          - create
-          - update
-          - delete
-        - apiGroups:
-          - coordination.k8s.io
-          resources:
-          - leases
-          verbs:
-          - get
-          - list
-          - watch
-          - create
-          - update
-          - patch
-          - delete
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - patch
-        serviceAccountName: simple-bundle-manager
+        - rules:
+            - apiGroups:
+                - ""
+              resources:
+                - configmaps
+                - serviceaccounts
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - networking.k8s.io
+              resources:
+                - networkpolicies
+              verbs:
+                - get
+                - list
+                - create
+                - update
+                - delete
+            - apiGroups:
+                - coordination.k8s.io
+              resources:
+                - leases
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - ""
+              resources:
+                - events
+              verbs:
+                - create
+                - patch
+          serviceAccountName: simple-bundle-manager
     strategy: deployment
   installModes:
-  - supported: false
-    type: OwnNamespace
-  - supported: true
-    type: SingleNamespace
-  - supported: false
-    type: MultiNamespace
-  - supported: true
-    type: AllNamespaces
+    - supported: false
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
   keywords:
-  - registry
+    - registry
   links:
-  - name: simple-bundle
-    url: https://simple-bundle.domain
+    - name: simple-bundle
+      url: https://simple-bundle.domain
   maintainers:
-  - email: main#simple-bundle.domain
-    name: Simple Bundle
+    - email: main#simple-bundle.domain
+      name: Simple Bundle
   maturity: beta
   provider:
     name: Simple Bundle

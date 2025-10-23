@@ -50,12 +50,10 @@ spec:
               description: spec defines the desired state of WebhookTest
               properties:
                 mutate:
-                  description: Mutate is a field that will be set to true by the mutating
-                    webhook.
+                  description: Mutate is a field that will be set to true by the mutating webhook.
                   type: boolean
                 valid:
-                  description: Valid must be set to true or the validation webhook will
-                    reject the resource.
+                  description: Valid must be set to true or the validation webhook will reject the resource.
                   type: boolean
               required:
                 - valid
@@ -67,16 +65,15 @@ spec:
                   description: |-
                     conditions represent the current state of the WebhookTest resource.
                     Each condition has a unique type and reflects the status of a specific aspect of the resource.
-                    
+
                     Standard condition types include:
                     - "Available": the resource is fully functional
                     - "Progressing": the resource is being created or updated
                     - "Degraded": the resource failed to reach or maintain its desired state
-                    
+
                     The status of each condition is one of True, False, or Unknown.
                   items:
-                    description: Condition contains details for one aspect of the current
-                      state of this API Resource.
+                    description: Condition contains details for one aspect of the current state of this API Resource.
                     properties:
                       lastTransitionTime:
                         description: |-
@@ -166,16 +163,13 @@ spec:
               description: spec defines the desired state of WebhookTest
               properties:
                 conversion:
-                  description: Conversion is an example field of WebhookTest. Edit WebhookTest_types.go
-                    to remove/update
+                  description: Conversion is an example field of WebhookTest. Edit WebhookTest_types.go to remove/update
                   properties:
                     mutate:
-                      description: Mutate is a field that will be set to true by the
-                        mutating webhook.
+                      description: Mutate is a field that will be set to true by the mutating webhook.
                       type: boolean
                     valid:
-                      description: Valid must be set to true or the validation webhook
-                        will reject the resource.
+                      description: Valid must be set to true or the validation webhook will reject the resource.
                       type: boolean
                   required:
                     - valid
@@ -190,16 +184,15 @@ spec:
                   description: |-
                     conditions represent the current state of the WebhookTest resource.
                     Each condition has a unique type and reflects the status of a specific aspect of the resource.
-                    
+
                     Standard condition types include:
                     - "Available": the resource is fully functional
                     - "Progressing": the resource is being created or updated
                     - "Degraded": the resource failed to reach or maintain its desired state
-                    
+
                     The status of each condition is one of True, False, or Unknown.
                   items:
-                    description: Condition contains details for one aspect of the current
-                      state of this API Resource.
+                    description: Condition contains details for one aspect of the current state of this API Resource.
                     properties:
                       lastTransitionTime:
                         description: |-
