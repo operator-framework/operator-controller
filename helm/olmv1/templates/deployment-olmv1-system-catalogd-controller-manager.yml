@@ -45,9 +45,6 @@ spec:
             {{- end }}
             - --metrics-bind-address=:7443
             - --external-address=catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc
-            {{- range .Values.catalogdFeatures }}
-            - --feature-gates={{- . -}}=true
-            {{- end }}
             {{- range .Values.options.catalogd.features.enabled }}
             - --feature-gates={{- . -}}=true
             {{- end }}

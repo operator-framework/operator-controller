@@ -44,9 +44,6 @@ spec:
             {{- if not .Values.options.tilt.enabled }}
             - --leader-elect
             {{- end }}
-            {{- range .Values.operatorControllerFeatures }}
-            - --feature-gates={{- . -}}=true
-            {{- end }}
             {{- range .Values.options.operatorController.features.enabled }}
             - --feature-gates={{- . -}}=true
             {{- end }}
