@@ -95,9 +95,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 						objects: []machinery.ObjectResult{
 							mockObjectResult{
 								success: true,
-								probes: map[string]machinery.ObjectProbeResult{
+								probes: map[string]machinerytypes.ProbeResult{
 									boxcutter.ProgressProbeType: {
-										Success: true,
+										Status: machinerytypes.ProbeStatusTrue,
 									},
 								},
 							},
@@ -113,9 +113,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
 									return obj
 								}(),
-								probes: map[string]machinery.ObjectProbeResult{
+								probes: map[string]machinerytypes.ProbeResult{
 									boxcutter.ProgressProbeType: {
-										Success: false,
+										Status: machinerytypes.ProbeStatusFalse,
 										Messages: []string{
 											"something bad happened",
 											"something worse happened",
@@ -141,9 +141,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 									return obj
 								}(),
-								probes: map[string]machinery.ObjectProbeResult{
+								probes: map[string]machinerytypes.ProbeResult{
 									boxcutter.ProgressProbeType: {
-										Success: false,
+										Status: machinerytypes.ProbeStatusTrue,
 										Messages: []string{
 											"we have a problem",
 										},
@@ -194,8 +194,8 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProgressing, cond.Reason)
-				require.Equal(t, "Rollout in progress.", cond.Message)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRolloutInProgress, cond.Reason)
+				require.Equal(t, "Revision is being rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
@@ -247,8 +247,8 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonAvailable, cond.Reason)
-				require.Equal(t, "Object is available and passes all probes.", cond.Message)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbesSucceeded, cond.Reason)
+				require.Equal(t, "Objects are available and pass all probes.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
 				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
@@ -755,6 +755,16 @@ type mockRevisionResult struct {
 	string          string
 }
 
+func (m mockRevisionResult) IsOnCluster() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockRevisionResult) IsToSpec() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m mockRevisionResult) GetValidationError() *validation.RevisionValidationError {
 	return m.validationError
 }
@@ -789,6 +799,16 @@ type mockPhaseResult struct {
 	string          string
 }
 
+func (m mockPhaseResult) IsOnCluster() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockPhaseResult) IsToSpec() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m mockPhaseResult) GetName() string {
 	return m.name
 }
@@ -821,8 +841,32 @@ type mockObjectResult struct {
 	action  machinery.Action
 	object  machinery.Object
 	success bool
-	probes  map[string]machinery.ObjectProbeResult
+	probes  map[string]machinerytypes.ProbeResult
 	string  string
+}
+
+func (m mockObjectResult) IsPaused() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockObjectResult) IsComplete() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockObjectResult) IsOnCluster() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockObjectResult) IsToSpec() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockObjectResult) Probes() machinerytypes.ProbeContainer {
+	return m.probes
 }
 
 func (m mockObjectResult) Action() machinery.Action {
@@ -835,10 +879,6 @@ func (m mockObjectResult) Object() machinery.Object {
 
 func (m mockObjectResult) Success() bool {
 	return m.success
-}
-
-func (m mockObjectResult) Probes() map[string]machinery.ObjectProbeResult {
-	return m.probes
 }
 
 func (m mockObjectResult) String() string {
