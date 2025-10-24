@@ -14,7 +14,6 @@ options:
   operatorController:
     features:
       enabled:
-        - SingleOwnNamespaceInstallSupport
         - PreflightPermissions
         - HelmChartSupport
       disabled:
