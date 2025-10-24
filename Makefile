@@ -188,7 +188,7 @@ fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
 .PHONY: fmt
 fmt: $(YAMLFMT) #EXHELP Formats code
 	go fmt ./...
-	$(YAMLFMT) testdata
+	$(YAMLFMT) -gitignore_excludes testdata
 
 .PHONY: update-tls-profiles
 update-tls-profiles: $(GOJQ) #EXHELP Update TLS profiles from the Mozilla wiki
