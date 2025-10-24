@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: httpd-script
+data:
+  httpd.sh: |
+    #!/bin/sh
+    echo "Version 1.2.0"
+    echo true > /var/www/started
+    echo true > /var/www/ready
+    echo true > /var/www/live
+    exec httpd -f -h /var/www -p 80
