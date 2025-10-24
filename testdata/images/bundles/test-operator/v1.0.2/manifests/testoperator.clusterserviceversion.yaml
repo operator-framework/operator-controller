@@ -21,7 +21,7 @@ metadata:
     createdAt: "2024-10-24T19:21:40Z"
     operators.operatorframework.io/builder: operator-sdk-v1.34.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: testoperator.v1.2.0
+  name: testoperator.v1.0.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -32,7 +32,7 @@ spec:
       kind: OLME2ETest
       name: olme2etests.olm.operatorframework.io
       version: v1
-  description: OLM E2E Testing Operator
+  description: OLM E2E Testing Operator with a wrong image ref
   displayName: test-operator
   icon:
     - base64data: ""
@@ -43,7 +43,7 @@ spec:
         - label:
             app.kubernetes.io/component: controller
             app.kubernetes.io/name: test-operator
-            app.kubernetes.io/version: 1.2.0
+            app.kubernetes.io/version: 1.0.2
           name: test-operator
           spec:
             replicas: 1
@@ -63,32 +63,8 @@ spec:
                       defaultMode: 0755
                 containers:
                   - name: busybox-httpd-container
-                    image: busybox:1.37
-                    command: ["/scripts/httpd.sh"]
-                    ports:
-                      - containerPort: 80
-                    volumeMounts:
-                      - name: scripts
-                        mountPath: /scripts
-                        readOnly: true
-                    startupProbe:
-                      httpGet:
-                        path: /started
-                        port: 80
-                      failureThreshold: 30
-                      periodSeconds: 10
-                    livenessProbe:
-                      httpGet:
-                        path: /live
-                        port: 80
-                      failureThreshold: 1
-                      periodSeconds: 2
-                    readinessProbe:
-                      httpGet:
-                        path: /ready
-                        port: 80
-                      initialDelaySeconds: 1
-                      periodSeconds: 1
+                    # This image ref is wrong and should trigger ImagePullBackOff condition
+                    image: wrong/image
                     serviceAccountName: simple-bundle-manager
       clusterPermissions:
         - rules:
@@ -172,4 +148,4 @@ spec:
   provider:
     name: Simple Bundle
     url: https://simple-bundle.domain
-  version: 1.2.0
+  version: 1.0.2
