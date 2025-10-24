@@ -10,20 +10,26 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 )
 
-func GetVersion(b declcfg.Bundle) (*bsemver.Version, error) {
+func GetVersionAndRelease(b declcfg.Bundle) (*bundle.VersionRelease, error) {
 	for _, p := range b.Properties {
 		if p.Type == property.TypePackage {
 			var pkg property.Package
 			if err := json.Unmarshal(p.Value, &pkg); err != nil {
 				return nil, fmt.Errorf("error unmarshalling package property: %w", err)
 			}
-			vers, err := bsemver.Parse(pkg.Version)
+
+			// TODO: For now, we assume that all bundles are registry+v1 bundles.
+			//   In the future, when we support other bundle formats, we should stop
+			//   using the legacy mechanism (i.e. using build metadata in the version)
+			//   to determine the bundle's release.
+			vr, err := bundle.NewLegacyRegistryV1VersionRelease(pkg.Version)
 			if err != nil {
 				return nil, err
 			}
-			return &vers, nil
+			return vr, nil
 		}
 	}
 	return nil, fmt.Errorf("no package property found in bundle %q", b.Name)
