@@ -38,6 +38,9 @@ vendor/
 \#*\#
 .\#*
 
+# AI temp files files
+.claude/
+
 # documentation website asset folder
 site
 
@@ -45,5 +48,5 @@ site
 .catalogd-tmp/
 .vscode
 
-# Tmporary files and directories
+# Temporary files and directories
 /test/regression/convert/testdata/tmp/*
