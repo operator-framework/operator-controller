@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -122,6 +123,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		return c.teardown(ctx, rev, revision)
 	}
 
+	revVersion := rev.GetAnnotations()[labels.BundleVersionKey]
 	//
 	// Reconcile
 	//
@@ -138,7 +140,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			rev.MarkAsProgressing(ocv1.ClusterExtensionRevisionReasonReconcileFailure, werr.Error())
 			return ctrl.Result{}, werr
 		}
-		rev.MarkAsProgressing(ocv1.ClusterExtensionRevisionReasonRolloutInProgress, "Revision is being rolled out.")
+		rev.MarkAsProgressing(ocv1.ClusterExtensionRevisionReasonRolloutInProgress, fmt.Sprintf("Revision %s is being rolled out.", revVersion))
 	}
 
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
@@ -231,7 +233,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 	if !rres.InTransistion() {
 		// we have rolled out all objects in all phases, not interested in probes here
-		rev.MarkAsNotProgressing(ocv1.ClusterExtensionRevisionReasonRolledOut, "Revision is rolled out.")
+		rev.MarkAsNotProgressing(ocv1.ClusterExtensionRevisionReasonRolledOut, fmt.Sprintf("Revision %s is rolled out.", revVersion))
 	}
 
 	//nolint:nestif
@@ -290,7 +292,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		if len(probeFailureMsgs) > 0 {
 			rev.MarkAsUnavailable(ocv1.ClusterExtensionRevisionReasonProbeFailure, strings.Join(probeFailureMsgs, "\n"))
 		} else {
-			rev.MarkAsUnavailable(ocv1.ClusterExtensionRevisionReasonIncomplete, "Revision has not been rolled out completely.")
+			rev.MarkAsUnavailable(ocv1.ClusterExtensionRevisionReasonIncomplete, fmt.Sprintf("Revision %s has not been rolled out completely.", revVersion))
 		}
 	}
 
