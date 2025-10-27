@@ -297,32 +297,43 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	rolloutSucceeded, rolloutStatus, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
-
-	// Set installed status
-	if rolloutSucceeded {
-		revisionStates = &RevisionStates{Installed: resolvedRevisionMetadata}
-	} else if err == nil && revisionStates.Installed == nil && len(revisionStates.RollingOut) == 0 {
-		revisionStates = &RevisionStates{RollingOut: []*RevisionMetadata{resolvedRevisionMetadata}}
-	}
-	setInstalledStatusFromRevisionStates(ext, revisionStates)
-
-	// If there was an error applying the resolved bundle,
-	// report the error via the Progressing condition.
-	if err != nil {
+	if _, _, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls); err != nil {
+		// If there was an error applying the resolved bundle,
+		// report the error via the Progressing condition.
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedRevisionMetadata.BundleMetadata, err))
 		return ctrl.Result{}, err
-	} else if !rolloutSucceeded {
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeProgressing,
-			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonRolloutInProgress,
-			Message:            rolloutStatus,
-			ObservedGeneration: ext.GetGeneration(),
-		})
-	} else {
-		setStatusProgressing(ext, nil)
 	}
+
+	// Mirror Available/Progressing conditions from the installed revision
+	if i := revisionStates.Installed; i != nil {
+		for _, cndType := range []string{ocv1.ClusterExtensionRevisionTypeAvailable, ocv1.ClusterExtensionRevisionTypeProgressing} {
+			cnd := *apimeta.FindStatusCondition(i.Conditions, cndType)
+			apimeta.SetStatusCondition(&ext.Status.Conditions, cnd)
+		}
+		ext.Status.Install = &ocv1.ClusterExtensionInstallStatus{
+			Bundle: i.BundleMetadata,
+		}
+		ext.Status.ActiveRevisions = []ocv1.RevisionStatus{{Name: i.RevName}}
+	}
+	for idx, r := range revisionStates.RollingOut {
+		rs := ocv1.RevisionStatus{Name: r.RevName}
+		// Mirror Progressing condition from the latest active revision
+		if idx == len(revisionStates.RollingOut)-1 {
+			pcnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+			if pcnd != nil {
+				apimeta.SetStatusCondition(&ext.Status.Conditions, *pcnd)
+			}
+			if acnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable); pcnd.Status == metav1.ConditionFalse && acnd != nil && acnd.Status != metav1.ConditionTrue {
+				apimeta.SetStatusCondition(&rs.Conditions, *acnd)
+			}
+		}
+		if len(ext.Status.ActiveRevisions) == 0 {
+			ext.Status.ActiveRevisions = []ocv1.RevisionStatus{rs}
+		} else {
+			ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, rs)
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -474,9 +485,11 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 }
 
 type RevisionMetadata struct {
+	RevName string
 	Package string
 	Image   string
 	ocv1.BundleMetadata
+	Conditions []metav1.Condition
 }
 
 type RevisionStates struct {
@@ -553,8 +566,10 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 		//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
 		//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
 		rm := &RevisionMetadata{
-			Package: rev.Labels[labels.PackageNameKey],
-			Image:   rev.Annotations[labels.BundleReferenceKey],
+			RevName:    rev.Name,
+			Package:    rev.Labels[labels.PackageNameKey],
+			Image:      rev.Annotations[labels.BundleReferenceKey],
+			Conditions: rev.Status.Conditions,
 			BundleMetadata: ocv1.BundleMetadata{
 				Name:    rev.Annotations[labels.BundleNameKey],
 				Version: rev.Annotations[labels.BundleVersionKey],
