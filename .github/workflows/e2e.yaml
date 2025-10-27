@@ -35,7 +35,7 @@ jobs:
       - name: Run e2e tests
         run: ARTIFACT_PATH=/tmp/artifacts E2E_SUMMARY_OUTPUT=$GITHUB_STEP_SUMMARY make test-e2e
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: e2e-artifacts
@@ -62,7 +62,7 @@ jobs:
       - name: Run e2e tests
         run: ARTIFACT_PATH=/tmp/artifacts E2E_SUMMARY_OUTPUT=$GITHUB_STEP_SUMMARY make test-experimental-e2e
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: experimental-e2e-artifacts
@@ -87,7 +87,7 @@ jobs:
     - name: Run the upgrade e2e test
       run: ARTIFACT_PATH=/tmp/artifacts make test-upgrade-e2e
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       if: failure()
       with:
         name: upgrade-e2e-artifacts
@@ -105,7 +105,7 @@ jobs:
     - name: Run the upgrade e2e test
       run: ARTIFACT_PATH=/tmp/artifacts make test-upgrade-experimental-e2e
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       if: failure()
       with:
         name: upgrade-experimental-e2e-artifacts
