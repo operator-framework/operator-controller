@@ -8,7 +8,7 @@ hide:
 Currently, OLM v1 only supports installing operators packaged in [OLM v0 bundles](https://olm.operatorframework.io/docs/tasks/creating-operator-bundle/)
 , also known as `registry+v1` bundles. Additionally, the bundled operator, or cluster extension:
 
-* **must** support installation via the `AllNamespaces`, `SingleNamespace`, or `OwnNamespace` install modes. 
+* **must** support installation via the `AllNamespaces` install mode
 * **must not** declare dependencies using any of the following file-based catalog properties:
     * `olm.gvk.required`
     * `olm.package.required`

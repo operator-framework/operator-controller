@@ -106,6 +106,7 @@ type ClusterExtensionSpec struct {
 	// a configuration schema the final manifests will be derived on a best-effort basis. More information on how
 	// to configure the bundle should be found in its end-user documentation.
 	//
+	// <opcon:experimental>
 	// +optional
 	Config *ClusterExtensionConfig `json:"config,omitempty"`
 }
