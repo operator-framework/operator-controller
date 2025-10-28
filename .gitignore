@@ -38,8 +38,13 @@ vendor/
 \#*\#
 .\#*
 
-# AI temp files files
-.claude/
+# AI temp/local files
+.claude/settings.local.json
+.claude/history/
+.claude/cache/
+.claude/logs/
+.claude/.session*
+.claude/*.log
 
 # documentation website asset folder
 site
@@ -50,3 +55,6 @@ site
 
 # Temporary files and directories
 /test/regression/convert/testdata/tmp/*
+
+# E2E profiling artifacts
+e2e-profiles/

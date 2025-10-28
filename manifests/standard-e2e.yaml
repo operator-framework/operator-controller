@@ -1784,6 +1784,7 @@ spec:
         - args:
             - --leader-elect
             - --metrics-bind-address=:7443
+            - --pprof-bind-address=:6060
             - --external-address=catalogd-service.olmv1-system.svc
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
@@ -1933,6 +1934,7 @@ spec:
         - args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=:8443
+            - --pprof-bind-address=:6060
             - --leader-elect
             - --tls-cert=/var/certs/tls.crt
             - --tls-key=/var/certs/tls.key
