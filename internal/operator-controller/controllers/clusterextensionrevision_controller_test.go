@@ -29,6 +29,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
 func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *testing.T) {
@@ -81,7 +82,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterExtensionRevisionReasonIncomplete, cond.Reason)
-				require.Equal(t, "Revision has not been rolled out completely.", cond.Message)
+				require.Equal(t, "Revision 1.0.0 has not been rolled out completely.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
@@ -175,7 +176,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			},
 		},
 		{
-			name: "set Progressing:True:Progressing condition while revision is transitioning",
+			name: "set Progressing:True:RollingOut condition while revision is transitioning",
 			revisionResult: mockRevisionResult{
 				inTransition: true,
 			},
@@ -194,13 +195,13 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProgressing, cond.Reason)
-				require.Equal(t, "Rollout in progress.", cond.Message)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRolloutInProgress, cond.Reason)
+				require.Equal(t, "Revision 1.0.0 is being rolled out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name: "remove Progressing condition once transition rollout is finished",
+			name: "set Progressing:False:RolledOut once transition rollout is finished",
 			revisionResult: mockRevisionResult{
 				inTransition: false,
 			},
@@ -211,8 +212,8 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
 					Type:               ocv1.TypeProgressing,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ClusterExtensionRevisionReasonProgressing,
-					Message:            "some message",
+					Reason:             ocv1.ClusterExtensionRevisionReasonRolledOut,
+					Message:            "Revision 1.0.0 is rolled out.",
 					ObservedGeneration: 1,
 				})
 				return []client.Object{ext, rev1}
@@ -224,11 +225,15 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				}, rev)
 				require.NoError(t, err)
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
-				require.Nil(t, cond)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRolledOut, cond.Reason)
+				require.Equal(t, "Revision 1.0.0 is rolled out.", cond.Message)
+				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name: "set Available:True:Available and Succeeded:True:RolloutSuccess conditions on successful revision rollout",
+			name: "set Available:True:ProbesSucceeded and Succeeded:True:RolloutSuccess conditions on successful revision rollout",
 			revisionResult: mockRevisionResult{
 				isComplete: true,
 			},
@@ -247,8 +252,8 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonAvailable, cond.Reason)
-				require.Equal(t, "Object is available and passes all probes.", cond.Message)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbesSucceeded, cond.Reason)
+				require.Equal(t, "Objects are available and pass all probes.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 
 				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
@@ -709,6 +714,12 @@ func newTestClusterExtensionRevision(name string) *ocv1.ClusterExtensionRevision
 			Name:       name,
 			UID:        types.UID(name),
 			Generation: int64(1),
+			Annotations: map[string]string{
+				labels.PackageNameKey:     "some-package",
+				labels.BundleNameKey:      "some-package.v1.0.0",
+				labels.BundleReferenceKey: "registry.io/some-repo/some-package:v1.0.0",
+				labels.BundleVersionKey:   "1.0.0",
+			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
 			Phases: []ocv1.ClusterExtensionRevisionPhase{
