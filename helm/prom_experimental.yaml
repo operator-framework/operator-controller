@@ -1,0 +1,14 @@
+# experimental values for OLMv1 prometheus
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+# Quote the threshold values to avoid the helm templater interpretting them
+
+# List of options to include
+options:
+  operatorController:
+    thresholds:
+      memoryGrowth: "200_000"
+      memoryUsage: "150_000_000"
+  catalogd:
+    thresholds:
+      memoryGrowth: "200_000"

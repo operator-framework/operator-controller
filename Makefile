@@ -281,13 +281,14 @@ test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
+test-experimental-e2e: PROMETHEUS_VALUES := helm/prom_experimental.yaml
 test-experimental-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
 prometheus: PROMETHEUS_VERSION := v0.83.0
 prometheus: $(KUSTOMIZE) #EXHELP Deploy Prometheus into specified namespace
-	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(VERSION)
+	./hack/test/install-prometheus.sh $(PROMETHEUS_NAMESPACE) $(PROMETHEUS_VERSION) $(VERSION) $(PROMETHEUS_VALUES)
 
 .PHONY: test-extension-developer-e2e
 test-extension-developer-e2e: SOURCE_MANIFEST := $(STANDARD_E2E_MANIFEST)

@@ -25,48 +25,48 @@ spec:
         - alert: operator-controller-memory-growth
           annotations:
             description: 'operator-controller pod memory usage growing at a high rate for 5 minutes: {{`{{ $value | humanize }}`}}B/sec'
-          expr: deriv(sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"})[5m:]) > 100_000
+          expr: deriv(sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"})[5m:]) > {{ .Values.options.operatorController.thresholds.memoryGrowth }}
           for: 5m
           keep_firing_for: 1d
         - alert: catalogd-memory-growth
           annotations:
             description: 'catalogd pod memory usage growing at a high rate for 5 minutes: {{`{{ $value | humanize }}`}}B/sec'
-          expr: deriv(sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"})[5m:]) > 100_000
+          expr: deriv(sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"})[5m:]) > {{ .Values.options.catalogd.thresholds.memoryGrowth }}
           for: 5m
           keep_firing_for: 1d
         - alert: operator-controller-memory-usage
           annotations:
             description: 'operator-controller pod using high memory resources for the last 5 minutes: {{`{{ $value | humanize }}`}}B'
-          expr: sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"}) > 100_000_000
+          expr: sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"}) > {{ .Values.options.operatorController.thresholds.memoryUsage }}
           for: 5m
           keep_firing_for: 1d
         - alert: catalogd-memory-usage
           annotations:
             description: 'catalogd pod using high memory resources for the last 5 minutes: {{`{{ $value | humanize }}`}}B'
-          expr: sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"}) > 75_000_000
+          expr: sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"}) > {{ .Values.options.catalogd.thresholds.memoryUsage }}
           for: 5m
           keep_firing_for: 1d
         - alert: operator-controller-cpu-usage
           annotations:
             description: 'operator-controller using high cpu resource for 5 minutes: {{`{{ $value | printf "%.2f" }}`}}%'
-          expr: rate(container_cpu_usage_seconds_total{pod=~"operator-controller.*",container="manager"}[5m]) * 100 > 20
+          expr: rate(container_cpu_usage_seconds_total{pod=~"operator-controller.*",container="manager"}[5m]) * 100 > {{ .Values.options.operatorController.thresholds.cpuUsage }}
           for: 5m
           keep_firing_for: 1d
         - alert: catalogd-cpu-usage
           annotations:
             description: 'catalogd using high cpu resources for 5 minutes: {{`{{ $value | printf "%.2f" }}`}}%'
-          expr: rate(container_cpu_usage_seconds_total{pod=~"catalogd.*",container="manager"}[5m]) * 100 > 20
+          expr: rate(container_cpu_usage_seconds_total{pod=~"catalogd.*",container="manager"}[5m]) * 100 > {{ .Values.options.catalogd.thresholds.cpuUsage }}
           for: 5m
           keep_firing_for: 1d
         - alert: operator-controller-api-call-rate
           annotations:
             description: 'operator-controller making excessive API calls for 5 minutes: {{`{{ $value | printf "%.2f" }}`}}/sec'
-          expr: sum(rate(rest_client_requests_total{job=~"operator-controller-service"}[5m])) > 10
+          expr: sum(rate(rest_client_requests_total{job=~"operator-controller-service"}[5m])) > {{ .Values.options.operatorController.thresholds.apiCallRate }}
           for: 5m
           keep_firing_for: 1d
         - alert: catalogd-api-call-rate
           annotations:
             description: 'catalogd making excessive API calls for 5 minutes: {{`{{ $value | printf "%.2f" }}`}}/sec'
-          expr: sum(rate(rest_client_requests_total{job=~"catalogd-service"}[5m])) > 5
+          expr: sum(rate(rest_client_requests_total{job=~"catalogd-service"}[5m])) > {{ .Values.options.catalogd.thresholds.apiCallRate }}
           for: 5m
           keep_firing_for: 1d

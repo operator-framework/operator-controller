@@ -1,13 +1,24 @@
 # Default values for OLMv1.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+# Quote the threshold values to avoid the helm templater interpretting them
 
 # List of components to include
 options:
   operatorController:
     enabled: true
+    thresholds:
+      memoryGrowth: "100_000"
+      memoryUsage: "100_000_000"
+      cpuUsage: 20
+      apiCallRate: 10
   catalogd:
     enabled: true
+    thresholds:
+      memoryGrowth: "100_000"
+      memoryUsage: "75_000_000"
+      cpuUsage: 20
+      apiCallRate: 5
 
 # The set of namespaces
 namespaces:
