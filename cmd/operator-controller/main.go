@@ -37,6 +37,7 @@ import (
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
@@ -77,6 +78,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
+	cacheutil "github.com/operator-framework/operator-controller/internal/shared/util/cache"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -231,6 +233,8 @@ func run() error {
 			cfg.systemNamespace: {LabelSelector: k8slabels.Everything()},
 		},
 		DefaultLabelSelector: k8slabels.Nothing(),
+		// Memory optimization: strip managed fields and large annotations from cached objects
+		DefaultTransform: cacheutil.StripManagedFieldsAndAnnotations(),
 	}
 
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
@@ -572,10 +576,13 @@ func setupBoxcutter(
 		RevisionGenerator:  rg,
 	}
 
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	baseDiscoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
 		return fmt.Errorf("unable to create discovery client: %w", err)
 	}
+
+	// Wrap the discovery client with caching to reduce memory usage from repeated OpenAPI schema fetches
+	discoveryClient := memory.NewMemCacheClient(baseDiscoveryClient)
 
 	trackingCache, err := managedcache.NewTrackingCache(
 		ctrl.Log.WithName("trackingCache"),

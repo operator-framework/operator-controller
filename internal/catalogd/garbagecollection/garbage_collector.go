@@ -79,7 +79,8 @@ func runGarbageCollection(ctx context.Context, cachePath string, metaClient meta
 	if err != nil {
 		return nil, fmt.Errorf("error reading cache directory: %w", err)
 	}
-	removed := []string{}
+	// Pre-allocate removed slice with estimated capacity to avoid reallocation
+	removed := make([]string, 0, len(cacheDirEntries))
 	for _, cacheDirEntry := range cacheDirEntries {
 		if cacheDirEntry.IsDir() && expectedCatalogs.Has(cacheDirEntry.Name()) {
 			continue
