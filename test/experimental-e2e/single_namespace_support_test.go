@@ -1,10 +1,11 @@
-package e2e
+package experimental_e2e
 
 import (
 	"context"
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,11 +16,44 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
+	. "github.com/operator-framework/operator-controller/test/helpers"
 )
+
+const (
+	artifactName = "operator-controller-experimental-e2e"
+	pollDuration = time.Minute
+	pollInterval = time.Second
+)
+
+var (
+	cfg *rest.Config
+	c   client.Client
+)
+
+func TestMain(m *testing.M) {
+	cfg = ctrl.GetConfigOrDie()
+
+	var err error
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
+	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	utilruntime.Must(err)
+
+	os.Exit(m.Run())
+}
+
+func TestNoop(t *testing.T) {
+	t.Log("Running experimental-e2e tests")
+	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+}
 
 func TestClusterExtensionSingleNamespaceSupport(t *testing.T) {
 	t.Log("Test support for cluster extension config")
@@ -344,5 +378,59 @@ func TestClusterExtensionOwnNamespaceSupport(t *testing.T) {
 		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Namespace: namespace.GetName(), Name: "own-namespace-operator"}, deployment))
 		require.NotNil(ct, deployment.Spec.Template.GetAnnotations())
 		require.Equal(ct, clusterExtension.Spec.Namespace, deployment.Spec.Template.GetAnnotations()["olm.targetNamespaces"])
+	}, pollDuration, pollInterval)
+}
+
+func TestClusterExtensionVersionUpdate(t *testing.T) {
+	t.Log("When a cluster extension is installed from a catalog")
+	t.Log("When resolving upgrade edges")
+
+	clusterExtension, extensionCatalog, sa, ns := TestInit(t)
+	defer TestCleanup(t, extensionCatalog, clusterExtension, sa, ns)
+	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+
+	t.Log("By creating an ClusterExtension at a specified version")
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1.CatalogFilter{
+				PackageName: "test",
+				Version:     "1.0.0",
+			},
+		},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1.ServiceAccountReference{
+			Name: sa.Name,
+		},
+	}
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+	t.Log("By eventually reporting a successful resolution")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("It allows to upgrade the ClusterExtension to a non-successor version")
+	t.Log("By forcing update of ClusterExtension resource to a non-successor version")
+	// 1.2.0 does not replace/skip/skipRange 1.0.0.
+	clusterExtension.Spec.Source.Catalog.Version = "1.2.0"
+	clusterExtension.Spec.Source.Catalog.UpgradeConstraintPolicy = ocv1.UpgradeConstraintPolicySelfCertified
+	require.NoError(t, c.Update(context.Background(), clusterExtension))
+	t.Log("By eventually reporting a satisfiable resolution")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+	}, pollDuration, pollInterval)
+	t.Log("We should have two ClusterExtensionRevision resources")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		cerList := &ocv1.ClusterExtensionRevisionList{}
+		require.NoError(ct, c.List(context.Background(), cerList))
+		require.Len(ct, cerList.Items, 2)
 	}, pollDuration, pollInterval)
 }
