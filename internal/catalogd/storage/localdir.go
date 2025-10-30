@@ -41,6 +41,11 @@ type LocalDirV1 struct {
 	// the loaded index. This avoids lots of unnecessary open/decode/close cycles when concurrent
 	// requests are being handled, which improves overall performance and decreases response latency.
 	sf singleflight.Group
+
+	// GraphQL schema cache: maps catalog name to its dynamically generated schema
+	// This cache is invalidated when a catalog is updated via Store()
+	schemaCacheMux sync.RWMutex
+	schemaCache    map[string]*gql.DynamicSchema
 }
 
 var (
@@ -102,10 +107,20 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 	}
 
 	catalogDir := s.catalogDir(catalog)
-	return errors.Join(
+	err = errors.Join(
 		os.RemoveAll(catalogDir),
 		os.Rename(tmpCatalogDir, catalogDir),
 	)
+	if err != nil {
+		return err
+	}
+
+	// Invalidate GraphQL schema cache for this catalog
+	s.schemaCacheMux.Lock()
+	delete(s.schemaCache, catalog)
+	s.schemaCacheMux.Unlock()
+
+	return nil
 }
 
 func (s *LocalDirV1) Delete(catalog string) error {
@@ -312,7 +327,7 @@ func (s *LocalDirV1) handleV1GraphQL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build dynamic GraphQL schema for this catalog
-	dynamicSchema, err := s.buildCatalogGraphQLSchema(catalogFS)
+	dynamicSchema, err := s.buildCatalogGraphQLSchema(catalog, catalogFS)
 	if err != nil {
 		httpError(w, err)
 		return
@@ -355,6 +370,8 @@ func httpError(w http.ResponseWriter, err error) {
 	default:
 		code = http.StatusInternalServerError
 	}
+	// Log the actual error for debugging
+	fmt.Printf("HTTP Error %d: %v\n", code, err)
 	http.Error(w, fmt.Sprintf("%d %s", code, http.StatusText(code)), code)
 }
 
@@ -398,7 +415,17 @@ func (s *LocalDirV1) createCatalogFS(catalog string) (fs.FS, error) {
 }
 
 // buildCatalogGraphQLSchema builds a dynamic GraphQL schema for the given catalog
-func (s *LocalDirV1) buildCatalogGraphQLSchema(catalogFS fs.FS) (*gql.DynamicSchema, error) {
+// Uses a cache to avoid rebuilding the schema on every request
+func (s *LocalDirV1) buildCatalogGraphQLSchema(catalog string, catalogFS fs.FS) (*gql.DynamicSchema, error) {
+	// Check cache first (read lock)
+	s.schemaCacheMux.RLock()
+	if cachedSchema, ok := s.schemaCache[catalog]; ok {
+		s.schemaCacheMux.RUnlock()
+		return cachedSchema, nil
+	}
+	s.schemaCacheMux.RUnlock()
+
+	// Schema not in cache, build it
 	var metas []*declcfg.Meta
 
 	// Collect all metas from the catalog filesystem
@@ -434,6 +461,14 @@ func (s *LocalDirV1) buildCatalogGraphQLSchema(catalogFS fs.FS) (*gql.DynamicSch
 	if err != nil {
 		return nil, fmt.Errorf("error building GraphQL schema: %w", err)
 	}
+
+	// Cache the result (write lock)
+	s.schemaCacheMux.Lock()
+	if s.schemaCache == nil {
+		s.schemaCache = make(map[string]*gql.DynamicSchema)
+	}
+	s.schemaCache[catalog] = dynamicSchema
+	s.schemaCacheMux.Unlock()
 
 	return dynamicSchema, nil
 }
