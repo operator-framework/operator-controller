@@ -53,17 +53,44 @@ func remapFieldName(name string) string {
 	re := regexp.MustCompile(`[^a-zA-Z0-9_]`)
 	clean := re.ReplaceAllString(name, "_")
 
+	// Collapse multiple consecutive underscores
+	clean = regexp.MustCompile(`_+`).ReplaceAllString(clean, "_")
+
+	// Trim leading underscores only (keep trailing to detect them)
+	clean = strings.TrimLeft(clean, "_")
+
 	// Split on underscores and camelCase
 	parts := strings.Split(clean, "_")
 	result := ""
+	hasContent := false
 	for i, part := range parts {
 		if part == "" {
+			// If we have an empty part after having content, it means there was a trailing separator
+			// Add a capitalized version of the last word
+			if hasContent && i == len(parts)-1 {
+				// Get the base word (first non-empty part)
+				for _, p := range parts {
+					if p != "" {
+						result += strings.ToUpper(string(p[0])) + strings.ToLower(p[1:])
+						break
+					}
+				}
+			}
 			continue
 		}
-		if i == 0 {
-			result = strings.ToLower(part)
+		hasContent = true
+		if i == 0 || result == "" {
+			// For the first part, check if it's all uppercase
+			if strings.ToUpper(part) == part {
+				// If all uppercase, convert entirely to lowercase
+				result = strings.ToLower(part)
+			} else {
+				// Otherwise, make only the first character lowercase
+				result = strings.ToLower(string(part[0])) + part[1:]
+			}
 		} else {
-			result += strings.Title(strings.ToLower(part))
+			// For subsequent parts, capitalize first letter, lowercase rest
+			result += strings.ToUpper(string(part[0])) + strings.ToLower(part[1:])
 		}
 	}
 
@@ -330,7 +357,7 @@ func buildGraphQLObjectType(schemaName string, info *SchemaInfo) *graphql.Object
 	}
 
 	return graphql.NewObject(graphql.ObjectConfig{
-		Name:   strings.Title(strings.ToLower(schemaName)),
+		Name:   sanitizeTypeName(schemaName),
 		Fields: fields,
 	})
 }
@@ -414,12 +441,16 @@ func sanitizeTypeName(propType string) string {
 	// Remove dots and other invalid characters, capitalize words
 	re := regexp.MustCompile(`[^a-zA-Z0-9]`)
 	clean := re.ReplaceAllString(propType, "_")
+
+	// Strip leading digits
+	clean = regexp.MustCompile(`^[0-9]+`).ReplaceAllString(clean, "")
+
 	parts := strings.Split(clean, "_")
 
 	result := ""
 	for _, part := range parts {
 		if part != "" {
-			result += strings.Title(strings.ToLower(part))
+			result += strings.ToUpper(string(part[0])) + strings.ToLower(part[1:])
 		}
 	}
 
@@ -443,7 +474,9 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 	queryFields := graphql.Fields{}
 
 	for schemaName, objectType := range objectTypes {
-		fieldName := strings.ToLower(schemaName) + "s" // e.g., "bundles", "packages"
+		// Sanitize schema name by removing dots and special characters for GraphQL field name
+		sanitized := regexp.MustCompile(`[^a-zA-Z0-9]`).ReplaceAllString(schemaName, "")
+		fieldName := strings.ToLower(sanitized) + "s" // e.g., "olmbundles", "olmpackages"
 
 		queryFields[fieldName] = &graphql.Field{
 			Type: graphql.NewList(objectType),
@@ -463,7 +496,8 @@ func BuildDynamicGraphQLSchema(catalogSchema *CatalogSchema, metasBySchema map[s
 				// Get the schema name from the field name
 				currentSchemaName := ""
 				for sn := range catalogSchema.Schemas {
-					if strings.ToLower(sn)+"s" == p.Info.FieldName {
+					sanitized := regexp.MustCompile(`[^a-zA-Z0-9]`).ReplaceAllString(sn, "")
+					if strings.ToLower(sanitized)+"s" == p.Info.FieldName {
 						currentSchemaName = sn
 						break
 					}
