@@ -5,6 +5,10 @@ data:
     [[registry]]
     prefix = "mirrored-registry.operator-controller-e2e.svc.cluster.local:5000"
     location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"
+
+    [[registry]]
+    prefix = "dynamic-registry.operator-controller-e2e.svc.cluster.local:5000"
+    location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"
 kind: ConfigMap
 metadata:
   annotations:
