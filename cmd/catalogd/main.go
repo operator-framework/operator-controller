@@ -365,11 +365,11 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	localStorage = &storage.LocalDirV1{
-		RootDir:            storeDir,
-		RootURL:            baseStorageURL,
-		EnableMetasHandler: features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler),
-	}
+	localStorage = storage.NewLocalDirV1(
+		storeDir,
+		baseStorageURL,
+		features.CatalogdFeatureGate.Enabled(features.APIV1MetasHandler),
+	)
 
 	// Config for the catalogd web server
 	catalogServerConfig := serverutil.CatalogServerConfig{
