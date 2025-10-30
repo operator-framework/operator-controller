@@ -21,16 +21,13 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
+	. "github.com/operator-framework/operator-controller/test/helpers"
 )
 
 var dynamicClient dynamic.Interface
 
-func TestNoop(t *testing.T) {
-	t.Log("Running experimental-e2e tests")
-	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
-}
-
 func TestWebhookSupport(t *testing.T) {
+	SkipIfFeatureGateDisabled(t, "WebhookProviderCertManager")
 	t.Log("Test support for bundles with webhooks")
 	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
 

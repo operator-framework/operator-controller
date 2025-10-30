@@ -213,10 +213,6 @@ test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run a
 e2e: #EXHELP Run the e2e tests.
 	go test -count=1 -v ./test/e2e/...
 
-.PHONY: experimental-e2e
-experimental-e2e: #EXHELP Run the experimental e2e tests.
-	go test -count=1 -v ./test/experimental-e2e/...
-
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
 
@@ -285,7 +281,7 @@ test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
-test-experimental-e2e: run-internal image-registry prometheus experimental-e2e e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
+test-experimental-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HELP Run experimental e2e test suite on local kind cluster
 
 .PHONY: prometheus
 prometheus: PROMETHEUS_NAMESPACE := olmv1-system
