@@ -1,0 +1,282 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "webhook.operators.coreos.io/v1",
+          "kind": "WebhookTest",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "webhook-operator"
+            },
+            "name": "webhooktest-sample"
+          },
+          "spec": null
+        },
+        {
+          "apiVersion": "webhook.operators.coreos.io/v2",
+          "kind": "WebhookTest",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "webhook-operator"
+            },
+            "name": "webhooktest-sample"
+          },
+          "spec": null
+        }
+      ]
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.41.1
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+  name: webhook-operator.v0.0.5
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+      - description: WebhookTest is the Schema for the webhooktests API
+        displayName: Webhook Test
+        kind: WebhookTest
+        name: webhooktests.webhook.operators.coreos.io
+        version: v1
+      - description: WebhookTest is the Schema for the webhooktests API
+        displayName: Webhook Test
+        kind: WebhookTest
+        name: webhooktests.webhook.operators.coreos.io
+        version: v2
+  description: webhook-operator test fixture
+  displayName: webhook-operator
+  icon:
+    - base64data: ""
+      mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+        - rules:
+            - apiGroups:
+                - webhook.operators.coreos.io
+              resources:
+                - webhooktests
+              verbs:
+                - create
+                - delete
+                - get
+                - list
+                - patch
+                - update
+                - watch
+            - apiGroups:
+                - webhook.operators.coreos.io
+              resources:
+                - webhooktests/finalizers
+              verbs:
+                - update
+            - apiGroups:
+                - webhook.operators.coreos.io
+              resources:
+                - webhooktests/status
+              verbs:
+                - get
+                - patch
+                - update
+            - apiGroups:
+                - authentication.k8s.io
+              resources:
+                - tokenreviews
+              verbs:
+                - create
+            - apiGroups:
+                - authorization.k8s.io
+              resources:
+                - subjectaccessreviews
+              verbs:
+                - create
+          serviceAccountName: webhook-operator-controller-manager
+      deployments:
+        - label:
+            app.kubernetes.io/managed-by: kustomize
+            app.kubernetes.io/name: webhook-operator
+            control-plane: controller-manager
+          name: webhook-operator-controller-manager
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: webhook-operator
+                control-plane: controller-manager
+            strategy: {}
+            template:
+              metadata:
+                annotations:
+                  kubectl.kubernetes.io/default-container: manager
+                labels:
+                  app.kubernetes.io/name: webhook-operator
+                  control-plane: controller-manager
+              spec:
+                containers:
+                  - args:
+                      - --metrics-bind-address=:8443
+                      - --leader-elect
+                      - --health-probe-bind-address=:8081
+                      - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
+                    command:
+                      - /manager
+                    image: quay.io/olmtest/webhook-operator:v0.0.5
+                    livenessProbe:
+                      httpGet:
+                        path: /healthz
+                        port: 8081
+                      initialDelaySeconds: 15
+                      periodSeconds: 20
+                    name: manager
+                    ports:
+                      - containerPort: 9443
+                        name: webhook-server
+                        protocol: TCP
+                    readinessProbe:
+                      httpGet:
+                        path: /readyz
+                        port: 8081
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                    resources:
+                      limits:
+                        cpu: 500m
+                        memory: 128Mi
+                      requests:
+                        cpu: 10m
+                        memory: 64Mi
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
+                      readOnlyRootFilesystem: true
+                    volumeMounts:
+                      - mountPath: /tmp/k8s-webhook-server/serving-certs
+                        name: webhook-certs
+                        readOnly: true
+                securityContext:
+                  runAsNonRoot: true
+                  seccompProfile:
+                    type: RuntimeDefault
+                serviceAccountName: webhook-operator-controller-manager
+                terminationGracePeriodSeconds: 10
+                volumes:
+                  - name: webhook-certs
+                    secret:
+                      secretName: webhook-server-cert
+      permissions:
+        - rules:
+            - apiGroups:
+                - ""
+              resources:
+                - configmaps
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - coordination.k8s.io
+              resources:
+                - leases
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - ""
+              resources:
+                - events
+              verbs:
+                - create
+                - patch
+          serviceAccountName: webhook-operator-controller-manager
+    strategy: deployment
+  installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+  keywords:
+    - test
+    - operator
+    - webhooks
+  links:
+    - name: Webhook Operator
+      url: https://webhook-operator.domain
+  maintainers:
+    - email: no-reply@operator-framework.io
+      name: no-reply
+  maturity: alpha
+  provider:
+    name: operator-framework
+  version: 0.0.5
+  webhookdefinitions:
+    - admissionReviewVersions:
+        - v1
+      containerPort: 443
+      conversionCRDs:
+        - webhooktests.webhook.operators.coreos.io
+      deploymentName: webhook-operator-controller-manager
+      generateName: cwebhooktests.kb.io
+      sideEffects: None
+      targetPort: 9443
+      type: ConversionWebhook
+      webhookPath: /convert
+    - admissionReviewVersions:
+        - v1
+      containerPort: 443
+      deploymentName: webhook-operator-controller-manager
+      failurePolicy: Fail
+      generateName: mwebhooktest-v1.kb.io
+      rules:
+        - apiGroups:
+            - webhook.operators.coreos.io
+          apiVersions:
+            - v1
+          operations:
+            - CREATE
+            - UPDATE
+          resources:
+            - webhooktests
+      sideEffects: None
+      targetPort: 9443
+      type: MutatingAdmissionWebhook
+      webhookPath: /mutate-webhook-operators-coreos-io-v1-webhooktest
+    - admissionReviewVersions:
+        - v1
+      containerPort: 443
+      deploymentName: webhook-operator-controller-manager
+      failurePolicy: Fail
+      generateName: vwebhooktest-v1.kb.io
+      rules:
+        - apiGroups:
+            - webhook.operators.coreos.io
+          apiVersions:
+            - v1
+          operations:
+            - CREATE
+            - UPDATE
+          resources:
+            - webhooktests
+      sideEffects: None
+      targetPort: 9443
+      type: ValidatingAdmissionWebhook
+      webhookPath: /validate-webhook-operators-coreos-io-v1-webhooktest

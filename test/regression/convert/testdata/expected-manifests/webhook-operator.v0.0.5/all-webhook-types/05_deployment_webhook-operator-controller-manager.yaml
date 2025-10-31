@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: webhook-operator
+    control-plane: controller-manager
+  name: webhook-operator-controller-manager
+  namespace: webhook-system
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: webhook-operator
+      control-plane: controller-manager
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        alm-examples: |-
+          [
+            {
+              "apiVersion": "webhook.operators.coreos.io/v1",
+              "kind": "WebhookTest",
+              "metadata": {
+                "labels": {
+                  "app.kubernetes.io/managed-by": "kustomize",
+                  "app.kubernetes.io/name": "webhook-operator"
+                },
+                "name": "webhooktest-sample"
+              },
+              "spec": null
+            },
+            {
+              "apiVersion": "webhook.operators.coreos.io/v2",
+              "kind": "WebhookTest",
+              "metadata": {
+                "labels": {
+                  "app.kubernetes.io/managed-by": "kustomize",
+                  "app.kubernetes.io/name": "webhook-operator"
+                },
+                "name": "webhooktest-sample"
+              },
+              "spec": null
+            }
+          ]
+        capabilities: Basic Install
+        kubectl.kubernetes.io/default-container: manager
+        olm.targetNamespaces: ""
+        operators.operatorframework.io/builder: operator-sdk-v1.41.1
+        operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+      labels:
+        app.kubernetes.io/name: webhook-operator
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --metrics-bind-address=:8443
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
+        command:
+        - /manager
+        image: quay.io/olmtest/webhook-operator:v0.0.5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: webhook-certs
+          readOnly: true
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: webhook-operator-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: webhook-certs
+        secret:
+          secretName: webhook-server-cert
+status: {}

@@ -77,6 +77,11 @@ func main() {
 			watchNamespace:   "argocd-system",
 			bundle:           "argocd-operator.v0.6.0",
 			testCaseName:     "own-namespace",
+		}, {
+			name:             "Webhooks",
+			installNamespace: "webhook-system",
+			bundle:           "webhook-operator.v0.0.5",
+			testCaseName:     "all-webhook-types",
 		},
 	} {
 		bundlePath := filepath.Join(bundleRootDir, tc.bundle)
