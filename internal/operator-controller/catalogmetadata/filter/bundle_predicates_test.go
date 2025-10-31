@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"testing"
 
-	mmsemver "github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/filter"
 )
 
-func TestInMastermindsSemverRange(t *testing.T) {
+func TestInSemverRange(t *testing.T) {
 	b1 := declcfg.Bundle{
 		Properties: []property.Property{
 			{
@@ -40,10 +40,10 @@ func TestInMastermindsSemverRange(t *testing.T) {
 		},
 	}
 
-	vRange, err := mmsemver.NewConstraint(">=1.0.0")
+	vRange, err := compare.NewVersionRange(">=1.0.0")
 	require.NoError(t, err)
 
-	f := filter.InMastermindsSemverRange(vRange)
+	f := filter.InSemverRange(vRange)
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
