@@ -25,6 +25,7 @@ import (
 	"slices"
 	"strings"
 
+	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -139,13 +140,16 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	return res, reconcileErr
 }
 
-// ensureAllConditionsWithReason checks that all defined condition types exist in the given ClusterExtension,
-// and assigns a specified reason and custom message to any missing condition.
-func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.ConditionReason, message string) {
+// ensureFailureConditionsWithReason keeps every non-deprecation condition present.
+// If one is missing, we add it with the given reason and message so users see why
+// reconcile failed. Deprecation conditions are handled later by SetDeprecationStatus.
+func ensureFailureConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.ConditionReason, message string) {
 	for _, condType := range conditionsets.ConditionTypes {
+		if isDeprecationCondition(condType) {
+			continue
+		}
 		cond := apimeta.FindStatusCondition(ext.Status.Conditions, condType)
 		if cond == nil {
-			// Create a new condition with a valid reason and add it
 			SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 				Type:               condType,
 				Status:             metav1.ConditionFalse,
@@ -154,6 +158,17 @@ func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.C
 				ObservedGeneration: ext.GetGeneration(),
 			})
 		}
+	}
+}
+
+// isDeprecationCondition reports whether the given type is one of the deprecation
+// conditions we manage separately.
+func isDeprecationCondition(condType string) bool {
+	switch condType {
+	case ocv1.TypeDeprecated, ocv1.TypePackageDeprecated, ocv1.TypeChannelDeprecated, ocv1.TypeBundleDeprecated:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -229,6 +244,19 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		return ctrl.Result{}, err
 	}
 
+	// Hold deprecation updates until the end. That way:
+	//   * if nothing installs, BundleDeprecated stays Unknown/Absent
+	//   * if a bundle installs, we report its real deprecation status
+	//   * install errors never leak into the deprecation conditions
+	var resolvedDeprecation *declcfg.Deprecation
+	defer func() {
+		installedBundleName := ""
+		if revisionStates != nil && revisionStates.Installed != nil {
+			installedBundleName = revisionStates.Installed.Name
+		}
+		SetDeprecationStatus(ext, installedBundleName, resolvedDeprecation)
+	}()
+
 	var resolvedRevisionMetadata *RevisionMetadata
 	if len(revisionStates.RollingOut) == 0 {
 		l.Info("resolving bundle")
@@ -236,30 +264,21 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		if revisionStates.Installed != nil {
 			bm = &revisionStates.Installed.BundleMetadata
 		}
-		resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolver.Resolve(ctx, ext, bm)
+		var resolvedBundle *declcfg.Bundle
+		var resolvedBundleVersion *bsemver.Version
+		resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err = r.Resolver.Resolve(ctx, ext, bm)
+		// Keep any deprecation data the resolver returned. The deferred update will use it
+		// even if installation later fails or never begins.
 		if err != nil {
 			// Note: We don't distinguish between resolution-specific errors and generic errors
 			setStatusProgressing(ext, err)
 			setInstalledStatusFromRevisionStates(ext, revisionStates)
-			ensureAllConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
+			// Ensure non-deprecation conditions capture the failure immediately. The deferred
+			// SetDeprecationStatus call is responsible for updating the deprecation conditions
+			// based on any catalog data returned by the resolver.
+			ensureFailureConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
 			return ctrl.Result{}, err
 		}
-
-		// set deprecation status after _successful_ resolution
-		// TODO:
-		//  1. It seems like deprecation status should reflect the currently installed bundle, not the resolved
-		//     bundle. So perhaps we should set package and channel deprecations directly after resolution, but
-		//     defer setting the bundle deprecation until we successfully install the bundle.
-		//  2. If resolution fails because it can't find a bundle, that doesn't mean we wouldn't be able to find
-		//     a deprecation for the ClusterExtension's spec.packageName. Perhaps we should check for a non-nil
-		//     resolvedDeprecation even if resolution returns an error. If present, we can still update some of
-		//     our deprecation status.
-		//       - Open question though: what if different catalogs have different opinions of what's deprecated.
-		//         If we can't resolve a bundle, how do we know which catalog to trust for deprecation information?
-		//         Perhaps if the package shows up in multiple catalogs and deprecations don't match, we can set
-		//         the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
-		//         all catalogs?
-		SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 		resolvedRevisionMetadata = &RevisionMetadata{
 			Package:        resolvedBundle.Package,
 			Image:          resolvedBundle.Image,
@@ -326,83 +345,141 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	return ctrl.Result{}, nil
 }
 
-// SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
-// based on the provided bundle
-func SetDeprecationStatus(ext *ocv1.ClusterExtension, bundleName string, deprecation *declcfg.Deprecation) {
-	deprecations := map[string][]declcfg.DeprecationEntry{}
-	channelSet := sets.New[string]()
-	if ext.Spec.Source.Catalog != nil {
-		for _, channel := range ext.Spec.Source.Catalog.Channels {
-			channelSet.Insert(channel)
-		}
+// DeprecationInfo captures the deprecation data needed to update condition status.
+type DeprecationInfo struct {
+	PackageEntries []declcfg.DeprecationEntry
+	ChannelEntries []declcfg.DeprecationEntry
+	BundleEntries  []declcfg.DeprecationEntry
+	BundleStatus   metav1.ConditionStatus
+}
+
+// SetDeprecationStatus updates the ClusterExtension deprecation conditions using the
+// catalog data from resolve plus the name of the bundle that actually landed. Examples:
+//   - no bundle installed -> bundle status stays Unknown/Absent
+//   - installed bundle marked deprecated -> bundle status True/Deprecated
+//   - installed bundle not deprecated -> bundle status False/Deprecated
+//
+// This keeps the deprecation conditions focused on catalog information:
+//   - PackageDeprecated: true if the catalog marks the package deprecated
+//   - ChannelDeprecated: true if any requested channel is marked deprecated
+//   - BundleDeprecated: reflects the installed bundle (Unknown/Absent when nothing installed)
+//   - Deprecated (rollup): true if any of the above signals a deprecation
+//
+// Install or validation errors never appear here because they belong on the
+// Progressing/Installed conditions instead. Callers should invoke this after reconcile
+// finishes (for example via a defer) so catalog data replaces any transient error messages.
+func SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string, deprecation *declcfg.Deprecation) {
+	info := buildDeprecationInfo(ext, installedBundleName, deprecation)
+
+	packageMessages := collectDeprecationMessages(info.PackageEntries)
+	channelMessages := collectDeprecationMessages(info.ChannelEntries)
+	bundleMessages := collectDeprecationMessages(info.BundleEntries)
+
+	messages := slices.Concat(packageMessages, channelMessages)
+	messages = slices.Concat(messages, bundleMessages)
+
+	status := metav1.ConditionFalse
+	if len(messages) > 0 {
+		status = metav1.ConditionTrue
 	}
+
+	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1.TypeDeprecated,
+		Status:             status,
+		Reason:             ocv1.ReasonDeprecated,
+		Message:            strings.Join(messages, "\n"),
+		ObservedGeneration: ext.GetGeneration(),
+	})
+
+	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1.TypePackageDeprecated,
+		Status:             conditionStatus(len(packageMessages) > 0),
+		Reason:             ocv1.ReasonDeprecated,
+		Message:            strings.Join(packageMessages, "\n"),
+		ObservedGeneration: ext.GetGeneration(),
+	})
+
+	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1.TypeChannelDeprecated,
+		Status:             conditionStatus(len(channelMessages) > 0),
+		Reason:             ocv1.ReasonDeprecated,
+		Message:            strings.Join(channelMessages, "\n"),
+		ObservedGeneration: ext.GetGeneration(),
+	})
+
+	bundleReason := ocv1.ReasonDeprecated
+	bundleMessage := strings.Join(bundleMessages, "\n")
+	if info.BundleStatus == metav1.ConditionUnknown {
+		bundleReason = ocv1.ReasonAbsent
+		bundleMessage = ""
+	}
+
+	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1.TypeBundleDeprecated,
+		Status:             info.BundleStatus,
+		Reason:             bundleReason,
+		Message:            bundleMessage,
+		ObservedGeneration: ext.GetGeneration(),
+	})
+}
+
+// buildDeprecationInfo filters the catalog deprecation data down to the package, channel,
+// and bundle entries that matter for this ClusterExtension. An empty bundle name means
+// nothing is installed yet, so we leave bundle status Unknown/Absent.
+func buildDeprecationInfo(ext *ocv1.ClusterExtension, installedBundleName string, deprecation *declcfg.Deprecation) DeprecationInfo {
+	info := DeprecationInfo{BundleStatus: metav1.ConditionUnknown}
+	var channelSet sets.Set[string]
+	if ext.Spec.Source.Catalog != nil {
+		channelSet = sets.New(ext.Spec.Source.Catalog.Channels...)
+	} else {
+		channelSet = sets.New[string]()
+	}
+
 	if deprecation != nil {
 		for _, entry := range deprecation.Entries {
 			switch entry.Reference.Schema {
 			case declcfg.SchemaPackage:
-				deprecations[ocv1.TypePackageDeprecated] = []declcfg.DeprecationEntry{entry}
+				info.PackageEntries = append(info.PackageEntries, entry)
 			case declcfg.SchemaChannel:
 				if channelSet.Has(entry.Reference.Name) {
-					deprecations[ocv1.TypeChannelDeprecated] = append(deprecations[ocv1.TypeChannelDeprecated], entry)
+					info.ChannelEntries = append(info.ChannelEntries, entry)
 				}
 			case declcfg.SchemaBundle:
-				if bundleName != entry.Reference.Name {
-					continue
+				if installedBundleName != "" && entry.Reference.Name == installedBundleName {
+					info.BundleEntries = append(info.BundleEntries, entry)
 				}
-				deprecations[ocv1.TypeBundleDeprecated] = []declcfg.DeprecationEntry{entry}
 			}
 		}
 	}
 
-	// first get ordered deprecation messages that we'll join in the Deprecated condition message
-	var deprecationMessages []string
-	for _, conditionType := range []string{
-		ocv1.TypePackageDeprecated,
-		ocv1.TypeChannelDeprecated,
-		ocv1.TypeBundleDeprecated,
-	} {
-		if entries, ok := deprecations[conditionType]; ok {
-			for _, entry := range entries {
-				deprecationMessages = append(deprecationMessages, entry.Message)
-			}
+	// installedBundleName is empty when nothing is installed. In that case we want
+	// to report the bundle deprecation condition as Unknown/Absent.
+	if installedBundleName != "" {
+		if len(info.BundleEntries) > 0 {
+			info.BundleStatus = metav1.ConditionTrue
+		} else {
+			info.BundleStatus = metav1.ConditionFalse
 		}
 	}
 
-	// next, set the Deprecated condition
-	status, reason, message := metav1.ConditionFalse, ocv1.ReasonDeprecated, ""
-	if len(deprecationMessages) > 0 {
-		status, reason, message = metav1.ConditionTrue, ocv1.ReasonDeprecated, strings.Join(deprecationMessages, ";")
-	}
-	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1.TypeDeprecated,
-		Reason:             reason,
-		Status:             status,
-		Message:            message,
-		ObservedGeneration: ext.Generation,
-	})
+	return info
+}
 
-	// finally, set the individual deprecation conditions for package, channel, and bundle
-	for _, conditionType := range []string{
-		ocv1.TypePackageDeprecated,
-		ocv1.TypeChannelDeprecated,
-		ocv1.TypeBundleDeprecated,
-	} {
-		entries, ok := deprecations[conditionType]
-		status, reason, message := metav1.ConditionFalse, ocv1.ReasonDeprecated, ""
-		if ok {
-			status, reason = metav1.ConditionTrue, ocv1.ReasonDeprecated
-			for _, entry := range entries {
-				message = fmt.Sprintf("%s\n%s", message, entry.Message)
-			}
+func collectDeprecationMessages(entries []declcfg.DeprecationEntry) []string {
+	messages := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.Message != "" {
+			messages = append(messages, entry.Message)
 		}
-		SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               conditionType,
-			Reason:             reason,
-			Status:             status,
-			Message:            message,
-			ObservedGeneration: ext.Generation,
-		})
 	}
+	return messages
+}
+
+func conditionStatus(ok bool) metav1.ConditionStatus {
+	if ok {
+		return metav1.ConditionTrue
+	}
+	return metav1.ConditionFalse
 }
 
 type ControllerBuilderOption func(builder *ctrl.Builder)
