@@ -1,11 +1,10 @@
-package experimental_e2e
+package e2e
 
 import (
 	"context"
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,46 +15,19 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
 	. "github.com/operator-framework/operator-controller/test/helpers"
 )
 
 const (
-	artifactName = "operator-controller-experimental-e2e"
-	pollDuration = time.Minute
-	pollInterval = time.Second
+	soNsFlag = "SingleOwnNamespaceInstallSupport"
 )
-
-var (
-	cfg *rest.Config
-	c   client.Client
-)
-
-func TestMain(m *testing.M) {
-	cfg = ctrl.GetConfigOrDie()
-
-	var err error
-	utilruntime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
-	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	utilruntime.Must(err)
-
-	os.Exit(m.Run())
-}
-
-func TestNoop(t *testing.T) {
-	t.Log("Running experimental-e2e tests")
-	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
-}
 
 func TestClusterExtensionSingleNamespaceSupport(t *testing.T) {
+	SkipIfFeatureGateDisabled(t, soNsFlag)
 	t.Log("Test support for cluster extension config")
 	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
 
@@ -213,6 +185,7 @@ func TestClusterExtensionSingleNamespaceSupport(t *testing.T) {
 }
 
 func TestClusterExtensionOwnNamespaceSupport(t *testing.T) {
+	SkipIfFeatureGateDisabled(t, soNsFlag)
 	t.Log("Test support for cluster extension with OwnNamespace install mode support")
 	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
 
@@ -382,6 +355,7 @@ func TestClusterExtensionOwnNamespaceSupport(t *testing.T) {
 }
 
 func TestClusterExtensionVersionUpdate(t *testing.T) {
+	SkipIfFeatureGateDisabled(t, soNsFlag)
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
