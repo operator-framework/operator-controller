@@ -34,10 +34,11 @@ func TestLocalDirStoraget(t *testing.T) {
 		{
 			name: "store and retrieve catalog content",
 			setup: func(t *testing.T) (*LocalDirV1, fs.FS) {
-				s := &LocalDirV1{
-					RootDir: t.TempDir(),
-					RootURL: &url.URL{Scheme: "http", Host: "test-addr", Path: urlPrefix},
-				}
+				s := NewLocalDirV1(
+					t.TempDir(),
+					&url.URL{Scheme: "http", Host: "test-addr", Path: urlPrefix},
+					false,
+				)
 				return s, createTestFS(t)
 			},
 			test: func(t *testing.T, s *LocalDirV1, fsys fs.FS) {
@@ -72,10 +73,11 @@ func TestLocalDirStoraget(t *testing.T) {
 		{
 			name: "storing with metas handler enabled should create indices",
 			setup: func(t *testing.T) (*LocalDirV1, fs.FS) {
-				s := &LocalDirV1{
-					RootDir:            t.TempDir(),
-					EnableMetasHandler: true,
-				}
+				s := NewLocalDirV1(
+					t.TempDir(),
+					nil,
+					true,
+				)
 				return s, createTestFS(t)
 			},
 			test: func(t *testing.T, s *LocalDirV1, fsys fs.FS) {
@@ -99,7 +101,7 @@ func TestLocalDirStoraget(t *testing.T) {
 			name: "concurrent reads during write should not cause data race",
 			setup: func(t *testing.T) (*LocalDirV1, fs.FS) {
 				dir := t.TempDir()
-				s := &LocalDirV1{RootDir: dir}
+				s := NewLocalDirV1(dir, nil, false)
 				return s, createTestFS(t)
 			},
 			test: func(t *testing.T, s *LocalDirV1, fsys fs.FS) {
@@ -129,7 +131,7 @@ func TestLocalDirStoraget(t *testing.T) {
 		{
 			name: "delete nonexistent catalog",
 			setup: func(t *testing.T) (*LocalDirV1, fs.FS) {
-				return &LocalDirV1{RootDir: t.TempDir()}, nil
+				return NewLocalDirV1(t.TempDir(), nil, false), nil
 			},
 			test: func(t *testing.T, s *LocalDirV1, _ fs.FS) {
 				err := s.Delete("nonexistent")
@@ -146,7 +148,7 @@ func TestLocalDirStoraget(t *testing.T) {
 				if err := os.Chmod(dir, 0000); err != nil {
 					t.Fatal(err)
 				}
-				return &LocalDirV1{RootDir: dir}, createTestFS(t)
+				return NewLocalDirV1(dir, nil, false), createTestFS(t)
 			},
 			test: func(t *testing.T, s *LocalDirV1, fsys fs.FS) {
 				err := s.Store(context.Background(), "test-catalog", fsys)
@@ -173,7 +175,7 @@ func TestLocalDirStoraget(t *testing.T) {
 }
 
 func TestLocalDirServerHandler(t *testing.T) {
-	store := &LocalDirV1{RootDir: t.TempDir(), RootURL: &url.URL{Path: urlPrefix}}
+	store := NewLocalDirV1(t.TempDir(), &url.URL{Path: urlPrefix}, false)
 	if store.Store(context.Background(), "test-catalog", createTestFS(t)) != nil {
 		t.Fatal("failed to store test catalog and start server")
 	}
@@ -274,11 +276,11 @@ func TestLocalDirServerHandler(t *testing.T) {
 // Tests to verify the behavior of the metas endpoint, as described in
 // https://docs.google.com/document/d/1s6_9IFEKGQLNh3ueH7SF4Yrx4PW9NSiNFqFIJx0pU-8/
 func TestMetasEndpoint(t *testing.T) {
-	store := &LocalDirV1{
-		RootDir:            t.TempDir(),
-		RootURL:            &url.URL{Path: urlPrefix},
-		EnableMetasHandler: true,
-	}
+	store := NewLocalDirV1(
+		t.TempDir(),
+		&url.URL{Path: urlPrefix},
+		true,
+	)
 	if store.Store(context.Background(), "test-catalog", createTestFS(t)) != nil {
 		t.Fatal("failed to store test catalog")
 	}
@@ -418,11 +420,11 @@ func TestMetasEndpoint(t *testing.T) {
 }
 
 func TestServerLoadHandling(t *testing.T) {
-	store := &LocalDirV1{
-		RootDir:            t.TempDir(),
-		RootURL:            &url.URL{Path: urlPrefix},
-		EnableMetasHandler: true,
-	}
+	store := NewLocalDirV1(
+		t.TempDir(),
+		&url.URL{Path: urlPrefix},
+		true,
+	)
 
 	// Create large test data
 	largeFS := fstest.MapFS{}
