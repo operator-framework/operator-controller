@@ -14,7 +14,6 @@ metadata:
             },
             "name": "webhooktest-sample"
           },
-          "spec": null
         },
         {
           "apiVersion": "webhook.operators.coreos.io/v2",
@@ -26,7 +25,6 @@ metadata:
             },
             "name": "webhooktest-sample"
           },
-          "spec": null
         }
       ]
     capabilities: Basic Install
