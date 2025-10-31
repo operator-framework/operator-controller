@@ -578,8 +578,8 @@ spec:
     - jsonPath: .status.install.bundle.version
       name: Version
       type: string
-    - jsonPath: .status.conditions[?(@.type=='Installed')].status
-      name: Installed
+    - jsonPath: .status.conditions[?(@.type=='Available')].status
+      name: Available
       type: string
     - jsonPath: .status.conditions[?(@.type=='Progressing')].status
       name: Progressing
