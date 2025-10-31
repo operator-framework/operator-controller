@@ -1,0 +1,43 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: webhook-operator.v-119edugfdvz48oyy2ctmbp4ec5c4a7zbv5k03vg4y3ve
+rules:
+- apiGroups:
+  - webhook.operators.coreos.io
+  resources:
+  - webhooktests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - webhook.operators.coreos.io
+  resources:
+  - webhooktests/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - webhook.operators.coreos.io
+  resources:
+  - webhooktests/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create

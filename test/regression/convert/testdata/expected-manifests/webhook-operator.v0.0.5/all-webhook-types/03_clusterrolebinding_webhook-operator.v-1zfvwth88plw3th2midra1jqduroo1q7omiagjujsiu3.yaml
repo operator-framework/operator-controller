@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: webhook-operator.v-1zfvwth88plw3th2midra1jqduroo1q7omiagjujsiu3
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: webhook-operator.v-1zfvwth88plw3th2midra1jqduroo1q7omiagjujsiu3
+subjects:
+- kind: ServiceAccount
+  name: webhook-operator-controller-manager
+  namespace: webhook-system
