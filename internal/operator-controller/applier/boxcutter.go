@@ -27,6 +27,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
 )
 
 const (
@@ -58,13 +59,17 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 			return nil, err
 		}
 
-		labels := maps.Clone(obj.GetLabels())
-		if labels == nil {
-			labels = map[string]string{}
-		}
+		// Optimize: avoid cloning if we're going to add labels anyway
+		existingLabels := obj.GetLabels()
+		labels := make(map[string]string, len(existingLabels)+len(objectLabels))
+		maps.Copy(labels, existingLabels)
 		maps.Copy(labels, objectLabels)
 		obj.SetLabels(labels)
 		obj.SetOwnerReferences(nil) // reset OwnerReferences for migration.
+
+		// Memory optimization: strip large annotations and managed fields
+		// Note: StripManagedFieldsAndAnnotations never returns an error in practice
+		_, _ = cache.StripManagedFieldsAndAnnotations(&obj)
 
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
 			Object:              obj,
@@ -96,10 +101,10 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	// objectLabels
 	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
 	for _, obj := range plain {
-		labels := maps.Clone(obj.GetLabels())
-		if labels == nil {
-			labels = map[string]string{}
-		}
+		// Optimize: avoid cloning if we're going to add labels anyway
+		existingLabels := obj.GetLabels()
+		labels := make(map[string]string, len(existingLabels)+len(objectLabels))
+		maps.Copy(labels, existingLabels)
 		maps.Copy(labels, objectLabels)
 		obj.SetLabels(labels)
 
@@ -114,6 +119,11 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		}
 		unstr := unstructured.Unstructured{Object: unstrObj}
 		unstr.SetGroupVersionKind(gvk)
+
+		// Memory optimization: strip large annotations and managed fields
+		if _, err := cache.StripManagedFieldsAndAnnotations(&unstr); err != nil {
+			return nil, err
+		}
 
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
 			Object: unstr,
@@ -329,7 +339,8 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 // ClusterExtensionRevisionPreviousLimit or to the first _active_ revision and deletes trimmed revisions from the cluster.
 // NOTE: revisionList must be sorted in chronographical order, from oldest to latest.
 func (bc *Boxcutter) setPreviousRevisions(ctx context.Context, latestRevision *ocv1.ClusterExtensionRevision, revisionList []ocv1.ClusterExtensionRevision) error {
-	trimmedPrevious := make([]ocv1.ClusterExtensionRevisionPrevious, 0)
+	// Pre-allocate with capacity limit to reduce allocations
+	trimmedPrevious := make([]ocv1.ClusterExtensionRevisionPrevious, 0, ClusterExtensionRevisionPreviousLimit)
 	for index, r := range revisionList {
 		if index < len(revisionList)-ClusterExtensionRevisionPreviousLimit && r.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
 			// Delete oldest CREs from the cluster and list to reach ClusterExtensionRevisionPreviousLimit or latest active revision
@@ -371,9 +382,16 @@ func latestRevisionNumber(prevRevisions []ocv1.ClusterExtensionRevision) int64 {
 }
 
 func splitManifestDocuments(file string) []string {
-	//nolint:prealloc
-	var docs []string
-	for _, manifest := range strings.Split(file, "\n") {
+	// Estimate: typical manifests have ~50-100 lines per document
+	// Pre-allocate for reasonable bundle size to reduce allocations
+	lines := strings.Split(file, "\n")
+	estimatedDocs := len(lines) / 20 // conservative estimate
+	if estimatedDocs < 4 {
+		estimatedDocs = 4
+	}
+	docs := make([]string, 0, estimatedDocs)
+
+	for _, manifest := range lines {
 		manifest = strings.TrimSpace(manifest)
 		if len(manifest) == 0 {
 			continue

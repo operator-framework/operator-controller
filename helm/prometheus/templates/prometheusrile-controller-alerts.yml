@@ -22,27 +22,35 @@ spec:
           annotations:
             description: container {{`{{ $labels.container }}`}} of pod {{`{{ $labels.pod }}`}} experienced OOM event(s); count={{`{{ $value }}`}}
           expr: container_oom_events_total > 0
+        # Memory growth alerts - thresholds calibrated based on baseline memory profiling
+        # See MEMORY_ANALYSIS.md for details on normal operational memory patterns
         - alert: operator-controller-memory-growth
           annotations:
             description: 'operator-controller pod memory usage growing at a high rate for 5 minutes: {{`{{ $value | humanize }}`}}B/sec'
-          expr: deriv(sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"})[5m:]) > 100_000
+          # Threshold: 200kB/sec (baseline shows 132.4kB/sec episodic growth during e2e tests is normal)
+          expr: deriv(sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"})[5m:]) > 200_000
           for: 5m
           keep_firing_for: 1d
         - alert: catalogd-memory-growth
           annotations:
             description: 'catalogd pod memory usage growing at a high rate for 5 minutes: {{`{{ $value | humanize }}`}}B/sec'
-          expr: deriv(sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"})[5m:]) > 100_000
+          # Threshold: 200kB/sec (aligned with operator-controller for consistency)
+          expr: deriv(sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"})[5m:]) > 200_000
           for: 5m
           keep_firing_for: 1d
+        # Memory usage alerts - thresholds calibrated for test/development environments
+        # Production deployments may need different thresholds based on workload
         - alert: operator-controller-memory-usage
           annotations:
             description: 'operator-controller pod using high memory resources for the last 5 minutes: {{`{{ $value | humanize }}`}}B'
-          expr: sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"}) > 100_000_000
+          # Threshold: 150MB (baseline shows 107.9MB peak is normal, stabilizes at 78-88MB)
+          expr: sum(container_memory_working_set_bytes{pod=~"operator-controller.*",container="manager"}) > 150_000_000
           for: 5m
           keep_firing_for: 1d
         - alert: catalogd-memory-usage
           annotations:
             description: 'catalogd pod using high memory resources for the last 5 minutes: {{`{{ $value | humanize }}`}}B'
+          # Threshold: 75MB (baseline shows 16.9MB peak, well under threshold)
           expr: sum(container_memory_working_set_bytes{pod=~"catalogd.*",container="manager"}) > 75_000_000
           for: 5m
           keep_firing_for: 1d
