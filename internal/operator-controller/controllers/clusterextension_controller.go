@@ -189,17 +189,22 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		setStatusProgressing(ext, err)
 		return ctrl.Result{}, err
 	}
-	if finalizeResult.Updated || finalizeResult.StatusUpdated {
-		// On create: make sure the finalizer is applied before we do anything
-		// On delete: make sure we do nothing after the finalizer is removed
+
+	// If the ClusterExtension is being deleted, we should not proceed with resolution or installation.
+	// This prevents errors when catalogs that were used for installation are no longer available.
+	// We check this immediately after finalizer handling to ensure we skip all reconciliation logic
+	// for resources that are being deleted, even if the finalizers haven't been updated.
+	if ext.GetDeletionTimestamp() != nil {
+		// The cluster extension is being deleted. We've handled finalizer registration/removal above,
+		// but the cluster extension may still be present in the cluster because there are other
+		// finalizers that other controllers need to handle (e.g. the orphan deletion finalizer).
+		// In this case, we should not proceed with resolution, unpacking, or installation.
 		return ctrl.Result{}, nil
 	}
 
-	if ext.GetDeletionTimestamp() != nil {
-		// If we've gotten here, that means the cluster extension is being deleted, we've handled all of
-		// _our_ finalizers (above), but the cluster extension is still present in the cluster, likely
-		// because there are _other_ finalizers that other controllers need to handle, (e.g. the orphan
-		// deletion finalizer).
+	if finalizeResult.Updated || finalizeResult.StatusUpdated {
+		// On create: make sure the finalizer is applied before we do anything
+		// On delete: make sure we do nothing after the finalizer is removed
 		return ctrl.Result{}, nil
 	}
 
