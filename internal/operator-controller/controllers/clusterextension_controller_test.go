@@ -121,6 +121,70 @@ func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 	}
 }
 
+// TestClusterExtensionDeletionWithUnavailableCatalog tests the fix for OCPBUGS-62942.
+// It verifies that when a ClusterExtension is being deleted, the reconcile loop
+// does not attempt resolution even if the catalog is unavailable (which would cause
+// a "cache for catalog not found" error).
+func TestClusterExtensionDeletionWithUnavailableCatalog(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t)
+
+	// Set up a resolver that would fail with a catalog error
+	catalogNotFoundErr := errors.New("error walking catalogs: error getting package from catalog: cache for catalog not found")
+	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		return nil, nil, nil, catalogNotFoundErr
+	})
+
+	// Set up a revision states getter that would also fail
+	revisionStatesErr := errors.New("getting installed bundle failed")
+	reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+		Err: revisionStatesErr,
+	}
+
+	ctx := context.Background()
+	pkgName := fmt.Sprintf("test-pkg-%s", rand.String(6))
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("When a ClusterExtension is being deleted")
+	t.Log("By creating a cluster extension with a finalizer")
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: extKey.Name,
+			Finalizers: []string{
+				controllers.ClusterExtensionCleanupUnpackCacheFinalizer,
+			},
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: pkgName,
+				},
+			},
+			Namespace: "default",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "default",
+			},
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	t.Log("And deleting the cluster extension")
+	require.NoError(t, cl.Delete(ctx, clusterExtension))
+
+	t.Log("Then reconcile should succeed without attempting resolution")
+	t.Log("By running reconcile")
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	// Should not return the catalog error or revision states error because
+	// reconcile should short-circuit before calling either the RevisionStatesGetter
+	// or the Resolver
+	require.NoError(t, err)
+
+	t.Log("And the cluster extension should still exist (waiting for finalizer cleanup)")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+	require.NotNil(t, clusterExtension.DeletionTimestamp)
+}
+
 func TestClusterExtensionResolutionFails(t *testing.T) {
 	pkgName := fmt.Sprintf("non-existent-%s", rand.String(6))
 	cl, reconciler := newClientAndReconciler(t)
