@@ -44,6 +44,9 @@ spec:
             - --leader-elect
             {{- end }}
             - --metrics-bind-address=:7443
+            {{- if .Values.options.profiling.enabled }}
+            - --pprof-bind-address=:6060
+            {{- end }}
             - --external-address=catalogd-service.{{ .Values.namespaces.olmv1.name }}.svc
             {{- range .Values.options.catalogd.features.enabled }}
             - --feature-gates={{- . -}}=true

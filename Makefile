@@ -106,11 +106,11 @@ CATALOGS_MANIFEST := $(MANIFEST_HOME)/default-catalogs.yaml
 
 .PHONY: help
 help: #HELP Display essential help.
-	@awk 'BEGIN {FS = ":[^#]*#HELP"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\n"} /^[a-zA-Z_0-9-]+:.*#HELP / { printf "  \033[36m%-21s\033[0m %s\n", $$1, $$2 } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":[^#]*#HELP"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\n"} /^[a-zA-Z_0-9\/%-]+:.*#HELP / { printf "  \033[36m%-21s\033[0m %s\n", $$1, $$2 } ' $(MAKEFILE_LIST)
 
 .PHONY: help-extended
 help-extended: #HELP Display extended help.
-	@awk 'BEGIN {FS = ":.*#(EX)?HELP"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*#(EX)?HELP / { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 } /^#SECTION / { printf "\n\033[1m%s\033[0m\n", substr($$0, 10) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*#(EX)?HELP"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9\/%-]+:.*#(EX)?HELP / { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 } /^#SECTION / { printf "\n\033[1m%s\033[0m\n", substr($$0, 10) } ' $(MAKEFILE_LIST)
 
 #SECTION Development
 
@@ -334,6 +334,27 @@ test-upgrade-experimental-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade e2e t
 .PHONY: e2e-coverage
 e2e-coverage:
 	COVERAGE_NAME=$(COVERAGE_NAME) ./hack/test/e2e-coverage.sh
+
+TEST_PROFILE_BIN := bin/test-profile
+.PHONY: build-test-profiler
+build-test-profiler: #EXHELP Build the test profiling tool
+	cd hack/tools/test-profiling && go build -o ../../../$(TEST_PROFILE_BIN) ./cmd/test-profile
+
+.PHONY: test-test-profiler
+test-test-profiler: #EXHELP Run unit tests for the test profiling tool
+	cd hack/tools/test-profiling && go test -v ./...
+
+.PHONY: start-profiling
+start-profiling: build-test-profiler #EXHELP Start profiling in background with auto-generated name (timestamp). Use start-profiling/<name> for custom name.
+	$(TEST_PROFILE_BIN) start
+
+.PHONY: start-profiling/%
+start-profiling/%: build-test-profiler #EXHELP Start profiling in background with specified name. Usage: make start-profiling/<name>
+	$(TEST_PROFILE_BIN) start $*
+
+.PHONY: stop-profiling
+stop-profiling: build-test-profiler #EXHELP Stop profiling and generate analysis report
+	$(TEST_PROFILE_BIN) stop
 
 #SECTION KIND Cluster Operations
 

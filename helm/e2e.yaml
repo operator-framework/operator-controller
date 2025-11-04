@@ -6,3 +6,5 @@
 options:
   e2e:
     enabled: true
+  profiling:
+    enabled: true
