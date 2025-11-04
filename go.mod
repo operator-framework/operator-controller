@@ -1,6 +1,6 @@
 module github.com/operator-framework/operator-controller
 
-go 1.24.4
+go 1.24.6
 
 require (
 	github.com/BurntSushi/toml v1.5.0
@@ -18,7 +18,7 @@ require (
 	github.com/klauspost/compress v1.18.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/operator-framework/api v0.35.0
+	github.com/operator-framework/api v0.36.0
 	github.com/operator-framework/helm-operator-plugins v0.8.0
 	github.com/operator-framework/operator-registry v1.60.0
 	github.com/prometheus/client_golang v1.23.2
@@ -43,7 +43,7 @@ require (
 	k8s.io/kubernetes v1.34.0
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	pkg.package-operator.run/boxcutter v0.7.1
-	sigs.k8s.io/controller-runtime v0.22.1
+	sigs.k8s.io/controller-runtime v0.22.3
 	sigs.k8s.io/controller-tools v0.19.0
 	sigs.k8s.io/crdify v0.5.0
 	sigs.k8s.io/yaml v1.6.0
