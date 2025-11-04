@@ -355,9 +355,15 @@ type DeprecationInfo struct {
 
 // SetDeprecationStatus updates the ClusterExtension deprecation conditions using the
 // catalog data from resolve plus the name of the bundle that actually landed. Examples:
-//   - no bundle installed -> bundle status stays Unknown/Absent
-//   - installed bundle marked deprecated -> bundle status True/Deprecated
-//   - installed bundle not deprecated -> bundle status False/Deprecated
+//   - No bundle installed -> BundleDeprecated stays Unknown/Absent (ReasonAbsent) because we
+//     cannot judge a bundle that never landed.
+//   - Catalog marks the package or one of the requested channels deprecated -> the matching
+//     conditions flip to Status=True and Reason=Deprecated, with the catalog's message.
+//   - Catalog marks the installed bundle deprecated -> BundleDeprecated becomes Status=True
+//     and Reason=Deprecated, again echoing the catalog message.
+//   - Catalog says nothing about a particular level (package/channel/bundle) -> that condition
+//     stays Status=False with Reason=NotDeprecated and an empty message so users can rely on
+//     the field existing even when everything is healthy.
 //
 // This keeps the deprecation conditions focused on catalog information:
 //   - PackageDeprecated: true if the catalog marks the package deprecated
@@ -379,38 +385,66 @@ func SetDeprecationStatus(ext *ocv1.ClusterExtension, installedBundleName string
 	messages = slices.Concat(messages, bundleMessages)
 
 	status := metav1.ConditionFalse
+	reason := ocv1.ReasonNotDeprecated
+	message := ""
 	if len(messages) > 0 {
 		status = metav1.ConditionTrue
+		reason = ocv1.ReasonDeprecated
+		message = strings.Join(messages, "\n")
 	}
 
 	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1.TypeDeprecated,
 		Status:             status,
-		Reason:             ocv1.ReasonDeprecated,
-		Message:            strings.Join(messages, "\n"),
+		Reason:             reason,
+		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
+
+	packageStatus := conditionStatus(len(packageMessages) > 0)
+	packageReason := ocv1.ReasonNotDeprecated
+	packageMessage := ""
+	if packageStatus == metav1.ConditionTrue {
+		packageReason = ocv1.ReasonDeprecated
+		packageMessage = strings.Join(packageMessages, "\n")
+	}
 
 	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1.TypePackageDeprecated,
-		Status:             conditionStatus(len(packageMessages) > 0),
-		Reason:             ocv1.ReasonDeprecated,
-		Message:            strings.Join(packageMessages, "\n"),
+		Status:             packageStatus,
+		Reason:             packageReason,
+		Message:            packageMessage,
 		ObservedGeneration: ext.GetGeneration(),
 	})
+
+	channelStatus := conditionStatus(len(channelMessages) > 0)
+	channelReason := ocv1.ReasonNotDeprecated
+	channelMessage := ""
+	if channelStatus == metav1.ConditionTrue {
+		channelReason = ocv1.ReasonDeprecated
+		channelMessage = strings.Join(channelMessages, "\n")
+	}
 
 	SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1.TypeChannelDeprecated,
-		Status:             conditionStatus(len(channelMessages) > 0),
-		Reason:             ocv1.ReasonDeprecated,
-		Message:            strings.Join(channelMessages, "\n"),
+		Status:             channelStatus,
+		Reason:             channelReason,
+		Message:            channelMessage,
 		ObservedGeneration: ext.GetGeneration(),
 	})
 
-	bundleReason := ocv1.ReasonDeprecated
-	bundleMessage := strings.Join(bundleMessages, "\n")
-	if info.BundleStatus == metav1.ConditionUnknown {
+	var bundleReason string
+	var bundleMessage string
+
+	switch info.BundleStatus {
+	case metav1.ConditionTrue:
+		bundleReason = ocv1.ReasonDeprecated
+		bundleMessage = strings.Join(bundleMessages, "\n")
+	case metav1.ConditionUnknown:
 		bundleReason = ocv1.ReasonAbsent
+		bundleMessage = ""
+	default:
+		bundleReason = ocv1.ReasonNotDeprecated
 		bundleMessage = ""
 	}
 

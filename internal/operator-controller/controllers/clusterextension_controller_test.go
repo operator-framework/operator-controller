@@ -321,15 +321,15 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 			deprecatedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeDeprecated)
 			require.NotNil(t, deprecatedCond)
 			require.Equal(t, metav1.ConditionFalse, deprecatedCond.Status)
-			require.Equal(t, ocv1.ReasonDeprecated, deprecatedCond.Reason)
+			require.Equal(t, ocv1.ReasonNotDeprecated, deprecatedCond.Reason)
 			pkgCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypePackageDeprecated)
 			require.NotNil(t, pkgCond)
 			require.Equal(t, metav1.ConditionFalse, pkgCond.Status)
-			require.Equal(t, ocv1.ReasonDeprecated, pkgCond.Reason)
+			require.Equal(t, ocv1.ReasonNotDeprecated, pkgCond.Reason)
 			chanCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeChannelDeprecated)
 			require.NotNil(t, chanCond)
 			require.Equal(t, metav1.ConditionFalse, chanCond.Status)
-			require.Equal(t, ocv1.ReasonDeprecated, chanCond.Reason)
+			require.Equal(t, ocv1.ReasonNotDeprecated, chanCond.Reason)
 			bundleCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeBundleDeprecated)
 			require.NotNil(t, bundleCond)
 			require.Equal(t, metav1.ConditionUnknown, bundleCond.Status)
@@ -418,15 +418,15 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 	deprecatedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeDeprecated)
 	require.NotNil(t, deprecatedCond)
 	require.Equal(t, metav1.ConditionFalse, deprecatedCond.Status)
-	require.Equal(t, ocv1.ReasonDeprecated, deprecatedCond.Reason)
+	require.Equal(t, ocv1.ReasonNotDeprecated, deprecatedCond.Reason)
 	pkgCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypePackageDeprecated)
 	require.NotNil(t, pkgCond)
 	require.Equal(t, metav1.ConditionFalse, pkgCond.Status)
-	require.Equal(t, ocv1.ReasonDeprecated, pkgCond.Reason)
+	require.Equal(t, ocv1.ReasonNotDeprecated, pkgCond.Reason)
 	chanCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeChannelDeprecated)
 	require.NotNil(t, chanCond)
 	require.Equal(t, metav1.ConditionFalse, chanCond.Status)
-	require.Equal(t, ocv1.ReasonDeprecated, chanCond.Reason)
+	require.Equal(t, ocv1.ReasonNotDeprecated, chanCond.Reason)
 	bundleCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeBundleDeprecated)
 	require.NotNil(t, bundleCond)
 	require.Equal(t, metav1.ConditionUnknown, bundleCond.Status)
@@ -505,19 +505,19 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 	deprecatedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeDeprecated)
 	require.NotNil(t, deprecatedCond)
 	require.Equal(t, metav1.ConditionFalse, deprecatedCond.Status)
-	require.Equal(t, ocv1.ReasonDeprecated, deprecatedCond.Reason)
+	require.Equal(t, ocv1.ReasonNotDeprecated, deprecatedCond.Reason)
 	require.Empty(t, deprecatedCond.Message)
 
 	packageCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypePackageDeprecated)
 	require.NotNil(t, packageCond)
 	require.Equal(t, metav1.ConditionFalse, packageCond.Status, "catalog said nothing about the package, so stay False")
-	require.Equal(t, ocv1.ReasonDeprecated, packageCond.Reason)
+	require.Equal(t, ocv1.ReasonNotDeprecated, packageCond.Reason)
 	require.Empty(t, packageCond.Message)
 
 	channelCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeChannelDeprecated)
 	require.NotNil(t, channelCond)
 	require.Equal(t, metav1.ConditionFalse, channelCond.Status, "channel also has no deprecation info")
-	require.Equal(t, ocv1.ReasonDeprecated, channelCond.Reason)
+	require.Equal(t, ocv1.ReasonNotDeprecated, channelCond.Reason)
 	require.Empty(t, channelCond.Message)
 
 	bundleCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeBundleDeprecated)
@@ -1052,19 +1052,19 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               ocv1.TypeDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
@@ -1110,19 +1110,19 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               ocv1.TypeDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
@@ -1179,19 +1179,19 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               ocv1.TypeDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
 						{
 							Type:               ocv1.TypeChannelDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
@@ -1256,7 +1256,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
@@ -1413,7 +1413,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
@@ -1570,7 +1570,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 						},
 						{
 							Type:               ocv1.TypePackageDeprecated,
-							Reason:             ocv1.ReasonDeprecated,
+							Reason:             ocv1.ReasonNotDeprecated,
 							Status:             metav1.ConditionFalse,
 							ObservedGeneration: 1,
 						},
