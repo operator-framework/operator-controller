@@ -38,8 +38,13 @@ vendor/
 \#*\#
 .\#*
 
-# AI temp files files
-.claude/
+# AI temp/local files
+.claude/settings.local.json
+.claude/history/
+.claude/cache/
+.claude/logs/
+.claude/.session*
+.claude/*.log
 
 # documentation website asset folder
 site
