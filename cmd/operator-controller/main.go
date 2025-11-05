@@ -460,7 +460,7 @@ func run() error {
 	}
 
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		err = setupBoxcutter(mgr, ceReconciler, preflights, regv1ManifestProvider)
+		err = setupBoxcutter(mgr, ceReconciler, preflights, clusterExtensionFinalizers, regv1ManifestProvider)
 	} else {
 		err = setupHelm(mgr, ceReconciler, preflights, ceController, clusterExtensionFinalizers, regv1ManifestProvider)
 	}
@@ -527,6 +527,7 @@ func setupBoxcutter(
 	mgr manager.Manager,
 	ceReconciler *controllers.ClusterExtensionReconciler,
 	preflights []applier.Preflight,
+	clusterExtensionFinalizers crfinalizer.Registerer,
 	regv1ManifestProvider applier.ManifestProvider,
 ) error {
 	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
@@ -549,6 +550,19 @@ func setupBoxcutter(
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create helm action client getter: %w", err)
+	}
+
+	// Register a no-op finalizer handler for cleanup-contentmanager-cache.
+	// This finalizer was added by the Helm applier for ClusterExtensions created
+	// before BoxcutterRuntime was enabled. Boxcutter doesn't use contentmanager,
+	// so we just need to acknowledge the finalizer to allow deletion to proceed.
+	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		// No-op: Boxcutter doesn't use contentmanager, so no cleanup is needed
+		return crfinalizer.Result{}, nil
+	}))
+	if err != nil {
+		setupLog.Error(err, "unable to register content manager cleanup finalizer for boxcutter")
+		return err
 	}
 
 	// TODO: add support for preflight checks
