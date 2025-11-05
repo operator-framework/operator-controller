@@ -589,6 +589,14 @@ func setupBoxcutter(
 		ActionClientGetter: acg,
 		RevisionGenerator:  rg,
 	}
+	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
+		controllers.HandleFinalizers(ceReconciler.Finalizers),
+		controllers.MigrateStorage(ceReconciler.StorageMigrator),
+		controllers.RetrieveRevisionStates(ceReconciler.RevisionStatesGetter),
+		controllers.RetrieveRevisionMetadata(ceReconciler.Resolver),
+		controllers.UnpackBundle(ceReconciler.ImagePuller, ceReconciler.ImageCache),
+		controllers.ApplyBundle(ceReconciler.Applier),
+	}
 
 	baseDiscoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
@@ -700,6 +708,14 @@ func setupHelm(
 		Manager:                       cm,
 	}
 	ceReconciler.RevisionStatesGetter = &controllers.HelmRevisionStatesGetter{ActionClientGetter: acg}
+	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
+		controllers.HandleFinalizers(ceReconciler.Finalizers),
+		controllers.RetrieveRevisionStates(ceReconciler.RevisionStatesGetter),
+		controllers.RetrieveRevisionMetadata(ceReconciler.Resolver),
+		controllers.UnpackBundle(ceReconciler.ImagePuller, ceReconciler.ImageCache),
+		controllers.ApplyBundle(ceReconciler.Applier),
+	}
+
 	return nil
 }
 
