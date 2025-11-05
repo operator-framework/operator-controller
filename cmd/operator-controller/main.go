@@ -50,7 +50,6 @@ import (
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -68,6 +67,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/operator-controller/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
+	cmcache "github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
@@ -106,6 +106,31 @@ type config struct {
 	catalogdCasDir       string
 	pullCasDir           string
 	globalPullSecret     string
+}
+
+type reconcilerConfigurator interface {
+	Configure(cer *controllers.ClusterExtensionReconciler) error
+}
+
+type boxcutterReconcilerConfigurator struct {
+	mgr                   manager.Manager
+	preflights            []applier.Preflight
+	regv1ManifestProvider applier.ManifestProvider
+	resolver              resolve.Resolver
+	imageCache            imageutil.Cache
+	imagePuller           imageutil.Puller
+	finalizers            crfinalizer.Finalizers
+}
+
+type helmReconcilerConfigurator struct {
+	mgr                   manager.Manager
+	preflights            []applier.Preflight
+	regv1ManifestProvider applier.ManifestProvider
+	resolver              resolve.Resolver
+	imageCache            imageutil.Cache
+	imagePuller           imageutil.Puller
+	finalizers            crfinalizer.Finalizers
+	watcher               cmcache.Watcher
 }
 
 const (
@@ -440,11 +465,7 @@ func run() error {
 	}
 
 	ceReconciler := &controllers.ClusterExtensionReconciler{
-		Client:      cl,
-		Resolver:    resolver,
-		ImageCache:  imageCache,
-		ImagePuller: imagePuller,
-		Finalizers:  clusterExtensionFinalizers,
+		Client: cl,
 	}
 	ceController, err := ceReconciler.SetupWithManager(mgr, ctrlBuilderOpts...)
 	if err != nil {
@@ -459,13 +480,30 @@ func run() error {
 		IsWebhookSupportEnabled:     certProvider != nil,
 		IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
 	}
-
+	var cerCfg reconcilerConfigurator
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		err = setupBoxcutter(mgr, ceReconciler, preflights, clusterExtensionFinalizers, regv1ManifestProvider)
+		cerCfg = &boxcutterReconcilerConfigurator{
+			mgr:                   mgr,
+			preflights:            preflights,
+			regv1ManifestProvider: regv1ManifestProvider,
+			resolver:              resolver,
+			imageCache:            imageCache,
+			imagePuller:           imagePuller,
+			finalizers:            clusterExtensionFinalizers,
+		}
 	} else {
-		err = setupHelm(mgr, ceReconciler, preflights, ceController, clusterExtensionFinalizers, regv1ManifestProvider)
+		cerCfg = &helmReconcilerConfigurator{
+			mgr:                   mgr,
+			preflights:            preflights,
+			regv1ManifestProvider: regv1ManifestProvider,
+			resolver:              resolver,
+			imageCache:            imageCache,
+			imagePuller:           imagePuller,
+			finalizers:            clusterExtensionFinalizers,
+			watcher:               ceController,
+		}
 	}
-	if err != nil {
+	if err := cerCfg.Configure(ceReconciler); err != nil {
 		setupLog.Error(err, "unable to setup lifecycler")
 		return err
 	}
@@ -524,19 +562,13 @@ func getCertificateProvider() render.CertificateProvider {
 	return nil
 }
 
-func setupBoxcutter(
-	mgr manager.Manager,
-	ceReconciler *controllers.ClusterExtensionReconciler,
-	preflights []applier.Preflight,
-	clusterExtensionFinalizers crfinalizer.Registerer,
-	regv1ManifestProvider applier.ManifestProvider,
-) error {
-	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
+func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.ClusterExtensionReconciler) error {
+	coreClient, err := corev1client.NewForConfig(c.mgr.GetConfig())
 	if err != nil {
 		return fmt.Errorf("unable to create core client: %w", err)
 	}
-	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
-		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
+	cfgGetter, err := helmclient.NewActionConfigGetter(c.mgr.GetConfig(), c.mgr.GetRESTMapper(),
+		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, c.mgr.GetAPIReader(), cfg.systemNamespace)),
 		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
 			ext := obj.(*ocv1.ClusterExtension)
 			return ext.Spec.Namespace, nil
@@ -557,7 +589,7 @@ func setupBoxcutter(
 	// This finalizer was added by the Helm applier for ClusterExtensions created
 	// before BoxcutterRuntime was enabled. Boxcutter doesn't use contentmanager,
 	// so we just need to acknowledge the finalizer to allow deletion to proceed.
-	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	err = c.finalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		// No-op: Boxcutter doesn't use contentmanager, so no cleanup is needed
 		return crfinalizer.Result{}, nil
 	}))
@@ -568,27 +600,35 @@ func setupBoxcutter(
 
 	// TODO: add support for preflight checks
 	// TODO: better scheme handling - which types do we want to support?
-	_ = apiextensionsv1.AddToScheme(mgr.GetScheme())
+	_ = apiextensionsv1.AddToScheme(c.mgr.GetScheme())
 	rg := &applier.SimpleRevisionGenerator{
-		Scheme:           mgr.GetScheme(),
-		ManifestProvider: regv1ManifestProvider,
+		Scheme:           c.mgr.GetScheme(),
+		ManifestProvider: c.regv1ManifestProvider,
 	}
-	ceReconciler.Applier = &applier.Boxcutter{
-		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
+	appl := &applier.Boxcutter{
+		Client:            c.mgr.GetClient(),
+		Scheme:            c.mgr.GetScheme(),
 		RevisionGenerator: rg,
-		Preflights:        preflights,
+		Preflights:        c.preflights,
 		FieldOwner:        fmt.Sprintf("%s/clusterextension-controller", fieldOwnerPrefix),
 	}
-	ceReconciler.RevisionStatesGetter = &controllers.BoxcutterRevisionStatesGetter{Reader: mgr.GetClient()}
-	ceReconciler.StorageMigrator = &applier.BoxcutterStorageMigrator{
-		Client:             mgr.GetClient(),
-		Scheme:             mgr.GetScheme(),
+	revisionStatesGetter := &controllers.BoxcutterRevisionStatesGetter{Reader: c.mgr.GetClient()}
+	storageMigrator := &applier.BoxcutterStorageMigrator{
+		Client:             c.mgr.GetClient(),
+		Scheme:             c.mgr.GetScheme(),
 		ActionClientGetter: acg,
 		RevisionGenerator:  rg,
 	}
+	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
+		controllers.HandleFinalizers(c.finalizers),
+		controllers.MigrateStorage(storageMigrator),
+		controllers.RetrieveRevisionStates(revisionStatesGetter),
+		controllers.ResolveBundle(c.resolver),
+		controllers.UnpackBundle(c.imagePuller, c.imageCache),
+		controllers.ApplyBundle(appl),
+	}
 
-	baseDiscoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	baseDiscoveryClient, err := discovery.NewDiscoveryClientForConfig(c.mgr.GetConfig())
 	if err != nil {
 		return fmt.Errorf("unable to create discovery client: %w", err)
 	}
@@ -598,48 +638,41 @@ func setupBoxcutter(
 
 	trackingCache, err := managedcache.NewTrackingCache(
 		ctrl.Log.WithName("trackingCache"),
-		mgr.GetConfig(),
+		c.mgr.GetConfig(),
 		crcache.Options{
-			Scheme: mgr.GetScheme(), Mapper: mgr.GetRESTMapper(),
+			Scheme: c.mgr.GetScheme(), Mapper: c.mgr.GetRESTMapper(),
 		},
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create boxcutter tracking cache: %v", err)
 	}
-	if err := mgr.Add(trackingCache); err != nil {
+	if err := c.mgr.Add(trackingCache); err != nil {
 		return fmt.Errorf("unable to add tracking cache to manager: %v", err)
 	}
 
 	if err = (&controllers.ClusterExtensionRevisionReconciler{
-		Client: mgr.GetClient(),
+		Client: c.mgr.GetClient(),
 		RevisionEngine: machinery.NewRevisionEngine(
 			machinery.NewPhaseEngine(
 				machinery.NewObjectEngine(
-					mgr.GetScheme(), trackingCache, mgr.GetClient(),
-					ownerhandling.NewNative(mgr.GetScheme()),
-					machinery.NewComparator(ownerhandling.NewNative(mgr.GetScheme()), discoveryClient, mgr.GetScheme(), fieldOwnerPrefix),
+					c.mgr.GetScheme(), trackingCache, c.mgr.GetClient(),
+					ownerhandling.NewNative(c.mgr.GetScheme()),
+					machinery.NewComparator(ownerhandling.NewNative(c.mgr.GetScheme()), discoveryClient, c.mgr.GetScheme(), fieldOwnerPrefix),
 					fieldOwnerPrefix, fieldOwnerPrefix,
 				),
-				validation.NewClusterPhaseValidator(mgr.GetRESTMapper(), mgr.GetClient()),
+				validation.NewClusterPhaseValidator(c.mgr.GetRESTMapper(), c.mgr.GetClient()),
 			),
-			validation.NewRevisionValidator(), mgr.GetClient(),
+			validation.NewRevisionValidator(), c.mgr.GetClient(),
 		),
 		TrackingCache: trackingCache,
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(c.mgr); err != nil {
 		return fmt.Errorf("unable to setup ClusterExtensionRevision controller: %w", err)
 	}
 	return nil
 }
 
-func setupHelm(
-	mgr manager.Manager,
-	ceReconciler *controllers.ClusterExtensionReconciler,
-	preflights []applier.Preflight,
-	ceController crcontroller.Controller,
-	clusterExtensionFinalizers crfinalizer.Registerer,
-	regv1ManifestProvider applier.ManifestProvider,
-) error {
-	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
+func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.ClusterExtensionReconciler) error {
+	coreClient, err := corev1client.NewForConfig(c.mgr.GetConfig())
 	if err != nil {
 		return fmt.Errorf("unable to create core client: %w", err)
 	}
@@ -649,8 +682,8 @@ func setupHelm(
 		clientRestConfigMapper = action.SyntheticUserRestConfigMapper(clientRestConfigMapper)
 	}
 
-	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
-		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), cfg.systemNamespace)),
+	cfgGetter, err := helmclient.NewActionConfigGetter(c.mgr.GetConfig(), c.mgr.GetRESTMapper(),
+		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, c.mgr.GetAPIReader(), cfg.systemNamespace)),
 		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
 			ext := obj.(*ocv1.ClusterExtension)
 			return ext.Spec.Namespace, nil
@@ -671,11 +704,11 @@ func setupHelm(
 	// determine if PreAuthorizer should be enabled based on feature gate
 	var preAuth authorization.PreAuthorizer
 	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
+		preAuth = authorization.NewRBACPreAuthorizer(c.mgr.GetClient())
 	}
 
-	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
-	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	cm := contentmanager.NewManager(clientRestConfigMapper, c.mgr.GetConfig(), c.mgr.GetRESTMapper())
+	err = c.finalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		ext := obj.(*ocv1.ClusterExtension)
 		err := cm.Delete(ext)
 		return crfinalizer.Result{}, err
@@ -686,18 +719,26 @@ func setupHelm(
 	}
 
 	// now initialize the helmApplier, assigning the potentially nil preAuth
-	ceReconciler.Applier = &applier.Helm{
+	appl := &applier.Helm{
 		ActionClientGetter: acg,
-		Preflights:         preflights,
+		Preflights:         c.preflights,
 		HelmChartProvider: &applier.RegistryV1HelmChartProvider{
-			ManifestProvider: regv1ManifestProvider,
+			ManifestProvider: c.regv1ManifestProvider,
 		},
 		HelmReleaseToObjectsConverter: &applier.HelmReleaseToObjectsConverter{},
 		PreAuthorizer:                 preAuth,
-		Watcher:                       ceController,
+		Watcher:                       c.watcher,
 		Manager:                       cm,
 	}
-	ceReconciler.RevisionStatesGetter = &controllers.HelmRevisionStatesGetter{ActionClientGetter: acg}
+	revisionStatesGetter := &controllers.HelmRevisionStatesGetter{ActionClientGetter: acg}
+	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
+		controllers.HandleFinalizers(c.finalizers),
+		controllers.RetrieveRevisionStates(revisionStatesGetter),
+		controllers.ResolveBundle(c.resolver),
+		controllers.UnpackBundle(c.imagePuller, c.imageCache),
+		controllers.ApplyBundle(appl),
+	}
+
 	return nil
 }
 
