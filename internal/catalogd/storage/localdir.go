@@ -65,7 +65,8 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 	}
 
 	eg, egCtx := errgroup.WithContext(ctx)
-	metaChans := []chan *declcfg.Meta{}
+	// Pre-allocate metaChans with correct capacity to avoid reallocation
+	metaChans := make([]chan *declcfg.Meta, 0, len(storeMetaFuncs))
 
 	for range storeMetaFuncs {
 		metaChans = append(metaChans, make(chan *declcfg.Meta, 1))
