@@ -76,7 +76,9 @@ func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension
 	return m.installCompleted, m.installStatus, m.err
 }
 
-func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
+type reconcilerOption func(*controllers.ClusterExtensionReconciler)
+
+func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 
 	reconciler := &controllers.ClusterExtensionReconciler{
@@ -86,6 +88,20 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 		},
 		Finalizers: crfinalizer.NewFinalizers(),
 	}
+	for _, opt := range opts {
+		opt(reconciler)
+	}
+	reconciler.ReconcileSteps = []controllers.ReconcileStepFunc{controllers.HandleFinalizers(reconciler.Finalizers), controllers.RetrieveRevisionStates(reconciler.RevisionStatesGetter)}
+	if r := reconciler.Resolver; r != nil {
+		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.RetrieveRevisionMetadata(r))
+	}
+	if i := reconciler.ImagePuller; i != nil {
+		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.UnpackBundle(i, reconciler.ImageCache))
+	}
+	if a := reconciler.Applier; a != nil {
+		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.ApplyBundle(a))
+	}
+
 	return cl, reconciler
 }
 
