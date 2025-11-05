@@ -35,11 +35,11 @@ $(CRD_DIFF): $(BINGO_DIR)/crd-diff.mod
 	@echo "(re)installing $(GOBIN)/crd-diff-v0.2.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-diff.mod -o=$(GOBIN)/crd-diff-v0.2.0 "github.com/everettraven/crd-diff"
 
-CRD_REF_DOCS := $(GOBIN)/crd-ref-docs-v0.1.0
+CRD_REF_DOCS := $(GOBIN)/crd-ref-docs-v0.2.0
 $(CRD_REF_DOCS): $(BINGO_DIR)/crd-ref-docs.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/crd-ref-docs-v0.1.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-ref-docs.mod -o=$(GOBIN)/crd-ref-docs-v0.1.0 "github.com/elastic/crd-ref-docs"
+	@echo "(re)installing $(GOBIN)/crd-ref-docs-v0.2.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-ref-docs.mod -o=$(GOBIN)/crd-ref-docs-v0.2.0 "github.com/elastic/crd-ref-docs"
 
 GOJQ := $(GOBIN)/gojq-v0.12.17
 $(GOJQ): $(BINGO_DIR)/gojq.mod
