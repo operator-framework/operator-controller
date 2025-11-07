@@ -64,7 +64,7 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		maps.Copy(labels, existingLabels)
 		maps.Copy(labels, objectLabels)
 		obj.SetLabels(labels)
-		obj.SetOwnerReferences(nil) // reset OwnerReferences for migration.
+		sanitize(&obj)
 
 		// Memory optimization: strip large annotations
 		// Note: ApplyStripTransform never returns an error in practice
@@ -123,6 +123,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 			return nil, err
 		}
 
+		sanitize(&unstr)
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
 			Object: unstr,
 		})
@@ -133,6 +134,35 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	}
 
 	return r.buildClusterExtensionRevision(objs, ext, revisionAnnotations), nil
+}
+
+func sanitize(obj *unstructured.Unstructured) {
+	m := obj.Object
+
+	// Remove status (top-level)
+	delete(m, "status")
+
+	// Remove common metadata fields set by the API server
+	if metaRaw, ok := m["metadata"]; ok {
+		if meta, ok := metaRaw.(map[string]any); ok {
+			delete(meta, "finalizers")
+			delete(meta, "ownerReferences")
+			delete(meta, "creationTimestamp")
+			delete(meta, "uid")
+			delete(meta, "resourceVersion")
+			delete(meta, "generation")
+			delete(meta, "managedFields")
+			delete(meta, "deletionTimestamp")
+			delete(meta, "deletionGracePeriodSeconds")
+
+			// remove kubectl last-applied annotation
+			if annRaw, ok := meta["annotations"]; ok {
+				if ann, ok := annRaw.(map[string]any); ok {
+					delete(ann, "kubectl.kubernetes.io/last-applied-configuration")
+				}
+			}
+		}
+	}
 }
 
 func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(

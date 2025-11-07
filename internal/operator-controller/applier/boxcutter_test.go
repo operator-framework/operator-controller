@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -36,8 +37,29 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 	g := &applier.SimpleRevisionGenerator{}
 
 	helmRelease := &release.Release{
-		Name:     "test-123",
-		Manifest: `{"apiVersion":"v1","kind":"ConfigMap"}` + "\n" + `{"apiVersion":"v1","kind":"Secret"}` + "\n",
+		Name: "test-123",
+		Manifest: strings.Join(strings.Fields(`
+		{
+			"apiVersion":"v1",
+			"kind":"ConfigMap",
+			"metadata":{
+				"finalizers":["test"],
+				"ownerReferences":[{"kind":"TestOwner"}],
+				"creationTimestamp":{"time":"0"},
+				"uid":"1a2b3c4d",
+				"resourceVersion":"12345",
+				"generation":123,
+				"managedFields":[{"manager":"test-manager"}],
+				"deletionTimestamp":{"time":"0"},
+				"deletionGracePeriodSeconds":30,
+				"annotations":{
+					"do-not-delete-me":"please",
+					"kubectl.kubernetes.io/last-applied-configuration":"delete me"
+				},
+			}, "status": {
+				"replicas": 3,
+			}
+		}`), "") + "\n" + `{"apiVersion":"v1","kind":"Secret"}` + "\n",
 		Labels: map[string]string{
 			labels.BundleNameKey:      "my-bundle",
 			labels.PackageNameKey:     "my-package",
@@ -84,6 +106,9 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 									"apiVersion": "v1",
 									"kind":       "ConfigMap",
 									"metadata": map[string]interface{}{
+										"annotations": map[string]interface{}{
+											"do-not-delete-me": "please",
+										},
 										"labels": map[string]interface{}{
 											"my-label": "my-value",
 										},
@@ -125,6 +150,23 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 				&appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-deployment",
+						// Fields to be sanitized
+						Finalizers:                 []string{"test"},
+						OwnerReferences:            []metav1.OwnerReference{{Kind: "TestOwner"}},
+						CreationTimestamp:          metav1.Time{Time: metav1.Now().Time},
+						UID:                        "1a2b3c4d",
+						ResourceVersion:            "12345",
+						Generation:                 123,
+						ManagedFields:              []metav1.ManagedFieldsEntry{{Manager: "test-manager"}},
+						DeletionTimestamp:          &metav1.Time{Time: metav1.Now().Time},
+						DeletionGracePeriodSeconds: func(i int64) *int64 { return &i }(30),
+						Annotations: map[string]string{
+							// User-set annotations should not be touched
+							"do-not-delete-me": "please",
+							"kubectl.kubernetes.io/last-applied-configuration": "delete me",
+						},
+					}, Status: appsv1.DeploymentStatus{
+						Replicas: 3,
 					},
 				},
 			}, nil
@@ -149,8 +191,6 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	require.Equal(t, map[string]string{
 		controllers.ClusterExtensionRevisionOwnerLabel: "test-extension",
 	}, rev.Labels)
-	t.Log("by checking there are no annotations")
-	require.Empty(t, rev.Annotations)
 	t.Log("by checking the revision number is 0")
 	require.Equal(t, int64(0), rev.Spec.Revision)
 	t.Log("by checking the rendered objects are present in the correct phases")
@@ -167,9 +207,6 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 								"name": "test-service",
 							},
 							"spec": map[string]interface{}{},
-							"status": map[string]interface{}{
-								"loadBalancer": map[string]interface{}{},
-							},
 						},
 					},
 				},
@@ -180,6 +217,9 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 							"kind":       "Deployment",
 							"metadata": map[string]interface{}{
 								"name": "test-deployment",
+								"annotations": map[string]interface{}{
+									"do-not-delete-me": "please",
+								},
 							},
 							"spec": map[string]interface{}{
 								"selector": nil,
@@ -191,7 +231,6 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 								},
 								"strategy": map[string]interface{}{},
 							},
-							"status": map[string]interface{}{},
 						},
 					},
 				},
