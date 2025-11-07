@@ -87,6 +87,7 @@ func ResolveBundle(r resolve.Resolver) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		var resolvedRevisionMetadata *RevisionMetadata
+		// nolint:nestif
 		if len(state.revisionStates.RollingOut) == 0 {
 			l.Info("resolving bundle")
 			var bm *ocv1.BundleMetadata
@@ -94,29 +95,26 @@ func ResolveBundle(r resolve.Resolver) ReconcileStepFunc {
 				bm = &state.revisionStates.Installed.BundleMetadata
 			}
 			resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolve(ctx, ext, bm)
+			hadCatalogDeprecationData := err == nil || resolvedDeprecation != nil
+
+			// Update deprecation status immediately after resolution.
+			// Use the INSTALLED bundle (not the resolved one) so BundleDeprecated reflects
+			// what's actually running. Package/Channel deprecations come from catalog data
+			// regardless of which bundle is installed.
+			installedBundleName := ""
+			if state.revisionStates.Installed != nil {
+				installedBundleName = state.revisionStates.Installed.Name
+			}
+			SetDeprecationStatus(ext, installedBundleName, resolvedDeprecation, hadCatalogDeprecationData)
+
 			if err != nil {
 				// Note: We don't distinguish between resolution-specific errors and generic errors
 				setStatusProgressing(ext, err)
 				setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-				ensureAllConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
+				ensureFailureConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
 				return nil, err
 			}
 
-			// set deprecation status after _successful_ resolution
-			// TODO:
-			//  1. It seems like deprecation status should reflect the currently installed bundle, not the resolved
-			//     bundle. So perhaps we should set package and channel deprecations directly after resolution, but
-			//     defer setting the bundle deprecation until we successfully install the bundle.
-			//  2. If resolution fails because it can't find a bundle, that doesn't mean we wouldn't be able to find
-			//     a deprecation for the ClusterExtension's spec.packageName. Perhaps we should check for a non-nil
-			//     resolvedDeprecation even if resolution returns an error. If present, we can still update some of
-			//     our deprecation status.
-			//       - Open question though: what if different catalogs have different opinions of what's deprecated.
-			//         If we can't resolve a bundle, how do we know which catalog to trust for deprecation information?
-			//         Perhaps if the package shows up in multiple catalogs and deprecations don't match, we can set
-			//         the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
-			//         all catalogs?
-			SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 			resolvedRevisionMetadata = &RevisionMetadata{
 				Package: resolvedBundle.Package,
 				Image:   resolvedBundle.Image,
@@ -127,6 +125,13 @@ func ResolveBundle(r resolve.Resolver) ReconcileStepFunc {
 				BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, resolvedBundleVersion.AsLegacyRegistryV1Version()),
 			}
 		} else {
+			// Rolling out existing revision - no new catalog data available.
+			// Set deprecation to Unknown since we can't query the catalog during rollout.
+			installedBundleName := ""
+			if state.revisionStates.Installed != nil {
+				installedBundleName = state.revisionStates.Installed.Name
+			}
+			SetDeprecationStatus(ext, installedBundleName, nil, false)
 			resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
 		}
 		state.resolvedRevisionMetadata = resolvedRevisionMetadata
