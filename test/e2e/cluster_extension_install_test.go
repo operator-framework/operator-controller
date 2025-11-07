@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -656,6 +657,12 @@ func TestClusterExtensionRecoversFromNoNamespaceWhenFailureFixed(t *testing.T) {
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotEmpty(ct, clusterExtension.Status.Install)
+
+		bundleDeprecatedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeBundleDeprecated)
+		require.NotNil(ct, bundleDeprecatedCond)
+		require.Equal(ct, metav1.ConditionFalse, bundleDeprecatedCond.Status)
+		require.Equal(ct, ocv1.ReasonDeprecated, bundleDeprecatedCond.Reason)
+		require.Empty(ct, bundleDeprecatedCond.Message)
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually reporting Progressing == True with Reason Success")
@@ -755,11 +762,23 @@ func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testi
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionFalse, cond.Status)
-		// TODO: We probably _should_ be testing the reason here, but helm and boxcutter applier have different reasons.
-		//   Maybe we change helm to use "Absent" rather than "Failed" since the Progressing condition already captures
-		//   the failure?
-		//require.Equal(ct, ocv1.ReasonFailed, cond.Reason)
+		// Helm uses Failed, Boxcutter uses Absent; both are fine here.
+		require.True(ct, slices.Contains([]string{ocv1.ReasonFailed, ocv1.ReasonAbsent}, cond.Reason))
 		require.Contains(ct, cond.Message, "No bundle installed")
+
+		deprecatedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeDeprecated)
+		require.NotNil(ct, deprecatedCond)
+		// Deprecation status depends on runtime:
+		//   - Helm: False (catalog lookup happens during resolution)
+		//   - Boxcutter: Unknown (uses RollingOut path, no catalog lookup)
+		require.True(ct, deprecatedCond.Status == metav1.ConditionFalse || deprecatedCond.Status == metav1.ConditionUnknown)
+		require.Empty(ct, deprecatedCond.Message)
+
+		bundleDeprecatedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeBundleDeprecated)
+		require.NotNil(ct, bundleDeprecatedCond)
+		require.Equal(ct, metav1.ConditionUnknown, bundleDeprecatedCond.Status)
+		require.Equal(ct, ocv1.ReasonAbsent, bundleDeprecatedCond.Reason)
+		require.Empty(ct, bundleDeprecatedCond.Message)
 	}, pollDuration, pollInterval)
 
 	t.Log("By deleting the new Deployment")
