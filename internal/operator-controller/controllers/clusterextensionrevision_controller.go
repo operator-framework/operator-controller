@@ -149,6 +149,11 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
 	if err != nil {
+		if rres != nil {
+			l.Error(err, "revision reconcile failed", "report", rres.String())
+		} else {
+			l.Error(err, "revision reconcile failed")
+		}
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionFalse,
@@ -158,12 +163,13 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		})
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
-	l.Info("reconcile report", "report", rres.String())
+	// Log detailed reconcile reports only in debug mode (V(1)) to reduce verbosity.
+	l.V(1).Info("reconcile report", "report", rres.String())
 
 	// Retry failing preflight checks with a flat 10s retry.
 	// TODO: report status, backoff?
 	if verr := rres.GetValidationError(); verr != nil {
-		l.Info("preflight error, retrying after 10s", "err", verr.String())
+		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
 
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
@@ -177,7 +183,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 	for i, pres := range rres.GetPhases() {
 		if verr := pres.GetValidationError(); verr != nil {
-			l.Info("preflight error, retrying after 10s", "err", verr.String())
+			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", i)
 
 			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
@@ -197,7 +203,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		}
 
 		if len(collidingObjs) > 0 {
-			l.Info("object collision error, retrying after 10s", "collisions", collidingObjs)
+			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", i, "collisions", collidingObjs)
 
 			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
@@ -300,6 +306,11 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 
 	tres, err := c.RevisionEngine.Teardown(ctx, *revision)
 	if err != nil {
+		if tres != nil {
+			l.Error(err, "revision teardown failed", "report", tres.String())
+		} else {
+			l.Error(err, "revision teardown failed")
+		}
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionFalse,
@@ -310,7 +321,8 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 		return ctrl.Result{}, fmt.Errorf("revision teardown: %v", err)
 	}
 
-	l.Info("teardown report", "report", tres.String())
+	// Log detailed teardown reports only in debug mode (V(1)) to reduce verbosity.
+	l.V(1).Info("teardown report", "report", tres.String())
 	if !tres.IsComplete() {
 		// TODO: If it is not complete, it seems like it would be good to update
 		//  the status in some way to tell the user that the teardown is still
