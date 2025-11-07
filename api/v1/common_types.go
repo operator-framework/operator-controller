@@ -29,7 +29,8 @@ const (
 	ReasonBlocked    = "Blocked"
 
 	// Deprecation reasons
-	ReasonDeprecated = "Deprecated"
+	ReasonDeprecated               = "Deprecated"
+	ReasonDeprecationStatusUnknown = "DeprecationStatusUnknown"
 
 	// Common reasons
 	ReasonSucceeded = "Succeeded"
