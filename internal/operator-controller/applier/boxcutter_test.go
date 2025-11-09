@@ -68,12 +68,17 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 				"olm.operatorframework.io/bundle-version":   "1.2.0",
 				"olm.operatorframework.io/package-name":     "my-package",
 			},
+			// Both owner and package-name labels are required:
+			// - owner: identifies which ClusterExtension owns this revision (for label-based queries)
+			// - package-name: needed by BoxcutterRevisionStatesGetter to populate RevisionMetadata.Package field
 			Labels: map[string]string{
-				"olm.operatorframework.io/owner": "test-123",
+				"olm.operatorframework.io/owner":        "test-123",
+				"olm.operatorframework.io/package-name": "my-package",
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
-			Revision: 1,
+			LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+			Revision:       1,
 			Phases: []ocv1.ClusterExtensionRevisionPhase{
 				{
 					Name: "deploy",
@@ -758,6 +763,99 @@ func TestBoxcutter_Apply(t *testing.T) {
 				assert.Contains(t, latest.Spec.Previous, ocv1.ClusterExtensionRevisionPrevious{Name: "rev-4"})
 			},
 		},
+		{
+			name: "annotation-only update (same phases, different annotations)",
+			mockBuilder: &mockBundleRevisionBuilder{
+				makeRevisionFunc: func(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+					revisionLabels := map[string]string{
+						controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+					}
+					if pkg, ok := revisionAnnotations[labels.PackageNameKey]; ok {
+						revisionLabels[labels.PackageNameKey] = pkg
+					}
+					return &ocv1.ClusterExtensionRevision{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: revisionAnnotations,
+							Labels:      revisionLabels,
+						},
+						Spec: ocv1.ClusterExtensionRevisionSpec{
+							Phases: []ocv1.ClusterExtensionRevisionPhase{
+								{
+									Name: string(applier.PhaseDeploy),
+									Objects: []ocv1.ClusterExtensionRevisionObject{
+										{
+											Object: unstructured.Unstructured{
+												Object: map[string]interface{}{
+													"apiVersion": "v1",
+													"kind":       "ConfigMap",
+													"metadata": map[string]interface{}{
+														"name": "test-cm",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}, nil
+				},
+			},
+			existingObjs: []client.Object{
+				ext,
+				&ocv1.ClusterExtensionRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-ext-1",
+						Annotations: map[string]string{
+							labels.BundleVersionKey: "1.0.0",
+							labels.PackageNameKey:   "test-package",
+						},
+						Labels: map[string]string{
+							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.PackageNameKey:                          "test-package",
+						},
+					},
+					Spec: ocv1.ClusterExtensionRevisionSpec{
+						Revision: 1,
+						Phases: []ocv1.ClusterExtensionRevisionPhase{
+							{
+								Name: string(applier.PhaseDeploy),
+								Objects: []ocv1.ClusterExtensionRevisionObject{
+									{
+										Object: unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"apiVersion": "v1",
+												"kind":       "ConfigMap",
+												"metadata": map[string]interface{}{
+													"name": "test-cm",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			validate: func(t *testing.T, c client.Client) {
+				revList := &ocv1.ClusterExtensionRevisionList{}
+				err := c.List(context.Background(), revList, client.MatchingLabels{controllers.ClusterExtensionRevisionOwnerLabel: ext.Name})
+				require.NoError(t, err)
+				// Should still be only 1 revision (in-place update, not new revision)
+				require.Len(t, revList.Items, 1)
+
+				rev := revList.Items[0]
+				assert.Equal(t, "test-ext-1", rev.Name)
+				assert.Equal(t, int64(1), rev.Spec.Revision)
+				// Verify annotations were updated
+				assert.Equal(t, "1.0.1", rev.Annotations[labels.BundleVersionKey])
+				assert.Equal(t, "test-package", rev.Annotations[labels.PackageNameKey])
+				// Verify labels still have package name
+				assert.Equal(t, ext.Name, rev.Labels[controllers.ClusterExtensionRevisionOwnerLabel])
+				assert.Equal(t, "test-package", rev.Labels[labels.PackageNameKey])
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -780,7 +878,15 @@ func TestBoxcutter_Apply(t *testing.T) {
 			testFS := fstest.MapFS{}
 
 			// Execute
-			installSucceeded, installStatus, err := boxcutter.Apply(t.Context(), testFS, ext, nil, nil)
+			revisionAnnotations := map[string]string{}
+			if tc.name == "annotation-only update (same phases, different annotations)" {
+				// For annotation-only update test, pass NEW annotations
+				revisionAnnotations = map[string]string{
+					labels.BundleVersionKey: "1.0.1",
+					labels.PackageNameKey:   "test-package",
+				}
+			}
+			installSucceeded, installStatus, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations)
 
 			// Assert
 			if tc.expectedErr != "" {
@@ -808,6 +914,9 @@ func TestBoxcutter_Apply(t *testing.T) {
 
 func TestBoxcutterStorageMigrator(t *testing.T) {
 	t.Run("creates revision", func(t *testing.T) {
+		testScheme := runtime.NewScheme()
+		require.NoError(t, ocv1.AddToScheme(testScheme))
+
 		brb := &mockBundleRevisionBuilder{}
 		mag := &mockActionGetter{}
 		client := &clientMock{}
@@ -815,6 +924,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
 			Client:             client,
+			Scheme:             testScheme,
 		}
 
 		ext := &ocv1.ClusterExtension{
@@ -836,6 +946,9 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 	})
 
 	t.Run("does not create revision when revisions exist", func(t *testing.T) {
+		testScheme := runtime.NewScheme()
+		require.NoError(t, ocv1.AddToScheme(testScheme))
+
 		brb := &mockBundleRevisionBuilder{}
 		mag := &mockActionGetter{}
 		client := &clientMock{}
@@ -843,6 +956,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
 			Client:             client,
+			Scheme:             testScheme,
 		}
 
 		ext := &ocv1.ClusterExtension{
@@ -866,6 +980,9 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 	})
 
 	t.Run("does not create revision when no helm release", func(t *testing.T) {
+		testScheme := runtime.NewScheme()
+		require.NoError(t, ocv1.AddToScheme(testScheme))
+
 		brb := &mockBundleRevisionBuilder{}
 		mag := &mockActionGetter{
 			getClientErr: driver.ErrReleaseNotFound,
@@ -875,6 +992,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			RevisionGenerator:  brb,
 			ActionClientGetter: mag,
 			Client:             client,
+			Scheme:             testScheme,
 		}
 
 		ext := &ocv1.ClusterExtension{
@@ -905,7 +1023,15 @@ func (m *mockBundleRevisionBuilder) GenerateRevisionFromHelmRelease(
 	helmRelease *release.Release, ext *ocv1.ClusterExtension,
 	objectLabels map[string]string,
 ) (*ocv1.ClusterExtensionRevision, error) {
-	return nil, nil
+	return &ocv1.ClusterExtensionRevision{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-revision",
+			Labels: map[string]string{
+				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+			},
+		},
+		Spec: ocv1.ClusterExtensionRevisionSpec{},
+	}, nil
 }
 
 type clientMock struct {
@@ -920,4 +1046,25 @@ func (m *clientMock) List(ctx context.Context, list client.ObjectList, opts ...c
 func (m *clientMock) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	args := m.Called(ctx, obj, opts)
 	return args.Error(0)
+}
+
+func (m *clientMock) Status() client.StatusWriter {
+	return &statusWriterMock{mock: &m.Mock}
+}
+
+type statusWriterMock struct {
+	mock *mock.Mock
+}
+
+func (s *statusWriterMock) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+	// Status updates are expected during migration - return success by default
+	return nil
+}
+
+func (s *statusWriterMock) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
+	return nil
+}
+
+func (s *statusWriterMock) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
+	return nil
 }

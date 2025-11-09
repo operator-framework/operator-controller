@@ -84,6 +84,9 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	})
 	rev.Name = fmt.Sprintf("%s-1", ext.Name)
 	rev.Spec.Revision = 1
+	// Explicitly set LifecycleState to Active to ensure migrated revision is recognized as active
+	// even before CRD default is applied by the API server
+	rev.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateActive
 	return rev, nil
 }
 
@@ -140,12 +143,18 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	ext *ocv1.ClusterExtension,
 	annotations map[string]string,
 ) *ocv1.ClusterExtensionRevision {
+	revisionLabels := map[string]string{
+		controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+	}
+	// Package name must be in labels for BoxcutterRevisionStatesGetter to find it
+	if pkg, ok := annotations[labels.PackageNameKey]; ok {
+		revisionLabels[labels.PackageNameKey] = pkg
+	}
+
 	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: annotations,
-			Labels: map[string]string{
-				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
-			},
+			Labels:      revisionLabels,
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
 			Phases: PhaseSort(objects),
@@ -153,17 +162,38 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	}
 }
 
+// BoxcutterStorageMigrator migrates ClusterExtensions from Helm-based storage to Boxcutter's
+// ClusterExtensionRevision storage.
+//
+// Scenario: Given a ClusterExtension, determine if migration from Helm storage is needed
+//   - When ClusterExtensionRevisions already exist, no migration needed (return early)
+//   - When a Helm release exists but no revisions, create ClusterExtensionRevision from Helm release
+//   - When no Helm release exists and no revisions, this is a fresh install (no migration needed)
+//
+// The migrated revision includes:
+//   - Owner label (olm.operatorframework.io/owner) for label-based lookups
+//   - OwnerReference to parent ClusterExtension for proper garbage collection
+//   - All objects from the Helm release manifest
+//
+// This ensures migrated revisions have the same structure as revisions created by normal
+// Boxcutter flow, enabling successful upgrades after migration.
 type BoxcutterStorageMigrator struct {
 	ActionClientGetter helmclient.ActionClientGetter
 	RevisionGenerator  ClusterExtensionRevisionGenerator
 	Client             boxcutterStorageMigratorClient
+	Scheme             *runtime.Scheme // Required for setting ownerReferences on migrated revisions
 }
 
 type boxcutterStorageMigratorClient interface {
 	List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 	Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
+	Status() client.StatusWriter
 }
 
+// Migrate performs a one-time migration from Helm storage to ClusterExtensionRevision storage.
+//
+// This enables upgrades from older operator-controller versions that used Helm for state management.
+// The migration is idempotent - it checks for existing revisions before attempting to migrate.
 func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) error {
 	existingRevisionList := ocv1.ClusterExtensionRevisionList{}
 	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingLabels{
@@ -195,9 +225,39 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		return err
 	}
 
+	// Set ownerReference to ensure proper lifecycle management and garbage collection.
+	// This makes the migrated revision consistent with revisions created by normal Boxcutter flow.
+	if err := controllerutil.SetControllerReference(ext, rev, m.Scheme); err != nil {
+		return fmt.Errorf("set ownerref: %w", err)
+	}
+
 	if err := m.Client.Create(ctx, rev); err != nil {
 		return err
 	}
+
+	// Mark the migrated revision as succeeded since the Helm release was already deployed.
+	// Without Succeeded=True, BoxcutterRevisionStatesGetter treats it as RollingOut instead of Installed,
+	// which breaks resolution and prevents upgrades.
+	// Note: After Create(), rev.Generation is populated by the API server (typically 1 for new objects)
+	meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+		Status:             metav1.ConditionTrue,
+		Reason:             ocv1.ClusterExtensionRevisionReasonAvailable,
+		Message:            "Migrated from Helm storage",
+		ObservedGeneration: rev.Generation,
+	})
+	meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
+		Status:             metav1.ConditionTrue,
+		Reason:             ocv1.ClusterExtensionRevisionReasonRolloutSuccess,
+		Message:            "Migrated from Helm storage",
+		ObservedGeneration: rev.Generation,
+	})
+
+	if err := m.Client.Status().Update(ctx, rev); err != nil {
+		return fmt.Errorf("updating migrated revision status: %w", err)
+	}
+
 	return nil
 }
 
@@ -270,6 +330,12 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		case err == nil:
 			// inplace patch was successful, no changes in phases
 			state = StateUnchanged
+			// Re-fetch the revision to get updated metadata and status after the patch
+			updated := &ocv1.ClusterExtensionRevision{}
+			if err := bc.Client.Get(ctx, client.ObjectKey{Name: currentRevision.Name}, updated); err != nil {
+				return false, "", fmt.Errorf("fetching updated revision: %w", err)
+			}
+			currentRevision = updated
 		default:
 			return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
 		}
