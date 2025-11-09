@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	ClusterExtensionRevisionPreviousLimit = 5
+	ClusterExtensionRevisionRetentionLimit = 5
 )
 
 type ClusterExtensionRevisionGenerator interface {
@@ -195,22 +195,33 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
-			Phases: PhaseSort(objects),
+			// Explicitly set LifecycleState to Active. While the CRD has a default,
+			// being explicit here ensures all code paths are clear and doesn't rely
+			// on API server defaulting behavior.
+			LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
+			Phases:         PhaseSort(objects),
 		},
 	}
 }
 
+// BoxcutterStorageMigrator migrates ClusterExtensions from Helm-based storage to
+// ClusterExtensionRevision storage, enabling upgrades from older operator-controller versions.
 type BoxcutterStorageMigrator struct {
 	ActionClientGetter helmclient.ActionClientGetter
 	RevisionGenerator  ClusterExtensionRevisionGenerator
 	Client             boxcutterStorageMigratorClient
+	Scheme             *runtime.Scheme
 }
 
 type boxcutterStorageMigratorClient interface {
 	List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
+	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
 	Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
+	Status() client.StatusWriter
 }
 
+// Migrate creates a ClusterExtensionRevision from an existing Helm release if no revisions exist yet.
+// The migration is idempotent and skipped if revisions already exist or no Helm release is found.
 func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) error {
 	existingRevisionList := ocv1.ClusterExtensionRevisionList{}
 	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingLabels{
@@ -242,9 +253,34 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		return err
 	}
 
+	// Set ownerReference for proper garbage collection when the ClusterExtension is deleted.
+	if err := controllerutil.SetControllerReference(ext, rev, m.Scheme); err != nil {
+		return fmt.Errorf("set ownerref: %w", err)
+	}
+
 	if err := m.Client.Create(ctx, rev); err != nil {
 		return err
 	}
+
+	// Re-fetch to get server-managed fields like Generation
+	if err := m.Client.Get(ctx, client.ObjectKeyFromObject(rev), rev); err != nil {
+		return fmt.Errorf("getting created revision: %w", err)
+	}
+
+	// Set Available=Unknown so the revision controller will verify cluster state through probes.
+	// During migration, ClusterExtension will briefly show as not installed until verification completes.
+	meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+		Status:             metav1.ConditionUnknown,
+		Reason:             ocv1.ClusterExtensionRevisionReasonMigrated,
+		Message:            "Migrated from Helm storage, awaiting cluster state verification",
+		ObservedGeneration: rev.Generation,
+	})
+
+	if err := m.Client.Status().Update(ctx, rev); err != nil {
+		return fmt.Errorf("updating migrated revision status: %w", err)
+	}
+
 	return nil
 }
 
@@ -304,7 +340,6 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	if len(existingRevisions) > 0 {
 		// try first to update the current revision.
 		currentRevision = &existingRevisions[len(existingRevisions)-1]
-		desiredRevision.Spec.Previous = currentRevision.Spec.Previous
 		desiredRevision.Spec.Revision = currentRevision.Spec.Revision
 		desiredRevision.Name = currentRevision.Name
 
@@ -354,8 +389,8 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		desiredRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
 		desiredRevision.Spec.Revision = revisionNumber
 
-		if err = bc.setPreviousRevisions(ctx, desiredRevision, prevRevisions); err != nil {
-			return false, "", fmt.Errorf("garbage collecting old Revisions: %w", err)
+		if err = bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
+			return false, "", fmt.Errorf("garbage collecting old revisions: %w", err)
 		}
 
 		if err := bc.createOrUpdate(ctx, desiredRevision); err != nil {
@@ -380,28 +415,21 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	return true, "", nil
 }
 
-// setPreviousRevisions populates spec.previous of latestRevision, trimming the list of previous _archived_ revisions down to
-// ClusterExtensionRevisionPreviousLimit or to the first _active_ revision and deletes trimmed revisions from the cluster.
-// NOTE: revisionList must be sorted in chronographical order, from oldest to latest.
-func (bc *Boxcutter) setPreviousRevisions(ctx context.Context, latestRevision *ocv1.ClusterExtensionRevision, revisionList []ocv1.ClusterExtensionRevision) error {
-	// Pre-allocate with capacity limit to reduce allocations
-	trimmedPrevious := make([]ocv1.ClusterExtensionRevisionPrevious, 0, ClusterExtensionRevisionPreviousLimit)
+// garbageCollectOldRevisions deletes archived revisions beyond ClusterExtensionRevisionRetentionLimit.
+// Active revisions are never deleted. revisionList must be sorted oldest to newest.
+func (bc *Boxcutter) garbageCollectOldRevisions(ctx context.Context, revisionList []ocv1.ClusterExtensionRevision) error {
 	for index, r := range revisionList {
-		if index < len(revisionList)-ClusterExtensionRevisionPreviousLimit && r.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
-			// Delete oldest CREs from the cluster and list to reach ClusterExtensionRevisionPreviousLimit or latest active revision
+		// Only delete archived revisions that are beyond the limit
+		if index < len(revisionList)-ClusterExtensionRevisionRetentionLimit && r.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
 			if err := bc.Client.Delete(ctx, &ocv1.ClusterExtensionRevision{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: r.Name,
 				},
 			}); err != nil && !apierrors.IsNotFound(err) {
-				return fmt.Errorf("deleting previous archived Revision: %w", err)
+				return fmt.Errorf("deleting archived revision: %w", err)
 			}
-		} else {
-			// All revisions within the limit or still active are preserved
-			trimmedPrevious = append(trimmedPrevious, ocv1.ClusterExtensionRevisionPrevious{Name: r.Name, UID: r.GetUID()})
 		}
 	}
-	latestRevision.Spec.Previous = trimmedPrevious
 	return nil
 }
 

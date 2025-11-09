@@ -667,27 +667,6 @@ spec:
                 x-kubernetes-validations:
                 - message: phases is immutable
                   rule: self == oldSelf || oldSelf.size() == 0
-              previous:
-                description: Previous references previous revisions that objects can
-                  be adopted from.
-                items:
-                  properties:
-                    name:
-                      type: string
-                    uid:
-                      description: |-
-                        UID is a type that holds unique ID values, including UUIDs.  Because we
-                        don't ONLY use UUIDs, this is an alias to string.  Being a type captures
-                        intent and helps make sure that UIDs and names do not get conflated.
-                      type: string
-                  required:
-                  - name
-                  - uid
-                  type: object
-                type: array
-                x-kubernetes-validations:
-                - message: previous is immutable
-                  rule: self == oldSelf
               revision:
                 description: |-
                   Revision is a sequence number representing a specific revision of the ClusterExtension instance.

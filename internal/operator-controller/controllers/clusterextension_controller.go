@@ -549,11 +549,11 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 			continue
 		}
 
-		// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "storageLabels")
+		// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "revisionAnnotations")
 		//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
 		//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
 		rm := &RevisionMetadata{
-			Package: rev.Labels[labels.PackageNameKey],
+			Package: rev.Annotations[labels.PackageNameKey],
 			Image:   rev.Annotations[labels.BundleReferenceKey],
 			BundleMetadata: ocv1.BundleMetadata{
 				Name:    rev.Annotations[labels.BundleNameKey],

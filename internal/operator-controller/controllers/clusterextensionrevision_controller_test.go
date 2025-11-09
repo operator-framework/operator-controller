@@ -49,7 +49,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				return []client.Object{ext, rev1}
 			},
@@ -67,7 +67,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				return []client.Object{ext, rev1}
 			},
@@ -156,7 +156,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				return []client.Object{ext, rev1}
 			},
@@ -181,7 +181,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				return []client.Object{ext, rev1}
 			},
@@ -206,7 +206,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
 					Type:               ocv1.TypeProgressing,
@@ -234,7 +234,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				return []client.Object{ext, rev1}
 			},
@@ -266,22 +266,14 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				prevRev1 := newTestClusterExtensionRevision("prev-rev-1")
+				prevRev1 := newTestClusterExtensionRevision(t, "prev-rev-1")
 				require.NoError(t, controllerutil.SetControllerReference(ext, prevRev1, testScheme))
-				prevRev2 := newTestClusterExtensionRevision("prev-rev-2")
+				prevRev2 := newTestClusterExtensionRevision(t, "prev-rev-2")
 				require.NoError(t, controllerutil.SetControllerReference(ext, prevRev2, testScheme))
-				rev1 := newTestClusterExtensionRevision("test-ext-1")
-				rev1.Spec.Previous = []ocv1.ClusterExtensionRevisionPrevious{
-					{
-						Name: "prev-rev-1",
-						UID:  "prev-rev-1",
-					}, {
-						Name: "prev-rev-2",
-						UID:  "prev-rev-2",
-					},
-				}
-				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
-				return []client.Object{ext, prevRev1, prevRev2, rev1}
+				currentRev := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
+				currentRev.Spec.Revision = 3
+				require.NoError(t, controllerutil.SetControllerReference(ext, currentRev, testScheme))
+				return []client.Object{ext, prevRev1, prevRev2, currentRev}
 			},
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterExtensionRevision{}
@@ -315,7 +307,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 						return tc.revisionResult, nil
 					},
 				},
-				TrackingCache: &mockTrackingCache{},
+				TrackingCache: &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -413,7 +405,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ext := newTestClusterExtension()
-			rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+			rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 			require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 
 			// create extension and cluster extension
@@ -431,7 +423,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 						return tc.revisionResult, nil
 					},
 				},
-				TrackingCache: &mockTrackingCache{},
+				TrackingCache: &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -467,7 +459,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			name:           "teardown finalizer is removed",
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
@@ -490,7 +482,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
@@ -520,7 +512,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
@@ -549,7 +541,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
@@ -583,7 +575,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
@@ -619,7 +611,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(clusterExtensionRevisionName)
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName)
 				rev1.Finalizers = []string{
 					"olm.operatorframework.io/teardown",
 				}
@@ -661,7 +653,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 					},
 					teardown: tc.revisionEngineTeardownFn(t),
 				},
-				TrackingCache: &mockTrackingCache{},
+				TrackingCache: &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -703,14 +695,23 @@ func newTestClusterExtension() *ocv1.ClusterExtension {
 	}
 }
 
-func newTestClusterExtensionRevision(name string) *ocv1.ClusterExtensionRevision {
+func newTestClusterExtensionRevision(t *testing.T, name string) *ocv1.ClusterExtensionRevision {
+	t.Helper()
+
+	// Extract revision number from name (e.g., "rev-1" -> 1, "test-ext-10" -> 10)
+	revNum := controllers.ExtractRevisionNumber(t, name)
+
 	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			UID:        types.UID(name),
 			Generation: int64(1),
+			Labels: map[string]string{
+				controllers.ClusterExtensionRevisionOwnerLabel: "test-ext",
+			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
+			Revision: revNum,
 			Phases: []ocv1.ClusterExtensionRevisionPhase{
 				{
 					Name: "everything",
@@ -879,14 +880,16 @@ func (m mockRevisionTeardownResult) String() string {
 	return m.string
 }
 
-type mockTrackingCache struct{}
+type mockTrackingCache struct {
+	client client.Client
+}
 
 func (m *mockTrackingCache) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	panic("not implemented")
+	return m.client.Get(ctx, key, obj, opts...)
 }
 
 func (m *mockTrackingCache) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	panic("not implemented")
+	return m.client.List(ctx, list, opts...)
 }
 
 func (m *mockTrackingCache) Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source {
