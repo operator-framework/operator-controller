@@ -24,6 +24,8 @@ options:
     enabled: false
   e2e:
     enabled: false
+  profiling:
+    enabled: false
   tilt:
     enabled: false
   openshift:

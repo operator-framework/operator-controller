@@ -41,6 +41,9 @@ spec:
         - args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=:8443
+            {{- if .Values.options.profiling.enabled }}
+            - --pprof-bind-address=:6060
+            {{- end }}
             {{- if not .Values.options.tilt.enabled }}
             - --leader-elect
             {{- end }}

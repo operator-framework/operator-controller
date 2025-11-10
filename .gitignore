@@ -50,3 +50,6 @@ site
 
 # Temporary files and directories
 /test/regression/convert/testdata/tmp/*
+
+# Test profiling artifacts
+test-profiles/
