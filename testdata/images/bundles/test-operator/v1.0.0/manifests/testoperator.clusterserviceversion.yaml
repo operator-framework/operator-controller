@@ -89,7 +89,7 @@ spec:
                         port: 80
                       initialDelaySeconds: 1
                       periodSeconds: 1
-                    serviceAccountName: simple-bundle-manager
+                serviceAccountName: simple-bundle-manager
       clusterPermissions:
         - rules:
             - apiGroups:

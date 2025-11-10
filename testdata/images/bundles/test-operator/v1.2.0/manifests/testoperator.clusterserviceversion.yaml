@@ -149,7 +149,7 @@ spec:
               verbs:
                 - create
                 - patch
-          serviceAccountName: simple-bundle-manager
+      serviceAccountName: simple-bundle-manager
     strategy: deployment
   installModes:
     - supported: false
