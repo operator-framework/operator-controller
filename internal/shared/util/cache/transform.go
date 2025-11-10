@@ -58,14 +58,34 @@ func StripManagedFieldsAndAnnotations() toolscache.TransformFunc {
 	}
 }
 
-// ApplyStripTransform applies the strip transform directly to an object.
+// StripAnnotations returns a cache transform function that removes
+// memory-heavy annotation fields that aren't needed for controller operations.
+// This significantly reduces memory usage in informer caches by removing:
+// - kubectl.kubernetes.io/last-applied-configuration annotation (can be very large)
+//
+// Use this function as a DefaultTransform in controller-runtime cache.Options
+// to reduce memory overhead across all cached objects.
+//
+// Example:
+//
+//	cacheOptions := cache.Options{
+//	    DefaultTransform: cacheutil.StripAnnotations(),
+//	}
+func StripAnnotations() toolscache.TransformFunc {
+	return func(obj interface{}) (interface{}, error) {
+		// Strip the large annotations
+		return stripAnnotations(obj)
+	}
+}
+
+// ApplyStripAnnotationsTransform applies the strip transform directly to an object.
 // This is a convenience function for cases where you need to strip fields
 // from an object outside of the cache transform context.
 //
 // Note: This function never returns an error in practice, but returns error
 // to satisfy the TransformFunc interface.
-func ApplyStripTransform(obj client.Object) error {
-	transform := StripManagedFieldsAndAnnotations()
+func ApplyStripAnnotationsTransform(obj client.Object) error {
+	transform := StripAnnotations()
 	_, err := transform(obj)
 	return err
 }

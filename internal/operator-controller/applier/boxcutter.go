@@ -66,9 +66,9 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		obj.SetLabels(labels)
 		obj.SetOwnerReferences(nil) // reset OwnerReferences for migration.
 
-		// Memory optimization: strip large annotations and managed fields
+		// Memory optimization: strip large annotations
 		// Note: ApplyStripTransform never returns an error in practice
-		_ = cache.ApplyStripTransform(&obj)
+		_ = cache.ApplyStripAnnotationsTransform(&obj)
 
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
 			Object:              obj,
@@ -118,8 +118,8 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		unstr := unstructured.Unstructured{Object: unstrObj}
 		unstr.SetGroupVersionKind(gvk)
 
-		// Memory optimization: strip large annotations and managed fields
-		if err := cache.ApplyStripTransform(&unstr); err != nil {
+		// Memory optimization: strip large annotations
+		if err := cache.ApplyStripAnnotationsTransform(&unstr); err != nil {
 			return nil, err
 		}
 
