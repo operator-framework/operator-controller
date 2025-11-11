@@ -673,7 +673,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			},
 		},
 		{
-			name:           "set Available condition to Unknown with reason Archived when archiving revision",
+			name:           "set Available:Archived:Unknown and Progressing:False:Unknown conditions when a revision is archived",
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -704,6 +704,13 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				require.Equal(t, ocv1.ClusterExtensionRevisionReasonArchived, cond.Reason)
 				require.Equal(t, "revision is archived", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
+
+				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonArchived, cond.Reason)
+				require.Equal(t, "revision is archived", cond.Message)
+				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
@@ -719,6 +726,13 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
 					Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 					Status:             metav1.ConditionUnknown,
+					Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
+					Message:            "revision is archived",
+					ObservedGeneration: rev1.Generation,
+				})
+				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
+					Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+					Status:             metav1.ConditionFalse,
 					Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
 					Message:            "revision is archived",
 					ObservedGeneration: rev1.Generation,

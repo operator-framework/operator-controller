@@ -131,7 +131,10 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		return ctrl.Result{}, fmt.Errorf("error ensuring teardown finalizer: %v", err)
 	}
 
-	// If the Available condition is not present, we are still rolling out the objects
+	// If the Available condition is not present, we are still rolling out the objects.
+	// NOTE: This assumes that once the Available condition is set, it will always be present.
+	// If the Available condition is ever removed or reset during the lifecycle,
+	// this could lead to incorrect behavior.
 	inRollout := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable) == nil
 	if inRollout {
 		if err := c.establishWatch(ctx, rev, revision); err != nil {
@@ -339,17 +342,26 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 		return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 	}
 
-	// Ensure Available condition is set to Unknown before removing the finalizer when archiving
-	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived &&
-		!meta.IsStatusConditionPresentAndEqual(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable, metav1.ConditionUnknown) {
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+	// Ensure conditions are set before removing the finalizer when archiving
+	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
+		condUpdated := meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionUnknown,
 			Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
 			Message:            "revision is archived",
 			ObservedGeneration: rev.Generation,
 		})
-		return ctrl.Result{}, nil
+		condUpdated = meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+			Status:             metav1.ConditionFalse,
+			Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
+			Message:            "revision is archived",
+			ObservedGeneration: rev.Generation,
+		}) || condUpdated
+
+		if condUpdated {
+			return ctrl.Result{}, nil
+		}
 	}
 
 	if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
