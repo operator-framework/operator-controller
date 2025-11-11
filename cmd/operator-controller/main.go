@@ -234,7 +234,7 @@ func run() error {
 		},
 		DefaultLabelSelector: k8slabels.Nothing(),
 		// Memory optimization: strip managed fields and large annotations from cached objects
-		DefaultTransform: cacheutil.StripManagedFieldsAndAnnotations(),
+		DefaultTransform: cacheutil.StripAnnotations(),
 	}
 
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
