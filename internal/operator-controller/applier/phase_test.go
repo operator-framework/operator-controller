@@ -262,16 +262,16 @@ func Test_PhaseSort(t *testing.T) {
 						{
 							Object: unstructured.Unstructured{
 								Object: map[string]interface{}{
-									"apiVersion": "apps/v1",
-									"kind":       "Deployment",
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
 								},
 							},
 						},
 						{
 							Object: unstructured.Unstructured{
 								Object: map[string]interface{}{
-									"apiVersion": "v1",
-									"kind":       "ConfigMap",
+									"apiVersion": "apps/v1",
+									"kind":       "Deployment",
 								},
 							},
 						},
@@ -283,6 +283,600 @@ func Test_PhaseSort(t *testing.T) {
 			name: "no objects",
 			objs: []v1.ClusterExtensionRevisionObject{},
 			want: []v1.ClusterExtensionRevisionPhase{},
+		},
+		{
+			name: "sort by group within same phase",
+			objs: []v1.ClusterExtensionRevisionObject{
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
+							"metadata": map[string]interface{}{
+								"name": "test",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name": "test",
+							},
+						},
+					},
+				},
+			},
+			want: []v1.ClusterExtensionRevisionPhase{
+				{
+					Name: string(applier.PhaseDeploy),
+					Objects: []v1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "apps/v1",
+									"kind":       "Deployment",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "sort by version within same group and phase",
+			objs: []v1.ClusterExtensionRevisionObject{
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "batch/v1",
+							"kind":       "Job",
+							"metadata": map[string]interface{}{
+								"name": "test",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "batch/v1beta1",
+							"kind":       "CronJob",
+							"metadata": map[string]interface{}{
+								"name": "test",
+							},
+						},
+					},
+				},
+			},
+			want: []v1.ClusterExtensionRevisionPhase{
+				{
+					Name: string(applier.PhaseDeploy),
+					Objects: []v1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "batch/v1",
+									"kind":       "Job",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "batch/v1beta1",
+									"kind":       "CronJob",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "sort by kind within same group, version, and phase",
+			objs: []v1.ClusterExtensionRevisionObject{
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Service",
+							"metadata": map[string]interface{}{
+								"name": "test",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name": "test",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
+							"metadata": map[string]interface{}{
+								"name": "test",
+							},
+						},
+					},
+				},
+			},
+			want: []v1.ClusterExtensionRevisionPhase{
+				{
+					Name: string(applier.PhaseDeploy),
+					Objects: []v1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "Secret",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "Service",
+									"metadata": map[string]interface{}{
+										"name": "test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "sort by namespace within same GVK and phase",
+			objs: []v1.ClusterExtensionRevisionObject{
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name":      "test",
+								"namespace": "zebra",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name":      "test",
+								"namespace": "alpha",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name":      "test",
+								"namespace": "beta",
+							},
+						},
+					},
+				},
+			},
+			want: []v1.ClusterExtensionRevisionPhase{
+				{
+					Name: string(applier.PhaseDeploy),
+					Objects: []v1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name":      "test",
+										"namespace": "alpha",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name":      "test",
+										"namespace": "beta",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name":      "test",
+										"namespace": "zebra",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "sort by name within same GVK, namespace, and phase",
+			objs: []v1.ClusterExtensionRevisionObject{
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name":      "zoo",
+								"namespace": "default",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name":      "apple",
+								"namespace": "default",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name":      "banana",
+								"namespace": "default",
+							},
+						},
+					},
+				},
+			},
+			want: []v1.ClusterExtensionRevisionPhase{
+				{
+					Name: string(applier.PhaseDeploy),
+					Objects: []v1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name":      "apple",
+										"namespace": "default",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name":      "banana",
+										"namespace": "default",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name":      "zoo",
+										"namespace": "default",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "comprehensive sorting - all dimensions",
+			objs: []v1.ClusterExtensionRevisionObject{
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
+							"metadata": map[string]interface{}{
+								"name":      "app-z",
+								"namespace": "prod",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
+							"metadata": map[string]interface{}{
+								"name":      "secret-b",
+								"namespace": "prod",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
+							"metadata": map[string]interface{}{
+								"name":      "secret-a",
+								"namespace": "prod",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name":      "config",
+								"namespace": "dev",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
+							"metadata": map[string]interface{}{
+								"name":      "app-a",
+								"namespace": "prod",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ConfigMap",
+							"metadata": map[string]interface{}{
+								"name":      "config",
+								"namespace": "prod",
+							},
+						},
+					},
+				},
+			},
+			want: []v1.ClusterExtensionRevisionPhase{
+				{
+					Name: string(applier.PhaseDeploy),
+					Objects: []v1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name":      "config",
+										"namespace": "dev",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
+									"metadata": map[string]interface{}{
+										"name":      "config",
+										"namespace": "prod",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "Secret",
+									"metadata": map[string]interface{}{
+										"name":      "secret-a",
+										"namespace": "prod",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "v1",
+									"kind":       "Secret",
+									"metadata": map[string]interface{}{
+										"name":      "secret-b",
+										"namespace": "prod",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "apps/v1",
+									"kind":       "Deployment",
+									"metadata": map[string]interface{}{
+										"name":      "app-a",
+										"namespace": "prod",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "apps/v1",
+									"kind":       "Deployment",
+									"metadata": map[string]interface{}{
+										"name":      "app-z",
+										"namespace": "prod",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "cluster-scoped vs namespaced resources - empty namespace sorts first",
+			objs: []v1.ClusterExtensionRevisionObject{
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "rbac.authorization.k8s.io/v1",
+							"kind":       "ClusterRole",
+							"metadata": map[string]interface{}{
+								"name": "admin",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "rbac.authorization.k8s.io/v1",
+							"kind":       "ClusterRole",
+							"metadata": map[string]interface{}{
+								"name": "viewer",
+							},
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "rbac.authorization.k8s.io/v1",
+							"kind":       "Role",
+							"metadata": map[string]interface{}{
+								"name":      "admin",
+								"namespace": "default",
+							},
+						},
+					},
+				},
+			},
+			want: []v1.ClusterExtensionRevisionPhase{
+				{
+					Name: string(applier.PhaseRBAC),
+					Objects: []v1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "rbac.authorization.k8s.io/v1",
+									"kind":       "ClusterRole",
+									"metadata": map[string]interface{}{
+										"name": "admin",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "rbac.authorization.k8s.io/v1",
+									"kind":       "ClusterRole",
+									"metadata": map[string]interface{}{
+										"name": "viewer",
+									},
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "rbac.authorization.k8s.io/v1",
+									"kind":       "Role",
+									"metadata": map[string]interface{}{
+										"name":      "admin",
+										"namespace": "default",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
