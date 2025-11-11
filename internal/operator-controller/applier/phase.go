@@ -1,6 +1,8 @@
 package applier
 
 import (
+	"slices"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -111,6 +113,57 @@ func init() {
 	}
 }
 
+// Sort objects within the phase deterministically by Group, Version, Kind, Namespace, Name
+// to ensure consistent ordering regardless of input order. This is critical for
+// Helm-to-Boxcutter migration where the same resources may come from different sources
+// (Helm release manifest vs bundle manifest) and need to produce identical phases.
+func compareClusterExtensionRevisionObjects(a, b ocv1.ClusterExtensionRevisionObject) int {
+	aGVK := a.Object.GroupVersionKind()
+	bGVK := b.Object.GroupVersionKind()
+
+	// Compare Group
+	if aGVK.Group < bGVK.Group {
+		return -1
+	} else if aGVK.Group > bGVK.Group {
+		return 1
+	}
+
+	// Compare Version
+	if aGVK.Version < bGVK.Version {
+		return -1
+	} else if aGVK.Version > bGVK.Version {
+		return 1
+	}
+
+	// Compare Kind
+	if aGVK.Kind < bGVK.Kind {
+		return -1
+	} else if aGVK.Kind > bGVK.Kind {
+		return 1
+	}
+
+	// Compare Namespace
+	aNs := a.Object.GetNamespace()
+	bNs := b.Object.GetNamespace()
+	if aNs < bNs {
+		return -1
+	} else if aNs > bNs {
+		return 1
+	}
+
+	// Compare Name
+	aName := a.Object.GetName()
+	bName := b.Object.GetName()
+	if aName < bName {
+		return -1
+	}
+	if aName > bName {
+		return 1
+	}
+
+	return 0
+}
+
 // PhaseSort takes an unsorted list of objects and organizes them into sorted phases.
 // Each phase will be applied in order according to DefaultPhaseOrder. Objects
 // within a single phase are applied simultaneously.
@@ -125,6 +178,9 @@ func PhaseSort(unsortedObjs []ocv1.ClusterExtensionRevisionObject) []ocv1.Cluste
 
 	for _, phaseName := range defaultPhaseOrder {
 		if objs, ok := phaseMap[phaseName]; ok {
+			// Sort objects within the phase deterministically
+			slices.SortFunc(objs, compareClusterExtensionRevisionObjects)
+
 			phasesSorted = append(phasesSorted, ocv1.ClusterExtensionRevisionPhase{
 				Name:    string(phaseName),
 				Objects: objs,

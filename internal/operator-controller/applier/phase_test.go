@@ -262,16 +262,16 @@ func Test_PhaseSort(t *testing.T) {
 						{
 							Object: unstructured.Unstructured{
 								Object: map[string]interface{}{
-									"apiVersion": "apps/v1",
-									"kind":       "Deployment",
+									"apiVersion": "v1",
+									"kind":       "ConfigMap",
 								},
 							},
 						},
 						{
 							Object: unstructured.Unstructured{
 								Object: map[string]interface{}{
-									"apiVersion": "v1",
-									"kind":       "ConfigMap",
+									"apiVersion": "apps/v1",
+									"kind":       "Deployment",
 								},
 							},
 						},

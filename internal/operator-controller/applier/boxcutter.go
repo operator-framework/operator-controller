@@ -308,6 +308,12 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		desiredRevision.Spec.Revision = currentRevision.Spec.Revision
 		desiredRevision.Name = currentRevision.Name
 
+		// Preserve CollisionProtection settings from the current revision to avoid
+		// creating a new revision when the only difference is the CollisionProtection value.
+		// This is critical during Helm-to-Boxcutter migration where the migrated revision
+		// has CollisionProtection=None to adopt Helm-managed resources.
+		preserveCollisionProtection(desiredRevision, currentRevision)
+
 		err := bc.createOrUpdate(ctx, desiredRevision)
 		switch {
 		case apierrors.IsInvalid(err):
@@ -378,6 +384,38 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		return false, succeededCondition.Message, nil
 	}
 	return true, "", nil
+}
+
+// preserveCollisionProtection copies the CollisionProtection settings from the current revision to the desired revision
+// for objects that have matching GVK, namespace, and name. This ensures that when patching an existing revision,
+// we don't inadvertently change the CollisionProtection value, which would cause the patch to fail since
+// CollisionProtection is an immutable field.
+func preserveCollisionProtection(desired, current *ocv1.ClusterExtensionRevision) {
+	// Build a map of objects in the current revision by their identity (GVK + namespace + name)
+	currentObjects := make(map[string]ocv1.CollisionProtection)
+	for _, phase := range current.Spec.Phases {
+		for _, obj := range phase.Objects {
+			key := objectKey(&obj.Object)
+			currentObjects[key] = obj.CollisionProtection
+		}
+	}
+
+	// Update desired revision objects to use the same CollisionProtection as current revision
+	for i := range desired.Spec.Phases {
+		for j := range desired.Spec.Phases[i].Objects {
+			desiredObj := &desired.Spec.Phases[i].Objects[j]
+			key := objectKey(&desiredObj.Object)
+			if collisionProtection, found := currentObjects[key]; found {
+				desiredObj.CollisionProtection = collisionProtection
+			}
+		}
+	}
+}
+
+// objectKey generates a unique key for an object based on its GVK, namespace, and name
+func objectKey(obj *unstructured.Unstructured) string {
+	gvk := obj.GroupVersionKind()
+	return fmt.Sprintf("%s/%s/%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind, obj.GetNamespace(), obj.GetName())
 }
 
 // setPreviousRevisions populates spec.previous of latestRevision, trimming the list of previous _archived_ revisions down to
