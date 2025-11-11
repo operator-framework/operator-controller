@@ -56,15 +56,39 @@ spec:
                   app: olme2etest
               spec:
                 terminationGracePeriodSeconds: 0
+                volumes:
+                  - name: scripts
+                    configMap:
+                      name: httpd-script
+                      defaultMode: 0755
                 containers:
-                  - name: busybox
+                  - name: busybox-httpd-container
                     image: busybox:1.37
-                    command:
-                      - 'sleep'
-                      - '1000'
-                    securityContext:
-                      runAsUser: 1000
-                      runAsNonRoot: true
+                    command: ["/scripts/httpd.sh"]
+                    ports:
+                      - containerPort: 80
+                    volumeMounts:
+                      - name: scripts
+                        mountPath: /scripts
+                        readOnly: true
+                    startupProbe:
+                      httpGet:
+                        path: /started
+                        port: 80
+                      failureThreshold: 30
+                      periodSeconds: 10
+                    livenessProbe:
+                      httpGet:
+                        path: /live
+                        port: 80
+                      failureThreshold: 1
+                      periodSeconds: 2
+                    readinessProbe:
+                      httpGet:
+                        path: /ready
+                        port: 80
+                      initialDelaySeconds: 1
+                      periodSeconds: 1
                     serviceAccountName: simple-bundle-manager
       clusterPermissions:
         - rules:
@@ -125,7 +149,7 @@ spec:
               verbs:
                 - create
                 - patch
-          serviceAccountName: simple-bundle-manager
+      serviceAccountName: simple-bundle-manager
     strategy: deployment
   installModes:
     - supported: false
