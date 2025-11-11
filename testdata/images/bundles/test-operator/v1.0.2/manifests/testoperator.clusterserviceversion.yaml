@@ -65,7 +65,7 @@ spec:
                   - name: busybox-httpd-container
                     # This image ref is wrong and should trigger ImagePullBackOff condition
                     image: wrong/image
-                    serviceAccountName: simple-bundle-manager
+                serviceAccountName: simple-bundle-manager
       clusterPermissions:
         - rules:
             - apiGroups:
