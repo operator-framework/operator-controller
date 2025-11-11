@@ -124,11 +124,15 @@ func ApplyBundleWithBoxcutter(a Applier) ReconcileStepFunc {
 			return ctx, nil, err
 		}
 
+		// Repopulate active revisions to avoid duplicates
+		ext.Status.ActiveRevisions = nil
+
 		// Mirror Available/Progressing conditions from the installed revision
 		if i := revisionStates.Installed; i != nil {
 			for _, cndType := range []string{ocv1.ClusterExtensionRevisionTypeAvailable, ocv1.ClusterExtensionRevisionTypeProgressing} {
-				cnd := *apimeta.FindStatusCondition(i.Conditions, cndType)
-				apimeta.SetStatusCondition(&ext.Status.Conditions, cnd)
+				if cnd := apimeta.FindStatusCondition(i.Conditions, cndType); cnd != nil {
+					apimeta.SetStatusCondition(&ext.Status.Conditions, *cnd)
+				}
 			}
 			ext.Status.Install = &ocv1.ClusterExtensionInstallStatus{
 				Bundle: i.BundleMetadata,
@@ -143,16 +147,31 @@ func ApplyBundleWithBoxcutter(a Applier) ReconcileStepFunc {
 				if pcnd != nil {
 					apimeta.SetStatusCondition(&ext.Status.Conditions, *pcnd)
 				}
-				if acnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable); pcnd.Status == metav1.ConditionFalse && acnd != nil && acnd.Status != metav1.ConditionTrue {
-					apimeta.SetStatusCondition(&rs.Conditions, *acnd)
+				acnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				if acnd != nil && pcnd != nil && pcnd.Status == metav1.ConditionFalse && acnd.Status != metav1.ConditionTrue {
+					apimeta.SetStatusCondition(&ext.Status.Conditions, *acnd)
 				}
 			}
-			if len(ext.Status.ActiveRevisions) == 0 {
-				ext.Status.ActiveRevisions = []ocv1.RevisionStatus{rs}
-			} else {
-				ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, rs)
-			}
+			ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, rs)
 		}
+
+		// Rewrite Progressing condition to respect the existing contract
+		// Currently ClusterExtension treats the Progressing condition in the same way as the Deployment resource
+		// It signals there's nothing in the way of the resource progressing rather than the resource is undergoing
+		// active reconciliation at the moment. In order to not break the original contract, we rewrite the condition.
+		// This should be temporary until we understand whether we can change how the Progressing condition operates.
+		if cnd := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing); cnd != nil {
+			switch cnd.Reason {
+			case ocv1.ClusterExtensionRevisionReasonRolledOut:
+				cnd.Status = metav1.ConditionTrue
+				cnd.Reason = ocv1.ReasonSucceeded
+			case ocv1.ClusterExtensionRevisionReasonRolloutError:
+				cnd.Status = metav1.ConditionTrue
+				cnd.Reason = ocv1.ReasonRetrying
+			}
+			apimeta.SetStatusCondition(&ext.Status.Conditions, *cnd)
+		}
+		setInstalledStatusFromRevisionStates(ext, revisionStates)
 		return ctx, nil, nil
 	}
 }
