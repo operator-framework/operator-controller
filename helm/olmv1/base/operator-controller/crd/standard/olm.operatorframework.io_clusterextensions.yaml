@@ -132,11 +132,11 @@ spec:
                   rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
               serviceAccount:
                 description: |-
-                  serviceAccount is a reference to a ServiceAccount used to perform all interactions
-                  with the cluster that are required to manage the extension.
+                  serviceAccount is an optional field that references a ServiceAccount used to
+                  perform all interactions with the cluster that are required to manage the extension.
+                  If not set, operator-controller will use its own ServiceAccount for extension management.
                   The ServiceAccount must be configured with the necessary permissions to perform these interactions.
                   The ServiceAccount must exist in the namespace referenced in the spec.
-                  serviceAccount is required.
                 properties:
                   name:
                     description: |-
@@ -173,8 +173,6 @@ spec:
                         (.), start and end with an alphanumeric character, and be
                         no longer than 253 characters
                       rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
-                required:
-                - name
                 type: object
               source:
                 description: |-
@@ -459,7 +457,6 @@ spec:
                     has(self.catalog) : !has(self.catalog)'
             required:
             - namespace
-            - serviceAccount
             - source
             type: object
           status:

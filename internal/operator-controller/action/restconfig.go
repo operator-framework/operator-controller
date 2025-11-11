@@ -44,6 +44,12 @@ func ServiceAccountRestConfigMapper(tokenGetter *authentication.TokenGetter) fun
 		if err != nil {
 			return nil, err
 		}
+
+		// If ServiceAccount is not set, just use operator-controller's service account
+		if cExt.Spec.ServiceAccount.Name == "" {
+			return c, nil
+		}
+
 		saConfig := rest.AnonymousClientConfig(c)
 		saConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
 			return &authentication.TokenInjectingRoundTripper{

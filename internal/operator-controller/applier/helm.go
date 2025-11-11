@@ -113,7 +113,8 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		labels: objectLabels,
 	}
 
-	if h.PreAuthorizer != nil {
+	// Only run pre-Authorization if optional ServiceAccount field name is set
+	if h.PreAuthorizer != nil && ext.Spec.ServiceAccount.Name != "" {
 		err := h.runPreAuthorizationChecks(ctx, ext, chrt, values, post)
 		if err != nil {
 			// Return the pre-authorization error directly
