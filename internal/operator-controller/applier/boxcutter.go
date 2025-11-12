@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
@@ -35,8 +36,9 @@ const (
 )
 
 type ClusterExtensionRevisionGenerator interface {
-	GenerateRevision(bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error)
+	GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error)
 	GenerateRevisionFromHelmRelease(
+		ctx context.Context,
 		helmRelease *release.Release, ext *ocv1.ClusterExtension,
 		objectLabels map[string]string,
 	) (*ocv1.ClusterExtensionRevision, error)
@@ -48,6 +50,7 @@ type SimpleRevisionGenerator struct {
 }
 
 func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
+	ctx context.Context,
 	helmRelease *release.Release, ext *ocv1.ClusterExtension,
 	objectLabels map[string]string,
 ) (*ocv1.ClusterExtensionRevision, error) {
@@ -64,11 +67,11 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		maps.Copy(labels, existingLabels)
 		maps.Copy(labels, objectLabels)
 		obj.SetLabels(labels)
-		obj.SetOwnerReferences(nil) // reset OwnerReferences for migration.
 
 		// Memory optimization: strip large annotations
 		// Note: ApplyStripTransform never returns an error in practice
 		_ = cache.ApplyStripAnnotationsTransform(&obj)
+		sanitizedUnstructured(ctx, &obj)
 
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
 			Object:              obj,
@@ -88,6 +91,7 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 }
 
 func (r *SimpleRevisionGenerator) GenerateRevision(
+	ctx context.Context,
 	bundleFS fs.FS, ext *ocv1.ClusterExtension,
 	objectLabels, revisionAnnotations map[string]string,
 ) (*ocv1.ClusterExtensionRevision, error) {
@@ -122,6 +126,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		if err := cache.ApplyStripAnnotationsTransform(&unstr); err != nil {
 			return nil, err
 		}
+		sanitizedUnstructured(ctx, &unstr)
 
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
 			Object: unstr,
@@ -133,6 +138,48 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	}
 
 	return r.buildClusterExtensionRevision(objs, ext, revisionAnnotations), nil
+}
+
+// sanitizedUnstructured takes an unstructured obj, removes status if present, and returns a sanitized copy containing only the allowed metadata entries set below.
+// If any unallowed entries are removed, a warning will be logged.
+func sanitizedUnstructured(ctx context.Context, unstr *unstructured.Unstructured) {
+	l := log.FromContext(ctx)
+	obj := unstr.Object
+
+	// remove status
+	if _, ok := obj["status"]; ok {
+		l.Info("warning: extraneous status removed from manifest")
+		delete(obj, "status")
+	}
+
+	var allowedMetadata = []string{
+		"annotations",
+		"labels",
+		"name",
+		"namespace",
+	}
+
+	var metadata map[string]any
+	if metaRaw, ok := obj["metadata"]; ok {
+		metadata, ok = metaRaw.(map[string]any)
+		if !ok {
+			return
+		}
+	} else {
+		return
+	}
+
+	metadataSanitized := map[string]any{}
+	for _, key := range allowedMetadata {
+		if val, ok := metadata[key]; ok {
+			metadataSanitized[key] = val
+		}
+	}
+
+	if len(metadataSanitized) != len(metadata) {
+		l.Info("warning: extraneous values removed from manifest metadata", "allowed metadata", allowedMetadata)
+	}
+	obj["metadata"] = metadataSanitized
 }
 
 func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
@@ -190,7 +237,7 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		return err
 	}
 
-	rev, err := m.RevisionGenerator.GenerateRevisionFromHelmRelease(helmRelease, ext, objectLabels)
+	rev, err := m.RevisionGenerator.GenerateRevisionFromHelmRelease(ctx, helmRelease, ext, objectLabels)
 	if err != nil {
 		return err
 	}
@@ -236,7 +283,7 @@ func (bc *Boxcutter) createOrUpdate(ctx context.Context, obj client.Object) erro
 
 func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
 	// Generate desired revision
-	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(contentFS, ext, objectLabels, revisionAnnotations)
+	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
 		return false, "", err
 	}
