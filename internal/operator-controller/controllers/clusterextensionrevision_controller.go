@@ -4,7 +4,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -26,7 +25,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -34,6 +32,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	finalizerutil "github.com/operator-framework/operator-controller/internal/shared/util/finalizer"
 )
 
 const (
@@ -109,6 +108,13 @@ func checkForUnexpectedClusterExtensionRevisionFieldChange(a, b ocv1.ClusterExte
 	a.Finalizers, b.Finalizers = []string{}, []string{}
 	a.ManagedFields, b.ManagedFields = nil, nil
 	a.ResourceVersion, b.ResourceVersion = "", ""
+	// Remove kubectl's last-applied-configuration annotation which may be added by the API server
+	if a.Annotations != nil {
+		delete(a.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+	}
+	if b.Annotations != nil {
+		delete(b.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+	}
 	return !equality.Semantic.DeepEqual(a.Spec, b.Spec)
 }
 
@@ -134,7 +140,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	//
 	// Reconcile
 	//
-	if err := c.ensureFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+	if _, err := finalizerutil.EnsureFinalizer(ctx, c.Client, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionFalse,
@@ -369,7 +375,7 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 		return ctrl.Result{}, nil
 	}
 
-	if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+	if err := finalizerutil.RemoveFinalizer(ctx, c.Client, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 		return ctrl.Result{}, fmt.Errorf("error removing teardown finalizer: %v", err)
 	}
 	return ctrl.Result{}, nil
@@ -406,53 +412,6 @@ func (c *ClusterExtensionRevisionReconciler) establishWatch(
 	}
 
 	return c.TrackingCache.Watch(ctx, rev, gvks)
-}
-
-func (c *ClusterExtensionRevisionReconciler) ensureFinalizer(
-	ctx context.Context, obj client.Object, finalizer string,
-) error {
-	if controllerutil.ContainsFinalizer(obj, finalizer) {
-		return nil
-	}
-
-	controllerutil.AddFinalizer(obj, finalizer)
-	patch := map[string]any{
-		"metadata": map[string]any{
-			"resourceVersion": obj.GetResourceVersion(),
-			"finalizers":      obj.GetFinalizers(),
-		},
-	}
-	patchJSON, err := json.Marshal(patch)
-	if err != nil {
-		return fmt.Errorf("marshalling patch to remove finalizer: %w", err)
-	}
-	if err := c.Client.Patch(ctx, obj, client.RawPatch(types.MergePatchType, patchJSON)); err != nil {
-		return fmt.Errorf("adding finalizer: %w", err)
-	}
-	return nil
-}
-
-func (c *ClusterExtensionRevisionReconciler) removeFinalizer(ctx context.Context, obj client.Object, finalizer string) error {
-	if !controllerutil.ContainsFinalizer(obj, finalizer) {
-		return nil
-	}
-
-	controllerutil.RemoveFinalizer(obj, finalizer)
-
-	patch := map[string]any{
-		"metadata": map[string]any{
-			"resourceVersion": obj.GetResourceVersion(),
-			"finalizers":      obj.GetFinalizers(),
-		},
-	}
-	patchJSON, err := json.Marshal(patch)
-	if err != nil {
-		return fmt.Errorf("marshalling patch to remove finalizer: %w", err)
-	}
-	if err := c.Client.Patch(ctx, obj, client.RawPatch(types.MergePatchType, patchJSON)); err != nil {
-		return fmt.Errorf("removing finalizer: %w", err)
-	}
-	return nil
 }
 
 // listPreviousRevisions returns active revisions belonging to the same ClusterExtension with lower revision numbers.

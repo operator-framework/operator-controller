@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -499,13 +498,14 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				t.Log("cluster revision is deleted")
+				t.Log("finalizer is removed from cluster revision")
 				rev := &ocv1.ClusterExtensionRevision{}
 				err := c.Get(t.Context(), client.ObjectKey{
 					Name: clusterExtensionRevisionName,
 				}, rev)
-				require.Error(t, err)
-				require.True(t, errors.IsNotFound(err))
+				require.NoError(t, err)
+				require.NotContains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
+				require.NotNil(t, rev.DeletionTimestamp)
 			},
 		},
 		{

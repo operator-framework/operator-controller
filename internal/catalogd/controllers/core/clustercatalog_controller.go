@@ -34,12 +34,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
+	finalizerutil "github.com/operator-framework/operator-controller/internal/shared/util/finalizer"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
@@ -58,8 +58,6 @@ type ClusterCatalogReconciler struct {
 	ImagePuller imageutil.Puller
 
 	Storage storage.Instance
-
-	finalizers crfinalizer.Finalizers
 
 	// TODO: The below storedCatalogs fields are used for a quick a hack that helps
 	//    us correctly populate a ClusterCatalog's status. The fact that we need
@@ -106,30 +104,15 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingCatsrc.Status, reconciledCatsrc.Status)
-	updateFinalizers := !equality.Semantic.DeepEqual(existingCatsrc.Finalizers, reconciledCatsrc.Finalizers)
 	unexpectedFieldsChanged := checkForUnexpectedFieldChange(existingCatsrc, *reconciledCatsrc)
 
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
 	}
 
-	// Save the finalizers off to the side. If we update the status, the reconciledCatsrc will be updated
-	// to contain the new state of the ClusterCatalog, which contains the status update, but (critically)
-	// does not contain the finalizers. After the status update, we need to re-add the finalizers to the
-	// reconciledCatsrc before updating the object.
-	finalizers := reconciledCatsrc.Finalizers
-
 	if updateStatus {
 		if err := r.Client.Status().Update(ctx, reconciledCatsrc); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating status: %v", err))
-		}
-	}
-
-	reconciledCatsrc.Finalizers = finalizers
-
-	if updateFinalizers {
-		if err := r.Update(ctx, reconciledCatsrc); err != nil {
-			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
 
@@ -141,10 +124,6 @@ func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.storedCatalogsMu.Lock()
 	defer r.storedCatalogsMu.Unlock()
 	r.storedCatalogs = make(map[string]storedCatalogData)
-
-	if err := r.setupFinalizers(); err != nil {
-		return fmt.Errorf("failed to setup finalizers: %v", err)
-	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1.ClusterCatalog{}).
@@ -171,32 +150,47 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 			return ctrl.Result{}, err
 		}
 
-		// Set status.conditions[type=Progressing] to False as we are done with
-		// all that needs to be done with the catalog
-		updateStatusProgressingUserSpecifiedUnavailable(&catalog.Status, catalog.GetGeneration())
-
 		// Remove the fbcDeletionFinalizer as we do not want a finalizer attached to the catalog
 		// when it is disabled. Because the finalizer serves no purpose now.
-		controllerutil.RemoveFinalizer(catalog, fbcDeletionFinalizer)
+		if err := finalizerutil.RemoveFinalizer(ctx, r.Client, catalog, fbcDeletionFinalizer); err != nil {
+			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
+		}
+
+		// Set status.conditions[type=Progressing] to True as we are done with
+		// all that needs to be done with the catalog
+		updateStatusProgressingUserSpecifiedUnavailable(&catalog.Status, catalog.GetGeneration())
+		// Clear URLs, ResolvedSource, and LastUnpacked since catalog is unavailable
+		catalog.Status.ResolvedSource = nil
+		catalog.Status.URLs = nil
+		catalog.Status.LastUnpacked = nil
 
 		return ctrl.Result{}, nil
 	}
 
-	finalizeResult, err := r.finalizers.Finalize(ctx, catalog)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	if finalizeResult.Updated || finalizeResult.StatusUpdated {
-		// On create: make sure the finalizer is applied before we do anything
-		// On delete: make sure we do nothing after the finalizer is removed
-		return ctrl.Result{}, nil
-	}
-
+	// Handle deletion
 	if catalog.GetDeletionTimestamp() != nil {
-		// If we've gotten here, that means the cluster catalog is being deleted, we've handled all of
-		// _our_ finalizers (above), but the cluster catalog is still present in the cluster, likely
-		// because there are _other_ finalizers that other controllers need to handle, (e.g. the orphan
-		// deletion finalizer).
+		if !controllerutil.ContainsFinalizer(catalog, fbcDeletionFinalizer) {
+			// All finalizers removed, nothing more to do
+			return ctrl.Result{}, nil
+		}
+		if err := r.deleteCatalogCache(ctx, catalog); err != nil {
+			return ctrl.Result{}, fmt.Errorf("finalizer %q failed: %w", fbcDeletionFinalizer, err)
+		}
+		if err := finalizerutil.RemoveFinalizer(ctx, r.Client, catalog, fbcDeletionFinalizer); err != nil {
+			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
+		}
+		// Update status to reflect that catalog is no longer serving
+		updateStatusNotServing(&catalog.Status, catalog.GetGeneration())
+		return ctrl.Result{}, nil
+	}
+
+	// Ensure finalizer is present
+	finalizerAdded, err := finalizerutil.EnsureFinalizer(ctx, r.Client, catalog, fbcDeletionFinalizer)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("error ensuring finalizer: %v", err)
+	}
+	// On create: make sure the finalizer is applied before we do anything else
+	if finalizerAdded {
 		return ctrl.Result{}, nil
 	}
 
@@ -419,30 +413,16 @@ func (r *ClusterCatalogReconciler) needsPoll(lastSuccessfulPoll time.Time, catal
 func checkForUnexpectedFieldChange(a, b ocv1.ClusterCatalog) bool {
 	a.Status, b.Status = ocv1.ClusterCatalogStatus{}, ocv1.ClusterCatalogStatus{}
 	a.Finalizers, b.Finalizers = []string{}, []string{}
-	return !equality.Semantic.DeepEqual(a, b)
-}
-
-type finalizerFunc func(ctx context.Context, obj client.Object) (crfinalizer.Result, error)
-
-func (f finalizerFunc) Finalize(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-	return f(ctx, obj)
-}
-
-func (r *ClusterCatalogReconciler) setupFinalizers() error {
-	f := crfinalizer.NewFinalizers()
-	err := f.Register(fbcDeletionFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		catalog, ok := obj.(*ocv1.ClusterCatalog)
-		if !ok {
-			panic("could not convert object to clusterCatalog")
-		}
-		err := r.deleteCatalogCache(ctx, catalog)
-		return crfinalizer.Result{StatusUpdated: true}, err
-	}))
-	if err != nil {
-		return err
+	a.ManagedFields, b.ManagedFields = nil, nil
+	a.ResourceVersion, b.ResourceVersion = "", ""
+	// Remove kubectl's last-applied-configuration annotation which may be added by the API server
+	if a.Annotations != nil {
+		delete(a.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
 	}
-	r.finalizers = f
-	return nil
+	if b.Annotations != nil {
+		delete(b.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+	}
+	return !equality.Semantic.DeepEqual(a, b)
 }
 
 func (r *ClusterCatalogReconciler) deleteStoredCatalog(catalogName string) {

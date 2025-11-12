@@ -51,7 +51,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
-	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -70,7 +69,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
@@ -388,12 +386,11 @@ func run() error {
 		},
 	}
 
-	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
-	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		return crfinalizer.Result{}, imageCache.Delete(ctx, obj.GetName())
-	})); err != nil {
-		setupLog.Error(err, "unable to register finalizer", "finalizerKey", controllers.ClusterExtensionCleanupUnpackCacheFinalizer)
-		return err
+	// Set up finalizer handlers for ClusterExtension
+	clusterExtensionFinalizerHandlers := map[string]controllers.FinalizerHandler{
+		controllers.ClusterExtensionCleanupUnpackCacheFinalizer: func(ctx context.Context, ext *ocv1.ClusterExtension) error {
+			return imageCache.Delete(ctx, ext.GetName())
+		},
 	}
 
 	cl := mgr.GetClient()
@@ -440,11 +437,11 @@ func run() error {
 	}
 
 	ceReconciler := &controllers.ClusterExtensionReconciler{
-		Client:      cl,
-		Resolver:    resolver,
-		ImageCache:  imageCache,
-		ImagePuller: imagePuller,
-		Finalizers:  clusterExtensionFinalizers,
+		Client:            cl,
+		Resolver:          resolver,
+		ImageCache:        imageCache,
+		ImagePuller:       imagePuller,
+		FinalizerHandlers: clusterExtensionFinalizerHandlers,
 	}
 	ceController, err := ceReconciler.SetupWithManager(mgr, ctrlBuilderOpts...)
 	if err != nil {
@@ -461,9 +458,9 @@ func run() error {
 	}
 
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
-		err = setupBoxcutter(mgr, ceReconciler, preflights, clusterExtensionFinalizers, regv1ManifestProvider)
+		err = setupBoxcutter(mgr, ceReconciler, preflights, regv1ManifestProvider)
 	} else {
-		err = setupHelm(mgr, ceReconciler, preflights, ceController, clusterExtensionFinalizers, regv1ManifestProvider)
+		err = setupHelm(mgr, ceReconciler, preflights, ceController, regv1ManifestProvider)
 	}
 	if err != nil {
 		setupLog.Error(err, "unable to setup lifecycler")
@@ -528,7 +525,6 @@ func setupBoxcutter(
 	mgr manager.Manager,
 	ceReconciler *controllers.ClusterExtensionReconciler,
 	preflights []applier.Preflight,
-	clusterExtensionFinalizers crfinalizer.Registerer,
 	regv1ManifestProvider applier.ManifestProvider,
 ) error {
 	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
@@ -557,13 +553,9 @@ func setupBoxcutter(
 	// This finalizer was added by the Helm applier for ClusterExtensions created
 	// before BoxcutterRuntime was enabled. Boxcutter doesn't use contentmanager,
 	// so we just need to acknowledge the finalizer to allow deletion to proceed.
-	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	ceReconciler.FinalizerHandlers[controllers.ClusterExtensionCleanupContentManagerCacheFinalizer] = func(ctx context.Context, ext *ocv1.ClusterExtension) error {
 		// No-op: Boxcutter doesn't use contentmanager, so no cleanup is needed
-		return crfinalizer.Result{}, nil
-	}))
-	if err != nil {
-		setupLog.Error(err, "unable to register content manager cleanup finalizer for boxcutter")
-		return err
+		return nil
 	}
 
 	// TODO: add support for preflight checks
@@ -636,7 +628,6 @@ func setupHelm(
 	ceReconciler *controllers.ClusterExtensionReconciler,
 	preflights []applier.Preflight,
 	ceController crcontroller.Controller,
-	clusterExtensionFinalizers crfinalizer.Registerer,
 	regv1ManifestProvider applier.ManifestProvider,
 ) error {
 	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
@@ -675,14 +666,9 @@ func setupHelm(
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
-	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		ext := obj.(*ocv1.ClusterExtension)
-		err := cm.Delete(ext)
-		return crfinalizer.Result{}, err
-	}))
-	if err != nil {
-		setupLog.Error(err, "unable to register content manager cleanup finalizer")
-		return err
+	// Register the content manager cleanup finalizer handler
+	ceReconciler.FinalizerHandlers[controllers.ClusterExtensionCleanupContentManagerCacheFinalizer] = func(ctx context.Context, ext *ocv1.ClusterExtension) error {
+		return cm.Delete(ext)
 	}
 
 	// now initialize the helmApplier, assigning the potentially nil preAuth

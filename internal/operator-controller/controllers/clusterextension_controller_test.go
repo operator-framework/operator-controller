@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
@@ -31,7 +30,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -783,11 +781,11 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 			},
 		},
 	}
-	err = reconciler.Finalizers.Register(fakeFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		return crfinalizer.Result{}, errors.New(finalizersMessage)
-	}))
-
-	require.NoError(t, err)
+	reconciler.FinalizerHandlers = map[string]controllers.FinalizerHandler{
+		fakeFinalizer: func(ctx context.Context, ext *ocv1.ClusterExtension) error {
+			return errors.New(finalizersMessage)
+		},
+	}
 
 	// Reconcile twice to simulate installing the ClusterExtension and loading in the finalizers
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
