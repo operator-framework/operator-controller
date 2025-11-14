@@ -103,10 +103,10 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 
 // Compare resources - Annotations/Labels/Spec
 func checkForUnexpectedClusterExtensionRevisionFieldChange(a, b *ocv1.ClusterExtensionRevision) bool {
-	if !equality.Semantic.DeepEqual(a.ObjectMeta.Annotations, b.ObjectMeta.Annotations) {
+	if !equality.Semantic.DeepEqual(a.Annotations, b.Annotations) {
 		return true
 	}
-	if !equality.Semantic.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
+	if !equality.Semantic.DeepEqual(a.Labels, b.Labels) {
 		return true
 	}
 	return !equality.Semantic.DeepEqual(a.Spec, b.Spec)
