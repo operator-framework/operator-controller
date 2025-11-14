@@ -146,7 +146,7 @@ func TestClusterExtensionDeprecationMessageTruncation(t *testing.T) {
 		deprecationMessages = append(deprecationMessages, fmt.Sprintf("API version 'v1beta1' of resource 'customresources%d.example.com' is deprecated, use 'v1' instead", i))
 	}
 
-	longDeprecationMsg := strings.Join(deprecationMessages, "; ")
+	longDeprecationMsg := strings.Join(deprecationMessages, "\n")
 	setInstalledStatusConditionUnknown(ext, longDeprecationMsg)
 
 	cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
