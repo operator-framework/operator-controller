@@ -267,10 +267,13 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				prevRev1 := newTestClusterExtensionRevision("prev-rev-1")
+				prevRev1.Spec.Revision = 1
 				require.NoError(t, controllerutil.SetControllerReference(ext, prevRev1, testScheme))
 				prevRev2 := newTestClusterExtensionRevision("prev-rev-2")
+				prevRev2.Spec.Revision = 2
 				require.NoError(t, controllerutil.SetControllerReference(ext, prevRev2, testScheme))
 				rev1 := newTestClusterExtensionRevision("test-ext-1")
+				rev1.Spec.Revision = 3
 				rev1.Spec.Previous = []ocv1.ClusterExtensionRevisionPrevious{
 					{
 						Name: "prev-rev-1",
@@ -315,7 +318,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *te
 						return tc.revisionResult, nil
 					},
 				},
-				TrackingCache: &mockTrackingCache{},
+				TrackingCache: &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -431,7 +434,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ValidationError_Retries(t
 						return tc.revisionResult, nil
 					},
 				},
-				TrackingCache: &mockTrackingCache{},
+				TrackingCache: &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -661,7 +664,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 					},
 					teardown: tc.revisionEngineTeardownFn(t),
 				},
-				TrackingCache: &mockTrackingCache{},
+				TrackingCache: &mockTrackingCache{client: testClient},
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
@@ -678,6 +681,145 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 
 			// validate test case
 			tc.validate(t, testClient)
+		})
+	}
+}
+
+func Test_ClusterExtensionRevisionReconciler_ListPreviousRevisions(t *testing.T) {
+	testScheme := newScheme(t)
+
+	for _, tc := range []struct {
+		name         string
+		existingObjs func() []client.Object
+		currentRev   string
+		expectedRevs []string
+	}{
+		{
+			// Scenario:
+			//   - Three revisions belong to the same owner.
+			//   - We ask for previous revisions of rev-2.
+			//   - Only revisions with lower revision numbers are returned (rev-1).
+			//   - Higher revision numbers (rev-3) are excluded.
+			name: "should skip current revision when listing previous",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterExtensionRevision("rev-1")
+				rev2 := newTestClusterExtensionRevision("rev-2")
+				rev3 := newTestClusterExtensionRevision("rev-3")
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
+				return []client.Object{ext, rev1, rev2, rev3}
+			},
+			currentRev:   "rev-2",
+			expectedRevs: []string{"rev-1"},
+		},
+		{
+			// Scenario:
+			//   - One sibling is archived already.
+			//   - The caller should not get archived items.
+			//   - Only active siblings are returned.
+			name: "should drop archived revisions when listing previous",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterExtensionRevision("rev-1")
+				rev2 := newTestClusterExtensionRevision("rev-2")
+				rev2.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
+				rev3 := newTestClusterExtensionRevision("rev-3")
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
+				return []client.Object{ext, rev1, rev2, rev3}
+			},
+			currentRev:   "rev-3",
+			expectedRevs: []string{"rev-1"},
+		},
+		{
+			// Scenario:
+			//   - One sibling is being deleted.
+			//   - We list previous revisions.
+			//   - The deleting one is filtered out.
+			name: "should drop deleting revisions when listing previous",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterExtensionRevision("rev-1")
+				rev2 := newTestClusterExtensionRevision("rev-2")
+				rev2.Finalizers = []string{"test-finalizer"}
+				rev2.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+				rev3 := newTestClusterExtensionRevision("rev-3")
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
+				return []client.Object{ext, rev1, rev2, rev3}
+			},
+			currentRev:   "rev-3",
+			expectedRevs: []string{"rev-1"},
+		},
+		{
+			// Scenario:
+			//   - Two different owners have revisions.
+			//   - The owner label is used as the filter.
+			//   - Only siblings with the same owner come back.
+			name: "should only include revisions matching owner label",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				ext2 := newTestClusterExtension()
+				ext2.Name = "test-ext-2"
+				ext2.UID = "test-ext-2"
+
+				rev1 := newTestClusterExtensionRevision("rev-1")
+				rev2 := newTestClusterExtensionRevision("rev-2")
+				rev2.Labels[controllers.ClusterExtensionRevisionOwnerLabel] = "test-ext-2"
+				rev3 := newTestClusterExtensionRevision("rev-3")
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext2, rev2, testScheme))
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev3, testScheme))
+				return []client.Object{ext, ext2, rev1, rev2, rev3}
+			},
+			currentRev:   "rev-3",
+			expectedRevs: []string{"rev-1"},
+		},
+		{
+			// Scenario:
+			//   - The revision has no owner label.
+			//   - Without the label we skip the lookup.
+			//   - The function returns an empty list.
+			name: "should return empty list when owner label missing",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterExtensionRevision("rev-1")
+				delete(rev1.Labels, controllers.ClusterExtensionRevisionOwnerLabel)
+				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
+				return []client.Object{ext, rev1}
+			},
+			currentRev:   "rev-1",
+			expectedRevs: []string{},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testClient := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithObjects(tc.existingObjs()...).
+				Build()
+
+			reconciler := &controllers.ClusterExtensionRevisionReconciler{
+				Client:        testClient,
+				TrackingCache: &mockTrackingCache{client: testClient},
+			}
+
+			currentRev := &ocv1.ClusterExtensionRevision{}
+			err := testClient.Get(t.Context(), client.ObjectKey{Name: tc.currentRev}, currentRev)
+			require.NoError(t, err)
+
+			previous, err := reconciler.ListPreviousRevisions(t.Context(), currentRev)
+			require.NoError(t, err)
+
+			var names []string
+			for _, rev := range previous {
+				names = append(names, rev.GetName())
+			}
+
+			require.ElementsMatch(t, tc.expectedRevs, names)
 		})
 	}
 }
@@ -704,13 +846,22 @@ func newTestClusterExtension() *ocv1.ClusterExtension {
 }
 
 func newTestClusterExtensionRevision(name string) *ocv1.ClusterExtensionRevision {
+	// Extract revision number from name (e.g., "rev-1" -> 1, "test-ext-2" -> 2)
+	revNum := int64(1)
+	if len(name) > 0 && name[len(name)-1] >= '0' && name[len(name)-1] <= '9' {
+		revNum = int64(name[len(name)-1] - '0')
+	}
 	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			UID:        types.UID(name),
 			Generation: int64(1),
+			Labels: map[string]string{
+				controllers.ClusterExtensionRevisionOwnerLabel: "test-ext",
+			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
+			Revision: revNum,
 			Phases: []ocv1.ClusterExtensionRevisionPhase{
 				{
 					Name: "everything",
@@ -879,14 +1030,16 @@ func (m mockRevisionTeardownResult) String() string {
 	return m.string
 }
 
-type mockTrackingCache struct{}
+type mockTrackingCache struct {
+	client client.Client
+}
 
 func (m *mockTrackingCache) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
-	panic("not implemented")
+	return m.client.Get(ctx, key, obj, opts...)
 }
 
 func (m *mockTrackingCache) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	panic("not implemented")
+	return m.client.List(ctx, list, opts...)
 }
 
 func (m *mockTrackingCache) Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source {
