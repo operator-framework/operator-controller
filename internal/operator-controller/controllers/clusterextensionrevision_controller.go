@@ -4,7 +4,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -27,18 +26,19 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	finalizerutil "github.com/operator-framework/operator-controller/internal/shared/util/finalizer"
 )
 
 const (
 	ClusterExtensionRevisionOwnerLabel        = "olm.operatorframework.io/owner"
 	clusterExtensionRevisionTeardownFinalizer = "olm.operatorframework.io/teardown"
+	CluserExtensionRevisionFinalizerOwner     = "olm.operatorframework.io/clusterextensionrevision-controller"
 )
 
 // ClusterExtensionRevisionReconciler actions individual snapshots of ClusterExtensions,
@@ -83,7 +83,7 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingRev.Status, reconciledRev.Status)
 
-	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionRevisionFieldChange(*existingRev, *reconciledRev)
+	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionRevisionFieldChange(existingRev, reconciledRev)
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
 	}
@@ -101,15 +101,14 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 	return res, reconcileErr
 }
 
-// Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedClusterExtensionRevisionFieldChange(a, b ocv1.ClusterExtensionRevision) bool {
-	a.Status, b.Status = ocv1.ClusterExtensionRevisionStatus{}, ocv1.ClusterExtensionRevisionStatus{}
-
-	// when finalizers are updated during reconcile, we expect finalizers, managedFields, and resourceVersion
-	// to be updated, so we ignore changes in these fields.
-	a.Finalizers, b.Finalizers = []string{}, []string{}
-	a.ManagedFields, b.ManagedFields = nil, nil
-	a.ResourceVersion, b.ResourceVersion = "", ""
+// Compare resources - Annotations/Labels/Spec
+func checkForUnexpectedClusterExtensionRevisionFieldChange(a, b *ocv1.ClusterExtensionRevision) bool {
+	if !equality.Semantic.DeepEqual(a.Annotations, b.Annotations) {
+		return true
+	}
+	if !equality.Semantic.DeepEqual(a.Labels, b.Labels) {
+		return true
+	}
 	return !equality.Semantic.DeepEqual(a.Spec, b.Spec)
 }
 
@@ -125,7 +124,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	//
 	// Reconcile
 	//
-	if err := c.ensureFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+	if _, err := finalizerutil.AddFinalizers(ctx, CluserExtensionRevisionFinalizerOwner, c.Client, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionFalse,
@@ -354,7 +353,7 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 		return ctrl.Result{}, nil
 	}
 
-	if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+	if err := finalizerutil.RemoveFinalizers(ctx, CluserExtensionRevisionFinalizerOwner, c.Client, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 		return ctrl.Result{}, fmt.Errorf("error removing teardown finalizer: %v", err)
 	}
 	return ctrl.Result{}, nil
@@ -391,53 +390,6 @@ func (c *ClusterExtensionRevisionReconciler) establishWatch(
 	}
 
 	return c.TrackingCache.Watch(ctx, rev, gvks)
-}
-
-func (c *ClusterExtensionRevisionReconciler) ensureFinalizer(
-	ctx context.Context, obj client.Object, finalizer string,
-) error {
-	if controllerutil.ContainsFinalizer(obj, finalizer) {
-		return nil
-	}
-
-	controllerutil.AddFinalizer(obj, finalizer)
-	patch := map[string]any{
-		"metadata": map[string]any{
-			"resourceVersion": obj.GetResourceVersion(),
-			"finalizers":      obj.GetFinalizers(),
-		},
-	}
-	patchJSON, err := json.Marshal(patch)
-	if err != nil {
-		return fmt.Errorf("marshalling patch to remove finalizer: %w", err)
-	}
-	if err := c.Client.Patch(ctx, obj, client.RawPatch(types.MergePatchType, patchJSON)); err != nil {
-		return fmt.Errorf("adding finalizer: %w", err)
-	}
-	return nil
-}
-
-func (c *ClusterExtensionRevisionReconciler) removeFinalizer(ctx context.Context, obj client.Object, finalizer string) error {
-	if !controllerutil.ContainsFinalizer(obj, finalizer) {
-		return nil
-	}
-
-	controllerutil.RemoveFinalizer(obj, finalizer)
-
-	patch := map[string]any{
-		"metadata": map[string]any{
-			"resourceVersion": obj.GetResourceVersion(),
-			"finalizers":      obj.GetFinalizers(),
-		},
-	}
-	patchJSON, err := json.Marshal(patch)
-	if err != nil {
-		return fmt.Errorf("marshalling patch to remove finalizer: %w", err)
-	}
-	if err := c.Client.Patch(ctx, obj, client.RawPatch(types.MergePatchType, patchJSON)); err != nil {
-		return fmt.Errorf("removing finalizer: %w", err)
-	}
-	return nil
 }
 
 func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revision, []boxcutter.RevisionReconcileOption, []client.Object) {

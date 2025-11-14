@@ -28,7 +28,6 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
@@ -84,7 +83,7 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 		RevisionStatesGetter: &MockRevisionStatesGetter{
 			RevisionStates: &controllers.RevisionStates{},
 		},
-		Finalizers: crfinalizer.NewFinalizers(),
+		FinalizerHandlers: map[string]controllers.FinalizerHandler{},
 	}
 	return cl, reconciler
 }
