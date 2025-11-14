@@ -61,6 +61,7 @@ import (
 const (
 	ClusterExtensionCleanupUnpackCacheFinalizer         = "olm.operatorframework.io/cleanup-unpack-cache"
 	ClusterExtensionCleanupContentManagerCacheFinalizer = "olm.operatorframework.io/cleanup-contentmanager-cache"
+	ClusterExtensionFinalizerOwner                      = "olm.operatorframework.io/clusterextension-controller"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -195,7 +196,7 @@ func (r *ClusterExtensionReconciler) handleDeletion(ctx context.Context, ext *oc
 	}
 	// Remove all finalizers in a single patch operation
 	if len(finalizersToRemove) > 0 {
-		if err := finalizerutil.RemoveFinalizer(ctx, r.Client, ext, finalizersToRemove...); err != nil {
+		if err := finalizerutil.RemoveFinalizers(ctx, ClusterExtensionFinalizerOwner, r.Client, ext, finalizersToRemove...); err != nil {
 			setStatusProgressing(ext, err)
 			return ctrl.Result{}, fmt.Errorf("error removing finalizers: %v", err)
 		}
@@ -215,13 +216,13 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		return r.handleDeletion(ctx, ext)
 	}
 
-	// Ensure all finalizers are present
+	// Add all finalizers
 	finalizers := make([]string, 0, len(r.FinalizerHandlers))
 	for finalizerKey := range r.FinalizerHandlers {
 		finalizers = append(finalizers, finalizerKey)
 	}
 	if len(finalizers) > 0 {
-		if _, err := finalizerutil.EnsureFinalizer(ctx, r.Client, ext, finalizers...); err != nil {
+		if _, err := finalizerutil.AddFinalizers(ctx, ClusterExtensionFinalizerOwner, r.Client, ext, finalizers...); err != nil {
 			setStatusProgressing(ext, err)
 			return ctrl.Result{}, fmt.Errorf("error ensuring finalizers: %v", err)
 		}

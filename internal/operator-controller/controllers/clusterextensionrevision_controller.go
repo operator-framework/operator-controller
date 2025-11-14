@@ -37,6 +37,7 @@ import (
 
 const (
 	clusterExtensionRevisionTeardownFinalizer = "olm.operatorframework.io/teardown"
+	CluserExtensionRevisionFinalizerOwner     = "olm.operatorframework.io/clusterextensionrevision-controller"
 )
 
 // ClusterExtensionRevisionReconciler actions individual snapshots of ClusterExtensions,
@@ -140,7 +141,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	//
 	// Reconcile
 	//
-	if _, err := finalizerutil.EnsureFinalizer(ctx, c.Client, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+	if _, err := finalizerutil.AddFinalizers(ctx, CluserExtensionRevisionFinalizerOwner, c.Client, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionFalse,
@@ -375,7 +376,7 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 		return ctrl.Result{}, nil
 	}
 
-	if err := finalizerutil.RemoveFinalizer(ctx, c.Client, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+	if err := finalizerutil.RemoveFinalizers(ctx, CluserExtensionRevisionFinalizerOwner, c.Client, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
 		return ctrl.Result{}, fmt.Errorf("error removing teardown finalizer: %v", err)
 	}
 	return ctrl.Result{}, nil
