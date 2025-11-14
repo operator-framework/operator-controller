@@ -151,10 +151,10 @@ func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.C
 
 // Compare resources - Annotations/Labels/Spec
 func checkForUnexpectedClusterExtensionFieldChange(a, b *ocv1.ClusterExtension) bool {
-	if !equality.Semantic.DeepEqual(a.ObjectMeta.Annotations, b.ObjectMeta.Annotations) {
+	if !equality.Semantic.DeepEqual(a.Annotations, b.Annotations) {
 		return true
 	}
-	if !equality.Semantic.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
+	if !equality.Semantic.DeepEqual(a.Labels, b.Labels) {
 		return true
 	}
 	return !equality.Semantic.DeepEqual(a.Spec, b.Spec)
