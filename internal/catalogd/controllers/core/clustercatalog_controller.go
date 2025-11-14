@@ -44,10 +44,12 @@ import (
 )
 
 const (
-	fbcDeletionFinalizer = "olm.operatorframework.io/delete-server-cache"
+	ClusterCatalogFinalizerOwner = "olm.operatorframework.io/clustercatalog-controller"
+	fbcDeletionFinalizer         = "olm.operatorframework.io/delete-server-cache"
 	// CatalogSources are polled if PollInterval is mentioned, in intervals of wait.Jitter(pollDuration, maxFactor)
 	// wait.Jitter returns a time.Duration between pollDuration and pollDuration + maxFactor * pollDuration.
-	requeueJitterMaxFactor = 0.01
+	requeueJitterMaxFactor   = 0.01
+	lastAppliedConfiguration = "kubectl.kubernetes.io/last-applied-configuration"
 )
 
 // ClusterCatalogReconciler reconciles a Catalog object
@@ -150,19 +152,15 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 			return ctrl.Result{}, err
 		}
 
-		// Remove the fbcDeletionFinalizer as we do not want a finalizer attached to the catalog
-		// when it is disabled. Because the finalizer serves no purpose now.
-		if err := finalizerutil.RemoveFinalizer(ctx, r.Client, catalog, fbcDeletionFinalizer); err != nil {
-			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
-		}
-
-		// Set status.conditions[type=Progressing] to True as we are done with
+		// Set status.conditions[type=Progressing] to False as we are done with
 		// all that needs to be done with the catalog
 		updateStatusProgressingUserSpecifiedUnavailable(&catalog.Status, catalog.GetGeneration())
-		// Clear URLs, ResolvedSource, and LastUnpacked since catalog is unavailable
-		catalog.Status.ResolvedSource = nil
-		catalog.Status.URLs = nil
-		catalog.Status.LastUnpacked = nil
+
+		// Remove the fbcDeletionFinalizer as we do not want a finalizer attached to the catalog
+		// when it is disabled. Because the finalizer serves no purpose now.
+		if err := finalizerutil.RemoveFinalizers(ctx, ClusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer); err != nil {
+			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
+		}
 
 		return ctrl.Result{}, nil
 	}
@@ -176,7 +174,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 		if err := r.deleteCatalogCache(ctx, catalog); err != nil {
 			return ctrl.Result{}, fmt.Errorf("finalizer %q failed: %w", fbcDeletionFinalizer, err)
 		}
-		if err := finalizerutil.RemoveFinalizer(ctx, r.Client, catalog, fbcDeletionFinalizer); err != nil {
+		if err := finalizerutil.RemoveFinalizers(ctx, ClusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer); err != nil {
 			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
 		}
 		// Update status to reflect that catalog is no longer serving
@@ -184,8 +182,8 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 		return ctrl.Result{}, nil
 	}
 
-	// Ensure finalizer is present
-	finalizerAdded, err := finalizerutil.EnsureFinalizer(ctx, r.Client, catalog, fbcDeletionFinalizer)
+	// Add finalizer
+	finalizerAdded, err := finalizerutil.AddFinalizers(ctx, ClusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("error ensuring finalizer: %v", err)
 	}
@@ -417,10 +415,10 @@ func checkForUnexpectedFieldChange(a, b ocv1.ClusterCatalog) bool {
 	a.ResourceVersion, b.ResourceVersion = "", ""
 	// Remove kubectl's last-applied-configuration annotation which may be added by the API server
 	if a.Annotations != nil {
-		delete(a.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+		delete(a.Annotations, lastAppliedConfiguration)
 	}
 	if b.Annotations != nil {
-		delete(b.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+		delete(b.Annotations, lastAppliedConfiguration)
 	}
 	return !equality.Semantic.DeepEqual(a, b)
 }

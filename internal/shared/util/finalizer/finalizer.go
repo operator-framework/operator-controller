@@ -29,11 +29,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// EnsureFinalizer adds one or more finalizers to the object using server-side apply.
+// AddFinalizers adds one or more finalizers to the object using server-side apply.
 // If all finalizers already exist, this is a no-op and returns (false, nil).
 // Returns (true, nil) if any finalizers were added.
 // Note: This function will update the passed object with the server response.
-func EnsureFinalizer(ctx context.Context, c client.Client, obj client.Object, finalizers ...string) (bool, error) {
+func AddFinalizers(ctx context.Context, owner string, c client.Client, obj client.Object, finalizers ...string) (bool, error) {
 	if len(finalizers) == 0 {
 		return false, nil
 	}
@@ -73,7 +73,7 @@ func EnsureFinalizer(ctx context.Context, c client.Client, obj client.Object, fi
 	u.SetFinalizers(newFinalizers)
 
 	// Use server-side apply to update finalizers
-	if err := c.Patch(ctx, u, client.Apply, client.ForceOwnership, client.FieldOwner("finalizer-controller")); err != nil {
+	if err := c.Patch(ctx, u, client.Apply, client.ForceOwnership, client.FieldOwner(owner)); err != nil {
 		return false, fmt.Errorf("adding finalizer: %w", err)
 	}
 
@@ -84,9 +84,9 @@ func EnsureFinalizer(ctx context.Context, c client.Client, obj client.Object, fi
 	return true, nil
 }
 
-// RemoveFinalizer removes one or more finalizers from the object using server-side apply.
+// RemoveFinalizers removes one or more finalizers from the object using server-side apply.
 // If none of the finalizers exist, this is a no-op.
-func RemoveFinalizer(ctx context.Context, c client.Client, obj client.Object, finalizers ...string) error {
+func RemoveFinalizers(ctx context.Context, owner string, c client.Client, obj client.Object, finalizers ...string) error {
 	if len(finalizers) == 0 {
 		return nil
 	}
@@ -125,7 +125,7 @@ func RemoveFinalizer(ctx context.Context, c client.Client, obj client.Object, fi
 	u.SetFinalizers(newFinalizers)
 
 	// Use server-side apply to update finalizers
-	if err := c.Patch(ctx, u, client.Apply, client.ForceOwnership, client.FieldOwner("finalizer-controller")); err != nil {
+	if err := c.Patch(ctx, u, client.Apply, client.ForceOwnership, client.FieldOwner(owner)); err != nil {
 		return fmt.Errorf("removing finalizer: %w", err)
 	}
 
