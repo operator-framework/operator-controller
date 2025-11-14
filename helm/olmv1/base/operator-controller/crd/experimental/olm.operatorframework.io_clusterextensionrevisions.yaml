@@ -87,6 +87,10 @@ spec:
                             description: |-
                               CollisionProtection controls whether OLM can adopt and modify objects
                               already existing on the cluster or even owned by another controller.
+                            enum:
+                            - Prevent
+                            - IfNoController
+                            - None
                             type: string
                           object:
                             type: object
@@ -133,7 +137,7 @@ spec:
                   Revision is a sequence number representing a specific revision of the ClusterExtension instance.
                   Must be positive. Each ClusterExtensionRevision of the same parent ClusterExtension needs to have
                   a unique value assigned. It is immutable after creation. The new revision number must always be previous revision +1.
-                format: int64
+                format: int32
                 minimum: 1
                 type: integer
                 x-kubernetes-validations:
