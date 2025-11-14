@@ -55,9 +55,9 @@ type ClusterExtensionRevisionSpec struct {
 	// a unique value assigned. It is immutable after creation. The new revision number must always be previous revision +1.
 	//
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
-	Revision int64 `json:"revision"`
+	Revision int32 `json:"revision"`
 	// Phases are groups of objects that will be applied at the same time.
 	// All objects in the phase will have to pass their probes in order to progress to the next phase.
 	//
@@ -108,6 +108,7 @@ type ClusterExtensionRevisionObject struct {
 	// already existing on the cluster or even owned by another controller.
 	//
 	// +kubebuilder:default="Prevent"
+	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	// +optional
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
