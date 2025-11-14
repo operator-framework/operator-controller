@@ -678,6 +678,10 @@ spec:
                             description: |-
                               CollisionProtection controls whether OLM can adopt and modify objects
                               already existing on the cluster or even owned by another controller.
+                            enum:
+                            - Prevent
+                            - IfNoController
+                            - None
                             type: string
                           object:
                             type: object

@@ -108,6 +108,7 @@ type ClusterExtensionRevisionObject struct {
 	// already existing on the cluster or even owned by another controller.
 	//
 	// +kubebuilder:default="Prevent"
+	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	// +optional
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
