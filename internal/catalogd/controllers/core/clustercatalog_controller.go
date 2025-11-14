@@ -48,8 +48,7 @@ const (
 	fbcDeletionFinalizer         = "olm.operatorframework.io/delete-server-cache"
 	// CatalogSources are polled if PollInterval is mentioned, in intervals of wait.Jitter(pollDuration, maxFactor)
 	// wait.Jitter returns a time.Duration between pollDuration and pollDuration + maxFactor * pollDuration.
-	requeueJitterMaxFactor   = 0.01
-	lastAppliedConfiguration = "kubectl.kubernetes.io/last-applied-configuration"
+	requeueJitterMaxFactor = 0.01
 )
 
 // ClusterCatalogReconciler reconciles a Catalog object
@@ -106,7 +105,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingCatsrc.Status, reconciledCatsrc.Status)
-	unexpectedFieldsChanged := checkForUnexpectedFieldChange(existingCatsrc, *reconciledCatsrc)
+	unexpectedFieldsChanged := checkForUnexpectedFieldChange(&existingCatsrc, reconciledCatsrc)
 
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
@@ -407,20 +406,15 @@ func (r *ClusterCatalogReconciler) needsPoll(lastSuccessfulPoll time.Time, catal
 	return nextPoll.Before(time.Now())
 }
 
-// Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedFieldChange(a, b ocv1.ClusterCatalog) bool {
-	a.Status, b.Status = ocv1.ClusterCatalogStatus{}, ocv1.ClusterCatalogStatus{}
-	a.Finalizers, b.Finalizers = []string{}, []string{}
-	a.ManagedFields, b.ManagedFields = nil, nil
-	a.ResourceVersion, b.ResourceVersion = "", ""
-	// Remove kubectl's last-applied-configuration annotation which may be added by the API server
-	if a.Annotations != nil {
-		delete(a.Annotations, lastAppliedConfiguration)
+// Compare resources - Annotations/Labels/Spec
+func checkForUnexpectedFieldChange(a, b *ocv1.ClusterCatalog) bool {
+	if !equality.Semantic.DeepEqual(a.ObjectMeta.Annotations, b.ObjectMeta.Annotations) {
+		return true
 	}
-	if b.Annotations != nil {
-		delete(b.Annotations, lastAppliedConfiguration)
+	if !equality.Semantic.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
+		return true
 	}
-	return !equality.Semantic.DeepEqual(a, b)
+	return !equality.Semantic.DeepEqual(a.Spec, b.Spec)
 }
 
 func (r *ClusterCatalogReconciler) deleteStoredCatalog(catalogName string) {
