@@ -384,7 +384,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
-					Finalizers:        []string{},
+					Finalizers:        nil,
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
 				Spec: ocv1.ClusterCatalogSpec{
@@ -665,7 +665,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
-					Finalizers: []string{},
+					Finalizers: nil,
 				},
 				Spec: ocv1.ClusterCatalogSpec{
 					Source: ocv1.CatalogSource{
