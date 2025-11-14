@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
 const (
@@ -122,29 +123,27 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		return c.teardown(ctx, rev, revision)
 	}
 
+	revVersion := rev.GetAnnotations()[labels.BundleVersionKey]
 	//
 	// Reconcile
 	//
 	if err := c.ensureFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
-			Message:            err.Error(),
-			ObservedGeneration: rev.Generation,
-		})
 		return ctrl.Result{}, fmt.Errorf("error ensuring teardown finalizer: %v", err)
 	}
 
-	if err := c.establishWatch(ctx, rev, revision); err != nil {
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
-			Message:            err.Error(),
-			ObservedGeneration: rev.Generation,
-		})
-		return ctrl.Result{}, fmt.Errorf("establish watch: %v", err)
+	// If the Available condition is not present, we are still rolling out the objects.
+	// NOTE: This assumes that once the Available condition is set, it will always be present.
+	// If the Available condition is ever removed or reset during the lifecycle,
+	// this could lead to incorrect behavior.
+	inRollout := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable) == nil
+	if inRollout {
+		if err := c.establishWatch(ctx, rev, revision); err != nil {
+			werr := fmt.Errorf("establish watch: %v", err)
+			// this error is very likely transient, so we should keep revision as progressing
+			markAsProgressing(rev, ocv1.ClusterExtensionRevisionReasonReconcileFailure, werr.Error())
+			return ctrl.Result{}, werr
+		}
+		markAsProgressing(rev, ocv1.ClusterExtensionRevisionReasonRolloutInProgress, fmt.Sprintf("Revision %s is being rolled out.", revVersion))
 	}
 
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
@@ -154,13 +153,19 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		} else {
 			l.Error(err, "revision reconcile failed")
 		}
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
-			Message:            err.Error(),
-			ObservedGeneration: rev.Generation,
-		})
+		if inRollout {
+			markAsProgressing(rev, ocv1.ClusterExtensionRevisionReasonRolloutError, err.Error())
+		} else {
+			// it is a probably transient error, and we do not know if the revision is available or not
+			// perhaps we should not report it at all, hoping that it is going to be mitigated in the next reconcile?
+			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+				Status:             metav1.ConditionUnknown,
+				Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
+				Message:            err.Error(),
+				ObservedGeneration: rev.Generation,
+			})
+		}
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
 	}
 	// Log detailed reconcile reports only in debug mode (V(1)) to reduce verbosity.
@@ -171,13 +176,20 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
 
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-			Status:             metav1.ConditionFalse,
-			Reason:             ocv1.ClusterExtensionRevisionReasonRevisionValidationFailure,
-			Message:            fmt.Sprintf("revision validation error: %s", verr),
-			ObservedGeneration: rev.Generation,
-		})
+		if inRollout {
+			// given that we retry, we are going to keep Progressing condition True
+			markAsProgressing(rev, ocv1.ClusterExtensionRevisionReasonRevisionValidationFailure, fmt.Sprintf("revision validation error: %s", verr))
+		} else {
+			// it is a probably transient error, and we do not know if the revision is available or not
+			// perhaps we should not report it at all, hoping that it is going to be mitigated in the next reconcile?
+			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+				Status:             metav1.ConditionUnknown,
+				Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
+				Message:            fmt.Sprintf("revision validation error: %s", verr),
+				ObservedGeneration: rev.Generation,
+			})
+		}
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
@@ -185,13 +197,20 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		if verr := pres.GetValidationError(); verr != nil {
 			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", i)
 
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-				Status:             metav1.ConditionFalse,
-				Reason:             ocv1.ClusterExtensionRevisionReasonPhaseValidationError,
-				Message:            fmt.Sprintf("phase %d validation error: %s", i, verr),
-				ObservedGeneration: rev.Generation,
-			})
+			if inRollout {
+				// given that we retry, we are going to keep Progressing condition True
+				markAsProgressing(rev, ocv1.ClusterExtensionRevisionReasonPhaseValidationError, fmt.Sprintf("phase %d validation error: %s", i, verr))
+			} else {
+				// it is a probably transient error, and we do not know if the revision is available or not
+				// perhaps we should not report it at all, hoping that it is going to be mitigated in the next reconcile?
+				meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+					Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+					Status:             metav1.ConditionUnknown,
+					Reason:             ocv1.ClusterExtensionRevisionReasonPhaseValidationError,
+					Message:            fmt.Sprintf("phase %d validation error: %s", i, verr),
+					ObservedGeneration: rev.Generation,
+				})
+			}
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 
@@ -204,16 +223,20 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 		if len(collidingObjs) > 0 {
 			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", i, "collisions", collidingObjs)
+			// collisions are probably stickier than phase roll out probe failures - so we'd probably want to set
+			// Progressing to false here due to the collision
+			if inRollout {
+				markAsNotProgressing(rev, ocv1.ClusterExtensionRevisionReasonObjectCollisions, fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")))
 
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-				Status:             metav1.ConditionFalse,
-				Reason:             ocv1.ClusterExtensionRevisionReasonObjectCollisions,
-				Message:            fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")),
-				ObservedGeneration: rev.Generation,
-			})
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+				// NOTE(pedjak): not sure if we want to retry here - collisions are probably not transient?
+				return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			}
 		}
+	}
+
+	if !rres.InTransistion() {
+		// we have rolled out all objects in all phases, not interested in probes here
+		markAsNotProgressing(rev, ocv1.ClusterExtensionRevisionReasonRolledOut, fmt.Sprintf("Revision %s is rolled out.", revVersion))
 	}
 
 	//nolint:nestif
@@ -229,23 +252,20 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			}
 		}
 
-		// Report status.
+		// It would be good to understand from Nico how we can distinguish between progression and availability probes
+		// and how to best check that all Availability probes are passing
+		markAsAvailable(rev, ocv1.ClusterExtensionRevisionReasonProbesSucceeded, "Objects are available and pass all probes.")
+
+		// We'll probably only want to remove this once we are done updating the ClusterExtension conditions
+		// as its one of the interfaces between the revision and the extension. If we still have the Succeeded for now
+		// that's fine.
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+			Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
 			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ClusterExtensionRevisionReasonAvailable,
-			Message:            "Object is available and passes all probes.",
+			Reason:             ocv1.ClusterExtensionRevisionReasonRolloutSuccess,
+			Message:            "Revision succeeded rolling out.",
 			ObservedGeneration: rev.Generation,
 		})
-		if !meta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
-				Status:             metav1.ConditionTrue,
-				Reason:             ocv1.ClusterExtensionRevisionReasonRolloutSuccess,
-				Message:            "Revision succeeded rolling out.",
-				ObservedGeneration: rev.Generation,
-			})
-		}
 	} else {
 		var probeFailureMsgs []string
 		for _, pres := range rres.GetPhases() {
@@ -253,6 +273,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 				continue
 			}
 			for _, ores := range pres.GetObjects() {
+				// we probably want an AvailabilityProbeType and run through all of them independently of whether
+				// the revision is complete or not
 				pr := ores.Probes()[boxcutter.ProgressProbeType]
 				if pr.Success {
 					continue
@@ -260,6 +282,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 				obj := ores.Object()
 				gvk := obj.GetObjectKind().GroupVersionKind()
+				// I think these can be pretty large and verbose. We may want to
+				// work a little on the formatting...?
 				probeFailureMsgs = append(probeFailureMsgs, fmt.Sprintf(
 					"Object %s.%s %s/%s: %v",
 					gvk.Kind, gvk.GroupVersion().String(),
@@ -269,33 +293,10 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			}
 		}
 		if len(probeFailureMsgs) > 0 {
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-				Status:             metav1.ConditionFalse,
-				Reason:             ocv1.ClusterExtensionRevisionReasonProbeFailure,
-				Message:            strings.Join(probeFailureMsgs, "\n"),
-				ObservedGeneration: rev.Generation,
-			})
+			markAsUnavailable(rev, ocv1.ClusterExtensionRevisionReasonProbeFailure, strings.Join(probeFailureMsgs, "\n"))
 		} else {
-			meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-				Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-				Status:             metav1.ConditionFalse,
-				Reason:             ocv1.ClusterExtensionRevisionReasonIncomplete,
-				Message:            "Revision has not been rolled out completely.",
-				ObservedGeneration: rev.Generation,
-			})
+			markAsUnavailable(rev, ocv1.ClusterExtensionRevisionReasonIncomplete, fmt.Sprintf("Revision %s has not been rolled out completely.", revVersion))
 		}
-	}
-	if rres.InTransistion() {
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeProgressing,
-			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ClusterExtensionRevisionReasonProgressing,
-			Message:            "Rollout in progress.",
-			ObservedGeneration: rev.Generation,
-		})
-	} else {
-		meta.RemoveStatusCondition(&rev.Status.Conditions, ocv1.TypeProgressing)
 	}
 
 	return ctrl.Result{}, nil
@@ -341,17 +342,26 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 		return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 	}
 
-	// Ensure Available condition is set to Unknown before removing the finalizer when archiving
-	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived &&
-		!meta.IsStatusConditionPresentAndEqual(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable, metav1.ConditionUnknown) {
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+	// Ensure conditions are set before removing the finalizer when archiving
+	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
+		condUpdated := meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionUnknown,
 			Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
 			Message:            "revision is archived",
 			ObservedGeneration: rev.Generation,
 		})
-		return ctrl.Result{}, nil
+		condUpdated = meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+			Status:             metav1.ConditionFalse,
+			Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
+			Message:            "revision is archived",
+			ObservedGeneration: rev.Generation,
+		}) || condUpdated
+
+		if condUpdated {
+			return ctrl.Result{}, nil
+		}
 	}
 
 	if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
@@ -551,3 +561,43 @@ var (
 		FieldB: ".status.replicas",
 	}
 )
+
+func markAsProgressing(cer *ocv1.ClusterExtensionRevision, reason, message string) {
+	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+		Status:             metav1.ConditionTrue,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cer.Generation,
+	})
+}
+
+func markAsNotProgressing(cer *ocv1.ClusterExtensionRevision, reason, message string) {
+	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cer.Generation,
+	})
+}
+
+func markAsAvailable(cer *ocv1.ClusterExtensionRevision, reason, message string) {
+	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+		Status:             metav1.ConditionTrue,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cer.Generation,
+	})
+}
+
+func markAsUnavailable(cer *ocv1.ClusterExtensionRevision, reason, message string) {
+	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+		Status:             metav1.ConditionFalse,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: cer.Generation,
+	})
+}
