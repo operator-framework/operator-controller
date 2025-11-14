@@ -78,7 +78,7 @@ func AddFinalizers(ctx context.Context, owner string, c client.Client, obj clien
 	}
 
 	// Update the passed object with the new finalizers
-	obj.SetFinalizers(newFinalizers)
+	obj.SetFinalizers(u.GetFinalizers())
 	obj.SetResourceVersion(u.GetResourceVersion())
 
 	return true, nil
@@ -130,7 +130,7 @@ func RemoveFinalizers(ctx context.Context, owner string, c client.Client, obj cl
 	}
 
 	// Update the passed object with the new finalizers
-	obj.SetFinalizers(newFinalizers)
+	obj.SetFinalizers(u.GetFinalizers())
 	obj.SetResourceVersion(u.GetResourceVersion())
 
 	return nil
