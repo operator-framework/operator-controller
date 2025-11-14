@@ -83,7 +83,7 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingRev.Status, reconciledRev.Status)
 
-	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionRevisionFieldChange(*existingRev, *reconciledRev)
+	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionRevisionFieldChange(existingRev, reconciledRev)
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
 	}
@@ -101,21 +101,13 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 	return res, reconcileErr
 }
 
-// Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedClusterExtensionRevisionFieldChange(a, b ocv1.ClusterExtensionRevision) bool {
-	a.Status, b.Status = ocv1.ClusterExtensionRevisionStatus{}, ocv1.ClusterExtensionRevisionStatus{}
-
-	// when finalizers are updated during reconcile, we expect finalizers, managedFields, and resourceVersion
-	// to be updated, so we ignore changes in these fields.
-	a.Finalizers, b.Finalizers = []string{}, []string{}
-	a.ManagedFields, b.ManagedFields = nil, nil
-	a.ResourceVersion, b.ResourceVersion = "", ""
-	// Remove kubectl's last-applied-configuration annotation which may be added by the API server
-	if a.Annotations != nil {
-		delete(a.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+// Compare resources - Annotations/Labels/Spec
+func checkForUnexpectedClusterExtensionRevisionFieldChange(a, b *ocv1.ClusterExtensionRevision) bool {
+	if !equality.Semantic.DeepEqual(a.ObjectMeta.Annotations, b.ObjectMeta.Annotations) {
+		return true
 	}
-	if b.Annotations != nil {
-		delete(b.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+	if !equality.Semantic.DeepEqual(a.ObjectMeta.Labels, b.ObjectMeta.Labels) {
+		return true
 	}
 	return !equality.Semantic.DeepEqual(a.Spec, b.Spec)
 }
