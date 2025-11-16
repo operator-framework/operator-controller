@@ -32,12 +32,12 @@ const (
 	FinalizerPrefix = "olm.operatorframework.io/"
 )
 
-// UpdateFinalizers sets the finalizers on an object to exactly the provided list using server-side apply.
+// EnsureFinalizers sets the finalizers on an object to exactly the provided list using server-side apply.
 // If no finalizers are supplied, all finalizers will be removed from the object.
 // If one finalizer is supplied, all other finalizers will be removed and only the supplied one will remain.
 // Returns (true, nil) if the finalizers were changed, (false, nil) if they were already set to the desired value.
 // Note: This function will update the passed object with the server response.
-func UpdateFinalizers(ctx context.Context, owner string, c client.Client, obj client.Object, finalizers ...string) (bool, error) {
+func EnsureFinalizers(ctx context.Context, owner string, c client.Client, obj client.Object, finalizers ...string) (bool, error) {
 	// Sort the desired finalizers for consistent ordering
 	newFinalizers := slices.Clone(finalizers)
 	if newFinalizers == nil {

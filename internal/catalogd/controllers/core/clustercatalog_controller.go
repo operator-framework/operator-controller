@@ -157,7 +157,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 
 		// Remove the fbcDeletionFinalizer as we do not want a finalizer attached to the catalog
 		// when it is disabled. Because the finalizer serves no purpose now.
-		if _, err := finalizerutil.UpdateFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog); err != nil {
+		if _, err := finalizerutil.EnsureFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog); err != nil {
 			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
 		}
 
@@ -173,7 +173,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 		if err := r.deleteCatalogCache(ctx, catalog); err != nil {
 			return ctrl.Result{}, fmt.Errorf("finalizer %q failed: %w", fbcDeletionFinalizer, err)
 		}
-		if _, err := finalizerutil.UpdateFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog); err != nil {
+		if _, err := finalizerutil.EnsureFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog); err != nil {
 			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
 		}
 		// Update status to reflect that catalog is no longer serving
@@ -182,7 +182,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 	}
 
 	// Add finalizer
-	finalizerAdded, err := finalizerutil.UpdateFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer)
+	finalizerAdded, err := finalizerutil.EnsureFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("error ensuring finalizer: %v", err)
 	}

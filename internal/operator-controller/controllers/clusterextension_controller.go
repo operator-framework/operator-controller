@@ -191,7 +191,7 @@ func (r *ClusterExtensionReconciler) handleDeletion(ctx context.Context, ext *oc
 	}
 	// Remove all finalizers in a single patch operation
 	if removeFinalizers {
-		if _, err := finalizerutil.UpdateFinalizers(ctx, clusterExtensionFinalizerOwner, r.Client, ext); err != nil {
+		if _, err := finalizerutil.EnsureFinalizers(ctx, clusterExtensionFinalizerOwner, r.Client, ext); err != nil {
 			setStatusProgressing(ext, err)
 			return ctrl.Result{}, fmt.Errorf("error removing finalizers: %v", err)
 		}
@@ -217,7 +217,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		finalizers = append(finalizers, finalizerKey)
 	}
 	if len(finalizers) > 0 {
-		if _, err := finalizerutil.UpdateFinalizers(ctx, clusterExtensionFinalizerOwner, r.Client, ext, finalizers...); err != nil {
+		if _, err := finalizerutil.EnsureFinalizers(ctx, clusterExtensionFinalizerOwner, r.Client, ext, finalizers...); err != nil {
 			setStatusProgressing(ext, err)
 			return ctrl.Result{}, fmt.Errorf("error ensuring finalizers: %v", err)
 		}
