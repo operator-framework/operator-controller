@@ -32,6 +32,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
+	finalizerutil "github.com/operator-framework/operator-controller/internal/shared/util/finalizer"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
@@ -768,7 +769,7 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 		}, &v, nil, nil
 	})
-	fakeFinalizer := "fake.testfinalizer.io"
+	fakeFinalizer := finalizerutil.FinalizerPrefix + "fake.testfinalizer"
 	finalizersMessage := "still have finalizers"
 	reconciler.Applier = &MockApplier{
 		installCompleted: true,

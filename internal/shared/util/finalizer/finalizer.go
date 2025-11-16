@@ -21,43 +21,53 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// AddFinalizers adds one or more finalizers to the object using server-side apply.
-// If all finalizers already exist, this is a no-op and returns (false, nil).
-// Returns (true, nil) if any finalizers were added.
-// Note: This function will update the passed object with the server response.
-func AddFinalizers(ctx context.Context, owner string, c client.Client, obj client.Object, finalizers ...string) (bool, error) {
-	if len(finalizers) == 0 {
-		return false, nil
-	}
+const (
+	FinalizerPrefix = "olm.operatorframework.io/"
+)
 
-	// Determine which finalizers need to be added
-	var toAdd []string
-	for _, finalizer := range finalizers {
-		if !controllerutil.ContainsFinalizer(obj, finalizer) {
-			toAdd = append(toAdd, finalizer)
+// UpdateFinalizers sets the finalizers on an object to exactly the provided list using server-side apply.
+// If no finalizers are supplied, all finalizers will be removed from the object.
+// If one finalizer is supplied, all other finalizers will be removed and only the supplied one will remain.
+// Returns (true, nil) if the finalizers were changed, (false, nil) if they were already set to the desired value.
+// Note: This function will update the passed object with the server response.
+func UpdateFinalizers(ctx context.Context, owner string, c client.Client, obj client.Object, finalizers ...string) (bool, error) {
+	// Sort the desired finalizers for consistent ordering
+	newFinalizers := slices.Clone(finalizers)
+	if newFinalizers == nil {
+		newFinalizers = []string{}
+	}
+	// Possibly overkill, but it will ensure our finalizers use the proper prefix
+	for _, s := range newFinalizers {
+		if !strings.HasPrefix(s, FinalizerPrefix) {
+			panic(fmt.Sprintf("finalizer does not have %q prefix: %q", FinalizerPrefix, s))
 		}
 	}
+	sort.Strings(newFinalizers)
 
-	if len(toAdd) == 0 {
+	// Check if the current finalizers already match the desired state
+	// Remove any non-"olm.operatorframework.io" finalizers (ones we don't manage) from the list
+	currentFinalizers := obj.GetFinalizers()
+	currentSorted := slices.Clone(currentFinalizers)
+	currentSorted = slices.DeleteFunc(currentSorted, func(f string) bool {
+		return !strings.HasPrefix(f, FinalizerPrefix)
+	})
+	if currentSorted == nil {
+		currentSorted = []string{}
+	}
+	sort.Strings(currentSorted)
+
+	// With only "olm.operatorframework.io" finalizers, other controller's finalizers
+	// won't interfere in this check
+	if slices.Equal(currentSorted, newFinalizers) {
 		return false, nil
 	}
-
-	// Sort the finalizers to add for consistent ordering
-	sort.Strings(toAdd)
-
-	// Create a copy of the finalizers list to avoid mutating the object
-	currentFinalizers := obj.GetFinalizers()
-	newFinalizers := make([]string, len(currentFinalizers), len(currentFinalizers)+len(toAdd))
-	copy(newFinalizers, currentFinalizers)
-	newFinalizers = append(newFinalizers, toAdd...)
 
 	// Get the GVK for this object type
 	gvk, err := apiutil.GVKForObject(obj, c.Scheme())
@@ -74,7 +84,7 @@ func AddFinalizers(ctx context.Context, owner string, c client.Client, obj clien
 
 	// Use server-side apply to update finalizers
 	if err := c.Patch(ctx, u, client.Apply, client.ForceOwnership, client.FieldOwner(owner)); err != nil {
-		return false, fmt.Errorf("adding finalizer: %w", err)
+		return false, fmt.Errorf("updating finalizers: %w", err)
 	}
 
 	// Update the passed object with the new finalizers
@@ -82,56 +92,4 @@ func AddFinalizers(ctx context.Context, owner string, c client.Client, obj clien
 	obj.SetResourceVersion(u.GetResourceVersion())
 
 	return true, nil
-}
-
-// RemoveFinalizers removes one or more finalizers from the object using server-side apply.
-// If none of the finalizers exist, this is a no-op.
-func RemoveFinalizers(ctx context.Context, owner string, c client.Client, obj client.Object, finalizers ...string) error {
-	if len(finalizers) == 0 {
-		return nil
-	}
-
-	// Create a set of finalizers to remove for efficient lookup
-	toRemove := sets.New(finalizers...)
-	hasAny := false
-	for _, finalizer := range finalizers {
-		if controllerutil.ContainsFinalizer(obj, finalizer) {
-			hasAny = true
-		}
-	}
-
-	if !hasAny {
-		return nil
-	}
-
-	// Create a copy of the finalizers list and remove the specified finalizers
-	currentFinalizers := obj.GetFinalizers()
-	newFinalizers := slices.Clone(currentFinalizers)
-	newFinalizers = slices.DeleteFunc(newFinalizers, func(f string) bool {
-		return toRemove.Has(f)
-	})
-
-	// Get the GVK for this object type
-	gvk, err := apiutil.GVKForObject(obj, c.Scheme())
-	if err != nil {
-		return fmt.Errorf("getting object kind: %w", err)
-	}
-
-	// Create an unstructured object for server-side apply
-	u := &unstructured.Unstructured{}
-	u.SetGroupVersionKind(gvk)
-	u.SetName(obj.GetName())
-	u.SetNamespace(obj.GetNamespace())
-	u.SetFinalizers(newFinalizers)
-
-	// Use server-side apply to update finalizers
-	if err := c.Patch(ctx, u, client.Apply, client.ForceOwnership, client.FieldOwner(owner)); err != nil {
-		return fmt.Errorf("removing finalizer: %w", err)
-	}
-
-	// Update the passed object with the new finalizers
-	obj.SetFinalizers(u.GetFinalizers())
-	obj.SetResourceVersion(u.GetResourceVersion())
-
-	return nil
 }

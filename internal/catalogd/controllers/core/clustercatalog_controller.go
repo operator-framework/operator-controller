@@ -44,8 +44,8 @@ import (
 )
 
 const (
-	ClusterCatalogFinalizerOwner = "olm.operatorframework.io/clustercatalog-controller"
-	fbcDeletionFinalizer         = "olm.operatorframework.io/delete-server-cache"
+	clusterCatalogFinalizerOwner = finalizerutil.FinalizerPrefix + "clustercatalog-controller"
+	fbcDeletionFinalizer         = finalizerutil.FinalizerPrefix + "delete-server-cache"
 	// CatalogSources are polled if PollInterval is mentioned, in intervals of wait.Jitter(pollDuration, maxFactor)
 	// wait.Jitter returns a time.Duration between pollDuration and pollDuration + maxFactor * pollDuration.
 	requeueJitterMaxFactor = 0.01
@@ -157,7 +157,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 
 		// Remove the fbcDeletionFinalizer as we do not want a finalizer attached to the catalog
 		// when it is disabled. Because the finalizer serves no purpose now.
-		if err := finalizerutil.RemoveFinalizers(ctx, ClusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer); err != nil {
+		if _, err := finalizerutil.UpdateFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog); err != nil {
 			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
 		}
 
@@ -173,7 +173,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 		if err := r.deleteCatalogCache(ctx, catalog); err != nil {
 			return ctrl.Result{}, fmt.Errorf("finalizer %q failed: %w", fbcDeletionFinalizer, err)
 		}
-		if err := finalizerutil.RemoveFinalizers(ctx, ClusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer); err != nil {
+		if _, err := finalizerutil.UpdateFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog); err != nil {
 			return ctrl.Result{}, fmt.Errorf("error removing finalizer: %v", err)
 		}
 		// Update status to reflect that catalog is no longer serving
@@ -182,7 +182,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *ocv1.
 	}
 
 	// Add finalizer
-	finalizerAdded, err := finalizerutil.AddFinalizers(ctx, ClusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer)
+	finalizerAdded, err := finalizerutil.UpdateFinalizers(ctx, clusterCatalogFinalizerOwner, r.Client, catalog, fbcDeletionFinalizer)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("error ensuring finalizer: %v", err)
 	}
