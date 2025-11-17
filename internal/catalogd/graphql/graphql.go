@@ -262,13 +262,27 @@ func analyzeBundleProperties(obj map[string]interface{}, info *SchemaInfo) {
 	}
 }
 
-// appendUnique adds a value to slice if not already present
+// appendUnique adds a value to slice if not already present, using JSON string as key for uniqueness
 func appendUnique(slice []interface{}, value interface{}) []interface{} {
+	seen := make(map[string]struct{}, len(slice))
+
 	for _, existing := range slice {
-		if reflect.DeepEqual(existing, value) {
-			return slice
+		key, err := json.Marshal(existing)
+		if err != nil {
+			continue // skip values that can't be marshaled
 		}
+		seen[string(key)] = struct{}{}
 	}
+
+	valueKey, err := json.Marshal(value)
+	if err != nil {
+		return slice // skip value if it can't be marshaled
+	}
+
+	if _, exists := seen[string(valueKey)]; exists {
+		return slice
+	}
+
 	return append(slice, value)
 }
 
