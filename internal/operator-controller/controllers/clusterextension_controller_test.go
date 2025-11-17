@@ -381,7 +381,8 @@ func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
 
 	require.Equal(t, ctrl.Result{}, res)
 	require.Error(t, err)
-	require.IsType(t, &authentication.ServiceAccountNotFoundError{}, err)
+	var saErr *authentication.ServiceAccountNotFoundError
+	require.ErrorAs(t, err, &saErr)
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
