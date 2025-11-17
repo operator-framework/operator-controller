@@ -59,7 +59,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	"github.com/operator-framework/operator-controller/internal/catalogd/webhook"
 	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
-	cacheutil "github.com/operator-framework/operator-controller/internal/shared/util/cache"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -255,8 +254,6 @@ func run(ctx context.Context) error {
 
 	cacheOptions := crcache.Options{
 		ByObject: map[client.Object]crcache.ByObject{},
-		// Memory optimization: strip managed fields and large annotations from cached objects
-		DefaultTransform: cacheutil.StripManagedFieldsAndAnnotations(),
 	}
 
 	saKey, err := sautil.GetServiceAccount()
