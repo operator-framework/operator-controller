@@ -10,10 +10,12 @@ import (
 
 const (
 	APIV1MetasHandler = featuregate.Feature("APIV1MetasHandler")
+	GraphQLCatalogQueries = featuregate.Feature("GraphQLCatalogQueries")
 )
 
 var catalogdFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	APIV1MetasHandler: {Default: false, PreRelease: featuregate.Alpha},
+	GraphQLCatalogQueries: {Default: false, PreRelease: featuregate.Alpha},
 }
 
 var CatalogdFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()

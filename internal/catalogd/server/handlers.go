@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/klog/v2"
 
 	"github.com/operator-framework/operator-controller/internal/catalogd/service"
 )
@@ -21,10 +23,10 @@ const timeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 // CatalogHandlers handles HTTP requests for catalog content
 type CatalogHandlers struct {
-	store         CatalogStore
-	graphqlSvc    service.GraphQLService
-	rootURL       *url.URL
-	enableMetas   bool
+	store       CatalogStore
+	graphqlSvc  service.GraphQLService
+	rootURL     *url.URL
+	enableMetas bool
 }
 
 // Index provides methods for looking up catalog content by schema/package/name
@@ -183,7 +185,7 @@ func httpError(w http.ResponseWriter, err error) {
 		code = http.StatusInternalServerError
 	}
 	// Log the actual error for debugging
-	fmt.Printf("HTTP Error %d: %v\n", code, err)
+	klog.ErrorS(err, "HTTP error", "code", code)
 	http.Error(w, fmt.Sprintf("%d %s", code, http.StatusText(code)), code)
 }
 
@@ -206,7 +208,7 @@ func allowedMethodsHandler(next http.Handler, allowedMethods ...string) http.Han
 	allowedMethodSet := sets.New[string](allowedMethods...)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Allow POST requests only for GraphQL endpoint
-		if r.URL.Path != "" && len(r.URL.Path) >= 7 && r.URL.Path[len(r.URL.Path)-7:] != "graphql" && r.Method == http.MethodPost {
+		if !strings.HasSuffix(r.URL.Path, "graphql") && r.Method == http.MethodPost {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
