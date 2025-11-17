@@ -31,7 +31,7 @@ type LocalDirV1 struct {
 	EnableMetasHandler bool
 
 	m sync.RWMutex
-	// this singleflight Group is used in `getIndex()` to handle concurrent HTTP requests
+	// this singleflight Group is used in `GetIndex()` to handle concurrent HTTP requests
 	// optimally. With the use of this singleflight group, the index is loaded from disk
 	// once per concurrent group of HTTP requests being handled by the metas handler.
 	// The single flight instance gives us a way to load the index from disk exactly once
@@ -123,6 +123,11 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 
 	// Invalidate GraphQL schema cache for this catalog
 	s.graphqlSvc.InvalidateCache(catalog)
+
+	// Pre-warm the GraphQL schema cache
+	if _, err := s.graphqlSvc.GetSchema(catalog, fsys); err != nil {
+		return fmt.Errorf("failed to pre-build GraphQL schema for catalog %q, %v", catalog, err)
+	}
 
 	return nil
 }

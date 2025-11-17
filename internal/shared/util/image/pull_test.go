@@ -40,7 +40,16 @@ func TestContainersImagePuller_Pull(t *testing.T) {
 	defer shutdown()
 
 	myModTime := time.Date(1985, 10, 25, 7, 53, 0, 0, time.FixedZone("PDT", -8*60*60))
-	defaultContextFunc := func(context.Context) (*types.SystemContext, error) { return &types.SystemContext{}, nil }
+
+	// Create a default context with insecure policy for tests that don't use buildSourceContextFunc
+	configDir := t.TempDir()
+	policyPath := filepath.Join(configDir, "policy.json")
+	insecurePolicy := `{"default":[{"type":"insecureAcceptAnything"}]}`
+	require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0644))
+
+	defaultContextFunc := func(context.Context) (*types.SystemContext, error) {
+		return &types.SystemContext{SignaturePolicyPath: policyPath}, nil
+	}
 
 	testCases := []struct {
 		name        string
@@ -298,8 +307,15 @@ func buildSourceContextFunc(t *testing.T, ref reference.Named) func(context.Cont
 		require.NoError(t, enc.Encode(registriesConf))
 		require.NoError(t, f.Close())
 
+		// Create an insecure policy for testing to override any system-level policy
+		// that might reject unsigned images
+		policyPath := filepath.Join(configDir, "policy.json")
+		insecurePolicy := `{"default":[{"type":"insecureAcceptAnything"}]}`
+		require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0644))
+
 		return &types.SystemContext{
 			SystemRegistriesConfPath: registriesConfPath,
+			SignaturePolicyPath:      policyPath,
 		}, nil
 	}
 }

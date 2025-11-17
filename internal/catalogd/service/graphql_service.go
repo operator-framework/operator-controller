@@ -63,6 +63,7 @@ func (s *CachedGraphQLService) GetSchema(catalog string, catalogFS fs.FS) (*gql.
 // ExecuteQuery executes a GraphQL query against a catalog
 func (s *CachedGraphQLService) ExecuteQuery(catalog string, catalogFS fs.FS, query string) (*graphql.Result, error) {
 	// Get or build the schema
+	// TODO: prevent cache rebuild on this callpath
 	dynamicSchema, err := s.GetSchema(catalog, catalogFS)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get GraphQL schema: %w", err)
@@ -87,14 +88,18 @@ func (s *CachedGraphQLService) InvalidateCache(catalog string) {
 // buildSchemaFromFS builds a GraphQL schema from a catalog filesystem
 func buildSchemaFromFS(catalogFS fs.FS) (*gql.DynamicSchema, error) {
 	var metas []*declcfg.Meta
+	var metasMux sync.Mutex
 
 	// Collect all metas from the catalog filesystem
+	// WalkMetasFS walks the filesystem concurrently, so we need to protect the metas slice
 	err := declcfg.WalkMetasFS(context.Background(), catalogFS, func(path string, meta *declcfg.Meta, err error) error {
 		if err != nil {
 			return err
 		}
 		if meta != nil {
+			metasMux.Lock()
 			metas = append(metas, meta)
+			metasMux.Unlock()
 		}
 		return nil
 	})
