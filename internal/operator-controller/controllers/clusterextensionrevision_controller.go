@@ -150,7 +150,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
 	if err != nil {
 		if rres != nil {
-			l.Error(err, "revision reconcile failed", "report", rres.String())
+			l.Error(err, "revision reconcile failed")
+			l.V(1).Info("reconcile failure report", "report", rres.String())
 		} else {
 			l.Error(err, "revision reconcile failed")
 		}
@@ -307,7 +308,8 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 	tres, err := c.RevisionEngine.Teardown(ctx, *revision)
 	if err != nil {
 		if tres != nil {
-			l.Error(err, "revision teardown failed", "report", tres.String())
+			l.Error(err, "revision teardown failed")
+			l.V(1).Info("teardown failure report", "report", tres.String())
 		} else {
 			l.Error(err, "revision teardown failed")
 		}
