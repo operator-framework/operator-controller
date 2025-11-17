@@ -298,8 +298,15 @@ func buildSourceContextFunc(t *testing.T, ref reference.Named) func(context.Cont
 		require.NoError(t, enc.Encode(registriesConf))
 		require.NoError(t, f.Close())
 
+		// Create an insecure policy for testing to override any system-level policy
+		// that might reject unsigned images
+		policyPath := filepath.Join(configDir, "policy.json")
+		insecurePolicy := `{"default":[{"type":"insecureAcceptAnything"}]}`
+		require.NoError(t, os.WriteFile(policyPath, []byte(insecurePolicy), 0600))
+
 		return &types.SystemContext{
 			SystemRegistriesConfPath: registriesConfPath,
+			SignaturePolicyPath:      policyPath,
 		}, nil
 	}
 }
