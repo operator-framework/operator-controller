@@ -498,14 +498,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				t.Log("finalizer is removed from cluster revision")
+				t.Log("revision is deleted after finalizer removal")
 				rev := &ocv1.ClusterExtensionRevision{}
 				err := c.Get(t.Context(), client.ObjectKey{
 					Name: clusterExtensionRevisionName,
 				}, rev)
-				require.NoError(t, err)
-				require.NotContains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
-				require.NotNil(t, rev.DeletionTimestamp)
+				// When DeletionTimestamp is set and the last finalizer is removed,
+				// Kubernetes deletes the object immediately. The fake client simulates
+				// this behavior, so we expect a NotFound error.
+				require.Error(t, err)
+				require.True(t, client.IgnoreNotFound(err) == nil, "expected NotFound error, got: %v", err)
 			},
 		},
 		{
