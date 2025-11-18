@@ -28,7 +28,6 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -86,7 +85,7 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 				"olm.operatorframework.io/package-name":     "my-package",
 			},
 			Labels: map[string]string{
-				"olm.operatorframework.io/owner": "test-123",
+				"olm.operatorframework.io/owner-name": "test-123",
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -178,9 +177,9 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, map[string]string{}, map[string]string{})
 	require.NoError(t, err)
 
-	t.Log("by checking the olm.operatorframework.io/owner label is set to the name of the ClusterExtension")
+	t.Log("by checking the olm.operatorframework.io/owner-name label is set to the name of the ClusterExtension")
 	require.Equal(t, map[string]string{
-		controllers.ClusterExtensionRevisionOwnerLabel: "test-extension",
+		labels.OwnerNameKey: "test-extension",
 	}, rev.Labels)
 	t.Log("by checking the revision number is 0")
 	require.Equal(t, int64(0), rev.Spec.Revision)
@@ -344,7 +343,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			Name: "test-ext-1",
 			UID:  "rev-uid-1",
 			Labels: map[string]string{
-				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+				labels.OwnerNameKey: ext.Name,
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -402,7 +401,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
 							Labels: map[string]string{
-								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+								labels.OwnerNameKey: ext.Name,
 							},
 						},
 						Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -430,7 +429,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterExtensionRevisionList{}
-				err := c.List(t.Context(), revList, client.MatchingLabels{controllers.ClusterExtensionRevisionOwnerLabel: ext.Name})
+				err := c.List(t.Context(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				require.Len(t, revList.Items, 1)
 
@@ -450,7 +449,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
 							Labels: map[string]string{
-								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+								labels.OwnerNameKey: ext.Name,
 							},
 						},
 						Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -481,7 +480,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterExtensionRevisionList{}
-				err := c.List(context.Background(), revList, client.MatchingLabels{controllers.ClusterExtensionRevisionOwnerLabel: ext.Name})
+				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				// No new revision should be created
 				require.Len(t, revList.Items, 1)
@@ -496,7 +495,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
 							Labels: map[string]string{
-								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+								labels.OwnerNameKey: ext.Name,
 							},
 						},
 						Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -528,7 +527,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterExtensionRevisionList{}
-				err := c.List(context.Background(), revList, client.MatchingLabels{controllers.ClusterExtensionRevisionOwnerLabel: ext.Name})
+				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				require.Len(t, revList.Items, 2)
 
@@ -557,7 +556,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			validate: func(t *testing.T, c client.Client) {
 				// Ensure no revisions were created
 				revList := &ocv1.ClusterExtensionRevisionList{}
-				err := c.List(context.Background(), revList, client.MatchingLabels{controllers.ClusterExtensionRevisionOwnerLabel: ext.Name})
+				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				assert.Empty(t, revList.Items)
 			},
@@ -570,7 +569,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
 							Labels: map[string]string{
-								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+								labels.OwnerNameKey: ext.Name,
 							},
 						},
 						Spec: ocv1.ClusterExtensionRevisionSpec{},
@@ -582,7 +581,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-1",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -594,7 +593,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-2",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -606,7 +605,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-3",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -618,7 +617,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-4",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -630,7 +629,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-5",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -642,7 +641,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-6",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -674,7 +673,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
 							Labels: map[string]string{
-								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+								labels.OwnerNameKey: ext.Name,
 							},
 						},
 						Spec: ocv1.ClusterExtensionRevisionSpec{},
@@ -686,7 +685,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-1",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -698,7 +697,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-2",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -711,7 +710,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-3",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -723,7 +722,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-4",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -736,7 +735,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-5",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -748,7 +747,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-6",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -760,7 +759,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "rev-7",
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -794,7 +793,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
 							Labels: map[string]string{
-								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+								labels.OwnerNameKey: ext.Name,
 							},
 						},
 						Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -830,7 +829,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 							labels.PackageNameKey:   "test-package",
 						},
 						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+							labels.OwnerNameKey: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -858,7 +857,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 			validate: func(t *testing.T, c client.Client) {
 				revList := &ocv1.ClusterExtensionRevisionList{}
-				err := c.List(context.Background(), revList, client.MatchingLabels{controllers.ClusterExtensionRevisionOwnerLabel: ext.Name})
+				err := c.List(context.Background(), revList, client.MatchingLabels{labels.OwnerNameKey: ext.Name})
 				require.NoError(t, err)
 				// Should still be only 1 revision (in-place update, not new revision)
 				require.Len(t, revList.Items, 1)
@@ -870,7 +869,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 				assert.Equal(t, "1.0.1", rev.Annotations[labels.BundleVersionKey])
 				assert.Equal(t, "test-package", rev.Annotations[labels.PackageNameKey])
 				// Verify owner label is still present
-				assert.Equal(t, ext.Name, rev.Labels[controllers.ClusterExtensionRevisionOwnerLabel])
+				assert.Equal(t, ext.Name, rev.Labels[labels.OwnerNameKey])
 			},
 		},
 	}
@@ -1061,7 +1060,7 @@ func (m *mockBundleRevisionBuilder) GenerateRevisionFromHelmRelease(
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-revision",
 			Labels: map[string]string{
-				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+				labels.OwnerNameKey: ext.Name,
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{},

@@ -29,6 +29,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
 func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionProgression(t *testing.T) {
@@ -707,7 +708,7 @@ func newTestClusterExtensionRevision(t *testing.T, name string) *ocv1.ClusterExt
 			UID:        types.UID(name),
 			Generation: int64(1),
 			Labels: map[string]string{
-				controllers.ClusterExtensionRevisionOwnerLabel: "test-ext",
+				labels.OwnerNameKey: "test-ext",
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{

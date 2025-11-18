@@ -280,7 +280,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		return ctrl.Result{}, err
 	}
 
-	storeLbls := map[string]string{
+	// The following values will be stored as annotations and not labels
+	revisionAnnotations := map[string]string{
 		labels.BundleNameKey:      resolvedRevisionMetadata.Name,
 		labels.PackageNameKey:     resolvedRevisionMetadata.Package,
 		labels.BundleVersionKey:   resolvedRevisionMetadata.Version,
@@ -297,7 +298,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	rolloutSucceeded, rolloutStatus, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
+	rolloutSucceeded, rolloutStatus, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, revisionAnnotations)
 
 	// Set installed status
 	if rolloutSucceeded {
@@ -531,7 +532,7 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 	//   recent revisions. We should consolidate to avoid code duplication.
 	existingRevisionList := &ocv1.ClusterExtensionRevisionList{}
 	if err := d.Reader.List(ctx, existingRevisionList, client.MatchingLabels{
-		ClusterExtensionRevisionOwnerLabel: ext.Name,
+		labels.OwnerNameKey: ext.Name,
 	}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
