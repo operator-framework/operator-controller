@@ -19,7 +19,6 @@ package v1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -40,6 +39,7 @@ const (
 	ClusterExtensionRevisionReasonIncomplete                = "Incomplete"
 	ClusterExtensionRevisionReasonProgressing               = "Progressing"
 	ClusterExtensionRevisionReasonArchived                  = "Archived"
+	ClusterExtensionRevisionReasonMigrated                  = "Migrated"
 )
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
@@ -66,10 +66,6 @@ type ClusterExtensionRevisionSpec struct {
 	// +listMapKey=name
 	// +optional
 	Phases []ClusterExtensionRevisionPhase `json:"phases,omitempty"`
-	// Previous references previous revisions that objects can be adopted from.
-	//
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="previous is immutable"
-	Previous []ClusterExtensionRevisionPrevious `json:"previous,omitempty"`
 }
 
 // ClusterExtensionRevisionLifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
@@ -129,13 +125,6 @@ const (
 	// causing load on the API server and etcd.
 	CollisionProtectionNone CollisionProtection = "None"
 )
-
-type ClusterExtensionRevisionPrevious struct {
-	// +kubebuilder:validation:Required
-	Name string `json:"name"`
-	// +kubebuilder:validation:Required
-	UID types.UID `json:"uid"`
-}
 
 // ClusterExtensionRevisionStatus defines the observed state of a ClusterExtensionRevision.
 type ClusterExtensionRevisionStatus struct {

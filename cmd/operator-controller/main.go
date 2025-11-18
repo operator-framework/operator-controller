@@ -583,6 +583,7 @@ func setupBoxcutter(
 	ceReconciler.RevisionStatesGetter = &controllers.BoxcutterRevisionStatesGetter{Reader: mgr.GetClient()}
 	ceReconciler.StorageMigrator = &applier.BoxcutterStorageMigrator{
 		Client:             mgr.GetClient(),
+		Scheme:             mgr.GetScheme(),
 		ActionClientGetter: acg,
 		RevisionGenerator:  rg,
 	}

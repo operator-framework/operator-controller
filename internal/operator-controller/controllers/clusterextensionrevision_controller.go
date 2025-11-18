@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -116,7 +115,17 @@ func checkForUnexpectedClusterExtensionRevisionFieldChange(a, b ocv1.ClusterExte
 func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
-	revision, opts, previous := toBoxcutterRevision(rev)
+	revision, opts, err := c.toBoxcutterRevision(ctx, rev)
+	if err != nil {
+		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+			Status:             metav1.ConditionFalse,
+			Reason:             ocv1.ClusterExtensionRevisionReasonReconcileFailure,
+			Message:            err.Error(),
+			ObservedGeneration: rev.Generation,
+		})
+		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
+	}
 
 	if !rev.DeletionTimestamp.IsZero() || rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
 		return c.teardown(ctx, rev, revision)
@@ -219,10 +228,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 	//nolint:nestif
 	if rres.IsComplete() {
-		// Archive other revisions.
+		// Archive previous revisions
+		previous, err := c.listPreviousRevisions(ctx, rev)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("listing previous revisions: %v", err)
+		}
 		for _, a := range previous {
 			patch := []byte(`{"spec":{"lifecycleState":"Archived"}}`)
-			if err := c.Client.Patch(ctx, a, client.RawPatch(types.MergePatchType, patch)); err != nil {
+			if err := c.Client.Patch(ctx, client.Object(a), client.RawPatch(types.MergePatchType, patch)); err != nil {
 				// TODO: It feels like an error here needs to propagate to a status _somewhere_.
 				//   Not sure the current CER makes sense? But it also feels off to set the CE
 				//   status from outside the CE reconciler.
@@ -442,18 +455,57 @@ func (c *ClusterExtensionRevisionReconciler) removeFinalizer(ctx context.Context
 	return nil
 }
 
-func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revision, []boxcutter.RevisionReconcileOption, []client.Object) {
-	previous := make([]client.Object, 0, len(rev.Spec.Previous))
-	for _, specPrevious := range rev.Spec.Previous {
-		prev := &unstructured.Unstructured{}
-		prev.SetName(specPrevious.Name)
-		prev.SetUID(specPrevious.UID)
-		prev.SetGroupVersionKind(ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionRevisionKind))
-		previous = append(previous, prev)
+// listPreviousRevisions returns active revisions belonging to the same ClusterExtension with lower revision numbers.
+// Filters out the current revision, archived revisions, deleting revisions, and revisions with equal or higher numbers.
+func (c *ClusterExtensionRevisionReconciler) listPreviousRevisions(ctx context.Context, rev *ocv1.ClusterExtensionRevision) ([]*ocv1.ClusterExtensionRevision, error) {
+	ownerLabel, ok := rev.Labels[ClusterExtensionRevisionOwnerLabel]
+	if !ok {
+		// No owner label means this revision isn't properly labeled - return empty list
+		return nil, nil
+	}
+
+	revList := &ocv1.ClusterExtensionRevisionList{}
+	if err := c.TrackingCache.List(ctx, revList, client.MatchingLabels{
+		ClusterExtensionRevisionOwnerLabel: ownerLabel,
+	}); err != nil {
+		return nil, fmt.Errorf("listing revisions: %w", err)
+	}
+
+	previous := make([]*ocv1.ClusterExtensionRevision, 0, len(revList.Items))
+	for i := range revList.Items {
+		r := &revList.Items[i]
+		if r.Name == rev.Name {
+			continue
+		}
+		// Skip archived or deleting revisions
+		if r.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived ||
+			!r.DeletionTimestamp.IsZero() {
+			continue
+		}
+		// Only include revisions with lower revision numbers (actual previous revisions)
+		if r.Spec.Revision >= rev.Spec.Revision {
+			continue
+		}
+		previous = append(previous, r)
+	}
+
+	return previous, nil
+}
+
+func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revision, []boxcutter.RevisionReconcileOption, error) {
+	previous, err := c.listPreviousRevisions(ctx, rev)
+	if err != nil {
+		return nil, nil, fmt.Errorf("listing previous revisions: %w", err)
+	}
+
+	// Convert to []client.Object for boxcutter
+	previousObjs := make([]client.Object, len(previous))
+	for i, rev := range previous {
+		previousObjs[i] = rev
 	}
 
 	opts := []boxcutter.RevisionReconcileOption{
-		boxcutter.WithPreviousOwners(previous),
+		boxcutter.WithPreviousOwners(previousObjs),
 		boxcutter.WithProbe(boxcutter.ProgressProbeType, probing.And{
 			deploymentProbe, statefulSetProbe, crdProbe, issuerProbe, certProbe,
 		}),
@@ -490,7 +542,7 @@ func toBoxcutterRevision(rev *ocv1.ClusterExtensionRevision) (*boxcutter.Revisio
 	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStatePaused {
 		opts = append(opts, boxcutter.WithPaused{})
 	}
-	return r, opts, previous
+	return r, opts, nil
 }
 
 var (
