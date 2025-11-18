@@ -40,5 +40,5 @@ var ConditionReasons = []string{
 	ocv1.ReasonBlocked,
 	ocv1.ReasonRetrying,
 	ocv1.ReasonAbsent,
-	ocv1.ReasonRolloutInProgress,
+	ocv1.ReasonRollingOut,
 }
