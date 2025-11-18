@@ -507,7 +507,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				// Kubernetes deletes the object immediately. The fake client simulates
 				// this behavior, so we expect a NotFound error.
 				require.Error(t, err)
-				require.True(t, client.IgnoreNotFound(err) == nil, "expected NotFound error, got: %v", err)
+				require.NoError(t, client.IgnoreNotFound(err), "expected NotFound error, got: %v", err)
 			},
 		},
 		{
