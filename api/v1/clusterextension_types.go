@@ -482,8 +482,11 @@ type ClusterExtensionStatus struct {
 	// When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.
 	// When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
 	// When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
+	// <opcon:experimental:description>
+	// When Progressing is True and Reason is RolloutInProgress, the ClusterExtension has one or more ClusterExtensionRevisions in active roll out.
+	// </opcon:experimental:description>
 	//
-	// When the ClusterExtension is sourced from a catalog, if may also communicate a deprecation condition.
+	// When the ClusterExtension is sourced from a catalog, it may also communicate a deprecation condition.
 	// These are indications from a package owner to guide users away from a particular package, channel, or bundle.
 	// BundleDeprecated is set if the requested bundle version is marked deprecated in the catalog.
 	// ChannelDeprecated is set if the requested channel is marked deprecated in the catalog.

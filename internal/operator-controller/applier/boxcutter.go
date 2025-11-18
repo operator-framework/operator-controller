@@ -397,6 +397,12 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	if progressingCondition == nil && availableCondition == nil && succeededCondition == nil {
 		return false, "New revision created", nil
 	} else if progressingCondition != nil && progressingCondition.Status == metav1.ConditionTrue {
+		switch progressingCondition.Reason {
+		case ocv1.ReasonSucceeded:
+			return true, "", nil
+		case ocv1.ClusterExtensionRevisionReasonRetrying:
+			return false, "", errors.New(progressingCondition.Message)
+		}
 		return false, progressingCondition.Message, nil
 	} else if availableCondition != nil && availableCondition.Status != metav1.ConditionTrue {
 		return false, "", errors.New(availableCondition.Message)
