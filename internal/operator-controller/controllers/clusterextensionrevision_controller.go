@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	ClusterExtensionRevisionOwnerLabel        = "olm.operatorframework.io/owner"
+	ClusterExtensionRevisionOwnerLabel        = "olm.operatorframework.io/owner-name"
 	clusterExtensionRevisionTeardownFinalizer = "olm.operatorframework.io/teardown"
 )
 

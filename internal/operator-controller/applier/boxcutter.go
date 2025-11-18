@@ -35,11 +35,11 @@ const (
 )
 
 type ClusterExtensionRevisionGenerator interface {
-	GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error)
+	GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error)
 	GenerateRevisionFromHelmRelease(
 		ctx context.Context,
 		helmRelease *release.Release, ext *ocv1.ClusterExtension,
-		objectLabels map[string]string,
+		objectLabels, revisionLabels map[string]string,
 	) (*ocv1.ClusterExtensionRevision, error)
 }
 
@@ -51,7 +51,7 @@ type SimpleRevisionGenerator struct {
 func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	ctx context.Context,
 	helmRelease *release.Release, ext *ocv1.ClusterExtension,
-	objectLabels map[string]string,
+	objectLabels, revisionLabels map[string]string,
 ) (*ocv1.ClusterExtensionRevision, error) {
 	docs := splitManifestDocuments(helmRelease.Manifest)
 	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(docs))
@@ -75,12 +75,19 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		})
 	}
 
-	rev := r.buildClusterExtensionRevision(objs, ext, map[string]string{
-		labels.BundleNameKey:      helmRelease.Labels[labels.BundleNameKey],
-		labels.PackageNameKey:     helmRelease.Labels[labels.PackageNameKey],
-		labels.BundleVersionKey:   helmRelease.Labels[labels.BundleVersionKey],
+	// Merge provided revision labels with bundle metadata from Helm release
+	allRevisionLabels := make(map[string]string, len(revisionLabels)+4)
+	maps.Copy(allRevisionLabels, revisionLabels)
+	allRevisionLabels[labels.BundleNameKey] = helmRelease.Labels[labels.BundleNameKey]
+	allRevisionLabels[labels.PackageNameKey] = helmRelease.Labels[labels.PackageNameKey]
+	allRevisionLabels[labels.BundleVersionKey] = helmRelease.Labels[labels.BundleVersionKey]
+
+	// Bundle reference goes to annotations (can be too long for labels)
+	revisionAnnotations := map[string]string{
 		labels.BundleReferenceKey: helmRelease.Labels[labels.BundleReferenceKey],
-	})
+	}
+
+	rev := r.buildClusterExtensionRevision(objs, ext, allRevisionLabels, revisionAnnotations)
 	rev.Name = fmt.Sprintf("%s-1", ext.Name)
 	rev.Spec.Revision = 1
 	return rev, nil
@@ -89,7 +96,7 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 func (r *SimpleRevisionGenerator) GenerateRevision(
 	ctx context.Context,
 	bundleFS fs.FS, ext *ocv1.ClusterExtension,
-	objectLabels, revisionAnnotations map[string]string,
+	objectLabels, revisionLabels, revisionAnnotations map[string]string,
 ) (*ocv1.ClusterExtensionRevision, error) {
 	// extract plain manifests
 	plain, err := r.ManifestProvider.Get(bundleFS, ext)
@@ -97,7 +104,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		return nil, err
 	}
 
-	// objectLabels
+	// Apply objectLabels to each managed object
 	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
 	for _, obj := range plain {
 		existingLabels := obj.GetLabels()
@@ -125,11 +132,14 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		})
 	}
 
+	if revisionLabels == nil {
+		revisionLabels = map[string]string{}
+	}
 	if revisionAnnotations == nil {
 		revisionAnnotations = map[string]string{}
 	}
 
-	return r.buildClusterExtensionRevision(objs, ext, revisionAnnotations), nil
+	return r.buildClusterExtensionRevision(objs, ext, revisionLabels, revisionAnnotations), nil
 }
 
 // sanitizedUnstructured takes an unstructured obj, removes status if present, and returns a sanitized copy containing only the allowed metadata entries set below.
@@ -177,14 +187,20 @@ func sanitizedUnstructured(ctx context.Context, unstr *unstructured.Unstructured
 func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	objects []ocv1.ClusterExtensionRevisionObject,
 	ext *ocv1.ClusterExtension,
-	annotations map[string]string,
+	revisionLabels map[string]string,
+	revisionAnnotations map[string]string,
 ) *ocv1.ClusterExtensionRevision {
+	// Build labels: owner labels + provided revision labels (package, bundle, version, etc.)
+	// Use owner-name + owner-kind for consistency with managed objects
+	allLabels := make(map[string]string, len(revisionLabels)+2)
+	allLabels[labels.OwnerKindKey] = ocv1.ClusterExtensionKind
+	allLabels[labels.OwnerNameKey] = ext.Name
+	maps.Copy(allLabels, revisionLabels)
+
 	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
-			Annotations: annotations,
-			Labels: map[string]string{
-				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
-			},
+			Labels:      allLabels,
+			Annotations: revisionAnnotations,
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
 			// Explicitly set LifecycleState to Active. While the CRD has a default,
@@ -240,7 +256,9 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		return err
 	}
 
-	rev, err := m.RevisionGenerator.GenerateRevisionFromHelmRelease(ctx, helmRelease, ext, objectLabels)
+	// revisionLabels will be merged with bundle metadata from Helm release
+	revisionLabels := map[string]string{}
+	rev, err := m.RevisionGenerator.GenerateRevisionFromHelmRelease(ctx, helmRelease, ext, objectLabels, revisionLabels)
 	if err != nil {
 		return err
 	}
@@ -284,8 +302,8 @@ type Boxcutter struct {
 	FieldOwner        string
 }
 
-func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
-	return bc.apply(ctx, contentFS, ext, objectLabels, revisionAnnotations)
+func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (bool, string, error) {
+	return bc.apply(ctx, contentFS, ext, objectLabels, revisionLabels, revisionAnnotations)
 }
 
 func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Object {
@@ -309,9 +327,9 @@ func (bc *Boxcutter) createOrUpdate(ctx context.Context, obj client.Object) erro
 	return bc.Client.Patch(ctx, obj, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
 }
 
-func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
+func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (bool, string, error) {
 	// Generate desired revision
-	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionAnnotations)
+	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionLabels, revisionAnnotations)
 	if err != nil {
 		return false, "", err
 	}

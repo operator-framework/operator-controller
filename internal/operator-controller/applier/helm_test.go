@@ -229,7 +229,7 @@ func TestApply_Base(t *testing.T) {
 	t.Run("fails converting content FS to helm chart", func(t *testing.T) {
 		helmApplier := applier.Helm{}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), os.DirFS("/"), testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), os.DirFS("/"), testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.False(t, installSucceeded)
 		require.Empty(t, installStatus)
@@ -242,7 +242,7 @@ func TestApply_Base(t *testing.T) {
 			HelmChartProvider:  DummyHelmChartProvider,
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "getting action client")
 		require.False(t, installSucceeded)
@@ -256,7 +256,7 @@ func TestApply_Base(t *testing.T) {
 			HelmChartProvider:  DummyHelmChartProvider,
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "getting current release")
 		require.False(t, installSucceeded)
@@ -275,7 +275,7 @@ func TestApply_Installation(t *testing.T) {
 			HelmChartProvider:  DummyHelmChartProvider,
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "attempting to dry-run install chart")
 		require.False(t, installSucceeded)
@@ -295,7 +295,7 @@ func TestApply_Installation(t *testing.T) {
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "install pre-flight check")
 		require.False(t, installSucceeded)
@@ -313,7 +313,7 @@ func TestApply_Installation(t *testing.T) {
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "installing chart")
 		require.False(t, installSucceeded)
@@ -337,7 +337,7 @@ func TestApply_Installation(t *testing.T) {
 			},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.NoError(t, err)
 		require.Empty(t, installStatus)
 		require.True(t, installSucceeded)
@@ -355,7 +355,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			HelmChartProvider:  DummyHelmChartProvider,
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "attempting to dry-run install chart")
 		require.False(t, installSucceeded)
@@ -380,7 +380,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "install pre-flight check")
 		require.False(t, installSucceeded)
@@ -409,7 +409,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 				},
 			},
 		}
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "problem running preauthorization")
 		require.False(t, installSucceeded)
@@ -438,7 +438,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 				},
 			},
 		}
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, errMissingRBAC)
 		require.False(t, installSucceeded)
@@ -473,7 +473,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.NoError(t, err)
 		require.Empty(t, installStatus)
 		require.True(t, installSucceeded)
@@ -494,7 +494,7 @@ func TestApply_Upgrade(t *testing.T) {
 			HelmChartProvider:  DummyHelmChartProvider,
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "attempting to dry-run upgrade chart")
 		require.False(t, installSucceeded)
@@ -518,7 +518,7 @@ func TestApply_Upgrade(t *testing.T) {
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "upgrade pre-flight check")
 		require.False(t, installSucceeded)
@@ -541,7 +541,7 @@ func TestApply_Upgrade(t *testing.T) {
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "upgrading chart")
 		require.False(t, installSucceeded)
@@ -565,7 +565,7 @@ func TestApply_Upgrade(t *testing.T) {
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "reconciling charts")
 		require.False(t, installSucceeded)
@@ -589,7 +589,7 @@ func TestApply_Upgrade(t *testing.T) {
 			},
 		}
 
-		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.NoError(t, err)
 		require.True(t, installSucceeded)
 		require.Empty(t, installStatus)
@@ -618,7 +618,7 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 			},
 		}
 
-		_, _, _ = helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		_, _, _ = helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 	})
 
 	t.Run("surfaces chart generation errors", func(t *testing.T) {
@@ -640,7 +640,7 @@ func TestApply_RegistryV1ToChartConverterIntegration(t *testing.T) {
 			},
 		}
 
-		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels, map[string]string{})
 		require.ErrorContains(t, err, "some error")
 	})
 }

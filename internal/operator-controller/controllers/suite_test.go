@@ -72,7 +72,7 @@ type MockApplier struct {
 	err              error
 }
 
-func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string) (bool, string, error) {
+func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string, _ map[string]string) (bool, string, error) {
 	return m.installCompleted, m.installStatus, m.err
 }
 

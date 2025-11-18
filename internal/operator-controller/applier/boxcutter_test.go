@@ -72,21 +72,23 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 	objectLabels := map[string]string{
 		"my-label": "my-value",
 	}
+	revisionLabels := map[string]string{}
 
-	rev, err := g.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, objectLabels)
+	rev, err := g.GenerateRevisionFromHelmRelease(t.Context(), helmRelease, ext, objectLabels, revisionLabels)
 	require.NoError(t, err)
 
 	assert.Equal(t, &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-123-1",
-			Annotations: map[string]string{
-				"olm.operatorframework.io/bundle-name":      "my-bundle",
-				"olm.operatorframework.io/bundle-reference": "bundle-ref",
-				"olm.operatorframework.io/bundle-version":   "1.2.0",
-				"olm.operatorframework.io/package-name":     "my-package",
-			},
 			Labels: map[string]string{
-				"olm.operatorframework.io/owner": "test-123",
+				"olm.operatorframework.io/owner-kind":     "ClusterExtension",
+				"olm.operatorframework.io/owner-name":     "test-123",
+				"olm.operatorframework.io/package-name":   "my-package",
+				"olm.operatorframework.io/bundle-name":    "my-bundle",
+				"olm.operatorframework.io/bundle-version": "1.2.0",
+			},
+			Annotations: map[string]string{
+				"olm.operatorframework.io/bundle-reference": "bundle-ref",
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -175,12 +177,13 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 		},
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, map[string]string{}, map[string]string{})
+	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, map[string]string{}, map[string]string{}, map[string]string{})
 	require.NoError(t, err)
 
-	t.Log("by checking the olm.operatorframework.io/owner label is set to the name of the ClusterExtension")
+	t.Log("by checking the owner labels are set correctly (owner-kind and owner-name)")
 	require.Equal(t, map[string]string{
-		controllers.ClusterExtensionRevisionOwnerLabel: "test-extension",
+		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+		labels.OwnerNameKey: "test-extension",
 	}, rev.Labels)
 	t.Log("by checking the revision number is 0")
 	require.Equal(t, int64(0), rev.Spec.Revision)
@@ -254,7 +257,7 @@ func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
 		ManifestProvider: r,
 	}
 
-	_, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{})
+	_, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{}, map[string]string{})
 	require.NoError(t, err)
 }
 
@@ -288,13 +291,17 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 		ManifestProvider: r,
 	}
 
-	revAnnotations := map[string]string{
+	revisionLabels := map[string]string{
+		"bundle": "label",
+	}
+
+	revisionAnnotations := map[string]string{
 		"other": "value",
 	}
 
 	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{
 		"some": "value",
-	}, revAnnotations)
+	}, revisionLabels, revisionAnnotations)
 	require.NoError(t, err)
 	t.Log("by checking the rendered objects contain the given object labels")
 	for _, phase := range rev.Spec.Phases {
@@ -305,8 +312,13 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 			}, revObj.Object.GetLabels())
 		}
 	}
-	t.Log("by checking the generated revision contain the given annotations")
-	require.Equal(t, revAnnotations, rev.Annotations)
+	t.Log("by checking the generated revision contains the given labels plus owner labels")
+	require.Contains(t, rev.Labels, "bundle")
+	require.Equal(t, "label", rev.Labels["bundle"])
+	require.Equal(t, ocv1.ClusterExtensionKind, rev.Labels[labels.OwnerKindKey])
+	require.Empty(t, rev.Labels[labels.OwnerNameKey]) // Empty because ext name is empty in test
+	t.Log("by checking the generated revision contains the given annotations")
+	require.Equal(t, revisionAnnotations, rev.Annotations)
 }
 
 func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
@@ -320,7 +332,7 @@ func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
 		ManifestProvider: r,
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{}, map[string]string{})
+	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{}, map[string]string{}, map[string]string{})
 	require.Nil(t, rev)
 	t.Log("by checking rendering errors are propagated")
 	require.Error(t, err)
@@ -344,7 +356,8 @@ func TestBoxcutter_Apply(t *testing.T) {
 			Name: "test-ext-1",
 			UID:  "rev-uid-1",
 			Labels: map[string]string{
-				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+				labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+				labels.OwnerNameKey: ext.Name,
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -397,13 +410,14 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "first revision",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: revisionAnnotations,
 							Labels: map[string]string{
-								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+								labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+								labels.OwnerNameKey: ext.Name,
 							},
+							Annotations: revisionAnnotations,
 						},
 						Spec: ocv1.ClusterExtensionRevisionSpec{
 							Phases: []ocv1.ClusterExtensionRevisionPhase{
@@ -445,7 +459,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "no change, revision exists",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
@@ -491,7 +505,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "new revision created when objects in new revision are different",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
@@ -549,7 +563,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "error from GenerateRevision",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return nil, errors.New("render boom")
 				},
 			},
@@ -565,7 +579,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "keep at most 5 past revisions",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
@@ -669,7 +683,7 @@ func TestBoxcutter_Apply(t *testing.T) {
 		{
 			name: "keep active revisions when they are out of limit",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: revisionAnnotations,
@@ -787,15 +801,20 @@ func TestBoxcutter_Apply(t *testing.T) {
 			},
 		},
 		{
-			name: "annotation-only update (same phases, different annotations)",
+			name: "label/annotation update (same phases, different metadata)",
 			mockBuilder: &mockBundleRevisionBuilder{
-				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+				makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+					// Merge provided revision labels with owner labels
+					allLabels := make(map[string]string, len(revisionLabels)+2)
+					allLabels[labels.OwnerKindKey] = ocv1.ClusterExtensionKind
+					allLabels[labels.OwnerNameKey] = ext.Name
+					for k, v := range revisionLabels {
+						allLabels[k] = v
+					}
 					return &ocv1.ClusterExtensionRevision{
 						ObjectMeta: metav1.ObjectMeta{
+							Labels:      allLabels,
 							Annotations: revisionAnnotations,
-							Labels: map[string]string{
-								controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
-							},
 						},
 						Spec: ocv1.ClusterExtensionRevisionSpec{
 							Phases: []ocv1.ClusterExtensionRevisionPhase{
@@ -825,12 +844,11 @@ func TestBoxcutter_Apply(t *testing.T) {
 				&ocv1.ClusterExtensionRevision{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-ext-1",
-						Annotations: map[string]string{
+						Labels: map[string]string{
+							labels.OwnerKindKey:     ocv1.ClusterExtensionKind,
+							labels.OwnerNameKey:     ext.Name,
 							labels.BundleVersionKey: "1.0.0",
 							labels.PackageNameKey:   "test-package",
-						},
-						Labels: map[string]string{
-							controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
 						},
 					},
 					Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -866,11 +884,12 @@ func TestBoxcutter_Apply(t *testing.T) {
 				rev := revList.Items[0]
 				assert.Equal(t, "test-ext-1", rev.Name)
 				assert.Equal(t, int64(1), rev.Spec.Revision)
-				// Verify annotations were updated
-				assert.Equal(t, "1.0.1", rev.Annotations[labels.BundleVersionKey])
-				assert.Equal(t, "test-package", rev.Annotations[labels.PackageNameKey])
-				// Verify owner label is still present
-				assert.Equal(t, ext.Name, rev.Labels[controllers.ClusterExtensionRevisionOwnerLabel])
+				// Verify labels were updated (bundle metadata is now in labels, not annotations)
+				assert.Equal(t, "1.0.1", rev.Labels[labels.BundleVersionKey])
+				assert.Equal(t, "test-package", rev.Labels[labels.PackageNameKey])
+				// Verify owner labels are still present
+				assert.Equal(t, ext.Name, rev.Labels[labels.OwnerNameKey])
+				assert.Equal(t, ocv1.ClusterExtensionKind, rev.Labels[labels.OwnerKindKey])
 			},
 		},
 	}
@@ -895,15 +914,16 @@ func TestBoxcutter_Apply(t *testing.T) {
 			testFS := fstest.MapFS{}
 
 			// Execute
+			revisionLabels := map[string]string{}
 			revisionAnnotations := map[string]string{}
-			if tc.name == "annotation-only update (same phases, different annotations)" {
-				// For annotation-only update test, pass NEW annotations
-				revisionAnnotations = map[string]string{
+			if tc.name == "label/annotation update (same phases, different metadata)" {
+				// For label/annotation update test, pass NEW metadata
+				revisionLabels = map[string]string{
 					labels.BundleVersionKey: "1.0.1",
 					labels.PackageNameKey:   "test-package",
 				}
 			}
-			installSucceeded, installStatus, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations)
+			installSucceeded, installStatus, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionLabels, revisionAnnotations)
 
 			// Assert
 			if tc.expectedErr != "" {
@@ -1045,23 +1065,24 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 
 // mockBundleRevisionBuilder is a mock implementation of the ClusterExtensionRevisionGenerator for testing.
 type mockBundleRevisionBuilder struct {
-	makeRevisionFunc func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1.ClusterExtensionRevision, error)
+	makeRevisionFunc func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error)
 }
 
-func (m *mockBundleRevisionBuilder) GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
-	return m.makeRevisionFunc(ctx, bundleFS, ext, objectLabels, revisionAnnotations)
+func (m *mockBundleRevisionBuilder) GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+	return m.makeRevisionFunc(ctx, bundleFS, ext, objectLabels, revisionLabels, revisionAnnotations)
 }
 
 func (m *mockBundleRevisionBuilder) GenerateRevisionFromHelmRelease(
 	ctx context.Context,
 	helmRelease *release.Release, ext *ocv1.ClusterExtension,
-	objectLabels map[string]string,
+	objectLabels, revisionLabels map[string]string,
 ) (*ocv1.ClusterExtensionRevision, error) {
 	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-revision",
 			Labels: map[string]string{
-				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+				labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+				labels.OwnerNameKey: ext.Name,
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{},

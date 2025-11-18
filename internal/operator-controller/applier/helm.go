@@ -102,7 +102,12 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 	return nil
 }
 
-func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) (bool, string, error) {
+// Apply applies Helm chart content. The revisionAnnotations parameter is ignored for Helm
+// (only used by boxcutter runtime which uses ClusterExtensionRevision).
+func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, storageLabels, revisionAnnotations map[string]string) (bool, string, error) {
+	// revisionAnnotations is ignored - Helm doesn't use ClusterExtensionRevision
+	_ = revisionAnnotations
+
 	chrt, err := h.buildHelmChart(contentFS, ext)
 	if err != nil {
 		return false, "", err

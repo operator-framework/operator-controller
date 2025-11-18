@@ -82,9 +82,9 @@ type StorageMigrator interface {
 
 type Applier interface {
 	// Apply applies the content in the provided fs.FS using the configuration of the provided ClusterExtension.
-	// It also takes in a map[string]string to be applied to all applied resources as labels and another
-	// map[string]string used to create a unique identifier for a stored reference to the resources created.
-	Apply(context.Context, fs.FS, *ocv1.ClusterExtension, map[string]string, map[string]string) (bool, string, error)
+	// It takes objectLabels to be applied to all managed resources, revisionLabels to be applied to the
+	// ClusterExtensionRevision for selection/querying, and revisionAnnotations for non-queryable metadata.
+	Apply(context.Context, fs.FS, *ocv1.ClusterExtension, map[string]string, map[string]string, map[string]string) (bool, string, error)
 }
 
 type RevisionStatesGetter interface {
@@ -280,10 +280,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 		return ctrl.Result{}, err
 	}
 
-	storeLbls := map[string]string{
-		labels.BundleNameKey:      resolvedRevisionMetadata.Name,
-		labels.PackageNameKey:     resolvedRevisionMetadata.Package,
-		labels.BundleVersionKey:   resolvedRevisionMetadata.Version,
+	// Split bundle metadata into labels (for selection) and annotations (for reference data)
+	revisionLabels := map[string]string{
+		labels.BundleNameKey:    resolvedRevisionMetadata.Name,
+		labels.PackageNameKey:   resolvedRevisionMetadata.Package,
+		labels.BundleVersionKey: resolvedRevisionMetadata.Version,
+	}
+
+	revisionAnnotations := map[string]string{
 		labels.BundleReferenceKey: resolvedRevisionMetadata.Image,
 	}
 
@@ -297,7 +301,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	rolloutSucceeded, rolloutStatus, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, storeLbls)
+	rolloutSucceeded, rolloutStatus, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, revisionLabels, revisionAnnotations)
 
 	// Set installed status
 	if rolloutSucceeded {
@@ -549,15 +553,13 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 			continue
 		}
 
-		// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "revisionAnnotations")
-		//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
-		//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
+		// Read bundle metadata from labels (queryable fields) and annotations (reference data)
 		rm := &RevisionMetadata{
-			Package: rev.Annotations[labels.PackageNameKey],
+			Package: rev.Labels[labels.PackageNameKey],
 			Image:   rev.Annotations[labels.BundleReferenceKey],
 			BundleMetadata: ocv1.BundleMetadata{
-				Name:    rev.Annotations[labels.BundleNameKey],
-				Version: rev.Annotations[labels.BundleVersionKey],
+				Name:    rev.Labels[labels.BundleNameKey],
+				Version: rev.Labels[labels.BundleVersionKey],
 			},
 		}
 
