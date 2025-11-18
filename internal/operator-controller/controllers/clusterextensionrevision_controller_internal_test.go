@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
 func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T) {
@@ -106,7 +107,7 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 
 				rev1 := newTestClusterExtensionRevisionInternal(t, "rev-1")
 				rev2 := newTestClusterExtensionRevisionInternal(t, "rev-2")
-				rev2.Labels[ClusterExtensionRevisionOwnerLabel] = "test-ext-2"
+				rev2.Labels[labels.OwnerNameKey] = "test-ext-2"
 				rev3 := newTestClusterExtensionRevisionInternal(t, "rev-3")
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				require.NoError(t, controllerutil.SetControllerReference(ext2, rev2, testScheme))
@@ -125,7 +126,7 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtensionInternal()
 				rev1 := newTestClusterExtensionRevisionInternal(t, "rev-1")
-				delete(rev1.Labels, ClusterExtensionRevisionOwnerLabel)
+				delete(rev1.Labels, labels.OwnerNameKey)
 				require.NoError(t, controllerutil.SetControllerReference(ext, rev1, testScheme))
 				return []client.Object{ext, rev1}
 			},
@@ -194,7 +195,7 @@ func newTestClusterExtensionRevisionInternal(t *testing.T, name string) *ocv1.Cl
 			UID:        types.UID(name),
 			Generation: int64(1),
 			Labels: map[string]string{
-				ClusterExtensionRevisionOwnerLabel: "test-ext",
+				labels.OwnerNameKey: "test-ext",
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{

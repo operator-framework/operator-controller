@@ -26,7 +26,6 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -183,7 +182,7 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: annotations,
 			Labels: map[string]string{
-				controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+				labels.OwnerNameKey: ext.Name,
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
@@ -217,7 +216,7 @@ type boxcutterStorageMigratorClient interface {
 func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.ClusterExtension, objectLabels map[string]string) error {
 	existingRevisionList := ocv1.ClusterExtensionRevisionList{}
 	if err := m.Client.List(ctx, &existingRevisionList, client.MatchingLabels{
-		controllers.ClusterExtensionRevisionOwnerLabel: ext.Name,
+		labels.OwnerNameKey: ext.Name,
 	}); err != nil {
 		return fmt.Errorf("listing ClusterExtensionRevisions before attempting migration: %w", err)
 	}
@@ -429,7 +428,7 @@ func (bc *Boxcutter) garbageCollectOldRevisions(ctx context.Context, revisionLis
 func (bc *Boxcutter) getExistingRevisions(ctx context.Context, extName string) ([]ocv1.ClusterExtensionRevision, error) {
 	existingRevisionList := &ocv1.ClusterExtensionRevisionList{}
 	if err := bc.Client.List(ctx, existingRevisionList, client.MatchingLabels{
-		controllers.ClusterExtensionRevisionOwnerLabel: extName,
+		labels.OwnerNameKey: extName,
 	}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
