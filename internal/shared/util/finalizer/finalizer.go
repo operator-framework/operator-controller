@@ -73,8 +73,7 @@ func EnsureFinalizers(ctx context.Context, owner string, c client.Client, obj cl
 
 	patch := map[string]any{
 		"metadata": map[string]any{
-			"resourceVersion": obj.GetResourceVersion(),
-			"finalizers":      newFinalizers,
+			"finalizers": newFinalizers,
 		},
 	}
 

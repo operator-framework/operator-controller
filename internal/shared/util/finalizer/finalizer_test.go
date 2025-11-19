@@ -161,7 +161,7 @@ func TestEnsureFinalizers(t *testing.T) {
 				WithObjects(cm).
 				WithInterceptorFuncs(interceptor.Funcs{
 					Patch: func(ctx context.Context, c client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
-						// Parse the patch to validate it has resourceVersion
+						// Parse the patch to validate structure
 						patchBytes, err := patch.Data(obj)
 						require.NoError(t, err)
 
@@ -172,20 +172,19 @@ func TestEnsureFinalizers(t *testing.T) {
 						metadata, ok := patchMap["metadata"].(map[string]interface{})
 						require.True(t, ok, "patch should contain metadata")
 
-						resourceVersion, ok := metadata["resourceVersion"]
-						require.True(t, ok, "patch metadata should contain resourceVersion")
-						require.NotEmpty(t, resourceVersion, "resourceVersion should not be empty")
-
 						finalizers, ok := metadata["finalizers"]
 						require.True(t, ok, "patch metadata should contain finalizers")
 
-						// Update the object with new finalizers
+						// Update the object with new finalizers and increment resource version
+						// to simulate what the API server does
 						if finalizerSlice, ok := finalizers.([]interface{}); ok {
 							stringFinalizers := make([]string, len(finalizerSlice))
 							for i, f := range finalizerSlice {
 								stringFinalizers[i] = f.(string)
 							}
 							obj.SetFinalizers(stringFinalizers)
+							// Simulate API server incrementing resourceVersion
+							obj.SetResourceVersion("2")
 						}
 
 						return nil
