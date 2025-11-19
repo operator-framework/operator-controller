@@ -33,10 +33,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
 const (
-	ClusterExtensionRevisionOwnerLabel        = "olm.operatorframework.io/owner"
 	clusterExtensionRevisionTeardownFinalizer = "olm.operatorframework.io/teardown"
 )
 
@@ -458,7 +458,7 @@ func (c *ClusterExtensionRevisionReconciler) removeFinalizer(ctx context.Context
 // listPreviousRevisions returns active revisions belonging to the same ClusterExtension with lower revision numbers.
 // Filters out the current revision, archived revisions, deleting revisions, and revisions with equal or higher numbers.
 func (c *ClusterExtensionRevisionReconciler) listPreviousRevisions(ctx context.Context, rev *ocv1.ClusterExtensionRevision) ([]*ocv1.ClusterExtensionRevision, error) {
-	ownerLabel, ok := rev.Labels[ClusterExtensionRevisionOwnerLabel]
+	ownerLabel, ok := rev.Labels[labels.OwnerNameKey]
 	if !ok {
 		// No owner label means this revision isn't properly labeled - return empty list
 		return nil, nil
@@ -466,7 +466,7 @@ func (c *ClusterExtensionRevisionReconciler) listPreviousRevisions(ctx context.C
 
 	revList := &ocv1.ClusterExtensionRevisionList{}
 	if err := c.TrackingCache.List(ctx, revList, client.MatchingLabels{
-		ClusterExtensionRevisionOwnerLabel: ownerLabel,
+		labels.OwnerNameKey: ownerLabel,
 	}); err != nil {
 		return nil, fmt.Errorf("listing revisions: %w", err)
 	}
@@ -521,12 +521,12 @@ func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Con
 		for _, specObj := range specPhase.Objects {
 			obj := specObj.Object.DeepCopy()
 
-			labels := obj.GetLabels()
-			if labels == nil {
-				labels = map[string]string{}
+			objLabels := obj.GetLabels()
+			if objLabels == nil {
+				objLabels = map[string]string{}
 			}
-			labels[ClusterExtensionRevisionOwnerLabel] = rev.Labels[ClusterExtensionRevisionOwnerLabel]
-			obj.SetLabels(labels)
+			objLabels[labels.OwnerNameKey] = rev.Labels[labels.OwnerNameKey]
+			obj.SetLabels(objLabels)
 
 			switch specObj.CollisionProtection {
 			case ocv1.CollisionProtectionIfNoController, ocv1.CollisionProtectionNone:
