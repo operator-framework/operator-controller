@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -499,13 +498,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				}
 			},
 			validate: func(t *testing.T, c client.Client) {
-				t.Log("cluster revision is deleted")
+				t.Log("revision is deleted after finalizer removal")
 				rev := &ocv1.ClusterExtensionRevision{}
 				err := c.Get(t.Context(), client.ObjectKey{
 					Name: clusterExtensionRevisionName,
 				}, rev)
+				// When DeletionTimestamp is set and the last finalizer is removed,
+				// Kubernetes deletes the object immediately. The fake client simulates
+				// this behavior, so we expect a NotFound error.
 				require.Error(t, err)
-				require.True(t, errors.IsNotFound(err))
+				require.NoError(t, client.IgnoreNotFound(err), "expected NotFound error, got: %v", err)
 			},
 		},
 		{

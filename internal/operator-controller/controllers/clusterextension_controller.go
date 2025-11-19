@@ -37,8 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -54,12 +54,14 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
+	finalizerutil "github.com/operator-framework/operator-controller/internal/shared/util/finalizer"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const (
-	ClusterExtensionCleanupUnpackCacheFinalizer         = "olm.operatorframework.io/cleanup-unpack-cache"
-	ClusterExtensionCleanupContentManagerCacheFinalizer = "olm.operatorframework.io/cleanup-contentmanager-cache"
+	ClusterExtensionCleanupUnpackCacheFinalizer         = finalizerutil.FinalizerPrefix + "cleanup-unpack-cache"
+	ClusterExtensionCleanupContentManagerCacheFinalizer = finalizerutil.FinalizerPrefix + "cleanup-contentmanager-cache"
+	clusterExtensionFinalizerOwner                      = finalizerutil.FinalizerPrefix + "clusterextension-controller"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -73,8 +75,11 @@ type ClusterExtensionReconciler struct {
 	StorageMigrator      StorageMigrator
 	Applier              Applier
 	RevisionStatesGetter RevisionStatesGetter
-	Finalizers           crfinalizer.Finalizers
+	FinalizerHandlers    map[string]FinalizerHandler
 }
+
+// FinalizerHandler defines a function that handles cleanup for a specific finalizer
+type FinalizerHandler func(context.Context, *ocv1.ClusterExtension) error
 
 type StorageMigrator interface {
 	Migrate(context.Context, *ocv1.ClusterExtension, map[string]string) error
@@ -110,29 +115,16 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
-	updateFinalizers := !equality.Semantic.DeepEqual(existingExt.Finalizers, reconciledExt.Finalizers)
 
 	// If any unexpected fields have changed, panic before updating the resource
-	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionFieldChange(*existingExt, *reconciledExt)
+	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionFieldChange(existingExt, reconciledExt)
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
 	}
 
-	// Save the finalizers off to the side. If we update the status, the reconciledExt will be updated
-	// to contain the new state of the ClusterExtension, which contains the status update, but (critically)
-	// does not contain the finalizers. After the status update, we need to re-add the finalizers to the
-	// reconciledExt before updating the object.
-	finalizers := reconciledExt.Finalizers
 	if updateStatus {
 		if err := r.Client.Status().Update(ctx, reconciledExt); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating status: %v", err))
-		}
-	}
-	reconciledExt.Finalizers = finalizers
-
-	if updateFinalizers {
-		if err := r.Update(ctx, reconciledExt); err != nil {
-			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
 
@@ -157,11 +149,15 @@ func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.C
 	}
 }
 
-// Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedClusterExtensionFieldChange(a, b ocv1.ClusterExtension) bool {
-	a.Status, b.Status = ocv1.ClusterExtensionStatus{}, ocv1.ClusterExtensionStatus{}
-	a.Finalizers, b.Finalizers = []string{}, []string{}
-	return !equality.Semantic.DeepEqual(a, b)
+// Compare resources - Annotations/Labels/Spec
+func checkForUnexpectedClusterExtensionFieldChange(a, b *ocv1.ClusterExtension) bool {
+	if !equality.Semantic.DeepEqual(a.Annotations, b.Annotations) {
+		return true
+	}
+	if !equality.Semantic.DeepEqual(a.Labels, b.Labels) {
+		return true
+	}
+	return !equality.Semantic.DeepEqual(a.Spec, b.Spec)
 }
 
 // Helper function to do the actual reconcile
@@ -179,28 +175,52 @@ func checkForUnexpectedClusterExtensionFieldChange(a, b ocv1.ClusterExtension) b
 4.2 Generating a chart from k8s objects.
 4.3 Store the release on cluster.
 */
+
+func (r *ClusterExtensionReconciler) handleDeletion(ctx context.Context, ext *ocv1.ClusterExtension) (ctrl.Result, error) {
+	// Run cleanup for each registered finalizer and collect finalizers to remove
+	removeFinalizers := false
+	for finalizerKey, handler := range r.FinalizerHandlers {
+		if !controllerutil.ContainsFinalizer(ext, finalizerKey) {
+			continue
+		}
+		if err := handler(ctx, ext); err != nil {
+			setStatusProgressing(ext, err)
+			return ctrl.Result{}, err
+		}
+		removeFinalizers = true
+	}
+	// Remove all finalizers in a single patch operation
+	if removeFinalizers {
+		if _, err := finalizerutil.EnsureFinalizers(ctx, clusterExtensionFinalizerOwner, r.Client, ext); err != nil {
+			setStatusProgressing(ext, err)
+			return ctrl.Result{}, fmt.Errorf("error removing finalizers: %v", err)
+		}
+	}
+	// All finalizers removed, nothing more to do
+	return ctrl.Result{}, nil
+}
+
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.ClusterExtension) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
 	l.Info("handling finalizers")
-	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
-	if err != nil {
-		setStatusProgressing(ext, err)
-		return ctrl.Result{}, err
-	}
-	if finalizeResult.Updated || finalizeResult.StatusUpdated {
-		// On create: make sure the finalizer is applied before we do anything
-		// On delete: make sure we do nothing after the finalizer is removed
-		return ctrl.Result{}, nil
+
+	// Handle deletion
+	if ext.GetDeletionTimestamp() != nil {
+		return r.handleDeletion(ctx, ext)
 	}
 
-	if ext.GetDeletionTimestamp() != nil {
-		// If we've gotten here, that means the cluster extension is being deleted, we've handled all of
-		// _our_ finalizers (above), but the cluster extension is still present in the cluster, likely
-		// because there are _other_ finalizers that other controllers need to handle, (e.g. the orphan
-		// deletion finalizer).
-		return ctrl.Result{}, nil
+	// Add all finalizers
+	finalizers := make([]string, 0, len(r.FinalizerHandlers))
+	for finalizerKey := range r.FinalizerHandlers {
+		finalizers = append(finalizers, finalizerKey)
+	}
+	if len(finalizers) > 0 {
+		if _, err := finalizerutil.EnsureFinalizers(ctx, clusterExtensionFinalizerOwner, r.Client, ext, finalizers...); err != nil {
+			setStatusProgressing(ext, err)
+			return ctrl.Result{}, fmt.Errorf("error ensuring finalizers: %v", err)
+		}
 	}
 
 	objLbls := map[string]string{

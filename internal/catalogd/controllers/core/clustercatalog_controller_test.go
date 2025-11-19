@@ -17,8 +17,10 @@ import (
 	"go.podman.io/image/v5/docker/reference"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -304,6 +306,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			name: "storage finalizer not set, storage finalizer gets set",
 			puller: &imageutil.MockPuller{
 				ImageFS: &fstest.MapFS{},
+				Ref:     mustRef(t, "my.org/someimage@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
 			},
 			store: &MockStore{},
 			catalog: &ocv1.ClusterCatalog{
@@ -332,6 +335,8 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						},
 					},
 				},
+				// Status remains empty because controller returns early after adding finalizer
+				Status: ocv1.ClusterCatalogStatus{},
 			},
 		},
 		{
@@ -379,7 +384,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
-					Finalizers:        []string{},
+					Finalizers:        nil,
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
 				Spec: ocv1.ClusterCatalogSpec{
@@ -660,7 +665,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			expectedCatalog: &ocv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
-					Finalizers: []string{},
+					Finalizers: nil,
 				},
 				Spec: ocv1.ClusterCatalogSpec{
 					Source: ocv1.CatalogSource{
@@ -802,8 +807,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			require.NoError(t, ocv1.AddToScheme(scheme))
+			cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tt.catalog).WithStatusSubresource(tt.catalog).Build()
+
 			reconciler := &ClusterCatalogReconciler{
-				Client:         nil,
+				Client:         cl,
 				ImagePuller:    tt.puller,
 				ImageCache:     tt.cache,
 				Storage:        tt.store,
@@ -812,7 +821,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			if reconciler.ImageCache == nil {
 				reconciler.ImageCache = &imageutil.MockCache{}
 			}
-			require.NoError(t, reconciler.setupFinalizers())
 			ctx := context.Background()
 
 			res, err := reconciler.reconcile(ctx, tt.catalog)
@@ -826,6 +834,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			}
 			diff := cmp.Diff(tt.expectedCatalog, tt.catalog,
 				cmpopts.IgnoreFields(metav1.Condition{}, "Message", "LastTransitionTime"),
+				cmpopts.IgnoreFields(metav1.ObjectMeta{}, "ResourceVersion"),
 				cmpopts.SortSlices(func(a, b metav1.Condition) bool { return a.Type < b.Type }))
 			assert.Empty(t, diff, "comparing the expected Catalog")
 		})
@@ -909,8 +918,12 @@ func TestPollingRequeue(t *testing.T) {
 				URLs:         &ocv1.ClusterCatalogURLs{Base: "URL"},
 				LastUnpacked: ptr.To(metav1.NewTime(time.Now().Truncate(time.Second))),
 			}
+			scheme := runtime.NewScheme()
+			require.NoError(t, ocv1.AddToScheme(scheme))
+			cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tc.catalog).WithStatusSubresource(tc.catalog).Build()
+
 			reconciler := &ClusterCatalogReconciler{
-				Client: nil,
+				Client: cl,
 				ImagePuller: &imageutil.MockPuller{
 					ImageFS: &fstest.MapFS{},
 					Ref:     ref,
@@ -924,7 +937,6 @@ func TestPollingRequeue(t *testing.T) {
 					},
 				},
 			}
-			require.NoError(t, reconciler.setupFinalizers())
 			res, _ := reconciler.reconcile(context.Background(), tc.catalog)
 			assert.InDelta(t, tc.expectedRequeueAfter, res.RequeueAfter, 2*requeueJitterMaxFactor*float64(tc.expectedRequeueAfter))
 		})
@@ -1136,13 +1148,16 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			if scd == nil {
 				scd = map[string]storedCatalogData{}
 			}
+			scheme := runtime.NewScheme()
+			require.NoError(t, ocv1.AddToScheme(scheme))
+			cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(tc.catalog).WithStatusSubresource(tc.catalog).Build()
+
 			reconciler := &ClusterCatalogReconciler{
-				Client:         nil,
+				Client:         cl,
 				ImagePuller:    &imageutil.MockPuller{Error: errors.New("mockpuller error")},
 				Storage:        &MockStore{},
 				storedCatalogs: scd,
 			}
-			require.NoError(t, reconciler.setupFinalizers())
 			_, err := reconciler.reconcile(context.Background(), tc.catalog)
 			if tc.expectedUnpackRun {
 				assert.Error(t, err)
