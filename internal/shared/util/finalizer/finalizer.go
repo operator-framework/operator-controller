@@ -36,7 +36,7 @@ const (
 // If no finalizers are supplied, all FinalizerPrefix finalizers will be removed from the object.
 // If any finalizers are supplied, all other FinalizerPrefix finalizers will be removed and only the supplied ones will remain.
 // Returns (true, nil) if the finalizers were changed, (false, nil) if they were already set to the desired value.
-// Note: This function will update the passed object with the server response.
+// Note: This function will update ONLY the finalizers field of the passed object, not other metadata fields.
 func EnsureFinalizers(ctx context.Context, owner string, c client.Client, obj client.Object, finalizers ...string) (bool, error) {
 	newFinalizers := slices.Clone(finalizers)
 	if newFinalizers == nil {
@@ -83,10 +83,19 @@ func EnsureFinalizers(ctx context.Context, owner string, c client.Client, obj cl
 		return false, fmt.Errorf("marshalling patch to ensure finalizers: %w", err)
 	}
 
-	// Use patch to update finalizers
-	if err := c.Patch(ctx, obj, client.RawPatch(types.MergePatchType, patchJSON)); err != nil {
+	// Create a copy to use for patching. We patch the copy to avoid having the server's
+	// patch response overwrite the original object with potentially changed metadata fields
+	// (like annotations) that the caller didn't intend to modify.
+	objCopy := obj.DeepCopyObject().(client.Object)
+
+	// Use patch to update finalizers on the server
+	if err := c.Patch(ctx, objCopy, client.RawPatch(types.MergePatchType, patchJSON)); err != nil {
 		return false, fmt.Errorf("updating finalizers: %w", err)
 	}
+
+	// Update only the finalizers in the original object to reflect the change,
+	// without copying other metadata that may have changed on the server.
+	obj.SetFinalizers(objCopy.GetFinalizers())
 
 	return true, nil
 }
