@@ -93,9 +93,10 @@ func EnsureFinalizers(ctx context.Context, owner string, c client.Client, obj cl
 		return false, fmt.Errorf("updating finalizers: %w", err)
 	}
 
-	// Update only the finalizers in the original object to reflect the change,
-	// without copying other metadata that may have changed on the server.
+	// Update the finalizers and resource version in the original object to reflect the change.
+	// The resource version must be updated to avoid conflicts with subsequent operations.
 	obj.SetFinalizers(objCopy.GetFinalizers())
+	obj.SetResourceVersion(objCopy.GetResourceVersion())
 
 	return true, nil
 }
