@@ -616,8 +616,28 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: ClusterExtensionRevision is the Schema for the clusterextensionrevisions
-          API
+        description: |-
+          ClusterExtensionRevision is the schema for the ClusterExtensionRevisions API.
+
+          A ClusterExtensionRevision represents an immutable snapshot of the Kubernetes objects
+          to be installed for a specific version of a ClusterExtension. Each revision contains
+          a set of objects organized into phases that are rolled out sequentially.
+
+          ClusterExtensionRevisions are created and managed automatically by the
+          ClusterExtension controller and should not be created directly by users. Each
+          ClusterExtension may have multiple revisions over its lifetime as it is upgraded
+          or reconfigured.
+
+          The revision rollout follows a phased approach where objects are applied in a
+          well-defined order based on their types (e.g., namespaces, then RBAC, then CRDs,
+          then deployments). Within each phase, all objects are applied simultaneously and
+          must pass their readiness probes before the rollout progresses to the next phase.
+
+          Revisions have three lifecycle states:
+            - Active: The revision is actively managed and reconciled (default state)
+            - Paused: Reconciliation is disabled but status updates continue
+            - Archived: The revision is torn down, objects are deleted, and the revision
+              removes itself from the owner list of managed objects
         properties:
           apiVersion:
             description: |-
@@ -638,11 +658,20 @@ spec:
             type: object
           spec:
             description: spec is an optional field that defines the desired state
-              of the ClusterExtension.
+              of the ClusterExtensionRevision.
             properties:
               lifecycleState:
                 default: Active
-                description: Specifies the lifecycle state of the ClusterExtensionRevision.
+                description: |-
+                  lifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
+
+                  When set to "Active" (the default), the revision is actively managed and reconciled.
+                  When set to "Paused", reconciliation is disabled but status updates continue.
+                  When set to "Archived", the revision is torn down and scaled to zero - the revision is removed from the owner
+                  list of all other objects previously under management and all objects that did not transition to a
+                  succeeding revision are deleted.
+
+                  Once a revision is set to "Archived", it cannot be un-archived.
                 enum:
                 - Active
                 - Paused
@@ -654,36 +683,84 @@ spec:
                     && oldSelf == self
               phases:
                 description: |-
-                  Phases are groups of objects that will be applied at the same time.
-                  All objects in the phase will have to pass their probes in order to progress to the next phase.
+                  phases is an optional, immutable list of phases that group objects to be applied together.
+
+                  Objects are organized into phases based on their Group-Kind. Common phases include:
+                    - namespaces: Namespace objects
+                    - policies: ResourceQuota, LimitRange, NetworkPolicy objects
+                    - rbac: ServiceAccount, Role, RoleBinding, ClusterRole, ClusterRoleBinding objects
+                    - crds: CustomResourceDefinition objects
+                    - storage: PersistentVolume, PersistentVolumeClaim, StorageClass objects
+                    - deploy: Deployment, StatefulSet, DaemonSet, Service, ConfigMap, Secret objects
+                    - publish: Ingress, APIService, Route, Webhook objects
+
+                  All objects within a phase are applied simultaneously. The revision only progresses
+                  to the next phase once all objects in the current phase pass their readiness probes.
+
+                  Once set (even if empty), this field is immutable.
                 items:
                   description: |-
-                    ClusterExtensionRevisionPhase are groups of objects that will be applied at the same time.
-                    All objects in the a phase will have to pass their probes in order to progress to the next phase.
+                    ClusterExtensionRevisionPhase represents a group of objects that are applied together.
+
+                    Objects within a phase are applied simultaneously, and all objects must pass their
+                    readiness probes before the revision progresses to the next phase. Phases are applied
+                    in a well-defined order based on the types of objects they contain.
                   properties:
                     name:
-                      description: Name identifies this phase.
+                      description: |-
+                        name is a required identifier for this phase.
+
+                        Phase names must follow the DNS label standard as defined in [RFC 1123].
+                        They must contain only lowercase alphanumeric characters or hyphens (-),
+                        start and end with an alphanumeric character, and be no longer than 63 characters.
+
+                        Common phase names include: namespaces, policies, rbac, crds, storage, deploy, publish.
+
+                        [RFC 1123]: https://tools.ietf.org/html/rfc1123
                       maxLength: 63
                       pattern: ^[a-z]([-a-z0-9]*[a-z0-9])?$
                       type: string
                     objects:
-                      description: Objects are a list of all the objects within this
-                        phase.
+                      description: |-
+                        objects is a required list of all Kubernetes objects within this phase.
+
+                        All objects in this list will be applied to the cluster simultaneously.
+                        The phase will only be considered complete once all objects pass their
+                        readiness probes.
                       items:
-                        description: ClusterExtensionRevisionObject contains an object
-                          and settings for it.
+                        description: |-
+                          ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
+                          of a ClusterExtensionRevision, along with its collision protection settings.
                         properties:
                           collisionProtection:
                             default: Prevent
                             description: |-
-                              CollisionProtection controls whether OLM can adopt and modify objects
-                              already existing on the cluster or even owned by another controller.
+                              collisionProtection controls whether the operator can adopt and modify objects
+                              that already exist on the cluster.
+
+                              When set to "Prevent" (the default), the operator will only manage objects it
+                              has created itself, preventing any ownership collisions.
+
+                              When set to "IfNoController", the operator can adopt and modify pre-existing
+                              objects that are not owned by another controller. This is useful for taking
+                              over management of manually-created resources.
+
+                              When set to "None", the operator can adopt and modify any pre-existing object,
+                              even if owned by another controller. Use this setting with extreme caution as
+                              it may cause multiple controllers to fight over the same resource, resulting
+                              in increased load on the API server and etcd.
                             enum:
                             - Prevent
                             - IfNoController
                             - None
                             type: string
                           object:
+                            description: |-
+                              object is a required embedded Kubernetes object to be applied.
+
+                              This object must be a valid Kubernetes resource with apiVersion, kind, and metadata
+                              fields. Status fields are not permitted and will be removed if present.
+                              Only specific metadata fields are preserved: name, namespace, labels, and annotations.
                             type: object
                             x-kubernetes-embedded-resource: true
                             x-kubernetes-preserve-unknown-fields: true
@@ -704,9 +781,12 @@ spec:
                   rule: self == oldSelf || oldSelf.size() == 0
               revision:
                 description: |-
-                  Revision is a sequence number representing a specific revision of the ClusterExtension instance.
-                  Must be positive. Each ClusterExtensionRevision of the same parent ClusterExtension needs to have
-                  a unique value assigned. It is immutable after creation. The new revision number must always be previous revision +1.
+                  revision is a required, immutable sequence number representing a specific revision
+                  of the parent ClusterExtension.
+
+                  Must be a positive integer. Each ClusterExtensionRevision belonging to the same
+                  parent ClusterExtension must have a unique revision number. The revision number
+                  must always be the previous revision number plus one, or 1 for the first revision.
                 format: int64
                 minimum: 1
                 type: integer
@@ -718,9 +798,44 @@ spec:
             type: object
           status:
             description: status is an optional field that defines the observed state
-              of the ClusterExtension.
+              of the ClusterExtensionRevision.
             properties:
               conditions:
+                description: |-
+                  conditions is an optional list of status conditions describing the state of the
+                  ClusterExtensionRevision.
+
+                  The Available condition represents whether the revision has been successfully rolled out
+                  and is available:
+                    - When Available is True with Reason Available, the revision has been successfully
+                      rolled out and all objects pass their readiness probes.
+                    - When Available is False with Reason Incomplete, the revision rollout has not yet
+                      completed but no specific failures have been detected.
+                    - When Available is False with Reason ProbeFailure, one or more objects are failing
+                      their readiness probes during rollout.
+                    - When Available is False with Reason ReconcileFailure, the revision has encountered
+                      a general reconciliation failure.
+                    - When Available is False with Reason RevisionValidationFailure, the revision failed
+                      preflight validation checks.
+                    - When Available is False with Reason PhaseValidationError, a phase within the revision
+                      failed preflight validation checks.
+                    - When Available is False with Reason ObjectCollisions, objects in the revision collide
+                      with existing cluster objects that cannot be adopted.
+                    - When Available is Unknown with Reason Archived, the revision has been archived and
+                      its objects have been torn down.
+                    - When Available is Unknown with Reason Migrated, the revision was migrated
+                      from an existing release and object status probe results have not yet been observed.
+
+                  The Succeeded condition represents whether the revision has successfully completed its
+                  rollout at least once:
+                    - When Succeeded is True with Reason RolloutSuccess, the revision has successfully
+                      completed its rollout. This condition is set once and persists even if the revision
+                      later becomes unavailable.
+
+                  The Progressing condition represents whether the revision is actively rolling out:
+                    - When Progressing is True with Reason Progressing, the revision rollout is actively
+                      making progress and is in transition.
+                    - When Progressing is not present, the revision is not currently in transition.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
