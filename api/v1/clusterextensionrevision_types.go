@@ -24,11 +24,15 @@ import (
 const (
 	ClusterExtensionRevisionKind = "ClusterExtensionRevision"
 
-	// Condition Types
+	// ClusterExtensionRevisionTypeAvailable is the condition type that represents whether the
+	// ClusterExtensionRevision is available and has been successfully rolled out.
 	ClusterExtensionRevisionTypeAvailable = "Available"
+
+	// ClusterExtensionRevisionTypeSucceeded is the condition type that represents whether the
+	// ClusterExtensionRevision rollout has succeeded.
 	ClusterExtensionRevisionTypeSucceeded = "Succeeded"
 
-	// Condition Reasons
+	// Condition reasons
 	ClusterExtensionRevisionReasonAvailable                 = "Available"
 	ClusterExtensionRevisionReasonReconcileFailure          = "ReconcileFailure"
 	ClusterExtensionRevisionReasonRevisionValidationFailure = "RevisionValidationFailure"
@@ -44,22 +48,47 @@ const (
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
 type ClusterExtensionRevisionSpec struct {
-	// Specifies the lifecycle state of the ClusterExtensionRevision.
+	// lifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
+	//
+	// When set to "Active" (the default), the revision is actively managed and reconciled.
+	// When set to "Archived", the revision is inactive and any resources not managed by a subsequent revision are deleted.
+	// The revision is removed from the owner list of all objects previously under management.
+	// All objects that did not transition to a succeeding revision are deleted.
+	//
+	// Once a revision is set to "Archived", it cannot be un-archived.
 	//
 	// +kubebuilder:default="Active"
-	// +kubebuilder:validation:Enum=Active;Paused;Archived
-	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Paused' || oldSelf == 'Archived' && oldSelf == self", message="can not un-archive"
+	// +kubebuilder:validation:Enum=Active;Archived
+	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Archived' && oldSelf == self", message="cannot un-archive"
 	LifecycleState ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
-	// Revision is a sequence number representing a specific revision of the ClusterExtension instance.
-	// Must be positive. Each ClusterExtensionRevision of the same parent ClusterExtension needs to have
-	// a unique value assigned. It is immutable after creation. The new revision number must always be previous revision +1.
+
+	// revision is a required, immutable sequence number representing a specific revision
+	// of the parent ClusterExtension.
+	//
+	// The revision field must be a positive integer.
+	// Each ClusterExtensionRevision belonging to the same parent ClusterExtension must have a unique revision number.
+	// The revision number must always be the previous revision number plus one, or 1 for the first revision.
 	//
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision"`
-	// Phases are groups of objects that will be applied at the same time.
-	// All objects in the phase will have to pass their probes in order to progress to the next phase.
+
+	// phases is an optional, immutable list of phases that group objects to be applied together.
+	//
+	// Objects are organized into phases based on their Group-Kind. Common phases include:
+	//   - namespaces: Namespace objects
+	//   - policies: ResourceQuota, LimitRange, NetworkPolicy objects
+	//   - rbac: ServiceAccount, Role, RoleBinding, ClusterRole, ClusterRoleBinding objects
+	//   - crds: CustomResourceDefinition objects
+	//   - storage: PersistentVolume, PersistentVolumeClaim, StorageClass objects
+	//   - deploy: Deployment, StatefulSet, DaemonSet, Service, ConfigMap, Secret objects
+	//   - publish: Ingress, APIService, Route, Webhook objects
+	//
+	// All objects in a phase are applied in no particular order.
+	// The revision progresses to the next phase only after all objects in the current phase pass their readiness probes.
+	//
+	// Once set, even if empty, the phases field is immutable.
 	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
 	// +listType=map
@@ -75,33 +104,62 @@ const (
 	// ClusterExtensionRevisionLifecycleStateActive / "Active" is the default lifecycle state.
 	ClusterExtensionRevisionLifecycleStateActive ClusterExtensionRevisionLifecycleState = "Active"
 	// ClusterExtensionRevisionLifecycleStatePaused / "Paused" disables reconciliation of the ClusterExtensionRevision.
-	// Only Status updates will still propagated, but object changes will not be reconciled.
+	// Object changes will not be reconciled. However, status updates will be propagated.
 	ClusterExtensionRevisionLifecycleStatePaused ClusterExtensionRevisionLifecycleState = "Paused"
-	// ClusterExtensionRevisionLifecycleStateArchived / "Archived" disables reconciliation while also "scaling to zero",
-	// which deletes all objects that are not excluded via the pausedFor property and
-	// removes itself from the owner list of all other objects previously under management.
+	// ClusterExtensionRevisionLifecycleStateArchived / "Archived" archives the revision for historical or auditing purposes.
+	// The revision is removed from the owner list of all other objects previously under management and all objects
+	// that did not transition to a succeeding revision are deleted.
 	ClusterExtensionRevisionLifecycleStateArchived ClusterExtensionRevisionLifecycleState = "Archived"
 )
 
-// ClusterExtensionRevisionPhase are groups of objects that will be applied at the same time.
-// All objects in the a phase will have to pass their probes in order to progress to the next phase.
+// ClusterExtensionRevisionPhase represents a group of objects that are applied together. The phase is considered
+// complete only after all objects pass their status probes.
 type ClusterExtensionRevisionPhase struct {
-	// Name identifies this phase.
+	// name is a required identifier for this phase.
+	//
+	// phase names must follow the DNS label standard as defined in [RFC 1123].
+	// They must contain only lowercase alphanumeric characters or hyphens (-),
+	// start and end with an alphanumeric character, and be no longer than 63 characters.
+	//
+	// Common phase names include: namespaces, policies, rbac, crds, storage, deploy, publish.
+	//
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:Pattern=`^[a-z]([-a-z0-9]*[a-z0-9])?$`
 	Name string `json:"name"`
-	// Objects are a list of all the objects within this phase.
+
+	// objects is a required list of all Kubernetes objects that belong to this phase.
+	//
+	// All objects in this list are applied to the cluster in no particular order.
 	Objects []ClusterExtensionRevisionObject `json:"objects"`
 }
 
-// ClusterExtensionRevisionObject contains an object and settings for it.
+// ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
+// of a phase, along with its collision protection settings.
 type ClusterExtensionRevisionObject struct {
+	// object is a required embedded Kubernetes object to be applied.
+	//
+	// This object must be a valid Kubernetes resource with apiVersion, kind, and metadata fields.
+	//
 	// +kubebuilder:validation:EmbeddedResource
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Object unstructured.Unstructured `json:"object"`
-	// CollisionProtection controls whether OLM can adopt and modify objects
-	// already existing on the cluster or even owned by another controller.
+
+	// collisionProtection controls whether the operator can adopt and modify objects
+	// that already exist on the cluster.
+	//
+	// When set to "Prevent" (the default), the operator only manages objects it created itself.
+	// This prevents ownership collisions.
+	//
+	// When set to "IfNoController", the operator can adopt and modify pre-existing objects
+	// that are not owned by another controller.
+	// This is useful for taking over management of manually-created resources.
+	//
+	// When set to "None", the operator can adopt and modify any pre-existing object, even if
+	// owned by another controller.
+	// Use this setting with extreme caution as it may cause multiple controllers to fight over
+	// the same resource, resulting in increased load on the API server and etcd.
 	//
 	// +kubebuilder:default="Prevent"
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
@@ -128,6 +186,27 @@ const (
 
 // ClusterExtensionRevisionStatus defines the observed state of a ClusterExtensionRevision.
 type ClusterExtensionRevisionStatus struct {
+	// conditions is an optional list of status conditions describing the state of the
+	// ClusterExtensionRevision.
+	//
+	// The Progressing condition represents whether the revision is actively rolling out:
+	//   - When status is True and reason is Progressing, the revision rollout is actively making progress and is in transition.
+	//   - When Progressing is not present, the revision is not currently in transition.
+	//
+	// The Available condition represents whether the revision has been successfully rolled out and is available:
+	//   - When status is True and reason is Available, the revision has been successfully rolled out and all objects pass their readiness probes.
+	//   - When status is False and reason is Incomplete, the revision rollout has not yet completed but no specific failures have been detected.
+	//   - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes during rollout.
+	//   - When status is False and reason is ReconcileFailure, the revision has encountered a general reconciliation failure.
+	//   - When status is False and reason is RevisionValidationFailure, the revision failed preflight validation checks.
+	//   - When status is False and reason is PhaseValidationError, a phase within the revision failed preflight validation checks.
+	//   - When status is False and reason is ObjectCollisions, objects in the revision collide with existing cluster objects that cannot be adopted.
+	//   - When status is Unknown and reason is Archived, the revision has been archived and its objects have been torn down.
+	//   - When status is Unknown and reason is Migrated, the revision was migrated from an existing release and object status probe results have not yet been observed.
+	//
+	// The Succeeded condition represents whether the revision has successfully completed its rollout:
+	//   - When status is True and reason is RolloutSuccess, the revision has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
+	//
 	// +listType=map
 	// +listMapKey=type
 	// +optional
@@ -137,19 +216,24 @@ type ClusterExtensionRevisionStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
-
-// ClusterExtensionRevision is the Schema for the clusterextensionrevisions API
 // +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
+
+// ClusterExtensionRevision represents an immutable snapshot of Kubernetes objects
+// for a specific version of a ClusterExtension. Each revision contains objects
+// organized into phases that roll out sequentially. The same object can only be managed by a single revision
+// at a time. Ownership of objects is transitioned from one revision to the next as the extension is upgraded
+// or reconfigured. Once the latest revision has rolled out successfully, previous active revisions are archived for
+// posterity.
 type ClusterExtensionRevision struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// spec is an optional field that defines the desired state of the ClusterExtension.
+	// spec defines the desired state of the ClusterExtensionRevision.
 	// +optional
 	Spec ClusterExtensionRevisionSpec `json:"spec,omitempty"`
 
-	// status is an optional field that defines the observed state of the ClusterExtension.
+	// status is optional and defines the observed state of the ClusterExtensionRevision.
 	// +optional
 	Status ClusterExtensionRevisionStatus `json:"status,omitempty"`
 }
