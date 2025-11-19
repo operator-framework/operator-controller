@@ -275,6 +275,27 @@ func Test_UnmarshalConfig(t *testing.T) {
 			installNamespace:       "",
 			expectedWatchNamespace: ptr.To("valid-ns"),
 		},
+		{
+			name:                   "accepts empty string watchNamespace (treated as AllNamespaces) when AllNamespaces+SingleNamespace",
+			supportedInstallModes:  []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace},
+			rawConfig:              []byte(`{"watchNamespace": ""}`),
+			installNamespace:       "install-ns",
+			expectedWatchNamespace: nil,
+		},
+		{
+			name:                   "accepts empty string watchNamespace (treated as AllNamespaces) when only SingleNamespace",
+			supportedInstallModes:  []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
+			rawConfig:              []byte(`{"watchNamespace": ""}`),
+			installNamespace:       "install-ns",
+			expectedWatchNamespace: nil,
+		},
+		{
+			name:                   "accepts empty string watchNamespace (treated as AllNamespaces) when only OwnNamespace",
+			supportedInstallModes:  []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeOwnNamespace},
+			rawConfig:              []byte(`{"watchNamespace": ""}`),
+			installNamespace:       "install-ns",
+			expectedWatchNamespace: nil,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var rv1 bundle.RegistryV1

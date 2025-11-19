@@ -410,3 +410,142 @@ func TestClusterExtensionVersionUpdate(t *testing.T) {
 		require.Len(ct, cerList.Items, 2)
 	}, pollDuration, pollInterval)
 }
+
+func TestClusterExtensionEmptyWatchNamespace(t *testing.T) {
+	SkipIfFeatureGateDisabled(t, soNsFlag)
+	t.Log("Test support for empty watchNamespace treated as AllNamespaces mode")
+	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+
+	t.Log("By creating install namespace and necessary rbac resources")
+	namespace := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "empty-watchnamespace-operator",
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), &namespace))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), &namespace))
+	})
+
+	serviceAccount := corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "empty-watchnamespace-operator-installer",
+			Namespace: namespace.GetName(),
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), &serviceAccount))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), &serviceAccount))
+	})
+
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "empty-watchnamespace-operator-installer",
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				APIGroup:  corev1.GroupName,
+				Name:      serviceAccount.GetName(),
+				Namespace: serviceAccount.GetNamespace(),
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: rbacv1.GroupName,
+			Kind:     "ClusterRole",
+			Name:     "cluster-admin",
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), clusterRoleBinding))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), clusterRoleBinding))
+	})
+
+	t.Log("By creating the test-catalog ClusterCatalog")
+	extensionCatalog := &ocv1.ClusterCatalog{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-catalog",
+		},
+		Spec: ocv1.ClusterCatalogSpec{
+			Source: ocv1.CatalogSource{
+				Type: ocv1.SourceTypeImage,
+				Image: &ocv1.ImageSource{
+					Ref:                 fmt.Sprintf("%s/e2e/test-catalog:v1", os.Getenv("CLUSTER_REGISTRY_HOST")),
+					PollIntervalMinutes: ptr.To(1),
+				},
+			},
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), extensionCatalog))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), extensionCatalog))
+	})
+
+	t.Log("By waiting for the catalog to serve its metadata")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.GetName()}, extensionCatalog))
+		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, ocv1.TypeServing)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By installing the single-namespace-operator ClusterExtension with empty watchNamespace")
+	clusterExtension := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "empty-watchnamespace-operator-extension",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Source: ocv1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1.CatalogFilter{
+					PackageName: "single-namespace-operator",
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
+					},
+				},
+			},
+			Namespace: namespace.GetName(),
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: serviceAccount.GetName(),
+			},
+			Config: &ocv1.ClusterExtensionConfig{
+				ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+				Inline: &apiextensionsv1.JSON{
+					Raw: []byte(`{"watchNamespace": ""}`),
+				},
+			},
+		},
+	}
+	require.NoError(t, c.Create(t.Context(), clusterExtension))
+	t.Cleanup(func() {
+		require.NoError(t, c.Delete(context.Background(), clusterExtension))
+	})
+
+	t.Log("By waiting for the extension to be installed successfully (empty watchNamespace treated as AllNamespaces)")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Contains(ct, cond.Message, "Installed bundle")
+		require.NotNil(ct, clusterExtension.Status.Install)
+		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
+	}, pollDuration, pollInterval)
+
+	t.Log("By verifying the deployment does not have watchNamespace annotation (should watch all namespaces)")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		deployment := &appsv1.Deployment{}
+		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Namespace: namespace.GetName(), Name: "single-namespace-operator"}, deployment))
+		// When watchNamespace is empty/nil, the olm.targetNamespaces annotation should not be set
+		// or should be empty, indicating the operator watches all namespaces
+		annotations := deployment.Spec.Template.GetAnnotations()
+		if annotations != nil {
+			targetNs, exists := annotations["olm.targetNamespaces"]
+			if exists {
+				require.Empty(ct, targetNs, "olm.targetNamespaces should be empty for AllNamespaces mode")
+			}
+		}
+	}, pollDuration, pollInterval)
+}

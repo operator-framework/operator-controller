@@ -79,7 +79,8 @@ func newConfig(data map[string]any) *Config {
 }
 
 // GetWatchNamespace returns the watchNamespace value if present in the configuration.
-// Returns nil if watchNamespace is not set or is explicitly set to null.
+// Returns nil if watchNamespace is not set, is explicitly set to null, or is set to an empty string.
+// An empty string is treated as equivalent to "not configured" (AllNamespaces mode).
 func (c *Config) GetWatchNamespace() *string {
 	if c == nil || *c == nil {
 		return nil
@@ -95,6 +96,10 @@ func (c *Config) GetWatchNamespace() *string {
 	// Convert value to string. Schema validation ensures this is a string,
 	// but fmt.Sprintf handles edge cases defensively.
 	str := fmt.Sprintf("%v", val)
+	// Treat empty string as "not configured" (AllNamespaces mode)
+	if str == "" {
+		return nil
+	}
 	return &str
 }
 
@@ -166,6 +171,11 @@ func validateConfigWithSchema(configBytes []byte, schema map[string]any, install
 			if !ok {
 				return fmt.Errorf("value must be a string")
 			}
+			// Empty string is treated as "not configured" (AllNamespaces mode)
+			// Skip validation for empty strings - they'll be normalized by GetWatchNamespace()
+			if str == "" {
+				return nil
+			}
 			if str != installNamespace {
 				return fmt.Errorf("invalid value %q: watchNamespace must be %q (the namespace where the operator is installed) because this operator only supports OwnNamespace install mode", str, installNamespace)
 			}
@@ -185,6 +195,11 @@ func validateConfigWithSchema(configBytes []byte, schema map[string]any, install
 			str, ok := value.(string)
 			if !ok {
 				return fmt.Errorf("value must be a string")
+			}
+			// Empty string is treated as "not configured" (AllNamespaces mode)
+			// Skip validation for empty strings - they'll be normalized by GetWatchNamespace()
+			if str == "" {
+				return nil
 			}
 			if str == installNamespace {
 				return fmt.Errorf("invalid value %q: watchNamespace must be different from %q (the install namespace) because this operator uses SingleNamespace install mode to watch a different namespace", str, installNamespace)
