@@ -80,22 +80,10 @@ func Test_UnmarshalConfig(t *testing.T) {
 			expectedErrMessage:    `got object, want string`,
 		},
 		{
-			name:                  "rejects with unknown field when install modes {AllNamespaces}",
+			name:                  "rejects with descriptive message when install modes {AllNamespaces}",
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces},
 			rawConfig:             []byte(`{"watchNamespace": "some-namespace"}`),
-			expectedErrMessage:    `unknown field "watchNamespace"`,
-		},
-		{
-			name:                  "rejects with unknown field when install modes {MultiNamespace}",
-			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeMultiNamespace},
-			rawConfig:             []byte(`{"watchNamespace": "some-namespace"}`),
-			expectedErrMessage:    `unknown field "watchNamespace"`,
-		},
-		{
-			name:                  "reject with unknown field when install modes {AllNamespaces, MultiNamespace}",
-			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeMultiNamespace},
-			rawConfig:             []byte(`{"watchNamespace": "some-namespace"}`),
-			expectedErrMessage:    `unknown field "watchNamespace"`,
+			expectedErrMessage:    `watchNamespace configuration is not supported when the content only supports AllNamespaces install mode`,
 		},
 		{
 			name:                  "reject with required field when install modes {OwnNamespace} and watchNamespace is null",

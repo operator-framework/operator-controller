@@ -45,6 +45,9 @@ const (
 	// FormatSingleNamespaceInstallMode defines the format check to ensure that
 	// the watchNamespace must differ from install namespace
 	FormatSingleNamespaceInstallMode = "singleNamespaceInstallMode"
+	// FormatAllNamespacesOnlyInstallMode defines the format check to reject
+	// watchNamespace when only AllNamespaces mode is supported (registry+v1 specific)
+	FormatAllNamespacesOnlyInstallMode = "allNamespacesOnlyInstallMode"
 )
 
 // SchemaProvider lets each package format type describe what configuration it accepts.
@@ -190,6 +193,14 @@ func validateConfigWithSchema(configBytes []byte, schema map[string]any, install
 				return fmt.Errorf("invalid value %q: watchNamespace must be different from %q (the install namespace) because this operator uses SingleNamespace install mode to watch a different namespace", str, installNamespace)
 			}
 			return nil
+		},
+	})
+	compiler.RegisterFormat(&jsonschema.Format{
+		Name: FormatAllNamespacesOnlyInstallMode,
+		Validate: func(value interface{}) error {
+			// Always reject - this format is used when AllNamespaces is the only supported mode
+			// and watchNamespace configuration doesn't make sense
+			return fmt.Errorf("watchNamespace configuration is not supported when the content only supports AllNamespaces install mode")
 		},
 	})
 

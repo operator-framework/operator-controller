@@ -34,7 +34,7 @@ func (rv1 *RegistryV1) GetConfigSchema() (map[string]any, error) {
 // buildBundleConfigSchema creates validation rules based on what the operator supports.
 //
 // Examples of how install modes affect validation:
-//   - AllNamespaces only: user can't set watchNamespace (operator watches everything)
+//   - AllNamespaces only: watchNamespace is explicitly rejected with helpful error
 //   - OwnNamespace only: user must set watchNamespace to the install namespace
 //   - SingleNamespace only: user must set watchNamespace to a different namespace
 //   - AllNamespaces + OwnNamespace: user can optionally set watchNamespace
@@ -48,8 +48,12 @@ func buildBundleConfigSchema(installModes sets.Set[v1alpha1.InstallMode]) (map[s
 	properties := map[string]any{}
 	var required []any
 
-	// Add watchNamespace property if the bundle supports it
-	if isWatchNamespaceConfigurable(installModes) {
+	// Special case: if ONLY AllNamespaces is supported, explicitly reject watchNamespace
+	// with a helpful error message (instead of generic "unknown field")
+	if isAllNamespacesOnly(installModes) {
+		properties["watchNamespace"] = buildRejectedWatchNamespaceProperty()
+	} else if isWatchNamespaceConfigurable(installModes) {
+		// Add watchNamespace property if the bundle supports it
 		watchNSProperty, isRequired := buildWatchNamespaceProperty(installModes)
 		properties["watchNamespace"] = watchNSProperty
 		if isRequired {
@@ -150,4 +154,28 @@ func isWatchNamespaceConfigurable(installModes sets.Set[v1alpha1.InstallMode]) b
 func isWatchNamespaceConfigRequired(installModes sets.Set[v1alpha1.InstallMode]) bool {
 	return isWatchNamespaceConfigurable(installModes) &&
 		!installModes.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true})
+}
+
+// isAllNamespacesOnly checks if only AllNamespaces install mode is supported.
+//
+// Returns true when:
+//   - Only AllNamespaces is supported (no OwnNamespace, no SingleNamespace)
+//
+// Returns false when:
+//   - OwnNamespace or SingleNamespace is also supported
+func isAllNamespacesOnly(installModes sets.Set[v1alpha1.InstallMode]) bool {
+	hasAllNamespaces := installModes.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true})
+	hasConfigurable := isWatchNamespaceConfigurable(installModes)
+
+	return hasAllNamespaces && !hasConfigurable
+}
+
+// buildRejectedWatchNamespaceProperty creates a schema property that always rejects
+// watchNamespace with a descriptive error message for AllNamespaces-only operators.
+func buildRejectedWatchNamespaceProperty() map[string]any {
+	return map[string]any{
+		"type":        "string",
+		"format":      config.FormatAllNamespacesOnlyInstallMode,
+		"description": "This field is not supported for this operator's install mode configuration",
+	}
 }
