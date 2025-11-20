@@ -305,6 +305,10 @@ test-extension-developer-e2e: run-internal image-registry extension-developer-e2
 run-latest-release:
 	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/$(notdir $(RELEASE_INSTALL)) | bash -s
 
+.PHONY: run-main-install
+run-main-install:
+	KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) ./hack/test/install-from-main.sh $(notdir $(SOURCE_MANIFEST))
+
 .PHONY: pre-upgrade-setup
 pre-upgrade-setup:
 	./hack/test/pre-upgrade-setup.sh $(CATALOG_IMG) $(TEST_CLUSTER_CATALOG_NAME) $(TEST_CLUSTER_EXTENSION_NAME)
@@ -315,6 +319,7 @@ post-upgrade-checks:
 
 
 TEST_UPGRADE_E2E_TASKS := kind-cluster run-latest-release image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean
+TEST_UPGRADE_EXPERIMENTAL_E2E_TASKS := kind-cluster run-main-install image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean
 
 .PHONY: test-upgrade-e2e
 test-upgrade-e2e: SOURCE_MANIFEST := $(STANDARD_MANIFEST)
@@ -332,7 +337,7 @@ test-upgrade-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-
 test-upgrade-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-upgrade-experimental-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-experimental-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-upgrade-experimental-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade e2e tests on a local kind cluster
+test-upgrade-experimental-e2e: $(TEST_UPGRADE_EXPERIMENTAL_E2E_TASKS) #HELP Run upgrade e2e tests on a local kind cluster
 
 
 .PHONY: e2e-coverage
