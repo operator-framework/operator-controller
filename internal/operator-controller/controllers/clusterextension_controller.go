@@ -36,7 +36,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -49,8 +48,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
-	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const (
@@ -99,16 +96,7 @@ func (steps *ReconcileSteps) Reconcile(ctx context.Context, ext *ocv1.ClusterExt
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
-	Resolver resolve.Resolver
-
-	ImageCache  imageutil.Cache
-	ImagePuller imageutil.Puller
-
-	StorageMigrator      StorageMigrator
-	Applier              Applier
-	RevisionStatesGetter RevisionStatesGetter
-	Finalizers           crfinalizer.Finalizers
-	ReconcileSteps       ReconcileSteps
+	ReconcileSteps ReconcileSteps
 }
 
 type StorageMigrator interface {

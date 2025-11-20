@@ -31,7 +31,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
+	finalizers "github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -51,8 +51,8 @@ func TestClusterExtensionDoesNotExist(t *testing.T) {
 func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 	installedBundleGetterCalledErr := errors.New("revision states getter called")
 
-	cl, reconciler := newClientAndReconciler(t, func(reconciler *controllers.ClusterExtensionReconciler) {
-		reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
 			Err: installedBundleGetterCalledErr,
 		}
 	})
@@ -125,8 +125,8 @@ func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 
 func TestClusterExtensionResolutionFails(t *testing.T) {
 	pkgName := fmt.Sprintf("non-existent-%s", rand.String(6))
-	cl, reconciler := newClientAndReconciler(t, func(reconciler *controllers.ClusterExtensionReconciler) {
-		reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 			return nil, nil, nil, fmt.Errorf("no package %q found", pkgName)
 		})
 	})
@@ -223,13 +223,13 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 				},
 			}
 			cl, reconciler := newClientAndReconciler(t,
-				func(reconciler *controllers.ClusterExtensionReconciler) {
-					reconciler.ImagePuller = &imageutil.MockPuller{
+				func(d *deps) {
+					d.ImagePuller = &imageutil.MockPuller{
 						Error: tc.pullErr,
 					}
 				},
-				func(reconciler *controllers.ClusterExtensionReconciler) {
-					reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+				func(d *deps) {
+					d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 						v := bsemver.MustParse("1.0.0")
 						return &declcfg.Bundle{
 							Name:    "prometheus.v1.0.0",
@@ -281,11 +281,11 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 
 func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t,
-		func(reconciler *controllers.ClusterExtensionReconciler) {
-			reconciler.ImagePuller = &imageutil.MockPuller{
+		func(d *deps) {
+			d.ImagePuller = &imageutil.MockPuller{
 				ImageFS: fstest.MapFS{},
 			}
-			reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 				v := bsemver.MustParse("1.0.0")
 				return &declcfg.Bundle{
 					Name:    "prometheus.v1.0.0",
@@ -293,7 +293,7 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 					Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 				}, &v, nil, nil
 			})
-			reconciler.Applier = &MockApplier{
+			d.Applier = &MockApplier{
 				err: errors.New("apply failure"),
 			}
 		})
@@ -360,8 +360,8 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 }
 
 func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, func(reconciler *controllers.ClusterExtensionReconciler) {
-		reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
 			Err: &authentication.ServiceAccountNotFoundError{
 				ServiceAccountName:      "missing-sa",
 				ServiceAccountNamespace: "default",
@@ -419,11 +419,11 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 	mockApplier := &MockApplier{
 		installCompleted: true,
 	}
-	cl, reconciler := newClientAndReconciler(t, func(reconciler *controllers.ClusterExtensionReconciler) {
-		reconciler.ImagePuller = &imageutil.MockPuller{
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 			v := bsemver.MustParse("1.0.0")
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
@@ -432,7 +432,7 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 			}, &v, nil, nil
 		})
 
-		reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
 			RevisionStates: &controllers.RevisionStates{
 				Installed: &controllers.RevisionMetadata{
 					BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
@@ -440,7 +440,7 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 				},
 			},
 		}
-		reconciler.Applier = mockApplier
+		d.Applier = mockApplier
 	})
 
 	ctx := context.Background()
@@ -512,11 +512,11 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 }
 
 func TestClusterExtensionManagerFailed(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, func(reconciler *controllers.ClusterExtensionReconciler) {
-		reconciler.ImagePuller = &imageutil.MockPuller{
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 			v := bsemver.MustParse("1.0.0")
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
@@ -524,7 +524,7 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		reconciler.Applier = &MockApplier{
+		d.Applier = &MockApplier{
 			installCompleted: true,
 			err:              errors.New("manager fail"),
 		}
@@ -589,11 +589,11 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 }
 
 func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, func(reconciler *controllers.ClusterExtensionReconciler) {
-		reconciler.ImagePuller = &imageutil.MockPuller{
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 			v := bsemver.MustParse("1.0.0")
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
@@ -601,7 +601,7 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		reconciler.Applier = &MockApplier{
+		d.Applier = &MockApplier{
 			installCompleted: true,
 			err:              errors.New("watch error"),
 		}
@@ -668,11 +668,11 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 }
 
 func TestClusterExtensionInstallationSucceeds(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, func(reconciler *controllers.ClusterExtensionReconciler) {
-		reconciler.ImagePuller = &imageutil.MockPuller{
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 			v := bsemver.MustParse("1.0.0")
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
@@ -680,7 +680,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		reconciler.Applier = &MockApplier{
+		d.Applier = &MockApplier{
 			installCompleted: true,
 		}
 	})
@@ -746,11 +746,12 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 	fakeFinalizer := "fake.testfinalizer.io"
 	finalizersMessage := "still have finalizers"
-	cl, reconciler := newClientAndReconciler(t, func(reconciler *controllers.ClusterExtensionReconciler) {
-		reconciler.ImagePuller = &imageutil.MockPuller{
+	var rfinalizers crfinalizer.Finalizers
+	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 			v := bsemver.MustParse("1.0.0")
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
@@ -758,10 +759,10 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			}, &v, nil, nil
 		})
-		reconciler.Applier = &MockApplier{
+		d.Applier = &MockApplier{
 			installCompleted: true,
 		}
-		reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
+		d.RevisionStatesGetter = &MockRevisionStatesGetter{
 			RevisionStates: &controllers.RevisionStates{
 				Installed: &controllers.RevisionMetadata{
 					BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
@@ -769,6 +770,7 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 				},
 			},
 		}
+		rfinalizers = d.Finalizers
 	})
 
 	ctx := context.Background()
@@ -803,7 +805,7 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 	require.NoError(t, err)
 	t.Log("It sets resolution success status")
 	t.Log("By running reconcile")
-	err = reconciler.Finalizers.Register(fakeFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	err = rfinalizers.Register(fakeFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		return crfinalizer.Result{}, errors.New(finalizersMessage)
 	}))
 
