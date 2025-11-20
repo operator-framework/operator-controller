@@ -67,13 +67,20 @@ type ClusterExtensionSpec struct {
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 
+	// <opcon:standard:description>
+	// serviceAccount is a required field that references a ServiceAccount used to
+	// perform all interactions with the cluster that are required to manage the extension.
+	// </opcon:standard:description>
+	// <opcon:standard:validation:Required>
+	//
+	// <opcon:experimental:description>
 	// serviceAccount is an optional field that references a ServiceAccount used to
 	// perform all interactions with the cluster that are required to manage the extension.
 	// If not set, operator-controller will use its own ServiceAccount for extension management.
 	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
 	// The ServiceAccount must exist in the namespace referenced in the spec.
-	//
-	// +optional
+	// </opcon:experimental:description>
+	// <opcon:experimental:validation:Optional>
 	ServiceAccount ServiceAccountReference `json:"serviceAccount,omitzero"`
 
 	// source is a required field which selects the installation source of content
@@ -403,8 +410,8 @@ type ServiceAccountReference struct {
 	// +kubebuilder:validation:MaxLength:=253
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="name must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
-	// +kubebuilder:validation:Optional
-	Name string `json:"name"`
+	// +optional
+	Name string `json:"name,omitempty"`
 }
 
 // PreflightConfig holds the configuration for the preflight checks.  If used, at least one preflight check must be non-nil.
