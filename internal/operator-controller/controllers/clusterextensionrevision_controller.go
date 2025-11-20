@@ -34,6 +34,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/util"
 )
 
 const (
@@ -158,12 +159,14 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
 	if err != nil {
+		// Generate human-readable summary for logging
 		if rres != nil {
-			l.Error(err, "revision reconcile failed")
-			l.V(1).Info("reconcile failure report", "report", rres.String())
+			summary := util.SummarizeRevisionResult(rres)
+			l.Error(err, "revision reconcile failed", "summary", summary)
 		} else {
 			l.Error(err, "revision reconcile failed")
 		}
+
 		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
 			Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
 			Status:             metav1.ConditionFalse,
@@ -320,9 +323,10 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 
 	tres, err := c.RevisionEngine.Teardown(ctx, *revision)
 	if err != nil {
+		// Generate human-readable summary for logging
 		if tres != nil {
-			l.Error(err, "revision teardown failed")
-			l.V(1).Info("teardown failure report", "report", tres.String())
+			summary := util.SummarizeRevisionTeardownResult(tres)
+			l.Error(err, "revision teardown failed", "summary", summary)
 		} else {
 			l.Error(err, "revision teardown failed")
 		}
@@ -337,7 +341,10 @@ func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *
 	}
 
 	// Log detailed teardown reports only in debug mode (V(1)) to reduce verbosity.
-	l.V(1).Info("teardown report", "report", tres.String())
+	summary := util.SummarizeRevisionTeardownResult(tres)
+	if summary != "" {
+		l.Info("teardown report", "report", summary)
+	}
 	if !tres.IsComplete() {
 		// TODO: If it is not complete, it seems like it would be good to update
 		//  the status in some way to tell the user that the teardown is still
