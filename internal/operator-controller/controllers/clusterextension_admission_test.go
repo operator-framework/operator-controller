@@ -349,7 +349,9 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		{"dot-separated", "dotted.name", ""},
 		{"longest valid service account name", strings.Repeat("x", 253), ""},
 		{"too long service account name", strings.Repeat("x", 254), tooLongError},
-		{"no service account name", "", regexMismatchError},
+		// This test case passes now that the ServiceAccount field is optional.
+		// The empty serialized version of the ServiceAccount field has an empty string for Name.
+		{"no service account name", "", ""},
 		{"spaces", "spaces spaces", regexMismatchError},
 		{"capitalized", "Capitalized", regexMismatchError},
 		{"camel case", "camelCase", regexMismatchError},
