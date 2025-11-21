@@ -349,7 +349,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		{"dot-separated", "dotted.name", ""},
 		{"longest valid service account name", strings.Repeat("x", 253), ""},
 		{"too long service account name", strings.Repeat("x", 254), tooLongError},
-		{"no service account name", "", regexMismatchError},
+		{"no service account name", "", ""},
 		{"spaces", "spaces spaces", regexMismatchError},
 		{"capitalized", "Capitalized", regexMismatchError},
 		{"camel case", "camelCase", regexMismatchError},

@@ -668,11 +668,13 @@ spec:
               namespace:
                 description: |-
                   namespace is a reference to a Kubernetes namespace.
-                  This is the namespace in which the provided ServiceAccount must exist.
-                  It also designates the default namespace where namespace-scoped resources
+
+                  This designates the default namespace where namespace-scoped resources
                   for the extension are applied to the cluster.
                   Some extensions may contain namespace-scoped resources to be applied in other namespaces.
                   This namespace must exist.
+
+                  This is also the namespace of the referenced service account.
 
                   namespace is required, immutable, and follows the DNS label standard
                   as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),
@@ -690,8 +692,9 @@ spec:
                 description: |-
                   serviceAccount is a reference to a ServiceAccount used to perform all interactions
                   with the cluster that are required to manage the extension.
+
                   The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-                  The ServiceAccount must exist in the namespace referenced in the spec.
+
                   serviceAccount is required.
                 properties:
                   name:
@@ -699,8 +702,6 @@ spec:
                       name is a required, immutable reference to the name of the ServiceAccount
                       to be used for installation and management of the content for the package
                       specified in the packageName field.
-
-                      This ServiceAccount must exist in the installNamespace.
 
                       name follows the DNS subdomain standard as defined in [RFC 1123].
                       It must contain only lowercase alphanumeric characters,

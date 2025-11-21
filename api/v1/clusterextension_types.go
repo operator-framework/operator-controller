@@ -49,11 +49,18 @@ const (
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
 	// namespace is a reference to a Kubernetes namespace.
-	// This is the namespace in which the provided ServiceAccount must exist.
-	// It also designates the default namespace where namespace-scoped resources
+	//
+	// This designates the default namespace where namespace-scoped resources
 	// for the extension are applied to the cluster.
 	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
 	// This namespace must exist.
+	//
+	// <opcon:standard:description>
+	// This is also the namespace of the referenced service account.
+	// </opcon:standard:description>
+	// <opcon:experimental:description>
+	// This is also the namespace of the referenced service account, if specified.
+	// </opcon:experimental:description>
 	//
 	// namespace is required, immutable, and follows the DNS label standard
 	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),
@@ -69,12 +76,24 @@ type ClusterExtensionSpec struct {
 
 	// serviceAccount is a reference to a ServiceAccount used to perform all interactions
 	// with the cluster that are required to manage the extension.
+	// <opcon:standard:description>
 	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// serviceAccount is required.
 	//
-	// +kubebuilder:validation:Required
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+	// serviceAccount is required.
+	// </opcon:standard:description>
+	//
+	// <opcon:experimental:description>
+	// If serviceAccount is specified, OLM will authenticate as that service account.
+	// Otherwise, operator-controller will authenticate as:
+	//   - User:  "olm:clusterextension:<clusterExtensionName>"
+	//   - Group: "olm:clusterextensions"
+	//
+	// The authenticated user must be configured with the necessary permissions to perform these interactions.
+	// </opcon:experimental:description>
+	//
+	// <opcon:standard:validation:Required>
+	// <opcon:experimental:validation:Optional>
+	ServiceAccount ServiceAccountReference `json:"serviceAccount,omitzero"`
 
 	// source is a required field which selects the installation source of content
 	// for this ClusterExtension. Selection is performed by setting the sourceType.
@@ -374,13 +393,11 @@ type CatalogFilter struct {
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
-// ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
+// ServiceAccountReference identifies the serviceAccount name used to manage a ClusterExtension.
 type ServiceAccountReference struct {
 	// name is a required, immutable reference to the name of the ServiceAccount
 	// to be used for installation and management of the content for the package
 	// specified in the packageName field.
-	//
-	// This ServiceAccount must exist in the installNamespace.
 	//
 	// name follows the DNS subdomain standard as defined in [RFC 1123].
 	// It must contain only lowercase alphanumeric characters,
@@ -404,7 +421,7 @@ type ServiceAccountReference struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="name must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
 	// +kubebuilder:validation:Required
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 }
 
 // PreflightConfig holds the configuration for the preflight checks.  If used, at least one preflight check must be non-nil.
