@@ -36,6 +36,7 @@ import (
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -671,7 +672,15 @@ func setupHelm(
 	// determine if PreAuthorizer should be enabled based on feature gate
 	var preAuth authorization.PreAuthorizer
 	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient())
+		preAuth = authorization.NewRBACPreAuthorizer(mgr.GetClient(), func(ext *ocv1.ClusterExtension) (*user.DefaultInfo, error) {
+			if ext.Spec.ServiceAccount.Name == "" && features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions) {
+				syntheticConfig := authentication.SyntheticImpersonationConfig(*ext)
+				return &user.DefaultInfo{Name: syntheticConfig.UserName, Groups: syntheticConfig.Groups}, nil
+			} else if ext.Spec.ServiceAccount.Name == "" || ext.Spec.Namespace == "" {
+				return nil, errors.New("service account name and namespace must be specified")
+			}
+			return &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}, nil
+		})
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())

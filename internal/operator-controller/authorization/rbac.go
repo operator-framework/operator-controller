@@ -55,13 +55,17 @@ var namespacedCollectionVerbs = []string{"create"}
 var clusterCollectionVerbs = []string{"list", "watch"}
 
 type rbacPreAuthorizer struct {
+	getUserInfo  userInfoMapper
 	authorizer   authorizer.Authorizer
 	ruleResolver validation.AuthorizationRuleResolver
 	restMapper   meta.RESTMapper
 }
 
-func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
+type userInfoMapper func(extension *ocv1.ClusterExtension) (*user.DefaultInfo, error)
+
+func NewRBACPreAuthorizer(cl client.Client, getUserInfo userInfoMapper) PreAuthorizer {
 	return &rbacPreAuthorizer{
+		getUserInfo:  getUserInfo,
 		authorizer:   newRBACAuthorizer(cl),
 		ruleResolver: newRBACRulesResolver(cl),
 		restMapper:   cl.RESTMapper(),
@@ -84,7 +88,11 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 	if err != nil {
 		return nil, err
 	}
-	manifestManager := &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}
+
+	manifestManager, err := a.getUserInfo(ext)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user info mapping from clusterextension: %v", err)
+	}
 	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(manifestManager, ext)
 
 	var preAuthEvaluationErrors []error

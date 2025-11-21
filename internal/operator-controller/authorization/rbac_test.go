@@ -414,10 +414,14 @@ func setupFakeClient(role client.Object) client.Client {
 	return fakeClientBuilder.Build()
 }
 
+func saInfo(ext *ocv1.ClusterExtension) (*user.DefaultInfo, error) {
+	return &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}, nil
+}
+
 func TestPreAuthorize_Success(t *testing.T) {
 	t.Run("preauthorize succeeds with no missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(privilegedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, saInfo)
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
@@ -427,7 +431,7 @@ func TestPreAuthorize_Success(t *testing.T) {
 func TestPreAuthorize_MissingRBAC(t *testing.T) {
 	t.Run("preauthorize fails and finds missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(limitedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, saInfo)
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, expectedSingleNamespaceMissingRules, missingRules)
@@ -437,7 +441,7 @@ func TestPreAuthorize_MissingRBAC(t *testing.T) {
 func TestPreAuthorizeMultiNamespace_MissingRBAC(t *testing.T) {
 	t.Run("preauthorize fails and finds missing rbac rules in multiple namespaces", func(t *testing.T) {
 		fakeClient := setupFakeClient(limitedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, saInfo)
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifestMultiNamespace))
 		require.NoError(t, err)
 		require.Equal(t, expectedMultiNamespaceMissingRules, missingRules)
@@ -447,7 +451,7 @@ func TestPreAuthorizeMultiNamespace_MissingRBAC(t *testing.T) {
 func TestPreAuthorize_CheckEscalation(t *testing.T) {
 	t.Run("preauthorize succeeds with no missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(escalatingClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, saInfo)
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)

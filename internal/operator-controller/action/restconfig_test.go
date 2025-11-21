@@ -98,22 +98,10 @@ func Test_SyntheticUserRestConfigMapper_Fails(t *testing.T) {
 		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
-			tokenGetter := &authentication.TokenGetter{}
-			saMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
+			saMapper := action.SyntheticUserRestConfigMapper(nil)
 			actualCfg, err := saMapper(context.Background(), tc.obj, tc.cfg)
-			if tc.expectedError != nil {
-				require.Nil(t, actualCfg)
-				require.EqualError(t, err, tc.expectedError.Error())
-			} else {
-				require.NoError(t, err)
-				transport, err := rest.TransportFor(actualCfg)
-				require.NoError(t, err)
-				require.NotNil(t, transport)
-				tokenInjectionRoundTripper, ok := transport.(*authentication.TokenInjectingRoundTripper)
-				require.True(t, ok)
-				require.Equal(t, tokenGetter, tokenInjectionRoundTripper.TokenGetter)
-				require.Equal(t, types.NamespacedName{Name: "my-service-account", Namespace: "my-namespace"}, tokenInjectionRoundTripper.Key)
-			}
+			require.Nil(t, actualCfg)
+			require.EqualError(t, err, tc.expectedError.Error())
 		})
 	}
 }
@@ -150,9 +138,6 @@ func Test_SyntheticUserRestConfigMapper_UsesSyntheticAuthMapper(t *testing.T) {
 			Name: "my-clusterextension",
 		},
 		Spec: ocv1.ClusterExtensionSpec{
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "olm.synthetic-user",
-			},
 			Namespace: "my-namespace",
 		},
 	}

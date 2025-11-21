@@ -17,6 +17,8 @@ options:
         - SingleOwnNamespaceInstallSupport
         - PreflightPermissions
         - HelmChartSupport
+        - BoxcutterRuntime
+        - SyntheticPermissions
       disabled:
         - WebhookProviderOpenshiftServiceCA
   catalogd:

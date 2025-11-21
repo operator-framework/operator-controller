@@ -13,6 +13,7 @@ options:
         - PreflightPermissions
         - HelmChartSupport
         - BoxcutterRuntime
+        - SyntheticPermissions
       disabled:
         - WebhookProviderOpenshiftServiceCA
 # List of enabled experimental features for catalogd
