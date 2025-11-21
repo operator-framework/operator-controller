@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -136,7 +137,7 @@ func runGenerator(args ...string) {
 				if channel == StandardChannel && strings.Contains(version.Name, "alpha") {
 					channelCrd.Spec.Versions[i].Served = false
 				}
-				version.Schema.OpenAPIV3Schema.Properties = opconTweaksMap(channel, version.Schema.OpenAPIV3Schema.Properties)
+				version.Schema.OpenAPIV3Schema.Properties = opconTweaksMap(channel, version.Schema.OpenAPIV3Schema)
 			}
 
 			conv, err := crd.AsVersion(*channelCrd, apiextensionsv1.SchemeGroupVersion)
@@ -179,10 +180,11 @@ func runGenerator(args ...string) {
 	}
 }
 
-func opconTweaksMap(channel string, props map[string]apiextensionsv1.JSONSchemaProps) map[string]apiextensionsv1.JSONSchemaProps {
+func opconTweaksMap(channel string, obj *apiextensionsv1.JSONSchemaProps) map[string]apiextensionsv1.JSONSchemaProps {
+	props := obj.Properties
 	for name := range props {
 		jsonProps := props[name]
-		p := opconTweaks(channel, name, jsonProps)
+		p := opconTweaks(channel, name, obj, jsonProps)
 		if p == nil {
 			delete(props, name)
 		} else {
@@ -194,7 +196,7 @@ func opconTweaksMap(channel string, props map[string]apiextensionsv1.JSONSchemaP
 
 // Custom Opcon API Tweaks for tags prefixed with `<opcon:` that get past
 // the limitations of Kubebuilder annotations.
-func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSchemaProps) *apiextensionsv1.JSONSchemaProps {
+func opconTweaks(channel string, name string, parent *apiextensionsv1.JSONSchemaProps, jsonProps apiextensionsv1.JSONSchemaProps) *apiextensionsv1.JSONSchemaProps {
 	if channel == StandardChannel {
 		if strings.Contains(jsonProps.Description, "<opcon:experimental>") {
 			return nil
@@ -210,6 +212,24 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 	numExpressions := strings.Count(jsonProps.Description, validationPrefix)
 	numValid := 0
 	if numExpressions > 0 {
+		requiredRe := regexp.MustCompile(validationPrefix + "Required>")
+		requiredMatches := requiredRe.FindAllStringSubmatch(jsonProps.Description, -1)
+		for range requiredMatches {
+			numValid += 1
+			if !slices.Contains(parent.Required, name) {
+				parent.Required = append(parent.Required, name)
+			}
+			slices.Sort(parent.Required)
+		}
+
+		optionalRe := regexp.MustCompile(validationPrefix + "Optional>")
+		optionalMatches := optionalRe.FindAllStringSubmatch(jsonProps.Description, -1)
+		for range optionalMatches {
+			numValid += 1
+			parent.Required = slices.DeleteFunc(parent.Required, func(s string) bool { return s == name })
+			slices.Sort(parent.Required)
+		}
+
 		enumRe := regexp.MustCompile(validationPrefix + "Enum=([A-Za-z;]*)>")
 		enumMatches := enumRe.FindAllStringSubmatch(jsonProps.Description, 64)
 		for _, enumMatch := range enumMatches {
@@ -246,19 +266,34 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 	jsonProps.Description = formatDescription(jsonProps.Description, channel, name)
 
 	if len(jsonProps.Properties) > 0 {
-		jsonProps.Properties = opconTweaksMap(channel, jsonProps.Properties)
+		jsonProps.Properties = opconTweaksMap(channel, &jsonProps)
 	} else if jsonProps.Items != nil && jsonProps.Items.Schema != nil {
-		jsonProps.Items.Schema = opconTweaks(channel, name, *jsonProps.Items.Schema)
+		jsonProps.Items.Schema = opconTweaks(channel, name, &jsonProps, *jsonProps.Items.Schema)
 	}
 
 	return &jsonProps
 }
 
 func formatDescription(description string, channel string, name string) string {
-	startTag := "<opcon:experimental:description>"
-	endTag := "</opcon:experimental:description>"
-	if channel == StandardChannel && strings.Contains(description, startTag) {
-		regexPattern := `\n*` + regexp.QuoteMeta(startTag) + `(?s:(.*?))` + regexp.QuoteMeta(endTag) + `\n*`
+	startTagStandard := "<opcon:standard:description>"
+	endTagStandard := "</opcon:standard:description>"
+	if channel == ExperimentalChannel && strings.Contains(description, startTagStandard) {
+		regexPattern := `\n*` + regexp.QuoteMeta(startTagStandard) + `(?s:(.*?))` + regexp.QuoteMeta(endTagStandard) + `\n*`
+		re := regexp.MustCompile(regexPattern)
+		match := re.FindStringSubmatch(description)
+		if len(match) != 2 {
+			log.Fatalf("Invalid <opcon:standard:description> tag for %s", name)
+		}
+		description = re.ReplaceAllString(description, "\n\n")
+	} else {
+		description = strings.ReplaceAll(description, startTagStandard, "")
+		description = strings.ReplaceAll(description, endTagStandard, "")
+	}
+
+	startTagExperimental := "<opcon:experimental:description>"
+	endTagExperimental := "</opcon:experimental:description>"
+	if channel == StandardChannel && strings.Contains(description, startTagExperimental) {
+		regexPattern := `\n*` + regexp.QuoteMeta(startTagExperimental) + `(?s:(.*?))` + regexp.QuoteMeta(endTagExperimental) + `\n*`
 		re := regexp.MustCompile(regexPattern)
 		match := re.FindStringSubmatch(description)
 		if len(match) != 2 {
@@ -266,16 +301,16 @@ func formatDescription(description string, channel string, name string) string {
 		}
 		description = re.ReplaceAllString(description, "\n\n")
 	} else {
-		description = strings.ReplaceAll(description, startTag, "")
-		description = strings.ReplaceAll(description, endTag, "")
+		description = strings.ReplaceAll(description, startTagExperimental, "")
+		description = strings.ReplaceAll(description, endTagExperimental, "")
 	}
 
 	// Comments within "opcon:util:excludeFromCRD" tag are not included in the generated CRD and all trailing \n operators before
 	// and after the tags are removed and replaced with three \n operators.
-	startTag = "<opcon:util:excludeFromCRD>"
-	endTag = "</opcon:util:excludeFromCRD>"
-	if strings.Contains(description, startTag) {
-		regexPattern := `\n*` + regexp.QuoteMeta(startTag) + `(?s:(.*?))` + regexp.QuoteMeta(endTag) + `\n*`
+	startTagExclude := "<opcon:util:excludeFromCRD>"
+	endTagExclude := "</opcon:util:excludeFromCRD>"
+	if strings.Contains(description, startTagExclude) {
+		regexPattern := `\n*` + regexp.QuoteMeta(startTagExclude) + `(?s:(.*?))` + regexp.QuoteMeta(endTagExclude) + `\n*`
 		re := regexp.MustCompile(regexPattern)
 		match := re.FindStringSubmatch(description)
 		if len(match) != 2 {
