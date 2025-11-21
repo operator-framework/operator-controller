@@ -4,8 +4,6 @@ metadata:
   name: argocd-operator
 spec:
   namespace: argocd-system
-  serviceAccount:
-    name: "olm.synthetic-user"
   source:
     sourceType: Catalog
     catalog:

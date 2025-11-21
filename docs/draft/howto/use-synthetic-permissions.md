@@ -8,7 +8,7 @@ Synthetic user permissions enables fine-grained configuration of ClusterExtensio
 User can not only configure RBAC permissions governing the management across all ClusterExtensions, but also on a 
 case-by-case basis.
 
-### Run OLM v1with Experimental Features Enabled
+### Run OLM v1 with Experimental Features Enabled
 
 ```terminal title=Enable Experimental Features in a New Kind Cluster
 make run-experimental
@@ -20,10 +20,11 @@ kubectl rollout status -n olmv1-system deployment/operator-controller-controller
 
 ### How does it work?
 
-When managing a ClusterExtension, OLM will assume the identity of user "olm:clusterextensions:<clusterextension-name>"
-and group "olm:clusterextensions" limiting Kubernetes API access scope to those defined for this user and group. These
-users and group do not exist beyond being defined in Cluster/RoleBinding(s) and can only be impersonated by clients with
- `impersonate` verb permissions on the `users` and `groups` resources.
+When managing a ClusterExtension that does not specify a service account, OLM will assume the identity of user
+"olm:clusterextension:<clusterextension-name>" and group "olm:clusterextensions" limiting Kubernetes API access scope
+to those defined for this user and group. These users and group do not exist beyond being defined in
+Cluster/RoleBinding(s) and can only be impersonated by clients with `impersonate` verb permissions on the `users` and
+`groups` resources.
 
 ### Demo
 
@@ -50,7 +51,7 @@ subjects:
   name: "olm:clusterextensions"
 ```
 
-##### Scoped olm:clusterextension group + Added perms on specific extensions
+##### Scoped olm:clusterextensions group + Added perms on specific extensions
 
 Give ClusterExtension management group broad permissions to manage ClusterExtensions denying potentially dangerous
 permissions such as being able to read cluster wide secrets:

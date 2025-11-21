@@ -20,7 +20,7 @@ bat --style=plain ${DEMO_RESOURCE_DIR}/synthetic-user-perms/cegroup-admin-bindin
 # apply cluster role binding
 kubectl apply -f ${DEMO_RESOURCE_DIR}/synthetic-user-perms/cegroup-admin-binding.yaml
 
-# install cluster extension - for now .spec.serviceAccount = "olm.synthetic-user"
+# install cluster extension without specifying .spec.serviceAccount
 bat --style=plain ${DEMO_RESOURCE_DIR}/synthetic-user-perms/argocd-clusterextension.yaml
 
 # apply cluster extension

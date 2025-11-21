@@ -33,12 +33,6 @@ saving it to a local file and then running `kubectl apply -f FILENAME`:
     metadata:
       name: argocd
     ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: argocd-installer
-      namespace: argocd
-    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
