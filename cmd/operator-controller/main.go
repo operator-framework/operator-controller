@@ -644,8 +644,7 @@ func setupHelm(
 	if err != nil {
 		return fmt.Errorf("unable to create core client: %w", err)
 	}
-	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
-	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
+	clientRestConfigMapper := action.ServiceAccountRestConfigMapper()
 	if features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions) {
 		clientRestConfigMapper = action.SyntheticUserRestConfigMapper(clientRestConfigMapper)
 	}
@@ -679,7 +678,8 @@ func setupHelm(
 			} else if ext.Spec.ServiceAccount.Name == "" || ext.Spec.Namespace == "" {
 				return nil, errors.New("service account name and namespace must be specified")
 			}
-			return &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}, nil
+			saConfig := authentication.ServiceAccountImpersonationConfig(*ext)
+			return &user.DefaultInfo{Name: saConfig.UserName, Groups: saConfig.Groups}, nil
 		})
 	}
 

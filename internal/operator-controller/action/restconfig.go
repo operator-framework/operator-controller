@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,25 +33,19 @@ func SyntheticUserRestConfigMapper(defaultAuthMapper func(ctx context.Context, o
 }
 
 // ServiceAccountRestConfigMapper returns an AuthConfigMapper scoped to the service account defined in o, which is expected to
-// be a ClusterExtension
-func ServiceAccountRestConfigMapper(tokenGetter *authentication.TokenGetter) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
+// be a ClusterExtension. It uses impersonation, which allows authentication as a ServiceAccount without requiring the
+// ServiceAccount to actually exist or having to manage tokens.
+func ServiceAccountRestConfigMapper() func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 		cExt, err := validate(o, c)
 		if err != nil {
 			return nil, err
 		}
-		saConfig := rest.AnonymousClientConfig(c)
-		saConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
-			return &authentication.TokenInjectingRoundTripper{
-				Tripper:     rt,
-				TokenGetter: tokenGetter,
-				Key: types.NamespacedName{
-					Name:      cExt.Spec.ServiceAccount.Name,
-					Namespace: cExt.Spec.Namespace,
-				},
-			}
+		cc := rest.CopyConfig(c)
+		cc.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+			return transport.NewImpersonatingRoundTripper(authentication.ServiceAccountImpersonationConfig(*cExt), rt)
 		})
-		return saConfig, nil
+		return cc, nil
 	}
 }
 

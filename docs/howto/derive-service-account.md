@@ -300,12 +300,20 @@ Therefore, the following permissions must be given to the installer service acco
 Once the installer service account required cluster-scoped and namespace-scoped permissions have been collected:
 
 1. Create the installation namespace
-2. Create the installer `ServiceAccount`
-3. Create the installer `ClusterRole`
-4. Create the `ClusterRoleBinding` between the installer service account and its cluster role
-5. Create the installer `Role`
-6. Create the `RoleBinding` between the installer service account and its role
-7. Create the `ClusterExtension`
+2. Create the installer `ClusterRole`
+3. Create the `ClusterRoleBinding` between the installer service account and its cluster role
+4. Create the installer `Role`
+5. Create the `RoleBinding` between the installer service account and its role
+6. Create the `ClusterExtension`
+
+!!! important "Do Not Create the ServiceAccount Resource"
+    OLM v1 uses Kubernetes impersonation and does not require the ServiceAccount to exist as an actual resource.
+    For security reasons, you should **NOT** create a ServiceAccount resource for the installer,
+    as it would be highly privileged and could be mounted by other pods in the namespace.
+
+    Instead, only create the RBAC resources (ClusterRole, ClusterRoleBinding, Role, RoleBinding)
+    that reference the ServiceAccount name. OLM will impersonate that ServiceAccount and be subject
+    to these RBAC permissions without the ServiceAccount resource actually existing in the cluster.
 
 A manifest with the full set of resources can be found [here](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1_clusterextension.yaml).
 

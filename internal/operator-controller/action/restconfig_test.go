@@ -9,13 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/action"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 )
 
 func Test_ServiceAccountRestConfigMapper(t *testing.T) {
@@ -55,21 +53,21 @@ func Test_ServiceAccountRestConfigMapper(t *testing.T) {
 		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
-			tokenGetter := &authentication.TokenGetter{}
-			saMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
+			saMapper := action.ServiceAccountRestConfigMapper()
 			actualCfg, err := saMapper(context.Background(), tc.obj, tc.cfg)
 			if tc.expectedError != nil {
 				require.Nil(t, actualCfg)
 				require.EqualError(t, err, tc.expectedError.Error())
 			} else {
 				require.NoError(t, err)
-				transport, err := rest.TransportFor(actualCfg)
-				require.NoError(t, err)
-				require.NotNil(t, transport)
-				tokenInjectionRoundTripper, ok := transport.(*authentication.TokenInjectingRoundTripper)
-				require.True(t, ok)
-				require.Equal(t, tokenGetter, tokenInjectionRoundTripper.TokenGetter)
-				require.Equal(t, types.NamespacedName{Name: "my-service-account", Namespace: "my-namespace"}, tokenInjectionRoundTripper.Key)
+				require.NotNil(t, actualCfg)
+
+				// test that the impersonation headers are appropriately injected into the request
+				// nolint:bodyclose
+				_, _ = actualCfg.WrapTransport(fakeRoundTripper(func(req *http.Request) (*http.Response, error) {
+					require.Equal(t, "system:serviceaccount:my-namespace:my-service-account", req.Header.Get("Impersonate-User"))
+					return &http.Response{}, nil
+				})).RoundTrip(&http.Request{})
 			}
 		})
 	}

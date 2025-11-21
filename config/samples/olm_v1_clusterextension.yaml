@@ -4,11 +4,13 @@ kind: Namespace
 metadata:
   name: argocd
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: argocd-installer
-  namespace: argocd
+# NOTE: The ServiceAccount resource is intentionally NOT created here.
+# OLM v1 uses Kubernetes impersonation and does not require the ServiceAccount to exist.
+# For security reasons, you should NOT create a ServiceAccount resource for the installer,
+# as it would be highly privileged and could be mounted by other pods in the namespace.
+# Instead, only the RBAC resources (ClusterRole, ClusterRoleBinding, Role, RoleBinding)
+# are created, which reference the ServiceAccount name "argocd-installer".
+# OLM will impersonate that ServiceAccount and be subject to these RBAC permissions.
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

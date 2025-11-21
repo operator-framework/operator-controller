@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 )
 
 var (
@@ -415,7 +416,7 @@ func setupFakeClient(role client.Object) client.Client {
 }
 
 func saInfo(ext *ocv1.ClusterExtension) (*user.DefaultInfo, error) {
-	return &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}, nil
+	return &user.DefaultInfo{Name: authentication.ServiceAccountImpersonationConfig(*ext).UserName}, nil
 }
 
 func TestPreAuthorize_Success(t *testing.T) {

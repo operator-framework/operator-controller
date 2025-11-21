@@ -49,7 +49,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
@@ -218,12 +217,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	revisionStates, err := r.RevisionStatesGetter.GetRevisionStates(ctx, ext)
 	if err != nil {
 		setInstallStatus(ext, nil)
-		var saerr *authentication.ServiceAccountNotFoundError
-		if errors.As(err, &saerr) {
-			setInstalledStatusConditionUnknown(ext, saerr.Error())
-			setStatusProgressing(ext, errors.New("installation cannot proceed due to missing ServiceAccount"))
-			return ctrl.Result{}, err
-		}
 		setInstalledStatusConditionUnknown(ext, err.Error())
 		setStatusProgressing(ext, errors.New("retrying to get installed bundle"))
 		return ctrl.Result{}, err

@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
@@ -343,61 +342,6 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 	require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
 	require.Contains(t, progressingCond.Message, fmt.Sprintf("for resolved bundle %q with version %q", expectedBundleMetadata.Name, expectedBundleMetadata.Version))
 
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
-}
-
-func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
-	reconciler.RevisionStatesGetter = &MockRevisionStatesGetter{
-		Err: &authentication.ServiceAccountNotFoundError{
-			ServiceAccountName:      "missing-sa",
-			ServiceAccountNamespace: "default",
-		}}
-
-	ctx := context.Background()
-	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
-
-	t.Log("Given a cluster extension with a missing service account")
-	clusterExtension := &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec: ocv1.ClusterExtensionSpec{
-			Source: ocv1.SourceConfig{
-				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
-					PackageName: "test-package",
-				},
-			},
-			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "missing-sa",
-			},
-		},
-	}
-
-	require.NoError(t, cl.Create(ctx, clusterExtension))
-
-	t.Log("When reconciling the cluster extension")
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-
-	require.Equal(t, ctrl.Result{}, res)
-	require.Error(t, err)
-	var saErr *authentication.ServiceAccountNotFoundError
-	require.ErrorAs(t, err, &saErr)
-	t.Log("By fetching updated cluster extension after reconcile")
-	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
-
-	t.Log("By checking the status conditions")
-	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
-	require.NotNil(t, installedCond)
-	require.Equal(t, metav1.ConditionUnknown, installedCond.Status)
-	require.Contains(t, installedCond.Message, fmt.Sprintf("service account %q not found in namespace %q: unable to authenticate with the Kubernetes cluster.",
-		"missing-sa", "default"))
-
-	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
-	require.NotNil(t, progressingCond)
-	require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
-	require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
-	require.Contains(t, progressingCond.Message, "installation cannot proceed due to missing ServiceAccount")
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 }
 

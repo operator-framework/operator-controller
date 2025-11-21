@@ -12,9 +12,9 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - serviceaccounts/token
+      - serviceaccounts
     verbs:
-      - create
+      - impersonate
   {{- if (has "SyntheticPermissions" .Values.options.operatorController.features.enabled) }}
   - apiGroups:
       - ""
