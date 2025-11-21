@@ -33,6 +33,14 @@ A semi-colon separated list of enumerations, similar to the `+kubebuilder:valida
 
 An XValidation scheme, similar to the `+kubebuilder:validation:XValidation` scheme, but more limited.
 
+* `Optional`
+
+Indicating that this field should not be listed as required in its parent.
+
+* `Required`
+
+Indicating that this field should be listed as required in its parent.
+
 ## Experimental Description
 
 * Start Tag: `<opcon:experimental:description>`
@@ -43,6 +51,18 @@ All text between the tags is included in the experimental CRD, but removed from 
 
 This is only useful if the field is included in the standard CRD, but there's additional meaning in
 the experimental CRD when feature gates are enabled.
+
+## Standard Description
+
+* Start Tag: `<opcon:standard:description>`
+* End Tag: `</opcon:standard:description>`
+
+Descriptive text that is only included as part of the field description within the standard CRD.
+All text between the tags is included in the standard CRD, but removed from the experimental CRD.
+
+This is useful if the field is included in the standard CRD and has differing meaning than when the
+field is used in the experimental CRD when feature gates are enabled.
+
 
 ## Exclude from CRD Description
 
