@@ -312,8 +312,12 @@ func TestOpconTweaksMapRequiredList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, required := opconTweaksMap(tt.channel, tt.props, tt.existingRequired)
-			require.ElementsMatch(t, tt.expectedRequired, required)
+			parentSchema := &apiextensionsv1.JSONSchemaProps{
+				Properties: tt.props,
+				Required:   tt.existingRequired,
+			}
+			opconTweaksMap(tt.channel, parentSchema)
+			require.ElementsMatch(t, tt.expectedRequired, parentSchema.Required)
 		})
 	}
 }
