@@ -137,7 +137,7 @@ func runGenerator(args ...string) {
 				if channel == StandardChannel && strings.Contains(version.Name, "alpha") {
 					channelCrd.Spec.Versions[i].Served = false
 				}
-				version.Schema.OpenAPIV3Schema.Properties, version.Schema.OpenAPIV3Schema.Required = opconTweaksMap(channel, version.Schema.OpenAPIV3Schema.Properties, version.Schema.OpenAPIV3Schema.Required)
+				channelCrd.Spec.Versions[i].Schema.OpenAPIV3Schema.Properties = opconTweaksMap(channel, channelCrd.Spec.Versions[i].Schema.OpenAPIV3Schema)
 			}
 
 			conv, err := crd.AsVersion(*channelCrd, apiextensionsv1.SchemeGroupVersion)
@@ -180,10 +180,10 @@ func runGenerator(args ...string) {
 	}
 }
 
-// Apply Opcon specific tweaks to all properties in a map, and return a list of required fields according to opcon tags.
-// For opcon validation optional/required tags, the required list is updated accordingly.
-func opconTweaksMap(channel string, props map[string]apiextensionsv1.JSONSchemaProps, existingRequired []string) (map[string]apiextensionsv1.JSONSchemaProps, []string) {
-	newRequired := slices.Clone(existingRequired)
+// Apply Opcon specific tweaks to all properties in a map, and update the parent schema's required list according to opcon tags.
+// For opcon validation optional/required tags, the parent schema's required list is mutated directly.
+func opconTweaksMap(channel string, parentSchema *apiextensionsv1.JSONSchemaProps) map[string]apiextensionsv1.JSONSchemaProps {
+	props := parentSchema.Properties
 
 	for name := range props {
 		jsonProps := props[name]
@@ -195,17 +195,17 @@ func opconTweaksMap(channel string, props map[string]apiextensionsv1.JSONSchemaP
 			// Update required list based on tag
 			switch reqStatus {
 			case statusRequired:
-				if !slices.Contains(newRequired, name) {
-					newRequired = append(newRequired, name)
+				if !slices.Contains(parentSchema.Required, name) {
+					parentSchema.Required = append(parentSchema.Required, name)
 				}
 			case statusOptional:
-				newRequired = slices.DeleteFunc(newRequired, func(s string) bool { return s == name })
+				parentSchema.Required = slices.DeleteFunc(parentSchema.Required, func(s string) bool { return s == name })
 			default:
 				// "" (unspecified) means keep existing status
 			}
 		}
 	}
-	return props, newRequired
+	return props
 }
 
 // Custom Opcon API Tweaks for tags prefixed with `<opcon:` that get past
@@ -288,7 +288,7 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 	jsonProps.Description = formatDescription(jsonProps.Description, channel, name)
 
 	if len(jsonProps.Properties) > 0 {
-		jsonProps.Properties, jsonProps.Required = opconTweaksMap(channel, jsonProps.Properties, jsonProps.Required)
+		jsonProps.Properties = opconTweaksMap(channel, &jsonProps)
 	} else if jsonProps.Items != nil && jsonProps.Items.Schema != nil {
 		jsonProps.Items.Schema, _ = opconTweaks(channel, name, *jsonProps.Items.Schema)
 	}
@@ -299,24 +299,25 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 func formatDescription(description string, channel string, name string) string {
 	tagset := []struct {
 		channel string
-		start   string
-		end     string
+		tag     string
 	}{
-		{channel: ExperimentalChannel, start: "<opcon:standard:description>", end: "</opcon:standard:description>"},
-		{channel: StandardChannel, start: "<opcon:experimental:description>", end: "</opcon:experimental:description>"},
+		{channel: ExperimentalChannel, tag: "opcon:standard:description"},
+		{channel: StandardChannel, tag: "opcon:experimental:description"},
 	}
 	for _, ts := range tagset {
-		if channel == ts.channel && strings.Contains(description, ts.start) {
-			regexPattern := `\n*` + regexp.QuoteMeta(ts.start) + `(?s:(.*?))` + regexp.QuoteMeta(ts.end) + `\n*`
+		startTag := fmt.Sprintf("<%s>", ts.tag)
+		endTag := fmt.Sprintf("</%s>", ts.tag)
+		if channel == ts.channel && strings.Contains(description, ts.tag) {
+			regexPattern := `\n*` + regexp.QuoteMeta(startTag) + `(?s:(.*?))` + regexp.QuoteMeta(endTag) + `\n*`
 			re := regexp.MustCompile(regexPattern)
 			match := re.FindStringSubmatch(description)
 			if len(match) != 2 {
-				log.Fatalf("Invalid <opcon:experimental:description> tag for %s", name)
+				log.Fatalf("Invalid %s tag for %s", startTag, name)
 			}
 			description = re.ReplaceAllString(description, "\n\n")
 		} else {
-			description = strings.ReplaceAll(description, ts.start, "")
-			description = strings.ReplaceAll(description, ts.end, "")
+			description = strings.ReplaceAll(description, startTag, "")
+			description = strings.ReplaceAll(description, endTag, "")
 		}
 	}
 
