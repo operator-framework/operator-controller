@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -48,6 +49,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	k8sutil "github.com/operator-framework/operator-controller/internal/shared/util/k8s"
 )
 
 const (
@@ -135,25 +137,28 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	updateFinalizers := !equality.Semantic.DeepEqual(existingExt.Finalizers, reconciledExt.Finalizers)
 
 	// If any unexpected fields have changed, panic before updating the resource
-	unexpectedFieldsChanged := checkForUnexpectedClusterExtensionFieldChange(*existingExt, *reconciledExt)
+	unexpectedFieldsChanged := k8sutil.CheckForUnexpectedFieldChange(existingExt, reconciledExt)
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
 	}
 
 	// Save the finalizers off to the side. If we update the status, the reconciledExt will be updated
 	// to contain the new state of the ClusterExtension, which contains the status update, but (critically)
-	// does not contain the finalizers. After the status update, we need to re-add the finalizers to the
-	// reconciledExt before updating the object.
+	// does not contain the finalizers. After the status update, we will use the saved finalizers in the
+	// CreateOrPatch()
 	finalizers := reconciledExt.Finalizers
 	if updateStatus {
 		if err := r.Client.Status().Update(ctx, reconciledExt); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating status: %v", err))
 		}
 	}
-	reconciledExt.Finalizers = finalizers
 
 	if updateFinalizers {
-		if err := r.Update(ctx, reconciledExt); err != nil {
+		// Use CreateOrPatch to update finalizers on the server
+		if _, err := controllerutil.CreateOrPatch(ctx, r.Client, reconciledExt, func() error {
+			reconciledExt.Finalizers = finalizers
+			return nil
+		}); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
@@ -177,13 +182,6 @@ func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.C
 			})
 		}
 	}
-}
-
-// Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedClusterExtensionFieldChange(a, b ocv1.ClusterExtension) bool {
-	a.Status, b.Status = ocv1.ClusterExtensionStatus{}, ocv1.ClusterExtensionStatus{}
-	a.Finalizers, b.Finalizers = []string{}, []string{}
-	return !equality.Semantic.DeepEqual(a, b)
 }
 
 // SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
