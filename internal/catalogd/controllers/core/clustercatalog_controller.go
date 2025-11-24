@@ -41,6 +41,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
+	k8sutil "github.com/operator-framework/operator-controller/internal/shared/util/k8s"
 )
 
 const (
@@ -107,7 +108,7 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingCatsrc.Status, reconciledCatsrc.Status)
 	updateFinalizers := !equality.Semantic.DeepEqual(existingCatsrc.Finalizers, reconciledCatsrc.Finalizers)
-	unexpectedFieldsChanged := checkForUnexpectedFieldChange(existingCatsrc, *reconciledCatsrc)
+	unexpectedFieldsChanged := k8sutil.CheckForUnexpectedFieldChange(&existingCatsrc, reconciledCatsrc)
 
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
@@ -115,8 +116,8 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	// Save the finalizers off to the side. If we update the status, the reconciledCatsrc will be updated
 	// to contain the new state of the ClusterCatalog, which contains the status update, but (critically)
-	// does not contain the finalizers. After the status update, we need to re-add the finalizers to the
-	// reconciledCatsrc before updating the object.
+	// does not contain the finalizers. After the status update, we will use the saved finalizers in the
+	// CreateOrPatch()
 	finalizers := reconciledCatsrc.Finalizers
 
 	if updateStatus {
@@ -125,10 +126,12 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 	}
 
-	reconciledCatsrc.Finalizers = finalizers
-
 	if updateFinalizers {
-		if err := r.Update(ctx, reconciledCatsrc); err != nil {
+		// Use CreateOrPatch to update finalizers on the server
+		if _, err := controllerutil.CreateOrPatch(ctx, r.Client, reconciledCatsrc, func() error {
+			reconciledCatsrc.Finalizers = finalizers
+			return nil
+		}); err != nil {
 			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
@@ -413,13 +416,6 @@ func (r *ClusterCatalogReconciler) needsPoll(lastSuccessfulPoll time.Time, catal
 	// Only poll if the next poll time is in the past.
 	nextPoll := lastSuccessfulPoll.Add(time.Duration(*catalog.Spec.Source.Image.PollIntervalMinutes) * time.Minute)
 	return nextPoll.Before(time.Now())
-}
-
-// Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedFieldChange(a, b ocv1.ClusterCatalog) bool {
-	a.Status, b.Status = ocv1.ClusterCatalogStatus{}, ocv1.ClusterCatalogStatus{}
-	a.Finalizers, b.Finalizers = []string{}, []string{}
-	return !equality.Semantic.DeepEqual(a, b)
 }
 
 type finalizerFunc func(ctx context.Context, obj client.Object) (crfinalizer.Result, error)
