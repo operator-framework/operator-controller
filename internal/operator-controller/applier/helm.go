@@ -21,13 +21,13 @@ import (
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -65,7 +65,7 @@ type Helm struct {
 	HelmReleaseToObjectsConverter HelmReleaseToObjectsConverterInterface
 
 	Manager contentmanager.Manager
-	Watcher crcontroller.Controller
+	Watcher cache.Watcher
 }
 
 // runPreAuthorizationChecks performs pre-authorization checks for a Helm release

@@ -17,12 +17,10 @@ limitations under the License.
 package controllers
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"io/fs"
-	"slices"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -38,7 +36,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -49,12 +46,8 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
-	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 )
 
 const (
@@ -62,18 +55,47 @@ const (
 	ClusterExtensionCleanupContentManagerCacheFinalizer = "olm.operatorframework.io/cleanup-contentmanager-cache"
 )
 
+type reconcileState struct {
+	revisionStates           *RevisionStates
+	resolvedRevisionMetadata *RevisionMetadata
+	imageFS                  fs.FS
+}
+
+// ReconcileStepFunc represents a single step in the ClusterExtension reconciliation process.
+// It takes a context, state and ClusterExtension object as input and returns:
+// - Any error that occurred during reconciliation, which will be returned to the caller
+// - A ctrl.Result that indicates whether reconciliation should complete immediately or be retried later
+type ReconcileStepFunc func(context.Context, *reconcileState, *ocv1.ClusterExtension) (*ctrl.Result, error)
+
+// ReconcileSteps is an ordered collection of reconciliation steps that are executed sequentially.
+// Each step receives the shared state from previous steps, allowing data to flow through the pipeline.
+type ReconcileSteps []ReconcileStepFunc
+
+// Reconcile executes a series of reconciliation steps in sequence for a ClusterExtension.
+// It takes a context and ClusterExtension object as input and executes each step in the ReconcileSteps slice.
+// If any step returns an error, reconciliation stops and the error is returned.
+// If any step returns a non-nil ctrl.Result, reconciliation stops, and that result is returned.
+// If all steps complete successfully, returns an empty ctrl.Result and nil error.
+func (steps *ReconcileSteps) Reconcile(ctx context.Context, ext *ocv1.ClusterExtension) (ctrl.Result, error) {
+	var res *ctrl.Result
+	var err error
+	s := &reconcileState{}
+	for _, step := range *steps {
+		res, err = step(ctx, s, ext)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if res != nil {
+			return *res, nil
+		}
+	}
+	return ctrl.Result{}, nil
+}
+
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
-	Resolver resolve.Resolver
-
-	ImageCache  imageutil.Cache
-	ImagePuller imageutil.Puller
-
-	StorageMigrator      StorageMigrator
-	Applier              Applier
-	RevisionStatesGetter RevisionStatesGetter
-	Finalizers           crfinalizer.Finalizers
+	ReconcileSteps ReconcileSteps
 }
 
 type StorageMigrator interface {
@@ -106,7 +128,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	defer l.Info("reconcile ending")
 
 	reconciledExt := existingExt.DeepCopy()
-	res, reconcileErr := r.reconcile(ctx, reconciledExt)
+	res, reconcileErr := r.ReconcileSteps.Reconcile(ctx, reconciledExt)
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
@@ -162,169 +184,6 @@ func checkForUnexpectedClusterExtensionFieldChange(a, b ocv1.ClusterExtension) b
 	a.Status, b.Status = ocv1.ClusterExtensionStatus{}, ocv1.ClusterExtensionStatus{}
 	a.Finalizers, b.Finalizers = []string{}, []string{}
 	return !equality.Semantic.DeepEqual(a, b)
-}
-
-// Helper function to do the actual reconcile
-//
-// Today we always return ctrl.Result{} and an error.
-// But in the future we might update this function
-// to return different results (e.g. requeue).
-//
-/* The reconcile functions performs the following major tasks:
-1. Resolution: Run the resolution to find the bundle from the catalog which needs to be installed.
-2. Validate: Ensure that the bundle returned from the resolution for install meets our requirements.
-3. Unpack: Unpack the contents from the bundle and store in a localdir in the pod.
-4. Install: The process of installing involves:
-4.1 Converting the CSV in the bundle into a set of plain k8s objects.
-4.2 Generating a chart from k8s objects.
-4.3 Store the release on cluster.
-*/
-//nolint:unparam
-func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.ClusterExtension) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
-
-	l.Info("handling finalizers")
-	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
-	if err != nil {
-		setStatusProgressing(ext, err)
-		return ctrl.Result{}, err
-	}
-	if finalizeResult.Updated || finalizeResult.StatusUpdated {
-		// On create: make sure the finalizer is applied before we do anything
-		// On delete: make sure we do nothing after the finalizer is removed
-		return ctrl.Result{}, nil
-	}
-
-	if ext.GetDeletionTimestamp() != nil {
-		// If we've gotten here, that means the cluster extension is being deleted, we've handled all of
-		// _our_ finalizers (above), but the cluster extension is still present in the cluster, likely
-		// because there are _other_ finalizers that other controllers need to handle, (e.g. the orphan
-		// deletion finalizer).
-		return ctrl.Result{}, nil
-	}
-
-	objLbls := map[string]string{
-		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
-		labels.OwnerNameKey: ext.GetName(),
-	}
-
-	if r.StorageMigrator != nil {
-		if err := r.StorageMigrator.Migrate(ctx, ext, objLbls); err != nil {
-			return ctrl.Result{}, fmt.Errorf("migrating storage: %w", err)
-		}
-	}
-
-	l.Info("getting installed bundle")
-	revisionStates, err := r.RevisionStatesGetter.GetRevisionStates(ctx, ext)
-	if err != nil {
-		setInstallStatus(ext, nil)
-		var saerr *authentication.ServiceAccountNotFoundError
-		if errors.As(err, &saerr) {
-			setInstalledStatusConditionUnknown(ext, saerr.Error())
-			setStatusProgressing(ext, errors.New("installation cannot proceed due to missing ServiceAccount"))
-			return ctrl.Result{}, err
-		}
-		setInstalledStatusConditionUnknown(ext, err.Error())
-		setStatusProgressing(ext, errors.New("retrying to get installed bundle"))
-		return ctrl.Result{}, err
-	}
-
-	var resolvedRevisionMetadata *RevisionMetadata
-	if len(revisionStates.RollingOut) == 0 {
-		l.Info("resolving bundle")
-		var bm *ocv1.BundleMetadata
-		if revisionStates.Installed != nil {
-			bm = &revisionStates.Installed.BundleMetadata
-		}
-		resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolver.Resolve(ctx, ext, bm)
-		if err != nil {
-			// Note: We don't distinguish between resolution-specific errors and generic errors
-			setStatusProgressing(ext, err)
-			setInstalledStatusFromRevisionStates(ext, revisionStates)
-			ensureAllConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
-			return ctrl.Result{}, err
-		}
-
-		// set deprecation status after _successful_ resolution
-		// TODO:
-		//  1. It seems like deprecation status should reflect the currently installed bundle, not the resolved
-		//     bundle. So perhaps we should set package and channel deprecations directly after resolution, but
-		//     defer setting the bundle deprecation until we successfully install the bundle.
-		//  2. If resolution fails because it can't find a bundle, that doesn't mean we wouldn't be able to find
-		//     a deprecation for the ClusterExtension's spec.packageName. Perhaps we should check for a non-nil
-		//     resolvedDeprecation even if resolution returns an error. If present, we can still update some of
-		//     our deprecation status.
-		//       - Open question though: what if different catalogs have different opinions of what's deprecated.
-		//         If we can't resolve a bundle, how do we know which catalog to trust for deprecation information?
-		//         Perhaps if the package shows up in multiple catalogs and deprecations don't match, we can set
-		//         the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
-		//         all catalogs?
-		SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
-		resolvedRevisionMetadata = &RevisionMetadata{
-			Package:        resolvedBundle.Package,
-			Image:          resolvedBundle.Image,
-			BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
-		}
-	} else {
-		resolvedRevisionMetadata = revisionStates.RollingOut[0]
-	}
-
-	l.Info("unpacking resolved bundle")
-	imageFS, _, _, err := r.ImagePuller.Pull(ctx, ext.GetName(), resolvedRevisionMetadata.Image, r.ImageCache)
-	if err != nil {
-		// Wrap the error passed to this with the resolution information until we have successfully
-		// installed since we intend for the progressing condition to replace the resolved condition
-		// and will be removing the .status.resolution field from the ClusterExtension status API
-		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedRevisionMetadata.BundleMetadata, err))
-		setInstalledStatusFromRevisionStates(ext, revisionStates)
-		return ctrl.Result{}, err
-	}
-
-	// The following values will be stored as annotations and not labels
-	revisionAnnotations := map[string]string{
-		labels.BundleNameKey:      resolvedRevisionMetadata.Name,
-		labels.PackageNameKey:     resolvedRevisionMetadata.Package,
-		labels.BundleVersionKey:   resolvedRevisionMetadata.Version,
-		labels.BundleReferenceKey: resolvedRevisionMetadata.Image,
-	}
-
-	l.Info("applying bundle contents")
-	// NOTE: We need to be cautious of eating errors here.
-	// We should always return any error that occurs during an
-	// attempt to apply content to the cluster. Only when there is
-	// a verifiable reason to eat the error (i.e it is recoverable)
-	// should an exception be made.
-	// The following kinds of errors should be returned up the stack
-	// to ensure exponential backoff can occur:
-	//   - Permission errors (it is not possible to watch changes to permissions.
-	//     The only way to eventually recover from permission errors is to keep retrying).
-	rolloutSucceeded, rolloutStatus, err := r.Applier.Apply(ctx, imageFS, ext, objLbls, revisionAnnotations)
-
-	// Set installed status
-	if rolloutSucceeded {
-		revisionStates = &RevisionStates{Installed: resolvedRevisionMetadata}
-	} else if err == nil && revisionStates.Installed == nil && len(revisionStates.RollingOut) == 0 {
-		revisionStates = &RevisionStates{RollingOut: []*RevisionMetadata{resolvedRevisionMetadata}}
-	}
-	setInstalledStatusFromRevisionStates(ext, revisionStates)
-
-	// If there was an error applying the resolved bundle,
-	// report the error via the Progressing condition.
-	if err != nil {
-		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedRevisionMetadata.BundleMetadata, err))
-		return ctrl.Result{}, err
-	} else if !rolloutSucceeded {
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1.TypeProgressing,
-			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonRolloutInProgress,
-			Message:            rolloutStatus,
-			ObservedGeneration: ext.GetGeneration(),
-		})
-	} else {
-		setStatusProgressing(ext, nil)
-	}
-	return ctrl.Result{}, nil
 }
 
 // SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
@@ -519,55 +378,5 @@ func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *o
 			break
 		}
 	}
-	return rs, nil
-}
-
-type BoxcutterRevisionStatesGetter struct {
-	Reader client.Reader
-}
-
-func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
-	// TODO: boxcutter applier has a nearly identical bit of code for listing and sorting revisions
-	//   only difference here is that it sorts in reverse order to start iterating with the most
-	//   recent revisions. We should consolidate to avoid code duplication.
-	existingRevisionList := &ocv1.ClusterExtensionRevisionList{}
-	if err := d.Reader.List(ctx, existingRevisionList, client.MatchingLabels{
-		labels.OwnerNameKey: ext.Name,
-	}); err != nil {
-		return nil, fmt.Errorf("listing revisions: %w", err)
-	}
-	slices.SortFunc(existingRevisionList.Items, func(a, b ocv1.ClusterExtensionRevision) int {
-		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
-	})
-
-	rs := &RevisionStates{}
-	for _, rev := range existingRevisionList.Items {
-		switch rev.Spec.LifecycleState {
-		case ocv1.ClusterExtensionRevisionLifecycleStateActive,
-			ocv1.ClusterExtensionRevisionLifecycleStatePaused:
-		default:
-			// Skip anything not active or paused, which should only be "Archived".
-			continue
-		}
-
-		// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "revisionAnnotations")
-		//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
-		//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
-		rm := &RevisionMetadata{
-			Package: rev.Annotations[labels.PackageNameKey],
-			Image:   rev.Annotations[labels.BundleReferenceKey],
-			BundleMetadata: ocv1.BundleMetadata{
-				Name:    rev.Annotations[labels.BundleNameKey],
-				Version: rev.Annotations[labels.BundleVersionKey],
-			},
-		}
-
-		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
-			rs.Installed = rm
-		} else {
-			rs.RollingOut = append(rs.RollingOut, rm)
-		}
-	}
-
 	return rs, nil
 }

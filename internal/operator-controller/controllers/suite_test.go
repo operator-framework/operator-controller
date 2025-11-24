@@ -32,6 +32,8 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
+	"github.com/operator-framework/operator-controller/internal/shared/util/image"
 	"github.com/operator-framework/operator-controller/test"
 )
 
@@ -76,16 +78,43 @@ func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension
 	return m.installCompleted, m.installStatus, m.err
 }
 
-func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
+type reconcilerOption func(*deps)
+
+type deps struct {
+	RevisionStatesGetter controllers.RevisionStatesGetter
+	Finalizers           crfinalizer.Finalizers
+	Resolver             resolve.Resolver
+	ImagePuller          image.Puller
+	ImageCache           image.Cache
+	Applier              controllers.Applier
+}
+
+func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 
-	reconciler := &controllers.ClusterExtensionReconciler{
-		Client: cl,
+	d := &deps{
 		RevisionStatesGetter: &MockRevisionStatesGetter{
 			RevisionStates: &controllers.RevisionStates{},
 		},
 		Finalizers: crfinalizer.NewFinalizers(),
 	}
+	reconciler := &controllers.ClusterExtensionReconciler{
+		Client: cl,
+	}
+	for _, opt := range opts {
+		opt(d)
+	}
+	reconciler.ReconcileSteps = []controllers.ReconcileStepFunc{controllers.HandleFinalizers(d.Finalizers), controllers.RetrieveRevisionStates(d.RevisionStatesGetter)}
+	if r := d.Resolver; r != nil {
+		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.ResolveBundle(r))
+	}
+	if i := d.ImagePuller; i != nil {
+		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.UnpackBundle(i, d.ImageCache))
+	}
+	if a := d.Applier; a != nil {
+		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.ApplyBundle(a))
+	}
+
 	return cl, reconciler
 }
 
