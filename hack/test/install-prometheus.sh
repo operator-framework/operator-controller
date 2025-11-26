@@ -38,8 +38,11 @@ echo "Patching namespace to ${PROMETHEUS_NAMESPACE}..."
 echo "Applying Prometheus base..."
 kubectl apply -k "$TMPDIR" --server-side
 
+echo "Waiting for Prometheus Operator deployment to become available..."
+kubectl wait --for=condition=Available deployment/prometheus-operator -n "$PROMETHEUS_NAMESPACE" --timeout=180s
+
 echo "Waiting for Prometheus Operator pod to become ready..."
-kubectl wait --for=condition=Ready pod -n "$PROMETHEUS_NAMESPACE" -l app.kubernetes.io/name=prometheus-operator
+kubectl wait --for=condition=Ready pod -n "$PROMETHEUS_NAMESPACE" -l app.kubernetes.io/name=prometheus-operator --timeout=120s
 
 echo "Applying prometheus Helm chart..."
 ${HELM} template prometheus helm/prometheus ${PROMETHEUS_VALUES} | sed "s/cert-git-version/cert-${VERSION}/g" | kubectl apply -f -
