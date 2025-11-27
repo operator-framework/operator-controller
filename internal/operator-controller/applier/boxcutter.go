@@ -266,20 +266,6 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		return fmt.Errorf("getting created revision: %w", err)
 	}
 
-	// Set Available=Unknown so the revision controller will verify cluster state through probes.
-	// During migration, ClusterExtension will briefly show as not installed until verification completes.
-	meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-		Status:             metav1.ConditionUnknown,
-		Reason:             ocv1.ClusterExtensionRevisionReasonMigrated,
-		Message:            "Migrated from Helm storage, awaiting cluster state verification",
-		ObservedGeneration: rev.Generation,
-	})
-
-	if err := m.Client.Status().Update(ctx, rev); err != nil {
-		return fmt.Errorf("updating migrated revision status: %w", err)
-	}
-
 	return nil
 }
 
