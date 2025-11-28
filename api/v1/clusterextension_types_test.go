@@ -1,6 +1,7 @@
 package v1_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -11,6 +12,7 @@ import (
 
 	"golang.org/x/exp/slices" // replace with "slices" in go 1.21
 
+	v1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 )
 
@@ -99,4 +101,63 @@ func parseConstants(prefix string) ([]string, error) {
 		}
 	}
 	return constValues, nil
+}
+
+func TestServiceAccountMarshaling(t *testing.T) {
+	tests := []struct {
+		name          string
+		spec          v1.ClusterExtensionSpec
+		expectField   string
+		unexpectField string
+	}{
+		{
+			name: "ServiceAccount with name is marshaled",
+			spec: v1.ClusterExtensionSpec{
+				Namespace: "test-ns",
+				ServiceAccount: v1.ServiceAccountReference{
+					Name: "test-sa",
+				},
+				Source: v1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &v1.CatalogFilter{
+						PackageName: "test-package",
+					},
+				},
+			},
+			expectField: "serviceAccount",
+		},
+		{
+			name: "ServiceAccount with empty name is omitted",
+			spec: v1.ClusterExtensionSpec{
+				Namespace:      "test-ns",
+				ServiceAccount: v1.ServiceAccountReference{},
+				Source: v1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &v1.CatalogFilter{
+						PackageName: "test-package",
+					},
+				},
+			},
+			unexpectField: "serviceAccount",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := json.Marshal(tt.spec)
+			if err != nil {
+				t.Fatalf("failed to marshal spec: %v", err)
+			}
+
+			jsonStr := string(data)
+
+			if tt.expectField != "" && !strings.Contains(jsonStr, tt.expectField) {
+				t.Errorf("expected field %q to be present in JSON output, got: %s", tt.expectField, jsonStr)
+			}
+
+			if tt.unexpectField != "" && strings.Contains(jsonStr, tt.unexpectField) {
+				t.Errorf("expected field %q to be omitted from JSON output, got: %s", tt.unexpectField, jsonStr)
+			}
+		})
+	}
 }

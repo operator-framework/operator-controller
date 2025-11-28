@@ -13,6 +13,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -787,5 +788,131 @@ func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testi
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+	}, pollDuration, pollInterval)
+}
+
+func TestClusterExtensionInstallWithoutServiceAccount(t *testing.T) {
+	t.Log("When a cluster extension is installed without specifying a ServiceAccount")
+	t.Log("It should use the operator-controller ServiceAccount with synthetic user permissions")
+
+	clusterExtension, extensionCatalog := TestInitClusterExtensionClusterCatalog(t)
+	defer TestCleanup(t, extensionCatalog, clusterExtension, nil, nil)
+	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+
+	// Create only the namespace (no ServiceAccount)
+	ns, err := CreateNamespace(context.Background(), clusterExtension.Name)
+	require.NoError(t, err)
+	defer TestCleanup(t, nil, nil, nil, ns)
+
+	// Create a ClusterRole for the synthetic user with necessary permissions
+	syntheticUserName := fmt.Sprintf("olm:clusterextension:%s", clusterExtension.Name)
+	clusterRoleName := fmt.Sprintf("synthetic-user-cr-%s", clusterExtension.Name)
+	cr := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"olm.operatorframework.io"},
+				Resources: []string{"clusterextensions/finalizers"},
+				Verbs:     []string{"update"},
+				ResourceNames: []string{clusterExtension.Name},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"configmaps", "secrets", "services", "serviceaccounts"},
+				Verbs:     []string{"create", "update", "delete", "patch", "get", "list", "watch"},
+			},
+			{
+				APIGroups: []string{"apiextensions.k8s.io"},
+				Resources: []string{"customresourcedefinitions"},
+				Verbs:     []string{"create", "update", "delete", "patch", "get", "list", "watch"},
+			},
+			{
+				APIGroups: []string{"apps"},
+				Resources: []string{"deployments"},
+				Verbs:     []string{"create", "update", "delete", "patch", "get", "list", "watch"},
+			},
+			{
+				APIGroups: []string{"rbac.authorization.k8s.io"},
+				Resources: []string{"clusterroles", "roles", "clusterrolebindings", "rolebindings"},
+				Verbs:     []string{"create", "update", "delete", "patch", "get", "list", "watch", "bind", "escalate"},
+			},
+			{
+				APIGroups: []string{"networking.k8s.io"},
+				Resources: []string{"networkpolicies"},
+				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
+			},
+		},
+	}
+	require.NoError(t, c.Create(context.Background(), cr))
+	defer func() {
+		require.NoError(t, c.Delete(context.Background(), cr))
+	}()
+
+	// Create a ClusterRoleBinding for the synthetic user
+	clusterRoleBindingName := fmt.Sprintf("synthetic-user-crb-%s", clusterExtension.Name)
+	crb := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleBindingName,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind: "User",
+				Name: syntheticUserName,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     clusterRoleName,
+		},
+	}
+	require.NoError(t, c.Create(context.Background(), crb))
+	defer func() {
+		require.NoError(t, c.Delete(context.Background(), crb))
+	}()
+
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1.CatalogFilter{
+				PackageName: "test",
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
+				},
+			},
+		},
+		Namespace: ns.Name,
+		// ServiceAccount intentionally omitted - should use operator-controller SA with synthetic user
+	}
+
+	t.Log("By creating the ClusterExtension resource without a ServiceAccount")
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+
+	t.Log("By eventually reporting Progressing == True with Reason Succeeded")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually installing the package successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+		require.Contains(ct, cond.Message, "Installed bundle")
+		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
+	}, pollDuration, pollInterval)
+
+	t.Log("By verifying the NetworkPolicy was created successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var np networkingv1.NetworkPolicy
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: "test-operator-network-policy", Namespace: ns.Name}, &np))
 	}, pollDuration, pollInterval)
 }
