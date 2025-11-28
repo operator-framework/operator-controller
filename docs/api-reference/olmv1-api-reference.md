@@ -254,7 +254,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `configType` _[ClusterExtensionConfigType](#clusterextensionconfigtype)_ | configType is a required reference to the type of configuration source.<br />Allowed values are "Inline"<br />When this field is set to "Inline", the cluster extension configuration is defined inline within the<br />ClusterExtension resource. |  | Enum: [Inline] <br />Required: \{\} <br /> |
-| `inline` _[JSON](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#json-v1-apiextensions-k8s-io)_ | inline contains JSON or YAML values specified directly in the<br />ClusterExtension.<br />inline must be set if configType is 'Inline'.<br />inline accepts arbitrary JSON/YAML objects.<br />inline is validation at runtime against the schema provided by the bundle if a schema is provided. |  | Type: object <br /> |
+| `inline` _[JSON](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#json-v1-apiextensions-k8s-io)_ | inline contains JSON or YAML values specified directly in the<br />ClusterExtension.<br />inline is used to specify arbitrary configuration values for the ClusterExtension.<br />It must be set if configType is 'Inline' and must be a valid JSON/YAML object containing at least one property.<br />The configuration values are validated at runtime against a JSON schema provided by the bundle. |  | MinProperties: 1 <br />Type: object <br /> |
 
 
 #### ClusterExtensionConfigType

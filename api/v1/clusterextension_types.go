@@ -176,12 +176,14 @@ type ClusterExtensionConfig struct {
 	// inline contains JSON or YAML values specified directly in the
 	// ClusterExtension.
 	//
-	// inline must be set if configType is 'Inline'.
-	// inline accepts arbitrary JSON/YAML objects.
-	// inline is validation at runtime against the schema provided by the bundle if a schema is provided.
+	// inline is used to specify arbitrary configuration values for the ClusterExtension.
+	// It must be set if configType is 'Inline' and must be a valid JSON/YAML object containing at least one property.
+	// The configuration values are validated at runtime against a JSON schema provided by the bundle.
 	//
 	// +kubebuilder:validation:Type=object
+	// +kubebuilder:validation:MinProperties=1
 	// +optional
+	// +unionMember
 	Inline *apiextensionsv1.JSON `json:"inline,omitempty"`
 }
 
