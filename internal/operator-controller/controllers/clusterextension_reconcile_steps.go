@@ -191,7 +191,7 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 			apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 				Type:               ocv1.TypeProgressing,
 				Status:             metav1.ConditionTrue,
-				Reason:             ocv1.ReasonRolloutInProgress,
+				Reason:             ocv1.ReasonRollingOut,
 				Message:            rolloutStatus,
 				ObservedGeneration: ext.GetGeneration(),
 			})
