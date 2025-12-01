@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -136,7 +137,7 @@ func runGenerator(args ...string) {
 				if channel == StandardChannel && strings.Contains(version.Name, "alpha") {
 					channelCrd.Spec.Versions[i].Served = false
 				}
-				version.Schema.OpenAPIV3Schema.Properties = opconTweaksMap(channel, version.Schema.OpenAPIV3Schema.Properties)
+				channelCrd.Spec.Versions[i].Schema.OpenAPIV3Schema.Properties = opconTweaksMap(channel, channelCrd.Spec.Versions[i].Schema.OpenAPIV3Schema)
 			}
 
 			conv, err := crd.AsVersion(*channelCrd, apiextensionsv1.SchemeGroupVersion)
@@ -179,25 +180,51 @@ func runGenerator(args ...string) {
 	}
 }
 
-func opconTweaksMap(channel string, props map[string]apiextensionsv1.JSONSchemaProps) map[string]apiextensionsv1.JSONSchemaProps {
+// Apply Opcon specific tweaks to all properties in a map, and update the parent schema's required list according to opcon tags.
+// For opcon validation optional/required tags, the parent schema's required list is mutated directly.
+// TODO: if we need to support other conditions from opconTweaks, it will likely be preferable to convey the parent schema to facilitate direct alteration.
+func opconTweaksMap(channel string, parentSchema *apiextensionsv1.JSONSchemaProps) map[string]apiextensionsv1.JSONSchemaProps {
+	props := parentSchema.Properties
+
 	for name := range props {
 		jsonProps := props[name]
-		p := opconTweaks(channel, name, jsonProps)
+		p, reqStatus := opconTweaks(channel, name, jsonProps)
 		if p == nil {
 			delete(props, name)
 		} else {
 			props[name] = *p
+			// Update required list based on tag
+			switch reqStatus {
+			case statusRequired:
+				if !slices.Contains(parentSchema.Required, name) {
+					parentSchema.Required = append(parentSchema.Required, name)
+				}
+			case statusOptional:
+				parentSchema.Required = slices.DeleteFunc(parentSchema.Required, func(s string) bool { return s == name })
+			default:
+				// "" (unspecified) means keep existing status
+			}
 		}
 	}
 	return props
 }
 
+const (
+	statusRequired  = "required"
+	statusOptional  = "optional"
+	statusNoOpinion = ""
+)
+
 // Custom Opcon API Tweaks for tags prefixed with `<opcon:` that get past
 // the limitations of Kubebuilder annotations.
-func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSchemaProps) *apiextensionsv1.JSONSchemaProps {
+// Returns the modified schema and a string indicating required status where indicated by opcon tags:
+// "required", "optional", or "" (no decision -- preserve any non-opcon required status).
+func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSchemaProps) (*apiextensionsv1.JSONSchemaProps, string) {
+	requiredStatus := statusNoOpinion
+
 	if channel == StandardChannel {
 		if strings.Contains(jsonProps.Description, "<opcon:experimental>") {
-			return nil
+			return nil, statusNoOpinion
 		}
 	}
 
@@ -219,7 +246,7 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 
 			numValid++
 			jsonProps.Enum = []apiextensionsv1.JSON{}
-			for _, val := range strings.Split(enumMatch[1], ";") {
+			for val := range strings.SplitSeq(enumMatch[1], ";") {
 				jsonProps.Enum = append(jsonProps.Enum, apiextensionsv1.JSON{Raw: []byte("\"" + val + "\"")})
 			}
 		}
@@ -237,6 +264,28 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 				Rule:    celMatch[2],
 			})
 		}
+		optReqRe := regexp.MustCompile(validationPrefix + "(Optional|Required)>")
+		optReqMatches := optReqRe.FindAllStringSubmatch(jsonProps.Description, 64)
+		hasOptional := false
+		hasRequired := false
+		for _, optReqMatch := range optReqMatches {
+			if len(optReqMatch) != 2 {
+				log.Fatalf("Invalid %s Optional/Required tag for %s", validationPrefix, name)
+			}
+
+			numValid++
+			switch optReqMatch[1] {
+			case "Optional":
+				hasOptional = true
+				requiredStatus = statusOptional
+			case "Required":
+				hasRequired = true
+				requiredStatus = statusRequired
+			}
+		}
+		if hasOptional && hasRequired {
+			log.Fatalf("Field %s has both Optional and Required validation tags for channel %s", name, channel)
+		}
 	}
 
 	if numValid < numExpressions {
@@ -246,34 +295,43 @@ func opconTweaks(channel string, name string, jsonProps apiextensionsv1.JSONSche
 	jsonProps.Description = formatDescription(jsonProps.Description, channel, name)
 
 	if len(jsonProps.Properties) > 0 {
-		jsonProps.Properties = opconTweaksMap(channel, jsonProps.Properties)
+		jsonProps.Properties = opconTweaksMap(channel, &jsonProps)
 	} else if jsonProps.Items != nil && jsonProps.Items.Schema != nil {
-		jsonProps.Items.Schema = opconTweaks(channel, name, *jsonProps.Items.Schema)
+		jsonProps.Items.Schema, _ = opconTweaks(channel, name, *jsonProps.Items.Schema)
 	}
 
-	return &jsonProps
+	return &jsonProps, requiredStatus
 }
 
 func formatDescription(description string, channel string, name string) string {
-	startTag := "<opcon:experimental:description>"
-	endTag := "</opcon:experimental:description>"
-	if channel == StandardChannel && strings.Contains(description, startTag) {
-		regexPattern := `\n*` + regexp.QuoteMeta(startTag) + `(?s:(.*?))` + regexp.QuoteMeta(endTag) + `\n*`
-		re := regexp.MustCompile(regexPattern)
-		match := re.FindStringSubmatch(description)
-		if len(match) != 2 {
-			log.Fatalf("Invalid <opcon:experimental:description> tag for %s", name)
+	tagset := []struct {
+		channel string
+		tag     string
+	}{
+		{channel: ExperimentalChannel, tag: "opcon:standard:description"},
+		{channel: StandardChannel, tag: "opcon:experimental:description"},
+	}
+	for _, ts := range tagset {
+		startTag := fmt.Sprintf("<%s>", ts.tag)
+		endTag := fmt.Sprintf("</%s>", ts.tag)
+		if channel == ts.channel && strings.Contains(description, ts.tag) {
+			regexPattern := `\n*` + regexp.QuoteMeta(startTag) + `(?s:(.*?))` + regexp.QuoteMeta(endTag) + `\n*`
+			re := regexp.MustCompile(regexPattern)
+			match := re.FindStringSubmatch(description)
+			if len(match) != 2 {
+				log.Fatalf("Invalid %s tag for %s", startTag, name)
+			}
+			description = re.ReplaceAllString(description, "\n\n")
+		} else {
+			description = strings.ReplaceAll(description, startTag, "")
+			description = strings.ReplaceAll(description, endTag, "")
 		}
-		description = re.ReplaceAllString(description, "\n\n")
-	} else {
-		description = strings.ReplaceAll(description, startTag, "")
-		description = strings.ReplaceAll(description, endTag, "")
 	}
 
 	// Comments within "opcon:util:excludeFromCRD" tag are not included in the generated CRD and all trailing \n operators before
 	// and after the tags are removed and replaced with three \n operators.
-	startTag = "<opcon:util:excludeFromCRD>"
-	endTag = "</opcon:util:excludeFromCRD>"
+	startTag := "<opcon:util:excludeFromCRD>"
+	endTag := "</opcon:util:excludeFromCRD>"
 	if strings.Contains(description, startTag) {
 		regexPattern := `\n*` + regexp.QuoteMeta(startTag) + `(?s:(.*?))` + regexp.QuoteMeta(endTag) + `\n*`
 		re := regexp.MustCompile(regexPattern)
