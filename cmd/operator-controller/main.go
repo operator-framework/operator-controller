@@ -78,6 +78,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	sharedcontrollers "github.com/operator-framework/operator-controller/internal/shared/controllers"
+	cacheutil "github.com/operator-framework/operator-controller/internal/shared/util/cache"
 	fsutil "github.com/operator-framework/operator-controller/internal/shared/util/fs"
 	httputil "github.com/operator-framework/operator-controller/internal/shared/util/http"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
@@ -257,6 +258,8 @@ func run() error {
 			cfg.systemNamespace: {LabelSelector: k8slabels.Everything()},
 		},
 		DefaultLabelSelector: k8slabels.Nothing(),
+		// Memory optimization: strip managed fields and large annotations from cached objects
+		DefaultTransform: cacheutil.StripAnnotations(),
 	}
 
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
