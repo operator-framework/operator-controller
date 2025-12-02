@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	//"context"
 	"fmt"
 	"log"
 	"os"
@@ -10,9 +9,6 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"github.com/spf13/pflag"
-	ctrl "sigs.k8s.io/controller-runtime"
-	//ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
 	"github.com/operator-framework/operator-controller/test/e2e/steps"
@@ -25,11 +21,7 @@ var opts = godog.Options{
 	Concurrency: 1,
 }
 
-var logOpts = zap.Options{}
-
 func init() {
-	flagSet := pflag.CommandLine
-	flagSet.BoolVar(&logOpts.Development, "log.debug", false, "print debug log level")
 	godog.BindCommandLineFlags("godog.", &opts)
 }
 
@@ -38,9 +30,6 @@ func TestMain(m *testing.M) {
 	pflag.Parse()
 	opts.Paths = pflag.Args()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&logOpts)))
-
-	//opts.DefaultContext = ctrl.LoggerInto(context.Background(), ctrllog.Log)
 	// run tests
 	sc := godog.TestSuite{
 		TestSuiteInitializer: InitializeSuite,
@@ -53,7 +42,7 @@ func TestMain(m *testing.M) {
 
 		path := os.Getenv("E2E_SUMMARY_OUTPUT")
 		if path == "" {
-			fmt.Printf("Note: E2E_SUMMARY_OUTPUT is unset; skipping summary generation\n")
+			fmt.Println("Note: E2E_SUMMARY_OUTPUT is unset; skipping summary generation")
 		} else {
 			if err := utils.PrintSummary(path); err != nil {
 				// Fail the run if alerts are found
@@ -72,7 +61,7 @@ func TestMain(m *testing.M) {
 }
 
 func InitializeSuite(tc *godog.TestSuiteContext) {
-	tc.BeforeSuite(steps.DetectEnabledFeatureGates)
+	tc.BeforeSuite(steps.BeforeSuite)
 }
 
 func InitializeScenario(sc *godog.ScenarioContext) {

@@ -22,11 +22,11 @@ import (
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 )
 
@@ -37,7 +37,10 @@ const (
 	tick              = 1 * time.Second
 )
 
-var kubeconfigPath string
+var (
+	kubeconfigPath string
+	k8sCli         string
+)
 
 func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^OLM is available$`, OLMisAvailable)
@@ -68,23 +71,29 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 }
 
 func init() {
-	kubeconfigPath = os.Getenv("HOME") + "/.kube/config"
+	flagSet := pflag.CommandLine
+	flagSet.StringVar(&k8sCli, "k8s.cli", "kubectl", "Path to k8s cli")
+	if v, found := os.LookupEnv("KUBECONFIG"); found {
+		kubeconfigPath = v
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			panic(fmt.Sprintf("cannot determine user home directory: %v", err))
+		}
+		flagSet.StringVar(&kubeconfigPath, "kubeconfig", filepath.Join(home, ".kube", "config"), "Paths to a kubeconfig. Only required if out-of-cluster.")
+	}
 }
 
-var (
-	logger = log.Log
-)
-
 func kubectl(args ...string) (string, error) {
-	cmd := exec.Command("kubectl", args...)
-	logger.V(1).Info(strings.Join(cmd.Args, " "))
+	cmd := exec.Command(k8sCli, args...)
+	logger.V(1).Info("Running", "command", strings.Join(cmd.Args, " "))
 	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
 	b, err := cmd.Output()
 	return string(b), err
 }
 
 func kubectlWithInput(yaml string, args ...string) (string, error) {
-	cmd := exec.Command("kubectl", args...)
+	cmd := exec.Command(k8sCli, args...)
 	cmd.Stdin = bytes.NewBufferString(yaml)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
 	b, err := cmd.Output()
@@ -143,7 +152,6 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 		_, err := kubectlWithInput(yamlContent, "apply", "-f", "-")
 		if err == nil {
 			return false
-			//return fmt.Errorf("expected apply to fail, got: %s", out)
 		}
 		if stdErr := string(func() *exec.ExitError {
 			target := &exec.ExitError{}
@@ -151,7 +159,6 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 			return target
 		}().Stderr); !strings.Contains(stdErr, errMsg) {
 			return false
-			//return fmt.Errorf("expected error message %s to be in stderr, got: %s", errMsg, stdErr)
 		}
 		return true
 	})
@@ -436,6 +443,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 			return false
 		}
 		defer resp.Body.Close()
+
 		if resp.StatusCode == http.StatusOK {
 			b, err := io.ReadAll(resp.Body)
 			if err != nil {

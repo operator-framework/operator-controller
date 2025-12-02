@@ -10,8 +10,11 @@ import (
 	"strconv"
 
 	"github.com/cucumber/godog"
+	"github.com/go-logr/logr"
+	"github.com/spf13/pflag"
 	"k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 type resource struct {
@@ -35,8 +38,17 @@ const (
 	scenarioContextKey contextKey = "scenario-context"
 )
 
-var featureGates = map[string]bool{
-	"WebhookProviderCertManager": true,
+var (
+	logOpts      = zap.Options{}
+	featureGates = map[string]bool{
+		"WebhookProviderCertManager": true,
+	}
+	logger logr.Logger
+)
+
+func init() {
+	flagSet := pflag.CommandLine
+	flagSet.BoolVar(&logOpts.Development, "log.debug", false, "print debug log level")
 }
 
 func RegisterHooks(sc *godog.ScenarioContext) {
@@ -46,7 +58,9 @@ func RegisterHooks(sc *godog.ScenarioContext) {
 	sc.After(ScenarioCleanup)
 }
 
-func DetectEnabledFeatureGates() {
+func BeforeSuite() {
+	logger = zap.New(zap.UseFlagOptions(&logOpts))
+
 	raw, err := kubectl("get", "deployment", "-n", olmNamespace, olmDeploymentName, "-o", "json")
 	if err != nil {
 		return
@@ -95,9 +109,10 @@ func scenarioCtx(ctx context.Context) *scenarioContext {
 
 func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context.Context, error) {
 	sc := scenarioCtx(ctx)
-	for _, p := range sc.backGroundCmds {
-		p.Process.Kill() // nolint: errcheck // we don't care about the error here, we just want to kill the process
-		p.Process.Wait() // nolint: errcheck // same as above, we just want to wait for the process to exit, and do not want to fail the test if it does not
+	for _, bgCmd := range sc.backGroundCmds {
+		if p := bgCmd.Process; p != nil {
+			_ = p.Kill()
+		}
 	}
 	if err != nil {
 		return ctx, err

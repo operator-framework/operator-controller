@@ -8,7 +8,7 @@ Feature: Install ClusterExtension
     And "test" catalog serves bundles
     And Service account "olm-sa" with needed permissions is available in test namespace
   
-  Scenario Outline: Install latest available version from the default channel
+  Scenario Outline: Install latest available version
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
