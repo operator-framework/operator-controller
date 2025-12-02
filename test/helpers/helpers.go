@@ -218,6 +218,7 @@ func TestInit(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog, *core
 
 func TestInitClusterExtensionClusterCatalog(t *testing.T) (*ocv1.ClusterExtension, *ocv1.ClusterCatalog) {
 	ceName := fmt.Sprintf("clusterextension-%s", rand.String(8))
+	catalogName := fmt.Sprintf("test-catalog-%s", rand.String(8))
 
 	ce := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
@@ -225,10 +226,10 @@ func TestInitClusterExtensionClusterCatalog(t *testing.T) (*ocv1.ClusterExtensio
 		},
 	}
 
-	cc, err := CreateTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
+	cc, err := CreateTestCatalog(context.Background(), catalogName, os.Getenv(testCatalogRefEnvVar))
 	require.NoError(t, err)
 
-	ValidateCatalogUnpack(t)
+	ValidateCatalogUnpackWithName(t, catalogName)
 
 	return ce, cc
 }
@@ -250,11 +251,18 @@ func TestInitServiceAccountNamespace(t *testing.T, clusterExtensionName string) 
 	return sa, ns
 }
 
+// ValidateCatalogUnpack validates that the test catalog with the default name has unpacked successfully.
+// Deprecated: Use ValidateCatalogUnpackWithName for tests that use unique catalog names.
 func ValidateCatalogUnpack(t *testing.T) {
+	ValidateCatalogUnpackWithName(t, testCatalogName)
+}
+
+// ValidateCatalogUnpackWithName validates that a catalog with the given name has unpacked successfully.
+func ValidateCatalogUnpackWithName(t *testing.T, catalogName string) {
 	catalog := &ocv1.ClusterCatalog{}
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == True and reason == Succeeded")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		err := c.Get(context.Background(), types.NamespacedName{Name: testCatalogName}, catalog)
+		err := c.Get(context.Background(), types.NamespacedName{Name: catalogName}, catalog)
 		require.NoError(ct, err)
 		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(ct, cond)
@@ -265,11 +273,11 @@ func ValidateCatalogUnpack(t *testing.T) {
 	t.Log("Checking that catalog has the expected metadata label")
 	require.NotNil(t, catalog.Labels)
 	require.Contains(t, catalog.Labels, "olm.operatorframework.io/metadata.name")
-	require.Equal(t, testCatalogName, catalog.Labels["olm.operatorframework.io/metadata.name"])
+	require.Equal(t, catalogName, catalog.Labels["olm.operatorframework.io/metadata.name"])
 
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Type = Serving with status == True")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		err := c.Get(context.Background(), types.NamespacedName{Name: testCatalogName}, catalog)
+		err := c.Get(context.Background(), types.NamespacedName{Name: catalogName}, catalog)
 		require.NoError(ct, err)
 		cond := apimeta.FindStatusCondition(catalog.Status.Conditions, ocv1.TypeServing)
 		require.NotNil(ct, cond)
