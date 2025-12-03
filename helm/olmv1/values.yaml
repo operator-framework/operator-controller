@@ -12,9 +12,6 @@ options:
     features:
       enabled: []
       disabled: []
-    podDisruptionBudget:
-      enabled: true
-      minAvailable: 1
   catalogd:
     enabled: true
     deployment:
@@ -23,9 +20,6 @@ options:
     features:
       enabled: []
       disabled: []
-    podDisruptionBudget:
-      enabled: true
-      minAvailable: 1
   certManager:
     enabled: false
   e2e:
