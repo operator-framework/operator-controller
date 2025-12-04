@@ -34,7 +34,15 @@ var (
 )
 
 const (
-	pollDuration         = time.Minute
+	pollDuration = time.Minute
+	// catalogPollDuration is used for catalog operations (unpacking, serving) which involve
+	// I/O-bound operations like pulling OCI images and unpacking catalog content.
+	catalogPollDuration = 3 * time.Minute
+	// extendedPollDuration is used for operations that involve pod restarts (like upgrades)
+	// or webhook installations with cert-manager. In the worst case of a pod crash during upgrade,
+	// leader election can take up to 163 seconds (LeaseDuration: 137s + RetryPeriod: 26s).
+	// With LeaderElectionReleaseOnCancel: true, graceful shutdowns only take ~26s (RetryPeriod).
+	extendedPollDuration = 5 * time.Minute
 	pollInterval         = time.Second
 	testCatalogName      = "test-catalog"
 	testCatalogRefEnvVar = "CATALOG_IMG"
@@ -268,7 +276,7 @@ func ValidateCatalogUnpackWithName(t *testing.T, catalogName string) {
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-	}, pollDuration, pollInterval)
+	}, catalogPollDuration, pollInterval)
 
 	t.Log("Checking that catalog has the expected metadata label")
 	require.NotNil(t, catalog.Labels)
@@ -283,13 +291,17 @@ func ValidateCatalogUnpackWithName(t *testing.T, catalogName string) {
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
-	}, pollDuration, pollInterval)
+	}, catalogPollDuration, pollInterval)
 }
 
 func EnsureNoExtensionResources(t *testing.T, clusterExtensionName string) {
 	ls := labels.Set{"olm.operatorframework.io/owner-name": clusterExtensionName}
 
-	// CRDs may take an extra long time to be deleted, and may run into the following error:
+	// Use 2 minute timeout for cleanup operations to ensure they complete within the test timeout.
+	// This is shorter than pollDuration (3 min) to leave buffer for the overall test suite.
+	cleanupTimeout := 2 * time.Minute
+
+	// CRDs may take extra time to be deleted, and may run into the following error:
 	// Condition=Terminating Status=True Reason=InstanceDeletionFailed Message="could not list instances: storage is (re)initializing"
 	t.Logf("By waiting for CustomResourceDefinitions of %q to be deleted", clusterExtensionName)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -297,7 +309,7 @@ func EnsureNoExtensionResources(t *testing.T, clusterExtensionName string) {
 		err := c.List(context.Background(), list, client.MatchingLabelsSelector{Selector: ls.AsSelector()})
 		require.NoError(ct, err)
 		require.Empty(ct, list.Items)
-	}, 5*pollDuration, pollInterval)
+	}, cleanupTimeout, pollInterval)
 
 	t.Logf("By waiting for ClusterRoleBindings of %q to be deleted", clusterExtensionName)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -305,7 +317,7 @@ func EnsureNoExtensionResources(t *testing.T, clusterExtensionName string) {
 		err := c.List(context.Background(), list, client.MatchingLabelsSelector{Selector: ls.AsSelector()})
 		require.NoError(ct, err)
 		require.Empty(ct, list.Items)
-	}, 2*pollDuration, pollInterval)
+	}, cleanupTimeout, pollInterval)
 
 	t.Logf("By waiting for ClusterRoles of %q to be deleted", clusterExtensionName)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -313,7 +325,7 @@ func EnsureNoExtensionResources(t *testing.T, clusterExtensionName string) {
 		err := c.List(context.Background(), list, client.MatchingLabelsSelector{Selector: ls.AsSelector()})
 		require.NoError(ct, err)
 		require.Empty(ct, list.Items)
-	}, 2*pollDuration, pollInterval)
+	}, cleanupTimeout, pollInterval)
 }
 
 func TestCleanup(t *testing.T, cat *ocv1.ClusterCatalog, clusterExtension *ocv1.ClusterExtension, sa *corev1.ServiceAccount, ns *corev1.Namespace) {
@@ -348,10 +360,12 @@ func TestCleanup(t *testing.T, cat *ocv1.ClusterCatalog, clusterExtension *ocv1.
 	if ns != nil {
 		t.Logf("By deleting Namespace %q", ns.Name)
 		require.NoError(t, c.Delete(context.Background(), ns))
+		// Namespace deletion may take longer as it needs to delete all resources within it.
+		// Use extendedPollDuration to allow sufficient time for graceful cleanup.
 		require.Eventually(t, func() bool {
 			err := c.Get(context.Background(), types.NamespacedName{Name: ns.Name}, &corev1.Namespace{})
 			return errors.IsNotFound(err)
-		}, pollDuration, pollInterval)
+		}, extendedPollDuration, pollInterval)
 	}
 }
 

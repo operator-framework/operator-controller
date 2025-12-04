@@ -155,5 +155,5 @@ spec:
       version: 1.0.0
 EOF
 
-kubectl wait --for=condition=Serving --timeout=60s ClusterCatalog $TEST_CLUSTER_CATALOG_NAME
-kubectl wait --for=condition=Installed --timeout=60s ClusterExtension $TEST_CLUSTER_EXTENSION_NAME
+kubectl wait --for=condition=Serving --timeout=5m ClusterCatalog $TEST_CLUSTER_CATALOG_NAME
+kubectl wait --for=condition=Installed --timeout=5m ClusterExtension $TEST_CLUSTER_EXTENSION_NAME

@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -26,6 +27,11 @@ import (
 const (
 	artifactName = "operator-controller-upgrade-e2e"
 	container    = "manager"
+	// pollDuration is set to 3 minutes for upgrade tests because upgrades cause pod restarts.
+	// With LeaderElectionReleaseOnCancel: true, graceful shutdowns take ~26s (RetryPeriod).
+	// In the worst case (pod crash), leader election can take up to 163s (LeaseDuration: 137s + RetryPeriod: 26s).
+	pollDuration = 3 * time.Minute
+	pollInterval = time.Second
 )
 
 func TestClusterCatalogUnpacking(t *testing.T) {
@@ -46,23 +52,22 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 		require.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.ReadyReplicas)
 	}, time.Minute, time.Second)
 
-	var managerPod corev1.Pod
-	t.Log("Waiting for only one controller-manager pod to remain")
+	t.Log("Waiting for controller-manager pods to match the desired replica count")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var managerPods corev1.PodList
 		err := c.List(ctx, &managerPods, client.MatchingLabels(managerLabelSelector))
 		require.NoError(ct, err)
-		require.Len(ct, managerPods.Items, 1)
-		managerPod = managerPods.Items[0]
+		require.Len(ct, managerPods.Items, int(*managerDeployment.Spec.Replicas))
 	}, time.Minute, time.Second)
 
 	t.Log("Waiting for acquired leader election")
-	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
+	leaderCtx, leaderCancel := context.WithTimeout(ctx, pollDuration)
 	defer leaderCancel()
-	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, &managerPod, leaderSubstrings...)
+
+	// When there are multiple replicas, find the leader pod
+	managerPod, err := findLeaderPod(leaderCtx, "catalogd")
 	require.NoError(t, err)
-	require.True(t, leaderElected)
+	require.NotNil(t, managerPod)
 
 	t.Log("Reading logs to make sure that ClusterCatalog was reconciled by catalogdv1")
 	logCtx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -71,7 +76,7 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 		"reconcile ending",
 		fmt.Sprintf(`ClusterCatalog=%q`, testClusterCatalogName),
 	}
-	found, err := watchPodLogsForSubstring(logCtx, &managerPod, substrings...)
+	found, err := watchPodLogsForSubstring(logCtx, managerPod, substrings...)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -84,7 +89,7 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-	}, time.Minute, time.Second)
+	}, pollDuration, pollInterval)
 
 	t.Log("Ensuring ClusterCatalog has Status.Condition of Serving with a status == True, reason == Available")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -94,7 +99,7 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
-	}, time.Minute, time.Second)
+	}, pollDuration, pollInterval)
 }
 
 func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
@@ -104,22 +109,30 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 
 	// wait for catalogd deployment to finish
 	t.Log("Wait for catalogd deployment to be ready")
-	catalogdManagerPod := waitForDeployment(t, ctx, "catalogd")
+	waitForDeployment(t, ctx, "catalogd")
+
+	// Find the catalogd leader pod
+	catalogdLeaderCtx, catalogdLeaderCancel := context.WithTimeout(ctx, pollDuration)
+	defer catalogdLeaderCancel()
+	catalogdManagerPod, err := findLeaderPod(catalogdLeaderCtx, "catalogd")
+	require.NoError(t, err)
+	require.NotNil(t, catalogdManagerPod)
 
 	// wait for operator-controller deployment to finish
 	t.Log("Wait for operator-controller deployment to be ready")
-	managerPod := waitForDeployment(t, ctx, "operator-controller")
+	waitForDeployment(t, ctx, "operator-controller")
 
 	t.Log("Wait for acquired leader election")
 	// Average case is under 1 minute but in the worst case: (previous leader crashed)
 	// we could have LeaseDuration (137s) + RetryPeriod (26s) +/- 163s
-	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
+	leaderCtx, leaderCancel := context.WithTimeout(ctx, pollDuration)
 	defer leaderCancel()
 
-	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, managerPod, leaderSubstrings...)
+	// When there are multiple replicas, find the leader pod
+	var managerPod *corev1.Pod
+	managerPod, err = findLeaderPod(leaderCtx, "operator-controller")
 	require.NoError(t, err)
-	require.True(t, leaderElected)
+	require.NotNil(t, managerPod)
 
 	t.Log("Reading logs to make sure that ClusterExtension was reconciled by operator-controller before we update it")
 	// Make sure that after we upgrade OLM itself we can still reconcile old objects without any changes
@@ -155,7 +168,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 
 		require.True(ct, clusterCatalog.Status.LastUnpacked.After(catalogdManagerPod.CreationTimestamp.Time))
-	}, time.Minute, time.Second)
+	}, pollDuration, pollInterval)
 
 	// TODO: if we change the underlying revision storage mechanism, the new version
 	//   will not detect any installed versions, we need to make sure that the upgrade
@@ -173,7 +186,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotNil(ct, clusterExtension.Status.Install)
 		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle.Version)
-	}, time.Minute, time.Second)
+	}, pollDuration, pollInterval)
 
 	previousVersion := clusterExtension.Status.Install.Bundle.Version
 
@@ -183,6 +196,13 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	require.NoError(t, c.Update(ctx, &clusterExtension))
 
 	t.Log("Checking that the ClusterExtension installs successfully")
+	// Use 10 minutes for post-OLM-upgrade extension upgrade operations.
+	// After upgrading OLM itself, the system needs time to:
+	// - Stabilize after operator-controller pods restart (leader election: up to 163s)
+	// - Process the ClusterExtension spec change
+	// - Resolve and unpack the new bundle (1.0.1)
+	// - Apply manifests and wait for rollout
+	// In multi-replica deployments with recent OLM upgrade, this can take significant time
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterExtensionName}, &clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
@@ -191,19 +211,17 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.Equal(ct, ocv1.BundleMetadata{Name: "test-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
 		require.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
-	}, time.Minute, time.Second)
+	}, 10*time.Minute, pollInterval)
 }
 
 // waitForDeployment checks that the updated deployment with the given app.kubernetes.io/name label
 // has reached the desired number of replicas and that the number pods matches that number
-// i.e. no old pods remain. It will return a pointer to the leader pod. This is only necessary
-// to facilitate the mitigation put in place for https://github.com/operator-framework/operator-controller/issues/1626
-func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel string) *corev1.Pod {
+// i.e. no old pods remain.
+func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel string) {
 	deploymentLabelSelector := labels.Set{"app.kubernetes.io/name": controlPlaneLabel}.AsSelector()
 
 	t.Log("Checking that the deployment is updated and available")
 	var desiredNumReplicas int32
-	var deploymentNamespace string
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var managerDeployments appsv1.DeploymentList
 		require.NoError(ct, c.List(ctx, &managerDeployments, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
@@ -229,51 +247,73 @@ func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel stri
 		require.Equal(ct, corev1.ConditionTrue, availableCond.Status, "Deployment Available condition is not True")
 
 		desiredNumReplicas = *managerDeployment.Spec.Replicas
-		deploymentNamespace = managerDeployment.Namespace
 	}, time.Minute, time.Second)
 
-	var managerPods corev1.PodList
 	t.Logf("Ensure the number of remaining pods equal the desired number of replicas (%d)", desiredNumReplicas)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var managerPods corev1.PodList
 		require.NoError(ct, c.List(ctx, &managerPods, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
 		require.Len(ct, managerPods.Items, int(desiredNumReplicas))
 	}, time.Minute, time.Second)
+}
 
-	// Find the leader pod by checking the lease
-	t.Log("Finding the leader pod")
-	// Map component labels to their leader election lease names
-	leaseNames := map[string]string{
-		"catalogd":            "catalogd-operator-lock",
+// findLeaderPod finds the pod that has acquired the leader lease by inspecting the Lease resource.
+// This is more reliable than checking logs as it directly queries the Kubernetes API for the lease holder.
+func findLeaderPod(ctx context.Context, controlPlaneLabel string) (*corev1.Pod, error) {
+	// Map component name to its LeaderElectionID
+	leaseNameMap := map[string]string{
 		"operator-controller": "9c4404e7.operatorframework.io",
+		"catalogd":            "catalogd-operator-lock",
 	}
 
-	leaseName, ok := leaseNames[controlPlaneLabel]
+	leaseName, ok := leaseNameMap[controlPlaneLabel]
 	if !ok {
-		t.Fatalf("Unknown control plane component: %s", controlPlaneLabel)
+		return nil, fmt.Errorf("unknown control plane label: %s", controlPlaneLabel)
 	}
 
 	var leaderPod *corev1.Pod
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+
+	// Use wait.PollUntilContextTimeout for polling with proper context handling
+	err := wait.PollUntilContextTimeout(ctx, 2*time.Second, pollDuration, true, func(ctx context.Context) (bool, error) {
+		// Fetch lease to get the current leader's identity
 		var lease coordinationv1.Lease
-		require.NoError(ct, c.Get(ctx, types.NamespacedName{Name: leaseName, Namespace: deploymentNamespace}, &lease))
-		require.NotNil(ct, lease.Spec.HolderIdentity)
-
-		leaderIdentity := *lease.Spec.HolderIdentity
-		// The lease holder identity format is: <pod-name>_<leader-election-id-suffix>
-		// Extract just the pod name by splitting on '_'
-		podName := strings.Split(leaderIdentity, "_")[0]
-
-		// Find the pod with matching name
-		for i := range managerPods.Items {
-			if managerPods.Items[i].Name == podName {
-				leaderPod = &managerPods.Items[i]
-				break
-			}
+		if err := c.Get(ctx, types.NamespacedName{
+			Name:      leaseName,
+			Namespace: "olmv1-system",
+		}, &lease); err != nil {
+			// Lease might not exist yet, retry
+			return false, nil
 		}
-		require.NotNil(ct, leaderPod, "leader pod not found with identity: %s (pod name: %s)", leaderIdentity, podName)
-	}, time.Minute, time.Second)
 
-	return leaderPod
+		if lease.Spec.HolderIdentity == nil {
+			// No leader elected yet, retry
+			return false, nil
+		}
+
+		// The HolderIdentity is in the format "pod-name_hash"
+		// Extract the pod name by splitting on "_"
+		holderIdentity := *lease.Spec.HolderIdentity
+		podName := strings.Split(holderIdentity, "_")[0]
+
+		// Directly fetch the pod by name instead of listing all pods
+		pod := &corev1.Pod{}
+		if err := c.Get(ctx, types.NamespacedName{
+			Name:      podName,
+			Namespace: "olmv1-system",
+		}, pod); err != nil {
+			// Pod might not exist yet or is being terminated, retry
+			return false, nil
+		}
+
+		leaderPod = pod
+		return true, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("timeout waiting for leader election: %w", err)
+	}
+
+	return leaderPod, nil
 }
 
 func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, substrings ...string) (bool, error) {
