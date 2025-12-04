@@ -31,7 +31,7 @@ The Kubernetes design assumptions are:
 - CRDs and their controllers are trusted cluster extensions.
 - If an object for an API exists a controller WILL reconcile it, no matter where it is in the cluster.
 
-OLM v1 will make the same assumption that Kubernetes does and that users of Kubernetes APIs do. That is: If a user has RBAC to create an object in the cluster, they can expect that a controller exists that will reconcile that object. If this assumption does not hold, it will be considered a configuration issue, not an OLM v1 bug.
+OLM v1 will make the same assumption that Kubernetes does and that users of Kubernetes APIs do. That is: If a user has RBAC to create an object in the cluster, they can expect that exactly one controller exists that will reconcile that object. If this assumption does not hold, it will be considered a configuration issue, not an OLM v1 bug.
 
 This means that it is a best practice to implement and configure controllers to have cluster-wide permission to read and update the status of their primary APIs. It does not mean that a controller needs cluster-wide access to read/write secondary APIs. If a controller can update the status of its primary APIs, it can tell users when it lacks permission to act on secondary APIs.
 
