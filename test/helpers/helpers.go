@@ -34,7 +34,10 @@ var (
 )
 
 const (
-	pollDuration         = time.Minute
+	// pollDuration is set to 3 minutes to account for leader election time in multi-replica deployments.
+	// In the worst case (previous leader crashed), leader election can take up to 163 seconds
+	// (LeaseDuration: 137s + RetryPeriod: 26s). Adding buffer for reconciliation time.
+	pollDuration         = 3 * time.Minute
 	pollInterval         = time.Second
 	testCatalogName      = "test-catalog"
 	testCatalogRefEnvVar = "CATALOG_IMG"

@@ -11,11 +11,11 @@ metadata:
   name: operator-controller-controller-manager
   namespace: {{ .Values.namespaces.olmv1.name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.options.operatorController.deployment.replicas }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1          # Allow temporary 2 pods (1 + 1) for zero-downtime updates
+      maxSurge: 1          # Allow temporary extra pod (e.g., 3 pods with 2 replicas) for zero-downtime updates
       maxUnavailable: 0    # Never allow pods to be unavailable during updates
   selector:
     matchLabels:

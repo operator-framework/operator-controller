@@ -484,8 +484,8 @@ run-experimental: run-internal #HELP Build the operator-controller then deploy i
 CATD_NAMESPACE := olmv1-system
 .PHONY: wait
 wait:
-	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
+	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=3m
+	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert --timeout=3m # Avoid upgrade test flakes when reissuing cert
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.

@@ -25,6 +25,11 @@ import (
 const (
 	artifactName = "operator-controller-upgrade-e2e"
 	container    = "manager"
+	// pollDuration is set to 3 minutes to account for leader election time in multi-replica deployments.
+	// In the worst case (previous leader crashed), leader election can take up to 163 seconds
+	// (LeaseDuration: 137s + RetryPeriod: 26s). Adding buffer for reconciliation time.
+	pollDuration = 3 * time.Minute
+	pollInterval = time.Second
 )
 
 func TestClusterCatalogUnpacking(t *testing.T) {
@@ -45,23 +50,22 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 		require.Equal(ct, *managerDeployment.Spec.Replicas, managerDeployment.Status.ReadyReplicas)
 	}, time.Minute, time.Second)
 
-	var managerPod corev1.Pod
-	t.Log("Waiting for only one controller-manager pod to remain")
+	t.Log("Waiting for controller-manager pods to match the desired replica count")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var managerPods corev1.PodList
 		err := c.List(ctx, &managerPods, client.MatchingLabels(managerLabelSelector))
 		require.NoError(ct, err)
-		require.Len(ct, managerPods.Items, 1)
-		managerPod = managerPods.Items[0]
+		require.Len(ct, managerPods.Items, int(*managerDeployment.Spec.Replicas))
 	}, time.Minute, time.Second)
 
 	t.Log("Waiting for acquired leader election")
 	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer leaderCancel()
-	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, &managerPod, leaderSubstrings...)
+
+	// When there are multiple replicas, find the leader pod
+	managerPod, err := findLeaderPod(leaderCtx, "catalogd")
 	require.NoError(t, err)
-	require.True(t, leaderElected)
+	require.NotNil(t, managerPod)
 
 	t.Log("Reading logs to make sure that ClusterCatalog was reconciled by catalogdv1")
 	logCtx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -70,7 +74,7 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 		"reconcile ending",
 		fmt.Sprintf(`ClusterCatalog=%q`, testClusterCatalogName),
 	}
-	found, err := watchPodLogsForSubstring(logCtx, &managerPod, substrings...)
+	found, err := watchPodLogsForSubstring(logCtx, managerPod, substrings...)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -103,11 +107,18 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 
 	// wait for catalogd deployment to finish
 	t.Log("Wait for catalogd deployment to be ready")
-	catalogdManagerPod := waitForDeployment(t, ctx, "catalogd")
+	waitForDeployment(t, ctx, "catalogd")
+
+	// Find the catalogd leader pod
+	catalogdLeaderCtx, catalogdLeaderCancel := context.WithTimeout(ctx, 3*time.Minute)
+	defer catalogdLeaderCancel()
+	catalogdManagerPod, err := findLeaderPod(catalogdLeaderCtx, "catalogd")
+	require.NoError(t, err)
+	require.NotNil(t, catalogdManagerPod)
 
 	// wait for operator-controller deployment to finish
 	t.Log("Wait for operator-controller deployment to be ready")
-	managerPod := waitForDeployment(t, ctx, "operator-controller")
+	waitForDeployment(t, ctx, "operator-controller")
 
 	t.Log("Wait for acquired leader election")
 	// Average case is under 1 minute but in the worst case: (previous leader crashed)
@@ -115,10 +126,11 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer leaderCancel()
 
-	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, managerPod, leaderSubstrings...)
+	// When there are multiple replicas, find the leader pod
+	var managerPod *corev1.Pod
+	managerPod, err = findLeaderPod(leaderCtx, "operator-controller")
 	require.NoError(t, err)
-	require.True(t, leaderElected)
+	require.NotNil(t, managerPod)
 
 	t.Log("Reading logs to make sure that ClusterExtension was reconciled by operator-controller before we update it")
 	// Make sure that after we upgrade OLM itself we can still reconcile old objects without any changes
@@ -154,7 +166,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 
 		require.True(ct, clusterCatalog.Status.LastUnpacked.After(catalogdManagerPod.CreationTimestamp.Time))
-	}, time.Minute, time.Second)
+	}, pollDuration, pollInterval)
 
 	// TODO: if we change the underlying revision storage mechanism, the new version
 	//   will not detect any installed versions, we need to make sure that the upgrade
@@ -172,7 +184,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotNil(ct, clusterExtension.Status.Install)
 		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle.Version)
-	}, time.Minute, time.Second)
+	}, pollDuration, pollInterval)
 
 	previousVersion := clusterExtension.Status.Install.Bundle.Version
 
@@ -182,6 +194,13 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	require.NoError(t, c.Update(ctx, &clusterExtension))
 
 	t.Log("Checking that the ClusterExtension installs successfully")
+	// Use 10 minutes for post-OLM-upgrade extension upgrade operations.
+	// After upgrading OLM itself, the system needs time to:
+	// - Stabilize after operator-controller pods restart (leader election: up to 163s)
+	// - Process the ClusterExtension spec change
+	// - Resolve and unpack the new bundle (1.0.1)
+	// - Apply manifests and wait for rollout
+	// In multi-replica deployments with recent OLM upgrade, this can take significant time
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterExtensionName}, &clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
@@ -190,14 +209,13 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.Equal(ct, ocv1.BundleMetadata{Name: "test-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
 		require.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
-	}, time.Minute, time.Second)
+	}, 10*time.Minute, pollInterval)
 }
 
 // waitForDeployment checks that the updated deployment with the given app.kubernetes.io/name label
 // has reached the desired number of replicas and that the number pods matches that number
-// i.e. no old pods remain. It will return a pointer to the first pod. This is only necessary
-// to facilitate the mitigation put in place for https://github.com/operator-framework/operator-controller/issues/1626
-func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel string) *corev1.Pod {
+// i.e. no old pods remain.
+func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel string) {
 	deploymentLabelSelector := labels.Set{"app.kubernetes.io/name": controlPlaneLabel}.AsSelector()
 
 	t.Log("Checking that the deployment is updated")
@@ -217,13 +235,101 @@ func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel stri
 		desiredNumReplicas = *managerDeployment.Spec.Replicas
 	}, time.Minute, time.Second)
 
-	var managerPods corev1.PodList
 	t.Logf("Ensure the number of remaining pods equal the desired number of replicas (%d)", desiredNumReplicas)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var managerPods corev1.PodList
 		require.NoError(ct, c.List(ctx, &managerPods, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
-		require.Len(ct, managerPods.Items, 1)
+		require.Len(ct, managerPods.Items, int(desiredNumReplicas))
 	}, time.Minute, time.Second)
-	return &managerPods.Items[0]
+}
+
+// findLeaderPod finds the pod that has acquired the leader lease by checking logs of all pods
+func findLeaderPod(ctx context.Context, controlPlaneLabel string) (*corev1.Pod, error) {
+	deploymentLabelSelector := labels.Set{"app.kubernetes.io/name": controlPlaneLabel}.AsSelector()
+
+	// If there's only one pod, it must be the leader
+	// First, do a quick check to see if we can find the leader in existing logs
+	var leaderPod *corev1.Pod
+	leaderSubstrings := []string{"successfully acquired lease"}
+
+	// Retry logic: keep checking until we find a leader or context times out
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("timeout waiting for leader election: %w", ctx.Err())
+		case <-ticker.C:
+			var managerPods corev1.PodList
+			if err := c.List(ctx, &managerPods, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}); err != nil {
+				continue
+			}
+
+			if len(managerPods.Items) == 0 {
+				continue
+			}
+
+			// If there's only one pod, it must be the leader
+			if len(managerPods.Items) == 1 {
+				return &managerPods.Items[0], nil
+			}
+
+			// Check each pod's existing logs (without following) for leader election message
+			for i := range managerPods.Items {
+				pod := &managerPods.Items[i]
+
+				// Check existing logs only (don't follow)
+				isLeader, err := checkPodLogsForSubstring(ctx, pod, leaderSubstrings...)
+				if err != nil {
+					// If we can't read logs from this pod, try the next one
+					continue
+				}
+				if isLeader {
+					leaderPod = pod
+					break
+				}
+			}
+
+			if leaderPod != nil {
+				return leaderPod, nil
+			}
+			// No leader found yet, retry after ticker interval
+		}
+	}
+}
+
+// checkPodLogsForSubstring checks existing pod logs (without following) for the given substrings
+func checkPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, substrings ...string) (bool, error) {
+	podLogOpts := corev1.PodLogOptions{
+		Follow:    false, // Don't follow, just read existing logs
+		Container: container,
+	}
+
+	req := kclientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
+	podLogs, err := req.Stream(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer podLogs.Close()
+
+	scanner := bufio.NewScanner(podLogs)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		foundCount := 0
+		for _, substring := range substrings {
+			if strings.Contains(line, substring) {
+				foundCount++
+			}
+		}
+		if foundCount == len(substrings) {
+			return true, nil
+		}
+	}
+
+	// If we didn't find the substrings, return false (not an error)
+	return false, nil
 }
 
 func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, substrings ...string) (bool, error) {
