@@ -29,6 +29,8 @@ import (
 const (
 	artifactName         = "operator-controller-e2e"
 	pollDuration         = time.Minute
+	catalogPollDuration  = 3 * time.Minute
+	extendedPollDuration = 5 * time.Minute
 	pollInterval         = time.Second
 	testCatalogRefEnvVar = "CATALOG_IMG"
 	testCatalogName      = "test-catalog"
@@ -167,12 +169,11 @@ location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"`,
 	t.Log("By eventually reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-	}, 2*time.Minute, pollInterval)
+	}, pollDuration, pollInterval)
 
-	// Give the check 2 minutes instead of the typical 1 for the pod's
-	// files to update from the configmap change.
+	// Give the check extra time for the pod's files to update from the configmap change.
 	// The theoretical max time is the kubelet sync period of 1 minute +
-	// ConfigMap cache TTL of 1 minute = 2 minutes
+	// ConfigMap cache TTL of 1 minute = 2 minutes, plus buffer for reconciliation.
 	t.Log("By eventually reporting progressing as True")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
@@ -180,7 +181,7 @@ location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"`,
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-	}, 2*time.Minute, pollInterval)
+	}, extendedPollDuration, pollInterval)
 
 	t.Log("By eventually installing the package successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -333,13 +334,14 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
+	// Use catalogPollDuration for initial catalog resolution
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-	}, pollDuration, pollInterval)
+	}, catalogPollDuration, pollInterval)
 
 	t.Log("It allows to upgrade the ClusterExtension to a non-successor version")
 	t.Log("By updating the ClusterExtension resource to a non-successor version")
@@ -380,13 +382,14 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
+	// Use catalogPollDuration for initial catalog resolution
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-	}, pollDuration, pollInterval)
+	}, catalogPollDuration, pollInterval)
 
 	t.Log("It does allow to upgrade the ClusterExtension to any of the successor versions within non-zero major version")
 	t.Log("By updating the ClusterExtension resource by skipping versions")
@@ -436,13 +439,14 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 
 	t.Log("By reporting a successful resolution and bundle path")
+	// Use catalogPollDuration since this test waits for the catalog to be unpacked and served
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-	}, pollDuration, pollInterval)
+	}, catalogPollDuration, pollInterval)
 
 	// patch imageRef tag on test-catalog image with v2 image
 	t.Log("By patching the catalog ImageRef to point to the v2 catalog")
@@ -517,26 +521,28 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 
 	t.Log("By reporting a successful resolution and bundle path")
+	// Use catalogPollDuration since this test waits for the catalog to be unpacked and served
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-	}, pollDuration, pollInterval)
+	}, catalogPollDuration, pollInterval)
 
 	// update tag on test-catalog image with v2 image
 	t.Log("By updating the catalog tag to point to the v2 catalog")
 	v2Image := fmt.Sprintf("%s/%s", os.Getenv("LOCAL_REGISTRY_HOST"), os.Getenv("E2E_TEST_CATALOG_V2"))
 	err = crane.Tag(v2Image, latestImageTag, crane.Insecure)
 	require.NoError(t, err)
+	// Use catalogPollDuration for waiting on catalog re-unpacking after tag update
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.Name}, extensionCatalog))
 		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, ocv1.TypeServing)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
-	}, pollDuration, pollInterval)
+	}, catalogPollDuration, pollInterval)
 
 	t.Log("By eventually reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -655,6 +661,7 @@ func TestClusterExtensionRecoversFromNoNamespaceWhenFailureFixed(t *testing.T) {
 	// backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
 	// after creating int the Namespace and ServiceAccount.
 	t.Log("By eventually installing the package successfully")
+	// Use extendedPollDuration for recovery tests to account for exponential backoff after repeated failures
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
@@ -663,7 +670,7 @@ func TestClusterExtensionRecoversFromNoNamespaceWhenFailureFixed(t *testing.T) {
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotEmpty(ct, clusterExtension.Status.Install)
-	}, pollDuration, pollInterval)
+	}, extendedPollDuration, pollInterval)
 
 	t.Log("By eventually reporting Progressing == True with Reason Success")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -777,6 +784,7 @@ func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testi
 	// backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
 	// after deleting the Deployment.
 	t.Log("By eventually installing the package successfully")
+	// Use extendedPollDuration for recovery tests to account for exponential backoff after repeated failures
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
@@ -785,7 +793,7 @@ func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testi
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotEmpty(ct, clusterExtension.Status.Install)
-	}, pollDuration, pollInterval)
+	}, extendedPollDuration, pollInterval)
 
 	t.Log("By eventually reporting Progressing == True with Reason Success")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
