@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -404,9 +405,12 @@ func TestClusterExtensionVersionUpdate(t *testing.T) {
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 	}, pollDuration, pollInterval)
 	t.Log("We should have two ClusterExtensionRevision resources")
+	// Use 5 minutes for checking ClusterExtensionRevision creation after upgrade.
+	// In multi-replica deployments, revision creation happens after the upgrade completes,
+	// which includes leader election time (up to 163s) plus reconciliation overhead.
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		cerList := &ocv1.ClusterExtensionRevisionList{}
 		require.NoError(ct, c.List(context.Background(), cerList))
 		require.Len(ct, cerList.Items, 2)
-	}, pollDuration, pollInterval)
+	}, 5*time.Minute, pollInterval)
 }
