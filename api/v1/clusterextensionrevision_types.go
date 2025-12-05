@@ -96,9 +96,6 @@ type ClusterExtensionRevisionLifecycleState string
 const (
 	// ClusterExtensionRevisionLifecycleStateActive / "Active" is the default lifecycle state.
 	ClusterExtensionRevisionLifecycleStateActive ClusterExtensionRevisionLifecycleState = "Active"
-	// ClusterExtensionRevisionLifecycleStatePaused / "Paused" disables reconciliation of the ClusterExtensionRevision.
-	// Object changes will not be reconciled. However, status updates will be propagated.
-	ClusterExtensionRevisionLifecycleStatePaused ClusterExtensionRevisionLifecycleState = "Paused"
 	// ClusterExtensionRevisionLifecycleStateArchived / "Archived" archives the revision for historical or auditing purposes.
 	// The revision is removed from the owner list of all other objects previously under management and all objects
 	// that did not transition to a succeeding revision are deleted.

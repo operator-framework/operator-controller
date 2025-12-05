@@ -450,10 +450,6 @@ func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Con
 		}
 		r.Phases = append(r.Phases, phase)
 	}
-
-	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStatePaused {
-		opts = append(opts, boxcutter.WithPaused{})
-	}
 	return r, opts, nil
 }
 

@@ -50,11 +50,7 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 
 	rs := &RevisionStates{}
 	for _, rev := range existingRevisionList.Items {
-		switch rev.Spec.LifecycleState {
-		case ocv1.ClusterExtensionRevisionLifecycleStateActive,
-			ocv1.ClusterExtensionRevisionLifecycleStatePaused:
-		default:
-			// Skip anything not active or paused, which should only be "Archived".
+		if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
 			continue
 		}
 
