@@ -27,8 +27,11 @@ import (
 )
 
 const (
-	artifactName         = "operator-controller-e2e"
-	pollDuration         = time.Minute
+	artifactName = "operator-controller-e2e"
+	// pollDuration is set to 3 minutes to account for leader election time in multi-replica deployments.
+	// In the worst case (previous leader crashed), leader election can take up to 163 seconds
+	// (LeaseDuration: 137s + RetryPeriod: 26s). Adding buffer for reconciliation time.
+	pollDuration         = 3 * time.Minute
 	pollInterval         = time.Second
 	testCatalogRefEnvVar = "CATALOG_IMG"
 	testCatalogName      = "test-catalog"
@@ -169,10 +172,11 @@ location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"`,
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 	}, 2*time.Minute, pollInterval)
 
-	// Give the check 2 minutes instead of the typical 1 for the pod's
-	// files to update from the configmap change.
+	// Give the check extra time for the pod's files to update from the configmap change.
 	// The theoretical max time is the kubelet sync period of 1 minute +
-	// ConfigMap cache TTL of 1 minute = 2 minutes
+	// ConfigMap cache TTL of 1 minute = 2 minutes.
+	// With multi-replica deployments, add leader election time (up to 163s in worst case).
+	// Total: 2 min (ConfigMap) + 2.7 min (leader election) + buffer = 5 minutes
 	t.Log("By eventually reporting progressing as True")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
@@ -180,7 +184,7 @@ location = "docker-registry.operator-controller-e2e.svc.cluster.local:5000"`,
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
-	}, 2*time.Minute, pollInterval)
+	}, 5*time.Minute, pollInterval)
 
 	t.Log("By eventually installing the package successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -655,6 +659,8 @@ func TestClusterExtensionRecoversFromNoNamespaceWhenFailureFixed(t *testing.T) {
 	// backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
 	// after creating int the Namespace and ServiceAccount.
 	t.Log("By eventually installing the package successfully")
+	// Use 5 minutes for recovery tests to account for exponential backoff after repeated failures
+	// plus leader election time (up to 163s in worst case)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
@@ -663,7 +669,7 @@ func TestClusterExtensionRecoversFromNoNamespaceWhenFailureFixed(t *testing.T) {
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotEmpty(ct, clusterExtension.Status.Install)
-	}, pollDuration, pollInterval)
+	}, 5*time.Minute, pollInterval)
 
 	t.Log("By eventually reporting Progressing == True with Reason Success")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -777,6 +783,8 @@ func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testi
 	// backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
 	// after deleting the Deployment.
 	t.Log("By eventually installing the package successfully")
+	// Use 5 minutes for recovery tests to account for exponential backoff after repeated failures
+	// plus leader election time (up to 163s in worst case)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
@@ -785,7 +793,7 @@ func TestClusterExtensionRecoversFromExistingDeploymentWhenFailureFixed(t *testi
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotEmpty(ct, clusterExtension.Status.Install)
-	}, pollDuration, pollInterval)
+	}, 5*time.Minute, pollInterval)
 
 	t.Log("By eventually reporting Progressing == True with Reason Success")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
