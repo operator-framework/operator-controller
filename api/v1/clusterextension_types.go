@@ -472,6 +472,21 @@ type BundleMetadata struct {
 	Version string `json:"version"`
 }
 
+// RevisionStatus defines the observed state of a ClusterExtensionRevision.
+type RevisionStatus struct {
+	// name of the ClusterExtensionRevision resource
+	Name string `json:"name"`
+	// conditions optionally expose Progressing and Available condition of the revision,
+	// in case when it is not yet marked as successfully installed (condition Succeeded is not set to True).
+	// Given that a ClusterExtension should remain available during upgrades, an observer may use these conditions
+	// to get more insights about reasons for its current state.
+	//
+	// +listType=map
+	// +listMapKey=type
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
 // ClusterExtensionStatus defines the observed state of a ClusterExtension.
 type ClusterExtensionStatus struct {
 	// The set of condition types which apply to all spec.source variations are Installed and Progressing.
@@ -504,6 +519,14 @@ type ClusterExtensionStatus struct {
 	//
 	// +optional
 	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
+
+	// activeRevisions holds a list of currently active (non-archived) ClusterExtensionRevisions,
+	// including both installed and rolling out revisions.
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	// <opcon:experimental>
+	ActiveRevisions []RevisionStatus `json:"activeRevisions,omitempty"`
 }
 
 // ClusterExtensionInstallStatus is a representation of the status of the identified bundle.

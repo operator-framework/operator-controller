@@ -39,6 +39,8 @@ func TestClusterExtensionRevision(t *testing.T) {
 			Catalog: &ocv1.CatalogFilter{
 				PackageName: "test",
 				Version:     "1.0.1",
+				// we would also like to force upgrade to 1.0.2, which is not within the upgrade path
+				UpgradeConstraintPolicy: ocv1.UpgradeConstraintPolicySelfCertified,
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
@@ -91,6 +93,9 @@ func TestClusterExtensionRevision(t *testing.T) {
 		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
+		require.Len(ct, clusterExtension.Status.ActiveRevisions, 1)
+		require.Equal(ct, clusterExtension.Status.ActiveRevisions[0].Name, clusterExtensionRevision.Name)
+		require.Empty(ct, clusterExtension.Status.ActiveRevisions[0].Conditions)
 	}, pollDuration, pollInterval)
 
 	t.Log("Check Deployment Availability Probe")
@@ -112,6 +117,14 @@ func TestClusterExtensionRevision(t *testing.T) {
 		require.Equal(ct, ocv1.ClusterExtensionRevisionReasonProbeFailure, cond.Reason)
 	}, pollDuration, pollInterval)
 
+	t.Log("By propagating Available:False to ClusterExtension")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionFalse, cond.Status)
+	}, pollDuration, pollInterval)
+
 	t.Log("By making the operator pod ready")
 	podName = getPodName(t, clusterExtension.Spec.Namespace, client.MatchingLabels{"app": "olme2etest"})
 	podExec(t, clusterExtension.Spec.Namespace, podName, []string{"touch", "/var/www/ready"})
@@ -128,6 +141,14 @@ func TestClusterExtensionRevision(t *testing.T) {
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ClusterExtensionRevisionReasonProbesSucceeded, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By propagating Available:True to ClusterExtension")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 	}, pollDuration, pollInterval)
 
 	t.Log("Check archiving")
@@ -180,6 +201,37 @@ func TestClusterExtensionRevision(t *testing.T) {
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionUnknown, cond.Status)
 		require.Equal(ct, ocv1.ClusterExtensionRevisionReasonArchived, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By upgrading the cluster extension to v1.0.2 containing bad image reference")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		clusterExtension.Spec.Source.Catalog.Version = "1.0.2"
+		require.NoError(t, c.Update(context.Background(), clusterExtension))
+	}, pollDuration, pollInterval)
+
+	t.Log("By revision-3 eventually reporting Progressing:True:Succeeded and Available:False:ProbeFailure conditions")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: fmt.Sprintf("%s-3", clusterExtension.Name)}, &clusterExtensionRevision))
+		cond := apimeta.FindStatusCondition(clusterExtensionRevision.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionTrue, cond.Status)
+		require.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
+
+		cond = apimeta.FindStatusCondition(clusterExtensionRevision.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+		require.NotNil(ct, cond)
+		require.Equal(ct, metav1.ConditionFalse, cond.Status)
+		require.Equal(ct, ocv1.ClusterExtensionRevisionReasonProbeFailure, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually reporting more than one active revision")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		require.Len(ct, clusterExtension.Status.ActiveRevisions, 2)
+		require.Equal(ct, clusterExtension.Status.ActiveRevisions[0].Name, fmt.Sprintf("%s-2", clusterExtension.Name))
+		require.Equal(ct, clusterExtension.Status.ActiveRevisions[1].Name, fmt.Sprintf("%s-3", clusterExtension.Name))
+		require.Empty(ct, clusterExtension.Status.ActiveRevisions[0].Conditions)
+		require.NotEmpty(ct, clusterExtension.Status.ActiveRevisions[1].Conditions)
 	}, pollDuration, pollInterval)
 }
 

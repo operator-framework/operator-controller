@@ -332,9 +332,11 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 }
 
 type RevisionMetadata struct {
-	Package string
-	Image   string
+	RevisionName string
+	Package      string
+	Image        string
 	ocv1.BundleMetadata
+	Conditions []metav1.Condition
 }
 
 type RevisionStates struct {
