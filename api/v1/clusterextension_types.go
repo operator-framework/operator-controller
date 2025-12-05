@@ -472,6 +472,14 @@ type BundleMetadata struct {
 	Version string `json:"version"`
 }
 
+type RevisionStatus struct {
+	Name string `json:"name"`
+	// +listType=map
+	// +listMapKey=type
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
 // ClusterExtensionStatus defines the observed state of a ClusterExtension.
 type ClusterExtensionStatus struct {
 	// The set of condition types which apply to all spec.source variations are Installed and Progressing.
@@ -504,6 +512,12 @@ type ClusterExtensionStatus struct {
 	//
 	// +optional
 	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
+
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	// <opcon:experimental>
+	ActiveRevisions []RevisionStatus `json:"activeRevisions,omitempty"`
 }
 
 // ClusterExtensionInstallStatus is a representation of the status of the identified bundle.
@@ -522,7 +536,7 @@ type ClusterExtensionInstallStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Installed Bundle",type=string,JSONPath=`.status.install.bundle.name`
 // +kubebuilder:printcolumn:name=Version,type=string,JSONPath=`.status.install.bundle.version`
-// +kubebuilder:printcolumn:name="Installed",type=string,JSONPath=`.status.conditions[?(@.type=='Installed')].status`
+// +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
 // +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 

@@ -628,7 +628,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
-		controllers.ApplyBundle(appl),
+		controllers.ApplyBundleWithBoxcutter(appl),
 	}
 
 	baseDiscoveryClient, err := discovery.NewDiscoveryClientForConfig(c.mgr.GetConfig())
