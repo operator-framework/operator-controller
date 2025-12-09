@@ -59,7 +59,7 @@ make manifests
 !!! note
     Run `make help` for more information on all potential `make` targets.
 
-### Rapid Iterative Development with Tilt
+## Rapid Iterative Development with Tilt
 
 If you are developing against the combined ecosystem of catalogd + operator-controller, you will want to take advantage of `tilt`:
 
@@ -134,6 +134,36 @@ Shortly after starting, Tilt processes the `Tiltfile`, resulting in:
 - Running kustomize and applying everything except the Deployments that reference the images above
 - Modifying the Deployments to use the just-built images
 - Creating the Deployments
+
+### Using the Claude local development environment sub-agent
+
+The repository contains a configuration for a Claude sub-agent that can help walk
+you through the process of setting up your local development environment. If you are
+using Claude, simply ask it for assistance in setting up the local development environment
+and it should suggest using the local development environment specialist sub-agent. For example:
+
+```
+> Can you help me set up a local dev environment?
+
+● I'll help you set up the local development environment for this OLM v1 project. Since this project has a specialized sub-agent for
+  local development setup, I'll use that to guide you through the complete process.
+
+---
+
+> I need help setting up a local dev env
+
+● I'll help you set up a local development environment for the operator-controller project. Since this involves setting up a complete
+  development environment with multiple components, I'll use the specialized OLM development environment agent to guide you through the
+  process.
+```
+
+The sub-agent is designed to assist with:
+- Checking for all the necessary tooling and installing missing binaries
+- Helping with OS-specific configuration
+- Running and monitoring the kind cluster and Tilt server
+
+As with all LLM-based tooling, always use good judgement and verify its suggestions. This is not
+intended as a substitute for the concrete instructions in the rest of the project documentation.
 
 ---
 
