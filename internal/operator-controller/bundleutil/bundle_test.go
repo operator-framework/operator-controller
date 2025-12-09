@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/blang/semver/v4"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +28,7 @@ func TestGetVersionAndRelease(t *testing.T) {
 				Value: json.RawMessage(`{"version": "1.0.0-pre+1.alpha.2"}`),
 			},
 			wantVersionRelease: &bundle.VersionRelease{
-				Version: semver.MustParse("1.0.0-pre"),
+				Version: bsemver.MustParse("1.0.0-pre"),
 				Release: bundle.Release([]bsemver.PRVersion{
 					{VersionNum: 1, IsNum: true},
 					{VersionStr: "alpha"},
@@ -53,7 +52,7 @@ func TestGetVersionAndRelease(t *testing.T) {
 				Value: json.RawMessage(`{"version": "1.0.0+001"}`),
 			},
 			wantVersionRelease: &bundle.VersionRelease{
-				Version: semver.MustParse("1.0.0+001"),
+				Version: bsemver.MustParse("1.0.0+001"),
 			},
 			wantErr: false,
 		},

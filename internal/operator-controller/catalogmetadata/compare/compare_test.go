@@ -19,40 +19,68 @@ func TestNewVersionRange(t *testing.T) {
 	type testCase struct {
 		name         string
 		versionRange string
-		inputVersion bsemver.Version
-		expect       bool
+		assertFunc   func(t *testing.T, vr bsemver.Range, err error)
 	}
 	for _, tc := range []testCase{
 		{
+			name:         "version without build metadata matches range with build metadata",
 			versionRange: "1.0.0+1",
-			inputVersion: bsemver.MustParse("1.0.0"),
-			expect:       true,
+			assertFunc: func(t *testing.T, vr bsemver.Range, err error) {
+				require.NoError(t, err)
+				assert.True(t, vr(bsemver.MustParse("1.0.0")))
+			},
 		},
 		{
+			name:         "version with different build metadata matches range with build metadata",
 			versionRange: "1.0.0+1",
-			inputVersion: bsemver.MustParse("1.0.0+2"),
-			expect:       true,
+			assertFunc: func(t *testing.T, vr bsemver.Range, err error) {
+				require.NoError(t, err)
+				assert.True(t, vr(bsemver.MustParse("1.0.0+2")))
+			},
 		},
 		{
+			name:         "version with same build metadata matches range with build metadata",
 			versionRange: "1.0.0+1",
-			inputVersion: bsemver.MustParse("1.0.0+1"),
-			expect:       true,
+			assertFunc: func(t *testing.T, vr bsemver.Range, err error) {
+				require.NoError(t, err)
+				assert.True(t, vr(bsemver.MustParse("1.0.0+1")))
+			},
 		},
 		{
+			name:         "exact version match without build metadata",
 			versionRange: "1.0.0",
-			inputVersion: bsemver.MustParse("1.0.0"),
-			expect:       true,
+			assertFunc: func(t *testing.T, vr bsemver.Range, err error) {
+				require.NoError(t, err)
+				assert.True(t, vr(bsemver.MustParse("1.0.0")))
+			},
 		},
 		{
+			name:         "version with build metadata matches range without build metadata",
 			versionRange: "1.0.0",
-			inputVersion: bsemver.MustParse("1.0.0+1"),
-			expect:       true,
+			assertFunc: func(t *testing.T, vr bsemver.Range, err error) {
+				require.NoError(t, err)
+				assert.True(t, vr(bsemver.MustParse("1.0.0+1")))
+			},
+		},
+		{
+			name:         "invalid range returns error",
+			versionRange: "not-a-valid-version",
+			assertFunc: func(t *testing.T, vr bsemver.Range, err error) {
+				require.Error(t, err)
+			},
+		},
+		{
+			name:         "version does not match range",
+			versionRange: ">=2.0.0",
+			assertFunc: func(t *testing.T, vr bsemver.Range, err error) {
+				require.NoError(t, err)
+				assert.False(t, vr(bsemver.MustParse("1.0.0")))
+			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			versionRange, err := compare.NewVersionRange(tc.versionRange)
-			require.NoError(t, err)
-			assert.Equal(t, tc.expect, versionRange(tc.inputVersion))
+			tc.assertFunc(t, versionRange, err)
 		})
 	}
 }

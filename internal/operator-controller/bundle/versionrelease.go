@@ -65,14 +65,22 @@ func (vr *VersionRelease) Compare(other VersionRelease) int {
 	return vr.Release.Compare(other.Release)
 }
 
+// AsLegacyRegistryV1Version converts a VersionRelease into a standard semver version.
+// If the VersionRelease's Release field is set, the returned semver version's build
+// metadata is set to the VersionRelease's Release. Otherwise, the build metadata is
+// set to the VersionRelease's Version field's build metadata.
 func (vr *VersionRelease) AsLegacyRegistryV1Version() bsemver.Version {
-	return bsemver.Version{
+	v := bsemver.Version{
 		Major: vr.Version.Major,
 		Minor: vr.Version.Minor,
 		Patch: vr.Version.Patch,
 		Pre:   vr.Version.Pre,
-		Build: slicesutil.Map(vr.Release, func(i bsemver.PRVersion) string { return i.String() }),
+		Build: vr.Version.Build,
 	}
+	if len(vr.Release) > 0 {
+		v.Build = slicesutil.Map(vr.Release, func(i bsemver.PRVersion) string { return i.String() })
+	}
+	return v
 }
 
 type Release []bsemver.PRVersion

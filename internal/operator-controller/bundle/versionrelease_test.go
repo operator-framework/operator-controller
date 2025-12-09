@@ -3,11 +3,117 @@ package bundle_test
 import (
 	"testing"
 
+	bsemver "github.com/blang/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 )
+
+func TestNewLegacyRegistryV1VersionRelease(t *testing.T) {
+	type testCase struct {
+		name   string
+		input  string
+		expect func(*testing.T, *bundle.VersionRelease, error)
+	}
+	for _, tc := range []testCase{
+		{
+			name:  "empty input",
+			input: "",
+			expect: func(t *testing.T, _ *bundle.VersionRelease, err error) {
+				assert.Error(t, err)
+			},
+		},
+		{
+			name:  "v-prefix is invalid",
+			input: "v1.0.0",
+			expect: func(t *testing.T, _ *bundle.VersionRelease, err error) {
+				assert.Error(t, err)
+			},
+		},
+		{
+			name:  "valid semver, valid build metadata, but not a valid release",
+			input: "1.2.3-alpha+4.005",
+			expect: func(t *testing.T, vr *bundle.VersionRelease, err error) {
+				require.NoError(t, err)
+				assert.Equal(t, uint64(1), vr.Version.Major)
+				assert.Equal(t, uint64(2), vr.Version.Minor)
+				assert.Equal(t, uint64(3), vr.Version.Patch)
+				assert.Equal(t, []bsemver.PRVersion{{VersionStr: "alpha"}}, vr.Version.Pre)
+				assert.Equal(t, []string{"4", "005"}, vr.Version.Build)
+				assert.Empty(t, vr.Release)
+			},
+		},
+		{
+			name:  "valid semver, valid build metadata, valid release",
+			input: "1.2.3-alpha+4.5",
+			expect: func(t *testing.T, vr *bundle.VersionRelease, err error) {
+				require.NoError(t, err)
+				assert.Equal(t, uint64(1), vr.Version.Major)
+				assert.Equal(t, uint64(2), vr.Version.Minor)
+				assert.Equal(t, uint64(3), vr.Version.Patch)
+				assert.Equal(t, []bsemver.PRVersion{{VersionStr: "alpha"}}, vr.Version.Pre)
+				assert.Empty(t, vr.Version.Build)
+				assert.Equal(t, bundle.Release([]bsemver.PRVersion{
+					{VersionNum: 4, IsNum: true},
+					{VersionNum: 5, IsNum: true},
+				}), vr.Release)
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := bundle.NewLegacyRegistryV1VersionRelease(tc.input)
+			tc.expect(t, actual, err)
+		})
+	}
+}
+
+func TestVersionRelease_AsLegacyRegistryV1Version(t *testing.T) {
+	type testCase struct {
+		name   string
+		input  bundle.VersionRelease
+		expect bsemver.Version
+	}
+	for _, tc := range []testCase{
+		{
+			name: "Release is set, so release is set as build metadata",
+			input: bundle.VersionRelease{
+				Version: bsemver.Version{
+					Major: 1,
+					Minor: 2,
+					Patch: 3,
+				},
+				Release: bundle.Release([]bsemver.PRVersion{{VersionStr: "release"}}),
+			},
+			expect: bsemver.Version{
+				Major: 1,
+				Minor: 2,
+				Patch: 3,
+				Build: []string{"release"},
+			},
+		},
+		{
+			name: "Release is unset, so version build metadata is set as build metadata",
+			input: bundle.VersionRelease{
+				Version: bsemver.Version{
+					Major: 1,
+					Minor: 2,
+					Patch: 3,
+					Build: []string{"buildmetadata"},
+				},
+			},
+			expect: bsemver.Version{
+				Major: 1,
+				Minor: 2,
+				Patch: 3,
+				Build: []string{"buildmetadata"},
+			}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expect, tc.input.AsLegacyRegistryV1Version())
+		})
+	}
+}
 
 func TestLegacyRegistryV1VersionRelease_Compare(t *testing.T) {
 	type testCase struct {
@@ -106,6 +212,12 @@ func TestLegacyRegistryV1VersionRelease_Compare(t *testing.T) {
 			v1:     "0.0.0-0+2",
 			v2:     "0.0.0-0+1",
 			expect: 1,
+		},
+		{
+			name:   "non-release build metadata is less than valid release build metadata",
+			v1:     "0.0.0-0+1.001",
+			v2:     "0.0.0-0+0",
+			expect: -1,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
