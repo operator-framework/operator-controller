@@ -96,3 +96,8 @@ deployments:
           - ALL
       readOnlyRootFilesystem: true
     terminationMessagePolicy: FallbackToLogsOnError
+# Documentation URLs
+docs:
+  clusterExtensionURL: https://www.example.com/ClusterExtension
+  clusterExtensionRevisionURL: https://www.example.com/ClusterExtensionRevision
+  clusterCatalogURL: https://www.example.com/ClusterCatalog

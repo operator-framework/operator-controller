@@ -214,6 +214,7 @@ type ClusterExtensionRevisionStatus struct {
 // at a time. Ownership of objects is transitioned from one revision to the next as the extension is upgraded
 // or reconfigured. Once the latest revision has rolled out successfully, previous active revisions are archived for
 // posterity.
+// Please see ClusterExtensionRevision documentation located at {{ .Values.docs.clusterExtensionRevisionURL }}
 type ClusterExtensionRevision struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

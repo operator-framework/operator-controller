@@ -527,6 +527,7 @@ type ClusterExtensionInstallStatus struct {
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterExtension is the Schema for the clusterextensions API
+// Please see ClusterExtension documentation located at {{ .Values.docs.clusterExtensionURL }}
 type ClusterExtension struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

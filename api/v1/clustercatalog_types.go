@@ -53,6 +53,7 @@ const (
 
 // ClusterCatalog enables users to make File-Based Catalog (FBC) catalog data available to the cluster.
 // For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
+// Please see ClusterCatalog documentation located at {{ .Values.docs.clusterCatalogURL }}
 type ClusterCatalog struct {
 	metav1.TypeMeta `json:",inline"`
 
