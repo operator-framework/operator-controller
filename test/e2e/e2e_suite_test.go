@@ -15,7 +15,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
-	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
+	testutil "github.com/operator-framework/operator-controller/internal/shared/util/test"
 )
 
 var (
@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 	if path == "" {
 		fmt.Printf("Note: E2E_SUMMARY_OUTPUT is unset; skipping summary generation")
 	} else {
-		err = utils.PrintSummary(path)
+		err = testutil.PrintSummary(path)
 		if err != nil {
 			// Fail the run if alerts are found
 			fmt.Printf("%v", err)
