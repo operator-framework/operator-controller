@@ -399,8 +399,6 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		default:
 			return false, progressingCondition.Message, nil
 		}
-	} else if availableCondition != nil && availableCondition.Status != metav1.ConditionTrue {
-		return false, "", errors.New(availableCondition.Message)
 	} else if succeededCondition != nil && succeededCondition.Status != metav1.ConditionTrue {
 		return false, succeededCondition.Message, nil
 	}
