@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
+	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -195,13 +196,14 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 
 // waitForDeployment checks that the updated deployment with the given app.kubernetes.io/name label
 // has reached the desired number of replicas and that the number pods matches that number
-// i.e. no old pods remain. It will return a pointer to the first pod. This is only necessary
+// i.e. no old pods remain. It will return a pointer to the leader pod. This is only necessary
 // to facilitate the mitigation put in place for https://github.com/operator-framework/operator-controller/issues/1626
 func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel string) *corev1.Pod {
 	deploymentLabelSelector := labels.Set{"app.kubernetes.io/name": controlPlaneLabel}.AsSelector()
 
-	t.Log("Checking that the deployment is updated")
+	t.Log("Checking that the deployment is updated and available")
 	var desiredNumReplicas int32
+	var deploymentNamespace string
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var managerDeployments appsv1.DeploymentList
 		require.NoError(ct, c.List(ctx, &managerDeployments, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
@@ -214,16 +216,64 @@ func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel stri
 				managerDeployment.Status.AvailableReplicas == *managerDeployment.Spec.Replicas &&
 				managerDeployment.Status.ReadyReplicas == *managerDeployment.Spec.Replicas,
 		)
+
+		// Check that the deployment has the Available condition set to True
+		var availableCond *appsv1.DeploymentCondition
+		for i := range managerDeployment.Status.Conditions {
+			if managerDeployment.Status.Conditions[i].Type == appsv1.DeploymentAvailable {
+				availableCond = &managerDeployment.Status.Conditions[i]
+				break
+			}
+		}
+		require.NotNil(ct, availableCond, "Available condition not found")
+		require.Equal(ct, corev1.ConditionTrue, availableCond.Status, "Deployment Available condition is not True")
+
 		desiredNumReplicas = *managerDeployment.Spec.Replicas
+		deploymentNamespace = managerDeployment.Namespace
 	}, time.Minute, time.Second)
 
 	var managerPods corev1.PodList
 	t.Logf("Ensure the number of remaining pods equal the desired number of replicas (%d)", desiredNumReplicas)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.List(ctx, &managerPods, client.MatchingLabelsSelector{Selector: deploymentLabelSelector}))
-		require.Len(ct, managerPods.Items, 1)
+		require.Len(ct, managerPods.Items, int(desiredNumReplicas))
 	}, time.Minute, time.Second)
-	return &managerPods.Items[0]
+
+	// Find the leader pod by checking the lease
+	t.Log("Finding the leader pod")
+	// Map component labels to their leader election lease names
+	leaseNames := map[string]string{
+		"catalogd":            "catalogd-operator-lock",
+		"operator-controller": "9c4404e7.operatorframework.io",
+	}
+
+	leaseName, ok := leaseNames[controlPlaneLabel]
+	if !ok {
+		t.Fatalf("Unknown control plane component: %s", controlPlaneLabel)
+	}
+
+	var leaderPod *corev1.Pod
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var lease coordinationv1.Lease
+		require.NoError(ct, c.Get(ctx, types.NamespacedName{Name: leaseName, Namespace: deploymentNamespace}, &lease))
+		require.NotNil(ct, lease.Spec.HolderIdentity)
+
+		leaderIdentity := *lease.Spec.HolderIdentity
+		// The lease holder identity format is: <pod-name>_<leader-election-id-suffix>
+		// Extract just the pod name by splitting on '_'
+		podName := strings.Split(leaderIdentity, "_")[0]
+
+		// Find the pod with matching name
+		for i := range managerPods.Items {
+			if managerPods.Items[i].Name == podName {
+				leaderPod = &managerPods.Items[i]
+				break
+			}
+		}
+		require.NotNil(ct, leaderPod, "leader pod not found with identity: %s (pod name: %s)", leaderIdentity, podName)
+	}, time.Minute, time.Second)
+
+	return leaderPod
 }
 
 func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, substrings ...string) (bool, error) {
