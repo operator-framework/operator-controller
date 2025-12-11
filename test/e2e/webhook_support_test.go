@@ -103,13 +103,14 @@ func TestWebhookSupport(t *testing.T) {
 	})
 
 	t.Log("By waiting for the catalog to serve its metadata")
+	// Use catalogPollDuration since catalog unpacking can take time
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.GetName()}, extensionCatalog))
 		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, ocv1.TypeServing)
 		require.NotNil(ct, cond)
 		require.Equal(ct, metav1.ConditionTrue, cond.Status)
 		require.Equal(ct, ocv1.ReasonAvailable, cond.Reason)
-	}, pollDuration, pollInterval)
+	}, catalogPollDuration, pollInterval)
 
 	t.Log("By installing the webhook-operator ClusterExtension")
 	clusterExtension := &ocv1.ClusterExtension{
@@ -138,6 +139,8 @@ func TestWebhookSupport(t *testing.T) {
 	})
 
 	t.Log("By waiting for webhook-operator extension to be installed successfully")
+	// Use extendedPollDuration for webhook installation as it requires webhook cert generation via
+	// cert-manager, which can take significant time.
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		require.NoError(ct, c.Get(t.Context(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
@@ -147,7 +150,7 @@ func TestWebhookSupport(t *testing.T) {
 		require.Contains(ct, cond.Message, "Installed bundle")
 		require.NotNil(ct, clusterExtension.Status.Install)
 		require.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
-	}, pollDuration, pollInterval)
+	}, extendedPollDuration, pollInterval)
 
 	t.Log("By waiting for webhook-operator deployment to be available")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
