@@ -34,7 +34,9 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: ClusterExtension is the Schema for the clusterextensions API
+        description: |-
+          ClusterExtension is the Schema for the clusterextensions API
+          Please see ClusterExtension documentation located at {{ .Values.docs.clusterExtensionURL }}
         properties:
           apiVersion:
             description: |-

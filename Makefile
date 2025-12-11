@@ -524,11 +524,14 @@ quickstart: manifests #EXHELP Generate the unified installation release manifest
 .PHONY: crd-ref-docs
 API_REFERENCE_FILENAME := olmv1-api-reference.md
 API_REFERENCE_DIR := $(ROOT_DIR)/docs/api-reference
+API_REF_TMP := $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME).tmp
 crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
 	rm -f $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME)
 	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api/ \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
-	--renderer=markdown --output-path=$(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME);
+	--renderer=markdown --output-path=$(API_REF_TMP)
+	go run hack/tools/quick-helm/main.go -values helm/olmv1/values.yaml $(API_REF_TMP) > $(API_REFERENCE_DIR)/$(API_REFERENCE_FILENAME)
+	rm $(API_REF_TMP)
 
 VENVDIR := $(abspath docs/.venv)
 
