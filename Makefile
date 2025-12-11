@@ -62,6 +62,10 @@ ifeq ($(origin KIND_CLUSTER_NAME), undefined)
 KIND_CLUSTER_NAME := operator-controller
 endif
 
+ifeq ($(origin KIND_CONFIG), undefined)
+KIND_CONFIG := ./kind-config.yaml
+endif
+
 
 ifneq (, $(shell command -v docker 2>/dev/null))
 CONTAINER_RUNTIME := docker
@@ -263,7 +267,7 @@ image-registry: export GOARCH=amd64
 image-registry: ## Build the testdata catalog used for e2e tests and push it to the image registry
 	go build $(GO_BUILD_FLAGS) $(GO_BUILD_EXTRA_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
 	$(CONTAINER_RUNTIME) build -f ./testdata/Dockerfile -t $(E2E_REGISTRY_IMAGE) ./testdata
-	$(CONTAINER_RUNTIME) save $(E2E_REGISTRY_IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image $(E2E_REGISTRY_IMAGE) --name $(KIND_CLUSTER_NAME)
 	./testdata/build-test-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME) $(E2E_REGISTRY_IMAGE)
 
 # When running the e2e suite, you can set the ARTIFACT_PATH variable to the absolute path
@@ -282,6 +286,7 @@ test-e2e: run-internal image-registry prometheus e2e e2e-coverage kind-clean #HE
 .PHONY: test-experimental-e2e
 test-experimental-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_E2E_MANIFEST)
 test-experimental-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
+test-experimental-e2e: KIND_CONFIG := ./kind-config-experimental.yaml
 test-experimental-e2e: GO_BUILD_EXTRA_FLAGS := -cover
 test-experimental-e2e: COVERAGE_NAME := experimental-e2e
 test-experimental-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
@@ -382,8 +387,8 @@ stop-profiling: build-test-profiler #EXHELP Stop profiling and generate analysis
 
 .PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND cluster.
-	$(CONTAINER_RUNTIME) save $(OPCON_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
-	$(CONTAINER_RUNTIME) save $(CATD_IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image $(OPCON_IMG) --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image $(CATD_IMG) --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-deploy
 kind-deploy: export DEFAULT_CATALOG := $(RELEASE_CATALOGS)
@@ -408,8 +413,9 @@ kind-deploy-experimental: manifests
 .PHONY: kind-cluster
 kind-cluster: $(KIND) kind-verify-versions #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
-	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config ./kind-config.yaml
+	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config $(KIND_CONFIG)
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
+	kubectl wait --for=condition=Ready nodes --all --timeout=2m
 
 .PHONY: kind-clean
 kind-clean: $(KIND) #EXHELP Delete the kind cluster.

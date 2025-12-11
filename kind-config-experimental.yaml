@@ -1,0 +1,45 @@
+apiVersion: kind.x-k8s.io/v1alpha4
+kind: Cluster
+nodes:
+  - role: control-plane
+    extraPortMappings:
+    # e2e image registry service's NodePort
+      - containerPort: 30000
+        hostPort: 30000
+        listenAddress: "127.0.0.1"
+        protocol: tcp
+    # prometheus metrics service's NodePort
+      - containerPort: 30900
+        hostPort: 30900
+        listenAddress: "127.0.0.1"
+        protocol: tcp
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        apiServer:
+            extraArgs:
+              enable-admission-plugins: OwnerReferencesPermissionEnforcement
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+          taints: []
+    extraMounts:
+      - hostPath: ./hack/kind-config/containerd/certs.d
+        containerPath: /etc/containerd/certs.d
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+          taints: []
+    extraMounts:
+      - hostPath: ./hack/kind-config/containerd/certs.d
+        containerPath: /etc/containerd/certs.d
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/containerd/certs.d"
