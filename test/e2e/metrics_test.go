@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,16 +34,17 @@ func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 	client := testutil.FindK8sClient(t)
 	curlNamespace := createRandomNamespace(t, client)
 	componentNamespace := getComponentNamespace(t, client, "control-plane=operator-controller-controller-manager")
-	metricsURL := fmt.Sprintf("https://operator-controller-service.%s.svc.cluster.local:8443/metrics", componentNamespace)
 
 	config := NewMetricsTestConfig(
 		client,
 		curlNamespace,
+		componentNamespace,
 		"operator-controller-metrics-reader",
 		"operator-controller-metrics-binding",
 		"operator-controller-metrics-reader",
 		"oper-curl-metrics",
-		metricsURL,
+		"app.kubernetes.io/name=operator-controller",
+		operatorControllerMetricsPort,
 	)
 
 	config.run(t)
@@ -53,16 +55,17 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 	client := testutil.FindK8sClient(t)
 	curlNamespace := createRandomNamespace(t, client)
 	componentNamespace := getComponentNamespace(t, client, "control-plane=catalogd-controller-manager")
-	metricsURL := fmt.Sprintf("https://catalogd-service.%s.svc.cluster.local:7443/metrics", componentNamespace)
 
 	config := NewMetricsTestConfig(
 		client,
 		curlNamespace,
+		componentNamespace,
 		"catalogd-metrics-reader",
 		"catalogd-metrics-binding",
 		"catalogd-metrics-reader",
 		"catalogd-curl-metrics",
-		metricsURL,
+		"app.kubernetes.io/name=catalogd",
+		catalogdMetricsPort,
 	)
 
 	config.run(t)
@@ -70,25 +73,29 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 
 // MetricsTestConfig holds the necessary configurations for testing metrics endpoints.
 type MetricsTestConfig struct {
-	client         string
-	namespace      string
-	clusterRole    string
-	clusterBinding string
-	serviceAccount string
-	curlPodName    string
-	metricsURL     string
+	client             string
+	namespace          string
+	componentNamespace string
+	clusterRole        string
+	clusterBinding     string
+	serviceAccount     string
+	curlPodName        string
+	componentSelector  string
+	metricsPort        int
 }
 
 // NewMetricsTestConfig initializes a new MetricsTestConfig.
-func NewMetricsTestConfig(client, namespace, clusterRole, clusterBinding, serviceAccount, curlPodName, metricsURL string) *MetricsTestConfig {
+func NewMetricsTestConfig(client, namespace, componentNamespace, clusterRole, clusterBinding, serviceAccount, curlPodName, componentSelector string, metricsPort int) *MetricsTestConfig {
 	return &MetricsTestConfig{
-		client:         client,
-		namespace:      namespace,
-		clusterRole:    clusterRole,
-		clusterBinding: clusterBinding,
-		serviceAccount: serviceAccount,
-		curlPodName:    curlPodName,
-		metricsURL:     metricsURL,
+		client:             client,
+		namespace:          namespace,
+		componentNamespace: componentNamespace,
+		clusterRole:        clusterRole,
+		clusterBinding:     clusterBinding,
+		serviceAccount:     serviceAccount,
+		curlPodName:        curlPodName,
+		componentSelector:  componentSelector,
+		metricsPort:        metricsPort,
 	}
 }
 
@@ -154,19 +161,33 @@ func (c *MetricsTestConfig) createCurlMetricsPod(t *testing.T) {
 	require.NoError(t, err, "Error creating curl pod: %s", string(output))
 }
 
-// validate verifies if is possible to access the metrics
+// validate verifies if is possible to access the metrics from all pods
 func (c *MetricsTestConfig) validate(t *testing.T, token string) {
 	t.Log("Waiting for the curl pod to be ready")
 	waitCmd := exec.Command(c.client, "wait", "--for=condition=Ready", "pod", c.curlPodName, "--namespace", c.namespace, "--timeout=60s")
 	waitOutput, waitErr := waitCmd.CombinedOutput()
 	require.NoError(t, waitErr, "Error waiting for curl pod to be ready: %s", string(waitOutput))
 
-	t.Log("Validating the metrics endpoint")
-	curlCmd := exec.Command(c.client, "exec", c.curlPodName, "--namespace", c.namespace, "--",
-		"curl", "-v", "-k", "-H", "Authorization: Bearer "+token, c.metricsURL)
-	output, err := curlCmd.CombinedOutput()
-	require.NoError(t, err, "Error calling metrics endpoint: %s", string(output))
-	require.Contains(t, string(output), "200 OK", "Metrics endpoint did not return 200 OK")
+	// Get all pod IPs for the component
+	podIPs := c.getComponentPodIPs(t)
+	require.NotEmpty(t, podIPs, "No pod IPs found for component")
+	t.Logf("Found %d pod(s) to scrape metrics from", len(podIPs))
+
+	// Validate metrics endpoint for each pod
+	for i, podIP := range podIPs {
+		// Build metrics URL with pod FQDN: <pod-ip-with-dashes>.<namespace>.pod.cluster.local
+		// Convert IP dots to dashes (e.g., 10.244.0.11 -> 10-244-0-11)
+		podIPDashes := strings.ReplaceAll(podIP, ".", "-")
+		metricsURL := fmt.Sprintf("https://%s.%s.pod.cluster.local:%d/metrics", podIPDashes, c.componentNamespace, c.metricsPort)
+		t.Logf("Validating metrics endpoint for pod %d/%d: %s", i+1, len(podIPs), metricsURL)
+
+		curlCmd := exec.Command(c.client, "exec", c.curlPodName, "--namespace", c.namespace, "--",
+			"curl", "-v", "-k", "-H", "Authorization: Bearer "+token, metricsURL)
+		output, err := curlCmd.CombinedOutput()
+		require.NoError(t, err, "Error calling metrics endpoint %s: %s", metricsURL, string(output))
+		require.Contains(t, string(output), "200 OK", "Metrics endpoint %s did not return 200 OK", metricsURL)
+		t.Logf("Successfully scraped metrics from pod %d/%d", i+1, len(podIPs))
+	}
 }
 
 // cleanup removes the created resources. Uses a context with timeout to prevent hangs.
@@ -241,6 +262,29 @@ func getComponentNamespace(t *testing.T, client, selector string) string {
 		t.Fatal("No namespace found for selector " + selector)
 	}
 	return namespace
+}
+
+// getComponentPodIPs returns the IP addresses of all pods matching the component selector
+func (c *MetricsTestConfig) getComponentPodIPs(t *testing.T) []string {
+	cmd := exec.Command(c.client, "get", "pods",
+		"--namespace="+c.componentNamespace,
+		"--selector="+c.componentSelector,
+		"--output=jsonpath={.items[*].status.podIP}")
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Error getting pod IPs: %s", string(output))
+
+	podIPsStr := string(bytes.TrimSpace(output))
+	if podIPsStr == "" {
+		return []string{}
+	}
+
+	// Split space-separated IPs
+	fields := bytes.Fields([]byte(podIPsStr))
+	ips := make([]string, len(fields))
+	for i, field := range fields {
+		ips[i] = string(field)
+	}
+	return ips
 }
 
 func stdoutAndCombined(cmd *exec.Cmd) ([]byte, []byte, error) {
