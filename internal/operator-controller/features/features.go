@@ -5,7 +5,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/component-base/featuregate"
 
-	fgutil "github.com/operator-framework/operator-controller/internal/shared/util/featuregates"
+	featuregatesutil "github.com/operator-framework/operator-controller/internal/shared/util/featuregates"
 )
 
 const (
@@ -90,5 +90,5 @@ func init() {
 
 // LogFeatureGateStates logs the state of all known feature gates.
 func LogFeatureGateStates(log logr.Logger, fg featuregate.FeatureGate) {
-	fgutil.LogFeatureGateStates(log, "feature gate status", fg, operatorControllerFeatureGates)
+	featuregatesutil.LogFeatureGateStates(log, "feature gate status", fg, operatorControllerFeatureGates)
 }

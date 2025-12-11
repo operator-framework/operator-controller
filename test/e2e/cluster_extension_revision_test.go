@@ -20,7 +20,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
-	. "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
+	. "github.com/operator-framework/operator-controller/internal/shared/util/test"
 	. "github.com/operator-framework/operator-controller/test/helpers"
 )
 

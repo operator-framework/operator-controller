@@ -18,7 +18,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
+	testutil "github.com/operator-framework/operator-controller/internal/shared/util/test"
 	. "github.com/operator-framework/operator-controller/test/helpers"
 )
 
@@ -29,7 +29,7 @@ const (
 func TestClusterExtensionSingleNamespaceSupport(t *testing.T) {
 	SkipIfFeatureGateDisabled(t, soNsFlag)
 	t.Log("Test support for cluster extension config")
-	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+	defer testutil.CollectTestArtifacts(t, artifactName, c, cfg)
 
 	t.Log("By creating install namespace, watch namespace and necessary rbac resources")
 	namespace := corev1.Namespace{
@@ -187,7 +187,7 @@ func TestClusterExtensionSingleNamespaceSupport(t *testing.T) {
 func TestClusterExtensionOwnNamespaceSupport(t *testing.T) {
 	SkipIfFeatureGateDisabled(t, soNsFlag)
 	t.Log("Test support for cluster extension with OwnNamespace install mode support")
-	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+	defer testutil.CollectTestArtifacts(t, artifactName, c, cfg)
 
 	t.Log("By creating install namespace, watch namespace and necessary rbac resources")
 	namespace := corev1.Namespace{
@@ -363,7 +363,7 @@ func TestClusterExtensionVersionUpdate(t *testing.T) {
 
 	clusterExtension, extensionCatalog, sa, ns := TestInit(t)
 	defer TestCleanup(t, extensionCatalog, clusterExtension, sa, ns)
-	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+	defer testutil.CollectTestArtifacts(t, artifactName, c, cfg)
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{

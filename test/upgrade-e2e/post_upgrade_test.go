@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
+	testutil "github.com/operator-framework/operator-controller/internal/shared/util/test"
 )
 
 const (
@@ -99,7 +99,7 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Starting checks after OLM upgrade")
 	ctx := context.Background()
-	defer utils.CollectTestArtifacts(t, artifactName, c, cfg)
+	defer testutil.CollectTestArtifacts(t, artifactName, c, cfg)
 
 	// wait for catalogd deployment to finish
 	t.Log("Wait for catalogd deployment to be ready")

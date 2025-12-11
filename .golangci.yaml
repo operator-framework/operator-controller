@@ -40,7 +40,7 @@ linters:
           alias: ctrl
         - pkg: github.com/blang/semver/v4
           alias: bsemver
-        - pkg: ^github.com/operator-framework/operator-controller/internal/util/([^/]+)$
+        - pkg: ^github.com/operator-framework/operator-controller/internal/shared/util/([^/]+)$
           alias: ${1}util
   exclusions:
     generated: lax

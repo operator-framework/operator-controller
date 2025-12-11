@@ -25,12 +25,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/rand"
 
-	utils "github.com/operator-framework/operator-controller/internal/shared/util/testutils"
+	testutil "github.com/operator-framework/operator-controller/internal/shared/util/test"
 )
 
 // TestOperatorControllerMetricsExportedEndpoint verifies that the metrics endpoint for the operator controller
 func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
-	client := utils.FindK8sClient(t)
+	client := testutil.FindK8sClient(t)
 	curlNamespace := createRandomNamespace(t, client)
 	componentNamespace := getComponentNamespace(t, client, "control-plane=operator-controller-controller-manager")
 	metricsURL := fmt.Sprintf("https://operator-controller-service.%s.svc.cluster.local:8443/metrics", componentNamespace)
@@ -50,7 +50,7 @@ func TestOperatorControllerMetricsExportedEndpoint(t *testing.T) {
 
 // TestCatalogdMetricsExportedEndpoint verifies that the metrics endpoint for catalogd
 func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
-	client := utils.FindK8sClient(t)
+	client := testutil.FindK8sClient(t)
 	curlNamespace := createRandomNamespace(t, client)
 	componentNamespace := getComponentNamespace(t, client, "control-plane=catalogd-controller-manager")
 	metricsURL := fmt.Sprintf("https://catalogd-service.%s.svc.cluster.local:7443/metrics", componentNamespace)
