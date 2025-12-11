@@ -29,6 +29,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	finalizers "github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
@@ -126,7 +127,7 @@ func TestClusterExtensionShortCircuitsReconcileDuringDeletion(t *testing.T) {
 func TestClusterExtensionResolutionFails(t *testing.T) {
 	pkgName := fmt.Sprintf("non-existent-%s", rand.String(6))
 	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
 			return nil, nil, nil, fmt.Errorf("no package %q found", pkgName)
 		})
 	})
@@ -229,8 +230,10 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 					}
 				},
 				func(d *deps) {
-					d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
-						v := bsemver.MustParse("1.0.0")
+					d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+						v := bundle.VersionRelease{
+							Version: bsemver.MustParse("1.0.0"),
+						}
 						return &declcfg.Bundle{
 							Name:    "prometheus.v1.0.0",
 							Package: "prometheus",
@@ -285,8 +288,10 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 			d.ImagePuller = &imageutil.MockPuller{
 				ImageFS: fstest.MapFS{},
 			}
-			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
-				v := bsemver.MustParse("1.0.0")
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+				v := bundle.VersionRelease{
+					Version: bsemver.MustParse("1.0.0"),
+				}
 				return &declcfg.Bundle{
 					Name:    "prometheus.v1.0.0",
 					Package: "prometheus",
@@ -423,8 +428,10 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
-			v := bsemver.MustParse("1.0.0")
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+			}
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
 				Package: "prometheus",
@@ -516,8 +523,10 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
-			v := bsemver.MustParse("1.0.0")
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+			}
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
 				Package: "prometheus",
@@ -593,8 +602,10 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
-			v := bsemver.MustParse("1.0.0")
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+			}
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
 				Package: "prometheus",
@@ -672,8 +683,10 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
-			v := bsemver.MustParse("1.0.0")
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+			}
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
 				Package: "prometheus",
@@ -751,8 +764,10 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 		d.ImagePuller = &imageutil.MockPuller{
 			ImageFS: fstest.MapFS{},
 		}
-		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
-			v := bsemver.MustParse("1.0.0")
+		d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+			v := bundle.VersionRelease{
+				Version: bsemver.MustParse("1.0.0"),
+			}
 			return &declcfg.Bundle{
 				Name:    "prometheus.v1.0.0",
 				Package: "prometheus",
