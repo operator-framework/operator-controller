@@ -103,8 +103,8 @@ type ClusterExtensionSpec struct {
 	// a configuration schema. When not specified, the default configuration of the resolved bundle will be used.
 	//
 	// config is validated against a configuration schema provided by the resolved bundle. If the bundle does not provide
-	// a configuration schema the final manifests will be derived on a best-effort basis. More information on how
-	// to configure the bundle should be found in its end-user documentation.
+	// a configuration schema the bundle is deemed to not be configurable. More information on how
+	// to configure bundles can be found in the OLM documentation associated with your current OLM version.
 	//
 	// <opcon:experimental>
 	// +optional
