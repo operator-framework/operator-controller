@@ -1,0 +1,24 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${TEST_NAMESPACE}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${SERVICEACCOUNT_NAME}
+  namespace: ${TEST_NAMESPACE}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ${CONTROLLER_NAME}-metrics-reader-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ${CONTROLLER_NAME}-metrics-reader
+subjects:
+  - kind: ServiceAccount
+    name: ${SERVICEACCOUNT_NAME}
+    namespace: ${TEST_NAMESPACE}

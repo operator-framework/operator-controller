@@ -1,20 +1,27 @@
 package e2e
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os/exec"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/scheme"
 	testutil "github.com/operator-framework/operator-controller/internal/shared/util/test"
 )
 
@@ -26,6 +33,11 @@ const (
 	catalogdWebhookPort           = 9443
 	catalogServerPort             = 8443
 	operatorControllerMetricsPort = 8443
+)
+
+var (
+	cfg *rest.Config
+	c   client.Client
 )
 
 type portWithJustification struct {
@@ -376,4 +388,26 @@ func validateSingleIngressRule(t *testing.T, policyName string, clusterIngressRu
 	}
 	require.ElementsMatchf(t, allExpectedPortsFromPwJ, clusterIngressRule.Ports,
 		"Policy %q, Ingress Rule: 'Ports' mismatch (aggregated from PortWithJustification). Expected: %+v, Got: %+v", policyName, allExpectedPortsFromPwJ, clusterIngressRule.Ports)
+}
+
+// getComponentNamespace returns the namespace where operator-controller or catalogd is running
+func getComponentNamespace(t *testing.T, client, selector string) string {
+	cmd := exec.Command(client, "get", "pods", "--all-namespaces", "--selector="+selector, "--output=jsonpath={.items[0].metadata.namespace}") //nolint:gosec // just gathering pods for a given selector
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Error determining namespace: %s", string(output))
+
+	namespace := string(bytes.TrimSpace(output))
+	if namespace == "" {
+		t.Fatal("No namespace found for selector " + selector)
+	}
+	return namespace
+}
+
+func init() {
+	cfg = ctrl.GetConfigOrDie()
+
+	var err error
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
+	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	utilruntime.Must(err)
 }

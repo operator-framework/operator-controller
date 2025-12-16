@@ -1,0 +1,11 @@
+apiVersion: olm.operatorframework.io/v1
+kind: ClusterCatalog
+metadata:
+  name: test-catalog
+spec:
+  priority: 0
+  source:
+    type: Image
+    image:
+      pollIntervalMinutes: 1
+      ref: ${CATALOG_IMG}
