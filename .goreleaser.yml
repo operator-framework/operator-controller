@@ -1,3 +1,4 @@
+version: 2
 before:
   hooks:
     - go mod tidy
@@ -116,7 +117,7 @@ docker_manifests:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   use: github-native
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
