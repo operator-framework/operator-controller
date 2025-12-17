@@ -53,6 +53,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
     When ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
     Then ClusterExtension is available
     And ClusterExtension reports Progressing as True with Reason Succeeded
+    And ClusterExtension reports BundleDeprecated as False with Reason Deprecated
 
   Scenario: Install ClusterExtension after conflicting resource is removed
     Given ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
@@ -111,6 +112,7 @@ Feature: Recover cluster extension from errors that might occur during its lifet
       """
     And ClusterExtension reports Progressing as True with Reason Retrying
     And ClusterExtension reports Installed as False
+    And ClusterExtension reports BundleDeprecated as Unknown with Reason Absent
     When resource "deployment/test-operator" is removed
     Then ClusterExtension is available
     And ClusterExtension reports Progressing as True with Reason Succeeded

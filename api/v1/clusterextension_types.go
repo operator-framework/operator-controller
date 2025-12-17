@@ -503,12 +503,12 @@ type ClusterExtensionStatus struct {
 	// When Progressing is True and Reason is RollingOut, the ClusterExtension has one or more ClusterExtensionRevisions in active roll out.
 	// </opcon:experimental:description>
 	//
-	// When the ClusterExtension is sourced from a catalog, if may also communicate a deprecation condition.
+	// When the ClusterExtension is sourced from a catalog, it may surface deprecation conditions based on catalog metadata.
 	// These are indications from a package owner to guide users away from a particular package, channel, or bundle.
-	// BundleDeprecated is set if the requested bundle version is marked deprecated in the catalog.
-	// ChannelDeprecated is set if the requested channel is marked deprecated in the catalog.
-	// PackageDeprecated is set if the requested package is marked deprecated in the catalog.
-	// Deprecated is a rollup condition that is present when any of the deprecated conditions are present.
+	// - PackageDeprecated is set to True if the requested package is marked as deprecated in the catalog, False if it is not, or Unknown if the package is not found in the catalog.
+	// - ChannelDeprecated is set to True if the requested channel is marked as deprecated in the catalog, False if it is not, or Unknown if the channel is not found in the catalog.
+	// - BundleDeprecated is set to True if the installed bundle is marked as deprecated in the catalog, False if it is not, or Unknown if the bundle is not found in the catalog or could not be installed.
+	// Deprecated is a rollup condition that is True when any individual deprecation condition is True, False when all deprecation conditions are False, and Unknown when we have no catalog information to report.
 	//
 	// +listType=map
 	// +listMapKey=type
