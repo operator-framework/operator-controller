@@ -1,0 +1,49 @@
+name: file-diff
+
+on:
+  pull_request:
+
+permissions:
+  pull-requests: write
+
+jobs:
+  check-networkpolicy-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          list-files: shell
+          filters: |
+            networkpolicy:
+              - 'helm/olmv1/templates/networkpolicy/**'
+
+      - name: Comment on PR if NetworkPolicy files changed
+        if: steps.filter.outputs.networkpolicy == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: networkpolicy-changes
+          message: |
+            ## ⚠️ NetworkPolicy Changes Detected
+
+            This PR modifies NetworkPolicy files which affect cluster security.
+
+            **Changed files:**
+            ```
+            ${{ steps.filter.outputs.networkpolicy_files }}
+            ```
+
+            **Please ensure:**
+            - These changes are intentional and reviewed carefully
+            - The OPA policies in `hack/conftest/policy/` are updated accordingly
+            - The changes have been validated with `make lint-helm`
+
+            NetworkPolicy changes require careful review as they affect cluster security.
+
+      - name: Fail if NetworkPolicy files changed
+        if: steps.filter.outputs.networkpolicy == 'true'
+        run: |
+          echo "::error::NetworkPolicy files have been modified. See PR comment for details."
+          exit 1

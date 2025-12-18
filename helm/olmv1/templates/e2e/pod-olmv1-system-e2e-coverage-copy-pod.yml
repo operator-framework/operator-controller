@@ -17,6 +17,7 @@ spec:
       image: busybox:1.36
       name: tar
       securityContext:
+        readOnlyRootFilesystem: true
         allowPrivilegeEscalation: false
         capabilities:
           drop:
