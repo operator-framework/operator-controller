@@ -456,7 +456,7 @@ spec:
             properties:
               conditions:
                 description: |-
-                  The set of condition types which apply to all spec.source variations are Installed and Progressing.
+                  conditions represents the set of condition types which apply to all spec.source variations are Installed and Progressing.
 
                   The Installed condition represents whether the bundle has been installed for this ClusterExtension:
                     - When Installed is True and the Reason is Succeeded, the bundle has been successfully installed.
