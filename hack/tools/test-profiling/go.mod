@@ -1,6 +1,6 @@
 module github.com/operator-framework/operator-controller/hack/tools/test-profiling
 
-go 1.24.6
+go 1.25.3
 
 require (
 	github.com/google/pprof v0.0.0-20251007162407-5df77e3f7d1d
