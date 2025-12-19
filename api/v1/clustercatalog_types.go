@@ -62,7 +62,7 @@ type ClusterCatalog struct {
 
 	// spec is a required field that defines the desired state of the ClusterCatalog.
 	// The controller ensures that the catalog is unpacked and served over the catalog content HTTP server.
-	// +kubebuilder:validation:Required
+	// +required
 	Spec ClusterCatalogSpec `json:"spec"`
 
 	// status contains the following information about the state of the ClusterCatalog:
@@ -85,7 +85,7 @@ type ClusterCatalogList struct {
 
 	// items is a list of ClusterCatalogs.
 	// items is required.
-	// +kubebuilder:validation:Required
+	// +required
 	Items []ClusterCatalog `json:"items"`
 }
 
@@ -105,7 +105,7 @@ type ClusterCatalogSpec struct {
 	//    image:
 	//      ref: quay.io/operatorhubio/catalog:latest
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	Source CatalogSource `json:"source"`
 
 	// priority is an optional field that defines a priority for this ClusterCatalog.
@@ -199,7 +199,7 @@ type ClusterCatalogURLs struct {
 	//
 	// New endpoints may be added as needs evolve.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=525
 	// +kubebuilder:validation:XValidation:rule="isURL(self)",message="must be a valid URL"
 	// +kubebuilder:validation:XValidation:rule="isURL(self) ? (url(self).getScheme() == \"http\" || url(self).getScheme() == \"https\") : true",message="scheme must be either http or https"
@@ -220,7 +220,7 @@ type CatalogSource struct {
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Image"
-	// +kubebuilder:validation:Required
+	// +required
 	Type SourceType `json:"type"`
 	// image configures how catalog contents are sourced from an OCI image.
 	// It is required when type is Image, and forbidden otherwise.
@@ -241,7 +241,7 @@ type ResolvedCatalogSource struct {
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Image"
-	// +kubebuilder:validation:Required
+	// +required
 	Type SourceType `json:"type"`
 	// image contains resolution information for a catalog sourced from an image.
 	// It must be set when type is Image, and forbidden otherwise.
@@ -253,7 +253,7 @@ type ResolvedImageSource struct {
 	// ref contains the resolved image digest-based reference.
 	// The digest format allows you to use other tooling to fetch the exact OCI manifests
 	// that were used to extract the catalog contents.
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=1000
 	// +kubebuilder:validation:XValidation:rule="self.matches('^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\\\b')",message="must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character."
 	// +kubebuilder:validation:XValidation:rule="self.find('(\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)') != \"\"",message="a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters."
@@ -307,7 +307,7 @@ type ImageSource struct {
 	// An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"
 	// An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest"
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=1000
 	// +kubebuilder:validation:XValidation:rule="self.matches('^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\\\b')",message="must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character."
 	// +kubebuilder:validation:XValidation:rule="self.find('(\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)') != \"\"",message="a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters."
