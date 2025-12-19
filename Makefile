@@ -117,9 +117,19 @@ help-extended: #HELP Display extended help.
 
 #SECTION Development
 
+GOLANGCI_LINT_KUBE_API := bin/golangci-lint-kube-api
+
+$(GOLANGCI_LINT_KUBE_API): $(GOLANGCI_LINT) .custom-gcl.yml
+	@echo "Building custom golangci-lint with kubeapilinter plugin..."
+	@$(GOLANGCI_LINT) custom || { \
+		echo "Failed to build custom golangci-lint."; \
+		rm -f $(GOLANGCI_LINT_KUBE_API); \
+		exit 1; \
+	}
+
 .PHONY: lint
-lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
-	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
+lint: lint-custom $(GOLANGCI_LINT_KUBE_API) #HELP Run golangci linter.
+	$(GOLANGCI_LINT_KUBE_API) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 lint-helm: $(HELM) #HELP Run helm linter
 	helm lint helm/olmv1
