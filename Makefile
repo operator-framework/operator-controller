@@ -121,9 +121,25 @@ help-extended: #HELP Display extended help.
 lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
 	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
-lint-helm: $(HELM) #HELP Run helm linter
+.PHONY: lint-helm
+lint-helm: $(HELM) $(CONFTEST) #HELP Run helm linter
 	helm lint helm/olmv1
 	helm lint helm/prometheus
+	(helm template olmv1 helm/olmv1; helm template prometheus helm/prometheus) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -n prometheus -
+
+.PHONY: lint-deployed-resources
+lint-deployed-resources: $(KUBE_SCORE) #HELP Lint deployed resources.
+	(for ns in $$(printf "olmv1-system\n%s\n" "$(CATD_NAMESPACE)" | uniq); do \
+		for resource in $$(kubectl api-resources --verbs=list --namespaced -o name); do \
+			kubectl get $$resource -n $$ns -o yaml ; \
+			echo "---" ; \
+		done \
+	done) | $(KUBE_SCORE) score - \
+		`# TODO: currently these checks are failing, decide if resources should be fixed for them to pass (https://github.com/operator-framework/operator-controller/issues/2398)` \
+		--ignore-test container-resources \
+		--ignore-test container-image-pull-policy \
+		--ignore-test container-ephemeral-storage-request-and-limit \
+		--ignore-test container-security-context-user-group-id
 
 .PHONY: custom-linter-build
 custom-linter-build: #EXHELP Build custom linter
@@ -164,9 +180,10 @@ $(EXPERIMENTAL_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml
 $(EXPERIMENTAL_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml helm/e2e.yaml
 HELM_SETTINGS ?=
 .PHONY: $(MANIFESTS)
-$(MANIFESTS): $(HELM)
+$(MANIFESTS): $(HELM) $(CONFTEST)
 	@mkdir -p $(MANIFEST_HOME)
 	$(HELM) template olmv1 helm/olmv1 $(addprefix --values ,$($@)) $(addprefix --set ,$(HELM_SETTINGS)) > $@
+	$(CONFTEST) test --policy hack/conftest/policy/ -n main --combine $@
 
 # Generate manifests stored in source-control
 .PHONY: manifests
@@ -474,7 +491,7 @@ go-build-linux: export GOARCH=amd64
 go-build-linux: $(BINARIES)
 
 .PHONY: run-internal
-run-internal: docker-build kind-cluster kind-load kind-deploy wait
+run-internal: docker-build kind-cluster kind-load kind-deploy lint-deployed-resources wait
 
 .PHONY: run
 run: SOURCE_MANIFEST := $(STANDARD_MANIFEST)

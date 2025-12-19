@@ -23,6 +23,12 @@ $(BINGO): $(BINGO_DIR)/bingo.mod
 	@echo "(re)installing $(GOBIN)/bingo-v0.9.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=bingo.mod -o=$(GOBIN)/bingo-v0.9.0 "github.com/bwplotka/bingo"
 
+CONFTEST := $(GOBIN)/conftest-v0.62.0
+$(CONFTEST): $(BINGO_DIR)/conftest.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/conftest-v0.62.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=conftest.mod -o=$(GOBIN)/conftest-v0.62.0 "github.com/open-policy-agent/conftest"
+
 CONTROLLER_GEN := $(GOBIN)/controller-gen-v0.19.0
 $(CONTROLLER_GEN): $(BINGO_DIR)/controller-gen.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
@@ -70,6 +76,12 @@ $(KIND): $(BINGO_DIR)/kind.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/kind-v0.30.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.30.0 "sigs.k8s.io/kind"
+
+KUBE_SCORE := $(GOBIN)/kube-score-v1.20.0
+$(KUBE_SCORE): $(BINGO_DIR)/kube-score.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/kube-score-v1.20.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kube-score.mod -o=$(GOBIN)/kube-score-v1.20.0 "github.com/zegl/kube-score/cmd/kube-score"
 
 KUSTOMIZE := $(GOBIN)/kustomize-v5.7.1
 $(KUSTOMIZE): $(BINGO_DIR)/kustomize.mod
