@@ -239,6 +239,8 @@ spec:
                   The lowest possible value is -2147483648.
                   The highest possible value is 2147483647.
                 format: int32
+                maximum: 2147483647
+                minimum: -2147483648
                 type: integer
               source:
                 description: |-
