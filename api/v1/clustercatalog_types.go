@@ -58,7 +58,7 @@ type ClusterCatalog struct {
 
 	// metadata is the standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	metav1.ObjectMeta `json:"metadata"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec is a required field that defines the desired state of the ClusterCatalog.
 	// The controller ensures that the catalog is unpacked and served over the catalog content HTTP server.
@@ -81,7 +81,7 @@ type ClusterCatalogList struct {
 
 	// metadata is the standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	metav1.ListMeta `json:"metadata"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// items is a list of ClusterCatalogs.
 	// items is required.
