@@ -459,6 +459,7 @@ type BundleMetadata struct {
 // RevisionStatus defines the observed state of a ClusterExtensionRevision.
 type RevisionStatus struct {
 	// name of the ClusterExtensionRevision resource
+	// +required
 	Name string `json:"name"`
 	// conditions optionally expose Progressing and Available condition of the revision,
 	// in case when it is not yet marked as successfully installed (condition Succeeded is not set to True).

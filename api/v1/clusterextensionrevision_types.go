@@ -52,6 +52,7 @@ type ClusterExtensionRevisionSpec struct {
 	// +kubebuilder:default="Active"
 	// +kubebuilder:validation:Enum=Active;Archived
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Archived' && oldSelf == self", message="cannot un-archive"
+	// +optional
 	LifecycleState ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
 
 	// revision is a required, immutable sequence number representing a specific revision
@@ -116,6 +117,7 @@ type ClusterExtensionRevisionPhase struct {
 	//
 	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:Pattern=`^[a-z]([-a-z0-9]*[a-z0-9])?$`
+	// +required
 	Name string `json:"name"`
 
 	// objects is a required list of all Kubernetes objects that belong to this phase.
@@ -133,6 +135,7 @@ type ClusterExtensionRevisionObject struct {
 	//
 	// +kubebuilder:validation:EmbeddedResource
 	// +kubebuilder:pruning:PreserveUnknownFields
+	// +required
 	Object unstructured.Unstructured `json:"object"`
 
 	// collisionProtection controls whether the operator can adopt and modify objects
