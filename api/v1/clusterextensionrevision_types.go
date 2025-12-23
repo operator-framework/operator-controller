@@ -61,7 +61,7 @@ type ClusterExtensionRevisionSpec struct {
 	// Each ClusterExtensionRevision belonging to the same parent ClusterExtension must have a unique revision number.
 	// The revision number must always be the previous revision number plus one, or 1 for the first revision.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="revision is immutable"
 	Revision int64 `json:"revision"`
@@ -238,7 +238,7 @@ type ClusterExtensionRevisionList struct {
 
 	// items is a required list of ClusterExtensionRevision objects.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	Items []ClusterExtensionRevision `json:"items"`
 }
 
