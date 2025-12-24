@@ -1,0 +1,44 @@
+name: api-diff-lint
+
+on:
+  workflow_dispatch:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+    - main
+
+jobs:
+  lint-api-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history for all branches (needed for API diff)
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+
+      - name: Run API diff linting checks
+        id: lint-api-diff
+        continue-on-error: true
+        run: make lint-api-diff
+
+      - name: Check for override label
+        if: ${{ steps.lint-api-diff.outcome == 'failure' }}
+        run: |
+          if gh api repos/$OWNER/$REPO/pulls/$PR --jq '.labels[].name' | grep -q "${OVERRIDE_LABEL}"; then
+            echo "Found ${OVERRIDE_LABEL} label, overriding failed results."
+            exit 0
+          else
+            echo "No ${OVERRIDE_LABEL} label found, failing the job."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          PR: ${{ github.event.pull_request.number }}
+          OVERRIDE_LABEL: "api-diff-lint-override"
+
