@@ -4,7 +4,7 @@ description: Validate API issues using kube-api-linter with diff-aware analysis
 
 # API Lint Diff
 
-Validates API issues in `api/` directory using kube-api-linter with diff-aware analysis that distinguishes between NEW and PRE-EXISTING issues.
+Validates API issues in `api/` directory using kube-api-linter with diff-aware analysis that distinguishes between FIXED, NEW, and PRE-EXISTING issues.
 
 ## Instructions for Claude AI
 
@@ -19,6 +19,7 @@ When this command is invoked, you MUST:
 
 2. **Understand the shell script's output**:
    - **False positives (IGNORED)**: Standard CRD scaffolding patterns that kube-api-linter incorrectly flags
+   - **FIXED issues (SUCCESS)**: Issues that existed in baseline but were resolved in current branch → Celebrate! 🎉
    - **NEW issues (ERRORS)**: Introduced in current branch → MUST fix
    - **PRE-EXISTING issues (WARNINGS)**: Existed before changes → Can fix separately
 
@@ -132,23 +133,38 @@ When this command is invoked, you MUST:
    # API Lint Diff Analysis Report
 
    **Generated:** [date]
-   **Baseline:** main branch
-   **Current:** [branch name]
+   **Baseline:** main branch (X issues)
+   **Current:** [branch name] (Y issues)
    **Status:** [status icon and message based on logic below]
 
    **Status Logic:**
-   - ✅ PASSED: 0 real issues (after filtering false positives)
+   - ✅ PASSED: 0 new issues (fixed issues are OK)
    - ⚠️ WARN: 0 new issues but has pre-existing issues
    - ❌ FAIL: Has new issues that must be fixed
 
    ## Executive Summary
-   - Total issues: X
-   - False positives (IGNORED): Y
-   - Real issues (NEED FIXING): Z
-   - NEW issues: N
-   - PRE-EXISTING issues: P
+   - Baseline issues: X
+   - Current issues: Y
+   - **FIXED**: F (issues resolved in this branch)
+   - **NEW**: N (issues introduced in this branch)
+   - **PRE-EXISTING**: P (issues that still remain)
+   - False positives (IGNORED): Z
 
-   ## REAL ISSUES - FIXES NEEDED (Z issues)
+   ## FIXED ISSUES (F issues)
+
+   [List of issues that were fixed in this branch - show the baseline line numbers]
+
+   ## NEW ISSUES (N issues)
+
+   [List of issues introduced in this branch - these MUST be fixed]
+
+   ## PRE-EXISTING ISSUES (P issues)
+
+   [List of issues that existed before and still exist - can be fixed separately]
+
+   ---
+
+   ## DETAILED ANALYSIS FOR ISSUES NEEDING FIXES
 
    ### Category 1: [Issue Type] (N issues) - [BREAKING/NON-BREAKING]
 
