@@ -160,7 +160,11 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		}
 		// The current bundle shares deprecation status with prior bundles or
 		// there are no prior bundles. Add it to the list.
-		resolvedBundles = append(resolvedBundles, foundBundle{&thisBundle, cat.GetName(), cat.Spec.Priority})
+		priority := int32(0)
+		if cat.Spec.Priority != nil {
+			priority = *cat.Spec.Priority
+		}
+		resolvedBundles = append(resolvedBundles, foundBundle{&thisBundle, cat.GetName(), priority})
 		priorDeprecation = thisDeprecation
 		return nil
 	}, listOptions...); err != nil {
