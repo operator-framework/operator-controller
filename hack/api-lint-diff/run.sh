@@ -196,7 +196,36 @@ check_linter_support() {
 
 # Find golangci-lint binary
 find_golangci_lint() {
-    # Check for custom build first
+    # Check if Variables.mk exists and extract golangci-lint path
+    if [[ -f ".bingo/Variables.mk" ]]; then
+        # Extract version from GOLANGCI_LINT variable
+        # Format: GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.7.2
+        local version
+        version=$(grep '^GOLANGCI_LINT' .bingo/Variables.mk | sed -E 's/.*golangci-lint-(v[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+
+        if [[ -n "${version}" ]]; then
+            # Use go env to get the actual GOBIN/GOPATH
+            local gobin
+            gobin=$(go env GOBIN)
+
+            # If GOBIN is empty, use GOPATH/bin
+            if [[ -z "${gobin}" ]]; then
+                local gopath
+                gopath=$(go env GOPATH)
+                # Take first entry if GOPATH has multiple paths (colon-separated)
+                gobin="${gopath%%:*}/bin"
+            fi
+
+            # Check if the versioned binary exists
+            local bingo_path="${gobin}/golangci-lint-${version}"
+            if [[ -f "${bingo_path}" ]]; then
+                echo "${bingo_path}"
+                return 0
+            fi
+        fi
+    fi
+
+    # Check for custom build
     if [[ -f ".bingo/golangci-lint" ]]; then
         echo ".bingo/golangci-lint"
         return 0
@@ -216,6 +245,7 @@ find_golangci_lint() {
 
     echo -e "${RED}Error: golangci-lint not found.${NC}" >&2
     echo -e "${RED}Searched for:${NC}" >&2
+    echo -e "  - .bingo/Variables.mk (bingo-managed versioned binary)" >&2
     echo -e "  - .bingo/golangci-lint" >&2
     echo -e "  - bin/golangci-lint" >&2
     echo -e "  - golangci-lint on your \$PATH" >&2
@@ -481,6 +511,23 @@ main() {
 
     # Create temporary config
     create_temp_config
+
+    # Ensure baseline branch is available (important for CI environments like GitHub Actions)
+    if ! git rev-parse --verify "${BASELINE_BRANCH}" &> /dev/null; then
+        echo -e "${YELLOW}Baseline branch '${BASELINE_BRANCH}' not found locally. Fetching from origin...${NC}" >&2
+
+        # Fetch the baseline branch from origin
+        if ! git fetch origin "${BASELINE_BRANCH}:${BASELINE_BRANCH}" 2>&1; then
+            # If direct fetch fails, try fetching with remote tracking
+            if ! git fetch origin "${BASELINE_BRANCH}" 2>&1; then
+                echo -e "${RED}Error: Failed to fetch baseline branch '${BASELINE_BRANCH}' from origin${NC}" >&2
+                echo -e "${RED}Please ensure the branch exists in the remote repository.${NC}" >&2
+                exit 1
+            fi
+            # Use the remote tracking branch
+            BASELINE_BRANCH="origin/${BASELINE_BRANCH}"
+        fi
+    fi
 
     # Get changed files
     get_changed_files > "${TEMP_DIR}/changed_files.txt"
