@@ -23,7 +23,7 @@ jobs:
       run: |
         make test-regression
 
-    - uses: codecov/codecov-action@v5.5.1
+    - uses: codecov/codecov-action@v5.5.2
       with:
         disable_search: true
         files: coverage/regression.out
