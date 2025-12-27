@@ -576,6 +576,8 @@ spec:
                 x-kubernetes-list-type: map
               conditions:
                 description: |-
+                  conditions represents the current state of the ClusterExtension.
+
                   The set of condition types which apply to all spec.source variations are Installed and Progressing.
 
                   The Installed condition represents whether the bundle has been installed for this ClusterExtension:

@@ -215,7 +215,11 @@ type ClusterExtensionRevisionStatus struct {
 // or reconfigured. Once the latest revision has rolled out successfully, previous active revisions are archived for
 // posterity.
 type ClusterExtensionRevision struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec defines the desired state of the ClusterExtensionRevision.
