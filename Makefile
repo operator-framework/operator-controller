@@ -125,10 +125,10 @@ lint: lint-custom $(GOLANGCI_LINT) #HELP Run golangci linter.
 lint-helm: $(HELM) $(CONFTEST) #HELP Run helm linter
 	helm lint helm/olmv1
 	helm lint helm/prometheus
-	(helm template olmv1 helm/olmv1; helm template prometheus helm/prometheus) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -n prometheus -
+	(set -euo pipefail; helm template olmv1 helm/olmv1; helm template prometheus helm/prometheus) | $(CONFTEST) test --policy hack/conftest/policy/ --combine -n main -n prometheus -
 
 .PHONY: lint-deployed-resources
-lint-deployed-resources: $(KUBE_SCORE) #HELP Lint deployed resources.
+lint-deployed-resources: $(KUBE_SCORE) #EXHELP Lint deployed resources.
 	(for ns in $$(printf "olmv1-system\n%s\n" "$(CATD_NAMESPACE)" | uniq); do \
 		for resource in $$(kubectl api-resources --verbs=list --namespaced -o name); do \
 			kubectl get $$resource -n $$ns -o yaml ; \

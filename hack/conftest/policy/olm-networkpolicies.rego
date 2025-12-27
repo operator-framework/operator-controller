@@ -101,7 +101,7 @@ deny contains msg if {
 deny contains msg if {
 	count(catalogd_policies) == 1
 	not catalogd_has_egress
-	msg := "Missing egress rules in catalogd-controller-manager NetworkPolicy. General egress is required to enables operator-controller to pull bundle images from arbitrary image registries, connect to catalogd's HTTPS server for metadata, and interact with the Kubernetes API server."
+	msg := "Missing egress rules in catalogd-controller-manager NetworkPolicy. General egress is required to enable catalogd-controller to pull bundle images from arbitrary image registries, and interact with the Kubernetes API server."
 }
 
 # Check that a NetworkPolicy exists for operator-controller-controller-manager that:
@@ -156,5 +156,5 @@ deny contains msg if {
 deny contains msg if {
 	count(operator_controller_policies) == 1
 	not operator_controller_has_egress
-	msg := "Missing egress rules in operator-controller-controller-manager NetworkPolicy. General egress is required to enables operator-controller to pull bundle images from arbitrary image registries, connect to catalogd's HTTPS server for metadata, and interact with the Kubernetes API server."
+	msg := "Missing egress rules in operator-controller-controller-manager NetworkPolicy. General egress is required to enable operator-controller to pull bundle images from arbitrary image registries, connect to catalogd's HTTPS server for metadata, and interact with the Kubernetes API server."
 }

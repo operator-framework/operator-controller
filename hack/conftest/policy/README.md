@@ -41,7 +41,7 @@ These policies are automatically run as part of:
 
 ```bash
 # Run all policies (main + prometheus namespaces)
-helm template olmv1 helm/olmv1 | conftest test --policy hack/conftest/policy/ --combine -n main -n prometheus -
+(helm template olmv1 helm/olmv1; helm template prometheus helm/prometheus) | conftest test --policy hack/conftest/policy/ --combine -n main -n prometheus -
 
 # Run only OLM policies
 helm template olmv1 helm/olmv1 | conftest test --policy hack/conftest/policy/ --combine -n main -
