@@ -59,7 +59,7 @@ jobs:
             make ${{ matrix.test.make-target }}
           fi
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: failure() && matrix.test.use-artifacts == true
         with:
           name: ${{ matrix.test.name }}-artifacts
