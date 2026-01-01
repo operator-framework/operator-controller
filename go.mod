@@ -3,7 +3,7 @@ module github.com/operator-framework/operator-controller
 go 1.25.3
 
 require (
-	github.com/BurntSushi/toml v1.5.0
+	github.com/BurntSushi/toml v1.6.0
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/blang/semver/v4 v4.0.0
 	github.com/cert-manager/cert-manager v1.19.2
