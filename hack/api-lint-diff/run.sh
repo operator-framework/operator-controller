@@ -196,7 +196,36 @@ check_linter_support() {
 
 # Find golangci-lint binary
 find_golangci_lint() {
-    # Check for custom build first
+    # Check if Variables.mk exists and extract golangci-lint path
+    if [[ -f ".bingo/Variables.mk" ]]; then
+        # Extract version from GOLANGCI_LINT variable
+        # Format: GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.7.2
+        local version
+        version=$(grep '^GOLANGCI_LINT' .bingo/Variables.mk | sed -E 's/.*golangci-lint-(v[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+
+        if [[ -n "${version}" ]]; then
+            # Use go env to get the actual GOBIN/GOPATH
+            local gobin
+            gobin=$(go env GOBIN)
+
+            # If GOBIN is empty, use GOPATH/bin
+            if [[ -z "${gobin}" ]]; then
+                local gopath
+                gopath=$(go env GOPATH)
+                # Take first entry if GOPATH has multiple paths (colon-separated)
+                gobin="${gopath%%:*}/bin"
+            fi
+
+            # Check if the versioned binary exists
+            local bingo_path="${gobin}/golangci-lint-${version}"
+            if [[ -f "${bingo_path}" ]]; then
+                echo "${bingo_path}"
+                return 0
+            fi
+        fi
+    fi
+
+    # Check for custom build
     if [[ -f ".bingo/golangci-lint" ]]; then
         echo ".bingo/golangci-lint"
         return 0
@@ -216,6 +245,7 @@ find_golangci_lint() {
 
     echo -e "${RED}Error: golangci-lint not found.${NC}" >&2
     echo -e "${RED}Searched for:${NC}" >&2
+    echo -e "  - .bingo/Variables.mk (bingo-managed versioned binary)" >&2
     echo -e "  - .bingo/golangci-lint" >&2
     echo -e "  - bin/golangci-lint" >&2
     echo -e "  - golangci-lint on your \$PATH" >&2
@@ -257,13 +287,14 @@ get_changed_files() {
         grep -v 'zz_generated' || true
 }
 
-# Categorize issues as NEW or PRE-EXISTING
+# Categorize issues as NEW, PRE-EXISTING, or FIXED
 categorize_issues() {
     local current_file="$1"
     local baseline_file="$2"
     local changed_files_file="$3"
     local new_issues_file="$4"
     local preexisting_issues_file="$5"
+    local fixed_issues_file="$6"
 
     # Read changed files into array
     local changed_files=()
@@ -306,16 +337,80 @@ categorize_issues() {
             # Compare without line numbers since line numbers can change when code is added/removed
             # Format is: file:line:col:linter:message
             # We'll compare: file:linter:message
-            # Use f1,4,5- to capture field 5 and all remaining fields (handles colons in messages)
+            # Extract file (field 1), linter (field 4), and message (field 5+) from current issue
             local file_linter_msg
             file_linter_msg=$(echo "${line}" | cut -d: -f1,4,5-)
 
-            if grep -Fq "${file_linter_msg}" "${baseline_file}" 2>/dev/null; then
+            # Check if baseline has a matching issue (same file, linter, message but possibly different line number)
+            # We need to extract the same fields from baseline and compare
+            local found=false
+            if [[ -f "${baseline_file}" ]]; then
+                while IFS= read -r baseline_line; do
+                    [[ -z "${baseline_line}" ]] && continue
+                    local baseline_file_linter_msg
+                    baseline_file_linter_msg=$(echo "${baseline_line}" | cut -d: -f1,4,5-)
+                    if [[ "${file_linter_msg}" == "${baseline_file_linter_msg}" ]]; then
+                        found=true
+                        break
+                    fi
+                done < "${baseline_file}"
+            fi
+
+            if $found; then
                 echo "${line}" >> "${preexisting_issues_file}"
             else
                 echo "${line}" >> "${new_issues_file}"
             fi
         done < "${current_file}"
+    fi
+
+    # Find FIXED issues - issues in baseline that are NOT in current
+    if [[ -f "${baseline_file}" && -s "${baseline_file}" ]]; then
+        while IFS= read -r baseline_line; do
+            [[ -z "${baseline_line}" ]] && continue
+
+            local file
+            file=$(echo "${baseline_line}" | cut -d: -f1)
+
+            # Only check files that were changed
+            if [[ ${#changed_files[@]} -gt 0 ]]; then
+                local file_changed=false
+                for changed_file in "${changed_files[@]}"; do
+                    if [[ "${file}" == "${changed_file}" ]]; then
+                        file_changed=true
+                        break
+                    fi
+                done
+
+                # Skip if file wasn't changed
+                if ! $file_changed; then
+                    continue
+                fi
+            fi
+
+            # Extract file:linter:message from baseline
+            local baseline_file_linter_msg
+            baseline_file_linter_msg=$(echo "${baseline_line}" | cut -d: -f1,4,5-)
+
+            # Check if this issue still exists in current
+            local still_exists=false
+            if [[ -f "${current_file}" ]]; then
+                while IFS= read -r current_line; do
+                    [[ -z "${current_line}" ]] && continue
+                    local current_file_linter_msg
+                    current_file_linter_msg=$(echo "${current_line}" | cut -d: -f1,4,5-)
+                    if [[ "${baseline_file_linter_msg}" == "${current_file_linter_msg}" ]]; then
+                        still_exists=true
+                        break
+                    fi
+                done < "${current_file}"
+            fi
+
+            # If issue doesn't exist in current, it was fixed
+            if ! $still_exists; then
+                echo "${baseline_line}" >> "${fixed_issues_file}"
+            fi
+        done < "${baseline_file}"
     fi
 }
 
@@ -328,19 +423,40 @@ output_issue() {
 generate_report() {
     local new_issues_file="$1"
     local preexisting_issues_file="$2"
+    local fixed_issues_file="$3"
+    local baseline_file="$4"
 
     local new_count=0
     local preexisting_count=0
+    local fixed_count=0
+    local baseline_count=0
 
     [[ -f "${new_issues_file}" ]] && new_count=$(wc -l < "${new_issues_file}" | tr -d ' ')
     [[ -f "${preexisting_issues_file}" ]] && preexisting_count=$(wc -l < "${preexisting_issues_file}" | tr -d ' ')
+    [[ -f "${fixed_issues_file}" ]] && fixed_count=$(wc -l < "${fixed_issues_file}" | tr -d ' ')
+    [[ -f "${baseline_file}" ]] && baseline_count=$(wc -l < "${baseline_file}" | tr -d ' ')
 
-    # Simple summary
+    local current_total=$((new_count + preexisting_count))
+
+    # Summary header
     echo "API Lint Diff Results"
-    echo "Baseline: ${BASELINE_BRANCH}"
+    echo "====================="
+    echo "Baseline (${BASELINE_BRANCH}): ${baseline_count} issues"
+    echo "Current branch: ${current_total} issues"
+    echo ""
+    echo "FIXED: ${fixed_count}"
     echo "NEW: ${new_count}"
     echo "PRE-EXISTING: ${preexisting_count}"
     echo ""
+
+    # Show FIXED issues
+    if [[ ${fixed_count} -gt 0 ]]; then
+        echo "=== FIXED ISSUES ==="
+        while IFS= read -r line; do
+            output_issue "${line}"
+        done < "${fixed_issues_file}"
+        echo ""
+    fi
 
     # Show NEW issues
     if [[ ${new_count} -gt 0 ]]; then
@@ -362,13 +478,17 @@ generate_report() {
 
     # Exit based on NEW issues count
     if [[ ${new_count} -eq 0 ]]; then
-        echo -e "${GREEN}NO NEW ISSUES found. Lint check passed.${NC}"
+        if [[ ${fixed_count} -gt 0 ]]; then
+            echo -e "${GREEN}SUCCESS: Fixed ${fixed_count} issue(s), no new issues introduced.${NC}"
+        else
+            echo -e "${GREEN}NO NEW ISSUES found. Lint check passed.${NC}"
+        fi
         if [[ ${preexisting_count} -gt 0 ]]; then
-            echo -e "${YELLOW}WARNING: Pre-existing issues detected. Please address them separately.${NC}"
+            echo -e "${YELLOW}WARNING: ${preexisting_count} pre-existing issue(s) remain. Please address them separately.${NC}"
         fi
         return 0
     else
-        echo -e "${RED}FAILED: ${new_count} new issue(s)${NC}"
+        echo -e "${RED}FAILED: ${new_count} new issue(s) introduced${NC}"
         return 1
     fi
 }
@@ -392,6 +512,23 @@ main() {
     # Create temporary config
     create_temp_config
 
+    # Ensure baseline branch is available (important for CI environments like GitHub Actions)
+    if ! git rev-parse --verify "${BASELINE_BRANCH}" &> /dev/null; then
+        echo -e "${YELLOW}Baseline branch '${BASELINE_BRANCH}' not found locally. Fetching from origin...${NC}" >&2
+
+        # Fetch the baseline branch from origin
+        if ! git fetch origin "${BASELINE_BRANCH}:${BASELINE_BRANCH}" 2>&1; then
+            # If direct fetch fails, try fetching with remote tracking
+            if ! git fetch origin "${BASELINE_BRANCH}" 2>&1; then
+                echo -e "${RED}Error: Failed to fetch baseline branch '${BASELINE_BRANCH}' from origin${NC}" >&2
+                echo -e "${RED}Please ensure the branch exists in the remote repository.${NC}" >&2
+                exit 1
+            fi
+            # Use the remote tracking branch
+            BASELINE_BRANCH="origin/${BASELINE_BRANCH}"
+        fi
+    fi
+
     # Get changed files
     get_changed_files > "${TEMP_DIR}/changed_files.txt"
 
@@ -414,18 +551,22 @@ main() {
     # Categorize issues
     touch "${TEMP_DIR}/new_issues.txt"
     touch "${TEMP_DIR}/preexisting_issues.txt"
+    touch "${TEMP_DIR}/fixed_issues.txt"
 
     categorize_issues \
         "${TEMP_DIR}/current_parsed.txt" \
         "${TEMP_DIR}/baseline_parsed.txt" \
         "${TEMP_DIR}/changed_files.txt" \
         "${TEMP_DIR}/new_issues.txt" \
-        "${TEMP_DIR}/preexisting_issues.txt"
+        "${TEMP_DIR}/preexisting_issues.txt" \
+        "${TEMP_DIR}/fixed_issues.txt"
 
     # Generate report
     generate_report \
         "${TEMP_DIR}/new_issues.txt" \
-        "${TEMP_DIR}/preexisting_issues.txt"
+        "${TEMP_DIR}/preexisting_issues.txt" \
+        "${TEMP_DIR}/fixed_issues.txt" \
+        "${TEMP_DIR}/baseline_parsed.txt"
 
     return $?
 }
