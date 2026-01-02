@@ -833,7 +833,7 @@ func TestUnequalPriority(t *testing.T) {
 					genBundle(pkgName, "1.0.0"),
 				},
 				Deprecations: []declcfg.Deprecation{},
-			}, &ocv1.ClusterCatalogSpec{Priority: 1}, nil
+			}, &ocv1.ClusterCatalogSpec{Priority: ptr.To[int32](1)}, nil
 		},
 		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
 			return &declcfg.DeclarativeConfig{
@@ -847,7 +847,7 @@ func TestUnequalPriority(t *testing.T) {
 					genBundle(pkgName, "1.1.0"),
 				},
 				Deprecations: []declcfg.Deprecation{},
-			}, &ocv1.ClusterCatalogSpec{Priority: 0}, nil
+			}, &ocv1.ClusterCatalogSpec{Priority: ptr.To[int32](0)}, nil
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
@@ -862,13 +862,13 @@ func TestMultiplePriority(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: 1}, nil
+			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: ptr.To[int32](1)}, nil
 		},
 		"b": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: 0}, nil
+			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: ptr.To[int32](0)}, nil
 		},
 		"c": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: 1}, nil
+			return genPackage(pkgName), &ocv1.ClusterCatalogSpec{Priority: ptr.To[int32](1)}, nil
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
@@ -944,7 +944,7 @@ func TestSomeCatalogsDisabled(t *testing.T) {
 					Name: "enabledCatalog",
 				},
 				Spec: ocv1.ClusterCatalogSpec{
-					Priority:         1, // Higher priority
+					Priority:         ptr.To[int32](1), // Higher priority
 					AvailabilityMode: ocv1.AvailabilityModeAvailable,
 				},
 			},
@@ -953,7 +953,7 @@ func TestSomeCatalogsDisabled(t *testing.T) {
 					Name: "disabledCatalog",
 				},
 				Spec: ocv1.ClusterCatalogSpec{
-					Priority:         0, // Lower priority (but disabled)
+					Priority:         ptr.To[int32](0), // Lower priority (but disabled)
 					AvailabilityMode: ocv1.AvailabilityModeUnavailable,
 				},
 			},
