@@ -474,6 +474,8 @@ type RevisionStatus struct {
 
 // ClusterExtensionStatus defines the observed state of a ClusterExtension.
 type ClusterExtensionStatus struct {
+	// conditions represents the current state of the ClusterExtension.
+	//
 	// The set of condition types which apply to all spec.source variations are Installed and Progressing.
 	//
 	// The Installed condition represents whether the bundle has been installed for this ClusterExtension:
@@ -536,7 +538,11 @@ type ClusterExtensionInstallStatus struct {
 
 // ClusterExtension is the Schema for the clusterextensions API
 type ClusterExtension struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec is an optional field that defines the desired state of the ClusterExtension.
