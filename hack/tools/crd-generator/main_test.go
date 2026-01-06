@@ -11,7 +11,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
-const controllerToolsVersion = "v0.19.0"
+const controllerToolsVersion = "v0.20.0"
 
 func TestRunGenerator(t *testing.T) {
 	here, err := os.Getwd()
