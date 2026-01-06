@@ -2247,7 +2247,6 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=:8443
             - --leader-elect
-            - --feature-gates=SingleOwnNamespaceInstallSupport=true
             - --feature-gates=PreflightPermissions=true
             - --feature-gates=HelmChartSupport=true
             - --feature-gates=BoxcutterRuntime=true

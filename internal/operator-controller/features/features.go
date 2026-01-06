@@ -33,8 +33,8 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// registry+v1 cluster extensions with single or own namespaces modes
 	// i.e. with a single watch namespace.
 	SingleOwnNamespaceInstallSupport: {
-		Default:       false,
-		PreRelease:    featuregate.Alpha,
+		Default:       true,
+		PreRelease:    featuregate.GA,
 		LockToDefault: false,
 	},
 
