@@ -66,6 +66,12 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-123",
 		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "test-sa",
+			},
+		},
 	}
 
 	objectLabels := map[string]string{
@@ -79,10 +85,12 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-123-1",
 			Annotations: map[string]string{
-				"olm.operatorframework.io/bundle-name":      "my-bundle",
-				"olm.operatorframework.io/bundle-reference": "bundle-ref",
-				"olm.operatorframework.io/bundle-version":   "1.2.0",
-				"olm.operatorframework.io/package-name":     "my-package",
+				"olm.operatorframework.io/bundle-name":               "my-bundle",
+				"olm.operatorframework.io/bundle-reference":          "bundle-ref",
+				"olm.operatorframework.io/bundle-version":            "1.2.0",
+				"olm.operatorframework.io/package-name":              "my-package",
+				"olm.operatorframework.io/service-account-name":      "test-sa",
+				"olm.operatorframework.io/service-account-namespace": "test-namespace",
 			},
 			Labels: map[string]string{
 				labels.OwnerNameKey: "test-123",
@@ -171,6 +179,12 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	ext := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-extension",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "test-sa",
+			},
 		},
 	}
 
@@ -291,7 +305,12 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 		"other": "value",
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{
+	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+		},
+	}, map[string]string{
 		"some": "value",
 	}, revAnnotations)
 	require.NoError(t, err)
@@ -319,7 +338,12 @@ func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
 		ManifestProvider: r,
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, &ocv1.ClusterExtension{}, map[string]string{}, map[string]string{})
+	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, &ocv1.ClusterExtension{
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace:      "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+		},
+	}, map[string]string{}, map[string]string{})
 	require.Nil(t, rev)
 	t.Log("by checking rendering errors are propagated")
 	require.Error(t, err)
