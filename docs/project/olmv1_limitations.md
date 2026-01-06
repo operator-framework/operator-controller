@@ -9,7 +9,7 @@ Currently, OLM v1 only supports installing operators packaged in [OLM v0 bundles
 , also known as `registry+v1` bundles. Additionally, the bundled operator, or cluster extension:
 
 * **must** support installation via the `AllNamespaces` install mode.
-    * Note that `AllNamespaces` is the recommended install mode. OLMv1 supports `SingleNamespace` and `OwnNamespace` modes for `registry+v1` bundles for backwards compatibility with OLMv0, but these are not recommended install modes as there is a [hard limitation](https://operator-framework.github.io/operator-controller/project/olmv1_design_decisions/#do-not-fight-kubernetes) of only one instance of a given CRD in the cluster.
+    * Note that `AllNamespaces` is the recommended install mode. OLM v1 supports `SingleNamespace` and `OwnNamespace` modes for `registry+v1` bundles for backwards compatibility with OLM v0, but these are not recommended install modes as there is a [hard limitation](https://operator-framework.github.io/operator-controller/project/olmv1_design_decisions/#do-not-fight-kubernetes) of only one instance of a given CRD in the cluster.
 * **must not** declare dependencies using any of the following file-based catalog properties:
     * `olm.gvk.required`
     * `olm.package.required`
