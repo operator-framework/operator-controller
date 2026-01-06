@@ -12,7 +12,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
-	"k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/component-base/featuregate"
 	"k8s.io/klog/v2/textlogger"
@@ -45,7 +45,7 @@ var (
 	featureGates = map[featuregate.Feature]bool{
 		features.WebhookProviderCertManager:        true,
 		features.PreflightPermissions:              false,
-		features.SingleOwnNamespaceInstallSupport:  false,
+		features.SingleOwnNamespaceInstallSupport:  true,
 		features.SyntheticPermissions:              false,
 		features.WebhookProviderOpenshiftServiceCA: false,
 		features.HelmChartSupport:                  false,
@@ -77,11 +77,11 @@ func BeforeSuite() {
 	if err != nil {
 		panic(fmt.Errorf("failed to get OLM deployments: %v", err))
 	}
-	dl := []v1.Deployment{}
+	dl := []appsv1.Deployment{}
 	if err := json.Unmarshal([]byte(raw), &dl); err != nil {
 		panic(fmt.Errorf("failed to unmarshal OLM deployments: %v", err))
 	}
-	var olm *v1.Deployment
+	var olm *appsv1.Deployment
 
 	for _, d := range dl {
 		if d.Name == olmDeploymentName {

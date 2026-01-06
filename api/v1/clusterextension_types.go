@@ -105,7 +105,6 @@ type ClusterExtensionSpec struct {
 	// a configuration schema the bundle is deemed to not be configurable. More information on how
 	// to configure bundles can be found in the OLM documentation associated with your current OLM version.
 	//
-	// <opcon:experimental>
 	// +optional
 	Config *ClusterExtensionConfig `json:"config,omitempty"`
 }

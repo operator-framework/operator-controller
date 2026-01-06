@@ -6,16 +6,14 @@
 set -e
 trap 'echo "Demo ran into error"; trap - SIGTERM && kill -- -$$; exit 1' ERR SIGINT SIGTERM EXIT
 
-# install experimental CRDs with config field support
-kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/experimental.yaml"
+# install standard CRDs
+echo "Install standard CRDs..."
+kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/standard.yaml"
 
-# wait for experimental CRDs to be available
+# wait for standard CRDs to be available
 kubectl wait --for condition=established --timeout=60s crd/clusterextensions.olm.operatorframework.io
 
-# enable 'SingleOwnNamespaceInstallSupport' feature gate
-kubectl patch deployment -n olmv1-system operator-controller-controller-manager --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--feature-gates=SingleOwnNamespaceInstallSupport=true"}]'
-
-# wait for operator-controller to become available
+# Ensure controller is healthy
 kubectl rollout status -n olmv1-system deployment/operator-controller-controller-manager
 
 # create install namespace
@@ -59,17 +57,6 @@ echo "Cleaning up demo resources..."
 kubectl delete clusterextension argocd-operator --ignore-not-found=true
 kubectl delete namespace argocd-system argocd --ignore-not-found=true
 kubectl delete clusterrolebinding argocd-installer-crb --ignore-not-found=true
-
-# remove feature gate from deployment
-echo "Removing feature gate from operator-controller..."
-kubectl patch deployment -n olmv1-system operator-controller-controller-manager --type='json' -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/args", "value": "--feature-gates=SingleOwnNamespaceInstallSupport=true"}]' || true
-
-# restore standard CRDs
-echo "Restoring standard CRDs..."
-kubectl apply -f "$(dirname "${BASH_SOURCE[0]}")/../../manifests/base.yaml"
-
-# wait for standard CRDs to be available
-kubectl wait --for condition=established --timeout=60s crd/clusterextensions.olm.operatorframework.io
 
 # wait for operator-controller to become available with standard config
 kubectl rollout status -n olmv1-system deployment/operator-controller-controller-manager

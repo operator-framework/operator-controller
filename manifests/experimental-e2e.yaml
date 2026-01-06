@@ -2343,7 +2343,6 @@ spec:
             - --metrics-bind-address=:8443
             - --pprof-bind-address=:6060
             - --leader-elect
-            - --feature-gates=SingleOwnNamespaceInstallSupport=true
             - --feature-gates=PreflightPermissions=true
             - --feature-gates=HelmChartSupport=true
             - --feature-gates=BoxcutterRuntime=true

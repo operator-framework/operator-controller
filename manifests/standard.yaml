@@ -628,6 +628,44 @@ spec:
             description: spec is an optional field that defines the desired state
               of the ClusterExtension.
             properties:
+              config:
+                description: |-
+                  config is optional and specifies bundle-specific configuration.
+                  Configuration is bundle-specific and a bundle may provide a configuration schema.
+                  When not specified, the default configuration of the resolved bundle is used.
+
+                  config is validated against a configuration schema provided by the resolved bundle. If the bundle does not provide
+                  a configuration schema the bundle is deemed to not be configurable. More information on how
+                  to configure bundles can be found in the OLM documentation associated with your current OLM version.
+                properties:
+                  configType:
+                    description: |-
+                      configType is required and specifies the type of configuration source.
+
+                      The only allowed value is "Inline".
+
+                      When set to "Inline", the cluster extension configuration is defined inline within the ClusterExtension resource.
+                    enum:
+                    - Inline
+                    type: string
+                  inline:
+                    description: |-
+                      inline contains JSON or YAML values specified directly in the ClusterExtension.
+
+                      It is used to specify arbitrary configuration values for the ClusterExtension.
+                      It must be set if configType is 'Inline' and must be a valid JSON/YAML object containing at least one property.
+                      The configuration values are validated at runtime against a JSON schema provided by the bundle.
+                    minProperties: 1
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                required:
+                - configType
+                type: object
+                x-kubernetes-validations:
+                - message: inline is required when configType is Inline, and forbidden
+                    otherwise
+                  rule: 'has(self.configType) && self.configType == ''Inline'' ?has(self.inline)
+                    : !has(self.inline)'
               install:
                 description: |-
                   install is optional and configures installation options for the ClusterExtension,
