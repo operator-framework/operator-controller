@@ -125,8 +125,8 @@ type ClusterCatalogSpec struct {
 	// The highest possible value is 2147483647.
 	//
 	// +kubebuilder:default:=0
-	// +kubebuilder:validation:minimum:=-2147483648
-	// +kubebuilder:validation:maximum:=2147483647
+	// +kubebuilder:validation:Minimum:=-2147483648
+	// +kubebuilder:validation:Maximum:=2147483647
 	// +optional
 	Priority int32 `json:"priority"`
 
