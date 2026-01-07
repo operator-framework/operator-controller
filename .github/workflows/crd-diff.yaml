@@ -8,13 +8,29 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-
       - name: Run make verify-crd-compatibility
+        id: verify-crd-compatibility
+        continue-on-error: true
         run: |
           make verify-crd-compatibility \
             CRD_DIFF_ORIGINAL_REF="git://${{ github.event.pull_request.base.sha }}?path=" \
             CRD_DIFF_UPDATED_REF="git://${{ github.event.pull_request.head.sha }}?path="
+      - name: Check for override label
+        if: ${{ steps.verify-crd-compatibility.outcome == 'failure' }}
+        run: |
+          if gh api repos/$OWNER/$REPO/pulls/$PR --jq '.labels.[].name' | grep -q "${OVERRIDE_LABEL}"; then
+            echo "Found ${OVERRIDE_LABEL} label, overriding failed results."
+            exit 0
+          else
+            echo "No ${OVERRIDE_LABEL} label found, failing the job."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          PR: ${{ github.event.pull_request.number }}
+          OVERRIDE_LABEL: "crd-diff-override"
