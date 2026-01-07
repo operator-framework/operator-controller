@@ -42,7 +42,7 @@ type DefaultRevisionEngineFactory struct {
 
 // CreateRevisionEngine constructs a boxcutter RevisionEngine for the given ClusterExtensionRevision.
 // It reads the ServiceAccount from annotations and creates a scoped client.
-func (f *DefaultRevisionEngineFactory) CreateRevisionEngine(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (RevisionEngine, error) {
+func (f *DefaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, rev *ocv1.ClusterExtensionRevision) (RevisionEngine, error) {
 	scopedClient, err := f.getScopedClient(rev)
 	if err != nil {
 		return nil, err
