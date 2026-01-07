@@ -149,6 +149,7 @@ func podNamespace() string {
 		return defaultSystemNamespace
 	}
 	return string(namespace)
+	// JUST A TEST
 }
 
 var operatorControllerCmd = &cobra.Command{
