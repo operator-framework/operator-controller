@@ -196,32 +196,12 @@ check_linter_support() {
 
 # Find golangci-lint binary
 find_golangci_lint() {
-    # Check if Variables.mk exists and extract golangci-lint path
-    if [[ -f ".bingo/Variables.mk" ]]; then
-        # Extract version from GOLANGCI_LINT variable
-        # Format: GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.7.2
-        local version
-        version=$(grep '^GOLANGCI_LINT' .bingo/Variables.mk | sed -E 's/.*golangci-lint-(v[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-
-        if [[ -n "${version}" ]]; then
-            # Use go env to get the actual GOBIN/GOPATH
-            local gobin
-            gobin=$(go env GOBIN)
-
-            # If GOBIN is empty, use GOPATH/bin
-            if [[ -z "${gobin}" ]]; then
-                local gopath
-                gopath=$(go env GOPATH)
-                # Take first entry if GOPATH has multiple paths (colon-separated)
-                gobin="${gopath%%:*}/bin"
-            fi
-
-            # Check if the versioned binary exists
-            local bingo_path="${gobin}/golangci-lint-${version}"
-            if [[ -f "${bingo_path}" ]]; then
-                echo "${bingo_path}"
-                return 0
-            fi
+    # Check if variables.env exists and extract golangci-lint path
+    if [[ -f ".bingo/variables.env" ]]; then
+        source .bingo/variables.env
+        if [[ -n "${GOLANGCI_LINT}" && -f "${GOLANGCI_LINT}" ]]; then
+            echo "${GOLANGCI_LINT}"
+            return 0
         fi
     fi
 
