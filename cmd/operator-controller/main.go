@@ -656,7 +656,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 	}
 	cerTokenGetter := authentication.NewTokenGetter(cerCoreClient, authentication.WithExpirationDuration(1*time.Hour))
 
-	revisionEngineFactory := controllers.NewDefaultRevisionEngineFactory(
+	revisionEngineFactory, err := controllers.NewDefaultRevisionEngineFactory(
 		c.mgr.GetScheme(),
 		trackingCache,
 		discoveryClient,
@@ -665,6 +665,9 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		c.mgr.GetConfig(),
 		cerTokenGetter,
 	)
+	if err != nil {
+		return fmt.Errorf("unable to create revision engine factory: %w", err)
+	}
 
 	if err = (&controllers.ClusterExtensionRevisionReconciler{
 		Client:                c.mgr.GetClient(),

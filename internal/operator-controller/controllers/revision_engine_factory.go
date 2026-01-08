@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"pkg.package-operator.run/boxcutter/machinery"
+	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
 	"pkg.package-operator.run/boxcutter/managedcache"
 	"pkg.package-operator.run/boxcutter/ownerhandling"
 	"pkg.package-operator.run/boxcutter/validation"
@@ -29,8 +30,19 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
-// DefaultRevisionEngineFactory creates boxcutter RevisionEngines with serviceAccount-scoped clients.
-type DefaultRevisionEngineFactory struct {
+// RevisionEngine defines the interface for reconciling and tearing down revisions.
+type RevisionEngine interface {
+	Teardown(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error)
+	Reconcile(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error)
+}
+
+// RevisionEngineFactory creates a RevisionEngine for a ClusterExtensionRevision.
+type RevisionEngineFactory interface {
+	CreateRevisionEngine(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (RevisionEngine, error)
+}
+
+// defaultRevisionEngineFactory creates boxcutter RevisionEngines with serviceAccount-scoped clients.
+type defaultRevisionEngineFactory struct {
 	Scheme           *runtime.Scheme
 	TrackingCache    managedcache.TrackingCache
 	DiscoveryClient  discovery.CachedDiscoveryInterface
@@ -42,8 +54,13 @@ type DefaultRevisionEngineFactory struct {
 
 // CreateRevisionEngine constructs a boxcutter RevisionEngine for the given ClusterExtensionRevision.
 // It reads the ServiceAccount from annotations and creates a scoped client.
-func (f *DefaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, rev *ocv1.ClusterExtensionRevision) (RevisionEngine, error) {
-	scopedClient, err := f.getScopedClient(rev)
+func (f *defaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, rev *ocv1.ClusterExtensionRevision) (RevisionEngine, error) {
+	saNamespace, saName, err := f.getServiceAccount(rev)
+	if err != nil {
+		return nil, err
+	}
+
+	scopedClient, err := f.createScopedClient(saNamespace, saName)
 	if err != nil {
 		return nil, err
 	}
@@ -62,33 +79,26 @@ func (f *DefaultRevisionEngineFactory) CreateRevisionEngine(_ context.Context, r
 	), nil
 }
 
-func (f *DefaultRevisionEngineFactory) getScopedClient(rev *ocv1.ClusterExtensionRevision) (client.Client, error) {
+func (f *defaultRevisionEngineFactory) getServiceAccount(rev *ocv1.ClusterExtensionRevision) (string, string, error) {
 	annotations := rev.GetAnnotations()
 	if annotations == nil {
-		return nil, fmt.Errorf("revision %q is missing required annotations", rev.Name)
+		return "", "", fmt.Errorf("revision %q is missing required annotations", rev.Name)
 	}
 
 	saName := strings.TrimSpace(annotations[labels.ServiceAccountNameKey])
 	saNamespace := strings.TrimSpace(annotations[labels.ServiceAccountNamespaceKey])
 
 	if len(saName) == 0 {
-		return nil, fmt.Errorf("revision %q is missing ServiceAccount name annotation", rev.Name)
+		return "", "", fmt.Errorf("revision %q is missing ServiceAccount name annotation", rev.Name)
 	}
 	if len(saNamespace) == 0 {
-		return nil, fmt.Errorf("revision %q is missing ServiceAccount namespace annotation", rev.Name)
+		return "", "", fmt.Errorf("revision %q is missing ServiceAccount namespace annotation", rev.Name)
 	}
 
-	return f.createScopedClient(saNamespace, saName)
+	return saNamespace, saName, nil
 }
 
-func (f *DefaultRevisionEngineFactory) createScopedClient(namespace, serviceAccountName string) (client.Client, error) {
-	if f.TokenGetter == nil {
-		return nil, fmt.Errorf("TokenGetter is required but not configured")
-	}
-	if f.BaseConfig == nil {
-		return nil, fmt.Errorf("BaseConfig is required but not configured")
-	}
-
+func (f *defaultRevisionEngineFactory) createScopedClient(namespace, serviceAccountName string) (client.Client, error) {
 	saConfig := rest.AnonymousClientConfig(f.BaseConfig)
 	saConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
 		return &authentication.TokenInjectingRoundTripper{
@@ -111,7 +121,7 @@ func (f *DefaultRevisionEngineFactory) createScopedClient(namespace, serviceAcco
 	return scopedClient, nil
 }
 
-// NewDefaultRevisionEngineFactory creates a new DefaultRevisionEngineFactory.
+// NewDefaultRevisionEngineFactory creates a new defaultRevisionEngineFactory.
 func NewDefaultRevisionEngineFactory(
 	scheme *runtime.Scheme,
 	trackingCache managedcache.TrackingCache,
@@ -120,8 +130,14 @@ func NewDefaultRevisionEngineFactory(
 	fieldOwnerPrefix string,
 	baseConfig *rest.Config,
 	tokenGetter *authentication.TokenGetter,
-) *DefaultRevisionEngineFactory {
-	return &DefaultRevisionEngineFactory{
+) (RevisionEngineFactory, error) {
+	if baseConfig == nil {
+		return nil, fmt.Errorf("baseConfig is required but not provided")
+	}
+	if tokenGetter == nil {
+		return nil, fmt.Errorf("tokenGetter is required but not provided")
+	}
+	return &defaultRevisionEngineFactory{
 		Scheme:           scheme,
 		TrackingCache:    trackingCache,
 		DiscoveryClient:  discoveryClient,
@@ -129,5 +145,5 @@ func NewDefaultRevisionEngineFactory(
 		FieldOwnerPrefix: fieldOwnerPrefix,
 		BaseConfig:       baseConfig,
 		TokenGetter:      tokenGetter,
-	}
+	}, nil
 }
