@@ -152,9 +152,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 						objects: []machinery.ObjectResult{
 							mockObjectResult{
 								success: true,
-								probes: map[string]machinery.ObjectProbeResult{
+								probes: machinerytypes.ProbeResultContainer{
 									boxcutter.ProgressProbeType: {
-										Success: true,
+										Status: machinerytypes.ProbeStatusTrue,
 									},
 								},
 							},
@@ -170,9 +170,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
 									return obj
 								}(),
-								probes: map[string]machinery.ObjectProbeResult{
+								probes: machinerytypes.ProbeResultContainer{
 									boxcutter.ProgressProbeType: {
-										Success: false,
+										Status: machinerytypes.ProbeStatusFalse,
 										Messages: []string{
 											"something bad happened",
 											"something worse happened",
@@ -198,9 +198,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 									return obj
 								}(),
-								probes: map[string]machinery.ObjectProbeResult{
+								probes: machinerytypes.ProbeResultContainer{
 									boxcutter.ProgressProbeType: {
-										Success: false,
+										Status: machinerytypes.ProbeStatusFalse,
 										Messages: []string{
 											"we have a problem",
 										},
@@ -243,9 +243,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 						objects: []machinery.ObjectResult{
 							mockObjectResult{
 								success: true,
-								probes: map[string]machinery.ObjectProbeResult{
-									boxcutter.ProgressProbeType: {
-										Success: true,
+								probes: machinerytypes.ProbeResultContainer{
+									boxcutter.ProgressProbeType: machinerytypes.ProbeResult{
+										Status: machinerytypes.ProbeStatusTrue,
 									},
 								},
 							},
@@ -261,9 +261,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
 									return obj
 								}(),
-								probes: map[string]machinery.ObjectProbeResult{
-									boxcutter.ProgressProbeType: {
-										Success: false,
+								probes: machinerytypes.ProbeResultContainer{
+									boxcutter.ProgressProbeType: machinerytypes.ProbeResult{
+										Status: machinerytypes.ProbeStatusFalse,
 										Messages: []string{
 											"something bad happened",
 											"something worse happened",
@@ -289,9 +289,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 									obj.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 									return obj
 								}(),
-								probes: map[string]machinery.ObjectProbeResult{
-									boxcutter.ProgressProbeType: {
-										Success: false,
+								probes: machinerytypes.ProbeResultContainer{
+									boxcutter.ProgressProbeType: machinerytypes.ProbeResult{
+										Status: machinerytypes.ProbeStatusFalse,
 										Messages: []string{
 											"we have a problem",
 										},
@@ -1018,7 +1018,7 @@ func (m mockRevisionResult) GetPhases() []machinery.PhaseResult {
 	return m.phases
 }
 
-func (m mockRevisionResult) InTransistion() bool {
+func (m mockRevisionResult) InTransition() bool {
 	return m.inTransition
 }
 
@@ -1033,6 +1033,8 @@ func (m mockRevisionResult) HasProgressed() bool {
 func (m mockRevisionResult) String() string {
 	return m.string
 }
+
+var _ machinery.PhaseResult = &mockPhaseResult{}
 
 type mockPhaseResult struct {
 	name            string
@@ -1056,7 +1058,7 @@ func (m mockPhaseResult) GetObjects() []machinery.ObjectResult {
 	return m.objects
 }
 
-func (m mockPhaseResult) InTransistion() bool {
+func (m mockPhaseResult) InTransition() bool {
 	return m.inTransition
 }
 
@@ -1072,12 +1074,28 @@ func (m mockPhaseResult) String() string {
 	return m.string
 }
 
+var _ machinery.ObjectResult = &mockObjectResult{}
+
 type mockObjectResult struct {
-	action  machinery.Action
-	object  machinery.Object
-	success bool
-	probes  map[string]machinery.ObjectProbeResult
-	string  string
+	action   machinery.Action
+	object   machinery.Object
+	success  bool
+	complete bool
+	paused   bool
+	probes   machinerytypes.ProbeResultContainer
+	string   string
+}
+
+func (m mockObjectResult) ProbeResults() machinerytypes.ProbeResultContainer {
+	return m.probes
+}
+
+func (m mockObjectResult) IsComplete() bool {
+	return m.complete
+}
+
+func (m mockObjectResult) IsPaused() bool {
+	return m.paused
 }
 
 func (m mockObjectResult) Action() machinery.Action {
@@ -1092,13 +1110,11 @@ func (m mockObjectResult) Success() bool {
 	return m.success
 }
 
-func (m mockObjectResult) Probes() map[string]machinery.ObjectProbeResult {
-	return m.probes
-}
-
 func (m mockObjectResult) String() string {
 	return m.string
 }
+
+var _ machinery.RevisionTeardownResult = mockRevisionTeardownResult{}
 
 type mockRevisionTeardownResult struct {
 	phases            []machinery.PhaseTeardownResult

@@ -178,7 +178,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		}
 	}
 
-	if !rres.InTransistion() {
+	if !rres.InTransition() {
 		markAsProgressing(rev, ocv1.ReasonSucceeded, fmt.Sprintf("Revision %s has rolled out.", revVersion))
 	} else {
 		markAsProgressing(rev, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
@@ -222,8 +222,8 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			for _, ores := range pres.GetObjects() {
 				// we probably want an AvailabilityProbeType and run through all of them independently of whether
 				// the revision is complete or not
-				pr := ores.Probes()[boxcutter.ProgressProbeType]
-				if pr.Success {
+				pr := ores.ProbeResults()[boxcutter.ProgressProbeType]
+				if pr.Status == machinerytypes.ProbeStatusTrue {
 					continue
 				}
 
