@@ -23,7 +23,7 @@ jobs:
       - name: Check for override label
         if: ${{ steps.lint-api-diff.outcome == 'failure' }}
         run: |
-          if gh api repos/$OWNER/$REPO/pulls/$PR --jq '.labels[].name' | grep -q "${OVERRIDE_LABEL}"; then
+          if gh api repos/$OWNER/$REPO/pulls/$PR --jq '.labels.[].name' | grep -q "${OVERRIDE_LABEL}"; then
             echo "Found ${OVERRIDE_LABEL} label, overriding failed results."
             exit 0
           else
