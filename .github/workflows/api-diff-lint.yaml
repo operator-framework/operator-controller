@@ -1,12 +1,7 @@
 name: api-diff-lint
 
 on:
-  workflow_dispatch:
   pull_request:
-  merge_group:
-  push:
-    branches:
-    - main
 
 jobs:
   lint-api-diff:
