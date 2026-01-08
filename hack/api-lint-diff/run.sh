@@ -225,7 +225,7 @@ find_golangci_lint() {
 
     echo -e "${RED}Error: golangci-lint not found.${NC}" >&2
     echo -e "${RED}Searched for:${NC}" >&2
-    echo -e "  - .bingo/Variables.mk (bingo-managed versioned binary)" >&2
+    echo -e "  - .bingo/variables.env (bingo-managed variables for GOLANGCI_LINT)" >&2
     echo -e "  - .bingo/golangci-lint" >&2
     echo -e "  - bin/golangci-lint" >&2
     echo -e "  - golangci-lint on your \$PATH" >&2
