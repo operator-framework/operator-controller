@@ -537,7 +537,11 @@ func randomAvailablePort() (int, error) {
 
 func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint string, controllerName string) error {
 	sc := scenarioCtx(ctx)
-	v, err := k8sClient("get", "service", "-n", olmNamespace, fmt.Sprintf("%s-service", controllerName), "-o", "json")
+	serviceNs, err := k8sClient("get", "service", "-A", "-o", fmt.Sprintf(`jsonpath={.items[?(@.metadata.name=="%s-service")].metadata.namespace}`, controllerName))
+	if err != nil {
+		return err
+	}
+	v, err := k8sClient("get", "service", "-n", serviceNs, fmt.Sprintf("%s-service", controllerName), "-o", "json")
 	if err != nil {
 		return err
 	}
