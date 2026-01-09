@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -27,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -46,6 +48,9 @@ type ClusterExtensionRevisionReconciler struct {
 	Client                client.Client
 	RevisionEngineFactory RevisionEngineFactory
 	TrackingCache         trackingCache
+	// track if we have queued up the reconciliation that detects eventual progress deadline issues
+	// keys is revision UUID, value is boolean
+	progressDeadlineCheckInFlight sync.Map
 }
 
 type trackingCache interface {
@@ -74,6 +79,25 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 	reconciledRev := existingRev.DeepCopy()
 	res, reconcileErr := c.reconcile(ctx, reconciledRev)
 
+	if pd := existingRev.Spec.ProgressDeadlineMinutes; pd > 0 {
+		cnd := meta.FindStatusCondition(reconciledRev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+		isStillProgressing := cnd != nil && cnd.Status == metav1.ConditionTrue && cnd.Reason != ocv1.ReasonSucceeded
+		succeeded := meta.IsStatusConditionTrue(reconciledRev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
+		// check if we reached the progress deadline only if the revision is still progressing and has not succeeded yet
+		if isStillProgressing && !succeeded {
+			timeout := time.Duration(pd) * time.Minute
+			if time.Since(existingRev.CreationTimestamp.Time) > timeout {
+				// progress deadline reached, reset any errors and stop reconciling this revision
+				markAsNotProgressing(reconciledRev, ocv1.ReasonProgressDeadlineExceeded, fmt.Sprintf("Revision has not rolled out for %d minutes.", pd))
+				reconcileErr = nil
+				res = ctrl.Result{}
+			} else if _, found := c.progressDeadlineCheckInFlight.Load(existingRev.GetUID()); !found && reconcileErr == nil {
+				// if we haven't already queued up a reconcile to check for progress deadline, queue one up, but only once
+				c.progressDeadlineCheckInFlight.Store(existingRev.GetUID(), true)
+				res = ctrl.Result{RequeueAfter: timeout}
+			}
+		}
+	}
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingRev.Status, reconciledRev.Status)
 
@@ -299,10 +323,29 @@ type Sourcerer interface {
 }
 
 func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	skipProgressDeadlineExceededPredicate := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			rev, ok := e.ObjectNew.(*ocv1.ClusterExtensionRevision)
+			if !ok {
+				return true
+			}
+			// allow deletions to happen
+			if !rev.DeletionTimestamp.IsZero() {
+				return true
+			}
+			if cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing); cnd != nil && cnd.Status == metav1.ConditionFalse && cnd.Reason == ocv1.ReasonProgressDeadlineExceeded {
+				return false
+			}
+			return true
+		},
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&ocv1.ClusterExtensionRevision{},
-			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+			builder.WithPredicates(
+				predicate.ResourceVersionChangedPredicate{},
+				skipProgressDeadlineExceededPredicate,
+			),
 		).
 		WatchesRawSource(
 			c.TrackingCache.Source(

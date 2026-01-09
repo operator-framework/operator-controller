@@ -41,4 +41,5 @@ var ConditionReasons = []string{
 	ocv1.ReasonRetrying,
 	ocv1.ReasonAbsent,
 	ocv1.ReasonRollingOut,
+	ocv1.ReasonProgressDeadlineExceeded,
 }

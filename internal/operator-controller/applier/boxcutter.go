@@ -191,7 +191,7 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	annotations[labels.ServiceAccountNameKey] = ext.Spec.ServiceAccount.Name
 	annotations[labels.ServiceAccountNamespaceKey] = ext.Spec.Namespace
 
-	return &ocv1.ClusterExtensionRevision{
+	cer := &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: annotations,
 			Labels: map[string]string{
@@ -206,6 +206,10 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 			Phases:         PhaseSort(objects),
 		},
 	}
+	if p := ext.Spec.ProgressDeadlineMinutes; p > 0 {
+		cer.Spec.ProgressDeadlineMinutes = p
+	}
+	return cer
 }
 
 // BoxcutterStorageMigrator migrates ClusterExtensions from Helm-based storage to

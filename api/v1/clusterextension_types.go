@@ -107,6 +107,17 @@ type ClusterExtensionSpec struct {
 	//
 	// +optional
 	Config *ClusterExtensionConfig `json:"config,omitempty"`
+
+	// progressDeadlineMinutes is an optional field that defines the maximum period
+	// of time in minutes after which an installation should be considered failed and
+	// require manual intervention. This functionality is disabled when no value
+	// is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
+	//
+	// +kubebuilder:validation:Minimum:=10
+	// +kubebuilder:validation:Maximum:=720
+	// +optional
+	// <opcon:experimental>
+	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"

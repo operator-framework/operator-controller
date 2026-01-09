@@ -60,6 +60,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutReason)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionRevisionReportsConditionWithoutMsg)
+	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" is archived$`, ClusterExtensionRevisionIsArchived)
 
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
@@ -88,6 +89,8 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
+
+	sc.Step(`^(?i)min value for (ClusterExtension|ClusterExtensionRevision) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)
 }
 
 func init() {
@@ -312,6 +315,36 @@ func ClusterExtensionReportsConditionWithoutMsg(ctx context.Context, conditionTy
 
 func ClusterExtensionReportsConditionWithoutReason(ctx context.Context, conditionType, conditionStatus string) error {
 	return waitForExtensionCondition(ctx, conditionType, conditionStatus, nil, nil)
+}
+
+func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditionType string, minMinutes, maxMinutes int) error {
+	sc := scenarioCtx(ctx)
+	t := godog.T(ctx)
+
+	// Get the ClusterExtension's creation timestamp and condition's lastTransitionTime
+	v, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o",
+		fmt.Sprintf("jsonpath={.metadata.creationTimestamp},{.status.conditions[?(@.type==\"%s\")].lastTransitionTime}", conditionType))
+	require.NoError(t, err)
+
+	parts := strings.Split(v, ",")
+	require.Len(t, parts, 2, "expected creationTimestamp and lastTransitionTime but got: %s", v)
+
+	creationTimestamp, err := time.Parse(time.RFC3339, parts[0])
+	require.NoError(t, err, "failed to parse creationTimestamp")
+
+	lastTransitionTime, err := time.Parse(time.RFC3339, parts[1])
+	require.NoError(t, err, "failed to parse lastTransitionTime")
+
+	transitionDuration := lastTransitionTime.Sub(creationTimestamp)
+	minDuration := time.Duration(minMinutes) * time.Minute
+	maxDuration := time.Duration(maxMinutes) * time.Minute
+
+	require.GreaterOrEqual(t, transitionDuration, minDuration,
+		"condition %s transitioned too early: %v since creation (expected >= %v)", conditionType, transitionDuration, minDuration)
+	require.LessOrEqual(t, transitionDuration, maxDuration,
+		"condition %s transitioned too late: %v since creation (expected <= %v)", conditionType, transitionDuration, maxDuration)
+
+	return nil
 }
 
 func ClusterExtensionReportsActiveRevisions(ctx context.Context, rawRevisionNames string) error {
@@ -728,5 +761,32 @@ func MarkTestOperatorNotReady(ctx context.Context, state string) error {
 		return fmt.Errorf("invalid state %s", state)
 	}
 	_, err = k8sClient("exec", podName, "-n", sc.namespace, "--", op, "/var/www/ready")
+	return err
+}
+
+// SetCRDFieldMinValue patches a CRD to set the minimum value for a field.
+// jsonPath is in the format ".spec.fieldName" and gets converted to the CRD schema path.
+func SetCRDFieldMinValue(_ context.Context, resourceType, jsonPath string, minValue int) error {
+	var crdName string
+	switch resourceType {
+	case "ClusterExtension":
+		crdName = "clusterextensions.olm.operatorframework.io"
+	case "ClusterExtensionRevision":
+		crdName = "clusterextensionrevisions.olm.operatorframework.io"
+	default:
+		return fmt.Errorf("unsupported resource type: %s", resourceType)
+	}
+
+	// Convert JSON path like ".spec.progressDeadlineMinutes" to CRD schema path
+	// e.g., ".spec.progressDeadlineMinutes" -> "properties/spec/properties/progressDeadlineMinutes"
+	parts := strings.Split(strings.TrimPrefix(jsonPath, "."), ".")
+	schemaParts := make([]string, 0, 2*len(parts))
+	for _, part := range parts {
+		schemaParts = append(schemaParts, "properties", part)
+	}
+	patchPath := fmt.Sprintf("/spec/versions/0/schema/openAPIV3Schema/%s/minimum", strings.Join(schemaParts, "/"))
+
+	patch := fmt.Sprintf(`[{"op": "replace", "path": "%s", "value": %d}]`, patchPath, minValue)
+	_, err := k8sClient("patch", "crd", crdName, "--type=json", "-p", patch)
 	return err
 }
