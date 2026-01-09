@@ -526,6 +526,50 @@ func TestDowngradeNotFound(t *testing.T) {
 	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "1.0.2": no bundles found for package %q matching version ">0.1.0 <1.0.0"`, pkgName))
 }
 
+func TestIssue1022DowngradeNotSuccessor(t *testing.T) {
+	pkgName := randPkg()
+
+	// Create a package similar to cockroachdb with versions 6.0.0, 6.0.1, etc.
+	fbc := &declcfg.DeclarativeConfig{
+		Packages: []declcfg.Package{{Name: pkgName}},
+		Channels: []declcfg.Channel{
+			{Package: pkgName, Name: "stable", Entries: []declcfg.ChannelEntry{
+				{Name: bundleName(pkgName, "6.0.0")},
+				{Name: bundleName(pkgName, "6.0.1"), Replaces: bundleName(pkgName, "6.0.0")},
+				{Name: bundleName(pkgName, "6.0.10"), Replaces: bundleName(pkgName, "6.0.1")},
+				{Name: bundleName(pkgName, "6.3.11"), SkipRange: ">=6.0.0 <6.3.11"},
+			}},
+		},
+		Bundles: []declcfg.Bundle{
+			genBundle(pkgName, "6.0.0"),
+			genBundle(pkgName, "6.0.1"),
+			genBundle(pkgName, "6.0.10"),
+			genBundle(pkgName, "6.3.11"),
+		},
+	}
+
+	w := staticCatalogWalker{
+		"catalog": func() (*declcfg.DeclarativeConfig, *ocv1.ClusterCatalogSpec, error) {
+			return fbc, nil, nil
+		},
+	}
+
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := buildFooClusterExtension(pkgName, []string{}, "6.0.0", ocv1.UpgradeConstraintPolicyCatalogProvided)
+	installedBundle := &ocv1.BundleMetadata{
+		Name:    bundleName(pkgName, "6.0.1"),
+		Version: "6.0.1",
+	}
+
+	// Try to downgrade to 6.0.0, which exists but is not a successor
+	_, _, _, err := r.Resolve(context.Background(), ce, installedBundle)
+
+	// The new error message should be more helpful
+	expectedMsg := fmt.Sprintf(`error upgrading from currently installed version "6.0.1": desired package %q with version range "6.0.0" does not match any successor of "6.0.1". Highest version successors of "6.0.1" are "6.3.11" (y-stream) and "6.0.10" (z-stream)`, pkgName)
+	assert.EqualError(t, err, expectedMsg)
+}
+
+
 func TestCatalogWalker(t *testing.T) {
 	t.Run("error listing catalogs", func(t *testing.T) {
 		w := CatalogWalker(

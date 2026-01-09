@@ -77,6 +77,8 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 	var catStats []*catStat
 
 	var resolvedBundles []foundBundle
+	var bundlesBeforeUpgrade []foundBundle // Track bundles before upgrade constraints
+	var allSuccessors []foundBundle        // Track all successors for suggestions
 	var priorDeprecation *declcfg.Deprecation
 
 	listOptions := []client.ListOption{
@@ -97,18 +99,36 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 		cs.PackageFound = true
 		cs.TotalBundles = len(packageFBC.Bundles)
 
-		var predicates []filterutil.Predicate[declcfg.Bundle]
+		// Build predicates for channel and version filtering
+		var preUpgradePredicates []filterutil.Predicate[declcfg.Bundle]
 		if len(channels) > 0 {
 			channelSet := sets.New(channels...)
 			filteredChannels := slices.DeleteFunc(packageFBC.Channels, func(c declcfg.Channel) bool {
 				return !channelSet.Has(c.Name)
 			})
-			predicates = append(predicates, filter.InAnyChannel(filteredChannels...))
+			preUpgradePredicates = append(preUpgradePredicates, filter.InAnyChannel(filteredChannels...))
 		}
 
 		if versionRangeConstraints != nil {
-			predicates = append(predicates, filter.InSemverRange(versionRangeConstraints))
+			preUpgradePredicates = append(preUpgradePredicates, filter.InSemverRange(versionRangeConstraints))
 		}
+
+		// Apply pre-upgrade predicates to track bundles before upgrade constraints
+		bundlesBeforeUpgradeConstraints := slices.Clone(packageFBC.Bundles)
+		bundlesBeforeUpgradeConstraints = filterutil.InPlace(bundlesBeforeUpgradeConstraints, filterutil.And(preUpgradePredicates...))
+
+		// Track bundles before upgrade constraints for better error messages
+		if len(bundlesBeforeUpgradeConstraints) > 0 && ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1.UpgradeConstraintPolicySelfCertified && installedBundle != nil {
+			// Sort to get the best bundle
+			slices.SortStableFunc(bundlesBeforeUpgradeConstraints, compare.ByVersionAndRelease)
+			if len(bundlesBeforeUpgradeConstraints) > 0 {
+				bundlesBeforeUpgrade = append(bundlesBeforeUpgrade, foundBundle{&bundlesBeforeUpgradeConstraints[0], cat.GetName(), cat.Spec.Priority})
+			}
+		}
+
+		// Now apply upgrade constraints
+		var predicates []filterutil.Predicate[declcfg.Bundle]
+		predicates = append(predicates, preUpgradePredicates...)
 
 		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1.UpgradeConstraintPolicySelfCertified && installedBundle != nil {
 			successorPredicate, err := filter.SuccessorsOf(*installedBundle, packageFBC.Channels...)
@@ -116,6 +136,22 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 				return fmt.Errorf("error finding upgrade edges: %w", err)
 			}
 			predicates = append(predicates, successorPredicate)
+
+			// Also collect all successors (without version constraints) for suggestions
+			allSuccessorBundles := slices.Clone(packageFBC.Bundles)
+			var successorOnlyPredicates []filterutil.Predicate[declcfg.Bundle]
+			if len(channels) > 0 {
+				channelSet := sets.New(channels...)
+				filteredChannels := slices.DeleteFunc(packageFBC.Channels, func(c declcfg.Channel) bool {
+					return !channelSet.Has(c.Name)
+				})
+				successorOnlyPredicates = append(successorOnlyPredicates, filter.InAnyChannel(filteredChannels...))
+			}
+			successorOnlyPredicates = append(successorOnlyPredicates, successorPredicate)
+			allSuccessorBundles = filterutil.InPlace(allSuccessorBundles, filterutil.And(successorOnlyPredicates...))
+			for i := range allSuccessorBundles {
+				allSuccessors = append(allSuccessors, foundBundle{&allSuccessorBundles[i], cat.GetName(), cat.Spec.Priority})
+			}
 		}
 
 		// Apply the predicates to get the candidate bundles
@@ -182,11 +218,13 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 	if len(resolvedBundles) != 1 {
 		l.Info("resolution failed", "stats", catStats)
 		return nil, nil, nil, resolutionError{
-			PackageName:     packageName,
-			Version:         versionRange,
-			Channels:        channels,
-			InstalledBundle: installedBundle,
-			ResolvedBundles: resolvedBundles,
+			PackageName:          packageName,
+			Version:              versionRange,
+			Channels:             channels,
+			InstalledBundle:      installedBundle,
+			ResolvedBundles:      resolvedBundles,
+			BundlesBeforeUpgrade: bundlesBeforeUpgrade,
+			AllSuccessors:        allSuccessors,
 		}
 	}
 	resolvedBundle := resolvedBundles[0].bundle
@@ -210,11 +248,13 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 }
 
 type resolutionError struct {
-	PackageName     string
-	Version         string
-	Channels        []string
-	InstalledBundle *ocv1.BundleMetadata
-	ResolvedBundles []foundBundle
+	PackageName          string
+	Version              string
+	Channels             []string
+	InstalledBundle      *ocv1.BundleMetadata
+	ResolvedBundles      []foundBundle
+	BundlesBeforeUpgrade []foundBundle // Bundles that matched before applying upgrade constraints
+	AllSuccessors        []foundBundle // All successor bundles found (for suggestions)
 }
 
 func (rei resolutionError) Error() string {
@@ -223,13 +263,29 @@ func (rei resolutionError) Error() string {
 		sb.WriteString(fmt.Sprintf("error upgrading from currently installed version %q: ", rei.InstalledBundle.Version))
 	}
 
-	if len(rei.ResolvedBundles) > 1 {
+	// Check if we have bundles that matched before upgrade constraints
+	if len(rei.ResolvedBundles) == 0 && len(rei.BundlesBeforeUpgrade) > 0 {
+		// Bundles exist matching the version range, but none are successors
+		if rei.Version != "" {
+			sb.WriteString(fmt.Sprintf("desired package %q with version range %q does not match any successor of %q", rei.PackageName, rei.Version, rei.InstalledBundle.Version))
+		} else {
+			sb.WriteString(fmt.Sprintf("no successor of %q found for package %q", rei.InstalledBundle.Version, rei.PackageName))
+		}
+
+		// Add suggestions for best successors if available
+		if len(rei.AllSuccessors) > 0 {
+			suggestions := rei.findBestSuccessors()
+			if suggestions != "" {
+				sb.WriteString(fmt.Sprintf(". %s", suggestions))
+			}
+		}
+	} else if len(rei.ResolvedBundles) > 1 {
 		sb.WriteString(fmt.Sprintf("found bundles for package %q ", rei.PackageName))
 	} else {
 		sb.WriteString(fmt.Sprintf("no bundles found for package %q ", rei.PackageName))
 	}
 
-	if rei.Version != "" {
+	if rei.Version != "" && !(len(rei.ResolvedBundles) == 0 && len(rei.BundlesBeforeUpgrade) > 0) {
 		sb.WriteString(fmt.Sprintf("matching version %q ", rei.Version))
 	}
 
@@ -247,6 +303,68 @@ func (rei resolutionError) Error() string {
 	}
 
 	return strings.TrimSpace(sb.String())
+}
+
+// findBestSuccessors finds the highest version successors in different streams
+func (rei resolutionError) findBestSuccessors() string {
+	if len(rei.AllSuccessors) == 0 {
+		return ""
+	}
+
+	// Parse installed version
+	installedVer, err := bsemver.Parse(rei.InstalledBundle.Version)
+	if err != nil {
+		return ""
+	}
+
+	var zStreamHighest *declcfg.Bundle
+	var yStreamHighest *declcfg.Bundle
+
+	for _, fb := range rei.AllSuccessors {
+		bundleVer, err := bundleutil.GetVersionAndRelease(*fb.bundle)
+		if err != nil {
+			continue
+		}
+
+		// Z-stream: same major.minor, different patch
+		if bundleVer.Version.Major == installedVer.Major && bundleVer.Version.Minor == installedVer.Minor {
+			if zStreamHighest == nil {
+				zStreamHighest = fb.bundle
+			} else {
+				currentHighest, _ := bundleutil.GetVersionAndRelease(*zStreamHighest)
+				if bundleVer.Compare(*currentHighest) > 0 {
+					zStreamHighest = fb.bundle
+				}
+			}
+		}
+
+		// Y-stream: same major, different minor
+		if bundleVer.Version.Major == installedVer.Major && bundleVer.Version.Minor != installedVer.Minor {
+			if yStreamHighest == nil {
+				yStreamHighest = fb.bundle
+			} else {
+				currentHighest, _ := bundleutil.GetVersionAndRelease(*yStreamHighest)
+				if bundleVer.Compare(*currentHighest) > 0 {
+					yStreamHighest = fb.bundle
+				}
+			}
+		}
+	}
+
+	var suggestions []string
+	if yStreamHighest != nil {
+		yVer, _ := bundleutil.GetVersionAndRelease(*yStreamHighest)
+		suggestions = append(suggestions, fmt.Sprintf("%q (y-stream)", yVer.AsLegacyRegistryV1Version().String()))
+	}
+	if zStreamHighest != nil {
+		zVer, _ := bundleutil.GetVersionAndRelease(*zStreamHighest)
+		suggestions = append(suggestions, fmt.Sprintf("%q (z-stream)", zVer.AsLegacyRegistryV1Version().String()))
+	}
+
+	if len(suggestions) > 0 {
+		return fmt.Sprintf("Highest version successors of %q are %s", rei.InstalledBundle.Version, strings.Join(suggestions, " and "))
+	}
+	return ""
 }
 
 func isDeprecated(bundle declcfg.Bundle, deprecation *declcfg.Deprecation) bool {
