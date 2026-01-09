@@ -28,13 +28,9 @@ aliases:
 
    api-approvers:
    - grokspawn
-   - thetechnick
 
    catalogd-approvers:
    - grokspawn
-
-   operator-controller-approvers:
-   - thetechnick
 
    cmd-approvers:
    - grokspawn
@@ -51,4 +47,3 @@ aliases:
    docs-draft-approvers:
    - camilamacedo86
    - grokspawn
-   - thetechnick
