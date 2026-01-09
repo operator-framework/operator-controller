@@ -471,7 +471,7 @@ func TestUpgradeNotFoundLegacy(t *testing.T) {
 	}
 	// 0.1.0 only upgrades to 1.0.x with its legacy upgrade edges, so this fails.
 	_, _, _, err := r.Resolve(context.Background(), ce, installedBundle)
-	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "0.1.0": no bundles found for package %q matching version "<1.0.0 >=2.0.0"`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "0.1.0": desired package %q with version range "<1.0.0 >=2.0.0" does not match any successor of "0.1.0"`, pkgName))
 }
 
 func TestDowngradeFound(t *testing.T) {
