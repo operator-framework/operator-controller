@@ -9,8 +9,18 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 )
 
+// Resolver defines the interface for resolving bundles based on ClusterExtension specs
 type Resolver interface {
+	// Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
 	Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error)
+}
+
+// SuccessorQuerier is an optional interface that resolvers can implement to provide
+// information about available successors. This is useful for generating helpful error messages.
+type SuccessorQuerier interface {
+	// GetBestSuccessors returns the best available successor bundles for the currently
+	// installed bundle, ignoring version range and channel filters.
+	GetBestSuccessors(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) ([]BundleRef, error)
 }
 
 type Func func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error)
