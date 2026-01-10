@@ -289,7 +289,6 @@ Two manifest variants exist:
 - `/go.mod` - Dependencies (use `make tidy`, avoid Go version bumps without discussion)
 - `/PROJECT` - Kubebuilder project config
 - `/OWNERS` & `/OWNERS_ALIASES` - Maintainer lists
-- `/CODEOWNERS` - Code ownership
 - `/mkdocs.yml` - Documentation site config
 - `/.bingo/*.mod` - Tool dependencies (managed by bingo)
 - `/.golangci.yaml` - Linter configuration
