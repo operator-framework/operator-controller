@@ -98,6 +98,7 @@ func (mockHelmReleaseToObjectsConverter) GetObjectsFromRelease(*release.Release)
 type mockActionGetter struct {
 	actionClientForErr error
 	getClientErr       error
+	historyErr         error
 	installErr         error
 	dryRunInstallErr   error
 	upgradeErr         error
@@ -105,6 +106,7 @@ type mockActionGetter struct {
 	reconcileErr       error
 	desiredRel         *release.Release
 	currentRel         *release.Release
+	history            []*release.Release
 }
 
 func (mag *mockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
@@ -116,7 +118,7 @@ func (mag *mockActionGetter) Get(name string, opts ...helmclient.GetOption) (*re
 }
 
 func (mag *mockActionGetter) History(name string, opts ...helmclient.HistoryOption) ([]*release.Release, error) {
-	return nil, mag.getClientErr
+	return mag.history, mag.historyErr
 }
 
 func (mag *mockActionGetter) Install(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.InstallOption) (*release.Release, error) {

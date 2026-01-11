@@ -39,4 +39,9 @@ const (
 	// so that the effective ServiceAccount identity used for
 	// ClusterExtensionRevision operations is preserved.
 	ServiceAccountNamespaceKey = "olm.operatorframework.io/service-account-namespace"
+
+	// MigratedFromHelmKey is the label key used to mark ClusterExtensionRevisions
+	// that were created during migration from Helm releases. This label is used
+	// to distinguish migrated revisions from those created by normal Boxcutter operation.
+	MigratedFromHelmKey = "olm.operatorframework.io/migrated-from-helm"
 )
