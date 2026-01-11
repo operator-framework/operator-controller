@@ -1190,10 +1190,12 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 				RevisionGenerator: dummyGenerator,
 				PreAuthorizer:     tc.preAuthorizer(t),
 			}
-			err := boxcutter.Apply(t.Context(), dummyBundleFs, ext, nil, revisionAnnotations)
+			completed, status, err := boxcutter.Apply(t.Context(), dummyBundleFs, ext, nil, revisionAnnotations)
 			if tc.validate != nil {
 				tc.validate(t, err)
 			}
+			_ = completed
+			_ = status
 		})
 	}
 }
