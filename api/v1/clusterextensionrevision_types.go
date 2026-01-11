@@ -32,6 +32,7 @@ const (
 	// Condition Reasons
 	ClusterExtensionRevisionReasonArchived        = "Archived"
 	ClusterExtensionRevisionReasonBlocked         = "Blocked"
+	ClusterExtensionRevisionReasonMigrated        = "Migrated"
 	ClusterExtensionRevisionReasonProbeFailure    = "ProbeFailure"
 	ClusterExtensionRevisionReasonProbesSucceeded = "ProbesSucceeded"
 	ClusterExtensionRevisionReasonReconciling     = "Reconciling"

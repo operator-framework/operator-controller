@@ -266,6 +266,33 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 		return fmt.Errorf("getting created revision: %w", err)
 	}
 
+	// Set initial status on the migrated revision to mark it as succeeded.
+	//
+	// The revision must have a Succeeded=True status condition immediately after creation.
+	//
+	// A revision is only considered "Installed" (vs "RollingOut") when it has this condition.
+	// Without it, the system cannot determine what version is currently installed, which breaks:
+	//   - Version resolution (can't compute upgrade paths from unknown starting point)
+	//   - Status reporting (installed bundle appears as nil)
+	//   - Subsequent upgrades (resolution fails without knowing current version)
+	//
+	// While the ClusterExtensionRevision controller would eventually reconcile and set this status,
+	// that creates a timing gap where the ClusterExtension reconciliation happens before the status
+	// is set, causing failures during the OLM upgrade window.
+	//
+	// Since we're creating this revision from a successfully deployed Helm release, we know it
+	// represents a working installation and can safely mark it as succeeded immediately.
+	meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
+		Status:             metav1.ConditionTrue,
+		Reason:             ocv1.ClusterExtensionRevisionReasonMigrated,
+		Message:            "Migrated from Helm release",
+		ObservedGeneration: rev.GetGeneration(),
+	})
+	if err := m.Client.Status().Update(ctx, rev); err != nil {
+		return fmt.Errorf("updating migrated revision status: %w", err)
+	}
+
 	return nil
 }
 
