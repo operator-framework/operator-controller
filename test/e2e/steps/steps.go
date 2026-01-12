@@ -85,6 +85,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterCatalog "([^"]+)" serves bundles$`, CatalogServesBundles)
 	sc.Step(`^"([^"]+)" catalog image version "([^"]+)" is also tagged as "([^"]+)"$`, TagCatalogImage)
 	sc.Step(`^(?i)ClusterCatalog "([^"]+)" image version "([^"]+)" is also tagged as "([^"]+)"$`, TagCatalogImage)
+	sc.Step(`^(?i)ClusterCatalog "([^"]+)" is deleted$`, CatalogIsDeleted)
 
 	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
@@ -662,6 +663,38 @@ func CatalogServesBundles(ctx context.Context, catalogName string) error {
 func TagCatalogImage(name, oldTag, newTag string) error {
 	imageRef := fmt.Sprintf("%s/%s", os.Getenv("LOCAL_REGISTRY_HOST"), fmt.Sprintf("e2e/%s-catalog:%s", name, oldTag))
 	return crane.Tag(imageRef, newTag, crane.Insecure)
+}
+
+func CatalogIsDeleted(ctx context.Context, catalogName string) error {
+	catalogFullName := fmt.Sprintf("%s-catalog", catalogName)
+	_, err := k8sClient("delete", "clustercatalog", catalogFullName, "--ignore-not-found=true")
+	if err != nil {
+		return fmt.Errorf("failed to delete catalog: %v", err)
+	}
+
+	// Wait for catalog to be fully deleted, respecting context cancellation.
+	ticker := time.NewTicker(tick)
+	defer ticker.Stop()
+
+	deadline := time.Now().Add(timeout)
+	for {
+		select {
+		case <-ctx.Done():
+			// Return the context error if we timed out or were cancelled while waiting.
+			return ctx.Err()
+		case <-ticker.C:
+			// Check if we've exceeded the timeout
+			if time.Now().After(deadline) {
+				return fmt.Errorf("timeout waiting for catalog %s to be deleted", catalogFullName)
+			}
+
+			_, err := k8sClient("get", "clustercatalog", catalogFullName)
+			if err != nil {
+				// Catalog is deleted - verification succeeded
+				return nil
+			}
+		}
+	}
 }
 
 func PrometheusMetricsAreReturned(ctx context.Context) error {
