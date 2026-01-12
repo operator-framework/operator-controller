@@ -198,7 +198,7 @@ check_linter_support() {
 find_golangci_lint() {
     # Check if variables.env exists and extract golangci-lint path
     if [[ -f ".bingo/variables.env" ]]; then
-        source .bingo/variables.env
+        source .bingo/variables.env 2>/dev/null || true
         if [[ -n "${GOLANGCI_LINT}" && -f "${GOLANGCI_LINT}" ]]; then
             echo "${GOLANGCI_LINT}"
             return 0
