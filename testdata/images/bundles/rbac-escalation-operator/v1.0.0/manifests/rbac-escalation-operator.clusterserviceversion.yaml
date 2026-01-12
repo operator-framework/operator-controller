@@ -27,7 +27,26 @@ spec:
                 containers:
                   - name: manager
                     image: busybox:1.37
-                    command: ["/bin/sh", "-c", "sleep 3600"]
+                    command: ["/bin/sh"]
+                    args: ["-c", "mkdir -p /tmp && (while true; do echo 'OK' | nc -l -p 8080; done)"]
+                    ports:
+                      - containerPort: 8080
+                        protocol: TCP
+                    startupProbe:
+                      tcpSocket:
+                        port: 8080
+                      failureThreshold: 30
+                      periodSeconds: 1
+                    livenessProbe:
+                      tcpSocket:
+                        port: 8080
+                      failureThreshold: 1
+                      periodSeconds: 2
+                    readinessProbe:
+                      tcpSocket:
+                        port: 8080
+                      initialDelaySeconds: 1
+                      periodSeconds: 1
                 serviceAccountName: rbac-escalation-sa
       # These permissions differ from test-operator's requirements to validate
       # that the installer SA can handle operators with diverse RBAC needs

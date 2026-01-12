@@ -32,6 +32,7 @@ Feature: RBAC Permissions for Extension Installation
               matchLabels:
                 "olm.operatorframework.io/metadata.name": test-catalog
       """
-    Then ClusterExtension is available
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
     And bundle "rbac-escalation-operator.1.0.0" is installed in version "1.0.0"
 
