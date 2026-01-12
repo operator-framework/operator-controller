@@ -159,3 +159,23 @@ properties:
     value:
       packageName: single-namespace-operator
       version: 1.0.0
+---
+schema: olm.package
+name: rbac-escalation-operator
+defaultChannel: stable
+---
+schema: olm.channel
+name: stable
+package: rbac-escalation-operator
+entries:
+  - name: rbac-escalation-operator.1.0.0
+---
+schema: olm.bundle
+name: rbac-escalation-operator.1.0.0
+package: rbac-escalation-operator
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/rbac-escalation-operator:v1.0.0
+properties:
+  - type: olm.package
+    value:
+      packageName: rbac-escalation-operator
+      version: 1.0.0

@@ -1,0 +1,84 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: rbac-escalation-operator.v1.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned: []
+  description: Test operator for validating RBAC escalation handling with diverse permission requirements
+  displayName: RBAC Escalation Test Operator
+  install:
+    spec:
+      deployments:
+        - name: rbac-escalation-operator
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: rbac-escalation
+            template:
+              metadata:
+                labels:
+                  app: rbac-escalation
+              spec:
+                terminationGracePeriodSeconds: 0
+                containers:
+                  - name: manager
+                    image: busybox:1.37
+                    command: ["/bin/sh", "-c", "sleep 3600"]
+                serviceAccountName: rbac-escalation-sa
+      # These permissions differ from test-operator's requirements to validate
+      # that the installer SA can handle operators with diverse RBAC needs
+      clusterPermissions:
+        - rules:
+            # Requires storage.k8s.io permissions to test RBAC escalation handling
+            - apiGroups:
+                - storage.k8s.io
+              resources:
+                - storageclasses
+              verbs:
+                - create
+                - update
+                - delete
+                - list
+                - watch
+                - get
+            # Requires scheduling.k8s.io permissions to test diverse RBAC scenarios
+            - apiGroups:
+                - scheduling.k8s.io
+              resources:
+                - priorityclasses
+              verbs:
+                - create
+                - update
+                - delete
+                - list
+                - watch
+                - get
+          serviceAccountName: rbac-escalation-sa
+    strategy: deployment
+  installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+  keywords:
+    - rbac-testing
+    - escalation
+  links:
+    - name: RBAC Escalation Operator
+      url: https://github.com/operator-framework/operator-controller
+  maintainers:
+    - email: dev@operatorframework.io
+      name: OLM Team
+  maturity: alpha
+  provider:
+    name: Operator Framework
+    url: https://operatorframework.io
+  version: 1.0.0
