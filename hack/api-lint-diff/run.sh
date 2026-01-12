@@ -504,8 +504,10 @@ main() {
                 echo -e "${RED}Please ensure the branch exists in the remote repository.${NC}" >&2
                 exit 1
             fi
-            # Use the remote tracking branch
-            BASELINE_BRANCH="origin/${BASELINE_BRANCH}"
+            # Use the remote tracking branch, adding 'origin/' only if not already present
+            if [[ "${BASELINE_BRANCH}" != origin/* ]]; then
+                BASELINE_BRANCH="origin/${BASELINE_BRANCH}"
+            fi
         fi
     fi
 
