@@ -6,6 +6,8 @@ on:
 jobs:
   lint-api-diff:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     steps:
       - uses: actions/checkout@v6
         with:
