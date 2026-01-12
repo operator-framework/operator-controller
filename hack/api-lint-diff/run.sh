@@ -196,7 +196,16 @@ check_linter_support() {
 
 # Find golangci-lint binary
 find_golangci_lint() {
-    # Check for custom build first
+    # Check if variables.env exists and extract golangci-lint path
+    if [[ -f ".bingo/variables.env" ]]; then
+        source .bingo/variables.env 2>/dev/null || true
+        if [[ -n "${GOLANGCI_LINT}" && -f "${GOLANGCI_LINT}" ]]; then
+            echo "${GOLANGCI_LINT}"
+            return 0
+        fi
+    fi
+
+    # Check for custom build
     if [[ -f ".bingo/golangci-lint" ]]; then
         echo ".bingo/golangci-lint"
         return 0
@@ -216,6 +225,7 @@ find_golangci_lint() {
 
     echo -e "${RED}Error: golangci-lint not found.${NC}" >&2
     echo -e "${RED}Searched for:${NC}" >&2
+    echo -e "  - .bingo/variables.env (bingo-managed variables for GOLANGCI_LINT)" >&2
     echo -e "  - .bingo/golangci-lint" >&2
     echo -e "  - bin/golangci-lint" >&2
     echo -e "  - golangci-lint on your \$PATH" >&2
@@ -481,6 +491,25 @@ main() {
 
     # Create temporary config
     create_temp_config
+
+    # Ensure baseline branch is available (important for CI environments like GitHub Actions)
+    if ! git rev-parse --verify "${BASELINE_BRANCH}" &> /dev/null; then
+        echo -e "${YELLOW}Baseline branch '${BASELINE_BRANCH}' not found locally. Fetching from origin...${NC}" >&2
+
+        # Fetch the baseline branch from origin
+        if ! git fetch origin "${BASELINE_BRANCH}:${BASELINE_BRANCH}" 2>&1; then
+            # If direct fetch fails, try fetching with remote tracking
+            if ! git fetch origin "${BASELINE_BRANCH}" 2>&1; then
+                echo -e "${RED}Error: Failed to fetch baseline branch '${BASELINE_BRANCH}' from origin${NC}" >&2
+                echo -e "${RED}Please ensure the branch exists in the remote repository.${NC}" >&2
+                exit 1
+            fi
+            # Use the remote tracking branch, adding 'origin/' only if not already present
+            if [[ "${BASELINE_BRANCH}" != origin/* ]]; then
+                BASELINE_BRANCH="origin/${BASELINE_BRANCH}"
+            fi
+        fi
+    fi
 
     # Get changed files
     get_changed_files > "${TEMP_DIR}/changed_files.txt"
