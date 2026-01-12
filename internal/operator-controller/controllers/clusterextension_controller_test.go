@@ -1611,3 +1611,304 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 		}
 	}
 }
+
+// TestResolutionFallbackToInstalledBundle tests the catalog deletion resilience fallback logic
+func TestResolutionFallbackToInstalledBundle(t *testing.T) {
+	t.Run("falls back when catalog unavailable and no version change", func(t *testing.T) {
+		cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+			// Resolver fails (simulating catalog unavailable)
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+				return nil, nil, nil, fmt.Errorf("catalog unavailable")
+			})
+			// Applier succeeds (resources maintained)
+			d.Applier = &MockApplier{
+				installCompleted: true,
+				installStatus:    "",
+				err:              nil,
+			}
+			d.RevisionStatesGetter = &MockRevisionStatesGetter{
+				RevisionStates: &controllers.RevisionStates{
+					Installed: &controllers.RevisionMetadata{
+						Package:        "test-pkg",
+						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
+						Image:          "test-image:1.0.0",
+					},
+				},
+			}
+		})
+
+		ctx := context.Background()
+		extKey := types.NamespacedName{Name: fmt.Sprintf("test-%s", rand.String(8))}
+
+		// Create ClusterExtension with no version specified
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "test-pkg",
+						// No version - should fall back
+					},
+				},
+				Namespace:      "default",
+				ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+			},
+		}
+		require.NoError(t, cl.Create(ctx, ext))
+
+		// Reconcile should succeed (fallback to installed, then apply succeeds)
+		// Catalog watch will trigger reconciliation when catalog becomes available again
+		res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+		require.NoError(t, err)
+		require.Equal(t, ctrl.Result{}, res)
+
+		// Verify status shows successful reconciliation
+		require.NoError(t, cl.Get(ctx, extKey, ext))
+
+		// Progressing should be Succeeded (apply completed successfully)
+		progCond := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+		require.NotNil(t, progCond)
+		require.Equal(t, metav1.ConditionTrue, progCond.Status)
+		require.Equal(t, ocv1.ReasonSucceeded, progCond.Reason)
+
+		// Installed should be True (maintaining current version)
+		instCond := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+		require.NotNil(t, instCond)
+		require.Equal(t, metav1.ConditionTrue, instCond.Status)
+		require.Equal(t, ocv1.ReasonSucceeded, instCond.Reason)
+	})
+
+	t.Run("fails when version upgrade requested without catalog", func(t *testing.T) {
+		cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+				return nil, nil, nil, fmt.Errorf("catalog unavailable")
+			})
+			d.RevisionStatesGetter = &MockRevisionStatesGetter{
+				RevisionStates: &controllers.RevisionStates{
+					Installed: &controllers.RevisionMetadata{
+						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
+					},
+				},
+			}
+		})
+
+		ctx := context.Background()
+		extKey := types.NamespacedName{Name: fmt.Sprintf("test-%s", rand.String(8))}
+
+		// Create ClusterExtension requesting version upgrade
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "test-pkg",
+						Version:     "1.0.1", // Requesting upgrade
+					},
+				},
+				Namespace:      "default",
+				ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+			},
+		}
+		require.NoError(t, cl.Create(ctx, ext))
+
+		// Reconcile should fail (can't upgrade without catalog)
+		res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+		require.Error(t, err)
+		require.Equal(t, ctrl.Result{}, res)
+
+		// Verify status shows Retrying
+		require.NoError(t, cl.Get(ctx, extKey, ext))
+		cond := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionTrue, cond.Status)
+		require.Equal(t, ocv1.ReasonRetrying, cond.Reason)
+	})
+
+	t.Run("auto-updates when catalog becomes available after fallback", func(t *testing.T) {
+		resolveAttempt := 0
+		cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+			// First attempt: catalog unavailable, then becomes available
+			d.Resolver = resolve.Func(func(_ context.Context, _ *ocv1.ClusterExtension, _ *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
+				resolveAttempt++
+				if resolveAttempt == 1 {
+					// First reconcile: catalog unavailable
+					return nil, nil, nil, fmt.Errorf("catalog temporarily unavailable")
+				}
+				// Second reconcile (triggered by catalog watch): catalog available with new version
+				v := bundle.VersionRelease{Version: bsemver.MustParse("2.0.0")}
+				return &declcfg.Bundle{
+					Name:    "test.2.0.0",
+					Package: "test-pkg",
+					Image:   "test-image:2.0.0",
+				}, &v, nil, nil
+			})
+			d.RevisionStatesGetter = &MockRevisionStatesGetter{
+				RevisionStates: &controllers.RevisionStates{
+					Installed: &controllers.RevisionMetadata{
+						Package:        "test-pkg",
+						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
+						Image:          "test-image:1.0.0",
+					},
+				},
+			}
+			d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
+			d.Applier = &MockApplier{installCompleted: true}
+		})
+
+		ctx := context.Background()
+		extKey := types.NamespacedName{Name: fmt.Sprintf("test-%s", rand.String(8))}
+
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "test-pkg",
+						// No version - auto-update to latest
+					},
+				},
+				Namespace:      "default",
+				ServiceAccount: ocv1.ServiceAccountReference{Name: "default"},
+			},
+		}
+		require.NoError(t, cl.Create(ctx, ext))
+
+		// First reconcile: catalog unavailable, falls back to v1.0.0
+		res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+		require.NoError(t, err)
+		require.Equal(t, ctrl.Result{}, res)
+
+		require.NoError(t, cl.Get(ctx, extKey, ext))
+		require.Equal(t, "1.0.0", ext.Status.Install.Bundle.Version)
+
+		// Second reconcile: simulating catalog watch trigger, catalog now available with v2.0.0
+		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+		require.NoError(t, err)
+		require.Equal(t, ctrl.Result{}, res)
+
+		// Should have upgraded to v2.0.0
+		require.NoError(t, cl.Get(ctx, extKey, ext))
+		require.Equal(t, "2.0.0", ext.Status.Install.Bundle.Version)
+
+		// Verify resolution was attempted twice (fallback, then success)
+		require.Equal(t, 2, resolveAttempt)
+	})
+}
+
+func TestCheckCatalogsExist(t *testing.T) {
+	t.Run("returns false when no catalogs exist", func(t *testing.T) {
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "test-pkg",
+					},
+				},
+			},
+		}
+
+		exists, err := controllers.CheckCatalogsExist(ctx, cl, ext)
+		require.NoError(t, err)
+		require.False(t, exists, "should return false when no catalogs exist")
+	})
+
+	t.Run("returns false when CRD doesn't exist", func(t *testing.T) {
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "test-pkg",
+					},
+				},
+			},
+		}
+
+		// ClusterCatalog CRD is not installed in test env
+		exists, err := controllers.CheckCatalogsExist(ctx, cl, ext)
+		require.NoError(t, err, "should not return error when CRD doesn't exist")
+		require.False(t, exists, "should treat missing CRD as no catalogs exist")
+	})
+
+	t.Run("returns false when no selector provided", func(t *testing.T) {
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "test-pkg",
+						Selector:    nil, // No selector
+					},
+				},
+			},
+		}
+
+		exists, err := controllers.CheckCatalogsExist(ctx, cl, ext)
+		require.NoError(t, err)
+		require.False(t, exists, "should return false when no catalogs exist (no selector)")
+	})
+
+	t.Run("returns false when empty selector provided", func(t *testing.T) {
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "test-pkg",
+						Selector:    &metav1.LabelSelector{}, // Empty selector (matches everything)
+					},
+				},
+			},
+		}
+
+		exists, err := controllers.CheckCatalogsExist(ctx, cl, ext)
+		require.NoError(t, err, "empty selector should not cause error")
+		require.False(t, exists, "should return false when no catalogs exist (empty selector)")
+	})
+
+	t.Run("returns error for invalid selector", func(t *testing.T) {
+		cl := newClient(t)
+		ctx := context.Background()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogFilter{
+						PackageName: "test-pkg",
+						Selector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{
+								{
+									Key:      "invalid",
+									Operator: "InvalidOperator", // Invalid operator
+									Values:   []string{"value"},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		exists, err := controllers.CheckCatalogsExist(ctx, cl, ext)
+		require.Error(t, err, "should return error for invalid selector")
+		require.Contains(t, err.Error(), "invalid catalog selector")
+		require.False(t, exists)
+	})
+}

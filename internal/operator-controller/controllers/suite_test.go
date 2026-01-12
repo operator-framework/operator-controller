@@ -106,7 +106,7 @@ func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Clie
 	}
 	reconciler.ReconcileSteps = []controllers.ReconcileStepFunc{controllers.HandleFinalizers(d.Finalizers), controllers.RetrieveRevisionStates(d.RevisionStatesGetter)}
 	if r := d.Resolver; r != nil {
-		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.ResolveBundle(r))
+		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.ResolveBundle(r, cl))
 	}
 	if i := d.ImagePuller; i != nil {
 		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.UnpackBundle(i, d.ImageCache))

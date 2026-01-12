@@ -678,21 +678,24 @@ func CatalogIsDeleted(ctx context.Context, catalogName string) error {
 
 	deadline := time.Now().Add(timeout)
 	for {
+		// Check timeout before waiting
+		if time.Now().After(deadline) {
+			return fmt.Errorf("timeout waiting for catalog %s to be deleted", catalogFullName)
+		}
+
+		// Check if catalog is deleted
+		_, err := k8sClient("get", "clustercatalog", catalogFullName)
+		if err != nil {
+			// Catalog is deleted - verification succeeded
+			return nil
+		}
+
 		select {
 		case <-ctx.Done():
 			// Return the context error if we timed out or were cancelled while waiting.
 			return ctx.Err()
 		case <-ticker.C:
-			// Check if we've exceeded the timeout
-			if time.Now().After(deadline) {
-				return fmt.Errorf("timeout waiting for catalog %s to be deleted", catalogFullName)
-			}
-
-			_, err := k8sClient("get", "clustercatalog", catalogFullName)
-			if err != nil {
-				// Catalog is deleted - verification succeeded
-				return nil
-			}
+			// Continue to next iteration
 		}
 	}
 }

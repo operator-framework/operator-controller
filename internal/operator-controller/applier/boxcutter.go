@@ -303,6 +303,25 @@ func (bc *Boxcutter) createOrUpdate(ctx context.Context, obj client.Object) erro
 }
 
 func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
+	// List all existing revisions
+	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
+	if err != nil {
+		return false, "", err
+	}
+
+	// If contentFS is nil, we're maintaining the current state without catalog access.
+	// In this case, we should use the existing installed revision without generating a new one.
+	if contentFS == nil {
+		if len(existingRevisions) == 0 {
+			return false, "", fmt.Errorf("cannot maintain workload: no catalog content available and no previously installed revision found")
+		}
+		// Returning true here signals that the rollout has succeeded using the current revision. The
+		// ClusterExtensionRevision controller will continue to reconcile, apply, and maintain the
+		// resources defined in that revision via Server-Side Apply, ensuring the workload keeps running
+		// even when catalog access (and thus new revision content) is unavailable.
+		return true, "", nil
+	}
+
 	// Generate desired revision
 	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
@@ -311,12 +330,6 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 
 	if err := controllerutil.SetControllerReference(ext, desiredRevision, bc.Scheme); err != nil {
 		return false, "", fmt.Errorf("set ownerref: %w", err)
-	}
-
-	// List all existing revisions
-	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
-	if err != nil {
-		return false, "", err
 	}
 
 	currentRevision := &ocv1.ClusterExtensionRevision{}

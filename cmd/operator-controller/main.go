@@ -626,7 +626,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.MigrateStorage(storageMigrator),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
-		controllers.ResolveBundle(c.resolver),
+		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
 		controllers.ApplyBundleWithBoxcutter(appl),
 	}
@@ -737,7 +737,7 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
-		controllers.ResolveBundle(c.resolver),
+		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
 		controllers.ApplyBundle(appl),
 	}

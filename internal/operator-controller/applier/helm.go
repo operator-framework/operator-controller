@@ -103,6 +103,16 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) (bool, string, error) {
+	// If contentFS is nil, we're maintaining the current state without catalog access.
+	// In this case, reconcile the existing Helm release if it exists.
+	if contentFS == nil {
+		ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
+		if err != nil {
+			return false, "", err
+		}
+		return h.reconcileExistingRelease(ctx, ac, ext)
+	}
+
 	chrt, err := h.buildHelmChart(contentFS, ext)
 	if err != nil {
 		return false, "", err
@@ -190,6 +200,45 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		return true, "", err
 	}
 
+	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
+		return true, "", err
+	}
+
+	return true, "", nil
+}
+
+// reconcileExistingRelease reconciles an existing Helm release without catalog access.
+// This is used when the catalog is unavailable but we need to maintain the current installation.
+// It reconciles the release and sets up watchers to ensure resources are maintained.
+func (h *Helm) reconcileExistingRelease(ctx context.Context, ac helmclient.ActionInterface, ext *ocv1.ClusterExtension) (bool, string, error) {
+	rel, err := ac.Get(ext.GetName())
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		return false, "", fmt.Errorf("cannot maintain workload: no catalog content available and no previously installed Helm release found")
+	}
+	if err != nil {
+		return false, "", fmt.Errorf("getting current release: %w", err)
+	}
+
+	// Reconcile the existing release to ensure resources are maintained
+	if err := ac.Reconcile(rel); err != nil {
+		// Reconcile failed - resources NOT maintained
+		// Return false (rollout failed) with error
+		return false, "", err
+	}
+
+	// At this point: Reconcile succeeded - resources ARE maintained
+	// The operations below are for setting up monitoring (watches).
+	// If they fail, the resources are still successfully reconciled and maintained,
+	// so we return true (rollout succeeded) even though monitoring setup failed.
+	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
+	if err != nil {
+		return true, "", err
+	}
+	klog.FromContext(ctx).Info("watching managed objects")
+	cache, err := h.Manager.Get(ctx, ext)
+	if err != nil {
+		return true, "", err
+	}
 	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
 		return true, "", err
 	}
