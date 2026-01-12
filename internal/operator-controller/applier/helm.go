@@ -19,6 +19,8 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -77,29 +79,8 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 		return fmt.Errorf("error rendering content for pre-authorization checks: %w", err)
 	}
 
-	missingRules, authErr := h.PreAuthorizer.PreAuthorize(ctx, ext, strings.NewReader(tmplRel.Manifest))
-
-	var preAuthErrors []error
-
-	if len(missingRules) > 0 {
-		var missingRuleDescriptions []string
-		for _, policyRules := range missingRules {
-			for _, rule := range policyRules.MissingRules {
-				missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(policyRules.Namespace, rule))
-			}
-		}
-		slices.Sort(missingRuleDescriptions)
-		// This phrase is explicitly checked by external testing
-		preAuthErrors = append(preAuthErrors, fmt.Errorf("service account requires the following permissions to manage cluster extension:\n  %s", strings.Join(missingRuleDescriptions, "\n  ")))
-	}
-	if authErr != nil {
-		preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", authErr))
-	}
-	if len(preAuthErrors) > 0 {
-		// This phrase is explicitly checked by external testing
-		return fmt.Errorf("pre-authorization failed: %v", errors.Join(preAuthErrors...))
-	}
-	return nil
+	manifestManager := getUserInfo(ext)
+	return formatPreAuthorizerOutput(h.PreAuthorizer.PreAuthorize(ctx, manifestManager, strings.NewReader(tmplRel.Manifest), extManagementPerms(ext)))
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) (bool, string, error) {
@@ -327,4 +308,49 @@ func ruleDescription(ns string, rule rbacv1.PolicyRule) string {
 		sb.WriteString(fmt.Sprintf(" NonResourceURLs:[%s]", strings.Join(slices.Sorted(slices.Values(rule.NonResourceURLs)), ",")))
 	}
 	return sb.String()
+}
+
+// formatPreAuthorizerOutput formats the output of PreAuthorizer.PreAuthorize calls into a consistent and deterministic error.
+// If the call returns no missing rules, and no error, nil is returned.
+func formatPreAuthorizerOutput(missingRules []authorization.ScopedPolicyRules, authErr error) error {
+	var preAuthErrors []error
+	if len(missingRules) > 0 {
+		var missingRuleDescriptions []string
+		for _, policyRules := range missingRules {
+			for _, rule := range policyRules.MissingRules {
+				missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(policyRules.Namespace, rule))
+			}
+		}
+		slices.Sort(missingRuleDescriptions)
+		// This phrase is explicitly checked by external testing
+		preAuthErrors = append(preAuthErrors, fmt.Errorf("service account requires the following permissions to manage cluster extension:\n  %s", strings.Join(missingRuleDescriptions, "\n  ")))
+	}
+	if authErr != nil {
+		preAuthErrors = append(preAuthErrors, fmt.Errorf("authorization evaluation error: %w", authErr))
+	}
+	if len(preAuthErrors) > 0 {
+		// This phrase is explicitly checked by external testing
+		return fmt.Errorf("pre-authorization failed: %v", errors.Join(preAuthErrors...))
+	}
+	return nil
+}
+
+func getUserInfo(ext *ocv1.ClusterExtension) user.Info {
+	return &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}
+}
+
+func extManagementPerms(ext *ocv1.ClusterExtension) func(user.Info) []authorizer.AttributesRecord {
+	return func(user user.Info) []authorizer.AttributesRecord {
+		return []authorizer.AttributesRecord{
+			{
+				User:            user,
+				Name:            ext.Name,
+				APIGroup:        ocv1.GroupVersion.Group,
+				APIVersion:      ocv1.GroupVersion.Version,
+				Resource:        "clusterextensions/finalizers",
+				ResourceRequest: true,
+				Verb:            "update",
+			},
+		}
+	}
 }

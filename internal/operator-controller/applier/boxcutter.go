@@ -1,10 +1,12 @@
 package applier
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"maps"
 	"slices"
@@ -16,6 +18,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/cli-runtime/pkg/printers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -25,6 +30,7 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
 )
@@ -283,28 +289,27 @@ type Boxcutter struct {
 	Scheme            *runtime.Scheme
 	RevisionGenerator ClusterExtensionRevisionGenerator
 	Preflights        []Preflight
+	PreAuthorizer     authorization.PreAuthorizer
 	FieldOwner        string
 }
 
-func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Object {
-	var objs []client.Object
-	for _, phase := range rev.Spec.Phases {
-		for _, phaseObject := range phase.Objects {
-			objs = append(objs, &phaseObject.Object)
-		}
-	}
-	return objs
-}
-
-func (bc *Boxcutter) createOrUpdate(ctx context.Context, obj client.Object) error {
-	if obj.GetObjectKind().GroupVersionKind().Empty() {
-		gvk, err := apiutil.GVKForObject(obj, bc.Scheme)
+// createOrUpdate creates or updates the revision object. PreAuthorization checks are performed to ensure the
+// user has sufficient permissions to manage the revision and its resources
+func (bc *Boxcutter) createOrUpdate(ctx context.Context, user user.Info, rev *ocv1.ClusterExtensionRevision) error {
+	if rev.GetObjectKind().GroupVersionKind().Empty() {
+		gvk, err := apiutil.GVKForObject(rev, bc.Scheme)
 		if err != nil {
 			return err
 		}
-		obj.GetObjectKind().SetGroupVersionKind(gvk)
+		rev.GetObjectKind().SetGroupVersionKind(gvk)
 	}
-	return bc.Client.Patch(ctx, obj, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
+
+	// Run auth preflight checks
+	if err := bc.runPreAuthorizationChecks(ctx, user, rev); err != nil {
+		return err
+	}
+
+	return bc.Client.Patch(ctx, rev, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
 }
 
 func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) error {
@@ -333,7 +338,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		desiredRevision.Spec.Revision = currentRevision.Spec.Revision
 		desiredRevision.Name = currentRevision.Name
 
-		err := bc.createOrUpdate(ctx, desiredRevision)
+		err := bc.createOrUpdate(ctx, getUserInfo(ext), desiredRevision)
 		switch {
 		case apierrors.IsInvalid(err):
 			// We could not update the current revision due to trying to update an immutable field.
@@ -348,7 +353,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	}
 
 	// Preflights
-	plainObjs := bc.getObjects(desiredRevision)
+	plainObjs := getObjects(desiredRevision)
 	for _, preflight := range bc.Preflights {
 		if shouldSkipPreflight(ctx, preflight, ext, state) {
 			continue
@@ -383,12 +388,29 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 			return fmt.Errorf("garbage collecting old revisions: %w", err)
 		}
 
-		if err := bc.createOrUpdate(ctx, desiredRevision); err != nil {
+		if err := bc.createOrUpdate(ctx, getUserInfo(ext), desiredRevision); err != nil {
 			return fmt.Errorf("creating new Revision: %w", err)
 		}
 	}
 
 	return nil
+}
+
+// runPreAuthorizationChecks runs PreAuthorization checks if the PreAuthorizer is set. An error will be returned if
+// the ClusterExtension service account does not have the necessary permissions to manage the revision's resources
+func (bc *Boxcutter) runPreAuthorizationChecks(ctx context.Context, user user.Info, rev *ocv1.ClusterExtensionRevision) error {
+	if bc.PreAuthorizer == nil {
+		return nil
+	}
+
+	// collect the revision manifests
+	manifestReader, err := revisionManifestReader(rev)
+	if err != nil {
+		return err
+	}
+
+	// run preauthorization check
+	return formatPreAuthorizerOutput(bc.PreAuthorizer.PreAuthorize(ctx, user, manifestReader, revisionManagementPerms(rev)))
 }
 
 // garbageCollectOldRevisions deletes archived revisions beyond ClusterExtensionRevisionRetentionLimit.
@@ -448,4 +470,44 @@ func splitManifestDocuments(file string) []string {
 		docs = append(docs, manifest)
 	}
 	return docs
+}
+
+// getObjects returns a slice of all objects in the revision
+func getObjects(rev *ocv1.ClusterExtensionRevision) []client.Object {
+	var objs []client.Object
+	for _, phase := range rev.Spec.Phases {
+		for _, phaseObject := range phase.Objects {
+			objs = append(objs, &phaseObject.Object)
+		}
+	}
+	return objs
+}
+
+// revisionManifestReader returns an io.Reader containing all manifests in the revision
+func revisionManifestReader(rev *ocv1.ClusterExtensionRevision) (io.Reader, error) {
+	printer := printers.YAMLPrinter{}
+	buf := new(bytes.Buffer)
+	for _, obj := range getObjects(rev) {
+		buf.WriteString("---\n")
+		if err := printer.PrintObj(obj, buf); err != nil {
+			return nil, err
+		}
+	}
+	return buf, nil
+}
+
+func revisionManagementPerms(rev *ocv1.ClusterExtensionRevision) func(user.Info) []authorizer.AttributesRecord {
+	return func(user user.Info) []authorizer.AttributesRecord {
+		return []authorizer.AttributesRecord{
+			{
+				User:            user,
+				Name:            rev.Name,
+				APIGroup:        ocv1.GroupVersion.Group,
+				APIVersion:      ocv1.GroupVersion.Version,
+				Resource:        "clusterextensionrevisions/finalizers",
+				ResourceRequest: true,
+				Verb:            "update",
+			},
+		}
+	}
 }

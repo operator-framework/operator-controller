@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
@@ -57,6 +58,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension is rolled out$`, ClusterExtensionIsRolledOut)
 	sc.Step(`^(?i)ClusterExtension reports "([^"]+)" as active revision(s?)$`, ClusterExtensionReportsActiveRevisions)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterExtensionReportsCondition)
+	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterExtensionReportsConditionWithMessageFragment)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutReason)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionRevisionReportsConditionWithoutMsg)
@@ -76,6 +78,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
+	sc.Step(`^(?i)ServiceAccount "([^"]*)" is available in \${TEST_NAMESPACE}$`, ServiceAccountIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" in test namespace is cluster admin$`, ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" in test namespace has permissions to fetch "([^"]+)" metrics$`, ServiceAccountWithFetchMetricsPermissions)
 	sc.Step(`^(?i)ServiceAccount "([^"]+)" sends request to "([^"]+)" endpoint of "([^"]+)" service$`, SendMetricsRequest)
@@ -172,13 +175,7 @@ func substituteScenarioVars(content string, sc *scenarioContext) string {
 	if v, found := os.LookupEnv("CATALOG_IMG"); found {
 		vars["CATALOG_IMG"] = v
 	}
-	m := func(k string) string {
-		if v, found := vars[k]; found {
-			return v
-		}
-		return ""
-	}
-	return os.Expand(content, m)
+	return templateContent(content, vars)
 }
 
 func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.DocString) error {
@@ -270,24 +267,28 @@ func waitFor(ctx context.Context, conditionFn func() bool) {
 	require.Eventually(godog.T(ctx), conditionFn, timeout, tick)
 }
 
-func waitForCondition(ctx context.Context, resourceType, resourceName, conditionType, conditionStatus string, conditionReason *string, msg *string) error {
+type msgMatchFn func(string) bool
+
+func alwaysMatch(_ string) bool { return true }
+
+func waitForCondition(ctx context.Context, resourceType, resourceName, conditionType, conditionStatus string, conditionReason *string, msgCmp msgMatchFn) error {
 	require.Eventually(godog.T(ctx), func() bool {
 		v, err := k8sClient("get", resourceType, resourceName, "-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
 		if err != nil {
 			return false
 		}
 
-		var condition map[string]interface{}
+		var condition metav1.Condition
 		if err := json.Unmarshal([]byte(v), &condition); err != nil {
 			return false
 		}
-		if condition["status"] != conditionStatus {
+		if condition.Status != metav1.ConditionStatus(conditionStatus) {
 			return false
 		}
-		if conditionReason != nil && condition["reason"] != *conditionReason {
+		if conditionReason != nil && condition.Reason != *conditionReason {
 			return false
 		}
-		if msg != nil && condition["message"] != *msg {
+		if msgCmp != nil && !msgCmp(condition.Message) {
 			return false
 		}
 
@@ -296,17 +297,31 @@ func waitForCondition(ctx context.Context, resourceType, resourceName, condition
 	return nil
 }
 
-func waitForExtensionCondition(ctx context.Context, conditionType, conditionStatus string, conditionReason *string, msg *string) error {
+func waitForExtensionCondition(ctx context.Context, conditionType, conditionStatus string, conditionReason *string, msgCmp msgMatchFn) error {
 	sc := scenarioCtx(ctx)
-	return waitForCondition(ctx, "clusterextension", sc.clusterExtensionName, conditionType, conditionStatus, conditionReason, msg)
+	return waitForCondition(ctx, "clusterextension", sc.clusterExtensionName, conditionType, conditionStatus, conditionReason, msgCmp)
 }
 
 func ClusterExtensionReportsCondition(ctx context.Context, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
-	var conditionMsg *string
+	msgCmp := alwaysMatch
 	if msg != nil {
-		conditionMsg = ptr.To(substituteScenarioVars(strings.Join(strings.Fields(msg.Content), " "), scenarioCtx(ctx)))
+		expectedMsg := substituteScenarioVars(strings.Join(strings.Fields(msg.Content), " "), scenarioCtx(ctx))
+		msgCmp = func(actual string) bool {
+			return actual == expectedMsg
+		}
 	}
-	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, conditionMsg)
+	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, msgCmp)
+}
+
+func ClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
+	msgCmp := alwaysMatch
+	if msgFragment != nil {
+		expectedMsgFragment := substituteScenarioVars(strings.Join(strings.Fields(msgFragment.Content), " "), scenarioCtx(ctx))
+		msgCmp = func(actualMsg string) bool {
+			return strings.Contains(actualMsg, expectedMsgFragment)
+		}
+	}
+	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, msgCmp)
 }
 
 func ClusterExtensionReportsConditionWithoutMsg(ctx context.Context, conditionType, conditionStatus, conditionReason string) error {
@@ -490,34 +505,45 @@ func ResourceRestored(ctx context.Context, resource string) error {
 	return nil
 }
 
-func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacTemplate string, keyValue ...string) error {
+func applyServiceAccount(ctx context.Context, serviceAccount string) error {
 	sc := scenarioCtx(ctx)
-	yamlContent, err := os.ReadFile(filepath.Join("steps", "testdata", rbacTemplate))
+	vars := extendMap(map[string]string{
+		"TEST_NAMESPACE":       sc.namespace,
+		"SERVICE_ACCOUNT_NAME": serviceAccount,
+		"SERVICEACCOUNT_NAME":  serviceAccount,
+	})
+
+	yaml, err := templateYaml(filepath.Join("steps", "testdata", "serviceaccount-template.yaml"), vars)
 	if err != nil {
-		return fmt.Errorf("failed to read RBAC template yaml: %v", err)
+		return fmt.Errorf("failed to template ServiceAccount yaml: %v", err)
 	}
 
-	vars := map[string]string{
+	// Apply the ServiceAccount configuration
+	_, err = k8scliWithInput(yaml, "apply", "-f", "-")
+	if err != nil {
+		return fmt.Errorf("failed to apply ServiceAccount configuration: %v: %s", err, stderrOutput(err))
+	}
+
+	return nil
+}
+
+func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacTemplate string, keyValue ...string) error {
+	sc := scenarioCtx(ctx)
+	if err := applyServiceAccount(ctx, serviceAccount); err != nil {
+		return err
+	}
+	vars := extendMap(map[string]string{
 		"TEST_NAMESPACE":         sc.namespace,
 		"SERVICE_ACCOUNT_NAME":   serviceAccount,
 		"SERVICEACCOUNT_NAME":    serviceAccount,
 		"CLUSTER_EXTENSION_NAME": sc.clusterExtensionName,
 		"CLUSTEREXTENSION_NAME":  sc.clusterExtensionName,
-	}
-	if len(keyValue) > 0 {
-		for i := 0; i < len(keyValue); i += 2 {
-			vars[keyValue[i]] = keyValue[i+1]
-		}
-	}
-	m := func(k string) string {
-		if v, found := vars[k]; found {
-			return v
-		}
-		return ""
-	}
+	}, keyValue...)
 
-	// Replace template variables
-	yaml := os.Expand(string(yamlContent), m)
+	yaml, err := templateYaml(filepath.Join("steps", "testdata", rbacTemplate), vars)
+	if err != nil {
+		return fmt.Errorf("failed to template RBAC yaml: %v", err)
+	}
 
 	// Apply the RBAC configuration
 	_, err = k8scliWithInput(yaml, "apply", "-f", "-")
@@ -526,6 +552,10 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 	}
 
 	return nil
+}
+
+func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
+	return applyServiceAccount(ctx, serviceAccount)
 }
 
 func ServiceAccountWithNeededPermissionsIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
@@ -789,4 +819,37 @@ func SetCRDFieldMinValue(_ context.Context, resourceType, jsonPath string, minVa
 	patch := fmt.Sprintf(`[{"op": "replace", "path": "%s", "value": %d}]`, patchPath, minValue)
 	_, err := k8sClient("patch", "crd", crdName, "--type=json", "-p", patch)
 	return err
+}
+
+// templateYaml applies values to the template located in templatePath and returns the result or any errors reading
+// the template file
+func templateYaml(templatePath string, values map[string]string) (string, error) {
+	yamlContent, err := os.ReadFile(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template file '%s': %v", templatePath, err)
+	}
+	return templateContent(string(yamlContent), values), nil
+}
+
+// templateContent applies values to content and returns the result
+func templateContent(content string, values map[string]string) string {
+	m := func(k string) string {
+		if v, found := values[k]; found {
+			return v
+		}
+		return ""
+	}
+
+	// Replace template variables
+	return os.Expand(content, m)
+}
+
+// extendMap extends m with the key/values in keyValue, which is expected to be of even size
+func extendMap(m map[string]string, keyValue ...string) map[string]string {
+	if len(keyValue) > 0 {
+		for i := 0; i < len(keyValue); i += 2 {
+			m[keyValue[i]] = keyValue[i+1]
+		}
+	}
+	return m
 }

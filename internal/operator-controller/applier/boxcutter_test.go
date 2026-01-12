@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"strings"
 	"testing"
@@ -16,11 +17,14 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,6 +33,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 )
 
@@ -1003,6 +1008,191 @@ func TestBoxcutter_Apply(t *testing.T) {
 				if tc.name != "error from client create" {
 					tc.validate(t, fakeClient)
 				}
+			}
+		})
+	}
+}
+
+func Test_PreAuthorizer_Integration(t *testing.T) {
+	testScheme := runtime.NewScheme()
+	require.NoError(t, ocv1.AddToScheme(testScheme))
+
+	// This is the revision that the mock builder will produce by default.
+	// We calculate its hash to use in the tests.
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-ext",
+			UID:  "test-uid",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "test-sa",
+			},
+		},
+	}
+	fakeClient := fake.NewClientBuilder().WithScheme(testScheme).Build()
+	dummyGenerator := &mockBundleRevisionBuilder{
+		makeRevisionFunc: func(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotation map[string]string) (*ocv1.ClusterExtensionRevision, error) {
+			return &ocv1.ClusterExtensionRevision{
+				Spec: ocv1.ClusterExtensionRevisionSpec{
+					Phases: []ocv1.ClusterExtensionRevisionPhase{
+						{
+							Name: "some-phase",
+							Objects: []ocv1.ClusterExtensionRevisionObject{
+								{
+									Object: unstructured.Unstructured{
+										Object: map[string]interface{}{
+											"apiVersion": "v1",
+											"kind":       "ConfigMap",
+											"data": map[string]string{
+												"test-data": "test-data",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}, nil
+		},
+	}
+	dummyBundleFs := fstest.MapFS{}
+	revisionAnnotations := map[string]string{}
+
+	for _, tc := range []struct {
+		name          string
+		preAuthorizer func(t *testing.T) authorization.PreAuthorizer
+		validate      func(t *testing.T, err error)
+	}{
+		{
+			name: "preauthorizer called with correct parameters",
+			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
+				return &mockPreAuthorizer{
+					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+						require.Equal(t, "system:serviceaccount:test-namespace:test-sa", user.GetName())
+						require.Empty(t, user.GetUID())
+						require.Nil(t, user.GetExtra())
+						require.Empty(t, user.GetGroups())
+
+						t.Log("has correct additional permissions")
+						require.Len(t, additionalRequiredPerms, 1)
+						perms := additionalRequiredPerms[0](user)
+
+						require.Len(t, perms, 1)
+						require.Equal(t, authorizer.AttributesRecord{
+							User:            user,
+							Name:            "test-ext-1",
+							APIGroup:        "olm.operatorframework.io",
+							APIVersion:      "v1",
+							Resource:        "clusterextensionrevisions/finalizers",
+							ResourceRequest: true,
+							Verb:            "update",
+						}, perms[0])
+
+						t.Log("has correct manifest reader")
+						manifests, err := io.ReadAll(reader)
+						require.NoError(t, err)
+						require.Equal(t, "---\napiVersion: v1\ndata:\n  test-data: test-data\nkind: ConfigMap\n", string(manifests))
+						return nil, nil
+					},
+				}
+			},
+		}, {
+			name: "preauthorizer errors are returned",
+			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
+				return &mockPreAuthorizer{
+					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+						return nil, errors.New("test error")
+					},
+				}
+			},
+			validate: func(t *testing.T, err error) {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "pre-authorization failed")
+				require.Contains(t, err.Error(), "authorization evaluation error: test error")
+			},
+		}, {
+			name: "preauthorizer missing permissions are returned as an error",
+			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
+				return &mockPreAuthorizer{
+					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+						return []authorization.ScopedPolicyRules{
+							{
+								Namespace: "",
+								MissingRules: []rbacv1.PolicyRule{
+									{
+										APIGroups: []string{""},
+										Resources: []string{"pods"},
+										Verbs:     []string{"get", "list", "watch"},
+									},
+								},
+							},
+						}, nil
+					},
+				}
+			},
+			validate: func(t *testing.T, err error) {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "pre-authorization failed")
+				require.Contains(t, err.Error(), "service account requires the following permissions")
+				require.Contains(t, err.Error(), "Resources:[pods]")
+				require.Contains(t, err.Error(), "Verbs:[get,list,watch]")
+			},
+		}, {
+			name: "preauthorizer missing permissions and errors are combined and returned as an error",
+			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
+				return &mockPreAuthorizer{
+					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+						return []authorization.ScopedPolicyRules{
+							{
+								Namespace: "",
+								MissingRules: []rbacv1.PolicyRule{
+									{
+										APIGroups: []string{""},
+										Resources: []string{"pods"},
+										Verbs:     []string{"get", "list", "watch"},
+									},
+								},
+							},
+						}, errors.New("test error")
+					},
+				}
+			},
+			validate: func(t *testing.T, err error) {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "pre-authorization failed")
+				require.Contains(t, err.Error(), "service account requires the following permissions")
+				require.Contains(t, err.Error(), "Resources:[pods]")
+				require.Contains(t, err.Error(), "Verbs:[get,list,watch]")
+				require.Contains(t, err.Error(), "authorization evaluation error: test error")
+			},
+		}, {
+			name: "successful call to preauthorizer does not block applier",
+			preAuthorizer: func(t *testing.T) authorization.PreAuthorizer {
+				return &mockPreAuthorizer{
+					fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+						return nil, nil
+					},
+				}
+			},
+			validate: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			boxcutter := &applier.Boxcutter{
+				Client:            fakeClient,
+				Scheme:            testScheme,
+				FieldOwner:        "test-owner",
+				RevisionGenerator: dummyGenerator,
+				PreAuthorizer:     tc.preAuthorizer(t),
+			}
+			err := boxcutter.Apply(t.Context(), dummyBundleFs, ext, nil, revisionAnnotations)
+			if tc.validate != nil {
+				tc.validate(t, err)
 			}
 		})
 	}
