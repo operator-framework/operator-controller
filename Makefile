@@ -151,7 +151,7 @@ lint-custom: custom-linter-build #EXHELP Call custom linter for the project
 
 .PHONY: lint-api-diff
 lint-api-diff: $(GOLANGCI_LINT) #HELP Validate API changes using kube-api-linter with diff-aware analysis
-	bash hack/api-lint-diff/run.sh
+	hack/api-lint-diff/run.sh
 
 .PHONY: k8s-pin
 k8s-pin: #EXHELP Pin k8s staging modules based on k8s.io/kubernetes version (in go.mod or from K8S_IO_K8S_VERSION env var) and run go mod tidy.
