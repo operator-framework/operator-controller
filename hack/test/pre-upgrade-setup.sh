@@ -122,6 +122,19 @@ rules:
     - "update"
     resourceNames:
     - "${TEST_CLUSTER_EXTENSION_NAME}"
+  - apiGroups:
+    - "olm.operatorframework.io"
+    resources:
+    - "clusterextensionrevisions"
+    - "clusterextensionrevisions/finalizers"
+    verbs:
+    - "create"
+    - "update"
+    - "patch"
+    - "delete"
+    - "get"
+    - "list"
+    - "watch"
 EOF
 
 kubectl apply -f - <<EOF

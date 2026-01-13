@@ -186,6 +186,12 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 	ext *ocv1.ClusterExtension,
 	annotations map[string]string,
 ) *ocv1.ClusterExtensionRevision {
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[labels.ServiceAccountNameKey] = ext.Spec.ServiceAccount.Name
+	annotations[labels.ServiceAccountNamespaceKey] = ext.Spec.Namespace
+
 	return &ocv1.ClusterExtensionRevision{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: annotations,

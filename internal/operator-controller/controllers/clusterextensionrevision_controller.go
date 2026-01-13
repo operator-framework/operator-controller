@@ -43,9 +43,9 @@ const (
 // ClusterExtensionRevisionReconciler actions individual snapshots of ClusterExtensions,
 // as part of the boxcutter integration.
 type ClusterExtensionRevisionReconciler struct {
-	Client         client.Client
-	RevisionEngine RevisionEngine
-	TrackingCache  trackingCache
+	Client                client.Client
+	RevisionEngineFactory RevisionEngineFactory
+	TrackingCache         trackingCache
 }
 
 type trackingCache interface {
@@ -53,11 +53,6 @@ type trackingCache interface {
 	Source(handler handler.EventHandler, predicates ...predicate.Predicate) source.Source
 	Watch(ctx context.Context, user client.Object, gvks sets.Set[schema.GroupVersionKind]) error
 	Free(ctx context.Context, user client.Object) error
-}
-
-type RevisionEngine interface {
-	Teardown(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error)
-	Reconcile(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error)
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensionrevisions,verbs=get;list;watch;update;patch;create;delete
@@ -139,7 +134,13 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		return ctrl.Result{}, werr
 	}
 
-	rres, err := c.RevisionEngine.Reconcile(ctx, *revision, opts...)
+	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, rev)
+	if err != nil {
+		setRetryingConditions(rev, err.Error())
+		return ctrl.Result{}, fmt.Errorf("failed to create revision engine: %v", err)
+	}
+
+	rres, err := revisionEngine.Reconcile(ctx, *revision, opts...)
 	if err != nil {
 		if rres != nil {
 			// Log detailed reconcile reports only in debug mode (V(1)) to reduce verbosity.
@@ -253,7 +254,13 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *ocv1.ClusterExtensionRevision, revision *boxcutter.Revision) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
-	tres, err := c.RevisionEngine.Teardown(ctx, *revision)
+	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, rev)
+	if err != nil {
+		markAsAvailableUnknown(rev, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
+		return ctrl.Result{}, fmt.Errorf("failed to create revision engine for teardown: %v", err)
+	}
+
+	tres, err := revisionEngine.Teardown(ctx, *revision)
 	if err != nil {
 		if tres != nil {
 			l.V(1).Info("teardown failure report", "report", tres.String())

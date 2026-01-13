@@ -90,6 +90,30 @@ func Test_PhaseSort(t *testing.T) {
 				{
 					Object: unstructured.Unstructured{
 						Object: map[string]interface{}{
+							"apiVersion": "rbac.authorization.k8s.io/v1",
+							"kind":       "ClusterRoleBinding",
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "rbac.authorization.k8s.io/v1",
+							"kind":       "RoleBinding",
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "rbac.authorization.k8s.io/v1",
+							"kind":       "Role",
+						},
+					},
+				},
+				{
+					Object: unstructured.Unstructured{
+						Object: map[string]interface{}{
 							"apiVersion": "v1",
 							"kind":       "PersistentVolume",
 						},
@@ -147,6 +171,35 @@ func Test_PhaseSort(t *testing.T) {
 								Object: map[string]interface{}{
 									"apiVersion": "rbac.authorization.k8s.io/v1",
 									"kind":       "ClusterRole",
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "rbac.authorization.k8s.io/v1",
+									"kind":       "Role",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: string(applier.PhaseRBACBindings),
+					Objects: []v1.ClusterExtensionRevisionObject{
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "rbac.authorization.k8s.io/v1",
+									"kind":       "ClusterRoleBinding",
+								},
+							},
+						},
+						{
+							Object: unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"apiVersion": "rbac.authorization.k8s.io/v1",
+									"kind":       "RoleBinding",
 								},
 							},
 						},

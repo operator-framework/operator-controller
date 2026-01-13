@@ -28,13 +28,14 @@ func determinePhase(gk schema.GroupKind) Phase {
 type Phase string
 
 const (
-	PhaseNamespaces Phase = "namespaces"
-	PhasePolicies   Phase = "policies"
-	PhaseRBAC       Phase = "rbac"
-	PhaseCRDs       Phase = "crds"
-	PhaseStorage    Phase = "storage"
-	PhaseDeploy     Phase = "deploy"
-	PhasePublish    Phase = "publish"
+	PhaseNamespaces   Phase = "namespaces"
+	PhasePolicies     Phase = "policies"
+	PhaseRBAC         Phase = "rbac"
+	PhaseRBACBindings Phase = "rbac-bindings"
+	PhaseCRDs         Phase = "crds"
+	PhaseStorage      Phase = "storage"
+	PhaseDeploy       Phase = "deploy"
+	PhasePublish      Phase = "publish"
 )
 
 // Well known phases ordered.
@@ -42,6 +43,7 @@ var defaultPhaseOrder = []Phase{
 	PhaseNamespaces,
 	PhasePolicies,
 	PhaseRBAC,
+	PhaseRBACBindings,
 	PhaseCRDs,
 	PhaseStorage,
 	PhaseDeploy,
@@ -68,8 +70,11 @@ var (
 		PhaseRBAC: {
 			{Kind: "ServiceAccount"},
 			{Kind: "Role", Group: "rbac.authorization.k8s.io"},
-			{Kind: "RoleBinding", Group: "rbac.authorization.k8s.io"},
 			{Kind: "ClusterRole", Group: "rbac.authorization.k8s.io"},
+		},
+
+		PhaseRBACBindings: {
+			{Kind: "RoleBinding", Group: "rbac.authorization.k8s.io"},
 			{Kind: "ClusterRoleBinding", Group: "rbac.authorization.k8s.io"},
 		},
 

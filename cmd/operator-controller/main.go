@@ -42,10 +42,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
-	"pkg.package-operator.run/boxcutter/machinery"
 	"pkg.package-operator.run/boxcutter/managedcache"
-	"pkg.package-operator.run/boxcutter/ownerhandling"
-	"pkg.package-operator.run/boxcutter/validation"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
@@ -653,21 +650,29 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		return fmt.Errorf("unable to add tracking cache to manager: %v", err)
 	}
 
+	cerCoreClient, err := corev1client.NewForConfig(c.mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("unable to create client for ClusterExtensionRevision controller: %w", err)
+	}
+	cerTokenGetter := authentication.NewTokenGetter(cerCoreClient, authentication.WithExpirationDuration(1*time.Hour))
+
+	revisionEngineFactory, err := controllers.NewDefaultRevisionEngineFactory(
+		c.mgr.GetScheme(),
+		trackingCache,
+		discoveryClient,
+		c.mgr.GetRESTMapper(),
+		fieldOwnerPrefix,
+		c.mgr.GetConfig(),
+		cerTokenGetter,
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create revision engine factory: %w", err)
+	}
+
 	if err = (&controllers.ClusterExtensionRevisionReconciler{
-		Client: c.mgr.GetClient(),
-		RevisionEngine: machinery.NewRevisionEngine(
-			machinery.NewPhaseEngine(
-				machinery.NewObjectEngine(
-					c.mgr.GetScheme(), trackingCache, c.mgr.GetClient(),
-					ownerhandling.NewNative(c.mgr.GetScheme()),
-					machinery.NewComparator(ownerhandling.NewNative(c.mgr.GetScheme()), discoveryClient, c.mgr.GetScheme(), fieldOwnerPrefix),
-					fieldOwnerPrefix, fieldOwnerPrefix,
-				),
-				validation.NewClusterPhaseValidator(c.mgr.GetRESTMapper(), c.mgr.GetClient()),
-			),
-			validation.NewRevisionValidator(), c.mgr.GetClient(),
-		),
-		TrackingCache: trackingCache,
+		Client:                c.mgr.GetClient(),
+		RevisionEngineFactory: revisionEngineFactory,
+		TrackingCache:         trackingCache,
 	}).SetupWithManager(c.mgr); err != nil {
 		return fmt.Errorf("unable to setup ClusterExtensionRevision controller: %w", err)
 	}
