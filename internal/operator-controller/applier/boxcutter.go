@@ -13,7 +13,6 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -283,10 +282,6 @@ type Boxcutter struct {
 	FieldOwner        string
 }
 
-func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
-	return bc.apply(ctx, contentFS, ext, objectLabels, revisionAnnotations)
-}
-
 func (bc *Boxcutter) getObjects(rev *ocv1.ClusterExtensionRevision) []client.Object {
 	var objs []client.Object
 	for _, phase := range rev.Spec.Phases {
@@ -308,21 +303,21 @@ func (bc *Boxcutter) createOrUpdate(ctx context.Context, obj client.Object) erro
 	return bc.Client.Patch(ctx, obj, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
 }
 
-func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
+func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) error {
 	// Generate desired revision
 	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
-		return false, "", err
+		return err
 	}
 
 	if err := controllerutil.SetControllerReference(ext, desiredRevision, bc.Scheme); err != nil {
-		return false, "", fmt.Errorf("set ownerref: %w", err)
+		return fmt.Errorf("set ownerref: %w", err)
 	}
 
 	// List all existing revisions
 	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
 	if err != nil {
-		return false, "", err
+		return err
 	}
 
 	currentRevision := &ocv1.ClusterExtensionRevision{}
@@ -344,7 +339,7 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 			// inplace patch was successful, no changes in phases
 			state = StateUnchanged
 		default:
-			return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
+			return fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
 		}
 	}
 
@@ -358,7 +353,7 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		case StateNeedsInstall:
 			err := preflight.Install(ctx, plainObjs)
 			if err != nil {
-				return false, "", err
+				return err
 			}
 		// TODO: jlanford's IDE says that "StateNeedsUpgrade" condition is always true, but
 		//   it isn't immediately obvious why that is. Perhaps len(existingRevisions) is
@@ -367,7 +362,7 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		case StateNeedsUpgrade:
 			err := preflight.Upgrade(ctx, plainObjs)
 			if err != nil {
-				return false, "", err
+				return err
 			}
 		}
 	}
@@ -381,34 +376,15 @@ func (bc *Boxcutter) apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		desiredRevision.Spec.Revision = revisionNumber
 
 		if err = bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
-			return false, "", fmt.Errorf("garbage collecting old revisions: %w", err)
+			return fmt.Errorf("garbage collecting old revisions: %w", err)
 		}
 
 		if err := bc.createOrUpdate(ctx, desiredRevision); err != nil {
-			return false, "", fmt.Errorf("creating new Revision: %w", err)
+			return fmt.Errorf("creating new Revision: %w", err)
 		}
-		currentRevision = desiredRevision
 	}
 
-	progressingCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.TypeProgressing)
-	availableCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
-	succeededCondition := meta.FindStatusCondition(currentRevision.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
-
-	if progressingCondition == nil && availableCondition == nil && succeededCondition == nil {
-		return false, "New revision created", nil
-	} else if progressingCondition != nil && progressingCondition.Status == metav1.ConditionTrue {
-		switch progressingCondition.Reason {
-		case ocv1.ReasonSucceeded:
-			return true, "", nil
-		case ocv1.ClusterExtensionRevisionReasonRetrying:
-			return false, "", errors.New(progressingCondition.Message)
-		default:
-			return false, progressingCondition.Message, nil
-		}
-	} else if succeededCondition != nil && succeededCondition.Status != metav1.ConditionTrue {
-		return false, succeededCondition.Message, nil
-	}
-	return true, "", nil
+	return nil
 }
 
 // garbageCollectOldRevisions deletes archived revisions beyond ClusterExtensionRevisionRetentionLimit.

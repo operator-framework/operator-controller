@@ -28,14 +28,6 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-type mockApplier struct {
-	err error
-}
-
-func (m *mockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string) (bool, string, error) {
-	return true, "", m.err
-}
-
 func TestApplyBundleWithBoxcutter(t *testing.T) {
 	type args struct {
 		activeRevisions []ocv1.RevisionStatus
@@ -119,7 +111,6 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
-			applier := &mockApplier{}
 
 			ext := &ocv1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
@@ -142,7 +133,9 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				imageFS: fstest.MapFS{},
 			}
 
-			stepFunc := ApplyBundleWithBoxcutter(applier)
+			stepFunc := ApplyBundleWithBoxcutter(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string) error {
+				return nil
+			})
 			result, err := stepFunc(ctx, state, ext)
 			require.NoError(t, err)
 			require.Nil(t, result)
