@@ -50,11 +50,7 @@ rules:
       - roles
       - clusterrolebindings
       - rolebindings
-    # The bind and escalate verbs allow the ServiceAccount to create role bindings
-    # for roles it doesn't have and grant permissions beyond its own. This is required
-    # because extension bundles contain their own RBAC that must be created.
-    # See docs/concepts/permission-model.md for details on these requirements.
-    verbs: [ update, create, list, watch, get, delete, patch, bind, escalate ]
+    verbs: [ update, create, list, watch, get, delete, patch ]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: [ update, create, list, watch, get, delete, patch ]
