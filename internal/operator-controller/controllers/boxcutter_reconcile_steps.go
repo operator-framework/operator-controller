@@ -115,6 +115,7 @@ func ApplyBundleWithBoxcutter(a Applier) ReconcileStepFunc {
 			return nil, err
 		}
 
+		ext.Status.ActiveRevisions = []ocv1.RevisionStatus{}
 		// Mirror Available/Progressing conditions from the installed revision
 		if i := state.revisionStates.Installed; i != nil {
 			for _, cndType := range []string{ocv1.ClusterExtensionRevisionTypeAvailable, ocv1.ClusterExtensionRevisionTypeProgressing} {
