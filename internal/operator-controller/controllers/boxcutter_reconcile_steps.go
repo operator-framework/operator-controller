@@ -20,6 +20,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"io/fs"
 	"slices"
 
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -93,7 +94,7 @@ func MigrateStorage(m StorageMigrator) ReconcileStepFunc {
 	}
 }
 
-func ApplyBundleWithBoxcutter(a Applier) ReconcileStepFunc {
+func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) error) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		revisionAnnotations := map[string]string{
@@ -108,7 +109,7 @@ func ApplyBundleWithBoxcutter(a Applier) ReconcileStepFunc {
 		}
 
 		l.Info("applying bundle contents")
-		if _, _, err := a.Apply(ctx, state.imageFS, ext, objLbls, revisionAnnotations); err != nil {
+		if err := apply(ctx, state.imageFS, ext, objLbls, revisionAnnotations); err != nil {
 			// If there was an error applying the resolved bundle,
 			// report the error via the Progressing condition.
 			setStatusProgressing(ext, wrapErrorWithResolutionInfo(state.resolvedRevisionMetadata.BundleMetadata, err))

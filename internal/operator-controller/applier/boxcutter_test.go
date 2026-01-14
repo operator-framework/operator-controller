@@ -926,18 +926,14 @@ func TestBoxcutter_Apply(t *testing.T) {
 					labels.PackageNameKey:   "test-package",
 				}
 			}
-			installSucceeded, installStatus, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations)
+			err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations)
 
 			// Assert
 			if tc.expectedErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.expectedErr)
-				assert.False(t, installSucceeded)
-				assert.Empty(t, installStatus)
 			} else {
 				require.NoError(t, err)
-				assert.False(t, installSucceeded)
-				assert.Equal(t, "New revision created", installStatus)
 			}
 
 			if tc.validate != nil {
