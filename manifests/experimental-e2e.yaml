@@ -778,6 +778,16 @@ spec:
                 x-kubernetes-validations:
                 - message: phases is immutable
                   rule: self == oldSelf || oldSelf.size() == 0
+              progressDeadlineMinutes:
+                description: |-
+                  progressDeadlineMinutes is an optional field that defines the maximum period
+                  of time in minutes after which an installation should be considered failed and
+                  require manual intervention. This functionality is disabled when no value
+                  is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
+                format: int32
+                maximum: 720
+                minimum: 10
+                type: integer
               revision:
                 description: |-
                   revision is a required, immutable sequence number representing a specific revision
@@ -1052,6 +1062,16 @@ spec:
                   rule: self == oldSelf
                 - message: namespace must be a valid DNS1123 label
                   rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+              progressDeadlineMinutes:
+                description: |-
+                  progressDeadlineMinutes is an optional field that defines the maximum period
+                  of time in minutes after which an installation should be considered failed and
+                  require manual intervention. This functionality is disabled when no value
+                  is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
+                format: int32
+                maximum: 720
+                minimum: 10
+                type: integer
               serviceAccount:
                 description: |-
                   serviceAccount specifies a ServiceAccount used to perform all interactions with the cluster

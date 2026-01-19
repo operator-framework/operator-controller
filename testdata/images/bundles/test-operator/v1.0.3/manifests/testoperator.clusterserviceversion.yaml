@@ -1,0 +1,151 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "olme2etests.olm.operatorframework.io/v1",
+          "kind": "OLME2ETests",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "test"
+            },
+            "name": "test-sample"
+          },
+          "spec": null
+        }
+      ]
+    capabilities: Basic Install
+    createdAt: "2024-10-24T19:21:40Z"
+    operators.operatorframework.io/builder: operator-sdk-v1.34.1
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+  name: testoperator.v1.0.2
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+  owned:
+    - description: Configures subsections of Alertmanager configuration specific to each namespace
+      displayName: OLME2ETest
+      kind: OLME2ETest
+      name: olme2etests.olm.operatorframework.io
+      version: v1
+  description: OLM E2E Testing Operator with a wrong image ref
+  displayName: test-operator
+  icon:
+    - base64data: ""
+      mediatype: ""
+  install:
+    spec:
+      deployments:
+        - label:
+            app.kubernetes.io/component: controller
+            app.kubernetes.io/name: test-operator
+            app.kubernetes.io/version: 1.0.2
+          name: test-operator
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: olme2etest
+            template:
+              metadata:
+                labels:
+                  app: olme2etest
+              spec:
+                terminationGracePeriodSeconds: 0
+                volumes:
+                  - name: scripts
+                    configMap:
+                      name: httpd-script
+                      defaultMode: 0755
+                containers:
+                  - name: busybox-httpd-container
+                    # This image ref is wrong and should trigger ImagePullBackOff condition
+                    image: busybox:1.36
+                serviceAccountName: simple-bundle-manager
+      clusterPermissions:
+        - rules:
+            - apiGroups:
+                - authentication.k8s.io
+              resources:
+                - tokenreviews
+              verbs:
+                - create
+            - apiGroups:
+                - authorization.k8s.io
+              resources:
+                - subjectaccessreviews
+              verbs:
+                - create
+          serviceAccountName: simple-bundle-manager
+      permissions:
+        - rules:
+            - apiGroups:
+                - ""
+              resources:
+                - configmaps
+                - serviceaccounts
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - networking.k8s.io
+              resources:
+                - networkpolicies
+              verbs:
+                - get
+                - list
+                - create
+                - update
+                - delete
+            - apiGroups:
+                - coordination.k8s.io
+              resources:
+                - leases
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - ""
+              resources:
+                - events
+              verbs:
+                - create
+                - patch
+          serviceAccountName: simple-bundle-manager
+    strategy: deployment
+  installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: true
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+  keywords:
+    - registry
+  links:
+    - name: simple-bundle
+      url: https://simple-bundle.domain
+  maintainers:
+    - email: main#simple-bundle.domain
+      name: Simple Bundle
+  maturity: beta
+  provider:
+    name: Simple Bundle
+    url: https://simple-bundle.domain
+  version: 1.0.2

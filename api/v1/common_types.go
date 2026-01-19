@@ -32,6 +32,7 @@ const (
 	ReasonDeprecated = "Deprecated"
 
 	// Common reasons
-	ReasonSucceeded = "Succeeded"
-	ReasonFailed    = "Failed"
+	ReasonSucceeded                = "Succeeded"
+	ReasonFailed                   = "Failed"
+	ReasonProgressDeadlineExceeded = "ProgressDeadlineExceeded"
 )

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wrong-test-configmap
+# need such config map with a wrong field so that we can reach progression deadline timeouts
+wrongfield:
+  name: "test-configmap"

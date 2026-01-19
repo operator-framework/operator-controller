@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
@@ -325,6 +326,65 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 	}
 	t.Log("by checking the generated revision contain the given annotations")
 	require.Equal(t, revAnnotations, rev.Annotations)
+}
+
+func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T) {
+	r := &FakeManifestProvider{
+		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
+			return []client.Object{}, nil
+		},
+	}
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
+	}
+
+	type args struct {
+		progressDeadlineMinutes *int32
+	}
+	type want struct {
+		progressDeadlineMinutes int32
+	}
+	type testCase struct {
+		args args
+		want want
+	}
+	for name, tc := range map[string]testCase{
+		"propagates when set": {
+			args: args{
+				progressDeadlineMinutes: ptr.To(int32(10)),
+			},
+			want: want{
+				progressDeadlineMinutes: 10,
+			},
+		},
+		"do not propagate when unset": {
+			want: want{
+				progressDeadlineMinutes: 0,
+			},
+		},
+	} {
+		ext := &ocv1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-extension",
+			},
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace:      "test-namespace",
+				ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
+			},
+		}
+		empty := map[string]string{}
+		t.Run(name, func(t *testing.T) {
+			if pd := tc.args.progressDeadlineMinutes; pd != nil {
+				ext.Spec.ProgressDeadlineMinutes = *pd
+			}
+
+			rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, empty, empty)
+			require.NoError(t, err)
+			require.Equal(t, tc.want.progressDeadlineMinutes, rev.Spec.ProgressDeadlineMinutes)
+		})
+	}
 }
 
 func Test_SimpleRevisionGenerator_Failure(t *testing.T) {

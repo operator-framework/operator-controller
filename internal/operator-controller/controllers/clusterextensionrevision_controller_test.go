@@ -922,6 +922,138 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 	}
 }
 
+func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testing.T) {
+	const (
+		clusterExtensionRevisionName = "test-ext-1"
+	)
+
+	testScheme := newScheme(t)
+	require.NoError(t, corev1.AddToScheme(testScheme))
+
+	for _, tc := range []struct {
+		name            string
+		existingObjs    func() []client.Object
+		revisionResult  machinery.RevisionResult
+		validate        func(*testing.T, client.Client)
+		reconcileErr    error
+		reconcileResult ctrl.Result
+	}{
+		{
+			name: "progressing set to false when progress deadline is exceeded",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1.Spec.ProgressDeadlineMinutes = 1
+				rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-61 * time.Second))
+				return []client.Object{rev1, ext}
+			},
+			revisionResult: &mockRevisionResult{
+				inTransition: true,
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterExtensionRevision{}
+				err := c.Get(t.Context(), client.ObjectKey{
+					Name: clusterExtensionRevisionName,
+				}, rev)
+				require.NoError(t, err)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				require.Equal(t, metav1.ConditionFalse, cnd.Status)
+				require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cnd.Reason)
+			},
+		},
+		{
+			name: "requeue after progressDeadline time for final progression deadline check",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1.Spec.ProgressDeadlineMinutes = 1
+				rev1.CreationTimestamp = metav1.NewTime(time.Now())
+				return []client.Object{rev1, ext}
+			},
+			revisionResult: &mockRevisionResult{
+				inTransition: true,
+			},
+			reconcileResult: ctrl.Result{RequeueAfter: 1 * time.Minute},
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterExtensionRevision{}
+				err := c.Get(t.Context(), client.ObjectKey{
+					Name: clusterExtensionRevisionName,
+				}, rev)
+				require.NoError(t, err)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				require.Equal(t, metav1.ConditionTrue, cnd.Status)
+				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
+			},
+		},
+		{
+			name: "no progression deadline checks on revision recovery",
+			existingObjs: func() []client.Object {
+				ext := newTestClusterExtension()
+				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
+				rev1.Spec.ProgressDeadlineMinutes = 1
+				rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-2 * time.Minute))
+				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
+					Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+					Status:             metav1.ConditionTrue,
+					Reason:             ocv1.ReasonSucceeded,
+					ObservedGeneration: rev1.Generation,
+				})
+				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
+					Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
+					Status:             metav1.ConditionTrue,
+					Reason:             ocv1.ReasonSucceeded,
+					ObservedGeneration: rev1.Generation,
+				})
+				return []client.Object{rev1, ext}
+			},
+			revisionResult: &mockRevisionResult{
+				inTransition: true,
+			},
+			validate: func(t *testing.T, c client.Client) {
+				rev := &ocv1.ClusterExtensionRevision{}
+				err := c.Get(t.Context(), client.ObjectKey{
+					Name: clusterExtensionRevisionName,
+				}, rev)
+				require.NoError(t, err)
+				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				require.Equal(t, metav1.ConditionTrue, cnd.Status)
+				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// create extension and cluster extension
+			testClient := fake.NewClientBuilder().
+				WithScheme(testScheme).
+				WithStatusSubresource(&ocv1.ClusterExtensionRevision{}).
+				WithObjects(tc.existingObjs()...).
+				Build()
+
+			// reconcile cluster extension revision
+			mockEngine := &mockRevisionEngine{
+				reconcile: func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionReconcileOption) (machinery.RevisionResult, error) {
+					return tc.revisionResult, nil
+				},
+			}
+			result, err := (&controllers.ClusterExtensionRevisionReconciler{
+				Client:                testClient,
+				RevisionEngineFactory: &mockRevisionEngineFactory{engine: mockEngine},
+				TrackingCache: &mockTrackingCache{
+					client: testClient,
+				},
+			}).Reconcile(t.Context(), ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Name: clusterExtensionRevisionName,
+				},
+			})
+			require.Equal(t, tc.reconcileResult, result)
+			require.Equal(t, tc.reconcileErr, err)
+
+			tc.validate(t, testClient)
+		})
+	}
+}
+
 func newTestClusterExtension() *ocv1.ClusterExtension {
 	return &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
