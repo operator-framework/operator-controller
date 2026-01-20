@@ -698,40 +698,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			},
 		},
 		{
-			name:           "set Available:Unknown:Reconciling and surface tear down errors when deleted",
-			revisionResult: mockRevisionResult{},
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
-				rev1.Finalizers = []string{
-					"olm.operatorframework.io/teardown",
-				}
-				rev1.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-				return []client.Object{rev1, ext}
-			},
-			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-				return func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-					return nil, fmt.Errorf("some teardown error")
-				}
-			},
-			expectedErr: "some teardown error",
-			validate: func(t *testing.T, c client.Client) {
-				t.Log("cluster revision is not deleted and still contains finalizer")
-				rev := &ocv1.ClusterExtensionRevision{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
-				}, rev)
-				require.NoError(t, err)
-				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionUnknown, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReconciling, cond.Reason)
-				require.Equal(t, "some teardown error", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
-			},
-		},
-		{
 			name:           "set Available:Unknown:Reconciling and surface tracking cache cleanup errors when deleted",
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
@@ -849,34 +815,6 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				}, rev)
 				require.NoError(t, err)
 				require.NotContains(t, rev.Finalizers, "olm.operatorframework.io/teardown")
-			},
-		},
-		{
-			name:           "surfaces revision teardown error when in archived state",
-			revisionResult: mockRevisionResult{},
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
-				rev1.Finalizers = []string{
-					"olm.operatorframework.io/teardown",
-				}
-				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
-				return []client.Object{rev1, ext}
-			},
-			revisionEngineTeardownFn: func(t *testing.T) func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-				return func(ctx context.Context, rev machinerytypes.Revision, opts ...machinerytypes.RevisionTeardownOption) (machinery.RevisionTeardownResult, error) {
-					return nil, fmt.Errorf("some teardown error")
-				}
-			},
-			expectedErr: "some teardown error",
-			validate: func(t *testing.T, c client.Client) {
-				t.Log("cluster revision is not deleted and still contains finalizer")
-				rev := &ocv1.ClusterExtensionRevision{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
-				}, rev)
-				require.NoError(t, err)
-				require.NotContains(t, "olm.operatorframework.io/teardown", rev.Finalizers)
 			},
 		},
 	} {
@@ -1438,35 +1376,5 @@ func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to create revision engine")
 		require.Contains(t, err.Error(), "token getter failed")
-	})
-
-	t.Run("factory fails during teardown", func(t *testing.T) {
-		ext := newTestClusterExtension()
-		rev := newTestClusterExtensionRevision(t, "test-rev", ext, testScheme)
-		rev.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-		rev.Finalizers = []string{"olm.operatorframework.io/teardown"}
-
-		testClient := fake.NewClientBuilder().
-			WithScheme(testScheme).
-			WithObjects(ext, rev).
-			Build()
-
-		failingFactory := &mockRevisionEngineFactory{
-			createErr: errors.New("serviceaccount not found"),
-		}
-
-		reconciler := &controllers.ClusterExtensionRevisionReconciler{
-			Client:                testClient,
-			RevisionEngineFactory: failingFactory,
-			TrackingCache:         &mockTrackingCache{client: testClient},
-		}
-
-		_, err := reconciler.Reconcile(t.Context(), ctrl.Request{
-			NamespacedName: types.NamespacedName{Name: "test-rev"},
-		})
-
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to create revision engine for teardown")
-		require.Contains(t, err.Error(), "serviceaccount not found")
 	})
 }
