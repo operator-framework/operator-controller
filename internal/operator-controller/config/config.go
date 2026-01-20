@@ -98,6 +98,47 @@ func (c *Config) GetWatchNamespace() *string {
 	return &str
 }
 
+// GetDeploymentConfig returns the deploymentConfig value if present in the configuration.
+// Returns nil if deploymentConfig is not set or is explicitly set to null.
+// The returned value is a generic map[string]any that can be marshaled to JSON
+// for validation or conversion to specific types (like v1alpha1.SubscriptionConfig).
+//
+// Returns a defensive deep copy so callers can't mutate the internal Config state.
+func (c *Config) GetDeploymentConfig() map[string]any {
+	if c == nil || *c == nil {
+		return nil
+	}
+	val, exists := (*c)["deploymentConfig"]
+	if !exists {
+		return nil
+	}
+	// User set deploymentConfig: null - treat as "not configured"
+	if val == nil {
+		return nil
+	}
+	// Schema validation ensures this is an object (map)
+	dcMap, ok := val.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	// Return a defensive deep copy so callers can't mutate the internal Config state.
+	// We use JSON marshal/unmarshal because the data is already JSON-compatible and
+	// this handles nested structures correctly.
+	data, err := json.Marshal(dcMap)
+	if err != nil {
+		// This should never happen since the map came from validated JSON/YAML,
+		// but return nil as a safe fallback
+		return nil
+	}
+	var copied map[string]any
+	if err := json.Unmarshal(data, &copied); err != nil {
+		// This should never happen for valid JSON
+		return nil
+	}
+	return copied
+}
+
 // UnmarshalConfig takes user configuration, validates it, and creates a Config object.
 // This is the only way to create a Config.
 //
