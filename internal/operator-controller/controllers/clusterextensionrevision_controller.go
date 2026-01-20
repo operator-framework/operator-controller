@@ -141,7 +141,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	}
 
 	if !rev.DeletionTimestamp.IsZero() || rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
-		return c.teardown(ctx, rev, revision)
+		return c.teardown(ctx, rev)
 	}
 
 	revVersion := rev.GetAnnotations()[labels.BundleVersionKey]
@@ -275,33 +275,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	return ctrl.Result{}, nil
 }
 
-func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *ocv1.ClusterExtensionRevision, revision *boxcutter.Revision) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
-
-	revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, rev)
-	if err != nil {
-		markAsAvailableUnknown(rev, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
-		return ctrl.Result{}, fmt.Errorf("failed to create revision engine for teardown: %v", err)
-	}
-
-	tres, err := revisionEngine.Teardown(ctx, *revision)
-	if err != nil {
-		if tres != nil {
-			l.V(1).Info("teardown failure report", "report", tres.String())
-		}
-		markAsAvailableUnknown(rev, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
-		return ctrl.Result{}, fmt.Errorf("revision teardown: %v", err)
-	}
-
-	// Log detailed teardown reports only in debug mode (V(1)) to reduce verbosity.
-	l.V(1).Info("teardown report", "report", tres.String())
-	if !tres.IsComplete() {
-		// TODO: If it is not complete, it seems like it would be good to update
-		//  the status in some way to tell the user that the teardown is still
-		//  in progress.
-		return ctrl.Result{}, nil
-	}
-
+func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (ctrl.Result, error) {
 	if err := c.TrackingCache.Free(ctx, rev); err != nil {
 		markAsAvailableUnknown(rev, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
 		return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
