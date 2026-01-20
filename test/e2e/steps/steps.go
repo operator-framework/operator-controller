@@ -2,6 +2,7 @@ package steps
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -24,15 +25,19 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/release"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
+	k8sresource "k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
 
 const (
@@ -56,7 +61,10 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension is updated(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterExtension is available$`, ClusterExtensionIsAvailable)
 	sc.Step(`^(?i)ClusterExtension is rolled out$`, ClusterExtensionIsRolledOut)
+	sc.Step(`^(?i)ClusterExtension resources are created and labeled$`, ClusterExtensionResourcesCreatedAndAreLabeled)
+	sc.Step(`^(?i)ClusterExtension is removed$`, ClusterExtensionIsRemoved)
 	sc.Step(`^(?i)ClusterExtension (?:latest generation )?has (?:been )?reconciled(?: the latest generation)?$`, ClusterExtensionReconciledLatestGeneration)
+	sc.Step(`^(?i)the ClusterExtension's constituent resources are removed$`, ClusterExtensionResourcesRemoved)
 	sc.Step(`^(?i)ClusterExtension reports "([^"]+)" as active revision(s?)$`, ClusterExtensionReportsActiveRevisions)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterExtensionReportsCondition)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterExtensionReportsConditionWithMessageFragment)
@@ -69,6 +77,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is removed$`, ResourceRemoved)
+	sc.Step(`^(?i)resource "([^"]+)" is eventually not found$`, ResourceEventuallyNotFound)
 	sc.Step(`^(?i)resource "([^"]+)" exists$`, ResourceAvailable)
 	sc.Step(`^(?i)resource is applied$`, ResourceIsApplied)
 	sc.Step(`^(?i)resource "deployment/test-operator" reports as (not ready|ready)$`, MarkTestOperatorNotReady)
@@ -279,8 +288,68 @@ func ClusterExtensionIsRolledOut(ctx context.Context) error {
 		if err := json.Unmarshal([]byte(v), &condition); err != nil {
 			return false
 		}
+
 		return condition["status"] == "True" && condition["reason"] == "Succeeded" && condition["type"] == "Progressing"
 	}, timeout, tick)
+
+	// Save ClusterExtension resources to test context for posterior checks
+	if err := sc.GatherClusterExtensionObjects(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+	if len(sc.GetClusterExtensionObjects()) == 0 {
+		return fmt.Errorf("extension objects not found in context")
+	}
+
+	for _, obj := range sc.extensionObjects {
+		waitFor(ctx, func() bool {
+			kind := obj.GetObjectKind().GroupVersionKind().Kind
+			clusterObj, err := getResource(kind, obj.GetName(), obj.GetNamespace())
+			if err != nil {
+				logger.V(1).Error(err, "error getting resource", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind)
+				return false
+			}
+
+			labels := clusterObj.GetLabels()
+			if labels == nil {
+				logger.V(1).Info("no labels found for resource", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind)
+				return false
+			}
+
+			for key, expectedValue := range map[string]string{
+				"olm.operatorframework.io/owner-kind": "ClusterExtension",
+				"olm.operatorframework.io/owner-name": sc.clusterExtensionName,
+			} {
+				if labels[key] != expectedValue {
+					logger.V(1).Info("invalid resource label value", "name", obj.GetName(), "namespace", obj.GetNamespace(), "kind", kind, "label", key, "expected", expectedValue, "actual", labels["olm.operatorframework.io/owner-kind"])
+					return false
+				}
+			}
+			return true
+		})
+	}
+	return nil
+}
+
+func ClusterExtensionIsRemoved(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+	return ResourceRemoved(ctx, fmt.Sprintf("clusterextension/%s", sc.clusterExtensionName))
+}
+
+func ClusterExtensionResourcesRemoved(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+	if len(sc.GetClusterExtensionObjects()) == 0 {
+		return fmt.Errorf("extension objects not found in context")
+	}
+	for _, obj := range sc.extensionObjects {
+		if err := ResourceEventuallyNotFound(ctx, fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -419,12 +488,12 @@ func ClusterExtensionRevisionIsArchived(ctx context.Context, revisionName string
 func ResourceAvailable(ctx context.Context, resource string) error {
 	sc := scenarioCtx(ctx)
 	resource = substituteScenarioVars(resource, sc)
-	rtype, name, found := strings.Cut(resource, "/")
+	kind, name, found := strings.Cut(resource, "/")
 	if !found {
-		return fmt.Errorf("resource %s is not in the format <type>/<name>", resource)
+		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
 	waitFor(ctx, func() bool {
-		_, err := k8sClient("get", rtype, name, "-n", sc.namespace)
+		_, err := k8sClient("get", kind, name, "-n", sc.namespace)
 		return err == nil
 	})
 	return nil
@@ -432,11 +501,12 @@ func ResourceAvailable(ctx context.Context, resource string) error {
 
 func ResourceRemoved(ctx context.Context, resource string) error {
 	sc := scenarioCtx(ctx)
-	rtype, name, found := strings.Cut(resource, "/")
+	resource = substituteScenarioVars(resource, sc)
+	kind, name, found := strings.Cut(resource, "/")
 	if !found {
-		return fmt.Errorf("resource %s is not in the format <type>/<name>", resource)
+		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
-	yaml, err := k8sClient("get", rtype, name, "-n", sc.namespace, "-o", "yaml")
+	yaml, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "yaml")
 	if err != nil {
 		return err
 	}
@@ -445,23 +515,38 @@ func ResourceRemoved(ctx context.Context, resource string) error {
 		return err
 	}
 	sc.removedResources = append(sc.removedResources, *obj)
-	_, err = k8sClient("delete", rtype, name, "-n", sc.namespace)
+	_, err = k8sClient("delete", kind, name, "-n", sc.namespace)
 	return err
+}
+
+func ResourceEventuallyNotFound(ctx context.Context, resource string) error {
+	sc := scenarioCtx(ctx)
+	resource = substituteScenarioVars(resource, sc)
+	kind, name, found := strings.Cut(resource, "/")
+	if !found {
+		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
+	}
+
+	waitFor(ctx, func() bool {
+		obj, err := k8sClient("get", kind, name, "-n", sc.namespace, "--ignore-not-found", "-o", "yaml")
+		return err == nil && strings.TrimSpace(obj) == ""
+	})
+	return nil
 }
 
 func ResourceMatches(ctx context.Context, resource string, requiredContentTemplate *godog.DocString) error {
 	sc := scenarioCtx(ctx)
 	resource = substituteScenarioVars(resource, sc)
-	rtype, name, found := strings.Cut(resource, "/")
+	kind, name, found := strings.Cut(resource, "/")
 	if !found {
-		return fmt.Errorf("resource %s is not in the format <type>/<name>", resource)
+		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
 	requiredContent, err := toUnstructured(substituteScenarioVars(requiredContentTemplate.Content, sc))
 	if err != nil {
 		return fmt.Errorf("failed to parse required resource yaml: %v", err)
 	}
 	waitFor(ctx, func() bool {
-		objJson, err := k8sClient("get", rtype, name, "-n", sc.namespace, "-o", "json")
+		objJson, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "json")
 		if err != nil {
 			return false
 		}
@@ -489,12 +574,13 @@ func ResourceMatches(ctx context.Context, resource string, requiredContentTempla
 
 func ResourceRestored(ctx context.Context, resource string) error {
 	sc := scenarioCtx(ctx)
-	rtype, name, found := strings.Cut(resource, "/")
+	resource = substituteScenarioVars(resource, sc)
+	kind, name, found := strings.Cut(resource, "/")
 	if !found {
-		return fmt.Errorf("resource %s is not in the format <type>/<name>", resource)
+		return fmt.Errorf("resource %s is not in the format <kind>/<name>", resource)
 	}
 	waitFor(ctx, func() bool {
-		yaml, err := k8sClient("get", rtype, name, "-n", sc.namespace, "-o", "yaml")
+		yaml, err := k8sClient("get", kind, name, "-n", sc.namespace, "-o", "yaml")
 		if err != nil {
 			return false
 		}
@@ -507,7 +593,7 @@ func ResourceRestored(ctx context.Context, resource string) error {
 		for i, removed := range sc.removedResources {
 			rct := removed.GetCreationTimestamp()
 			if removed.GetName() == obj.GetName() && removed.GetKind() == obj.GetKind() && rct.Before(&ct) {
-				switch rtype {
+				switch kind {
 				case "configmap":
 					if !reflect.DeepEqual(removed.Object["data"], obj.Object["data"]) {
 						return false
@@ -882,4 +968,162 @@ func extendMap(m map[string]string, keyValue ...string) map[string]string {
 		}
 	}
 	return m
+}
+
+func getResource(kind string, name string, namespace string) (*unstructured.Unstructured, error) {
+	out, err := k8sClient("get", kind, name, "-n", namespace, "-o", "yaml")
+	if err != nil {
+		return nil, err
+	}
+	obj, err := toUnstructured(out)
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+// listExtensionResources returns a slice of client.Object containing all resources for a ClusterExtension
+// this method is best called when the extension has been installed successfully. An error is returned if there was
+// any issue in determining the extension's resources.
+func listExtensionResources(extName string) ([]client.Object, error) {
+	if enabled, found := featureGates[features.BoxcutterRuntime]; found && enabled {
+		return listExtensionRevisionResources(extName)
+	}
+	return listHelmReleaseResources(extName)
+}
+
+// listHelmReleaseResources returns a slice of client.Object containing all resources for a ClusterExtension's
+// Helm release. Note: The current implementation does not support release secrets chunked across multiple secrets
+func listHelmReleaseResources(extName string) ([]client.Object, error) {
+	secret, err := helmReleaseSecretForExtension(extName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm release secret for extension %s: %w", extName, err)
+	}
+
+	rel, err := helmReleaseFromSecret(secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm release from secret for cluster extension '%s': %w", extName, err)
+	}
+
+	objs, err := collectHelmReleaseObjects(rel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to collect helm release objects for cluster extension '%s': %w", extName, err)
+	}
+	return objs, nil
+}
+
+// helmReleaseSecretForExtension returns the Helm release secret for the extension with name extName
+func helmReleaseSecretForExtension(extName string) (*corev1.Secret, error) {
+	out, err := k8sClient("get", "secrets", "-n", olmNamespace,
+		"-l", fmt.Sprintf("name=%s,status=deployed", extName),
+		"--field-selector", "type=operatorframework.io/index.v1", "-o", "json")
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(out) == "" {
+		return nil, err
+	}
+
+	var secretList corev1.SecretList
+	if err = json.Unmarshal([]byte(out), &secretList); err != nil {
+		return nil, err
+	}
+	if len(secretList.Items) != 1 {
+		return nil, err
+	}
+	return &secretList.Items[0], nil
+}
+
+// helmReleaseFromSecret returns the Helm Release object encoded in the secret. Note: this function does not yet support
+// releases chunked over multiple Secrets
+func helmReleaseFromSecret(secret *corev1.Secret) (*release.Release, error) {
+	// OLM uses a custom release backend that compresses the release data
+	gzReader, err := gzip.NewReader(strings.NewReader(string(secret.Data["chunk"])))
+	if err != nil {
+		return nil, err
+	}
+	defer gzReader.Close()
+
+	releaseJsonBytes, err := io.ReadAll(gzReader)
+	if err != nil {
+		return nil, err
+	}
+
+	var rel release.Release
+	if err = json.Unmarshal(releaseJsonBytes, &rel); err != nil {
+		return nil, err
+	}
+	return &rel, nil
+}
+
+// collectHelmReleaseObjects returns a slice of client.Object containing the manifests in rel
+func collectHelmReleaseObjects(rel *release.Release) ([]client.Object, error) {
+	result := k8sresource.NewLocalBuilder().Flatten().Unstructured().Stream(strings.NewReader(rel.Manifest), rel.Name).Do()
+	if err := result.Err(); err != nil {
+		return nil, err
+	}
+	infos, err := result.Infos()
+	if err != nil {
+		return nil, err
+	}
+
+	objs := make([]client.Object, 0, len(infos))
+	for _, info := range infos {
+		clientObject, ok := info.Object.(client.Object)
+		if !ok {
+			return nil, fmt.Errorf("object of type %T does not implement client.Object", info.Object)
+		}
+		objs = append(objs, clientObject)
+	}
+	return objs, nil
+}
+
+// listExtensionRevisionResources lists objects in the phases of the latest active revision
+func listExtensionRevisionResources(extName string) ([]client.Object, error) {
+	rev, err := latestActiveRevisionForExtension(extName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest active revision for extension %s: %w", extName, err)
+	}
+
+	var objs []client.Object
+	for i := range rev.Spec.Phases {
+		phase := &rev.Spec.Phases[i]
+		for j := range phase.Objects {
+			objs = append(objs, &phase.Objects[j].Object)
+		}
+	}
+
+	return objs, nil
+}
+
+// latestActiveRevisionForExtension returns the latest active revision for the extension called extName
+func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterExtensionRevision, error) {
+	out, err := k8sClient("get", "clusterextensionrevisions", "-l", fmt.Sprintf("olm.operatorframework.io/owner-name=%s", extName), "-o", "json")
+	if err != nil {
+		return nil, fmt.Errorf("error listing revisions for extension '%s': %w", extName, err)
+	}
+	if strings.TrimSpace(out) == "" {
+		return nil, fmt.Errorf("no revisions found for extension '%s'", extName)
+	}
+	var revisionList ocv1.ClusterExtensionRevisionList
+	if err := json.Unmarshal([]byte(out), &revisionList); err != nil {
+		return nil, fmt.Errorf("error unmarshalling revisions for extension '%s': %w", extName, err)
+	}
+
+	var latest *ocv1.ClusterExtensionRevision
+	for i := range revisionList.Items {
+		rev := &revisionList.Items[i]
+		if rev.Spec.LifecycleState != ocv1.ClusterExtensionRevisionLifecycleStateActive {
+			continue
+		}
+		if latest == nil || rev.Spec.Revision > latest.Spec.Revision {
+			latest = rev
+		}
+	}
+
+	if latest == nil {
+		return nil, fmt.Errorf("no active revisions found for extension '%s'", extName)
+	}
+
+	return latest, nil
 }
