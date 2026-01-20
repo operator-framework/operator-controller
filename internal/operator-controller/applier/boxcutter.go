@@ -312,21 +312,38 @@ func (bc *Boxcutter) createOrUpdate(ctx context.Context, user user.Info, rev *oc
 	return bc.Client.Patch(ctx, rev, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
 }
 
-func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) error {
+func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
+	// List existing revisions first to validate cluster connectivity before checking contentFS.
+	// This ensures we fail fast on API errors rather than attempting fallback behavior when
+	// cluster access is unavailable (since the ClusterExtensionRevision controller also requires
+	// API access to maintain resources). The revision list is also needed to determine if fallback
+	// is possible when contentFS is nil (at least one revision must exist).
+	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
+	if err != nil {
+		return false, "", err
+	}
+
+	// If contentFS is nil, we're maintaining the current state without catalog access.
+	// In this case, we should use the existing installed revision without generating a new one.
+	if contentFS == nil {
+		if len(existingRevisions) == 0 {
+			return false, "", fmt.Errorf("catalog content unavailable and no revision installed")
+		}
+		// Returning true here signals that the rollout has succeeded using the current revision.
+		// This assumes the ClusterExtensionRevision controller is running and will continue to
+		// reconcile, apply, and maintain the resources defined in that revision via Server-Side Apply,
+		// ensuring the workload keeps running even when catalog access is unavailable.
+		return true, "", nil
+	}
+
 	// Generate desired revision
 	desiredRevision, err := bc.RevisionGenerator.GenerateRevision(ctx, contentFS, ext, objectLabels, revisionAnnotations)
 	if err != nil {
-		return err
+		return false, "", err
 	}
 
 	if err := controllerutil.SetControllerReference(ext, desiredRevision, bc.Scheme); err != nil {
-		return fmt.Errorf("set ownerref: %w", err)
-	}
-
-	// List all existing revisions
-	existingRevisions, err := bc.getExistingRevisions(ctx, ext.GetName())
-	if err != nil {
-		return err
+		return false, "", fmt.Errorf("set ownerref: %w", err)
 	}
 
 	currentRevision := &ocv1.ClusterExtensionRevision{}
@@ -348,7 +365,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 			// inplace patch was successful, no changes in phases
 			state = StateUnchanged
 		default:
-			return fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
+			return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
 		}
 	}
 
@@ -362,7 +379,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		case StateNeedsInstall:
 			err := preflight.Install(ctx, plainObjs)
 			if err != nil {
-				return err
+				return false, "", err
 			}
 		// TODO: jlanford's IDE says that "StateNeedsUpgrade" condition is always true, but
 		//   it isn't immediately obvious why that is. Perhaps len(existingRevisions) is
@@ -371,7 +388,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		case StateNeedsUpgrade:
 			err := preflight.Upgrade(ctx, plainObjs)
 			if err != nil {
-				return err
+				return false, "", err
 			}
 		}
 	}
@@ -385,15 +402,15 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		desiredRevision.Spec.Revision = revisionNumber
 
 		if err = bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
-			return fmt.Errorf("garbage collecting old revisions: %w", err)
+			return false, "", fmt.Errorf("garbage collecting old revisions: %w", err)
 		}
 
 		if err := bc.createOrUpdate(ctx, getUserInfo(ext), desiredRevision); err != nil {
-			return fmt.Errorf("creating new Revision: %w", err)
+			return false, "", fmt.Errorf("creating new Revision: %w", err)
 		}
 	}
 
-	return nil
+	return true, "", nil
 }
 
 // runPreAuthorizationChecks runs PreAuthorization checks if the PreAuthorizer is set. An error will be returned if

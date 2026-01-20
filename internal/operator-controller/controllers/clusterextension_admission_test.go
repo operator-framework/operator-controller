@@ -13,7 +13,9 @@ import (
 )
 
 func TestClusterExtensionSourceConfig(t *testing.T) {
-	sourceTypeEmptyError := "Invalid value: null"
+	// NOTE: Kubernetes validation error format for JSON null values varies across K8s versions.
+	// We check for the common part "Invalid value:" which appears in all versions.
+	sourceTypeEmptyError := "Invalid value:"
 	sourceTypeMismatchError := "spec.source.sourceType: Unsupported value"
 	sourceConfigInvalidError := "spec.source: Invalid value"
 	// unionField represents the required Catalog or (future) Bundle field required by SourceConfig
