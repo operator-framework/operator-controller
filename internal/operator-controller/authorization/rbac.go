@@ -31,12 +31,25 @@ import (
 	"k8s.io/kubernetes/pkg/registry/rbac/validation"
 	rbac "k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
+// UserAuthorizerAttributesFactory is a function that produces a slice of AttributesRecord for user
+type UserAuthorizerAttributesFactory func(user user.Info) []authorizer.AttributesRecord
+
 type PreAuthorizer interface {
-	PreAuthorize(ctx context.Context, ext *ocv1.ClusterExtension, manifestReader io.Reader) ([]ScopedPolicyRules, error)
+	// PreAuthorize validates whether the user satisfies the necessary permissions
+	// as defined by the RBAC policy. It examines the user’s roles, resource identifiers, and
+	// the intended action to determine if the operation is allowed. Optional additional required permissions are also evaluated
+	// against user.
+	//
+	// Return Value:
+	//   - nil: indicates that the authorization check passed and the operation is permitted.
+	//   - non-nil error: indicates that an error occurred during the permission evaluation process
+	//     (for example, a failure decoding the manifest or other internal issues). If the evaluation
+	//     completes successfully but identifies missing rules, then a nil error is returned along with
+	//     the list (or slice) of missing rules. Note that in some cases the error may encapsulate multiple
+	//     evaluation failures
+	PreAuthorize(ctx context.Context, user user.Info, manifestReader io.Reader, additionalRequiredPerms ...UserAuthorizerAttributesFactory) ([]ScopedPolicyRules, error)
 }
 
 type ScopedPolicyRules struct {
@@ -68,24 +81,19 @@ func NewRBACPreAuthorizer(cl client.Client) PreAuthorizer {
 	}
 }
 
-// PreAuthorize validates whether the current user/request satisfies the necessary permissions
-// as defined by the RBAC policy. It examines the user’s roles, resource identifiers, and
-// the intended action to determine if the operation is allowed.
-//
-// Return Value:
-//   - nil: indicates that the authorization check passed and the operation is permitted.
-//   - non-nil error: indicates that an error occurred during the permission evaluation process
-//     (for example, a failure decoding the manifest or other internal issues). If the evaluation
-//     completes successfully but identifies missing rules, then a nil error is returned along with
-//     the list (or slice) of missing rules. Note that in some cases the error may encapsulate multiple
-//     evaluation failures
-func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterExtension, manifestReader io.Reader) ([]ScopedPolicyRules, error) {
+func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, user user.Info, manifestReader io.Reader, additionalRequiredPerms ...UserAuthorizerAttributesFactory) ([]ScopedPolicyRules, error) {
 	dm, err := a.decodeManifest(manifestReader)
 	if err != nil {
 		return nil, err
 	}
-	manifestManager := &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ext.Spec.Namespace, ext.Spec.ServiceAccount.Name)}
-	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(manifestManager, ext)
+
+	// derive manifest related attributes records
+	attributesRecords := dm.asAuthorizationAttributesRecordsForUser(user)
+
+	// append additional required perms
+	for _, fn := range additionalRequiredPerms {
+		attributesRecords = append(attributesRecords, fn(user)...)
+	}
 
 	var preAuthEvaluationErrors []error
 	missingRules, err := a.authorizeAttributesRecords(ctx, attributesRecords)
@@ -97,7 +105,7 @@ func (a *rbacPreAuthorizer) PreAuthorize(ctx context.Context, ext *ocv1.ClusterE
 
 	var parseErrors []error
 	for _, obj := range dm.rbacObjects() {
-		if err := ec.checkEscalation(ctx, manifestManager, obj); err != nil {
+		if err := ec.checkEscalation(ctx, user, obj); err != nil {
 			result, err := parseEscalationErrorForMissingRules(err)
 			missingRules[obj.GetNamespace()] = append(missingRules[obj.GetNamespace()], result.MissingRules...)
 			preAuthEvaluationErrors = append(preAuthEvaluationErrors, result.ResolutionErrors)
@@ -316,7 +324,7 @@ func (dm *decodedManifest) rbacObjects() []client.Object {
 	return objects
 }
 
-func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info, ext *ocv1.ClusterExtension) []authorizer.AttributesRecord {
+func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info) []authorizer.AttributesRecord {
 	var attributeRecords []authorizer.AttributesRecord
 
 	for gvr, keys := range dm.gvrs {
@@ -361,18 +369,6 @@ func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManag
 				Resource:        gvr.Resource,
 				ResourceRequest: true,
 				Verb:            v,
-			})
-		}
-
-		for _, verb := range []string{"update"} {
-			attributeRecords = append(attributeRecords, authorizer.AttributesRecord{
-				User:            manifestManager,
-				Name:            ext.Name,
-				APIGroup:        ext.GroupVersionKind().Group,
-				APIVersion:      ext.GroupVersionKind().Version,
-				Resource:        "clusterextensions/finalizers",
-				ResourceRequest: true,
-				Verb:            verb,
 			})
 		}
 	}

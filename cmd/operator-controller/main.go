@@ -598,7 +598,12 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		return err
 	}
 
-	// TODO: add support for preflight checks
+	// determine if PreAuthorizer should be enabled based on feature gate
+	var preAuth authorization.PreAuthorizer
+	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
+		preAuth = authorization.NewRBACPreAuthorizer(c.mgr.GetClient())
+	}
+
 	// TODO: better scheme handling - which types do we want to support?
 	_ = apiextensionsv1.AddToScheme(c.mgr.GetScheme())
 	rg := &applier.SimpleRevisionGenerator{
@@ -610,6 +615,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		Scheme:            c.mgr.GetScheme(),
 		RevisionGenerator: rg,
 		Preflights:        c.preflights,
+		PreAuthorizer:     preAuth,
 		FieldOwner:        fmt.Sprintf("%s/clusterextension-controller", fieldOwnerPrefix),
 	}
 	revisionStatesGetter := &controllers.BoxcutterRevisionStatesGetter{Reader: c.mgr.GetClient()}

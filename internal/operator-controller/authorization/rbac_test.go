@@ -14,12 +14,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kubernetes/pkg/registry/rbac/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 var (
@@ -129,17 +128,9 @@ subjects:
   namespace: a-test-namespace
   `
 
-	saName                  = "test-serviceaccount"
-	ns                      = "test-namespace"
-	exampleClusterExtension = ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-cluster-extension"},
-		Spec: ocv1.ClusterExtensionSpec{
-			Namespace: ns,
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: saName,
-			},
-		},
-	}
+	saName   = "test-serviceaccount"
+	ns       = "test-namespace"
+	testUser = &user.DefaultInfo{Name: fmt.Sprintf("system:serviceaccount:%s:%s", ns, saName)}
 
 	objects = []client.Object{
 		&corev1.Namespace{
@@ -204,7 +195,7 @@ subjects:
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{"*"},
-				Resources: []string{"serviceaccounts", "services", "clusterextensions/finalizers"},
+				Resources: []string{"serviceaccounts", "services"},
 				Verbs:     []string{"*"},
 			},
 			{
@@ -236,12 +227,6 @@ subjects:
 					APIGroups:       []string{"rbac.authorization.k8s.io"},
 					Resources:       []string{"roles"},
 					ResourceNames:   []string(nil),
-					NonResourceURLs: []string(nil)},
-				{
-					Verbs:           []string{"update"},
-					APIGroups:       []string{""},
-					Resources:       []string{"clusterextensions/finalizers"},
-					ResourceNames:   []string{"test-cluster-extension"},
 					NonResourceURLs: []string(nil),
 				},
 			},
@@ -310,12 +295,6 @@ subjects:
 					APIGroups:       []string{"rbac.authorization.k8s.io"},
 					Resources:       []string{"roles"},
 					ResourceNames:   []string(nil),
-					NonResourceURLs: []string(nil)},
-				{
-					Verbs:           []string{"update"},
-					APIGroups:       []string{""},
-					Resources:       []string{"clusterextensions/finalizers"},
-					ResourceNames:   []string{"test-cluster-extension"},
 					NonResourceURLs: []string(nil),
 				},
 			},
@@ -418,7 +397,7 @@ func TestPreAuthorize_Success(t *testing.T) {
 	t.Run("preauthorize succeeds with no missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(privilegedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
 	})
@@ -428,7 +407,7 @@ func TestPreAuthorize_MissingRBAC(t *testing.T) {
 	t.Run("preauthorize fails and finds missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(limitedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, expectedSingleNamespaceMissingRules, missingRules)
 	})
@@ -438,7 +417,7 @@ func TestPreAuthorizeMultiNamespace_MissingRBAC(t *testing.T) {
 	t.Run("preauthorize fails and finds missing rbac rules in multiple namespaces", func(t *testing.T) {
 		fakeClient := setupFakeClient(limitedClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifestMultiNamespace))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifestMultiNamespace))
 		require.NoError(t, err)
 		require.Equal(t, expectedMultiNamespaceMissingRules, missingRules)
 	})
@@ -448,9 +427,41 @@ func TestPreAuthorize_CheckEscalation(t *testing.T) {
 	t.Run("preauthorize succeeds with no missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(escalatingClusterRole)
 		preAuth := NewRBACPreAuthorizer(fakeClient)
-		missingRules, err := preAuth.PreAuthorize(context.TODO(), &exampleClusterExtension, strings.NewReader(testManifest))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
+	})
+}
+
+func TestPreAuthorize_AdditionalRequiredPerms_MissingRBAC(t *testing.T) {
+	t.Run("preauthorize fails and finds missing rbac rules coming from the additional required permissions", func(t *testing.T) {
+		fakeClient := setupFakeClient(escalatingClusterRole)
+		preAuth := NewRBACPreAuthorizer(fakeClient)
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest), func(user user.Info) []authorizer.AttributesRecord {
+			return []authorizer.AttributesRecord{
+				{
+					User:            user,
+					Verb:            "create",
+					APIGroup:        corev1.SchemeGroupVersion.Group,
+					APIVersion:      corev1.SchemeGroupVersion.Version,
+					Resource:        "pods",
+					ResourceRequest: true,
+				},
+			}
+		})
+		require.NoError(t, err)
+		require.Equal(t, []ScopedPolicyRules{
+			{
+				Namespace: "",
+				MissingRules: []rbacv1.PolicyRule{
+					{
+						Verbs:     []string{"create"},
+						APIGroups: []string{""},
+						Resources: []string{"pods"},
+					},
+				},
+			},
+		}, missingRules)
 	})
 }
 

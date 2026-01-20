@@ -15,6 +15,9 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
@@ -70,16 +73,11 @@ type mockPreflight struct {
 }
 
 type mockPreAuthorizer struct {
-	missingRules []authorization.ScopedPolicyRules
-	returnError  error
+	fn func(context.Context, user.Info, io.Reader, ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error)
 }
 
-func (p *mockPreAuthorizer) PreAuthorize(
-	ctx context.Context,
-	ext *ocv1.ClusterExtension,
-	manifestReader io.Reader,
-) ([]authorization.ScopedPolicyRules, error) {
-	return p.missingRules, p.returnError
+func (p *mockPreAuthorizer) PreAuthorize(ctx context.Context, manifestManager user.Info, manifestReader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+	return p.fn(ctx, manifestManager, manifestReader, additionalRequiredPerms...)
 }
 
 func (mp *mockPreflight) Install(context.Context, []client.Object) error {
@@ -193,7 +191,17 @@ metadata:
 spec:
   clusterIP: 0.0.0.0`
 
-	testCE            = &ocv1.ClusterExtension{}
+	testCE = &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-ext",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "test-sa",
+			},
+		},
+	}
 	testObjectLabels  = map[string]string{"object": "label"}
 	testStorageLabels = map[string]string{"storage": "label"}
 	errPreAuth        = errors.New("problem running preauthorization")
@@ -345,6 +353,52 @@ func TestApply_Installation(t *testing.T) {
 }
 
 func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
+	t.Run("preauthorizer called with correct parameters", func(t *testing.T) {
+		mockAcg := &mockActionGetter{
+			getClientErr: driver.ErrReleaseNotFound,
+			installErr:   errors.New("failed installing chart"),
+			desiredRel: &release.Release{
+				Info:     &release.Info{Status: release.StatusDeployed},
+				Manifest: validManifest,
+			},
+		}
+		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
+		helmApplier := applier.Helm{
+			ActionClientGetter: mockAcg,
+			Preflights:         []applier.Preflight{mockPf},
+			PreAuthorizer: &mockPreAuthorizer{
+				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+					t.Log("has correct user")
+					require.Equal(t, "system:serviceaccount:test-namespace:test-sa", user.GetName())
+					require.Empty(t, user.GetUID())
+					require.Nil(t, user.GetExtra())
+					require.Empty(t, user.GetGroups())
+
+					t.Log("has correct additional permissions")
+					require.Len(t, additionalRequiredPerms, 1)
+					perms := additionalRequiredPerms[0](user)
+
+					require.Len(t, perms, 1)
+					require.Equal(t, authorizer.AttributesRecord{
+						User:            user,
+						Name:            "test-ext",
+						APIGroup:        "olm.operatorframework.io",
+						APIVersion:      "v1",
+						Resource:        "clusterextensions/finalizers",
+						ResourceRequest: true,
+						Verb:            "update",
+					}, perms[0])
+					return nil, nil
+				},
+			},
+			HelmChartProvider:             DummyHelmChartProvider,
+			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
+		}
+
+		_, _, err := helmApplier.Apply(context.TODO(), validFS, testCE, testObjectLabels, testStorageLabels)
+		require.Error(t, err)
+	})
+
 	t.Run("fails during dry-run installation", func(t *testing.T) {
 		mockAcg := &mockActionGetter{
 			getClientErr:     driver.ErrReleaseNotFound,
@@ -373,9 +427,13 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		mockPf := &mockPreflight{installErr: errors.New("failed during install pre-flight check")}
 		helmApplier := applier.Helm{
-			ActionClientGetter:            mockAcg,
-			Preflights:                    []applier.Preflight{mockPf},
-			PreAuthorizer:                 &mockPreAuthorizer{nil, nil},
+			ActionClientGetter: mockAcg,
+			Preflights:         []applier.Preflight{mockPf},
+			PreAuthorizer: &mockPreAuthorizer{
+				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+					return nil, nil
+				},
+			},
 			HelmChartProvider:             DummyHelmChartProvider,
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 		}
@@ -397,8 +455,12 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			PreAuthorizer:      &mockPreAuthorizer{nil, errPreAuth},
-			HelmChartProvider:  DummyHelmChartProvider,
+			PreAuthorizer: &mockPreAuthorizer{
+				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+					return nil, errPreAuth
+				},
+			},
+			HelmChartProvider: DummyHelmChartProvider,
 		}
 		// Use a ClusterExtension with valid Spec fields.
 		validCE := &ocv1.ClusterExtension{
@@ -426,8 +488,12 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		}
 		helmApplier := applier.Helm{
 			ActionClientGetter: mockAcg,
-			PreAuthorizer:      &mockPreAuthorizer{missingRBAC, nil},
-			HelmChartProvider:  DummyHelmChartProvider,
+			PreAuthorizer: &mockPreAuthorizer{
+				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+					return missingRBAC, nil
+				},
+			},
+			HelmChartProvider: DummyHelmChartProvider,
 		}
 		// Use a ClusterExtension with valid Spec fields.
 		validCE := &ocv1.ClusterExtension{
@@ -454,8 +520,12 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			},
 		}
 		helmApplier := applier.Helm{
-			ActionClientGetter:            mockAcg,
-			PreAuthorizer:                 &mockPreAuthorizer{nil, nil},
+			ActionClientGetter: mockAcg,
+			PreAuthorizer: &mockPreAuthorizer{
+				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
+					return nil, nil
+				},
+			},
 			HelmChartProvider:             DummyHelmChartProvider,
 			HelmReleaseToObjectsConverter: mockHelmReleaseToObjectsConverter{},
 			Manager: &mockManagedContentCacheManager{
