@@ -14,6 +14,7 @@ func NewEnv() *envtest.Environment {
 	testEnv := &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			pathFromProjectRoot("helm/olmv1/base/operator-controller/crd/experimental"),
+			pathFromProjectRoot("helm/olmv1/base/catalogd/crd/experimental"),
 		},
 		ErrorIfCRDPathMissing: true,
 	}

@@ -168,6 +168,8 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 // ensureAllConditionsWithReason checks that all defined condition types exist in the given ClusterExtension,
 // and assigns a specified reason and custom message to any missing condition.
+//
+//nolint:unparam // reason parameter is designed to be flexible, even if current callers use the same value
 func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.ConditionReason, message string) {
 	for _, condType := range conditionsets.ConditionTypes {
 		cond := apimeta.FindStatusCondition(ext.Status.Conditions, condType)

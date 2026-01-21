@@ -56,6 +56,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension is updated(?:\s+.*)?$`, ResourceIsApplied)
 	sc.Step(`^(?i)ClusterExtension is available$`, ClusterExtensionIsAvailable)
 	sc.Step(`^(?i)ClusterExtension is rolled out$`, ClusterExtensionIsRolledOut)
+	sc.Step(`^(?i)ClusterExtension (?:latest generation )?has (?:been )?reconciled(?: the latest generation)?$`, ClusterExtensionReconciledLatestGeneration)
 	sc.Step(`^(?i)ClusterExtension reports "([^"]+)" as active revision(s?)$`, ClusterExtensionReportsActiveRevisions)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterExtensionReportsCondition)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterExtensionReportsConditionWithMessageFragment)
@@ -89,6 +90,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterCatalog "([^"]+)" serves bundles$`, CatalogServesBundles)
 	sc.Step(`^"([^"]+)" catalog image version "([^"]+)" is also tagged as "([^"]+)"$`, TagCatalogImage)
 	sc.Step(`^(?i)ClusterCatalog "([^"]+)" image version "([^"]+)" is also tagged as "([^"]+)"$`, TagCatalogImage)
+	sc.Step(`^(?i)ClusterCatalog "([^"]+)" is deleted$`, CatalogIsDeleted)
 
 	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
@@ -243,6 +245,25 @@ func ClusterExtensionIsAvailable(ctx context.Context) error {
 		}
 		return v == "True"
 	}, timeout, tick)
+	return nil
+}
+
+func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
+	sc := scenarioCtx(ctx)
+	waitFor(ctx, func() bool {
+		// Get both generation and observedGeneration in a single kubectl call
+		output, err := k8sClient("get", "clusterextension", sc.clusterExtensionName,
+			"-o", "jsonpath={.metadata.generation},{.status.conditions[?(@.type=='Progressing')].observedGeneration}")
+		if err != nil || output == "" {
+			return false
+		}
+		parts := strings.Split(output, ",")
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			return false
+		}
+		// Both exist and are equal means reconciliation happened
+		return parts[0] == parts[1]
+	})
 	return nil
 }
 
@@ -725,6 +746,15 @@ func CatalogServesBundles(ctx context.Context, catalogName string) error {
 func TagCatalogImage(name, oldTag, newTag string) error {
 	imageRef := fmt.Sprintf("%s/%s", os.Getenv("LOCAL_REGISTRY_HOST"), fmt.Sprintf("e2e/%s-catalog:%s", name, oldTag))
 	return crane.Tag(imageRef, newTag, crane.Insecure)
+}
+
+func CatalogIsDeleted(ctx context.Context, catalogName string) error {
+	catalogFullName := fmt.Sprintf("%s-catalog", catalogName)
+	_, err := k8sClient("delete", "clustercatalog", catalogFullName, "--ignore-not-found=true", "--wait=true")
+	if err != nil {
+		return fmt.Errorf("failed to delete catalog: %v", err)
+	}
+	return nil
 }
 
 func PrometheusMetricsAreReturned(ctx context.Context) error {

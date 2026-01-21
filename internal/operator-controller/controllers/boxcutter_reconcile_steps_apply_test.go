@@ -133,8 +133,8 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				imageFS: fstest.MapFS{},
 			}
 
-			stepFunc := ApplyBundleWithBoxcutter(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string) error {
-				return nil
+			stepFunc := ApplyBundleWithBoxcutter(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string) (bool, string, error) {
+				return true, "", nil
 			})
 			result, err := stepFunc(ctx, state, ext)
 			require.NoError(t, err)

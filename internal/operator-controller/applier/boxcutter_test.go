@@ -991,14 +991,18 @@ func TestBoxcutter_Apply(t *testing.T) {
 					labels.PackageNameKey:   "test-package",
 				}
 			}
-			err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations)
+			completed, status, err := boxcutter.Apply(t.Context(), testFS, ext, nil, revisionAnnotations)
 
 			// Assert
 			if tc.expectedErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.expectedErr)
+				assert.False(t, completed)
+				assert.Empty(t, status)
 			} else {
 				require.NoError(t, err)
+				assert.True(t, completed)
+				assert.Empty(t, status)
 			}
 
 			if tc.validate != nil {
@@ -1190,10 +1194,12 @@ func Test_PreAuthorizer_Integration(t *testing.T) {
 				RevisionGenerator: dummyGenerator,
 				PreAuthorizer:     tc.preAuthorizer(t),
 			}
-			err := boxcutter.Apply(t.Context(), dummyBundleFs, ext, nil, revisionAnnotations)
+			completed, status, err := boxcutter.Apply(t.Context(), dummyBundleFs, ext, nil, revisionAnnotations)
 			if tc.validate != nil {
 				tc.validate(t, err)
 			}
+			_ = completed
+			_ = status
 		})
 	}
 }

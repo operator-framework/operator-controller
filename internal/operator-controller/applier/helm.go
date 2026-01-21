@@ -84,6 +84,16 @@ func (h *Helm) runPreAuthorizationChecks(ctx context.Context, ext *ocv1.ClusterE
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) (bool, string, error) {
+	// If contentFS is nil, we're maintaining the current state without catalog access.
+	// In this case, reconcile the existing Helm release if it exists.
+	if contentFS == nil {
+		ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
+		if err != nil {
+			return false, "", err
+		}
+		return h.reconcileExistingRelease(ctx, ac, ext)
+	}
+
 	chrt, err := h.buildHelmChart(contentFS, ext)
 	if err != nil {
 		return false, "", err
@@ -173,6 +183,62 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 
 	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
 		return true, "", err
+	}
+
+	return true, "", nil
+}
+
+// reconcileExistingRelease reconciles an existing Helm release without catalog access.
+// This is used when the catalog is unavailable but we need to maintain the current installation.
+// It reconciles the release to actively maintain resources, and sets up watchers for monitoring/observability.
+func (h *Helm) reconcileExistingRelease(ctx context.Context, ac helmclient.ActionInterface, ext *ocv1.ClusterExtension) (bool, string, error) {
+	rel, err := ac.Get(ext.GetName())
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		return false, "", fmt.Errorf("catalog content unavailable and no release installed")
+	}
+	if err != nil {
+		return false, "", fmt.Errorf("failed to get current release: %w", err)
+	}
+
+	// Reconcile the existing release to ensure resources are maintained
+	if err := ac.Reconcile(rel); err != nil {
+		// Reconcile failed - resources NOT maintained
+		// Return false (rollout failed) with error
+		return false, "", err
+	}
+
+	// At this point: Reconcile succeeded - resources ARE maintained (applied to cluster via Server-Side Apply)
+	// The operations below are for setting up watches to detect drift (i.e., if someone manually modifies the
+	// resources). If watch setup fails, the resources are still successfully maintained, but we won't detect
+	// and auto-correct manual modifications. We return true (rollout succeeded) and log watch errors.
+	logger := klog.FromContext(ctx)
+
+	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
+	if err != nil {
+		logger.Error(err, "failed to parse manifest objects, cannot set up drift detection watches (resources are applied but drift detection disabled)")
+		return true, "", nil
+	}
+
+	logger.V(1).Info("setting up drift detection watches on managed objects")
+
+	// Defensive nil checks to prevent panics if Manager or Watcher not properly initialized
+	if h.Manager == nil {
+		logger.Error(fmt.Errorf("manager is nil"), "Manager not initialized, cannot set up drift detection watches (resources are applied but drift detection disabled)")
+		return true, "", nil
+	}
+	cache, err := h.Manager.Get(ctx, ext)
+	if err != nil {
+		logger.Error(err, "failed to get managed content cache, cannot set up drift detection watches (resources are applied but drift detection disabled)")
+		return true, "", nil
+	}
+
+	if h.Watcher == nil {
+		logger.Error(fmt.Errorf("watcher is nil"), "Watcher not initialized, cannot set up drift detection watches (resources are applied but drift detection disabled)")
+		return true, "", nil
+	}
+	if err := cache.Watch(ctx, h.Watcher, relObjects...); err != nil {
+		logger.Error(err, "failed to set up drift detection watches (resources are applied but drift detection disabled)")
+		return true, "", nil
 	}
 
 	return true, "", nil
