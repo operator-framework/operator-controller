@@ -36,6 +36,8 @@ var ConditionTypes = []string{
 var ConditionReasons = []string{
 	ocv1.ReasonSucceeded,
 	ocv1.ReasonDeprecated,
+	ocv1.ReasonNotDeprecated,
+	ocv1.ReasonDeprecationStatusUnknown,
 	ocv1.ReasonFailed,
 	ocv1.ReasonBlocked,
 	ocv1.ReasonRetrying,

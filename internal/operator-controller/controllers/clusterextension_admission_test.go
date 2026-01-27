@@ -13,9 +13,7 @@ import (
 )
 
 func TestClusterExtensionSourceConfig(t *testing.T) {
-	// NOTE: Kubernetes validation error format for JSON null values varies across K8s versions.
-	// We check for the common part "Invalid value:" which appears in all versions.
-	sourceTypeEmptyError := "Invalid value:"
+	sourceTypeEmptyErrors := []string{"Invalid value: \"null\"", "Invalid value: null"}
 	sourceTypeMismatchError := "spec.source.sourceType: Unsupported value"
 	sourceConfigInvalidError := "spec.source: Invalid value"
 	// unionField represents the required Catalog or (future) Bundle field required by SourceConfig
@@ -23,12 +21,12 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 		name       string
 		sourceType string
 		unionField string
-		errMsg     string
+		errMsgs    []string
 	}{
-		{"sourceType is null", "", "Catalog", sourceTypeEmptyError},
-		{"sourceType is invalid", "Invalid", "Catalog", sourceTypeMismatchError},
-		{"catalog field does not exist", "Catalog", "", sourceConfigInvalidError},
-		{"sourceConfig has required fields", "Catalog", "Catalog", ""},
+		{"sourceType is null", "", "Catalog", sourceTypeEmptyErrors},
+		{"sourceType is invalid", "Invalid", "Catalog", []string{sourceTypeMismatchError}},
+		{"catalog field does not exist", "Catalog", "", []string{sourceConfigInvalidError}},
+		{"sourceConfig has required fields", "Catalog", "Catalog", []string{}},
 	}
 
 	t.Parallel()
@@ -64,12 +62,20 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 				}))
 			}
 
-			if tc.errMsg == "" {
+			if len(tc.errMsgs) == 0 {
 				require.NoError(t, err, "unexpected error for sourceType %q: %w", tc.sourceType, err)
-			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.errMsg)
+				return
 			}
+
+			require.Error(t, err)
+			matched := false
+			for _, msg := range tc.errMsgs {
+				if strings.Contains(err.Error(), msg) {
+					matched = true
+					break
+				}
+			}
+			require.True(t, matched, "expected one of %v in error %q", tc.errMsgs, err)
 		})
 	}
 }

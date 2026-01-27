@@ -95,46 +95,62 @@ func RetrieveRevisionStates(r RevisionStatesGetter) ReconcileStepFunc {
 func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
-		var resolvedRevisionMetadata *RevisionMetadata
-		if len(state.revisionStates.RollingOut) == 0 {
-			l.Info("resolving bundle")
-			var bm *ocv1.BundleMetadata
-			if state.revisionStates.Installed != nil {
-				bm = &state.revisionStates.Installed.BundleMetadata
-			}
-			resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolve(ctx, ext, bm)
-			if err != nil {
-				return handleResolutionError(ctx, c, state, ext, err)
-			}
 
-			// set deprecation status after _successful_ resolution
-			// TODO:
-			//  1. It seems like deprecation status should reflect the currently installed bundle, not the resolved
-			//     bundle. So perhaps we should set package and channel deprecations directly after resolution, but
-			//     defer setting the bundle deprecation until we successfully install the bundle.
-			//  2. If resolution fails because it can't find a bundle, that doesn't mean we wouldn't be able to find
-			//     a deprecation for the ClusterExtension's spec.packageName. Perhaps we should check for a non-nil
-			//     resolvedDeprecation even if resolution returns an error. If present, we can still update some of
-			//     our deprecation status.
-			//       - Open question though: what if different catalogs have different opinions of what's deprecated.
-			//         If we can't resolve a bundle, how do we know which catalog to trust for deprecation information?
-			//         Perhaps if the package shows up in multiple catalogs and deprecations don't match, we can set
-			//         the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
-			//         all catalogs?
-			SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
-			resolvedRevisionMetadata = &RevisionMetadata{
-				Package: resolvedBundle.Package,
-				Image:   resolvedBundle.Image,
-				// TODO: Right now, operator-controller only supports registry+v1 bundles and has no concept
-				//   of a "release" field. If/when we add a release field concept or a new bundle format
-				//   we need to re-evaluate use of `AsLegacyRegistryV1Version` so that we avoid propagating
-				//   registry+v1's semver spec violations of treating build metadata as orderable.
-				BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, resolvedBundleVersion.AsLegacyRegistryV1Version()),
+		// If already rolling out, use existing revision and set deprecation to Unknown (no catalog check)
+		if len(state.revisionStates.RollingOut) > 0 {
+			installedBundleName := ""
+			if state.revisionStates.Installed != nil {
+				installedBundleName = state.revisionStates.Installed.Name
 			}
-		} else {
-			resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
+			SetDeprecationStatus(ext, installedBundleName, nil, false)
+			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
+			return nil, nil
 		}
-		state.resolvedRevisionMetadata = resolvedRevisionMetadata
+
+		// Resolve a new bundle from the catalog
+		l.V(1).Info("resolving bundle")
+		var bm *ocv1.BundleMetadata
+		if state.revisionStates.Installed != nil {
+			bm = &state.revisionStates.Installed.BundleMetadata
+		}
+		resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolve(ctx, ext, bm)
+
+		// Get the installed bundle name for deprecation status.
+		// BundleDeprecated should reflect what's currently running, not what we're trying to install.
+		installedBundleName := ""
+		if state.revisionStates.Installed != nil {
+			installedBundleName = state.revisionStates.Installed.Name
+		}
+
+		// Set deprecation status based on resolution results:
+		//  - If resolution succeeds: hasCatalogData=true, deprecation shows catalog data (nil=not deprecated)
+		//  - If resolution fails but returns deprecation: hasCatalogData=true, show package/channel deprecation warnings
+		//  - If resolution fails with nil deprecation: hasCatalogData=false, all conditions go Unknown
+		//
+		// Note: We DO check for deprecation data even when resolution fails (hasCatalogData = err == nil || resolvedDeprecation != nil).
+		// This allows us to show package/channel deprecation warnings even when we can't resolve a specific bundle.
+		//
+		// TODO: Open question - what if different catalogs have different opinions of what's deprecated?
+		//   If we can't resolve a bundle, how do we know which catalog to trust for deprecation information?
+		//   Perhaps if the package shows up in multiple catalogs and deprecations don't match, we can set
+		//   the deprecation status to unknown? Or perhaps we somehow combine the deprecation information from
+		//   all catalogs? This needs a follow-up discussion and PR.
+		hasCatalogData := err == nil || resolvedDeprecation != nil
+		SetDeprecationStatus(ext, installedBundleName, resolvedDeprecation, hasCatalogData)
+
+		if err != nil {
+			return handleResolutionError(ctx, c, state, ext, err)
+		}
+
+		state.resolvedRevisionMetadata = &RevisionMetadata{
+			Package: resolvedBundle.Package,
+			Image:   resolvedBundle.Image,
+			// TODO: Right now, operator-controller only supports registry+v1 bundles and has no concept
+			//   of a "release" field. If/when we add a release field concept or a new bundle format
+			//   we need to re-evaluate use of `AsLegacyRegistryV1Version` so that we avoid propagating
+			//   registry+v1's semver spec violations of treating build metadata as orderable.
+			BundleMetadata: bundleutil.MetadataFor(resolvedBundle.Name, resolvedBundleVersion.AsLegacyRegistryV1Version()),
+		}
 		return nil, nil
 	}
 }
@@ -160,7 +176,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 		msg := fmt.Sprintf("failed to resolve bundle: %v", err)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-		ensureAllConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
+		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
 		return nil, err
 	}
 
@@ -179,7 +195,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 			"installedVersion", installedVersion)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-		ensureAllConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
+		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
 		return nil, err
 	}
 
@@ -198,7 +214,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 			"catalogName", catalogName)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-		ensureAllConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
+		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
 		return nil, err
 	}
 
@@ -215,7 +231,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 			"catalogName", catalogName)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-		ensureAllConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
+		ensureFailureConditionsWithReason(ext, ocv1.ReasonRetrying, msg)
 		return nil, err
 	}
 

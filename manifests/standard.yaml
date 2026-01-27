@@ -1080,12 +1080,12 @@ spec:
                   When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
                   When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
 
-                  When the ClusterExtension is sourced from a catalog, it may also communicate a deprecation condition.
+                  When the ClusterExtension is sourced from a catalog, it surfaces deprecation conditions based on catalog metadata.
                   These are indications from a package owner to guide users away from a particular package, channel, or bundle:
-                    - BundleDeprecated is set if the requested bundle version is marked deprecated in the catalog.
-                    - ChannelDeprecated is set if the requested channel is marked deprecated in the catalog.
-                    - PackageDeprecated is set if the requested package is marked deprecated in the catalog.
-                    - Deprecated is a rollup condition that is present when any of the deprecated conditions are present.
+                    - BundleDeprecated is True if the installed bundle is marked deprecated, False if not deprecated, or Unknown if no bundle is installed yet or if catalog data is unavailable.
+                    - ChannelDeprecated is True if any requested channel is marked deprecated, False if not deprecated, or Unknown if catalog data is unavailable.
+                    - PackageDeprecated is True if the requested package is marked deprecated, False if not deprecated, or Unknown if catalog data is unavailable.
+                    - Deprecated is a rollup condition that is True when any deprecation exists, False when none exist, or Unknown when catalog data is unavailable.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
