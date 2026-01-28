@@ -1,6 +1,10 @@
 package bundle
 
 import (
+	_ "embed"
+	"encoding/json"
+	"fmt"
+
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -11,7 +15,13 @@ import (
 )
 
 const (
-	BundleConfigWatchNamespaceKey = "watchNamespace"
+	BundleConfigWatchNamespaceKey   = "watchNamespace"
+	BundleConfigDeploymentConfigKey = "deploymentConfig"
+)
+
+var (
+	//go:embed registryv1bundleconfig.json
+	bundleConfigSchemaJSON []byte
 )
 
 type RegistryV1 struct {
@@ -31,38 +41,91 @@ func (rv1 *RegistryV1) GetConfigSchema() (map[string]any, error) {
 	return buildBundleConfigSchema(installModes)
 }
 
-// buildBundleConfigSchema creates validation rules based on what the operator supports.
+// buildBundleConfigSchema loads the base bundle config schema and modifies it based on
+// the operator's install modes.
 //
-// Examples of how install modes affect validation:
-//   - AllNamespaces only: user can't set watchNamespace (operator watches everything)
-//   - OwnNamespace only: user must set watchNamespace to the install namespace
-//   - SingleNamespace only: user must set watchNamespace to a different namespace
-//   - AllNamespaces + OwnNamespace: user can optionally set watchNamespace
+// The base schema includes
+// 1. watchNamespace
+// 2. deploymentConfig properties.
+// The watchNamespace property is modified based on what the operator supports:
+//   - AllNamespaces only: remove watchNamespace (operator always watches everything)
+//   - OwnNamespace only: make watchNamespace required, must equal install namespace
+//   - SingleNamespace only: make watchNamespace required, must differ from install namespace
+//   - AllNamespaces + OwnNamespace: make watchNamespace optional
 func buildBundleConfigSchema(installModes sets.Set[v1alpha1.InstallMode]) (map[string]any, error) {
-	schema := map[string]any{
-		"$schema":              "http://json-schema.org/draft-07/schema#",
-		"type":                 "object",
-		"additionalProperties": false, // Reject unknown fields (catches typos and misconfigurations)
+	// Load the base schema
+	baseSchema, err := getBundleConfigSchemaMap()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get base bundle config schema: %w", err)
 	}
 
-	properties := map[string]any{}
-	var required []any
+	// Get properties map from the schema
+	properties, ok := baseSchema["properties"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("base schema missing properties")
+	}
 
-	// Add watchNamespace property if the bundle supports it
+	// Modify watchNamespace field based on install modes
 	if isWatchNamespaceConfigurable(installModes) {
+		// Replace the generic watchNamespace with install-mode-specific version
 		watchNSProperty, isRequired := buildWatchNamespaceProperty(installModes)
 		properties["watchNamespace"] = watchNSProperty
+
+		// Preserve existing required fields, only add/remove watchNamespace
 		if isRequired {
-			required = append(required, "watchNamespace")
+			addToRequired(baseSchema, "watchNamespace")
+		} else {
+			removeFromRequired(baseSchema, "watchNamespace")
+		}
+	} else {
+		// AllNamespaces only - remove watchNamespace property entirely
+		// (operator always watches all namespaces, no configuration needed)
+		delete(properties, "watchNamespace")
+		removeFromRequired(baseSchema, "watchNamespace")
+	}
+
+	return baseSchema, nil
+}
+
+// addToRequired adds fieldName to the schema's required array if it's not already present.
+// Preserves any existing required fields.
+func addToRequired(schema map[string]any, fieldName string) {
+	var required []any
+	if existingRequired, ok := schema["required"].([]any); ok {
+		// Check if field is already required
+		for _, field := range existingRequired {
+			if field == fieldName {
+				return // Already required
+			}
+		}
+		required = existingRequired
+	}
+	// Add the field to required list
+	schema["required"] = append(required, fieldName)
+}
+
+// removeFromRequired removes fieldName from the schema's required array if present.
+// Preserves all other required fields.
+func removeFromRequired(schema map[string]any, fieldName string) {
+	existingRequired, ok := schema["required"].([]any)
+	if !ok {
+		return // No required array
+	}
+
+	// Filter out the field
+	filtered := make([]any, 0, len(existingRequired))
+	for _, field := range existingRequired {
+		if field != fieldName {
+			filtered = append(filtered, field)
 		}
 	}
 
-	schema["properties"] = properties
-	if len(required) > 0 {
-		schema["required"] = required
+	// Update or delete the required array
+	if len(filtered) > 0 {
+		schema["required"] = filtered
+	} else {
+		delete(schema, "required")
 	}
-
-	return schema, nil
 }
 
 // buildWatchNamespaceProperty creates the validation rules for the watchNamespace field.
@@ -150,4 +213,17 @@ func isWatchNamespaceConfigurable(installModes sets.Set[v1alpha1.InstallMode]) b
 func isWatchNamespaceConfigRequired(installModes sets.Set[v1alpha1.InstallMode]) bool {
 	return isWatchNamespaceConfigurable(installModes) &&
 		!installModes.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true})
+}
+
+// getBundleConfigSchemaMap returns the complete registry+v1 bundle configuration schema
+// as a map[string]any. This includes the following properties:
+// 1. watchNamespace
+// 2. deploymentConfig
+// The schema can be modified at runtime based on operator install modes before validation.
+func getBundleConfigSchemaMap() (map[string]any, error) {
+	var schemaMap map[string]any
+	if err := json.Unmarshal(bundleConfigSchemaJSON, &schemaMap); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal bundle config schema: %w", err)
+	}
+	return schemaMap, nil
 }

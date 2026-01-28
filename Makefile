@@ -202,7 +202,7 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) --load-build-tags=$(GO_BUILD_TAGS) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: k8s-pin kind-verify-versions fmt generate manifests update-tls-profiles crd-ref-docs verify-bingo #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
+verify: k8s-pin kind-verify-versions fmt generate manifests update-tls-profiles crd-ref-docs update-registryv1-bundle-schema verify-bingo #HELP Verify all generated code is up-to-date. Runs k8s-pin instead of just tidy.
 	git diff --exit-code
 
 .PHONY: verify-bingo
@@ -221,6 +221,10 @@ fmt: $(YAMLFMT) #EXHELP Formats code
 .PHONY: update-tls-profiles
 update-tls-profiles: $(GOJQ) #EXHELP Update TLS profiles from the Mozilla wiki
 	env JQ=$(GOJQ) hack/tools/update-tls-profiles.sh
+
+.PHONY: update-registryv1-bundle-schema
+update-registryv1-bundle-schema: #EXHELP Update registry+v1 bundle configuration JSON schema
+	hack/tools/update-registryv1-bundle-schema.sh
 
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := git://main?path=
