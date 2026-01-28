@@ -30,9 +30,7 @@ Feature: Install ClusterExtension
     Then ClusterExtension is rolled out
     And ClusterExtension is available
     And bundle "test-operator.1.2.0" is installed in version "1.2.0"
-    And resource "networkpolicy/test-operator-network-policy" is installed
-    And resource "configmap/test-configmap" is installed
-    And resource "deployment/test-operator" is installed
+    And ClusterExtension resources are created and labeled
 
   @mirrored-registry
   Scenario Outline: Install latest available version from mirrored registry
@@ -57,9 +55,7 @@ Feature: Install ClusterExtension
     Then ClusterExtension is rolled out
     And ClusterExtension is available
     And bundle "<package-name>-operator.1.2.0" is installed in version "1.2.0"
-    And resource "networkpolicy/test-operator-network-policy" is installed
-    And resource "configmap/test-configmap" is installed
-    And resource "deployment/test-operator" is installed
+    And ClusterExtension resources are created and labeled
 
     Examples:
       | package-name  |

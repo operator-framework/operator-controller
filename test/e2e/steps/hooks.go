@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/component-base/featuregate"
 	"k8s.io/klog/v2/textlogger"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
@@ -32,6 +33,9 @@ type scenarioContext struct {
 	removedResources     []unstructured.Unstructured
 	backGroundCmds       []*exec.Cmd
 	metricsResponse      map[string]string
+
+	// set by ClusterExtensionIsRolledOut
+	extensionObjects []client.Object
 }
 
 type contextKey string
