@@ -198,6 +198,12 @@ func init() {
 	tlsprofiles.AddFlags(flags)
 
 	ctrl.SetLogger(klog.NewKlogr())
+
+	// Configure global HTTP transport to prefer IPv4 for all HTTP clients
+	// including the containers/image library used for pulling from registries
+	if transport, ok := http.DefaultTransport.(*http.Transport); ok {
+		transport.DialContext = httputil.IPv4PreferringDialContext
+	}
 }
 func validateMetricsFlags() error {
 	if (cfg.certFile != "" && cfg.keyFile == "") || (cfg.certFile == "" && cfg.keyFile != "") {
@@ -325,6 +331,8 @@ func run() error {
 	}
 
 	restConfig := ctrl.GetConfigOrDie()
+	// Configure REST client to prefer IPv4 over IPv6 when both are available
+	restConfig.Dial = httputil.IPv4PreferringDialContext
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme.Scheme,
 		Metrics:                       metricsServerOptions,
