@@ -56,11 +56,8 @@ func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 	// Nothing is installed
 	if revisionStates.Installed == nil {
 		setInstallStatus(ext, nil)
-		if len(revisionStates.RollingOut) == 0 {
-			setInstalledStatusConditionFalse(ext, ocv1.ReasonFailed, "No bundle installed")
-		} else {
-			setInstalledStatusConditionFalse(ext, ocv1.ReasonAbsent, "No bundle installed")
-		}
+		reason := determineFailureReason(revisionStates.RollingOut)
+		setInstalledStatusConditionFalse(ext, reason, "No bundle installed")
 		return
 	}
 	// Something is installed
@@ -69,6 +66,44 @@ func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 	}
 	setInstallStatus(ext, installStatus)
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", revisionStates.Installed.Image))
+}
+
+// determineFailureReason determines the appropriate reason for the Installed condition
+// when no bundle is installed (Installed: False).
+//
+// Returns Failed when:
+//   - No rolling revisions exist (nothing to install)
+//   - Any rolling revision has Reason: Retrying (indicates an error occurred)
+//
+// Returns Absent when:
+//   - Rolling revisions exist with Reason: RollingOut (healthy phased rollout in progress)
+//
+// Rationale:
+//   - Failed: Semantically indicates an error prevented installation
+//   - Absent: Semantically indicates "not there yet" (neutral state, e.g., during healthy rollout)
+//   - Retrying reason indicates an error (config validation, apply failure, etc.)
+//   - RollingOut reason indicates healthy progress (not an error)
+//
+// This ensures consistency: all errors (regardless of type) result in Failed,
+// while healthy rollout states result in Absent.
+func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
+	if len(rollingRevisions) == 0 {
+		return ocv1.ReasonFailed
+	}
+
+	// Check if any rolling revision indicates an error (Retrying reason)
+	for _, rev := range rollingRevisions {
+		progressingCond := apimeta.FindStatusCondition(rev.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+		if progressingCond != nil && progressingCond.Reason == string(ocv1.ClusterExtensionRevisionReasonRetrying) {
+			// Retrying indicates an error occurred (config, apply, validation, etc.)
+			// Use Failed for semantic correctness: installation failed due to error
+			return ocv1.ReasonFailed
+		}
+	}
+
+	// No errors detected - revisions are progressing healthily (RollingOut) or no conditions set
+	// Use Absent for neutral "not installed yet" state
+	return ocv1.ReasonAbsent
 }
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
