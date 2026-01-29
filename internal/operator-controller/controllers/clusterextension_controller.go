@@ -455,7 +455,12 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager, opts ...
 }
 
 func wrapErrorWithResolutionInfo(resolved ocv1.BundleMetadata, err error) error {
-	return fmt.Errorf("error for resolved bundle %q with version %q: %w", resolved.Name, resolved.Version, err)
+	wrappedErr := fmt.Errorf("error for resolved bundle %q with version %q: %w", resolved.Name, resolved.Version, err)
+	// Preserve TerminalError type if the original error was terminal
+	if errors.Is(err, reconcile.TerminalError(nil)) {
+		return reconcile.TerminalError(wrappedErr)
+	}
+	return wrappedErr
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change

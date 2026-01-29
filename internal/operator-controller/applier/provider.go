@@ -9,6 +9,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -77,7 +78,7 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		bundleConfigBytes := extensionConfigBytes(ext)
 		bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, ext.Spec.Namespace)
 		if err != nil {
-			return nil, fmt.Errorf("invalid ClusterExtension configuration: %w", err)
+			return nil, reconcile.TerminalError(fmt.Errorf("invalid ClusterExtension configuration: %w", err))
 		}
 
 		if watchNS := bundleConfig.GetWatchNamespace(); watchNS != nil {
