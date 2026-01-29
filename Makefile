@@ -181,7 +181,7 @@ MANIFESTS ?= $(STANDARD_MANIFEST) $(STANDARD_E2E_MANIFEST) $(EXPERIMENTAL_MANIFE
 $(STANDARD_MANIFEST) ?= helm/cert-manager.yaml
 $(STANDARD_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/e2e.yaml
 $(EXPERIMENTAL_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml
-$(EXPERIMENTAL_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml helm/e2e.yaml
+$(EXPERIMENTAL_E2E_MANIFEST) ?= helm/cert-manager.yaml helm/experimental.yaml helm/e2e.yaml helm/high-availability.yaml
 HELM_SETTINGS ?=
 .PHONY: $(MANIFESTS)
 $(MANIFESTS): $(HELM) $(CONFTEST)
@@ -514,8 +514,8 @@ run-experimental: run-internal #HELP Build the operator-controller then deploy i
 CATD_NAMESPACE := olmv1-system
 .PHONY: wait
 wait:
-	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
+	kubectl wait --for=condition=Available --namespace=$(CATD_NAMESPACE) deployment/catalogd-controller-manager --timeout=3m
+	kubectl wait --for=condition=Ready --namespace=$(CATD_NAMESPACE) certificate/catalogd-service-cert --timeout=3m # Avoid upgrade test flakes when reissuing cert
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
