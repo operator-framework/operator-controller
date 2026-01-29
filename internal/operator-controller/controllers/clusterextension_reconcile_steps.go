@@ -158,11 +158,11 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 // handleResolutionError handles the case when bundle resolution fails.
 //
 // Decision logic (evaluated in order):
-//  1. No installed bundle → Retry (cannot proceed without any bundle)
-//  2. Version change requested → Retry (cannot upgrade without catalog)
-//  3. Cannot check catalog existence → Retry (API error, cannot safely decide)
-//  4. Catalogs exist → Retry (transient error, catalog may be updating)
-//  5. Catalogs deleted → Fallback to installed bundle (maintain current state)
+//  1. No installed bundle: Retry (cannot proceed without any bundle)
+//  2. Version change requested: Retry (cannot upgrade without catalog)
+//  3. Cannot check catalog existence: Retry (API error, cannot safely decide)
+//  4. Catalogs exist: Retry (transient error, catalog may be updating)
+//  5. Catalogs deleted: Fallback to installed bundle (maintain current state)
 //
 // When falling back (case 5), we set the resolved bundle to the installed bundle and return
 // no error, allowing the Apply step to run and maintain resources using the existing installation.
