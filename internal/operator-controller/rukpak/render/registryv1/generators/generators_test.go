@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1/generators"
@@ -2507,4 +2509,587 @@ func Test_CertProviderResourceGenerator_Succeeds(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "my-deployment-service-cert"},
 		}),
 	}, objs)
+}
+
+func Test_BundleCSVDeploymentGenerator_WithDeploymentConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		bundle *bundle.RegistryV1
+		opts   render.Options
+		verify func(*testing.T, []client.Object)
+	}{
+		{
+			name: "applies env vars from deployment config",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{
+												Name: "manager",
+												Env: []corev1.EnvVar{
+													{Name: "EXISTING_VAR", Value: "existing_value"},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Env: []corev1.EnvVar{
+						{Name: "NEW_VAR", Value: "new_value"},
+						{Name: "EXISTING_VAR", Value: "overridden_value"},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+				require.Len(t, dep.Spec.Template.Spec.Containers, 1)
+				envVars := dep.Spec.Template.Spec.Containers[0].Env
+
+				// Should have both vars
+				require.Len(t, envVars, 2)
+
+				// Existing var should be overridden
+				var existingVar *corev1.EnvVar
+				for i := range envVars {
+					if envVars[i].Name == "EXISTING_VAR" {
+						existingVar = &envVars[i]
+						break
+					}
+				}
+				require.NotNil(t, existingVar)
+				require.Equal(t, "overridden_value", existingVar.Value)
+
+				// New var should be added
+				var newVar *corev1.EnvVar
+				for i := range envVars {
+					if envVars[i].Name == "NEW_VAR" {
+						newVar = &envVars[i]
+						break
+					}
+				}
+				require.NotNil(t, newVar)
+				require.Equal(t, "new_value", newVar.Value)
+			},
+		},
+		{
+			name: "applies resources from deployment config",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Resources: &corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("100m"),
+							corev1.ResourceMemory: resource.MustParse("128Mi"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("200m"),
+							corev1.ResourceMemory: resource.MustParse("256Mi"),
+						},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+				resources := dep.Spec.Template.Spec.Containers[0].Resources
+
+				require.Equal(t, resource.MustParse("100m"), *resources.Requests.Cpu())
+				require.Equal(t, resource.MustParse("128Mi"), *resources.Requests.Memory())
+				require.Equal(t, resource.MustParse("200m"), *resources.Limits.Cpu())
+				require.Equal(t, resource.MustParse("256Mi"), *resources.Limits.Memory())
+			},
+		},
+		{
+			name: "applies tolerations from deployment config",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Tolerations: []corev1.Toleration{
+						{
+							Key:      "node.kubernetes.io/disk-type",
+							Operator: corev1.TolerationOpEqual,
+							Value:    "ssd",
+							Effect:   corev1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+				tolerations := dep.Spec.Template.Spec.Tolerations
+
+				require.Len(t, tolerations, 1)
+				require.Equal(t, "node.kubernetes.io/disk-type", tolerations[0].Key)
+				require.Equal(t, corev1.TolerationOpEqual, tolerations[0].Operator)
+				require.Equal(t, "ssd", tolerations[0].Value)
+				require.Equal(t, corev1.TaintEffectNoSchedule, tolerations[0].Effect)
+			},
+		},
+		{
+			name: "applies node selector from deployment config",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+										NodeSelector: map[string]string{
+											"existing-key": "existing-value",
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					NodeSelector: map[string]string{
+						"disk-type": "ssd",
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+
+				// Node selector should be replaced, not merged
+				require.Equal(t, map[string]string{"disk-type": "ssd"}, dep.Spec.Template.Spec.NodeSelector)
+			},
+		},
+		{
+			name: "applies affinity from deployment config",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Affinity: &corev1.Affinity{
+						NodeAffinity: &corev1.NodeAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+								NodeSelectorTerms: []corev1.NodeSelectorTerm{
+									{
+										MatchExpressions: []corev1.NodeSelectorRequirement{
+											{
+												Key:      "kubernetes.io/arch",
+												Operator: corev1.NodeSelectorOpIn,
+												Values:   []string{"amd64", "arm64"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+
+				require.NotNil(t, dep.Spec.Template.Spec.Affinity)
+				require.NotNil(t, dep.Spec.Template.Spec.Affinity.NodeAffinity)
+				require.NotNil(t, dep.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution)
+				require.Len(t, dep.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms, 1)
+			},
+		},
+		{
+			name: "applies annotations from deployment config",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithAnnotations(map[string]string{
+						"csv-annotation": "csv-value",
+					}).
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									ObjectMeta: metav1.ObjectMeta{
+										Annotations: map[string]string{
+											"existing-pod-annotation": "existing-pod-value",
+										},
+									},
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Annotations: map[string]string{
+						"config-annotation":       "config-value",
+						"existing-pod-annotation": "should-not-override",
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+
+				// Deployment annotations should include config annotations
+				// (CSV annotations are only merged into pod template by the generator)
+				require.Contains(t, dep.Annotations, "config-annotation")
+				require.Equal(t, "config-value", dep.Annotations["config-annotation"])
+
+				// Pod template annotations should include CSV annotations (merged by generator)
+				// and existing pod annotations should take precedence over config
+				require.Contains(t, dep.Spec.Template.Annotations, "csv-annotation")
+				require.Equal(t, "csv-value", dep.Spec.Template.Annotations["csv-annotation"])
+				require.Contains(t, dep.Spec.Template.Annotations, "existing-pod-annotation")
+				require.Equal(t, "existing-pod-value", dep.Spec.Template.Annotations["existing-pod-annotation"])
+				require.Contains(t, dep.Spec.Template.Annotations, "config-annotation")
+				require.Equal(t, "config-value", dep.Spec.Template.Annotations["config-annotation"])
+			},
+		},
+		{
+			name: "applies volumes and volume mounts from deployment config",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Volumes: []corev1.Volume{
+						{
+							Name: "config-volume",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: "my-config"},
+								},
+							},
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "config-volume",
+							MountPath: "/etc/config",
+						},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+
+				// Check volume was added
+				require.Len(t, dep.Spec.Template.Spec.Volumes, 1)
+				require.Equal(t, "config-volume", dep.Spec.Template.Spec.Volumes[0].Name)
+
+				// Check volume mount was added to container
+				require.Len(t, dep.Spec.Template.Spec.Containers[0].VolumeMounts, 1)
+				require.Equal(t, "config-volume", dep.Spec.Template.Spec.Containers[0].VolumeMounts[0].Name)
+				require.Equal(t, "/etc/config", dep.Spec.Template.Spec.Containers[0].VolumeMounts[0].MountPath)
+			},
+		},
+		{
+			name: "applies envFrom from deployment config",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					EnvFrom: []corev1.EnvFromSource{
+						{
+							ConfigMapRef: &corev1.ConfigMapEnvSource{
+								LocalObjectReference: corev1.LocalObjectReference{Name: "env-config"},
+							},
+						},
+						{
+							SecretRef: &corev1.SecretEnvSource{
+								LocalObjectReference: corev1.LocalObjectReference{Name: "env-secret"},
+							},
+						},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+
+				envFrom := dep.Spec.Template.Spec.Containers[0].EnvFrom
+				require.Len(t, envFrom, 2)
+
+				// Check ConfigMap ref
+				require.NotNil(t, envFrom[0].ConfigMapRef)
+				require.Equal(t, "env-config", envFrom[0].ConfigMapRef.Name)
+
+				// Check Secret ref
+				require.NotNil(t, envFrom[1].SecretRef)
+				require.Equal(t, "env-secret", envFrom[1].SecretRef.Name)
+			},
+		},
+		{
+			name: "applies all config fields together",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "manager"},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Env: []corev1.EnvVar{
+						{Name: "ENV_VAR", Value: "value"},
+					},
+					Resources: &corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU: resource.MustParse("100m"),
+						},
+					},
+					Tolerations: []corev1.Toleration{
+						{Key: "key1", Operator: corev1.TolerationOpEqual, Value: "value1"},
+					},
+					NodeSelector: map[string]string{
+						"disk": "ssd",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+
+				// Verify env was applied
+				require.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 1)
+				require.Equal(t, "ENV_VAR", dep.Spec.Template.Spec.Containers[0].Env[0].Name)
+
+				// Verify resources were applied
+				require.NotNil(t, dep.Spec.Template.Spec.Containers[0].Resources.Requests)
+
+				// Verify tolerations were applied
+				require.Len(t, dep.Spec.Template.Spec.Tolerations, 1)
+
+				// Verify node selector was applied
+				require.Equal(t, map[string]string{"disk": "ssd"}, dep.Spec.Template.Spec.NodeSelector)
+
+				// Verify annotations were applied
+				require.Contains(t, dep.Annotations, "annotation-key")
+				require.Contains(t, dep.Spec.Template.Annotations, "annotation-key")
+			},
+		},
+		{
+			name: "applies config to multiple containers",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{Name: "container1"},
+											{Name: "container2"},
+											{Name: "container3"},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: &config.DeploymentConfig{
+					Env: []corev1.EnvVar{
+						{Name: "SHARED_VAR", Value: "shared_value"},
+					},
+					Resources: &corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU: resource.MustParse("100m"),
+						},
+					},
+				},
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+
+				// All containers should have the env var
+				for i := range dep.Spec.Template.Spec.Containers {
+					container := dep.Spec.Template.Spec.Containers[i]
+					require.Len(t, container.Env, 1)
+					require.Equal(t, "SHARED_VAR", container.Env[0].Name)
+					require.Equal(t, "shared_value", container.Env[0].Value)
+
+					// All containers should have the resources
+					require.NotNil(t, container.Resources.Requests)
+					require.Equal(t, resource.MustParse("100m"), *container.Resources.Requests.Cpu())
+				}
+			},
+		},
+		{
+			name: "nil deployment config does nothing",
+			bundle: &bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().
+					WithStrategyDeploymentSpecs(
+						v1alpha1.StrategyDeploymentSpec{
+							Name: "test-deployment",
+							Spec: appsv1.DeploymentSpec{
+								Template: corev1.PodTemplateSpec{
+									Spec: corev1.PodSpec{
+										Containers: []corev1.Container{
+											{
+												Name: "manager",
+												Env: []corev1.EnvVar{
+													{Name: "EXISTING_VAR", Value: "existing_value"},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					).Build(),
+			},
+			opts: render.Options{
+				InstallNamespace: "test-ns",
+				TargetNamespaces: []string{"test-ns"},
+				DeploymentConfig: nil,
+			},
+			verify: func(t *testing.T, objs []client.Object) {
+				require.Len(t, objs, 1)
+				dep := objs[0].(*appsv1.Deployment)
+
+				// Should only have the existing env var
+				require.Len(t, dep.Spec.Template.Spec.Containers[0].Env, 1)
+				require.Equal(t, "EXISTING_VAR", dep.Spec.Template.Spec.Containers[0].Env[0].Name)
+				require.Equal(t, "existing_value", dep.Spec.Template.Spec.Containers[0].Env[0].Value)
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			objs, err := generators.BundleCSVDeploymentGenerator(tc.bundle, tc.opts)
+			require.NoError(t, err)
+			tc.verify(t, objs)
+		})
+	}
 }

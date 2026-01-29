@@ -21,6 +21,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
@@ -97,6 +98,9 @@ func BundleCSVDeploymentGenerator(rv1 *bundle.RegistryV1, opts render.Options) (
 		if webhookDeployments.Has(depSpec.Name) && secretInfo != nil {
 			ensureCorrectDeploymentCertVolumes(deploymentResource, *secretInfo)
 		}
+
+		// Apply deployment configuration if provided
+		applyCustomConfigToDeployment(deploymentResource, opts.DeploymentConfig)
 
 		objs = append(objs, deploymentResource)
 	}
@@ -577,4 +581,252 @@ func getWebhookNamespaceSelector(targetNamespaces []string) *metav1.LabelSelecto
 		}
 	}
 	return nil
+}
+
+// applyCustomConfigToDeployment applies the deployment configuration to all containers in the deployment.
+// It follows OLMv0 behavior for applying configuration to deployments.
+// See https://github.com/operator-framework/operator-lifecycle-manager/blob/master/pkg/controller/operators/catalog/subscription/config_types.go
+func applyCustomConfigToDeployment(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if config == nil {
+		return
+	}
+
+	// Apply all configuration modifications following OLMv0 behavior
+	applyEnvironmentConfig(deployment, config)
+	applyEnvironmentFromConfig(deployment, config)
+	applyVolumeConfig(deployment, config)
+	applyVolumeMountConfig(deployment, config)
+	applyTolerationsConfig(deployment, config)
+	applyResourcesConfig(deployment, config)
+	applyNodeSelectorConfig(deployment, config)
+	applyAffinityConfig(deployment, config)
+	applyAnnotationsConfig(deployment, config)
+}
+
+// applyEnvironmentConfig applies environment variables to all containers in the deployment.
+// Environment variables from config override existing environment variables with the same name.
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L73-L90
+func applyEnvironmentConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if len(config.Env) == 0 {
+		return
+	}
+
+	for i := range deployment.Spec.Template.Spec.Containers {
+		container := &deployment.Spec.Template.Spec.Containers[i]
+
+		// Create a map to track existing env var names for override behavior
+		existingEnvMap := make(map[string]int)
+		for idx, env := range container.Env {
+			existingEnvMap[env.Name] = idx
+		}
+
+		// Apply config env vars, overriding existing ones with same name
+		for _, configEnv := range config.Env {
+			if existingIdx, exists := existingEnvMap[configEnv.Name]; exists {
+				// Override existing env var
+				container.Env[existingIdx] = configEnv
+			} else {
+				// Append new env var
+				container.Env = append(container.Env, configEnv)
+			}
+		}
+	}
+}
+
+// applyEnvironmentFromConfig appends EnvFrom sources to all containers in the deployment.
+// Duplicate EnvFrom sources are not added.
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L92-L106
+func applyEnvironmentFromConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if len(config.EnvFrom) == 0 {
+		return
+	}
+
+	for i := range deployment.Spec.Template.Spec.Containers {
+		container := &deployment.Spec.Template.Spec.Containers[i]
+
+		// Check for duplicates before appending
+		for _, configEnvFrom := range config.EnvFrom {
+			isDuplicate := false
+			for _, existingEnvFrom := range container.EnvFrom {
+				if envFromEquals(existingEnvFrom, configEnvFrom) {
+					isDuplicate = true
+					break
+				}
+			}
+			if !isDuplicate {
+				container.EnvFrom = append(container.EnvFrom, configEnvFrom)
+			}
+		}
+	}
+}
+
+// envFromEquals checks if two EnvFromSource objects are equal.
+func envFromEquals(a, b corev1.EnvFromSource) bool {
+	if a.Prefix != b.Prefix {
+		return false
+	}
+
+	if (a.ConfigMapRef == nil) != (b.ConfigMapRef == nil) {
+		return false
+	}
+	if a.ConfigMapRef != nil && b.ConfigMapRef != nil {
+		if a.ConfigMapRef.Name != b.ConfigMapRef.Name {
+			return false
+		}
+	}
+
+	if (a.SecretRef == nil) != (b.SecretRef == nil) {
+		return false
+	}
+	if a.SecretRef != nil && b.SecretRef != nil {
+		if a.SecretRef.Name != b.SecretRef.Name {
+			return false
+		}
+	}
+
+	return true
+}
+
+// applyVolumeConfig appends volumes to the deployment's pod spec.
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L108-L113
+func applyVolumeConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if len(config.Volumes) == 0 {
+		return
+	}
+
+	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, config.Volumes...)
+}
+
+// applyVolumeMountConfig appends volume mounts to all containers in the deployment.
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L115-L122
+func applyVolumeMountConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if len(config.VolumeMounts) == 0 {
+		return
+	}
+
+	for i := range deployment.Spec.Template.Spec.Containers {
+		container := &deployment.Spec.Template.Spec.Containers[i]
+		container.VolumeMounts = append(container.VolumeMounts, config.VolumeMounts...)
+	}
+}
+
+// applyTolerationsConfig appends tolerations to the deployment's pod spec.
+// Duplicate tolerations are not added.
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L124-L138
+func applyTolerationsConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if len(config.Tolerations) == 0 {
+		return
+	}
+
+	// Check for duplicates before appending
+	for _, configToleration := range config.Tolerations {
+		isDuplicate := false
+		for _, existingToleration := range deployment.Spec.Template.Spec.Tolerations {
+			if tolerationEquals(existingToleration, configToleration) {
+				isDuplicate = true
+				break
+			}
+		}
+		if !isDuplicate {
+			deployment.Spec.Template.Spec.Tolerations = append(deployment.Spec.Template.Spec.Tolerations, configToleration)
+		}
+	}
+}
+
+// tolerationEquals checks if two Toleration objects are equal.
+func tolerationEquals(a, b corev1.Toleration) bool {
+	return a.Key == b.Key &&
+		a.Operator == b.Operator &&
+		a.Value == b.Value &&
+		a.Effect == b.Effect &&
+		((a.TolerationSeconds == nil && b.TolerationSeconds == nil) ||
+			(a.TolerationSeconds != nil && b.TolerationSeconds != nil && *a.TolerationSeconds == *b.TolerationSeconds))
+}
+
+// applyResourcesConfig applies resource requirements to all containers in the deployment.
+// This completely replaces existing resource requirements.
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L140-L147
+func applyResourcesConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if config.Resources == nil {
+		return
+	}
+
+	for i := range deployment.Spec.Template.Spec.Containers {
+		container := &deployment.Spec.Template.Spec.Containers[i]
+		container.Resources = *config.Resources
+	}
+}
+
+// applyNodeSelectorConfig applies node selector to the deployment's pod spec.
+// This completely replaces existing node selector.
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L149-L154
+func applyNodeSelectorConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if config.NodeSelector == nil {
+		return
+	}
+
+	deployment.Spec.Template.Spec.NodeSelector = config.NodeSelector
+}
+
+// applyAffinityConfig applies affinity configuration to the deployment's pod spec.
+// This selectively overrides non-nil affinity sub-attributes.
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L156-L179
+func applyAffinityConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if config.Affinity == nil {
+		return
+	}
+
+	if deployment.Spec.Template.Spec.Affinity == nil {
+		deployment.Spec.Template.Spec.Affinity = &corev1.Affinity{}
+	}
+
+	if config.Affinity.NodeAffinity != nil {
+		deployment.Spec.Template.Spec.Affinity.NodeAffinity = config.Affinity.NodeAffinity
+	}
+
+	if config.Affinity.PodAffinity != nil {
+		deployment.Spec.Template.Spec.Affinity.PodAffinity = config.Affinity.PodAffinity
+	}
+
+	if config.Affinity.PodAntiAffinity != nil {
+		deployment.Spec.Template.Spec.Affinity.PodAntiAffinity = config.Affinity.PodAntiAffinity
+	}
+}
+
+// applyAnnotationsConfig applies annotations to the deployment and its pod template.
+// Existing deployment and pod annotations take precedence over config annotations (no override).
+// This follows OLMv0 behavior:
+// https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/catalog/subscription/subscription_config.go#L181-L204
+func applyAnnotationsConfig(deployment *appsv1.Deployment, config *config.DeploymentConfig) {
+	if len(config.Annotations) == 0 {
+		return
+	}
+
+	// Apply to deployment metadata
+	if deployment.Annotations == nil {
+		deployment.Annotations = make(map[string]string)
+	}
+	for key, value := range config.Annotations {
+		if _, exists := deployment.Annotations[key]; !exists {
+			deployment.Annotations[key] = value
+		}
+	}
+
+	// Apply to pod template metadata
+	if deployment.Spec.Template.Annotations == nil {
+		deployment.Spec.Template.Annotations = make(map[string]string)
+	}
+	for key, value := range config.Annotations {
+		if _, exists := deployment.Spec.Template.Annotations[key]; !exists {
+			deployment.Spec.Template.Annotations[key] = value
+		}
+	}
 }

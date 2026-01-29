@@ -30,6 +30,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"sigs.k8s.io/yaml"
 )
@@ -46,6 +48,10 @@ const (
 	// the watchNamespace must differ from install namespace
 	FormatSingleNamespaceInstallMode = "singleNamespaceInstallMode"
 )
+
+// DeploymentConfig is a type alias for v1alpha1.SubscriptionConfig
+// to maintain clear naming in the OLMv1 context while reusing the v0 type.
+type DeploymentConfig = v1alpha1.SubscriptionConfig
 
 // SchemaProvider lets each package format type describe what configuration it accepts.
 //
