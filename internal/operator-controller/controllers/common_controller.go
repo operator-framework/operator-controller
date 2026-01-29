@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	ocerror "github.com/operator-framework/operator-controller/internal/shared/util/error"
 )
 
 const (
@@ -155,7 +156,8 @@ func setStatusProgressing(ext *ocv1.ClusterExtension, err error) {
 
 	if err != nil {
 		progressingCond.Reason = ocv1.ReasonRetrying
-		progressingCond.Message = err.Error()
+		// Unwrap TerminalError to avoid "terminal error:" prefix in message
+		progressingCond.Message = ocerror.UnwrapTerminal(err).Error()
 	}
 
 	if errors.Is(err, reconcile.TerminalError(nil)) {

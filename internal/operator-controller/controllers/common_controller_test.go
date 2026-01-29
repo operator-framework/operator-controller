@@ -53,7 +53,7 @@ func TestSetStatusProgressing(t *testing.T) {
 				Type:    ocv1.TypeProgressing,
 				Status:  metav1.ConditionFalse,
 				Reason:  ocv1.ReasonBlocked,
-				Message: "terminal error: boom",
+				Message: "boom",
 			},
 		},
 	} {

@@ -50,6 +50,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	ocerror "github.com/operator-framework/operator-controller/internal/shared/util/error"
 	k8sutil "github.com/operator-framework/operator-controller/internal/shared/util/k8s"
 )
 
@@ -455,12 +456,14 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager, opts ...
 }
 
 func wrapErrorWithResolutionInfo(resolved ocv1.BundleMetadata, err error) error {
-	wrappedErr := fmt.Errorf("error for resolved bundle %q with version %q: %w", resolved.Name, resolved.Version, err)
-	// Preserve TerminalError type if the original error was terminal
+	// Preserve TerminalError type through wrapping by re-wrapping after adding context
 	if errors.Is(err, reconcile.TerminalError(nil)) {
+		// Unwrap to get the inner error, add context, then re-wrap as TerminalError
+		innerErr := ocerror.UnwrapTerminal(err)
+		wrappedErr := fmt.Errorf("error for resolved bundle %q with version %q: %w", resolved.Name, resolved.Version, innerErr)
 		return reconcile.TerminalError(wrappedErr)
 	}
-	return wrappedErr
+	return fmt.Errorf("error for resolved bundle %q with version %q: %w", resolved.Name, resolved.Version, err)
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change
