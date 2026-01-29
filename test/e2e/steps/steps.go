@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -41,9 +42,10 @@ import (
 )
 
 const (
-	olmDeploymentName = "operator-controller-controller-manager"
-	timeout           = 5 * time.Minute
-	tick              = 1 * time.Second
+	olmDeploymentName       = "operator-controller-controller-manager"
+	timeout                 = 10 * time.Minute
+	deploymentUpdateTimeout = 20 * time.Minute // Longer timeout for deployment updates via boxcutter
+	tick                    = 1 * time.Second
 )
 
 var (
@@ -107,6 +109,13 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
 
 	sc.Step(`^(?i)min value for (ClusterExtension|ClusterExtensionRevision) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)
+
+	sc.Step(`^(?i)resource "([^"]+)" has no proxy environment variables$`, ResourceHasNoProxyEnvVars)
+	sc.Step(`^(?i)ClusterExtension revision manifests have no proxy environment variables$`, ClusterExtensionRevisionHasNoProxyEnvVars)
+	sc.Step(`^(?i)operator-controller has environment variable "([^"]+)" set to "([^"]+)"$`, OperatorControllerHasEnvVar)
+	sc.Step(`^(?i)resource "([^"]+)" has environment variable "([^"]+)" set to "([^"]+)"$`, ResourceHasEnvVar)
+	sc.Step(`^(?i)operator-controller has environment variable "([^"]+)" removed$`, OperatorControllerEnvVarRemoved)
+	sc.Step(`^(?i)resource "([^"]+)" has no environment variable "([^"]+)"$`, ResourceHasNoEnvVar)
 }
 
 func init() {
@@ -352,11 +361,42 @@ func ClusterExtensionResourcesRemoved(ctx context.Context) error {
 			return err
 		}
 	}
+
+	// Wait for CRDs owned by this ClusterExtension to be fully deleted
+	// This is critical to avoid CRD ownership conflicts when running multiple test scenarios
+	// that install the same bundle (which creates the same cluster-scoped CRDs)
+	logger.Info("waiting for CRDs owned by ClusterExtension to be deleted", "clusterExtension", sc.clusterExtensionName)
+
+	// Use a longer timeout for CRD deletion since finalizers and cleanup can take time
+	crdTimeout := 2 * timeout // Double the normal timeout for CRD deletion
+	require.Eventually(godog.T(ctx), func() bool {
+		// Get all CRDs that are owned by this ClusterExtension
+		output, err := k8sClient("get", "crd", "-l", fmt.Sprintf("olm.operatorframework.io/owner-name=%s", sc.clusterExtensionName), "-o", "jsonpath={.items[*].metadata.name}")
+		if err != nil {
+			logger.V(1).Info("error checking for CRDs", "error", err)
+			return false
+		}
+
+		// If output is empty, all CRDs are deleted
+		crdNames := strings.TrimSpace(output)
+		if crdNames == "" {
+			logger.Info("all CRDs owned by ClusterExtension have been deleted", "clusterExtension", sc.clusterExtensionName)
+			return true
+		}
+
+		logger.V(1).Info("still waiting for CRDs to be deleted", "crds", crdNames)
+		return false
+	}, crdTimeout, tick, "CRDs owned by ClusterExtension not deleted after timeout")
+
 	return nil
 }
 
 func waitFor(ctx context.Context, conditionFn func() bool) {
 	require.Eventually(godog.T(ctx), conditionFn, timeout, tick)
+}
+
+func waitForWithTimeout(ctx context.Context, conditionFn func() bool, customTimeout time.Duration) {
+	require.Eventually(godog.T(ctx), conditionFn, customTimeout, tick)
 }
 
 type msgMatchFn func(string) bool
@@ -392,6 +432,78 @@ func waitForCondition(ctx context.Context, resourceType, resourceName, condition
 func waitForExtensionCondition(ctx context.Context, conditionType, conditionStatus string, conditionReason *string, msgCmp msgMatchFn) error {
 	sc := scenarioCtx(ctx)
 	return waitForCondition(ctx, "clusterextension", sc.clusterExtensionName, conditionType, conditionStatus, conditionReason, msgCmp)
+}
+
+// waitForOperatorControllerStartup waits for the operator-controller pod to be Ready
+// and for the startup hook to complete. This ensures the manager cache is synced
+// and the controller is ready to handle new ClusterExtensions with the current configuration.
+func waitForOperatorControllerStartup(ctx context.Context) {
+	// Wait for the operator-controller pod to be Running and Ready
+	var podName string
+	var podStartTime *metav1.Time
+	waitFor(ctx, func() bool {
+		raw, err := k8sClient("get", "pods", "-n", olmNamespace, "-l", "app.kubernetes.io/name=operator-controller", "-o", "json")
+		if err != nil {
+			return false
+		}
+		var podList corev1.PodList
+		if err := json.Unmarshal([]byte(raw), &podList); err != nil {
+			return false
+		}
+		if len(podList.Items) == 0 {
+			return false
+		}
+
+		// Find a Running and Ready pod (preferably the newest by start time)
+		var readyPod *corev1.Pod
+		for i := range podList.Items {
+			pod := &podList.Items[i]
+			if pod.Status.Phase != corev1.PodRunning {
+				continue
+			}
+
+			// Check if pod is Ready
+			isReady := false
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
+					isReady = true
+					break
+				}
+			}
+
+			if isReady {
+				// Select this pod if we don't have one yet, or if it's newer than the current selection
+				if readyPod == nil || (pod.Status.StartTime != nil && readyPod.Status.StartTime != nil && pod.Status.StartTime.After(readyPod.Status.StartTime.Time)) {
+					readyPod = pod
+				}
+			}
+		}
+
+		if readyPod != nil {
+			podName = readyPod.Name
+			podStartTime = readyPod.Status.StartTime
+			return true
+		}
+		return false
+	})
+
+	// Wait for the startup hook to complete
+	// The startup hook logs "triggered reconciliation for existing ClusterExtensions" after processing
+	// We check all logs since pod start to ensure we don't miss the message
+	waitFor(ctx, func() bool {
+		// Build kubectl logs arguments conditionally based on whether we have a start time
+		args := []string{"logs", "-n", olmNamespace, podName}
+		if podStartTime != nil {
+			args = append(args, "--since-time="+podStartTime.Format(time.RFC3339))
+		}
+
+		logs, err := k8sClient(args...)
+		if err != nil {
+			return false
+		}
+		// Look for the log message that indicates startup hook completion
+		return strings.Contains(logs, "triggered reconciliation for existing ClusterExtensions")
+	})
 }
 
 func ClusterExtensionReportsCondition(ctx context.Context, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
@@ -1167,4 +1279,420 @@ func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterExtensionRev
 	}
 
 	return latest, nil
+}
+
+// ResourceHasNoProxyEnvVars verifies that a deployment resource does NOT have proxy env vars
+func ResourceHasNoProxyEnvVars(ctx context.Context, resource string) error {
+	sc := scenarioCtx(ctx)
+	resource = substituteScenarioVars(resource, sc)
+	rtype, name, found := strings.Cut(resource, "/")
+	if !found {
+		return fmt.Errorf("resource %s is not in the format <type>/<name>", resource)
+	}
+
+	if rtype != "deployment" {
+		return fmt.Errorf("resource type %s is not supported for proxy env var checking, only deployment is supported", rtype)
+	}
+
+	// Use longer timeout for deployment updates (boxcutter can take >10 minutes)
+	waitForWithTimeout(ctx, func() bool {
+		raw, err := k8sClient("get", rtype, name, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+
+		// IMPORTANT: Create fresh struct on each iteration so old data doesn't persist
+		var dep appsv1.Deployment
+		if err := json.Unmarshal([]byte(raw), &dep); err != nil {
+			return false
+		}
+
+		// Check that NO containers have proxy env vars
+		for _, container := range dep.Spec.Template.Spec.Containers {
+			for _, env := range container.Env {
+				if env.Name == "HTTP_PROXY" || env.Name == "HTTPS_PROXY" || env.Name == "NO_PROXY" {
+					return false
+				}
+			}
+		}
+		// Also check that NO init containers have proxy env vars
+		for _, container := range dep.Spec.Template.Spec.InitContainers {
+			for _, env := range container.Env {
+				if env.Name == "HTTP_PROXY" || env.Name == "HTTPS_PROXY" || env.Name == "NO_PROXY" {
+					return false
+				}
+			}
+		}
+		return true
+	}, deploymentUpdateTimeout)
+
+	return nil
+}
+
+// OperatorControllerHasEnvVar patches the operator-controller deployment to add an environment variable
+func OperatorControllerHasEnvVar(ctx context.Context, envName, envValue string) error {
+	// Get the current deployment first
+	raw, err := k8sClient("get", "deployment", olmDeploymentName, "-n", olmNamespace, "-o", "json")
+	if err != nil {
+		return fmt.Errorf("failed to get operator-controller deployment: %w", err)
+	}
+	var dep appsv1.Deployment
+	if err := json.Unmarshal([]byte(raw), &dep); err != nil {
+		return fmt.Errorf("failed to unmarshal deployment: %w", err)
+	}
+
+	// Check if the env var already exists
+	if len(dep.Spec.Template.Spec.Containers) > 0 {
+		for _, env := range dep.Spec.Template.Spec.Containers[0].Env {
+			if env.Name == envName {
+				if env.Value == envValue {
+					// Already has the correct value, no need to patch
+					return nil
+				}
+				// Env var exists with different value, need to update
+				break
+			}
+		}
+	}
+
+	// Use strategic merge patch to add/update the env var
+	patchObj := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []map[string]interface{}{
+						{
+							"name": "manager",
+							"env": []map[string]interface{}{
+								{
+									"name":  envName,
+									"value": envValue,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	patchBytes, err := json.Marshal(patchObj)
+	if err != nil {
+		return fmt.Errorf("failed to marshal deployment patch: %w", err)
+	}
+	patch := string(patchBytes)
+	_, err = k8sClient("patch", "deployment", olmDeploymentName, "-n", olmNamespace, "--type=strategic", "-p", patch)
+	if err != nil {
+		return fmt.Errorf("failed to patch operator-controller deployment: %w", err)
+	}
+
+	// Wait for the deployment to roll out with the new env var
+	waitFor(ctx, func() bool {
+		raw, err := k8sClient("get", "deployment", olmDeploymentName, "-n", olmNamespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var dep appsv1.Deployment
+		if err := json.Unmarshal([]byte(raw), &dep); err != nil {
+			return false
+		}
+
+		// Check deployment is available
+		available := false
+		for _, cond := range dep.Status.Conditions {
+			if cond.Type == appsv1.DeploymentAvailable && cond.Status == corev1.ConditionTrue {
+				available = true
+				break
+			}
+		}
+		if !available {
+			return false
+		}
+
+		// Check all replicas are updated
+		if dep.Status.UpdatedReplicas != dep.Status.Replicas {
+			return false
+		}
+
+		// Check the env var is present in the first container (manager)
+		if len(dep.Spec.Template.Spec.Containers) == 0 {
+			return false
+		}
+		for _, env := range dep.Spec.Template.Spec.Containers[0].Env {
+			if env.Name == envName && env.Value == envValue {
+				return true
+			}
+		}
+		return false
+	})
+
+	// Wait for operator-controller to fully start up with the new configuration
+	waitForOperatorControllerStartup(ctx)
+
+	return nil
+}
+
+// ResourceHasEnvVar verifies that a deployment resource has a specific environment variable with a specific value
+func ResourceHasEnvVar(ctx context.Context, resource, envName, envValue string) error {
+	sc := scenarioCtx(ctx)
+	resource = substituteScenarioVars(resource, sc)
+	rtype, name, found := strings.Cut(resource, "/")
+	if !found {
+		return fmt.Errorf("resource %s is not in the format <type>/<name>", resource)
+	}
+
+	if rtype != "deployment" {
+		return fmt.Errorf("resource type %s is not supported for env var checking, only deployment is supported", rtype)
+	}
+
+	waitFor(ctx, func() bool {
+		var dep appsv1.Deployment
+		raw, err := k8sClient("get", rtype, name, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+		if err := json.Unmarshal([]byte(raw), &dep); err != nil {
+			return false
+		}
+
+		// Check that ALL containers have the env var with the correct value
+		if len(dep.Spec.Template.Spec.Containers) == 0 {
+			return false
+		}
+		for _, container := range dep.Spec.Template.Spec.Containers {
+			found := false
+			for _, env := range container.Env {
+				if env.Name == envName && env.Value == envValue {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		}
+		// Also check that ALL init containers have the env var with the correct value
+		for _, container := range dep.Spec.Template.Spec.InitContainers {
+			found := false
+			for _, env := range container.Env {
+				if env.Name == envName && env.Value == envValue {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		}
+		return true
+	})
+
+	return nil
+}
+
+// OperatorControllerEnvVarRemoved removes an environment variable from the operator-controller deployment
+func OperatorControllerEnvVarRemoved(ctx context.Context, envName string) error {
+	// Use kubectl set env to remove the environment variable by name
+	// This is more stable than JSON patch with array indices, which can break if env var ordering changes
+	_, err := k8sClient("set", "env", "deployment/"+olmDeploymentName, "-n", olmNamespace, envName+"-")
+	if err != nil {
+		return fmt.Errorf("failed to remove env var %s from operator-controller deployment: %w", envName, err)
+	}
+
+	// Wait for the deployment to roll out without the env var
+	waitFor(ctx, func() bool {
+		raw, err := k8sClient("get", "deployment", olmDeploymentName, "-n", olmNamespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+		var dep appsv1.Deployment
+		if err := json.Unmarshal([]byte(raw), &dep); err != nil {
+			return false
+		}
+
+		// Check deployment is available
+		available := false
+		for _, cond := range dep.Status.Conditions {
+			if cond.Type == appsv1.DeploymentAvailable && cond.Status == corev1.ConditionTrue {
+				available = true
+				break
+			}
+		}
+		if !available {
+			return false
+		}
+
+		// Check all replicas are updated
+		if dep.Status.UpdatedReplicas != dep.Status.Replicas {
+			return false
+		}
+
+		// Check the env var is NOT present in the first container (manager)
+		if len(dep.Spec.Template.Spec.Containers) == 0 {
+			return false
+		}
+		for _, env := range dep.Spec.Template.Spec.Containers[0].Env {
+			if env.Name == envName {
+				return false
+			}
+		}
+		return true
+	})
+
+	// Wait for operator-controller to fully start up with the new configuration
+	waitForOperatorControllerStartup(ctx)
+	logger.Info("operator-controller startup hook completed, proxy config applied")
+
+	// Wait for reconciliation to complete - the ClusterExtension should reach rolled out state
+	// with the new proxy configuration (or lack thereof)
+	return ClusterExtensionIsRolledOut(ctx)
+}
+
+// ResourceHasNoEnvVar verifies that a deployment resource does NOT have a specific environment variable
+func ResourceHasNoEnvVar(ctx context.Context, resource, envName string) error {
+	sc := scenarioCtx(ctx)
+	resource = substituteScenarioVars(resource, sc)
+	rtype, name, found := strings.Cut(resource, "/")
+	if !found {
+		return fmt.Errorf("resource %s is not in the format <type>/<name>", resource)
+	}
+
+	if rtype != "deployment" {
+		return fmt.Errorf("resource type %s is not supported for env var checking, only deployment is supported", rtype)
+	}
+
+	waitFor(ctx, func() bool {
+		var dep appsv1.Deployment
+		raw, err := k8sClient("get", rtype, name, "-n", sc.namespace, "-o", "json")
+		if err != nil {
+			return false
+		}
+		if err := json.Unmarshal([]byte(raw), &dep); err != nil {
+			return false
+		}
+
+		// Check that NO containers have the env var
+		for _, container := range dep.Spec.Template.Spec.Containers {
+			for _, env := range container.Env {
+				if env.Name == envName {
+					return false
+				}
+			}
+		}
+		// Also check that NO init containers have the env var
+		for _, container := range dep.Spec.Template.Spec.InitContainers {
+			for _, env := range container.Env {
+				if env.Name == envName {
+					return false
+				}
+			}
+		}
+		return true
+	})
+
+	return nil
+}
+
+// ClusterExtensionRevisionHasNoProxyEnvVars verifies that the active ClusterExtensionRevision
+// manifests do NOT contain proxy environment variables in deployment resources
+// NOTE: This step only works with BoxcutterRuntime enabled. When BoxcutterRuntime is disabled,
+// Rukpak/Helm is used instead, which doesn't create ClusterExtensionRevisions.
+func ClusterExtensionRevisionHasNoProxyEnvVars(ctx context.Context) error {
+	// Skip this check if BoxcutterRuntime is disabled
+	// When using Rukpak/Helm, there are no ClusterExtensionRevisions to check
+	if !featureGates[features.BoxcutterRuntime] {
+		logger.Info("Skipping ClusterExtensionRevision manifest check - BoxcutterRuntime is disabled")
+		return nil
+	}
+
+	sc := scenarioCtx(ctx)
+
+	var revisionName string
+	// Wait for active revision to be available - there might be a brief transition period
+	// where the ClusterExtension is updating and activeRevisions is temporarily empty
+	require.Eventually(godog.T(ctx), func() bool {
+		raw, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", "jsonpath={.status.activeRevisions[0].name}")
+		if err != nil {
+			logger.V(1).Info("failed to get active revision name", "error", err)
+			return false
+		}
+		revisionName = strings.TrimSpace(raw)
+		return revisionName != ""
+	}, timeout, tick, "active revision not found after timeout")
+
+	// Get the ClusterExtensionRevision
+	revRaw, err := k8sClient("get", "clusterextensionrevision", revisionName, "-o", "json")
+	if err != nil {
+		return fmt.Errorf("failed to get revision %s: %w", revisionName, err)
+	}
+
+	var rev map[string]interface{}
+	if err := json.Unmarshal([]byte(revRaw), &rev); err != nil {
+		return fmt.Errorf("failed to unmarshal revision: %w", err)
+	}
+
+	// Check phases for deployment resources
+	specVal, ok := rev["spec"]
+	if !ok {
+		return fmt.Errorf("revision %s has no spec field", revisionName)
+	}
+
+	specMap, ok := specVal.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("revision %s has unexpected spec structure (got %T)", revisionName, specVal)
+	}
+
+	phasesVal, found := specMap["phases"]
+	if !found || phasesVal == nil {
+		return fmt.Errorf("no phases found in revision %s", revisionName)
+	}
+
+	phases, ok := phasesVal.([]interface{})
+	if !ok {
+		return fmt.Errorf("revision %s has phases field with unexpected type (got %T)", revisionName, phasesVal)
+	}
+
+	for _, phase := range phases {
+		phaseMap, ok := phase.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("revision %s has phase with unexpected structure (got %T)", revisionName, phase)
+		}
+		kindVal, ok := phaseMap["kind"].(string)
+		if !ok || kindVal != "Deployment" {
+			continue
+		}
+
+		// Get manifests from this phase
+		manifestsVal, exists := phaseMap["manifests"]
+		if !exists || manifestsVal == nil {
+			continue
+		}
+		manifests, ok := manifestsVal.([]interface{})
+		if !ok {
+			return fmt.Errorf("revision %s has manifests field with unexpected type (got %T)", revisionName, manifestsVal)
+		}
+
+		for _, manifestData := range manifests {
+			// manifestData is base64-encoded YAML
+			manifestStr, ok := manifestData.(string)
+			if !ok {
+				return fmt.Errorf("unexpected manifest data type %T in revision %s", manifestData, revisionName)
+			}
+
+			// Decode base64
+			decoded, err := base64.StdEncoding.DecodeString(manifestStr)
+			if err != nil {
+				return fmt.Errorf("failed to base64 decode manifest in revision %s: %w", revisionName, err)
+			}
+
+			// Check if the manifest contains proxy env vars
+			manifestYaml := string(decoded)
+			if strings.Contains(manifestYaml, "NO_PROXY") ||
+				strings.Contains(manifestYaml, "HTTP_PROXY") ||
+				strings.Contains(manifestYaml, "HTTPS_PROXY") {
+				return fmt.Errorf("revision %s contains proxy environment variables in manifests", revisionName)
+			}
+		}
+	}
+
+	return nil
 }

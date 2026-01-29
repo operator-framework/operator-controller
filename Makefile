@@ -243,7 +243,7 @@ test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run a
 
 .PHONY: e2e
 e2e: #EXHELP Run the e2e tests.
-	go test -count=1 -v ./test/e2e/features_test.go
+	$(if $(GODOG_TAGS),go test -timeout=30m -count=1 -v ./test/e2e/features_test.go -args --godog.tags="$(GODOG_TAGS)",go test -timeout=30m -count=1 -v ./test/e2e/features_test.go)
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e

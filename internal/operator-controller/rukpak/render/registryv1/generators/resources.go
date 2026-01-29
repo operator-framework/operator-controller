@@ -115,6 +115,64 @@ func WithMutatingWebhooks(webhooks ...admissionregistrationv1.MutatingWebhook) f
 	}
 }
 
+// WithProxy applies HTTP proxy environment variables to Deployment resources.
+// Proxy env vars are applied to both regular containers and init containers.
+func WithProxy(httpProxy, httpsProxy, noProxy string) func(client.Object) {
+	return func(obj client.Object) {
+		switch o := obj.(type) {
+		case *appsv1.Deployment:
+			addProxyEnvVars(httpProxy, httpsProxy, noProxy, o.Spec.Template.Spec.Containers)
+			addProxyEnvVars(httpProxy, httpsProxy, noProxy, o.Spec.Template.Spec.InitContainers)
+		}
+	}
+}
+
+func addProxyEnvVars(httpProxy, httpsProxy, noProxy string, containers []corev1.Container) {
+	proxyEnvNames := []string{"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"}
+
+	for i := range containers {
+		// First, remove any existing proxy env vars to ensure clean slate
+		// This allows us to remove proxy vars when they're no longer configured
+		var newEnv []corev1.EnvVar
+		if len(containers[i].Env) > 0 {
+			newEnv = make([]corev1.EnvVar, 0, len(containers[i].Env))
+			for _, env := range containers[i].Env {
+				isProxyVar := false
+				for _, proxyName := range proxyEnvNames {
+					if env.Name == proxyName {
+						isProxyVar = true
+						break
+					}
+				}
+				if !isProxyVar {
+					newEnv = append(newEnv, env)
+				}
+			}
+		}
+		containers[i].Env = newEnv
+
+		// Then add the proxy env vars if they're configured
+		if len(httpProxy) > 0 {
+			containers[i].Env = append(containers[i].Env, corev1.EnvVar{
+				Name:  "HTTP_PROXY",
+				Value: httpProxy,
+			})
+		}
+		if len(httpsProxy) > 0 {
+			containers[i].Env = append(containers[i].Env, corev1.EnvVar{
+				Name:  "HTTPS_PROXY",
+				Value: httpsProxy,
+			})
+		}
+		if len(noProxy) > 0 {
+			containers[i].Env = append(containers[i].Env, corev1.EnvVar{
+				Name:  "NO_PROXY",
+				Value: noProxy,
+			})
+		}
+	}
+}
+
 // CreateServiceAccountResource creates a ServiceAccount resource with name 'name', namespace 'namespace', and applying
 // any ServiceAccount related options in opts
 func CreateServiceAccountResource(name string, namespace string, opts ...ResourceCreatorOption) *corev1.ServiceAccount {

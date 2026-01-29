@@ -6,8 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -275,4 +277,114 @@ func Test_WithMutatingWebhook(t *testing.T) {
 		{Name: "wh-one"},
 		{Name: "wh-two"},
 	}, wh.Webhooks)
+}
+
+func Test_WithProxy(t *testing.T) {
+	depSpec := appsv1.DeploymentSpec{
+		Template: corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name: "init-container",
+						Env: []corev1.EnvVar{
+							{
+								Name:  "INIT_VAR",
+								Value: "init-value",
+							},
+						},
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name: "c1",
+						Env: []corev1.EnvVar{
+							{
+								Name:  "TEST",
+								Value: "xxx",
+							},
+						},
+					},
+					{
+						Name: "c2",
+						Env: []corev1.EnvVar{
+							{
+								Name:  "APP_ENV",
+								Value: "production",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	depl := generators.CreateDeploymentResource(
+		"test",
+		"test-ns",
+		generators.WithDeploymentSpec(depSpec),
+		generators.WithProxy("http://proxy.example.com:8080", "https://proxy.example.com:8443", "localhost,.cluster.local"),
+	)
+
+	// Verify init container has proxy env vars
+	expectedInitEnv := []corev1.EnvVar{
+		{
+			Name:  "INIT_VAR",
+			Value: "init-value",
+		},
+		{
+			Name:  "HTTP_PROXY",
+			Value: "http://proxy.example.com:8080",
+		},
+		{
+			Name:  "HTTPS_PROXY",
+			Value: "https://proxy.example.com:8443",
+		},
+		{
+			Name:  "NO_PROXY",
+			Value: "localhost,.cluster.local",
+		},
+	}
+	assert.Equal(t, expectedInitEnv, depl.Spec.Template.Spec.InitContainers[0].Env, "init container should have proxy env vars")
+
+	// Verify first regular container has proxy env vars
+	expectedC1Env := []corev1.EnvVar{
+		{
+			Name:  "TEST",
+			Value: "xxx",
+		},
+		{
+			Name:  "HTTP_PROXY",
+			Value: "http://proxy.example.com:8080",
+		},
+		{
+			Name:  "HTTPS_PROXY",
+			Value: "https://proxy.example.com:8443",
+		},
+		{
+			Name:  "NO_PROXY",
+			Value: "localhost,.cluster.local",
+		},
+	}
+	assert.Equal(t, expectedC1Env, depl.Spec.Template.Spec.Containers[0].Env, "container c1 should have proxy env vars")
+
+	// Verify second regular container has proxy env vars
+	expectedC2Env := []corev1.EnvVar{
+		{
+			Name:  "APP_ENV",
+			Value: "production",
+		},
+		{
+			Name:  "HTTP_PROXY",
+			Value: "http://proxy.example.com:8080",
+		},
+		{
+			Name:  "HTTPS_PROXY",
+			Value: "https://proxy.example.com:8443",
+		},
+		{
+			Name:  "NO_PROXY",
+			Value: "localhost,.cluster.local",
+		},
+	}
+	assert.Equal(t, expectedC2Env, depl.Spec.Template.Spec.Containers[1].Env, "container c2 should have proxy env vars")
 }
