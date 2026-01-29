@@ -22,6 +22,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -149,6 +150,12 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(ocv1.AddToScheme(scheme))
 	ctrl.SetLogger(klog.NewKlogr())
+
+	// Configure global HTTP transport to prefer IPv4 for all HTTP clients
+	// including the containers/image library used for pulling from registries
+	if transport, ok := http.DefaultTransport.(*http.Transport); ok {
+		transport.DialContext = httputil.IPv4PreferringDialContext
+	}
 }
 
 func main() {
@@ -274,7 +281,10 @@ func run(ctx context.Context) error {
 	}
 
 	// Create manager
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+	// Configure REST client to prefer IPv4 over IPv6 when both are available
+	restConfig.Dial = httputil.IPv4PreferringDialContext
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme,
 		Metrics:                       metricsServerOptions,
 		PprofBindAddress:              cfg.pprofAddr,
