@@ -200,10 +200,10 @@ Feature: Install ClusterExtension
     And ClusterExtension reports Progressing as True with Reason Retrying and Message:
       """
       error for resolved bundle "own-namespace-operator.1.0.0" with version
-      "1.0.0": invalid ClusterExtension configuration: invalid configuration: 'some-ns'
-      is not valid ownNamespaceInstallMode: invalid value "some-ns": watchNamespace
-      must be "${TEST_NAMESPACE}" (the namespace where the operator is installed) because this
-      operator only supports OwnNamespace install mode
+      "1.0.0": invalid ClusterExtension configuration: invalid configuration: invalid
+      format for field "watchNamespace": 'some-ns' is not valid ownNamespaceInstallMode:
+      invalid value "some-ns": must be "${TEST_NAMESPACE}" (the namespace where the
+      operator is installed) because this operator only supports OwnNamespace install mode
       """
     When ClusterExtension is updated to set watchNamespace to own namespace value
       """

@@ -393,7 +393,7 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid ClusterExtension configuration:")
-		require.Contains(t, err.Error(), "watchNamespace must be")
+		require.Contains(t, err.Error(), "must be")
 		require.Contains(t, err.Error(), "install-namespace")
 	})
 

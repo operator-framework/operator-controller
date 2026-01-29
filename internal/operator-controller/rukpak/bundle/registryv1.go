@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	BundleConfigWatchNamespaceKey   = "watchNamespace"
-	BundleConfigDeploymentConfigKey = "deploymentConfig"
+	watchNamespaceConfigKey = "watchNamespace"
+	namespaceNamePattern    = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+	namespaceNameMaxLength  = 63
 )
 
 var (
@@ -69,19 +70,19 @@ func buildBundleConfigSchema(installModes sets.Set[v1alpha1.InstallMode]) (map[s
 	if isWatchNamespaceConfigurable(installModes) {
 		// Replace the generic watchNamespace with install-mode-specific version
 		watchNSProperty, isRequired := buildWatchNamespaceProperty(installModes)
-		properties["watchNamespace"] = watchNSProperty
+		properties[watchNamespaceConfigKey] = watchNSProperty
 
 		// Preserve existing required fields, only add/remove watchNamespace
 		if isRequired {
-			addToRequired(baseSchema, "watchNamespace")
+			addToRequired(baseSchema, watchNamespaceConfigKey)
 		} else {
-			removeFromRequired(baseSchema, "watchNamespace")
+			removeFromRequired(baseSchema, watchNamespaceConfigKey)
 		}
 	} else {
 		// AllNamespaces only - remove watchNamespace property entirely
 		// (operator always watches all namespaces, no configuration needed)
-		delete(properties, "watchNamespace")
-		removeFromRequired(baseSchema, "watchNamespace")
+		delete(properties, watchNamespaceConfigKey)
+		removeFromRequired(baseSchema, watchNamespaceConfigKey)
 	}
 
 	return baseSchema, nil
@@ -138,37 +139,37 @@ func removeFromRequired(schema map[string]any, fieldName string) {
 //
 // Returns the validation rules and whether the field is required.
 func buildWatchNamespaceProperty(installModes sets.Set[v1alpha1.InstallMode]) (map[string]any, bool) {
-	watchNSProperty := map[string]any{
-		"description": "The namespace that the operator should watch for custom resources",
-	}
+	const description = "The namespace that the operator should watch for custom resources"
 
 	hasOwnNamespace := installModes.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true})
 	hasSingleNamespace := installModes.Has(v1alpha1.InstallMode{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true})
 
 	format := selectNamespaceFormat(hasOwnNamespace, hasSingleNamespace)
 
+	watchNamespaceSchema := map[string]any{
+		"type":      "string",
+		"minLength": 1,
+		"maxLength": namespaceNameMaxLength,
+		// kubernetes namespace name format
+		"pattern": namespaceNamePattern,
+	}
+	if format != "" {
+		watchNamespaceSchema["format"] = format
+	}
+
 	if isWatchNamespaceConfigRequired(installModes) {
-		watchNSProperty["type"] = "string"
-		if format != "" {
-			watchNSProperty["format"] = format
-		}
-		return watchNSProperty, true
+		watchNamespaceSchema["description"] = description
+		return watchNamespaceSchema, true
 	}
 
 	// allow null or valid namespace string
-	stringSchema := map[string]any{
-		"type": "string",
-	}
-	if format != "" {
-		stringSchema["format"] = format
-	}
-	// Convert to []any for JSON schema compatibility
-	watchNSProperty["anyOf"] = []any{
-		map[string]any{"type": "null"},
-		stringSchema,
-	}
-
-	return watchNSProperty, false
+	return map[string]any{
+		"description": description,
+		"anyOf": []any{
+			map[string]any{"type": "null"},
+			watchNamespaceSchema,
+		},
+	}, false
 }
 
 // selectNamespaceFormat picks which namespace constraint to apply.
