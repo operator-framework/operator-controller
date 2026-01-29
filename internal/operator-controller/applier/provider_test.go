@@ -11,6 +11,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -98,6 +99,37 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 		_, err := provider.Get(bundleFS, ext)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid ClusterExtension configuration")
+	})
+
+	t.Run("returns terminal error for invalid config", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		// Bundle with SingleNamespace install mode requiring watchNamespace config
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+
+		// ClusterExtension without required config
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				// No config provided - should fail validation
+			},
+		}
+
+		_, err := provider.Get(bundleFS, ext)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid ClusterExtension configuration")
+		// Assert that config validation errors are terminal (not retriable)
+		require.ErrorIs(t, err, reconcile.TerminalError(nil), "config validation errors should be terminal")
 	})
 
 	t.Run("returns rendered manifests", func(t *testing.T) {
