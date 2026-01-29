@@ -114,6 +114,8 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 			// If there was an error applying the resolved bundle,
 			// report the error via the Progressing condition.
 			setStatusProgressing(ext, wrapErrorWithResolutionInfo(state.resolvedRevisionMetadata.BundleMetadata, err))
+			// Set the Installed condition based on revision states even when there's an error
+			setInstalledStatusFromRevisionStates(ext, state.revisionStates)
 			return nil, err
 		}
 
