@@ -10,6 +10,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
@@ -62,6 +63,9 @@ type Options struct {
 	TargetNamespaces    []string
 	UniqueNameGenerator UniqueNameGenerator
 	CertificateProvider CertificateProvider
+	// DeploymentConfig contains optional customizations to apply to CSV deployments.
+	// If nil, no customizations are applied.
+	DeploymentConfig *config.DeploymentConfig
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -106,6 +110,14 @@ func WithUniqueNameGenerator(generator UniqueNameGenerator) Option {
 func WithCertificateProvider(provider CertificateProvider) Option {
 	return func(o *Options) {
 		o.CertificateProvider = provider
+	}
+}
+
+// WithDeploymentConfig sets the deployment configuration to apply to CSV deployments.
+// If deploymentConfig is nil, no customizations are applied.
+func WithDeploymentConfig(deploymentConfig *config.DeploymentConfig) Option {
+	return func(o *Options) {
+		o.DeploymentConfig = deploymentConfig
 	}
 }
 
