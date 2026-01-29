@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// getModulePath returns the directory path of the specified Go module from go mod cache
-func getModulePath(t *testing.T, modulePath string) string {
+// getPackageDir returns the directory path of the specified Go package.
+// It uses 'go list' which automatically handles both vendor mode and module cache.
+func getPackageDir(t *testing.T, pkgPath string) string {
 	t.Helper()
-	// Use -mod=readonly to bypass vendor directory and get the module cache path
-	cmd := exec.Command("go", "list", "-mod=readonly", "-m", "-f", "{{.Dir}}", modulePath)
+	cmd := exec.Command("go", "list", "-f", "{{.Dir}}", pkgPath)
 	out, err := cmd.Output()
-	require.NoError(t, err, "failed to find module %s", modulePath)
+	require.NoError(t, err, "failed to find package %s", pkgPath)
 	return strings.TrimSpace(string(out))
 }
 
@@ -70,9 +70,9 @@ func getMockOpenAPISpec() *OpenAPISpec {
 }
 
 func TestParseSubscriptionConfig(t *testing.T) {
-	// Get the module path from go mod cache
-	modulePath := getModulePath(t, "github.com/operator-framework/api")
-	subscriptionTypesFile := filepath.Join(modulePath, "pkg/operators/v1alpha1/subscription_types.go")
+	// Get the package directory containing subscription_types.go
+	pkgDir := getPackageDir(t, "github.com/operator-framework/api/pkg/operators/v1alpha1")
+	subscriptionTypesFile := filepath.Join(pkgDir, "subscription_types.go")
 
 	fields, err := parseSubscriptionConfig(subscriptionTypesFile)
 	require.NoError(t, err, "should successfully parse SubscriptionConfig")
