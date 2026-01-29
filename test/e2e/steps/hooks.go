@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/component-base/featuregate"
 	"k8s.io/klog/v2/textlogger"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 )
@@ -32,6 +33,26 @@ type scenarioContext struct {
 	removedResources     []unstructured.Unstructured
 	backGroundCmds       []*exec.Cmd
 	metricsResponse      map[string]string
+
+	extensionObjects []client.Object
+}
+
+// GatherClusterExtensionObjects collects all resources related to the ClusterExtension container in
+// either their Helm release Secret or ClusterExtensionRevision depending on the applier being used
+// and saves them into the context.
+func (s *scenarioContext) GatherClusterExtensionObjects() error {
+	objs, err := listExtensionResources(s.clusterExtensionName)
+	if err != nil {
+		return fmt.Errorf("failed to load extension resources into context: %w", err)
+	}
+	s.extensionObjects = objs
+	return nil
+}
+
+// GetClusterExtensionObjects returns the ClusterExtension objects currently saved into the context.
+// Will always return nil until GatherClusterExtensionObjects is called
+func (s *scenarioContext) GetClusterExtensionObjects() []client.Object {
+	return s.extensionObjects
 }
 
 type contextKey string
