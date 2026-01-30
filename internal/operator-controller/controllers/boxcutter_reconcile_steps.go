@@ -117,8 +117,8 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 			// report the error via the Progressing condition.
 			setStatusProgressing(ext, wrapErrorWithResolutionInfo(state.resolvedRevisionMetadata.BundleMetadata, err))
 			// Only set Installed condition for retryable errors.
-			// For terminal errors (Progressing: False/Blocked), the Progressing condition
-			// already provides all necessary information about the failure.
+			// For terminal errors (Progressing: False with a terminal reason such as Blocked or InvalidConfiguration),
+			// the Progressing condition already provides all necessary information about the failure.
 			if !errors.Is(err, reconcile.TerminalError(nil)) {
 				setInstalledStatusFromRevisionStates(ext, state.revisionStates)
 			}
