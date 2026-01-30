@@ -298,6 +298,67 @@ Feature: Install ClusterExtension
         mutate: true
       """
 
+  @SingleOwnNamespaceInstallSupport
+  Scenario: Report failure when watchNamespace has invalid DNS-1123 name
+    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
+        config:
+          configType: Inline
+          inline:
+            watchNamespace: invalid-namespace-
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: single-namespace-operator
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+      """
+      invalid ClusterExtension configuration: invalid configuration: field "watchNamespace" must match pattern
+      """
+
+  @SingleOwnNamespaceInstallSupport
+  @WebhookProviderCertManager
+  Scenario: Reject watchNamespace for operator that does not support Single/OwnNamespace install modes
+    Given ServiceAccount "olm-admin" in test namespace is cluster admin
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-admin
+        config:
+          configType: Inline
+          inline:
+            watchNamespace: ${TEST_NAMESPACE}
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: webhook-operator
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+      """
+      invalid ClusterExtension configuration: invalid configuration: unknown field "watchNamespace"
+      """
+
   @BoxcutterRuntime
   @ProgressDeadline
   Scenario: Report ClusterExtension as not progressing if the rollout does not complete within given timeout
