@@ -20,6 +20,10 @@ import (
 	registry "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/operator-registry"
 )
 
+const (
+	PropertyOLMProperties = "olm.properties"
+)
+
 type BundleSource interface {
 	GetBundle() (bundle.RegistryV1, error)
 }
@@ -173,6 +177,9 @@ func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS
 	if err != nil {
 		return fmt.Errorf("failed to marshal registry+v1 properties to json: %w", err)
 	}
-	csv.Annotations["olm.properties"] = string(allPropertiesJSON)
+	if csv.Annotations == nil {
+		csv.Annotations = map[string]string{}
+	}
+	csv.Annotations[PropertyOLMProperties] = string(allPropertiesJSON)
 	return nil
 }
