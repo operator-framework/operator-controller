@@ -40,6 +40,7 @@ var ConditionReasons = []string{
 	ocv1.ReasonDeprecationStatusUnknown,
 	ocv1.ReasonFailed,
 	ocv1.ReasonBlocked,
+	ocv1.ReasonInvalidConfiguration,
 	ocv1.ReasonRetrying,
 	ocv1.ReasonAbsent,
 	ocv1.ReasonRollingOut,

@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 )
 
 func TestSetStatusProgressing(t *testing.T) {
@@ -46,7 +47,7 @@ func TestSetStatusProgressing(t *testing.T) {
 			},
 		},
 		{
-			name:             "non-nil ClusterExtension, terminal error, Progressing condition has status False with reason Blocked",
+			name:             "non-nil ClusterExtension, terminal error without reason, Progressing condition has status False with reason Blocked",
 			err:              reconcile.TerminalError(errors.New("boom")),
 			clusterExtension: &ocv1.ClusterExtension{},
 			expected: metav1.Condition{
@@ -54,6 +55,17 @@ func TestSetStatusProgressing(t *testing.T) {
 				Status:  metav1.ConditionFalse,
 				Reason:  ocv1.ReasonBlocked,
 				Message: "boom",
+			},
+		},
+		{
+			name:             "non-nil ClusterExtension, terminal error with InvalidConfiguration reason, Progressing condition has status False with that reason",
+			err:              errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, errors.New("missing required field")),
+			clusterExtension: &ocv1.ClusterExtension{},
+			expected: metav1.Condition{
+				Type:    ocv1.TypeProgressing,
+				Status:  metav1.ConditionFalse,
+				Reason:  ocv1.ReasonInvalidConfiguration,
+				Message: "missing required field",
 			},
 		},
 	} {

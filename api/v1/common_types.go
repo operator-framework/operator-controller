@@ -24,9 +24,10 @@ const (
 	ReasonAbsent = "Absent"
 
 	// Progressing reasons
-	ReasonRollingOut = "RollingOut"
-	ReasonRetrying   = "Retrying"
-	ReasonBlocked    = "Blocked"
+	ReasonRollingOut           = "RollingOut"
+	ReasonRetrying             = "Retrying"
+	ReasonBlocked              = "Blocked"
+	ReasonInvalidConfiguration = "InvalidConfiguration"
 
 	// Deprecation reasons
 	ReasonDeprecated               = "Deprecated"

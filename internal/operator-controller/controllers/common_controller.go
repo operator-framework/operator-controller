@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	ocerror "github.com/operator-framework/operator-controller/internal/shared/util/error"
+	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 )
 
 const (
@@ -157,12 +157,19 @@ func setStatusProgressing(ext *ocv1.ClusterExtension, err error) {
 	if err != nil {
 		progressingCond.Reason = ocv1.ReasonRetrying
 		// Unwrap TerminalError to avoid "terminal error:" prefix in message
-		progressingCond.Message = ocerror.UnwrapTerminal(err).Error()
+		progressingCond.Message = errorutil.UnwrapTerminal(err).Error()
 	}
 
 	if errors.Is(err, reconcile.TerminalError(nil)) {
 		progressingCond.Status = metav1.ConditionFalse
-		progressingCond.Reason = ocv1.ReasonBlocked
+		// Try to extract a specific reason from the terminal error.
+		// If the error was created with NewTerminalError(reason, err), use that reason.
+		// Otherwise, fall back to the generic "Blocked" reason.
+		if reason, ok := errorutil.ExtractTerminalReason(err); ok {
+			progressingCond.Reason = reason
+		} else {
+			progressingCond.Reason = ocv1.ReasonBlocked
+		}
 	}
 
 	SetStatusCondition(&ext.Status.Conditions, progressingCond)
