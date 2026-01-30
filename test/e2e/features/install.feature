@@ -390,3 +390,30 @@ Feature: Install ClusterExtension
       Revision has not rolled out for 1 minutes.
       """
     And ClusterExtension reports Progressing transition between 1 and 2 minutes since its creation
+
+  @BoxcutterRuntime
+  Scenario:  ClusterExtensionRevision is annotated with bundle properties
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            version: 1.2.0
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    # The annotation key and value come from the bundle's metadata/properties.yaml file
+    Then ClusterExtensionRevision "${NAME}-1" contains annotation "olm.properties" with value
+      """
+      [{"type":"olm.test-property","value":"some-value"}]
+      """

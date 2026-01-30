@@ -85,7 +85,6 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 			opts = append(opts, render.WithTargetNamespaces(*watchNS))
 		}
 	}
-
 	return r.BundleRenderer.Render(rv1, ext.Spec.Namespace, opts...)
 }
 
@@ -102,7 +101,7 @@ func (r *RegistryV1HelmChartProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExten
 
 	chrt := &chart.Chart{Metadata: &chart.Metadata{}}
 	// The need to get the underlying bundle in order to extract its annotations
-	// will go away once with have a bundle interface that can surface the annotations independently of the
+	// will go away once we have a bundle interface that can surface the annotations independently of the
 	// underlying bundle format...
 	rv1, err := source.FromFS(bundleFS).GetBundle()
 	if err != nil {
@@ -148,4 +147,15 @@ func extensionConfigBytes(ext *ocv1.ClusterExtension) []byte {
 		}
 	}
 	return nil
+}
+
+func getBundleAnnotations(bundleFS fs.FS) (map[string]string, error) {
+	// The need to get the underlying bundle in order to extract its annotations
+	// will go away once we have a bundle interface that can surface the annotations independently of the
+	// underlying bundle format...
+	rv1, err := source.FromFS(bundleFS).GetBundle()
+	if err != nil {
+		return nil, err
+	}
+	return rv1.CSV.GetAnnotations(), nil
 }
