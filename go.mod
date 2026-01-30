@@ -17,7 +17,7 @@ require (
 	github.com/google/go-containerregistry v0.20.7
 	github.com/google/renameio/v2 v2.0.2
 	github.com/gorilla/handlers v1.5.2
-	github.com/klauspost/compress v1.18.2
+	github.com/klauspost/compress v1.18.3
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/operator-framework/api v0.37.0
