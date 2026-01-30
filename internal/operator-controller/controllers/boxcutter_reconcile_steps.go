@@ -19,6 +19,7 @@ package controllers
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"slices"
@@ -27,6 +28,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
@@ -114,6 +116,12 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 			// If there was an error applying the resolved bundle,
 			// report the error via the Progressing condition.
 			setStatusProgressing(ext, wrapErrorWithResolutionInfo(state.resolvedRevisionMetadata.BundleMetadata, err))
+			// Only set Installed condition for retryable errors.
+			// For terminal errors (Progressing: False with a terminal reason such as Blocked or InvalidConfiguration),
+			// the Progressing condition already provides all necessary information about the failure.
+			if !errors.Is(err, reconcile.TerminalError(nil)) {
+				setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+			}
 			return nil, err
 		}
 

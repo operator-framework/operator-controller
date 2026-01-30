@@ -16,6 +16,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
+	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 )
 
 // ManifestProvider returns the manifests that should be applied by OLM given a bundle and its associated ClusterExtension
@@ -77,7 +78,7 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		bundleConfigBytes := extensionConfigBytes(ext)
 		bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, ext.Spec.Namespace)
 		if err != nil {
-			return nil, fmt.Errorf("invalid ClusterExtension configuration: %w", err)
+			return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid ClusterExtension configuration: %w", err))
 		}
 
 		if watchNS := bundleConfig.GetWatchNamespace(); watchNS != nil {

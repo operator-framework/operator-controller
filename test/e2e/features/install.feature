@@ -117,7 +117,7 @@ Feature: Install ClusterExtension
               matchLabels:
                 "olm.operatorframework.io/metadata.name": test-catalog
       """
-    And ClusterExtension reports Progressing as True with Reason Retrying and Message:
+    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
       """
       error for resolved bundle "single-namespace-operator.1.0.0" with version "1.0.0":
       invalid ClusterExtension configuration: invalid configuration: required field "watchNamespace" is missing
@@ -169,7 +169,7 @@ Feature: Install ClusterExtension
               matchLabels:
                 "olm.operatorframework.io/metadata.name": test-catalog
       """
-    And ClusterExtension reports Progressing as True with Reason Retrying and Message:
+    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
       """
       error for resolved bundle "own-namespace-operator.1.0.0" with version
       "1.0.0": invalid ClusterExtension configuration: invalid configuration: required
@@ -197,7 +197,7 @@ Feature: Install ClusterExtension
               matchLabels:
                 "olm.operatorframework.io/metadata.name": test-catalog
       """
-    And ClusterExtension reports Progressing as True with Reason Retrying and Message:
+    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
       """
       error for resolved bundle "own-namespace-operator.1.0.0" with version
       "1.0.0": invalid ClusterExtension configuration: invalid configuration: invalid

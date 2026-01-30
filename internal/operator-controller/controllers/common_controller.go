@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 )
 
 const (
@@ -56,11 +57,8 @@ func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 	// Nothing is installed
 	if revisionStates.Installed == nil {
 		setInstallStatus(ext, nil)
-		if len(revisionStates.RollingOut) == 0 {
-			setInstalledStatusConditionFalse(ext, ocv1.ReasonFailed, "No bundle installed")
-		} else {
-			setInstalledStatusConditionFalse(ext, ocv1.ReasonAbsent, "No bundle installed")
-		}
+		reason := determineFailureReason(revisionStates.RollingOut)
+		setInstalledStatusConditionFalse(ext, reason, "No bundle installed")
 		return
 	}
 	// Something is installed
@@ -69,6 +67,45 @@ func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionSt
 	}
 	setInstallStatus(ext, installStatus)
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", revisionStates.Installed.Image))
+}
+
+// determineFailureReason determines the appropriate reason for the Installed condition
+// when no bundle is installed (Installed: False).
+//
+// Returns Failed when:
+//   - No rolling revisions exist (nothing to install)
+//   - The latest rolling revision has Reason: Retrying (indicates an error occurred)
+//
+// Returns Absent when:
+//   - Rolling revisions exist with the latest having Reason: RollingOut (healthy phased rollout in progress)
+//
+// Rationale:
+//   - Failed: Semantically indicates an error prevented installation
+//   - Absent: Semantically indicates "not there yet" (neutral state, e.g., during healthy rollout)
+//   - Retrying reason indicates an error (config validation, apply failure, etc.)
+//   - RollingOut reason indicates healthy progress (not an error)
+//   - Only the LATEST revision matters - old errors superseded by newer healthy revisions should not cause Failed
+//
+// Note: rollingRevisions are sorted in ascending order by Spec.Revision (oldest to newest),
+// so the latest revision is the LAST element in the array.
+func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
+	if len(rollingRevisions) == 0 {
+		return ocv1.ReasonFailed
+	}
+
+	// Check if the LATEST rolling revision indicates an error (Retrying reason)
+	// Latest revision is the last element in the array (sorted ascending by Spec.Revision)
+	latestRevision := rollingRevisions[len(rollingRevisions)-1]
+	progressingCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+	if progressingCond != nil && progressingCond.Reason == string(ocv1.ClusterExtensionRevisionReasonRetrying) {
+		// Retrying indicates an error occurred (config, apply, validation, etc.)
+		// Use Failed for semantic correctness: installation failed due to error
+		return ocv1.ReasonFailed
+	}
+
+	// No error detected in latest revision - it's progressing healthily (RollingOut) or no conditions set
+	// Use Absent for neutral "not installed yet" state
+	return ocv1.ReasonAbsent
 }
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
@@ -119,12 +156,20 @@ func setStatusProgressing(ext *ocv1.ClusterExtension, err error) {
 
 	if err != nil {
 		progressingCond.Reason = ocv1.ReasonRetrying
-		progressingCond.Message = err.Error()
+		// Unwrap TerminalError to avoid "terminal error:" prefix in message
+		progressingCond.Message = errorutil.UnwrapTerminal(err).Error()
 	}
 
 	if errors.Is(err, reconcile.TerminalError(nil)) {
 		progressingCond.Status = metav1.ConditionFalse
-		progressingCond.Reason = ocv1.ReasonBlocked
+		// Try to extract a specific reason from the terminal error.
+		// If the error was created with NewTerminalError(reason, err), use that reason.
+		// Otherwise, fall back to the generic "Blocked" reason.
+		if reason, ok := errorutil.ExtractTerminalReason(err); ok {
+			progressingCond.Reason = reason
+		} else {
+			progressingCond.Reason = ocv1.ReasonBlocked
+		}
 	}
 
 	SetStatusCondition(&ext.Status.Conditions, progressingCond)

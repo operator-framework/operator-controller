@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 )
 
 func TestSetStatusProgressing(t *testing.T) {
@@ -46,14 +47,25 @@ func TestSetStatusProgressing(t *testing.T) {
 			},
 		},
 		{
-			name:             "non-nil ClusterExtension, terminal error, Progressing condition has status False with reason Blocked",
+			name:             "non-nil ClusterExtension, terminal error without reason, Progressing condition has status False with reason Blocked",
 			err:              reconcile.TerminalError(errors.New("boom")),
 			clusterExtension: &ocv1.ClusterExtension{},
 			expected: metav1.Condition{
 				Type:    ocv1.TypeProgressing,
 				Status:  metav1.ConditionFalse,
 				Reason:  ocv1.ReasonBlocked,
-				Message: "terminal error: boom",
+				Message: "boom",
+			},
+		},
+		{
+			name:             "non-nil ClusterExtension, terminal error with InvalidConfiguration reason, Progressing condition has status False with that reason",
+			err:              errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, errors.New("missing required field")),
+			clusterExtension: &ocv1.ClusterExtension{},
+			expected: metav1.Condition{
+				Type:    ocv1.TypeProgressing,
+				Status:  metav1.ConditionFalse,
+				Reason:  ocv1.ReasonInvalidConfiguration,
+				Message: "missing required field",
 			},
 		},
 	} {
@@ -237,6 +249,163 @@ func TestSetStatusConditionWrapper(t *testing.T) {
 				require.NotContains(t, cond.Message, truncationSuffix,
 					"short messages should not contain truncation suffix")
 			}
+		})
+	}
+}
+
+func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T) {
+	tests := []struct {
+		name                  string
+		revisionStates        *RevisionStates
+		expectedInstalledCond metav1.Condition
+	}{
+		{
+			name: "no revisions at all - uses Failed",
+			revisionStates: &RevisionStates{
+				Installed:  nil,
+				RollingOut: nil,
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonFailed,
+			},
+		},
+		{
+			name: "rolling revision with error (Retrying) - uses Failed",
+			revisionStates: &RevisionStates{
+				Installed: nil,
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-1",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Message: "some error occurred",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonFailed,
+			},
+		},
+		{
+			name: "multiple rolling revisions with one Retrying - uses Failed",
+			revisionStates: &RevisionStates{
+				Installed: nil,
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-1",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ReasonRollingOut,
+								Message: "Revision is rolling out",
+							},
+						},
+					},
+					{
+						RevisionName: "rev-2",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Message: "validation error occurred",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonFailed,
+			},
+		},
+		{
+			name: "rolling revision with RollingOut reason - uses Absent",
+			revisionStates: &RevisionStates{
+				Installed: nil,
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-1",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ReasonRollingOut,
+								Message: "Revision is rolling out",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonAbsent,
+			},
+		},
+		{
+			name: "old revision with Retrying superseded by latest healthy - uses Absent",
+			revisionStates: &RevisionStates{
+				Installed: nil,
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-1",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Message: "old error that was superseded",
+							},
+						},
+					},
+					{
+						RevisionName: "rev-2",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ReasonRollingOut,
+								Message: "Latest revision is rolling out healthy",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonAbsent,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ext := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-ext",
+					Generation: 1,
+				},
+			}
+
+			setInstalledStatusFromRevisionStates(ext, tt.revisionStates)
+
+			cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+			require.NotNil(t, cond)
+			require.Equal(t, tt.expectedInstalledCond.Status, cond.Status)
+			require.Equal(t, tt.expectedInstalledCond.Reason, cond.Reason)
 		})
 	}
 }
