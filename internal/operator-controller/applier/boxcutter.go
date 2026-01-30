@@ -328,14 +328,12 @@ func (m *BoxcutterStorageMigrator) ensureMigratedRevisionStatus(ctx context.Cont
 		if revisions[i].Spec.Revision != 1 {
 			continue
 		}
-		// Only process migrated revisions - skip normal Boxcutter revision 1 to avoid extra API calls.
-		if revisions[i].Labels[labels.MigratedFromHelmKey] != "true" {
-			return nil
-		}
 		// Skip if already succeeded - status is already set correctly.
 		if meta.IsStatusConditionTrue(revisions[i].Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
 			return nil
 		}
+		// Ensure revision 1 status is set correctly, including for previously migrated
+		// revisions that may not carry the MigratedFromHelm label.
 		return m.ensureRevisionStatus(ctx, &revisions[i])
 	}
 	// No revision 1 found - migration not applicable (revisions created by normal operation).
