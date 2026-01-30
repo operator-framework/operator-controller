@@ -1514,6 +1514,16 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			}).
 			Return(nil)
 
+		// The migration flow calls Get() to re-fetch the revision before checking its status.
+		// Even for non-migrated revisions, Get() is called to determine if status needs to be set.
+		client.
+			On("Get", mock.Anything, mock.Anything, mock.AnythingOfType("*v1.ClusterExtensionRevision"), mock.Anything).
+			Run(func(args mock.Arguments) {
+				rev := args.Get(2).(*ocv1.ClusterExtensionRevision)
+				*rev = existingRev
+			}).
+			Return(nil)
+
 		err := sm.Migrate(t.Context(), ext, map[string]string{"my-label": "my-value"})
 		require.NoError(t, err)
 
