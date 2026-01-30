@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -72,9 +73,9 @@ func Test_ErrorFormatting_SchemaLibraryVersion(t *testing.T) {
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeOwnNamespace},
 			installNamespace:      "correct-namespace",
 			expectedErrSubstrings: []string{
+				"invalid format for field \"watchNamespace\"",
 				"invalid value",
 				"wrong-namespace",
-				"watchNamespace must be",
 				"correct-namespace",
 				"the namespace where the operator is installed",
 				"OwnNamespace install mode",
@@ -86,12 +87,36 @@ func Test_ErrorFormatting_SchemaLibraryVersion(t *testing.T) {
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
 			installNamespace:      "install-ns",
 			expectedErrSubstrings: []string{
+				"invalid format for field \"watchNamespace\"",
+				"not valid singleNamespaceInstallMode",
 				"invalid value",
 				"install-ns",
-				"watchNamespace must be different from",
+				"must be different from",
 				"the install namespace",
 				"SingleNamespace install mode",
 				"watch a different namespace",
+			},
+		},
+		{
+			name:                  "SingleNamespace constraint error bad namespace format",
+			rawConfig:             []byte(`{"watchNamespace": "---AAAA-BBBB-super-long-namespace-that-that-is-waaaaaaaaayyy-longer-than-sixty-three-characters"}`),
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
+			installNamespace:      "install-ns",
+			expectedErrSubstrings: []string{
+				"field \"watchNamespace\"",
+				"must match pattern \"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\"",
+			},
+		},
+		{
+			name:                  "Single- and OwnNamespace constraint error bad namespace format",
+			rawConfig:             []byte(`{"watchNamespace": ` + strings.Repeat("A", 63) + `"}`),
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace, v1alpha1.InstallModeTypeOwnNamespace},
+			installNamespace:      "install-ns",
+			expectedErrSubstrings: []string{
+				"invalid configuration",
+				"multiple errors found",
+				"must have maximum length of 63 (len=64)",
+				"must match pattern \"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\"",
 			},
 		},
 	} {

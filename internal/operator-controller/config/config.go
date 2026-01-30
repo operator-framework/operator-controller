@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/santhosh-tekuri/jsonschema/v6/kind"
 	"sigs.k8s.io/yaml"
 )
 
@@ -208,7 +209,7 @@ func validateConfigWithSchema(configBytes []byte, schema map[string]any, install
 				return fmt.Errorf("value must be a string")
 			}
 			if str != installNamespace {
-				return fmt.Errorf("invalid value %q: watchNamespace must be %q (the namespace where the operator is installed) because this operator only supports OwnNamespace install mode", str, installNamespace)
+				return fmt.Errorf("invalid value %q: must be %q (the namespace where the operator is installed) because this operator only supports OwnNamespace install mode", str, installNamespace)
 			}
 			return nil
 		},
@@ -228,7 +229,7 @@ func validateConfigWithSchema(configBytes []byte, schema map[string]any, install
 				return fmt.Errorf("value must be a string")
 			}
 			if str == installNamespace {
-				return fmt.Errorf("invalid value %q: watchNamespace must be different from %q (the install namespace) because this operator uses SingleNamespace install mode to watch a different namespace", str, installNamespace)
+				return fmt.Errorf("invalid value %q: must be different from %q (the install namespace) because this operator uses SingleNamespace install mode to watch a different namespace", str, installNamespace)
 			}
 			return nil
 		},
@@ -294,9 +295,13 @@ func formatSchemaError(err error) error {
 
 // formatSingleError formats a single validation error from the schema library.
 func formatSingleError(errUnit jsonschema.OutputUnit) string {
+	if errUnit.Error == nil {
+		return ""
+	}
+
 	// Check the keyword location to identify the error type
-	switch {
-	case strings.Contains(errUnit.KeywordLocation, "/required"):
+	switch errKind := errUnit.Error.Kind.(type) {
+	case *kind.Required:
 		// Missing required field
 		fieldName := extractFieldNameFromMessage(errUnit.Error)
 		if fieldName != "" {
@@ -304,7 +309,7 @@ func formatSingleError(errUnit jsonschema.OutputUnit) string {
 		}
 		return "required field is missing"
 
-	case strings.Contains(errUnit.KeywordLocation, "/additionalProperties"):
+	case *kind.AdditionalProperties:
 		// Unknown/additional field
 		fieldName := extractFieldNameFromMessage(errUnit.Error)
 		if fieldName != "" {
@@ -312,7 +317,7 @@ func formatSingleError(errUnit jsonschema.OutputUnit) string {
 		}
 		return "unknown field"
 
-	case strings.Contains(errUnit.KeywordLocation, "/type"):
+	case *kind.Type:
 		// Type mismatch (e.g., got null, want string)
 		fieldPath := buildFieldPath(errUnit.InstanceLocation)
 		if fieldPath != "" {
@@ -324,16 +329,14 @@ func formatSingleError(errUnit jsonschema.OutputUnit) string {
 		}
 		return fmt.Sprintf("invalid type: %s", errUnit.Error.String())
 
-	case strings.Contains(errUnit.KeywordLocation, "/format"):
-		// Custom format validation (e.g., OwnNamespace, SingleNamespace constraints)
-		// These already have good error messages from our custom validators
-		if errUnit.Error != nil {
-			return errUnit.Error.String()
-		}
+	case *kind.Format:
 		fieldPath := buildFieldPath(errUnit.InstanceLocation)
-		return fmt.Sprintf("invalid format for field %q", fieldPath)
+		if fieldPath != "" {
+			return fmt.Sprintf("invalid format for field %q: %s", fieldPath, errUnit.Error.String())
+		}
+		return fmt.Sprintf("invalid format: %s", errUnit.Error.String())
 
-	case strings.Contains(errUnit.KeywordLocation, "/anyOf"):
+	case *kind.AnyOf:
 		// anyOf validation failed - could be null or wrong type
 		// This happens when a field accepts [null, string] but got something else
 		fieldPath := buildFieldPath(errUnit.InstanceLocation)
@@ -342,13 +345,31 @@ func formatSingleError(errUnit jsonschema.OutputUnit) string {
 		}
 		return "invalid value"
 
-	default:
-		// Unknown error type - return the library's error message
-		// This serves as a fallback for future schema features we haven't customized yet
-		if errUnit.Error != nil {
-			return errUnit.Error.String()
+	case *kind.MaxLength:
+		fieldPath := buildFieldPath(errUnit.InstanceLocation)
+		if fieldPath != "" {
+			return fmt.Sprintf("field %q must have maximum length of %d (len=%d)", fieldPath, errKind.Want, errKind.Got)
 		}
-		return ""
+		return errUnit.Error.String()
+
+	case *kind.MinLength:
+		fieldPath := buildFieldPath(errUnit.InstanceLocation)
+		if fieldPath != "" {
+			return fmt.Sprintf("field %q must have minimum length of %d (len=%d)", fieldPath, errKind.Want, errKind.Got)
+		}
+		return errUnit.Error.String()
+
+	case *kind.Pattern:
+		fieldPath := buildFieldPath(errUnit.InstanceLocation)
+		if fieldPath != "" {
+			return fmt.Sprintf("field %q must match pattern %q", fieldPath, errKind.Want)
+		}
+		return errUnit.Error.String()
+
+	default:
+		// Unhandled error type - return the library's error message
+		// This serves as a fallback for future schema features we haven't customized yet
+		return errUnit.Error.String()
 	}
 }
 
