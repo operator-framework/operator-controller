@@ -325,7 +325,7 @@ Feature: Install ClusterExtension
       """
     Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
-      invalid-namespace-
+      invalid ClusterExtension configuration: invalid configuration: field "watchNamespace" must match pattern
       """
 
   @SingleOwnNamespaceInstallSupport
@@ -356,7 +356,7 @@ Feature: Install ClusterExtension
       """
     Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
       """
-      watchNamespace
+      invalid ClusterExtension configuration: invalid configuration: unknown field "watchNamespace"
       """
 
   @BoxcutterRuntime
