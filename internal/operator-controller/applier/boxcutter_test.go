@@ -1416,8 +1416,8 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
 
-		// Revision with Succeeded=False (e.g., from a failed status update attempt)
-		// This is the specific scenario from Copilot comment #1
+		// Migrated revision with Succeeded=False (e.g., from a previous failed status update attempt)
+		// This simulates a revision whose Succeeded condition should be corrected from False to True during migration.
 		existingRev := ocv1.ClusterExtensionRevision{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-revision",
