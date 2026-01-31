@@ -33,6 +33,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
 )
 
@@ -106,6 +107,27 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		return nil, err
 	}
 
+	if revisionAnnotations == nil {
+		revisionAnnotations = map[string]string{}
+	}
+
+	// add bundle properties of interest to revision annotations
+	bundleAnnotations, err := getBundleAnnotations(bundleFS)
+	if err != nil {
+		return nil, fmt.Errorf("error getting bundle annotations: %w", err)
+	}
+
+	// we don't care about all of the bundle and csv annotations as they can be quite confusing
+	// e.g. 'createdAt', 'capabilities', etc.
+	for _, key := range []string{
+		// used by other operators that care about the bundle properties (e.g. maxOpenShiftVersion)
+		source.PropertyOLMProperties,
+	} {
+		if value, ok := bundleAnnotations[key]; ok {
+			revisionAnnotations[key] = value
+		}
+	}
+
 	// objectLabels
 	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
 	for _, obj := range plain {
@@ -137,11 +159,6 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 			Object: unstr,
 		})
 	}
-
-	if revisionAnnotations == nil {
-		revisionAnnotations = map[string]string{}
-	}
-
 	return r.buildClusterExtensionRevision(objs, ext, revisionAnnotations), nil
 }
 
