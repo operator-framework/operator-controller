@@ -21,7 +21,9 @@ const (
 	TypeProgressing = "Progressing"
 
 	// Installed reasons
-	ReasonAbsent = "Absent"
+	ReasonAbsent     = "Absent"
+	ReasonInstalling = "Installing"
+	ReasonUpgrading  = "Upgrading"
 
 	// Progressing reasons
 	ReasonRollingOut           = "RollingOut"

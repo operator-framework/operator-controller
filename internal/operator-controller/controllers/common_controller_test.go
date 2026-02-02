@@ -253,6 +253,107 @@ func TestSetStatusConditionWrapper(t *testing.T) {
 	}
 }
 
+func TestSetInstalledStatusFromRevisionStates_Upgrade(t *testing.T) {
+	tests := []struct {
+		name                  string
+		revisionStates        *RevisionStates
+		expectedInstalledCond metav1.Condition
+	}{
+		{
+			name: "installed bundle with healthy upgrade in progress - uses Upgrading",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-2",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ReasonRollingOut,
+								Message: "Upgrading to v2.0.0",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionTrue,
+				Reason: ocv1.ReasonUpgrading,
+			},
+		},
+		{
+			name: "installed bundle with no rolling revisions - uses Succeeded",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: nil,
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionTrue,
+				Reason: ocv1.ReasonSucceeded,
+			},
+		},
+		{
+			name: "installed bundle with rolling revision not yet healthy - uses Succeeded",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-2",
+						Conditions:   []metav1.Condition{},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionTrue,
+				Reason: ocv1.ReasonSucceeded,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ext := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-ext",
+					Generation: 1,
+				},
+			}
+
+			setInstalledStatusFromRevisionStates(ext, tt.revisionStates)
+
+			cond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+			require.NotNil(t, cond)
+			require.Equal(t, tt.expectedInstalledCond.Status, cond.Status)
+			require.Equal(t, tt.expectedInstalledCond.Reason, cond.Reason)
+		})
+	}
+}
+
 func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T) {
 	tests := []struct {
 		name                  string
@@ -331,7 +432,7 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
-			name: "rolling revision with RollingOut reason - uses Absent",
+			name: "rolling revision with RollingOut reason - uses Installing",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -351,11 +452,11 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			expectedInstalledCond: metav1.Condition{
 				Type:   ocv1.TypeInstalled,
 				Status: metav1.ConditionFalse,
-				Reason: ocv1.ReasonAbsent,
+				Reason: ocv1.ReasonInstalling,
 			},
 		},
 		{
-			name: "old revision with Retrying superseded by latest healthy - uses Absent",
+			name: "old revision with Retrying superseded by latest healthy - uses Installing",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -378,6 +479,47 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 								Status:  metav1.ConditionTrue,
 								Reason:  ocv1.ReasonRollingOut,
 								Message: "Latest revision is rolling out healthy",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonInstalling,
+			},
+		},
+		{
+			name: "rolling revision with no conditions set - uses Absent",
+			revisionStates: &RevisionStates{
+				Installed: nil,
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-1",
+						Conditions:   []metav1.Condition{},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonAbsent,
+			},
+		},
+		{
+			name: "rolling revision with unknown reason - uses Absent",
+			revisionStates: &RevisionStates{
+				Installed: nil,
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-1",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  "SomeOtherReason",
+								Message: "Revision is in an unknown state",
 							},
 						},
 					},
