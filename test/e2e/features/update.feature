@@ -31,7 +31,8 @@ Feature: Update ClusterExtension
     And ClusterExtension is rolled out
     And ClusterExtension is available
     When ClusterExtension is updated to version "1.0.1"
-    Then ClusterExtension is rolled out
+    Then ClusterExtension reports Installed as True with Reason Upgrading or has progressed past it
+    And ClusterExtension is rolled out
     And ClusterExtension is available
     And bundle "test-operator.1.0.1" is installed in version "1.0.1"
 

@@ -359,6 +359,30 @@ Feature: Install ClusterExtension
       invalid ClusterExtension configuration: invalid configuration: unknown field "watchNamespace"
       """
 
+  Scenario: Report Installing status during initial installation
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension reports Installed as False with Reason Installing or has progressed past it
+    And ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "test-operator.1.2.0" is installed in version "1.2.0"
+
   @BoxcutterRuntime
   @ProgressDeadline
   Scenario: Report ClusterExtension as not progressing if the rollout does not complete within given timeout
