@@ -69,6 +69,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message:$`, ClusterExtensionReportsCondition)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) and Message includes:$`, ClusterExtensionReportsConditionWithMessageFragment)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutMsg)
+	sc.Step(`^(?i)ClusterExtension eventually reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+) or has progressed$`, ClusterExtensionEventuallyReportsConditionOrProgressed)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) as ([[:alnum:]]+)$`, ClusterExtensionReportsConditionWithoutReason)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionRevisionReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
@@ -421,6 +422,93 @@ func ClusterExtensionReportsConditionWithoutMsg(ctx context.Context, conditionTy
 
 func ClusterExtensionReportsConditionWithoutReason(ctx context.Context, conditionType, conditionStatus string) error {
 	return waitForExtensionCondition(ctx, conditionType, conditionStatus, nil, nil)
+}
+
+// ClusterExtensionEventuallyReportsConditionOrProgressed checks if a ClusterExtension ever reports
+// a specific condition with a specific reason, OR has already progressed past that transient state.
+// This is useful for testing transient states like "Installing" or "Upgrading" that may complete
+// very quickly before the test can observe them.
+//
+// For Installing (Installed=False, Reason=Installing): accepts Installed=False with Reason=Installing OR Installed=True with Reason=Succeeded.
+// For Upgrading (Installed=True, Reason=Upgrading): accepts Installed=True with Reason=Upgrading OR Installed=True with Reason=Succeeded.
+// For any other condition reason (or when the condition does not match one of the transient patterns
+// above), this helper behaves like ClusterExtensionReportsConditionWithoutMsg and requires an exact match on
+// type, status, and reason via waitForExtensionCondition.
+func ClusterExtensionEventuallyReportsConditionOrProgressed(ctx context.Context, conditionType, conditionStatus, conditionReason string) error {
+	sc := scenarioCtx(ctx)
+
+	// Map of transient reasons to their progressed states with expected status
+	type progressedState struct {
+		reason string
+		status string
+	}
+
+	progressedStates := map[string][]progressedState{
+		"Installing": {{reason: "Succeeded", status: "True"}}, // Installing (False) -> Succeeded (True)
+		"Upgrading":  {{reason: "Succeeded", status: "True"}}, // Upgrading (True) -> Succeeded (True)
+	}
+
+	acceptedProgressed, isTransient := progressedStates[conditionReason]
+	if !isTransient {
+		// Not a transient state, use normal exact match
+		return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, nil)
+	}
+
+	// For transient states, we accept either the target reason OR any progressed reason
+	require.Eventually(godog.T(ctx), func() bool {
+		v, err := k8sClient("get", "clusterextension", sc.clusterExtensionName, "-o", fmt.Sprintf("jsonpath={.status.conditions[?(@.type==\"%s\")]}", conditionType))
+		if err != nil {
+			logger.V(1).Info("Failed to get clusterextension", "name", sc.clusterExtensionName, "error", err)
+			return false
+		}
+
+		if v == "" {
+			logger.V(1).Info("No condition found yet", "conditionType", conditionType)
+			return false
+		}
+
+		var condition metav1.Condition
+		if err := json.Unmarshal([]byte(v), &condition); err != nil {
+			logger.V(1).Info("Failed to unmarshal condition", "error", err, "value", v)
+			return false
+		}
+
+		logger.V(1).Info("Checking condition",
+			"conditionType", conditionType,
+			"status", condition.Status,
+			"reason", condition.Reason,
+			"expectedStatus", conditionStatus,
+			"expectedReason", conditionReason)
+
+		// Check if we have the target reason with expected status (transient state)
+		if condition.Status == metav1.ConditionStatus(conditionStatus) && condition.Reason == conditionReason {
+			logger.V(1).Info("Found transient state",
+				"conditionType", conditionType,
+				"status", condition.Status,
+				"reason", condition.Reason)
+			return true
+		}
+
+		// Check if we've progressed past the transient state
+		for _, progressed := range acceptedProgressed {
+			if condition.Status == metav1.ConditionStatus(progressed.status) && condition.Reason == progressed.reason {
+				logger.V(1).Info("State has progressed past transient state",
+					"conditionType", conditionType,
+					"expectedTransientStatus", conditionStatus,
+					"expectedTransientReason", conditionReason,
+					"actualStatus", condition.Status,
+					"actualReason", condition.Reason)
+				return true
+			}
+		}
+
+		logger.V(1).Info("Condition doesn't match expected or progressed states",
+			"actualStatus", condition.Status,
+			"actualReason", condition.Reason)
+		return false
+	}, timeout, tick)
+
+	return nil
 }
 
 func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditionType string, minMinutes, maxMinutes int) error {

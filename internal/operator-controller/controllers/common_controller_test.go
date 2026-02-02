@@ -253,6 +253,259 @@ func TestSetStatusConditionWrapper(t *testing.T) {
 	}
 }
 
+func TestSetInstalledStatusFromRevisionStates_Upgrade(t *testing.T) {
+	tests := []struct {
+		name                    string
+		revisionStates          *RevisionStates
+		expectedInstalledCond   metav1.Condition
+		setupProgressingCond    *metav1.Condition
+		expectedProgressingCond *metav1.Condition
+	}{
+		{
+			// When operator v1 is running and v2 upgrade starts rolling out
+			// Then status shows Upgrading to inform users the new version is being deployed
+			name: "installed bundle with healthy upgrade in progress - uses Upgrading",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-2",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ReasonRollingOut,
+								Message: "Upgrading to v2.0.0",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:    ocv1.TypeInstalled,
+				Status:  metav1.ConditionTrue,
+				Reason:  ocv1.ReasonUpgrading,
+				Message: "Upgrading from quay.io/example/bundle:v1.0.0",
+			},
+		},
+		{
+			// When operator is installed and no upgrades are happening
+			// Then status shows Succeeded because everything is stable
+			name: "installed bundle with no rolling revisions - uses Succeeded",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: nil,
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionTrue,
+				Reason: ocv1.ReasonSucceeded,
+			},
+		},
+		{
+			// When operator v1 is running and v2 upgrade just started but health not confirmed yet
+			// Then status stays Succeeded because current version still works fine
+			name: "installed bundle with rolling revision not yet healthy - uses Succeeded",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-2",
+						Conditions:   []metav1.Condition{},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionTrue,
+				Reason: ocv1.ReasonSucceeded,
+			},
+		},
+		{
+			// When operator v1 is running but v2 upgrade fails with config errors
+			// Then status stays Succeeded because v1 keeps working even though v2 upgrade failed
+			name: "installed bundle with upgrade error (Retrying) - uses Succeeded",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-2",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Message: "Upgrade failed: invalid configuration",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionTrue,
+				Reason: ocv1.ReasonSucceeded,
+			},
+		},
+		{
+			// When operator v1 is running but v2 upgrade has unknown state
+			// Then status stays Succeeded because v1 is still healthy regardless
+			name: "installed bundle with upgrade having unknown reason - uses Succeeded",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-2",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  "SomeUnknownReason",
+								Message: "Unknown state",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionTrue,
+				Reason: ocv1.ReasonSucceeded,
+			},
+		},
+		{
+			// When operator v1 is running but multiple upgrade attempts keep failing
+			// Then users see both conditions showing the complete picture:
+			//   Installed: True, Reason: Succeeded - current v1 is working fine
+			//   Progressing: True, Reason: Retrying - v2 upgrade is failing
+			name: "installed bundle with multiple rolling revisions including errors - uses Succeeded",
+			revisionStates: &RevisionStates{
+				Installed: &RevisionMetadata{
+					RevisionName: "rev-1",
+					Image:        "quay.io/example/bundle:v1.0.0",
+					BundleMetadata: ocv1.BundleMetadata{
+						Name:    "example.v1.0.0",
+						Version: "1.0.0",
+					},
+				},
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-2",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Message: "First upgrade attempt failed",
+							},
+						},
+					},
+					{
+						RevisionName: "rev-3",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
+								Message: "Second upgrade attempt also failed",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionTrue,
+				Reason: ocv1.ReasonSucceeded,
+			},
+			setupProgressingCond: &metav1.Condition{
+				Type:    ocv1.TypeProgressing,
+				Status:  metav1.ConditionTrue,
+				Reason:  ocv1.ReasonRetrying,
+				Message: "Second upgrade attempt also failed",
+			},
+			expectedProgressingCond: &metav1.Condition{
+				Type:    ocv1.TypeProgressing,
+				Status:  metav1.ConditionTrue,
+				Reason:  ocv1.ReasonRetrying,
+				Message: "Second upgrade attempt also failed",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ext := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-ext",
+					Generation: 1,
+				},
+			}
+
+			// Setup Progressing condition if specified to simulate controller behavior
+			if tt.setupProgressingCond != nil {
+				SetStatusCondition(&ext.Status.Conditions, *tt.setupProgressingCond)
+			}
+
+			setInstalledStatusFromRevisionStates(ext, tt.revisionStates)
+
+			// Verify Installed condition
+			installedCond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeInstalled)
+			require.NotNil(t, installedCond)
+			require.Equal(t, tt.expectedInstalledCond.Status, installedCond.Status)
+			require.Equal(t, tt.expectedInstalledCond.Reason, installedCond.Reason)
+			if tt.expectedInstalledCond.Message != "" {
+				require.Equal(t, tt.expectedInstalledCond.Message, installedCond.Message)
+			}
+
+			// Verify Progressing condition if expected
+			// This verifies that setInstalledStatusFromRevisionStates does not modify Progressing
+			if tt.expectedProgressingCond != nil {
+				progressingCond := meta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+				require.NotNil(t, progressingCond)
+				require.Equal(t, tt.expectedProgressingCond.Status, progressingCond.Status)
+				require.Equal(t, tt.expectedProgressingCond.Reason, progressingCond.Reason)
+				require.Equal(t, tt.expectedProgressingCond.Message, progressingCond.Message)
+			}
+		})
+	}
+}
+
 func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T) {
 	tests := []struct {
 		name                  string
@@ -260,6 +513,8 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 		expectedInstalledCond metav1.Condition
 	}{
 		{
+			// When no operator is installed and no installation attempts exist
+			// Then status shows Failed because there is nothing to install
 			name: "no revisions at all - uses Failed",
 			revisionStates: &RevisionStates{
 				Installed:  nil,
@@ -272,6 +527,8 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
+			// When installing operator for first time but it fails with validation errors
+			// Then status shows Failed to indicate the installation did not succeed
 			name: "rolling revision with error (Retrying) - uses Failed",
 			revisionStates: &RevisionStates{
 				Installed: nil,
@@ -296,6 +553,8 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
+			// When installing operator for first time with multiple attempts and latest one fails
+			// Then status shows Failed because the most recent attempt has errors
 			name: "multiple rolling revisions with one Retrying - uses Failed",
 			revisionStates: &RevisionStates{
 				Installed: nil,
@@ -331,7 +590,9 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			},
 		},
 		{
-			name: "rolling revision with RollingOut reason - uses Absent",
+			// When installing operator for first time and rollout is actively progressing
+			// Then status shows Installing to inform users installation is in progress
+			name: "rolling revision with RollingOut reason - uses Installing",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -351,11 +612,13 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 			expectedInstalledCond: metav1.Condition{
 				Type:   ocv1.TypeInstalled,
 				Status: metav1.ConditionFalse,
-				Reason: ocv1.ReasonAbsent,
+				Reason: ocv1.ReasonInstalling,
 			},
 		},
 		{
-			name: "old revision with Retrying superseded by latest healthy - uses Absent",
+			// When first install attempt failed but user fixed config and second attempt is progressing
+			// Then status shows Installing because latest attempt is healthy
+			name: "old revision with Retrying superseded by latest healthy - uses Installing",
 			revisionStates: &RevisionStates{
 				Installed: nil,
 				RollingOut: []*RevisionMetadata{
@@ -378,6 +641,51 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 								Status:  metav1.ConditionTrue,
 								Reason:  ocv1.ReasonRollingOut,
 								Message: "Latest revision is rolling out healthy",
+							},
+						},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonInstalling,
+			},
+		},
+		{
+			// When installing operator but rollout just started with no status updates yet
+			// Then status shows Absent because we cannot determine health yet
+			name: "rolling revision with no conditions set - uses Absent",
+			revisionStates: &RevisionStates{
+				Installed: nil,
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-1",
+						Conditions:   []metav1.Condition{},
+					},
+				},
+			},
+			expectedInstalledCond: metav1.Condition{
+				Type:   ocv1.TypeInstalled,
+				Status: metav1.ConditionFalse,
+				Reason: ocv1.ReasonAbsent,
+			},
+		},
+		{
+			// When installing operator but status has unexpected reason we do not recognize
+			// Then status shows Absent as neutral state for unknown conditions
+			name: "rolling revision with unknown reason - uses Absent",
+			revisionStates: &RevisionStates{
+				Installed: nil,
+				RollingOut: []*RevisionMetadata{
+					{
+						RevisionName: "rev-1",
+						Conditions: []metav1.Condition{
+							{
+								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
+								Status:  metav1.ConditionTrue,
+								Reason:  "SomeOtherReason",
+								Message: "Revision is in an unknown state",
 							},
 						},
 					},
