@@ -323,7 +323,7 @@ Feature: Install ClusterExtension
               matchLabels:
                 "olm.operatorframework.io/metadata.name": test-catalog
       """
-    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+    Then ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
       """
       invalid ClusterExtension configuration: invalid configuration: field "watchNamespace" must match pattern
       """
@@ -354,7 +354,7 @@ Feature: Install ClusterExtension
               matchLabels:
                 "olm.operatorframework.io/metadata.name": test-catalog
       """
-    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
+    Then ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
       """
       invalid ClusterExtension configuration: invalid configuration: unknown field "watchNamespace"
       """
