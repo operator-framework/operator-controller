@@ -36,6 +36,15 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/applier"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/bundlefs"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing/clusterserviceversion"
+)
+
+var (
+	dummyBundle = bundlefs.Builder().
+		WithPackageName("test-package").
+		WithCSV(clusterserviceversion.Builder().WithName("test-csv").Build()).
+		Build()
 )
 
 func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) {
@@ -195,7 +204,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 		},
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, map[string]string{}, map[string]string{})
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{})
 	require.NoError(t, err)
 
 	t.Log("by checking the olm.operatorframework.io/owner-name label is set to the name of the ClusterExtension")
@@ -254,8 +263,88 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	}, rev.Spec.Phases)
 }
 
+func Test_SimpleRevisionGenerator_GenerateRevision_BundleAnnotations(t *testing.T) {
+	r := &FakeManifestProvider{
+		GetFn: func(_ fs.FS, _ *ocv1.ClusterExtension) ([]client.Object, error) {
+			return []client.Object{}, nil
+		},
+	}
+
+	b := applier.SimpleRevisionGenerator{
+		Scheme:           k8scheme.Scheme,
+		ManifestProvider: r,
+	}
+
+	ext := &ocv1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-extension",
+		},
+		Spec: ocv1.ClusterExtensionSpec{
+			Namespace: "test-namespace",
+			ServiceAccount: ocv1.ServiceAccountReference{
+				Name: "test-sa",
+			},
+		},
+	}
+
+	t.Run("bundle properties are copied to the olm.properties annotation", func(t *testing.T) {
+		bundleFS := bundlefs.Builder().
+			WithPackageName("test-package").
+			WithBundleProperty("olm.bundle.property", "some-value").
+			WithBundleProperty("olm.another.bundle.property", "some-other-value").
+			WithCSV(clusterserviceversion.Builder().WithName("test-csv").Build()).
+			Build()
+
+		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{})
+		require.NoError(t, err)
+
+		t.Log("by checking bundle properties are added to the revision annotations")
+		require.NotNil(t, rev.Annotations)
+		require.JSONEq(t, `[{"type":"olm.bundle.property","value":"some-value"},{"type":"olm.another.bundle.property","value":"some-other-value"}]`, rev.Annotations["olm.properties"])
+	})
+
+	t.Run("olm.properties should not be present if there are no bundle properties", func(t *testing.T) {
+		bundleFS := bundlefs.Builder().
+			WithPackageName("test-package").
+			WithCSV(clusterserviceversion.Builder().WithName("test-csv").Build()).
+			Build()
+
+		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{})
+		require.NoError(t, err)
+
+		t.Log("by checking olm.properties is not present in the revision annotations")
+		_, ok := rev.Annotations["olm.properties"]
+		require.False(t, ok, "olm.properties should not be present in the revision annotations")
+	})
+
+	t.Run("csv annotations are not added to the revision annotations", func(t *testing.T) {
+		bundleFS := bundlefs.Builder().
+			WithPackageName("test-package").
+			WithBundleProperty("olm.bundle.property", "some-value").
+			WithCSV(clusterserviceversion.Builder().
+				WithName("test-csv").
+				WithAnnotations(map[string]string{
+					"some.csv.annotation": "some-other-value",
+				}).
+				Build()).
+			Build()
+
+		rev, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{})
+		require.NoError(t, err)
+
+		t.Log("by checking csv annotations are not added to the revision annotations")
+		_, ok := rev.Annotations["olm.csv.annotation"]
+		require.False(t, ok, "csv annotation should not be present in the revision annotations")
+	})
+
+	t.Run("errors getting bundle properties are surfaced", func(t *testing.T) {
+		_, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, map[string]string{}, map[string]string{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "metadata/annotations.yaml: file does not exist")
+	})
+}
+
 func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
-	bundleFS := fstest.MapFS{}
 	ext := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-extension",
@@ -264,7 +353,7 @@ func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
 	r := &FakeManifestProvider{
 		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
 			t.Log("by checking renderer was called with the correct parameters")
-			require.Equal(t, bundleFS, b)
+			require.Equal(t, dummyBundle, b)
 			require.Equal(t, ext, e)
 			return nil, nil
 		},
@@ -274,7 +363,7 @@ func Test_SimpleRevisionGenerator_Renderer_Integration(t *testing.T) {
 		ManifestProvider: r,
 	}
 
-	_, err := b.GenerateRevision(t.Context(), bundleFS, ext, map[string]string{}, map[string]string{})
+	_, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{})
 	require.NoError(t, err)
 }
 
@@ -312,7 +401,7 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 		"other": "value",
 	}
 
-	rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, &ocv1.ClusterExtension{
+	rev, err := b.GenerateRevision(t.Context(), dummyBundle, &ocv1.ClusterExtension{
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace:      "test-namespace",
 			ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
@@ -386,7 +475,7 @@ func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T
 				ext.Spec.ProgressDeadlineMinutes = *pd
 			}
 
-			rev, err := b.GenerateRevision(t.Context(), fstest.MapFS{}, ext, empty, empty)
+			rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, empty, empty)
 			require.NoError(t, err)
 			require.Equal(t, tc.want.progressDeadlineMinutes, rev.Spec.ProgressDeadlineMinutes)
 		})

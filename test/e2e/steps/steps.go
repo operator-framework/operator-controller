@@ -73,6 +73,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterExtensionRevisionReportsConditionWithoutMsg)
 	sc.Step(`^(?i)ClusterExtension reports ([[:alnum:]]+) transition between (\d+) and (\d+) minutes since its creation$`, ClusterExtensionReportsConditionTransitionTime)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" is archived$`, ClusterExtensionRevisionIsArchived)
+	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterExtensionRevisionHasAnnotationWithValue)
 
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
@@ -483,6 +484,27 @@ func ClusterExtensionRevisionReportsConditionWithoutMsg(ctx context.Context, rev
 
 func ClusterExtensionRevisionIsArchived(ctx context.Context, revisionName string) error {
 	return waitForCondition(ctx, "clusterextensionrevision", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Progressing", "False", ptr.To("Archived"), nil)
+}
+
+func ClusterExtensionRevisionHasAnnotationWithValue(ctx context.Context, revisionName, annotationKey string, annotationValue *godog.DocString) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+	expectedValue := ""
+	if annotationValue != nil {
+		expectedValue = annotationValue.Content
+	}
+	waitFor(ctx, func() bool {
+		obj, err := getResource("clusterextensionrevision", revisionName, "")
+		if err != nil {
+			logger.V(1).Error(err, "failed to get clusterextensionrevision", "name", revisionName)
+			return false
+		}
+		if obj.GetAnnotations() == nil {
+			return false
+		}
+		return obj.GetAnnotations()[annotationKey] == expectedValue
+	})
+	return nil
 }
 
 func ResourceAvailable(ctx context.Context, resource string) error {
