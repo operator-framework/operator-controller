@@ -63,7 +63,7 @@ type ClusterExtensionSpec struct {
 	// +kubebuilder:validation:MaxLength:=63
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
-	// +kubebuilder:validation:Required
+	// +required
 	Namespace string `json:"namespace"`
 
 	// serviceAccount specifies a ServiceAccount used to perform all interactions with the cluster
@@ -72,7 +72,7 @@ type ClusterExtensionSpec struct {
 	// The ServiceAccount must exist in the namespace referenced in the spec.
 	// The serviceAccount field is required.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
 
 	// source is required and selects the installation source of content for this ClusterExtension.
@@ -88,7 +88,7 @@ type ClusterExtensionSpec struct {
 	//   catalog:
 	//     packageName: example-package
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	Source SourceConfig `json:"source"`
 
 	// install is optional and configures installation options for the ClusterExtension,
@@ -137,7 +137,7 @@ type SourceConfig struct {
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Catalog"
-	// +kubebuilder:validation:Required
+	// +required
 	SourceType string `json:"sourceType"`
 
 	// catalog configures how information is sourced from a catalog.
@@ -177,7 +177,7 @@ type ClusterExtensionConfig struct {
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Inline"
-	// +kubebuilder:validation:Required
+	// +required
 	ConfigType ClusterExtensionConfigType `json:"configType"`
 
 	// inline contains JSON or YAML values specified directly in the ClusterExtension.
@@ -220,7 +220,7 @@ type CatalogFilter struct {
 	// +kubebuilder:validation:MaxLength:=253
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="packageName is immutable"
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="packageName must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
-	// +kubebuilder:validation:Required
+	// +required
 	PackageName string `json:"packageName"`
 
 	// version is an optional semver constraint (a specific version or range of versions).
@@ -403,7 +403,7 @@ type ServiceAccountReference struct {
 	// +kubebuilder:validation:MaxLength:=253
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="name must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
-	// +kubebuilder:validation:Required
+	// +required
 	Name string `json:"name"`
 }
 
@@ -431,7 +431,7 @@ type CRDUpgradeSafetyPreflightConfig struct {
 	// When set to "Strict", the CRD Upgrade Safety pre-flight check runs during an upgrade operation.
 	//
 	// +kubebuilder:validation:Enum:="None";"Strict"
-	// +kubebuilder:validation:Required
+	// +required
 	Enforcement CRDUpgradeSafetyEnforcement `json:"enforcement"`
 }
 
@@ -455,14 +455,14 @@ type BundleMetadata struct {
 	// It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.),
 	// start and end with an alphanumeric character, and be no longer than 253 characters.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="packageName must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
 	Name string `json:"name"`
 
 	// version is required and references the version that this bundle represents.
 	// It follows the semantic versioning standard as defined in https://semver.org/.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^([0-9]+)(\\\\.[0-9]+)?(\\\\.[0-9]+)?(-([-0-9A-Za-z]+(\\\\.[-0-9A-Za-z]+)*))?(\\\\+([-0-9A-Za-z]+(-\\\\.[-0-9A-Za-z]+)*))?\")",message="version must be well-formed semver"
 	Version string `json:"version"`
 }
@@ -533,7 +533,7 @@ type ClusterExtensionInstallStatus struct {
 	// A "bundle" is a versioned set of content that represents the resources that need to be applied
 	// to a cluster to install a package.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	Bundle BundleMetadata `json:"bundle"`
 }
 
@@ -575,7 +575,7 @@ type ClusterExtensionList struct {
 
 	// items is a required list of ClusterExtension objects.
 	//
-	// +kubebuilder:validation:Required
+	// +required
 	Items []ClusterExtension `json:"items"`
 }
 
