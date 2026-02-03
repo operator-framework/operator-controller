@@ -67,12 +67,7 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		if err := yaml.Unmarshal([]byte(doc), &obj); err != nil {
 			return nil, err
 		}
-
-		existingLabels := obj.GetLabels()
-		labels := make(map[string]string, len(existingLabels)+len(objectLabels))
-		maps.Copy(labels, existingLabels)
-		maps.Copy(labels, objectLabels)
-		obj.SetLabels(labels)
+		obj.SetLabels(mergeLabelMaps(obj.GetLabels(), objectLabels))
 
 		// Memory optimization: strip large annotations
 		// Note: ApplyStripTransform never returns an error in practice
@@ -131,11 +126,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	// objectLabels
 	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
 	for _, obj := range plain {
-		existingLabels := obj.GetLabels()
-		labels := make(map[string]string, len(existingLabels)+len(objectLabels))
-		maps.Copy(labels, existingLabels)
-		maps.Copy(labels, objectLabels)
-		obj.SetLabels(labels)
+		obj.SetLabels(mergeLabelMaps(obj.GetLabels(), objectLabels))
 
 		gvk, err := apiutil.GVKForObject(obj, r.Scheme)
 		if err != nil {
@@ -219,6 +210,7 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: annotations,
 			Labels: map[string]string{
+				labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 				labels.OwnerNameKey: ext.Name,
 			},
 		},
@@ -665,4 +657,11 @@ func revisionManagementPerms(rev *ocv1.ClusterExtensionRevision) func(user.Info)
 			},
 		}
 	}
+}
+
+func mergeLabelMaps(m1, m2 map[string]string) map[string]string {
+	mergedLabels := make(map[string]string, len(m1)+len(m2))
+	maps.Copy(mergedLabels, m1)
+	maps.Copy(mergedLabels, m2)
+	return mergedLabels
 }

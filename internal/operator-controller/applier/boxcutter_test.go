@@ -109,6 +109,7 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 				"olm.operatorframework.io/service-account-namespace": "test-namespace",
 			},
 			Labels: map[string]string{
+				labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 				labels.OwnerNameKey: "test-123",
 			},
 		},
@@ -207,8 +208,9 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, map[string]string{}, map[string]string{})
 	require.NoError(t, err)
 
-	t.Log("by checking the olm.operatorframework.io/owner-name label is set to the name of the ClusterExtension")
+	t.Log("by checking the olm.operatorframework.io/owner-name and owner-kind labels are set")
 	require.Equal(t, map[string]string{
+		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 		labels.OwnerNameKey: "test-extension",
 	}, rev.Labels)
 	t.Log("by checking the revision number is 0")

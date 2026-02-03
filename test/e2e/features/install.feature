@@ -417,3 +417,29 @@ Feature: Install ClusterExtension
       """
       [{"type":"olm.test-property","value":"some-value"}]
       """
+
+  @BoxcutterRuntime
+  Scenario: ClusterExtensionRevision is labeled with owner information
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            version: 1.2.0
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And ClusterExtensionRevision "${NAME}-1" has label "olm.operatorframework.io/owner-kind" with value "ClusterExtension"
+    And ClusterExtensionRevision "${NAME}-1" has label "olm.operatorframework.io/owner-name" with value "${NAME}"
