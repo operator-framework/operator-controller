@@ -444,6 +444,218 @@ func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
 	})
 }
 
+func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
+	t.Run("passes deploymentConfig to renderer when provided in configuration", func(t *testing.T) {
+		expectedEnvVars := []corev1.EnvVar{
+			{Name: "TEST_ENV", Value: "test-value"},
+		}
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						t.Log("ensure deploymentConfig is passed to renderer")
+						require.NotNil(t, opts.DeploymentConfig)
+						require.Equal(t, expectedEnvVars, opts.DeploymentConfig.Env)
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{"deploymentConfig": {"env": [{"name": "TEST_ENV", "value": "test-value"}]}}`),
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("does not pass deploymentConfig to renderer when not provided in configuration", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						t.Log("ensure deploymentConfig is nil when not provided")
+						require.Nil(t, opts.DeploymentConfig)
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				// No config provided
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("passes deploymentConfig with multiple fields to renderer", func(t *testing.T) {
+		expectedNodeSelector := map[string]string{"kubernetes.io/os": "linux"}
+		expectedTolerations := []corev1.Toleration{
+			{Key: "key1", Operator: "Equal", Value: "value1", Effect: "NoSchedule"},
+		}
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						t.Log("ensure all deploymentConfig fields are passed to renderer")
+						require.NotNil(t, opts.DeploymentConfig)
+						require.Equal(t, expectedNodeSelector, opts.DeploymentConfig.NodeSelector)
+						require.Equal(t, expectedTolerations, opts.DeploymentConfig.Tolerations)
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{
+							"deploymentConfig": {
+								"nodeSelector": {"kubernetes.io/os": "linux"},
+								"tolerations": [{"key": "key1", "operator": "Equal", "value": "value1", "effect": "NoSchedule"}]
+							}
+						}`),
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("passes both watchNamespace and deploymentConfig when both provided", func(t *testing.T) {
+		expectedWatchNamespace := "some-namespace"
+		expectedEnvVars := []corev1.EnvVar{
+			{Name: "TEST_ENV", Value: "test-value"},
+		}
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						t.Log("ensure both watchNamespace and deploymentConfig are passed to renderer")
+						require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
+						require.NotNil(t, opts.DeploymentConfig)
+						require.Equal(t, expectedEnvVars, opts.DeploymentConfig.Env)
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{
+							"watchNamespace": "some-namespace",
+							"deploymentConfig": {
+								"env": [{"name": "TEST_ENV", "value": "test-value"}]
+							}
+						}`),
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("handles empty deploymentConfig gracefully", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						t.Log("ensure deploymentConfig is nil for empty config object")
+						require.Nil(t, opts.DeploymentConfig)
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{"deploymentConfig": {}}`),
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("returns terminal error when deploymentConfig has invalid structure", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: true,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+
+		// Provide deploymentConfig with invalid structure - env should be array, not string
+		// Schema validation catches this before conversion
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{"deploymentConfig": {"env": "not-an-array"}}`),
+					},
+				},
+			},
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid ClusterExtension configuration")
+		require.Contains(t, err.Error(), "deploymentConfig.env")
+		require.ErrorIs(t, err, reconcile.TerminalError(nil), "config validation errors should be terminal")
+	})
+}
+
 func Test_RegistryV1HelmChartProvider_Integration(t *testing.T) {
 	t.Run("surfaces bundle source errors", func(t *testing.T) {
 		provider := applier.RegistryV1HelmChartProvider{

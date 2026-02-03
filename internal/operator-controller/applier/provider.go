@@ -14,6 +14,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
@@ -70,22 +71,44 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 	}
 
 	if r.IsSingleOwnNamespaceEnabled {
-		schema, err := rv1.GetConfigSchema()
+		configOpts, err := r.extractBundleConfigOptions(&rv1, ext)
 		if err != nil {
-			return nil, fmt.Errorf("error getting configuration schema: %w", err)
+			return nil, err
 		}
-
-		bundleConfigBytes := extensionConfigBytes(ext)
-		bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, ext.Spec.Namespace)
-		if err != nil {
-			return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid ClusterExtension configuration: %w", err))
-		}
-
-		if watchNS := bundleConfig.GetWatchNamespace(); watchNS != nil {
-			opts = append(opts, render.WithTargetNamespaces(*watchNS))
-		}
+		opts = append(opts, configOpts...)
 	}
 	return r.BundleRenderer.Render(rv1, ext.Spec.Namespace, opts...)
+}
+
+// extractBundleConfigOptions extracts and validates configuration options from a ClusterExtension.
+// Returns render options for watchNamespace and deploymentConfig if present in the extension's configuration.
+func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.RegistryV1, ext *ocv1.ClusterExtension) ([]render.Option, error) {
+	schema, err := rv1.GetConfigSchema()
+	if err != nil {
+		return nil, fmt.Errorf("error getting configuration schema: %w", err)
+	}
+
+	bundleConfigBytes := extensionConfigBytes(ext)
+	bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, ext.Spec.Namespace)
+	if err != nil {
+		return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid ClusterExtension configuration: %w", err))
+	}
+
+	var opts []render.Option
+	if watchNS := bundleConfig.GetWatchNamespace(); watchNS != nil {
+		opts = append(opts, render.WithTargetNamespaces(*watchNS))
+	}
+
+	// Extract and convert deploymentConfig if present
+	if deploymentConfigMap := bundleConfig.GetDeploymentConfig(); deploymentConfigMap != nil {
+		deploymentConfig, err := convertToDeploymentConfig(deploymentConfigMap)
+		if err != nil {
+			return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid deploymentConfig: %w", err))
+		}
+		opts = append(opts, render.WithDeploymentConfig(deploymentConfig))
+	}
+
+	return opts, nil
 }
 
 // RegistryV1HelmChartProvider creates a Helm-Chart from a registry+v1 bundle and its associated ClusterExtension
@@ -147,6 +170,29 @@ func extensionConfigBytes(ext *ocv1.ClusterExtension) []byte {
 		}
 	}
 	return nil
+}
+
+// convertToDeploymentConfig converts a map[string]any (from validated bundle config)
+// to a *config.DeploymentConfig struct that can be passed to the renderer.
+// Returns nil if the map is empty.
+func convertToDeploymentConfig(deploymentConfigMap map[string]any) (*config.DeploymentConfig, error) {
+	if len(deploymentConfigMap) == 0 {
+		return nil, nil
+	}
+
+	// Marshal the map to JSON
+	data, err := json.Marshal(deploymentConfigMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal deploymentConfig: %w", err)
+	}
+
+	// Unmarshal into the DeploymentConfig struct
+	var deploymentConfig config.DeploymentConfig
+	if err := json.Unmarshal(data, &deploymentConfig); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal deploymentConfig: %w", err)
+	}
+
+	return &deploymentConfig, nil
 }
 
 func getBundleAnnotations(bundleFS fs.FS) (map[string]string, error) {
