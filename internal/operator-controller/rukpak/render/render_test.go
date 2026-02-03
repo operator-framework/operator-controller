@@ -13,6 +13,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	. "github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util/testing"
@@ -381,4 +382,80 @@ func Test_BundleValidatorCallsAllValidationFnsInOrder(t *testing.T) {
 	}
 	require.NoError(t, val.Validate(nil))
 	require.Equal(t, "hi", actual)
+}
+
+func Test_WithDeploymentConfig(t *testing.T) {
+	t.Run("sets deployment config when provided", func(t *testing.T) {
+		expectedConfig := &config.DeploymentConfig{
+			Env: []corev1.EnvVar{
+				{Name: "TEST_ENV", Value: "test-value"},
+			},
+		}
+
+		var receivedConfig *config.DeploymentConfig
+		renderer := render.BundleRenderer{
+			ResourceGenerators: []render.ResourceGenerator{
+				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+					receivedConfig = opts.DeploymentConfig
+					return nil, nil
+				},
+			},
+		}
+
+		_, err := renderer.Render(
+			bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			},
+			"test-namespace",
+			render.WithDeploymentConfig(expectedConfig),
+		)
+
+		require.NoError(t, err)
+		require.Equal(t, expectedConfig, receivedConfig)
+	})
+
+	t.Run("deployment config is nil when not provided", func(t *testing.T) {
+		var receivedConfig *config.DeploymentConfig
+		renderer := render.BundleRenderer{
+			ResourceGenerators: []render.ResourceGenerator{
+				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+					receivedConfig = opts.DeploymentConfig
+					return nil, nil
+				},
+			},
+		}
+
+		_, err := renderer.Render(
+			bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			},
+			"test-namespace",
+		)
+
+		require.NoError(t, err)
+		require.Nil(t, receivedConfig)
+	})
+
+	t.Run("deployment config is nil when explicitly set to nil", func(t *testing.T) {
+		var receivedConfig *config.DeploymentConfig
+		renderer := render.BundleRenderer{
+			ResourceGenerators: []render.ResourceGenerator{
+				func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+					receivedConfig = opts.DeploymentConfig
+					return nil, nil
+				},
+			},
+		}
+
+		_, err := renderer.Render(
+			bundle.RegistryV1{
+				CSV: clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build(),
+			},
+			"test-namespace",
+			render.WithDeploymentConfig(nil),
+		)
+
+		require.NoError(t, err)
+		require.Nil(t, receivedConfig)
+	})
 }
