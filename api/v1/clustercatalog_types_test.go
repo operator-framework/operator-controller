@@ -38,7 +38,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				PollIntervalMinutes: ptr.To(1),
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image: Invalid value: \"object\": cannot specify pollIntervalMinutes while using digest-based image",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image: Invalid value: cannot specify pollIntervalMinutes while using digest-based image",
 			},
 		},
 		"valid digest based image ref, poll interval not allowed, poll interval not specified": {
@@ -52,7 +52,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: "-quay+docker/foo/bar@sha256:abcdef123456789abcdef123456789abc",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character.",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"-quay+docker/foo/bar@sha256:abcdef123456789abcdef123456789abc\": must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character.",
 			},
 		},
 		"invalid digest based image ref, invalid name": {
@@ -60,7 +60,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: "docker.io/FOO/BAR@sha256:abcdef123456789abcdef123456789abc",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters.",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"docker.io/FOO/BAR@sha256:abcdef123456789abcdef123456789abc\": a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters.",
 			},
 		},
 		"invalid digest based image ref, invalid digest algorithm": {
@@ -68,7 +68,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: "docker.io/foo/bar@99-problems:abcdef123456789abcdef123456789abc",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": digest algorithm is not valid. valid algorithms must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the \"-\", \"_\", \"+\", and \".\" characters.",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"docker.io/foo/bar@99-problems:abcdef123456789abcdef123456789abc\": digest algorithm is not valid. valid algorithms must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the \"-\", \"_\", \"+\", and \".\" characters.",
 			},
 		},
 		"invalid digest based image ref, too short digest encoding": {
@@ -76,7 +76,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: "docker.io/foo/bar@sha256:abcdef123456789",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": digest is not valid. the encoded string must be at least 32 characters",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"docker.io/foo/bar@sha256:abcdef123456789\": digest is not valid. the encoded string must be at least 32 characters",
 			},
 		},
 		"invalid digest based image ref, invalid characters in digest encoding": {
@@ -84,7 +84,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: "docker.io/foo/bar@sha256:XYZxy123456789abcdef123456789abc",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": digest is not valid. the encoded string must only contain hex characters (A-F, a-f, 0-9)",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"docker.io/foo/bar@sha256:XYZxy123456789abcdef123456789abc\": digest is not valid. the encoded string must only contain hex characters (A-F, a-f, 0-9)",
 			},
 		},
 		"invalid image ref, no tag or digest": {
@@ -92,7 +92,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: "docker.io/foo/bar",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": must end with a digest or a tag",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"docker.io/foo/bar\": must end with a digest or a tag",
 			},
 		},
 		"invalid tag based image ref, tag too long": {
@@ -100,7 +100,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: fmt.Sprintf("docker.io/foo/bar:%s", strings.Repeat("x", 128)),
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": tag is invalid. the tag must not be more than 127 characters",
+				fmt.Sprintf("openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"docker.io/foo/bar:%s\": tag is invalid. the tag must not be more than 127 characters", strings.Repeat("x", 128)),
 			},
 		},
 		"invalid tag based image ref, tag contains invalid characters": {
@@ -108,7 +108,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: "docker.io/foo/bar:-foo_bar-",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": tag is invalid. valid tags must begin with a word character (alphanumeric + \"_\") followed by word characters or \".\", and \"-\" characters",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"docker.io/foo/bar:-foo_bar-\": tag is invalid. valid tags must begin with a word character (alphanumeric + \"_\") followed by word characters or \".\", and \"-\" characters",
 			},
 		},
 		"valid tag based image ref": {
@@ -129,7 +129,7 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 				Ref: "docker.io:8080",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"string\": a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters.",
+				"openAPIV3Schema.properties.spec.properties.source.properties.image.ref: Invalid value: \"docker.io:8080\": a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters.",
 			},
 		},
 		"valid image ref, domain with port": {
@@ -179,7 +179,7 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 				Ref: "-quay+docker/foo/bar@sha256:abcdef123456789abcdef123456789abc",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character.",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"-quay+docker/foo/bar@sha256:abcdef123456789abcdef123456789abc\": must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character.",
 			},
 		},
 		"invalid digest based image ref, invalid name": {
@@ -187,7 +187,7 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 				Ref: "docker.io/FOO/BAR@sha256:abcdef123456789abcdef123456789abc",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters.",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"docker.io/FOO/BAR@sha256:abcdef123456789abcdef123456789abc\": a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters.",
 			},
 		},
 		"invalid digest based image ref, invalid digest algorithm": {
@@ -195,7 +195,7 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 				Ref: "docker.io/foo/bar@99-problems:abcdef123456789abcdef123456789abc",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": digest algorithm is not valid. valid algorithms must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the \"-\", \"_\", \"+\", and \".\" characters.",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"docker.io/foo/bar@99-problems:abcdef123456789abcdef123456789abc\": digest algorithm is not valid. valid algorithms must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the \"-\", \"_\", \"+\", and \".\" characters.",
 			},
 		},
 		"invalid digest based image ref, too short digest encoding": {
@@ -203,7 +203,7 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 				Ref: "docker.io/foo/bar@sha256:abcdef123456789",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": digest is not valid. the encoded string must be at least 32 characters",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"docker.io/foo/bar@sha256:abcdef123456789\": digest is not valid. the encoded string must be at least 32 characters",
 			},
 		},
 		"invalid digest based image ref, invalid characters in digest encoding": {
@@ -211,7 +211,7 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 				Ref: "docker.io/foo/bar@sha256:XYZxy123456789abcdef123456789abc",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": digest is not valid. the encoded string must only contain hex characters (A-F, a-f, 0-9)",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"docker.io/foo/bar@sha256:XYZxy123456789abcdef123456789abc\": digest is not valid. the encoded string must only contain hex characters (A-F, a-f, 0-9)",
 			},
 		},
 		"invalid image ref, no digest": {
@@ -219,7 +219,7 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 				Ref: "docker.io/foo/bar",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": must end with a digest",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"docker.io/foo/bar\": must end with a digest",
 			},
 		},
 		"invalid image ref, only domain with port": {
@@ -227,8 +227,8 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 				Ref: "docker.io:8080",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters.",
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": must end with a digest",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"docker.io:8080\": a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters.",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"docker.io:8080\": must end with a digest",
 			},
 		},
 		"invalid image ref, tag-based ref": {
@@ -236,7 +236,7 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 				Ref: "docker.io/foo/bar:latest",
 			},
 			wantErrs: []string{
-				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"string\": must end with a digest",
+				"openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref: Invalid value: \"docker.io/foo/bar:latest\": must end with a digest",
 			},
 		},
 	} {
@@ -271,7 +271,7 @@ func TestClusterCatalogURLsCELValidation(t *testing.T) {
 				Base: "file://somefilepath",
 			},
 			wantErrs: []string{
-				fmt.Sprintf("%s: Invalid value: \"string\": scheme must be either http or https", pth),
+				fmt.Sprintf("%s: Invalid value: \"file://somefilepath\": scheme must be either http or https", pth),
 			},
 		},
 		"base is invalid": {
@@ -279,7 +279,7 @@ func TestClusterCatalogURLsCELValidation(t *testing.T) {
 				Base: "notevenarealURL",
 			},
 			wantErrs: []string{
-				fmt.Sprintf("%s: Invalid value: \"string\": must be a valid URL", pth),
+				fmt.Sprintf("%s: Invalid value: \"notevenarealURL\": must be a valid URL", pth),
 			},
 		},
 	} {
@@ -309,7 +309,7 @@ func TestSourceCELValidation(t *testing.T) {
 				Type: SourceTypeImage,
 			},
 			wantErrs: []string{
-				fmt.Sprintf("%s: Invalid value: \"object\": image is required when source type is %s, and forbidden otherwise", pth, SourceTypeImage),
+				fmt.Sprintf("%s: Invalid value: image is required when source type is %s, and forbidden otherwise", pth, SourceTypeImage),
 			},
 		},
 		"image source with required image field": {
@@ -351,7 +351,7 @@ func TestResolvedSourceCELValidation(t *testing.T) {
 				Type: SourceTypeImage,
 			},
 			wantErrs: []string{
-				fmt.Sprintf("%s: Invalid value: \"object\": image is required when source type is %s, and forbidden otherwise", pth, SourceTypeImage),
+				fmt.Sprintf("%s: Invalid value: image is required when source type is %s, and forbidden otherwise", pth, SourceTypeImage),
 			},
 		},
 		"image source with required image field": {

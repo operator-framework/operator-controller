@@ -7,27 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
-// Define a dummy struct that implements runtime.Object but isn't a ClusterCatalog
-type NotClusterCatalog struct {
-	metav1.TypeMeta
-	metav1.ObjectMeta
-}
-
-func (n *NotClusterCatalog) DeepCopyObject() runtime.Object {
-	return &NotClusterCatalog{}
-}
-
 func TestClusterCatalogDefaulting(t *testing.T) {
 	tests := map[string]struct {
-		clusterCatalog runtime.Object
+		clusterCatalog *ocv1.ClusterCatalog
 		expectedLabels map[string]string
-		expectError    bool
-		errorMessage   string
 	}{
 		"no labels provided, name label added": {
 			clusterCatalog: &ocv1.ClusterCatalog{
@@ -38,7 +25,6 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 			expectedLabels: map[string]string{
 				"olm.operatorframework.io/metadata.name": "test-catalog",
 			},
-			expectError: false,
 		},
 		"labels already present, name label added": {
 			clusterCatalog: &ocv1.ClusterCatalog{
@@ -53,7 +39,6 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 				"olm.operatorframework.io/metadata.name": "test-catalog",
 				"existing":                               "label",
 			},
-			expectError: false,
 		},
 		"name label already present, no changes": {
 			clusterCatalog: &ocv1.ClusterCatalog{
@@ -67,18 +52,6 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 			expectedLabels: map[string]string{
 				"olm.operatorframework.io/metadata.name": "test-catalog", // Defaulting should still override this to match the object name
 			},
-			expectError: false,
-		},
-		"invalid object type, expect error": {
-			clusterCatalog: &NotClusterCatalog{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "NotClusterCatalog",
-					APIVersion: "v1",
-				},
-			},
-			expectedLabels: nil,
-			expectError:    true,
-			errorMessage:   "expected a ClusterCatalog but got a *webhook.NotClusterCatalog",
 		},
 	}
 
@@ -87,19 +60,13 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 			// Arrange
 			clusterCatalogWrapper := &ClusterCatalog{}
 
-			// Act
+			// Act - with type-safe API, no type assertion errors are possible
 			err := clusterCatalogWrapper.Default(context.TODO(), tc.clusterCatalog)
 
 			// Assert
-			if tc.expectError {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tc.errorMessage)
-			} else {
-				assert.NoError(t, err)
-				if tc.expectedLabels != nil {
-					labels := tc.clusterCatalog.(*ocv1.ClusterCatalog).Labels
-					assert.Equal(t, tc.expectedLabels, labels)
-				}
+			require.NoError(t, err)
+			if tc.expectedLabels != nil {
+				assert.Equal(t, tc.expectedLabels, tc.clusterCatalog.Labels)
 			}
 		})
 	}
