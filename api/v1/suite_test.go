@@ -20,6 +20,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
@@ -56,6 +57,9 @@ func TestMain(m *testing.M) {
 	}
 
 	code := m.Run()
-	utilruntime.Must(testEnv.Stop())
+	// Use Eventually wrapper for graceful test environment teardown
+	// controller-runtime v0.23.0+ requires this to prevent timing-related errors
+	stopErr := test.StopWithRetry(testEnv, time.Minute, time.Second)
+	utilruntime.Must(stopErr)
 	os.Exit(code)
 }
