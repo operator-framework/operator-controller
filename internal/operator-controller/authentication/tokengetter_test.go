@@ -16,7 +16,7 @@ import (
 )
 
 func TestTokenGetterGet(t *testing.T) {
-	fakeClient := fake.NewSimpleClientset()
+	fakeClient := fake.NewClientset()
 	fakeClient.PrependReactor("create", "serviceaccounts/token",
 		func(action ctest.Action) (bool, runtime.Object, error) {
 			act, ok := action.(ctest.CreateActionImpl)
