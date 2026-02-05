@@ -146,7 +146,14 @@ func CheckWebhookDeploymentReferentialIntegrity(rv1 *bundle.RegistryV1) []error 
 		delete(webhooksByDeployment, depl.Name)
 	}
 
-	var errs []error
+	totalWebhooks := 0
+	for _, webhookDefns := range webhooksByDeployment {
+		totalWebhooks += len(webhookDefns)
+	}
+	if totalWebhooks == 0 {
+		return nil
+	}
+	errs := make([]error, 0, totalWebhooks)
 	// Loop through sorted keys to keep error messages ordered by deployment name
 	for _, deploymentName := range slices.Sorted(maps.Keys(webhooksByDeployment)) {
 		webhookDefns := webhooksByDeployment[deploymentName]
@@ -179,7 +186,14 @@ func CheckWebhookNameUniqueness(rv1 *bundle.RegistryV1) []error {
 		webhookNameSetByType[wh.Type].Insert(wh.GenerateName)
 	}
 
-	var errs []error
+	totalDuplicates := 0
+	for _, duplicates := range duplicateWebhooksByType {
+		totalDuplicates += duplicates.Len()
+	}
+	if totalDuplicates == 0 {
+		return nil
+	}
+	errs := make([]error, 0, totalDuplicates)
 	for _, whType := range slices.Sorted(maps.Keys(duplicateWebhooksByType)) {
 		for _, webhookName := range slices.Sorted(slices.Values(duplicateWebhooksByType[whType].UnsortedList())) {
 			errs = append(errs, fmt.Errorf("duplicate webhook '%s' of type '%s'", webhookName, whType))
@@ -267,7 +281,14 @@ func CheckWebhookNameIsDNS1123SubDomain(rv1 *bundle.RegistryV1) []error {
 		}
 	}
 
-	var errs []error
+	totalInvalid := 0
+	for _, webhooks := range invalidWebhooksByType {
+		totalInvalid += len(webhooks)
+	}
+	if totalInvalid == 0 {
+		return nil
+	}
+	errs := make([]error, 0, totalInvalid)
 	for _, whType := range slices.Sorted(maps.Keys(invalidWebhooksByType)) {
 		for _, webhookName := range slices.Sorted(maps.Keys(invalidWebhooksByType[whType])) {
 			errs = append(errs, fmt.Errorf("webhook of type '%s' has invalid name '%s': %s", whType, webhookName, strings.Join(invalidWebhooksByType[whType][webhookName], ",")))
