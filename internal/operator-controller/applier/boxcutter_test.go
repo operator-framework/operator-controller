@@ -1858,6 +1858,7 @@ type statusWriterMock struct {
 	mock         *mock.Mock
 	updatedObj   client.Object
 	updateCalled bool
+	applyCalled  bool
 }
 
 func (s *statusWriterMock) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
@@ -1877,6 +1878,9 @@ func (s *statusWriterMock) Create(ctx context.Context, obj client.Object, subRes
 
 // Apply is required by controller-runtime v0.23.0+ StatusWriter interface
 func (s *statusWriterMock) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.SubResourceApplyOption) error {
-	// Apply is not used in these tests, just return nil
-	return nil
+	// Track Apply calls to detect unexpected usage in tests
+	s.applyCalled = true
+	// Apply is not currently used by the code under test, but tracking the call
+	// helps ensure tests fail if this assumption changes
+	return fmt.Errorf("unexpected call to StatusWriter.Apply() - this method is not expected to be used in these tests")
 }
