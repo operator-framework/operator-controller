@@ -439,6 +439,36 @@ func (bc *Boxcutter) createOrUpdate(ctx context.Context, user user.Info, rev *oc
 		return err
 	}
 
+	// DEPRECATION NOTICE: Using client.Apply (deprecated in controller-runtime v0.23.0+)
+	//
+	// WHY WE CAN'T FIX THIS YET:
+	// The recommended replacement is the new typed Apply() method that requires generated
+	// apply configurations (ApplyConfiguration types). However, this project does not
+	// currently generate these apply configurations for its API types.
+	//
+	// WHY WE NEED SERVER-SIDE APPLY SEMANTICS:
+	// This controller requires server-side apply with field ownership management to:
+	// 1. Track which controller owns which fields (via client.FieldOwner)
+	// 2. Take ownership of fields from other managers during upgrades (via client.ForceOwnership)
+	// 3. Automatically create-or-update without explicit Get/Create/Update logic
+	//
+	// WHY ALTERNATIVES DON'T WORK:
+	// - client.MergeFrom(): Lacks field ownership - causes conflicts during controller upgrades
+	// - client.StrategicMergePatch(): No field management - upgrade tests fail with ownership errors
+	// - Manual Create/Update: Loses server-side apply benefits, complex to implement correctly
+	//
+	// WHAT'S REQUIRED TO FIX PROPERLY:
+	// 1. Generate apply configurations for all API types (ClusterExtensionRevision, etc.)
+	//    - Requires running controller-gen with --with-applyconfig flag
+	//    - Generates ClusterExtensionRevisionApplyConfiguration types
+	// 2. Update all resource creation/update code to use typed Apply methods
+	// 3. Update all tests to work with new patterns
+	// This is a project-wide effort beyond the scope of the k8s v1.35 upgrade.
+	//
+	// MIGRATION PATH:
+	// Track in a future issue: "Generate apply configurations and migrate to typed Apply methods"
+	//
+	// nolint:staticcheck // SA1019: server-side apply required, needs generated apply configurations
 	return bc.Client.Patch(ctx, rev, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
 }
 
