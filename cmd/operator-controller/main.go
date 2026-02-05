@@ -625,8 +625,12 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		ActionClientGetter: acg,
 		RevisionGenerator:  rg,
 	}
+	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
+		controllers.ValidateClusterExtension(
+			controllers.ServiceAccountValidator(tokenGetter),
+		),
 		controllers.MigrateStorage(storageMigrator),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
@@ -656,12 +660,6 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		return fmt.Errorf("unable to add tracking cache to manager: %v", err)
 	}
 
-	cerCoreClient, err := corev1client.NewForConfig(c.mgr.GetConfig())
-	if err != nil {
-		return fmt.Errorf("unable to create client for ClusterExtensionRevision controller: %w", err)
-	}
-	cerTokenGetter := authentication.NewTokenGetter(cerCoreClient, authentication.WithExpirationDuration(1*time.Hour))
-
 	revisionEngineFactory, err := controllers.NewDefaultRevisionEngineFactory(
 		c.mgr.GetScheme(),
 		trackingCache,
@@ -669,7 +667,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		c.mgr.GetRESTMapper(),
 		fieldOwnerPrefix,
 		c.mgr.GetConfig(),
-		cerTokenGetter,
+		tokenGetter,
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create revision engine factory: %w", err)
@@ -747,6 +745,9 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 	revisionStatesGetter := &controllers.HelmRevisionStatesGetter{ActionClientGetter: acg}
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
+		controllers.ValidateClusterExtension(
+			controllers.ServiceAccountValidator(tokenGetter),
+		),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
