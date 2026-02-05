@@ -1874,3 +1874,9 @@ func (s *statusWriterMock) Patch(ctx context.Context, obj client.Object, patch c
 func (s *statusWriterMock) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
 	return nil
 }
+
+// Apply is required by controller-runtime v0.23.0+ StatusWriter interface
+func (s *statusWriterMock) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.SubResourceApplyOption) error {
+	// Apply is not used in these tests, just return nil
+	return nil
+}
