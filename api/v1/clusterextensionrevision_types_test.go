@@ -21,7 +21,8 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 	}{
 		"revision is immutable": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Revision = 2
@@ -29,8 +30,9 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases may be initially empty": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
-				Phases:   []ClusterExtensionRevisionPhase{},
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+				Phases:         []ClusterExtensionRevisionPhase{},
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Phases = []ClusterExtensionRevisionPhase{
@@ -44,7 +46,8 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases may be initially unset": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Phases = []ClusterExtensionRevisionPhase{
@@ -58,7 +61,8 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases are immutable if not empty": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
 				Phases: []ClusterExtensionRevisionPhase{
 					{
 						Name:    "foo",
@@ -107,17 +111,21 @@ func TestClusterExtensionRevisionValidity(t *testing.T) {
 	}{
 		"revision cannot be negative": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: -1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       -1,
 			},
 			valid: false,
 		},
 		"revision cannot be zero": {
-			spec:  ClusterExtensionRevisionSpec{},
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+			},
 			valid: false,
 		},
 		"revision must be positive": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
 			},
 			valid: true,
 		},
