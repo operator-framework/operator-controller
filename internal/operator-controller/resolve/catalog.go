@@ -237,7 +237,7 @@ func (rei resolutionError) Error() string {
 		sb.WriteString(fmt.Sprintf("in channels %v ", rei.Channels))
 	}
 
-	matchedCatalogs := []string{}
+	matchedCatalogs := make([]string, 0, len(rei.ResolvedBundles))
 	for _, r := range rei.ResolvedBundles {
 		matchedCatalogs = append(matchedCatalogs, r.catalog)
 	}

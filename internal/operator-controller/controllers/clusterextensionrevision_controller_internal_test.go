@@ -152,7 +152,7 @@ func Test_ClusterExtensionRevisionReconciler_listPreviousRevisions(t *testing.T)
 			previous, err := reconciler.listPreviousRevisions(t.Context(), currentRev)
 			require.NoError(t, err)
 
-			var names []string
+			names := make([]string, 0, len(previous))
 			for _, rev := range previous {
 				names = append(names, rev.GetName())
 			}

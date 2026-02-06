@@ -21,7 +21,7 @@ import (
 type BundleValidator []func(v1 *bundle.RegistryV1) []error
 
 func (v BundleValidator) Validate(rv1 *bundle.RegistryV1) error {
-	var errs []error
+	errs := make([]error, 0, len(v))
 	for _, validator := range v {
 		errs = append(errs, validator(rv1)...)
 	}
