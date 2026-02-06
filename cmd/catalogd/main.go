@@ -149,6 +149,13 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(ocv1.AddToScheme(scheme))
 	ctrl.SetLogger(klog.NewKlogr())
+
+	// Configure global HTTP transport to use custom dialer for all HTTP clients
+	// including the containers/image library used for pulling from registries.
+	// The custom dialer tries addresses in DNS order without Happy Eyeballs' 300ms delay.
+	if err := httputil.ConfigureDefaultTransport(); err != nil {
+		setupLog.Error(err, "Failed to configure custom dialer")
+	}
 }
 
 func main() {
@@ -274,7 +281,10 @@ func run(ctx context.Context) error {
 	}
 
 	// Create manager
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+	// Configure REST client to use custom dialer without Happy Eyeballs delay
+	restConfig.Dial = httputil.ImmediateFallbackDialContext
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme,
 		Metrics:                       metricsServerOptions,
 		PprofBindAddress:              cfg.pprofAddr,
