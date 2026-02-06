@@ -42,14 +42,18 @@ const (
 type ClusterExtensionRevisionSpec struct {
 	// lifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
 	//
-	// When set to "Active" (the default), the revision is actively managed and reconciled.
+	// When set to "Active", the revision is actively managed and reconciled.
 	// When set to "Archived", the revision is inactive and any resources not managed by a subsequent revision are deleted.
 	// The revision is removed from the owner list of all objects previously under management.
 	// All objects that did not transition to a succeeding revision are deleted.
 	//
 	// Once a revision is set to "Archived", it cannot be un-archived.
 	//
-	// +kubebuilder:default="Active"
+	// It is possible for more than one revision to be "Active" simultaneously. This will occur when
+	// moving from one revision to another. The old revision will not be set to "Archived" until the
+	// new revision has been completely rolled out.
+	//
+	// +required
 	// +kubebuilder:validation:Enum=Active;Archived
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Active' || oldSelf == 'Archived' && oldSelf == self", message="cannot un-archive"
 	LifecycleState ClusterExtensionRevisionLifecycleState `json:"lifecycleState,omitempty"`
@@ -82,7 +86,10 @@ type ClusterExtensionRevisionSpec struct {
 	//
 	// Once set, even if empty, the phases field is immutable.
 	//
+	// Each phase in the list must have a unique name. The maximum number of phases is 20.
+	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf || oldSelf.size() == 0", message="phases is immutable"
+	// +kubebuilder:validation:MaxItems=20
 	// +listType=map
 	// +listMapKey=name
 	// +optional
@@ -125,13 +132,17 @@ type ClusterExtensionRevisionPhase struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
+	// +required
+	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
-	// +kubebuilder:validation:Pattern=`^[a-z]([-a-z0-9]*[a-z0-9])?$`
+	// +kubebuilder:validation:XValidation:rule=`!format.dns1123Label().validate(self).hasValue()`,message="the value must consist of only lowercase alphanumeric characters and hyphens, and must start with an alphabetic character and end with an alphanumeric character."
 	Name string `json:"name"`
 
 	// objects is a required list of all Kubernetes objects that belong to this phase.
 	//
-	// All objects in this list are applied to the cluster in no particular order.
+	// All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50.
+	// +required
+	// +kubebuilder:validation:MaxItems=50
 	Objects []ClusterExtensionRevisionObject `json:"objects"`
 }
 
@@ -149,7 +160,9 @@ type ClusterExtensionRevisionObject struct {
 	// collisionProtection controls whether the operator can adopt and modify objects
 	// that already exist on the cluster.
 	//
-	// When set to "Prevent" (the default), the operator only manages objects it created itself.
+	// Allowed values are: "Prevent", "IfNoController", and "None".
+	//
+	// When set to "Prevent", the operator only manages objects it created itself.
 	// This prevents ownership collisions.
 	//
 	// When set to "IfNoController", the operator can adopt and modify pre-existing objects
@@ -161,9 +174,8 @@ type ClusterExtensionRevisionObject struct {
 	// Use this setting with extreme caution as it may cause multiple controllers to fight over
 	// the same resource, resulting in increased load on the API server and etcd.
 	//
-	// +kubebuilder:default="Prevent"
+	// +required
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
-	// +optional
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 

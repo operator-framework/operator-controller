@@ -231,6 +231,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 							"spec": map[string]interface{}{},
 						},
 					},
+					CollisionProtection: ocv1.CollisionProtectionPrevent,
 				},
 				{
 					Object: unstructured.Unstructured{
@@ -259,6 +260,7 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 							},
 						},
 					},
+					CollisionProtection: ocv1.CollisionProtectionPrevent,
 				},
 			},
 		},
