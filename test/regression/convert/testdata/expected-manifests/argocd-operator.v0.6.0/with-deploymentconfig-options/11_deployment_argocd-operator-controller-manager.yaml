@@ -1,0 +1,298 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    foo: bar
+    testkey: testval
+  name: argocd-operator-controller-manager
+  namespace: argocd-system
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        alm-examples: |-
+          [
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "AppProject",
+              "metadata": {
+                "name": "example"
+              },
+              "spec": null
+            },
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "Application",
+              "metadata": {
+                "name": "example"
+              },
+              "spec": null
+            },
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "ApplicationSet",
+              "metadata": {
+                "name": "example"
+              },
+              "spec": null
+            },
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "ArgoCD",
+              "metadata": {
+                "name": "argocd-sample"
+              },
+              "spec": {
+                "controller": {
+                  "resources": {
+                    "limits": {
+                      "cpu": "2000m",
+                      "memory": "2048Mi"
+                    },
+                    "requests": {
+                      "cpu": "250m",
+                      "memory": "1024Mi"
+                    }
+                  }
+                },
+                "ha": {
+                  "enabled": false,
+                  "resources": {
+                    "limits": {
+                      "cpu": "500m",
+                      "memory": "256Mi"
+                    },
+                    "requests": {
+                      "cpu": "250m",
+                      "memory": "128Mi"
+                    }
+                  }
+                },
+                "redis": {
+                  "resources": {
+                    "limits": {
+                      "cpu": "500m",
+                      "memory": "256Mi"
+                    },
+                    "requests": {
+                      "cpu": "250m",
+                      "memory": "128Mi"
+                    }
+                  }
+                },
+                "repo": {
+                  "resources": {
+                    "limits": {
+                      "cpu": "1000m",
+                      "memory": "512Mi"
+                    },
+                    "requests": {
+                      "cpu": "250m",
+                      "memory": "256Mi"
+                    }
+                  }
+                },
+                "server": {
+                  "resources": {
+                    "limits": {
+                      "cpu": "500m",
+                      "memory": "256Mi"
+                    },
+                    "requests": {
+                      "cpu": "125m",
+                      "memory": "128Mi"
+                    }
+                  },
+                  "route": {
+                    "enabled": true
+                  }
+                },
+                "sso": {
+                  "dex": {
+                    "resources": {
+                      "limits": {
+                        "cpu": "500m",
+                        "memory": "256Mi"
+                      },
+                      "requests": {
+                        "cpu": "250m",
+                        "memory": "128Mi"
+                      }
+                    }
+                  },
+                  "provider": "dex"
+                }
+              }
+            },
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "kind": "ArgoCDExport",
+              "metadata": {
+                "name": "argocdexport-sample"
+              },
+              "spec": {
+                "argocd": "argocd-sample"
+              }
+            }
+          ]
+        capabilities: Deep Insights
+        categories: Integration & Delivery
+        certified: "false"
+        containerImage: quay.io/argoprojlabs/argocd-operator@sha256:99aeec24cc406d06d18822347d9ac3ed053a702d8419191e4e681075fed7b9bb
+        description: Argo CD is a declarative, GitOps continuous delivery tool for
+          Kubernetes.
+        foo: bar
+        olm.targetNamespaces: ""
+        operators.operatorframework.io/builder: operator-sdk-v1.10.0+git
+        operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+        repository: https://github.com/argoproj-labs/argocd-operator
+        support: Argo CD
+        testkey: testval
+      labels:
+        control-plane: controller-manager
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+              matchFields:
+              - key: key
+                operator: In
+                values:
+                - val1
+                - val2
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: test-app
+            namespaces:
+            - test
+            - test2
+            topologyKey: topKey
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: test-app-2
+              topologyKey: topKey2
+            weight: 100
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        env:
+        - name: CUSTOM_ENV_VAR
+          value: custom-value
+        - name: LOG_LEVEL
+          value: debug
+        envFrom:
+        - prefix: test
+        - configMapRef:
+            name: configmapForTest
+        - secretRef:
+            name: secretForTest
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - mountPath: /test-volume-mount
+          name: test-configmap-volume
+          readOnly: true
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        command:
+        - /manager
+        env:
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.annotations['olm.targetNamespaces']
+        - name: CUSTOM_ENV_VAR
+          value: custom-value
+        - name: LOG_LEVEL
+          value: debug
+        envFrom:
+        - prefix: test
+        - configMapRef:
+            name: configmapForTest
+        - secretRef:
+            name: secretForTest
+        image: quay.io/argoprojlabs/argocd-operator@sha256:99aeec24cc406d06d18822347d9ac3ed053a702d8419191e4e681075fed7b9bb
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+        volumeMounts:
+        - mountPath: /test-volume-mount
+          name: test-configmap-volume
+          readOnly: true
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: argocd-operator-controller-manager
+      terminationGracePeriodSeconds: 10
+      tolerations:
+      - effect: NoSchedule
+        key: some/key
+        operator: Equal
+      - effect: NoExecute
+        key: someother/key
+        operator: Exists
+        tolerationSeconds: 120
+      volumes:
+      - configMap:
+          name: testVolumeConfigMap
+        name: test-configmap-volume
+      - emptyDir: {}
+        name: test-emptydir-volume
+status: {}
