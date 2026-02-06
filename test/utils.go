@@ -61,18 +61,17 @@ func getFirstFoundEnvTestBinaryDir() string {
 // can fail intermittently due to graceful shutdown timing.
 func StopWithRetry(env interface{ Stop() error }, timeout, interval time.Duration) error {
 	deadline := time.Now().Add(timeout)
-	var lastErr error
 	for time.Now().Before(deadline) {
 		if err := env.Stop(); err == nil {
 			return nil
 		} else {
-			lastErr = err
 			log.Printf("StopWithRetry: env.Stop() failed during teardown, retrying in %s: %v", interval, err)
 		}
 		time.Sleep(interval)
 	}
-	if lastErr != nil {
-		log.Printf("StopWithRetry: timeout reached before successful teardown; last error: %v", lastErr)
+	err := env.Stop() // Final attempt
+	if err != nil {
+		log.Printf("StopWithRetry: timeout reached before successful teardown; last error: %v", err)
 	}
-	return env.Stop() // Final attempt
+	return err
 }

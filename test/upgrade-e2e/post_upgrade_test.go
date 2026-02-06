@@ -310,32 +310,32 @@ func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, substrings .
 				continue
 			}
 
-		scanner := bufio.NewScanner(podLogs)
-		for scanner.Scan() {
-			line := scanner.Text()
+			scanner := bufio.NewScanner(podLogs)
+			for scanner.Scan() {
+				line := scanner.Text()
 
-			foundCount := 0
-			for _, substring := range substrings {
-				if strings.Contains(line, substring) {
-					foundCount++
+				foundCount := 0
+				for _, substring := range substrings {
+					if strings.Contains(line, substring) {
+						foundCount++
+					}
+				}
+				if foundCount == len(substrings) {
+					podLogs.Close()
+					pollCancel()
+					return true, nil
 				}
 			}
-			if foundCount == len(substrings) {
+
+			// Check for scanning errors before closing
+			if err := scanner.Err(); err != nil {
 				podLogs.Close()
 				pollCancel()
-				return true, nil
+				// Log the error but continue polling - might be transient
+				continue
 			}
-		}
-
-		// Check for scanning errors before closing
-		if err := scanner.Err(); err != nil {
 			podLogs.Close()
 			pollCancel()
-			// Log the error but continue polling - might be transient
-			continue
-		}
-		podLogs.Close()
-		pollCancel()
 		}
 	}
 }
