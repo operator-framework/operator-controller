@@ -147,7 +147,8 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		sanitizedUnstructured(ctx, &unstr)
 
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
-			Object: unstr,
+			Object:              unstr,
+			CollisionProtection: ocv1.CollisionProtectionPrevent,
 		})
 	}
 	return r.buildClusterExtensionRevision(objs, ext, revisionAnnotations), nil
@@ -215,9 +216,6 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
-			// Explicitly set LifecycleState to Active. While the CRD has a default,
-			// being explicit here ensures all code paths are clear and doesn't rely
-			// on API server defaulting behavior.
 			LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
 			Phases:         PhaseSort(objects),
 		},
