@@ -68,7 +68,7 @@ func TestRunGarbageCollection(t *testing.T) {
 				require.NoError(t, os.MkdirAll(filepath.Join(cachePath, catalog.Name, "fakedigest"), os.ModePerm))
 			}
 
-			runtimeObjs := []runtime.Object{}
+			runtimeObjs := make([]runtime.Object, 0, len(tt.existCatalogs))
 			for _, catalog := range tt.existCatalogs {
 				runtimeObjs = append(runtimeObjs, catalog)
 			}

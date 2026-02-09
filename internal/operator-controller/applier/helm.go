@@ -381,7 +381,11 @@ func ruleDescription(ns string, rule rbacv1.PolicyRule) string {
 func formatPreAuthorizerOutput(missingRules []authorization.ScopedPolicyRules, authErr error) error {
 	var preAuthErrors []error
 	if len(missingRules) > 0 {
-		var missingRuleDescriptions []string
+		totalMissingRules := 0
+		for _, policyRules := range missingRules {
+			totalMissingRules += len(policyRules.MissingRules)
+		}
+		missingRuleDescriptions := make([]string, 0, totalMissingRules)
 		for _, policyRules := range missingRules {
 			for _, rule := range policyRules.MissingRules {
 				missingRuleDescriptions = append(missingRuleDescriptions, ruleDescription(policyRules.Namespace, rule))

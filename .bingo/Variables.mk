@@ -53,11 +53,11 @@ $(GOJQ): $(BINGO_DIR)/gojq.mod
 	@echo "(re)installing $(GOBIN)/gojq-v0.12.17"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=gojq.mod -o=$(GOBIN)/gojq-v0.12.17 "github.com/itchyny/gojq/cmd/gojq"
 
-GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.7.2
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v2.8.0
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/golangci-lint-v2.7.2"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v2.7.2 "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
+	@echo "(re)installing $(GOBIN)/golangci-lint-v2.8.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v2.8.0 "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 
 GORELEASER := $(GOBIN)/goreleaser-v2.11.2
 $(GORELEASER): $(BINGO_DIR)/goreleaser.mod

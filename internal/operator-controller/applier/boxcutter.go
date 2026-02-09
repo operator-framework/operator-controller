@@ -621,7 +621,11 @@ func splitManifestDocuments(file string) []string {
 
 // getObjects returns a slice of all objects in the revision
 func getObjects(rev *ocv1.ClusterExtensionRevision) []client.Object {
-	var objs []client.Object
+	totalObjects := 0
+	for _, phase := range rev.Spec.Phases {
+		totalObjects += len(phase.Objects)
+	}
+	objs := make([]client.Object, 0, totalObjects)
 	for _, phase := range rev.Spec.Phases {
 		for _, phaseObject := range phase.Objects {
 			objs = append(objs, &phaseObject.Object)

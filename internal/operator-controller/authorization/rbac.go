@@ -325,7 +325,17 @@ func (dm *decodedManifest) rbacObjects() []client.Object {
 }
 
 func (dm *decodedManifest) asAuthorizationAttributesRecordsForUser(manifestManager user.Info) []authorizer.AttributesRecord {
-	var attributeRecords []authorizer.AttributesRecord
+	// Calculate initial capacity as an upper-bound estimate:
+	// - For each key: len(objectVerbs) records (4)
+	// - For unique namespaces: len(namespacedCollectionVerbs) records (1 per unique namespace across all keys in a GVR)
+	//   We use totalKeys as upper bound (worst case: each key in different namespace)
+	// - For each GVR: len(clusterCollectionVerbs) records (2)
+	totalKeys := 0
+	for _, keys := range dm.gvrs {
+		totalKeys += len(keys)
+	}
+	estimatedCapacity := totalKeys*len(objectVerbs) + totalKeys*len(namespacedCollectionVerbs) + len(dm.gvrs)*len(clusterCollectionVerbs)
+	attributeRecords := make([]authorizer.AttributesRecord, 0, estimatedCapacity)
 
 	for gvr, keys := range dm.gvrs {
 		namespaces := sets.New[string]()
