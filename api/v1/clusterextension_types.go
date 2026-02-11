@@ -436,16 +436,14 @@ type CRDUpgradeSafetyPreflightConfig struct {
 }
 
 const (
-	// TypeDeprecated is a rollup condition that is present when
-	// any of the deprecated conditions are present.
+	// Deprecation Condition Types
 	TypeDeprecated        = "Deprecated"
 	TypePackageDeprecated = "PackageDeprecated"
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
 
-	// None will not perform CRD upgrade safety checks.
-	CRDUpgradeSafetyEnforcementNone CRDUpgradeSafetyEnforcement = "None"
-	// Strict will enforce the CRD upgrade safety check and block the upgrade if the CRD would not pass the check.
+	// CRD Upgrade Safety Enforcement
+	CRDUpgradeSafetyEnforcementNone   CRDUpgradeSafetyEnforcement = "None"
 	CRDUpgradeSafetyEnforcementStrict CRDUpgradeSafetyEnforcement = "Strict"
 )
 

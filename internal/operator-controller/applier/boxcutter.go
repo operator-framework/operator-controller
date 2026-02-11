@@ -222,9 +222,6 @@ func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
 			Phases:         PhaseSort(objects),
 		},
 	}
-	if p := ext.Spec.ProgressDeadlineMinutes; p > 0 {
-		cer.Spec.ProgressDeadlineMinutes = p
-	}
 	return cer
 }
 
@@ -337,8 +334,8 @@ func (m *BoxcutterStorageMigrator) ensureMigratedRevisionStatus(ctx context.Cont
 		if revisions[i].Spec.Revision != 1 {
 			continue
 		}
-		// Skip if already succeeded - status is already set correctly.
-		if meta.IsStatusConditionTrue(revisions[i].Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
+		// Skip if already ready - status is already set correctly.
+		if meta.IsStatusConditionTrue(revisions[i].Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady) {
 			return nil
 		}
 		// Ensure revision 1 status is set correctly, including for previously migrated
@@ -377,7 +374,7 @@ func (m *BoxcutterStorageMigrator) findLatestDeployedRelease(ac helmclient.Actio
 	return latestDeployed, nil
 }
 
-// ensureRevisionStatus ensures the revision has the Succeeded status condition set.
+// ensureRevisionStatus ensures the revision has the Ready status condition set.
 // Returns nil if the status is already set or after successfully setting it.
 // Only sets status on revisions that were actually migrated from Helm (marked with MigratedFromHelmKey label).
 func (m *BoxcutterStorageMigrator) ensureRevisionStatus(ctx context.Context, rev *ocv1.ClusterExtensionRevision) error {
@@ -387,23 +384,23 @@ func (m *BoxcutterStorageMigrator) ensureRevisionStatus(ctx context.Context, rev
 	}
 
 	// Only set status if this revision was actually migrated from Helm.
-	// This prevents us from incorrectly marking normal Boxcutter revision 1 as succeeded
+	// This prevents us from incorrectly marking normal Boxcutter revision 1 as ready
 	// when it's still in progress.
 	if rev.Labels[labels.MigratedFromHelmKey] != "true" {
 		return nil
 	}
 
-	// Check if status is already set to Succeeded=True
-	if meta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
+	// Check if status is already set to Ready=True
+	if meta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady) {
 		return nil
 	}
 
-	// Set the Succeeded status condition
+	// Set the Ready status condition
 	meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
+		Type:               ocv1.ClusterExtensionRevisionTypeReady,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1.ReasonSucceeded,
-		Message:            "Revision succeeded - migrated from Helm release",
+		Reason:             ocv1.ClusterExtensionRevisionReasonReady,
+		Message:            "Revision ready - migrated from Helm release",
 		ObservedGeneration: rev.GetGeneration(),
 	})
 

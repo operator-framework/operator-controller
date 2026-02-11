@@ -27,7 +27,6 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
@@ -423,65 +422,6 @@ func Test_SimpleRevisionGenerator_AppliesObjectLabelsAndRevisionAnnotations(t *t
 	}
 	t.Log("by checking the generated revision contain the given annotations")
 	require.Equal(t, revAnnotations, rev.Annotations)
-}
-
-func Test_SimpleRevisionGenerator_PropagatesProgressDeadlineMinutes(t *testing.T) {
-	r := &FakeManifestProvider{
-		GetFn: func(b fs.FS, e *ocv1.ClusterExtension) ([]client.Object, error) {
-			return []client.Object{}, nil
-		},
-	}
-
-	b := applier.SimpleRevisionGenerator{
-		Scheme:           k8scheme.Scheme,
-		ManifestProvider: r,
-	}
-
-	type args struct {
-		progressDeadlineMinutes *int32
-	}
-	type want struct {
-		progressDeadlineMinutes int32
-	}
-	type testCase struct {
-		args args
-		want want
-	}
-	for name, tc := range map[string]testCase{
-		"propagates when set": {
-			args: args{
-				progressDeadlineMinutes: ptr.To(int32(10)),
-			},
-			want: want{
-				progressDeadlineMinutes: 10,
-			},
-		},
-		"do not propagate when unset": {
-			want: want{
-				progressDeadlineMinutes: 0,
-			},
-		},
-	} {
-		ext := &ocv1.ClusterExtension{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-extension",
-			},
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace:      "test-namespace",
-				ServiceAccount: ocv1.ServiceAccountReference{Name: "test-sa"},
-			},
-		}
-		empty := map[string]string{}
-		t.Run(name, func(t *testing.T) {
-			if pd := tc.args.progressDeadlineMinutes; pd != nil {
-				ext.Spec.ProgressDeadlineMinutes = *pd
-			}
-
-			rev, err := b.GenerateRevision(t.Context(), dummyBundle, ext, empty, empty)
-			require.NoError(t, err)
-			require.Equal(t, tc.want.progressDeadlineMinutes, rev.Spec.ProgressDeadlineMinutes)
-		})
-	}
 }
 
 func Test_SimpleRevisionGenerator_Failure(t *testing.T) {
@@ -1352,7 +1292,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 
 		client.AssertExpectations(t)
 
-		// Verify the migrated revision has Succeeded=True status with Succeeded reason and a migration message
+		// Verify the migrated revision has Ready=True status with Succeeded reason and a migration message
 		statusWriter := client.Status().(*statusWriterMock)
 		require.True(t, statusWriter.updateCalled, "Status().Update() should be called during migration")
 		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
@@ -1360,12 +1300,12 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterExtensionRevision)
 		require.True(t, ok, "Updated object should be a ClusterExtensionRevision")
 
-		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
-		require.NotNil(t, succeededCond, "Succeeded condition should be set")
-		assert.Equal(t, metav1.ConditionTrue, succeededCond.Status, "Succeeded condition should be True")
-		assert.Equal(t, ocv1.ReasonSucceeded, succeededCond.Reason, "Reason should be Succeeded")
-		assert.Equal(t, "Revision succeeded - migrated from Helm release", succeededCond.Message, "Message should indicate Helm migration")
-		assert.Equal(t, int64(1), succeededCond.ObservedGeneration, "ObservedGeneration should match revision generation")
+		readyCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
+		require.NotNil(t, readyCond, "Ready condition should be set")
+		assert.Equal(t, metav1.ConditionTrue, readyCond.Status, "Ready condition should be True")
+		assert.Equal(t, ocv1.ClusterExtensionRevisionReasonReady, readyCond.Reason, "Reason should be Succeeded")
+		assert.Equal(t, "Revision ready - migrated from Helm release", readyCond.Message, "Message should indicate Helm migration")
+		assert.Equal(t, int64(1), readyCond.ObservedGeneration, "ObservedGeneration should match revision generation")
 	})
 
 	t.Run("does not create revision when revisions exist", func(t *testing.T) {
@@ -1400,9 +1340,9 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			Status: ocv1.ClusterExtensionRevisionStatus{
 				Conditions: []metav1.Condition{
 					{
-						Type:   ocv1.ClusterExtensionRevisionTypeSucceeded,
+						Type:   ocv1.ClusterExtensionRevisionTypeReady,
 						Status: metav1.ConditionTrue,
-						Reason: ocv1.ReasonSucceeded,
+						Reason: ocv1.ClusterExtensionRevisionReasonReady,
 					},
 				},
 			},
@@ -1483,10 +1423,10 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterExtensionRevision)
 		require.True(t, ok, "Updated object should be a ClusterExtensionRevision")
 
-		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
-		require.NotNil(t, succeededCond, "Succeeded condition should be set")
-		assert.Equal(t, metav1.ConditionTrue, succeededCond.Status, "Succeeded condition should be True")
-		assert.Equal(t, ocv1.ReasonSucceeded, succeededCond.Reason, "Reason should be Succeeded")
+		readyCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
+		require.NotNil(t, readyCond, "Ready condition should be set")
+		assert.Equal(t, metav1.ConditionTrue, readyCond.Status, "Ready condition should be True")
+		assert.Equal(t, ocv1.ClusterExtensionRevisionReasonReady, readyCond.Reason, "Reason should be Succeeded")
 	})
 
 	t.Run("updates status from False to True for migrated revision", func(t *testing.T) {
@@ -1507,8 +1447,8 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "test123"},
 		}
 
-		// Migrated revision with Succeeded=False (e.g., from a previous failed status update attempt)
-		// This simulates a revision whose Succeeded condition should be corrected from False to True during migration.
+		// Migrated revision with Ready=False (e.g., from a previous failed status update attempt)
+		// This simulates a revision whose Ready condition should be corrected from False to True during migration.
 		existingRev := ocv1.ClusterExtensionRevision{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-revision",
@@ -1523,7 +1463,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 			Status: ocv1.ClusterExtensionRevisionStatus{
 				Conditions: []metav1.Condition{
 					{
-						Type:   ocv1.ClusterExtensionRevisionTypeSucceeded,
+						Type:   ocv1.ClusterExtensionRevisionTypeReady,
 						Status: metav1.ConditionFalse, // Important: False, not missing
 						Reason: "InProgress",
 					},
@@ -1560,10 +1500,10 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterExtensionRevision)
 		require.True(t, ok, "Updated object should be a ClusterExtensionRevision")
 
-		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
-		require.NotNil(t, succeededCond, "Succeeded condition should be set")
-		assert.Equal(t, metav1.ConditionTrue, succeededCond.Status, "Succeeded condition should be updated to True")
-		assert.Equal(t, ocv1.ReasonSucceeded, succeededCond.Reason, "Reason should be Succeeded")
+		readyCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
+		require.NotNil(t, readyCond, "Ready condition should be set")
+		assert.Equal(t, metav1.ConditionTrue, readyCond.Status, "Ready condition should be updated to True")
+		assert.Equal(t, ocv1.ClusterExtensionRevisionReasonReady, readyCond.Reason, "Reason should be Succeeded")
 	})
 
 	t.Run("does not set status on non-migrated revision 1", func(t *testing.T) {
@@ -1707,7 +1647,7 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		assert.Equal(t, 2, brb.helmReleaseUsed.Version, "Should use version 2 (deployed), not version 3 (failed)")
 		assert.Equal(t, release.StatusDeployed, brb.helmReleaseUsed.Info.Status, "Should use deployed release")
 
-		// Verify the migrated revision has Succeeded=True status
+		// Verify the migrated revision has Ready=True status
 		statusWriter := client.Status().(*statusWriterMock)
 		require.True(t, statusWriter.updateCalled, "Status().Update() should be called during migration")
 		require.NotNil(t, statusWriter.updatedObj, "Updated object should not be nil")
@@ -1715,9 +1655,9 @@ func TestBoxcutterStorageMigrator(t *testing.T) {
 		rev, ok := statusWriter.updatedObj.(*ocv1.ClusterExtensionRevision)
 		require.True(t, ok, "Updated object should be a ClusterExtensionRevision")
 
-		succeededCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
-		require.NotNil(t, succeededCond, "Succeeded condition should be set")
-		assert.Equal(t, metav1.ConditionTrue, succeededCond.Status, "Succeeded condition should be True")
+		readyCond := apimeta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
+		require.NotNil(t, readyCond, "Ready condition should be set")
+		assert.Equal(t, metav1.ConditionTrue, readyCond.Status, "Ready condition should be True")
 	})
 
 	t.Run("does not create revision when helm release is not deployed and no deployed history", func(t *testing.T) {

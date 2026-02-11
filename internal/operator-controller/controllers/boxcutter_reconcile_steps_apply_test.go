@@ -31,7 +31,7 @@ import (
 func TestApplyBundleWithBoxcutter(t *testing.T) {
 	type args struct {
 		activeRevisions []ocv1.RevisionStatus
-		revisionStates  *RevisionStates
+		revisionStates  RevisionStates
 	}
 	type want struct {
 		activeRevisions []ocv1.RevisionStatus
@@ -48,16 +48,18 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				activeRevisions: []ocv1.RevisionStatus{
 					{Name: "ce-1"},
 				},
-				revisionStates: &RevisionStates{
-					Installed: &RevisionMetadata{
+				revisionStates: RevisionStates{
+					{
 						RevisionName: "ce-1",
+						State:        RevisionStateInstalled,
 						BundleMetadata: ocv1.BundleMetadata{
 							Name:    "test-bundle",
 							Version: "1.0.0",
 						},
 					},
-					RollingOut: []*RevisionMetadata{
-						{RevisionName: "ce-2"},
+					{
+						RevisionName: "ce-2",
+						State:        RevisionStateRollingOut,
 					},
 				},
 			},
@@ -74,9 +76,10 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				activeRevisions: []ocv1.RevisionStatus{
 					{Name: "ce-1"},
 				},
-				revisionStates: &RevisionStates{
-					Installed: &RevisionMetadata{
+				revisionStates: RevisionStates{
+					{
 						RevisionName: "ce-2",
+						State:        RevisionStateInstalled,
 						BundleMetadata: ocv1.BundleMetadata{
 							Name:    "test-bundle",
 							Version: "1.0.1",
@@ -96,9 +99,10 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 				activeRevisions: []ocv1.RevisionStatus{
 					{Name: "ce-1"},
 				},
-				revisionStates: &RevisionStates{
-					RollingOut: []*RevisionMetadata{
-						{RevisionName: "ce-1"},
+				revisionStates: RevisionStates{
+					{
+						RevisionName: "ce-1",
+						State:        RevisionStateRollingOut,
 					},
 				},
 			},

@@ -55,11 +55,11 @@ func newClient(t *testing.T) client.Client {
 var _ controllers.RevisionStatesGetter = (*MockRevisionStatesGetter)(nil)
 
 type MockRevisionStatesGetter struct {
-	*controllers.RevisionStates
+	controllers.RevisionStates
 	Err error
 }
 
-func (m *MockRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*controllers.RevisionStates, error) {
+func (m *MockRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (controllers.RevisionStates, error) {
 	if m.Err != nil {
 		return nil, m.Err
 	}
@@ -94,7 +94,7 @@ func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Clie
 
 	d := &deps{
 		RevisionStatesGetter: &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{},
+			RevisionStates: controllers.RevisionStates{},
 		},
 		Finalizers: crfinalizer.NewFinalizers(),
 	}

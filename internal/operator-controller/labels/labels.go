@@ -44,4 +44,10 @@ const (
 	// that were created during migration from Helm releases. This label is used
 	// to distinguish migrated revisions from those created by normal Boxcutter operation.
 	MigratedFromHelmKey = "olm.operatorframework.io/migrated-from-helm"
+
+	// ClusterExtensionGenerationKey is the annotation key used to record the
+	// generation of the ClusterExtension at the time the ClusterExtensionRevision
+	// was created. This tracks which version of the ClusterExtension spec led to
+	// the creation of this revision.
+	ClusterExtensionGenerationKey = "olm.operatorframework.io/cluster-extension-generation"
 )

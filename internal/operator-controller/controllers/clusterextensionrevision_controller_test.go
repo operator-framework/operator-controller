@@ -66,7 +66,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			},
 		},
 		{
-			name:                    "Available condition is not updated on error if its not already set",
+			name:                    "Ready condition is not updated on error if its not already set",
 			reconcilingRevisionName: clusterExtensionRevisionName,
 			revisionResult:          mockRevisionResult{},
 			revisionReconcileErr:    errors.New("some error"),
@@ -81,12 +81,15 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
-				require.Nil(t, cond)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
+				require.NotNil(t, cond)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReconciling, cond.Reason)
+				require.Equal(t, "some error", cond.Message)
 			},
 		},
 		{
-			name:                    "Available condition is updated to Unknown on error if its been already set",
+			name:                    "Ready condition is updated to Unknown on error if its been already set",
 			reconcilingRevisionName: clusterExtensionRevisionName,
 			revisionResult:          mockRevisionResult{},
 			revisionReconcileErr:    errors.New("some error"),
@@ -94,9 +97,9 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
+					Type:               ocv1.ClusterExtensionRevisionTypeReady,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ClusterExtensionRevisionReasonProbesSucceeded,
+					Reason:             ocv1.ClusterExtensionRevisionReasonReady,
 					Message:            "Revision 1.0.0 is rolled out.",
 					ObservedGeneration: 1,
 				})
@@ -108,16 +111,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReconciling, cond.Reason)
 				require.Equal(t, "some error", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name:                    "set Available:False:RollingOut status condition during rollout when no probe failures are detected",
+			name:                    "set Ready:False:RollingOut status condition during rollout when no probe failures are detected",
 			reconcilingRevisionName: clusterExtensionRevisionName,
 			revisionResult:          mockRevisionResult{},
 			existingObjs: func() []client.Object {
@@ -131,16 +134,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
-				require.Equal(t, ocv1.ReasonRollingOut, cond.Reason)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRollingOut, cond.Reason)
 				require.Equal(t, "Revision 1.0.0 is rolling out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is in transition",
+			name:                    "set Ready:False:ProbeFailure condition when probe failures are detected and revision is in transition",
 			reconcilingRevisionName: clusterExtensionRevisionName,
 			revisionResult: mockRevisionResult{
 				inTransition: true,
@@ -222,7 +225,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbeFailure, cond.Reason)
@@ -231,7 +234,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			},
 		},
 		{
-			name:                    "set Available:False:ProbeFailure condition when probe failures are detected and revision is not in transition",
+			name:                    "set Ready:False:ProbeFailure condition when probe failures are detected and revision is not in transition",
 			reconcilingRevisionName: clusterExtensionRevisionName,
 			revisionResult: mockRevisionResult{
 				inTransition: false,
@@ -313,7 +316,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbeFailure, cond.Reason)
@@ -336,16 +339,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRetrying, cond.Reason)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReconciling, cond.Reason)
 				require.Equal(t, "some error", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name: "set Progressing:True:RollingOut condition while revision is transitioning",
+			name: "set Ready:False:RollingOut condition while revision is transitioning",
 			revisionResult: mockRevisionResult{
 				inTransition: true,
 			},
@@ -361,27 +364,27 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ReasonRollingOut, cond.Reason)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonRollingOut, cond.Reason)
 				require.Equal(t, "Revision 1.0.0 is rolling out.", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name: "set Progressing:True:Succeeded once transition rollout is finished",
+			name: "set Ready:True:Succeeded once transition rollout is finished",
 			revisionResult: mockRevisionResult{
-				inTransition: false,
+				isComplete: true,
 			},
 			reconcilingRevisionName: clusterExtensionRevisionName,
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.TypeProgressing,
+					Type:               ocv1.ClusterExtensionRevisionTypeReady,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonSucceeded,
+					Reason:             ocv1.ClusterExtensionRevisionReasonReady,
 					Message:            "Revision 1.0.0 is rolling out.",
 					ObservedGeneration: 1,
 				})
@@ -393,16 +396,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.TypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision 1.0.0 has rolled out.", cond.Message)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReady, cond.Reason)
+				require.Equal(t, "Revision has rolled out successfully", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name: "set Available:True:ProbesSucceeded and Succeeded:True:Succeeded conditions on successful revision rollout",
+			name: "set Ready:True:Succeeded condition on successful revision rollout",
 			revisionResult: mockRevisionResult{
 				isComplete: true,
 			},
@@ -418,25 +421,11 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonProbesSucceeded, cond.Reason)
-				require.Equal(t, "Objects are available and pass all probes.", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
-
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision 1.0.0 has rolled out.", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
-
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionTrue, cond.Status)
-				require.Equal(t, ocv1.ReasonSucceeded, cond.Reason)
-				require.Equal(t, "Revision succeeded rolling out.", cond.Message)
+				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReady, cond.Reason)
+				require.Equal(t, "Revision has rolled out successfully", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
@@ -698,7 +687,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 			},
 		},
 		{
-			name:           "set Available:Unknown:Reconciling and surface tracking cache cleanup errors when deleted",
+			name:           "set Ready:Unknown:Reconciling and surface tracking cache cleanup errors when deleted",
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -727,16 +716,16 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionUnknown, cond.Status)
+				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterExtensionRevisionReasonReconciling, cond.Reason)
 				require.Equal(t, "some tracking cache cleanup error", cond.Message)
 				require.Equal(t, int64(1), cond.ObservedGeneration)
 			},
 		},
 		{
-			name:           "set Available:Archived:Unknown and Progressing:False:Archived conditions when a revision is archived",
+			name:           "set Ready:False:Archived condition when a revision is archived",
 			revisionResult: mockRevisionResult{},
 			existingObjs: func() []client.Object {
 				ext := newTestClusterExtension()
@@ -760,14 +749,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 					Name: clusterExtensionRevisionName,
 				}, rev)
 				require.NoError(t, err)
-				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable)
-				require.NotNil(t, cond)
-				require.Equal(t, metav1.ConditionUnknown, cond.Status)
-				require.Equal(t, ocv1.ClusterExtensionRevisionReasonArchived, cond.Reason)
-				require.Equal(t, "revision is archived", cond.Message)
-				require.Equal(t, int64(1), cond.ObservedGeneration)
-
-				cond = meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
+				cond := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
 				require.NotNil(t, cond)
 				require.Equal(t, metav1.ConditionFalse, cond.Status)
 				require.Equal(t, ocv1.ClusterExtensionRevisionReasonArchived, cond.Reason)
@@ -786,14 +768,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_Deletion(t *testing.T) {
 				}
 				rev1.Spec.LifecycleState = ocv1.ClusterExtensionRevisionLifecycleStateArchived
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-					Status:             metav1.ConditionUnknown,
-					Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
-					Message:            "revision is archived",
-					ObservedGeneration: rev1.Generation,
-				})
-				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+					Type:               ocv1.ClusterExtensionRevisionTypeReady,
 					Status:             metav1.ConditionFalse,
 					Reason:             ocv1.ClusterExtensionRevisionReasonArchived,
 					Message:            "revision is archived",
@@ -875,90 +850,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 		validate        func(*testing.T, client.Client)
 		reconcileErr    error
 		reconcileResult ctrl.Result
-	}{
-		{
-			name: "progressing set to false when progress deadline is exceeded",
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
-				rev1.Spec.ProgressDeadlineMinutes = 1
-				rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-61 * time.Second))
-				return []client.Object{rev1, ext}
-			},
-			revisionResult: &mockRevisionResult{
-				inTransition: true,
-			},
-			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
-				}, rev)
-				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
-				require.Equal(t, metav1.ConditionFalse, cnd.Status)
-				require.Equal(t, ocv1.ReasonProgressDeadlineExceeded, cnd.Reason)
-			},
-		},
-		{
-			name: "requeue after progressDeadline time for final progression deadline check",
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
-				rev1.Spec.ProgressDeadlineMinutes = 1
-				rev1.CreationTimestamp = metav1.NewTime(time.Now())
-				return []client.Object{rev1, ext}
-			},
-			revisionResult: &mockRevisionResult{
-				inTransition: true,
-			},
-			reconcileResult: ctrl.Result{RequeueAfter: 1 * time.Minute},
-			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
-				}, rev)
-				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
-				require.Equal(t, metav1.ConditionTrue, cnd.Status)
-				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
-			},
-		},
-		{
-			name: "no progression deadline checks on revision recovery",
-			existingObjs: func() []client.Object {
-				ext := newTestClusterExtension()
-				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
-				rev1.Spec.ProgressDeadlineMinutes = 1
-				rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-2 * time.Minute))
-				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
-					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonSucceeded,
-					ObservedGeneration: rev1.Generation,
-				})
-				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
-					Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
-					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonSucceeded,
-					ObservedGeneration: rev1.Generation,
-				})
-				return []client.Object{rev1, ext}
-			},
-			revisionResult: &mockRevisionResult{
-				inTransition: true,
-			},
-			validate: func(t *testing.T, c client.Client) {
-				rev := &ocv1.ClusterExtensionRevision{}
-				err := c.Get(t.Context(), client.ObjectKey{
-					Name: clusterExtensionRevisionName,
-				}, rev)
-				require.NoError(t, err)
-				cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
-				require.Equal(t, metav1.ConditionTrue, cnd.Status)
-				require.Equal(t, ocv1.ReasonRollingOut, cnd.Reason)
-			},
-		},
-	} {
+	}{} {
 		t.Run(tc.name, func(t *testing.T) {
 			// create extension and cluster extension
 			testClient := fake.NewClientBuilder().

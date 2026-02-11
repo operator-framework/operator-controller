@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
 
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -95,31 +97,40 @@ func RetrieveRevisionStates(r RevisionStatesGetter) ReconcileStepFunc {
 func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
+		l.Info("resolving bundle")
 
-		// If already rolling out, use existing revision and set deprecation to Unknown (no catalog check)
-		if len(state.revisionStates.RollingOut) > 0 {
-			installedBundleName := ""
-			if state.revisionStates.Installed != nil {
-				installedBundleName = state.revisionStates.Installed.Name
+		// If the latest revision is already rolling out for the current generation, skip resolution
+		// This prevents re-resolving when a revision is already being deployed for the current spec
+		if latest := state.revisionStates.Latest(); latest != nil {
+			if latest.State == RevisionStateRollingOut && latest.ClusterExtensionGeneration == ext.GetGeneration() {
+				l.Info("skipping resolver - latest revision already rolling out for current generation",
+					"revisionName", latest.RevisionName,
+					"generation", ext.GetGeneration())
+				installedBundleName := ""
+				if state.revisionStates.Installed() != nil {
+					l.Info("installed bundle", "name", state.revisionStates.Installed().Name)
+					installedBundleName = state.revisionStates.Installed().Name
+				}
+				SetDeprecationStatus(ext, installedBundleName, nil, false)
+				state.resolvedRevisionMetadata = latest
+				return nil, nil
 			}
-			SetDeprecationStatus(ext, installedBundleName, nil, false)
-			state.resolvedRevisionMetadata = state.revisionStates.RollingOut[0]
-			return nil, nil
 		}
 
 		// Resolve a new bundle from the catalog
 		l.V(1).Info("resolving bundle")
 		var bm *ocv1.BundleMetadata
-		if state.revisionStates.Installed != nil {
-			bm = &state.revisionStates.Installed.BundleMetadata
+		if state.revisionStates.Installed() != nil {
+			l.Info("installed bundle", "name", state.revisionStates.Installed().Name)
+			bm = &state.revisionStates.Installed().BundleMetadata
 		}
 		resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolve(ctx, ext, bm)
 
 		// Get the installed bundle name for deprecation status.
 		// BundleDeprecated should reflect what's currently running, not what we're trying to install.
 		installedBundleName := ""
-		if state.revisionStates.Installed != nil {
-			installedBundleName = state.revisionStates.Installed.Name
+		if state.revisionStates.Installed() != nil {
+			installedBundleName = state.revisionStates.Installed().Name
 		}
 
 		// Set deprecation status based on resolution results:
@@ -142,9 +153,11 @@ func ResolveBundle(r resolve.Resolver, c client.Client) ReconcileStepFunc {
 			return handleResolutionError(ctx, c, state, ext, err)
 		}
 
+		l.Info("resolved bundle", "name", resolvedBundle.Name, "version", resolvedBundleVersion.Version.String(), "deprecation", resolvedDeprecation)
 		state.resolvedRevisionMetadata = &RevisionMetadata{
-			Package: resolvedBundle.Package,
-			Image:   resolvedBundle.Image,
+			Package:                    resolvedBundle.Package,
+			Image:                      resolvedBundle.Image,
+			ClusterExtensionGeneration: ext.GetGeneration(),
 			// TODO: Right now, operator-controller only supports registry+v1 bundles and has no concept
 			//   of a "release" field. If/when we add a release field concept or a new bundle format
 			//   we need to re-evaluate use of `AsLegacyRegistryV1Version` so that we avoid propagating
@@ -172,7 +185,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 	l := log.FromContext(ctx)
 
 	// No installed bundle and resolution failed - cannot proceed
-	if state.revisionStates.Installed == nil {
+	if state.revisionStates.Installed() == nil {
 		msg := fmt.Sprintf("failed to resolve bundle: %v", err)
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
@@ -185,7 +198,7 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 	if ext.Spec.Source.Catalog != nil {
 		specVersion = ext.Spec.Source.Catalog.Version
 	}
-	installedVersion := state.revisionStates.Installed.Version
+	installedVersion := state.revisionStates.Installed().Version
 
 	// If spec requests a different version, we cannot fall back - must fail and retry
 	if specVersion != "" && specVersion != installedVersion {
@@ -246,11 +259,11 @@ func handleResolutionError(ctx context.Context, c client.Client, state *reconcil
 		"resolutionError", err.Error(),
 		"packageName", getPackageName(ext),
 		"catalogName", catalogName,
-		"installedBundle", state.revisionStates.Installed.Name,
-		"installedVersion", state.revisionStates.Installed.Version)
+		"installedBundle", state.revisionStates.Installed().Name,
+		"installedVersion", state.revisionStates.Installed().Version)
 	// Set installed status based on current revision states (needed before Apply runs)
 	setInstalledStatusFromRevisionStates(ext, state.revisionStates)
-	state.resolvedRevisionMetadata = state.revisionStates.Installed
+	state.resolvedRevisionMetadata = state.revisionStates.Installed()
 	// Return no error to allow Apply step to run and maintain resources.
 	// Apply will set Progressing=Succeeded when it completes successfully.
 	return nil, nil
@@ -326,9 +339,9 @@ func UnpackBundle(i imageutil.Puller, cache imageutil.Cache) ReconcileStepFunc {
 
 		// Check if resolved bundle matches installed bundle (no version change)
 		bundleUnchanged := state.revisionStates != nil &&
-			state.revisionStates.Installed != nil &&
-			state.resolvedRevisionMetadata.Name == state.revisionStates.Installed.Name &&
-			state.resolvedRevisionMetadata.Version == state.revisionStates.Installed.Version
+			state.revisionStates.Installed() != nil &&
+			state.resolvedRevisionMetadata.Name == state.revisionStates.Installed().Name &&
+			state.resolvedRevisionMetadata.Version == state.revisionStates.Installed().Version
 
 		if err != nil {
 			if bundleUnchanged {
@@ -363,10 +376,11 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		revisionAnnotations := map[string]string{
-			labels.BundleNameKey:      state.resolvedRevisionMetadata.Name,
-			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
-			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
-			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
+			labels.BundleNameKey:                 state.resolvedRevisionMetadata.Name,
+			labels.PackageNameKey:                state.resolvedRevisionMetadata.Package,
+			labels.BundleVersionKey:              state.resolvedRevisionMetadata.Version,
+			labels.BundleReferenceKey:            state.resolvedRevisionMetadata.Image,
+			labels.ClusterExtensionGenerationKey: fmt.Sprintf("%d", ext.GetGeneration()),
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
@@ -387,9 +401,13 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 
 		// Set installed status
 		if rolloutSucceeded {
-			state.revisionStates = &RevisionStates{Installed: state.resolvedRevisionMetadata}
-		} else if err == nil && state.revisionStates.Installed == nil && len(state.revisionStates.RollingOut) == 0 {
-			state.revisionStates = &RevisionStates{RollingOut: []*RevisionMetadata{state.resolvedRevisionMetadata}}
+			rm := state.resolvedRevisionMetadata
+			rm.State = RevisionStateInstalled
+			state.revisionStates = RevisionStates{rm}
+		} else if err == nil && state.revisionStates.Installed() == nil && len(state.revisionStates.RollingOut()) == 0 {
+			rm := state.resolvedRevisionMetadata
+			rm.State = RevisionStateRollingOut
+			state.revisionStates = RevisionStates{rm}
 		}
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
 
@@ -409,6 +427,89 @@ func ApplyBundle(a Applier) ReconcileStepFunc {
 		} else {
 			setStatusProgressing(ext, nil)
 		}
+		return nil, nil
+	}
+}
+
+// CheckProgressDeadline checks if the ClusterExtension has exceeded its progress deadline.
+// It monitors the Progressing condition and active revision Ready conditions to detect:
+//  1. Retrying transient errors (Progressing=True, Reason=Retrying): bundle resolution, image pull, API errors
+//  2. Stuck rollouts (Progressing=True, Reason=RollingOut): revisions failing to reach Ready state
+//
+// When the deadline is exceeded, it sets Progressing=False with Reason=ProgressDeadlineExceeded
+// to mark the failure as terminal. It tracks deadline checks per ClusterExtension UID to avoid
+// scheduling redundant requeues.
+func CheckProgressDeadline(progressDeadlineCheckInFlight *sync.Map) ReconcileStepFunc {
+	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
+		l := log.FromContext(ctx)
+
+		pd := ext.Spec.ProgressDeadlineMinutes
+		if pd <= 0 {
+			// No progress deadline configured, clear tracking and skip check
+			progressDeadlineCheckInFlight.Delete(ext.GetUID())
+			return nil, nil
+		}
+
+		cnd := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1.TypeProgressing)
+		// Check progress deadline for:
+		// 1. Transient errors (Progressing=True with Reason=Retrying): bundle resolution, image pull, API errors, etc.
+		// 2. Stuck rollouts (Progressing=True with Reason=RollingOut): revisions that fail to reach Ready state
+		// Terminal errors (Progressing=False) like configuration validation failures are already terminal.
+		isStuckRetrying := cnd != nil && cnd.Status == metav1.ConditionTrue && cnd.Reason == ocv1.ReasonRetrying
+		isRollingOut := cnd != nil && cnd.Status == metav1.ConditionTrue && cnd.Reason == ocv1.ReasonRollingOut
+
+		var timeSinceLastTransition time.Duration
+		var isStuck bool
+
+		if isStuckRetrying {
+			// Retrying transient errors - use Progressing condition's LastTransitionTime
+			timeSinceLastTransition = time.Since(cnd.LastTransitionTime.Time)
+			isStuck = true
+		} else if isRollingOut {
+			// Rolling out - check if the latest active revision is stuck
+			// The latest revision is the one currently rolling out
+			if len(ext.Status.ActiveRevisions) > 0 {
+				latestRevStatus := ext.Status.ActiveRevisions[len(ext.Status.ActiveRevisions)-1]
+				readyCond := apimeta.FindStatusCondition(latestRevStatus.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
+				if readyCond != nil && readyCond.Status == metav1.ConditionFalse {
+					// Latest revision is not ready - check how long it's been stuck
+					timeSinceLastTransition = time.Since(readyCond.LastTransitionTime.Time)
+					isStuck = true
+				}
+			}
+		}
+
+		if !isStuck {
+			// Not stuck anymore (either progressing successfully, or already terminal),
+			// clear the deadline check tracking
+			progressDeadlineCheckInFlight.Delete(ext.GetUID())
+			return nil, nil
+		}
+
+		timeout := time.Duration(pd) * time.Minute
+
+		if timeSinceLastTransition > timeout {
+			// Progress deadline exceeded - set terminal condition
+			l.Info("progress deadline exceeded", "deadline", pd, "timeSinceLastTransition", timeSinceLastTransition)
+			SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+				Type:               ocv1.TypeProgressing,
+				Status:             metav1.ConditionFalse,
+				Reason:             ocv1.ReasonProgressDeadlineExceeded,
+				Message:            fmt.Sprintf("ClusterExtension has not progressed for %d minutes", pd),
+				ObservedGeneration: ext.GetGeneration(),
+			})
+			// Return nil error and empty result since this is now terminal (no retry needed)
+			return &ctrl.Result{}, nil
+		}
+
+		// Deadline not yet exceeded - schedule a requeue to check again later
+		// Only schedule if we haven't already scheduled one for this ClusterExtension
+		if _, found := progressDeadlineCheckInFlight.Load(ext.GetUID()); !found {
+			progressDeadlineCheckInFlight.Store(ext.GetUID(), true)
+			timeUntilDeadline := timeout - timeSinceLastTransition
+			return &ctrl.Result{RequeueAfter: timeUntilDeadline}, nil
+		}
+
 		return nil, nil
 	}
 }

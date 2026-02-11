@@ -256,15 +256,12 @@ func TestSetStatusConditionWrapper(t *testing.T) {
 func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T) {
 	tests := []struct {
 		name                  string
-		revisionStates        *RevisionStates
+		revisionStates        RevisionStates
 		expectedInstalledCond metav1.Condition
 	}{
 		{
-			name: "no revisions at all - uses Failed",
-			revisionStates: &RevisionStates{
-				Installed:  nil,
-				RollingOut: nil,
-			},
+			name:           "no revisions at all - uses Failed",
+			revisionStates: RevisionStates{},
 			expectedInstalledCond: metav1.Condition{
 				Type:   ocv1.TypeInstalled,
 				Status: metav1.ConditionFalse,
@@ -273,18 +270,16 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 		},
 		{
 			name: "rolling revision with error (Retrying) - uses Failed",
-			revisionStates: &RevisionStates{
-				Installed: nil,
-				RollingOut: []*RevisionMetadata{
-					{
-						RevisionName: "rev-1",
-						Conditions: []metav1.Condition{
-							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
-								Message: "some error occurred",
-							},
+			revisionStates: RevisionStates{
+				{
+					RevisionName: "rev-1",
+					State:        RevisionStateRollingOut,
+					Conditions: []metav1.Condition{
+						{
+							Type:    ocv1.ClusterExtensionRevisionTypeReady,
+							Status:  metav1.ConditionFalse,
+							Reason:  ocv1.ClusterExtensionRevisionReasonReconciling,
+							Message: "some error occurred",
 						},
 					},
 				},
@@ -297,29 +292,28 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 		},
 		{
 			name: "multiple rolling revisions with one Retrying - uses Failed",
-			revisionStates: &RevisionStates{
-				Installed: nil,
-				RollingOut: []*RevisionMetadata{
-					{
-						RevisionName: "rev-1",
-						Conditions: []metav1.Condition{
-							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ReasonRollingOut,
-								Message: "Revision is rolling out",
-							},
+			revisionStates: RevisionStates{
+				{
+					RevisionName: "rev-1",
+					State:        RevisionStateRollingOut,
+					Conditions: []metav1.Condition{
+						{
+							Type:    ocv1.ClusterExtensionRevisionTypeReady,
+							Status:  metav1.ConditionFalse,
+							Reason:  ocv1.ReasonRollingOut,
+							Message: "Revision is rolling out",
 						},
 					},
-					{
-						RevisionName: "rev-2",
-						Conditions: []metav1.Condition{
-							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
-								Message: "validation error occurred",
-							},
+				},
+				{
+					RevisionName: "rev-2",
+					State:        RevisionStateRollingOut,
+					Conditions: []metav1.Condition{
+						{
+							Type:    ocv1.ClusterExtensionRevisionTypeReady,
+							Status:  metav1.ConditionFalse,
+							Reason:  ocv1.ClusterExtensionRevisionReasonReconciling,
+							Message: "validation error occurred",
 						},
 					},
 				},
@@ -332,18 +326,16 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 		},
 		{
 			name: "rolling revision with RollingOut reason - uses Absent",
-			revisionStates: &RevisionStates{
-				Installed: nil,
-				RollingOut: []*RevisionMetadata{
-					{
-						RevisionName: "rev-1",
-						Conditions: []metav1.Condition{
-							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ReasonRollingOut,
-								Message: "Revision is rolling out",
-							},
+			revisionStates: RevisionStates{
+				{
+					RevisionName: "rev-1",
+					State:        RevisionStateRollingOut,
+					Conditions: []metav1.Condition{
+						{
+							Type:    ocv1.ClusterExtensionRevisionTypeReady,
+							Status:  metav1.ConditionFalse,
+							Reason:  ocv1.ReasonRollingOut,
+							Message: "Revision is rolling out",
 						},
 					},
 				},
@@ -356,29 +348,28 @@ func TestSetInstalledStatusFromRevisionStates_ConfigValidationError(t *testing.T
 		},
 		{
 			name: "old revision with Retrying superseded by latest healthy - uses Absent",
-			revisionStates: &RevisionStates{
-				Installed: nil,
-				RollingOut: []*RevisionMetadata{
-					{
-						RevisionName: "rev-1",
-						Conditions: []metav1.Condition{
-							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ClusterExtensionRevisionReasonRetrying,
-								Message: "old error that was superseded",
-							},
+			revisionStates: RevisionStates{
+				{
+					RevisionName: "rev-1",
+					State:        RevisionStateRollingOut,
+					Conditions: []metav1.Condition{
+						{
+							Type:    ocv1.ClusterExtensionRevisionTypeReady,
+							Status:  metav1.ConditionFalse,
+							Reason:  ocv1.ClusterExtensionRevisionReasonReconciling,
+							Message: "old error that was superseded",
 						},
 					},
-					{
-						RevisionName: "rev-2",
-						Conditions: []metav1.Condition{
-							{
-								Type:    ocv1.ClusterExtensionRevisionTypeProgressing,
-								Status:  metav1.ConditionTrue,
-								Reason:  ocv1.ReasonRollingOut,
-								Message: "Latest revision is rolling out healthy",
-							},
+				},
+				{
+					RevisionName: "rev-2",
+					State:        RevisionStateRollingOut,
+					Conditions: []metav1.Condition{
+						{
+							Type:    ocv1.ClusterExtensionRevisionTypeReady,
+							Status:  metav1.ConditionFalse,
+							Reason:  ocv1.ReasonRollingOut,
+							Message: "Latest revision is rolling out healthy",
 						},
 					},
 				},
