@@ -181,7 +181,7 @@ Feature: Update ClusterExtension
     Then bundle "test-operator.1.3.0" is installed in version "1.3.0"
 
   @BoxcutterRuntime
-  Scenario: Each update creates a new revision
+  Scenario: Each update creates a new revision and resources not present in the new revision are removed from the cluster
     Given ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -212,6 +212,7 @@ Feature: Update ClusterExtension
     And ClusterExtensionRevision "${NAME}-2" reports Progressing as True with Reason Succeeded
     And ClusterExtensionRevision "${NAME}-2" reports Available as True with Reason ProbesSucceeded
     And ClusterExtensionRevision "${NAME}-1" is archived
+    And ClusterExtensionRevision "${NAME}-1" phase objects are not found or not owned by the revision
 
   @BoxcutterRuntime
   Scenario: Report all active revisions on ClusterExtension

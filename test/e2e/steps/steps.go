@@ -75,6 +75,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" is archived$`, ClusterExtensionRevisionIsArchived)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" contains annotation "([^"]+)" with value$`, ClusterExtensionRevisionHasAnnotationWithValue)
 	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" has label "([^"]+)" with value "([^"]+)"$`, ClusterExtensionRevisionHasLabelWithValue)
+	sc.Step(`^(?i)ClusterExtensionRevision "([^"]+)" phase objects are not found or not owned by the revision$`, ClusterExtensionRevisionObjectsNotFoundOrNotOwned)
 
 	sc.Step(`^(?i)resource "([^"]+)" is installed$`, ResourceAvailable)
 	sc.Step(`^(?i)resource "([^"]+)" is available$`, ResourceAvailable)
@@ -319,7 +320,7 @@ func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
 		return fmt.Errorf("extension objects not found in context")
 	}
 
-	for _, obj := range sc.extensionObjects {
+	for _, obj := range sc.GetClusterExtensionObjects() {
 		waitFor(ctx, func() bool {
 			kind := obj.GetObjectKind().GroupVersionKind().Kind
 			clusterObj, err := getResource(kind, obj.GetName(), obj.GetNamespace())
@@ -361,7 +362,7 @@ func ClusterExtensionResourcesRemoved(ctx context.Context) error {
 	if len(sc.GetClusterExtensionObjects()) == 0 {
 		return fmt.Errorf("extension objects not found in context")
 	}
-	for _, obj := range sc.extensionObjects {
+	for _, obj := range sc.GetClusterExtensionObjects() {
 		if err := ResourceEventuallyNotFound(ctx, fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())); err != nil {
 			return err
 		}
@@ -557,6 +558,66 @@ func ClusterExtensionRevisionHasLabelWithValue(ctx context.Context, revisionName
 		}
 		return obj.GetLabels()[labelKey] == labelValue
 	})
+	return nil
+}
+
+// ClusterExtensionRevisionObjectsNotFoundOrNotOwned waits for all objects described in the named
+// ClusterExtensionRevision's phases to either not exist on the cluster or not contain the revision
+// in their ownerReferences. Polls with timeout.
+func ClusterExtensionRevisionObjectsNotFoundOrNotOwned(ctx context.Context, revisionName string) error {
+	sc := scenarioCtx(ctx)
+	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
+
+	// Get the CER to extract its phase objects
+	var rev ocv1.ClusterExtensionRevision
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("get", "clusterextensionrevision", revisionName, "-o", "json")
+		if err != nil {
+			return false
+		}
+		return json.Unmarshal([]byte(out), &rev) == nil
+	})
+
+	// For each object in each phase, verify it either doesn't exist or
+	// doesn't have the CER in its ownerReferences
+	for _, phase := range rev.Spec.Phases {
+		for _, phaseObj := range phase.Objects {
+			obj := phaseObj.Object
+			kind := obj.GetKind()
+			name := obj.GetName()
+			namespace := obj.GetNamespace()
+
+			waitFor(ctx, func() bool {
+				args := []string{"get", kind, name, "--ignore-not-found", "-o", "json"}
+				if namespace != "" {
+					args = append(args, "-n", namespace)
+				}
+				out, err := k8sClient(args...)
+				if err != nil {
+					return false
+				}
+				// If output is empty, the resource does not exist — condition satisfied
+				if strings.TrimSpace(out) == "" {
+					return true
+				}
+				clusterObj, err := toUnstructured(out)
+				if err != nil {
+					return false
+				}
+
+				// Check that no ownerReference points to this CER
+				for _, ref := range clusterObj.GetOwnerReferences() {
+					if ref.Kind == ocv1.ClusterExtensionRevisionKind && ref.Name == revisionName {
+						logger.V(1).Info("object still owned by revision",
+							"kind", kind, "name", name, "namespace", namespace,
+							"revision", revisionName)
+						return false
+					}
+				}
+				return true
+			})
+		}
+	}
 	return nil
 }
 
