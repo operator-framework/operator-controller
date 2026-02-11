@@ -103,7 +103,7 @@ spec:
   type: NodePort
 EOF
 
-kubectl wait --for=condition=Available -n "${namespace}" "deploy/${name}" --timeout=60s
+kubectl wait --for=condition=Available -n "${namespace}" "deploy/${name}" --timeout=3m
 
 kubectl apply -f - << EOF
 apiVersion: batch/v1
@@ -135,4 +135,4 @@ spec:
             secretName: ${namespace}-registry
 EOF
 
-kubectl wait --for=condition=Complete -n "${namespace}" "job/${name}-push" --timeout=60s
+kubectl wait --for=condition=Complete -n "${namespace}" "job/${name}-push" --timeout=3m

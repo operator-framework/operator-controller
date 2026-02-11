@@ -1,0 +1,33 @@
+# High Availability (HA) configuration for OLMv1
+# Sets replicas to 2 for both operator-controller and catalogd to enable HA setup
+# This is used in experimental-e2e.yaml to test multi-replica deployments
+#
+# Pod anti-affinity is configured as "preferred" (not "required") to ensure:
+# - In multi-node clusters: replicas are scheduled on different nodes for better availability
+# - In single-node clusters (like kind): both replicas can still be scheduled on the same node
+options:
+  operatorController:
+    deployment:
+      replicas: 2
+  catalogd:
+    deployment:
+      replicas: 2
+
+# Pod anti-affinity configuration to prefer spreading replicas across different nodes
+# Uses preferredDuringSchedulingIgnoredDuringExecution (soft constraint) to allow
+# scheduling on the same node when necessary (e.g., single-node kind clusters for e2e tests)
+deployments:
+  templateSpec:
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: control-plane
+                    operator: In
+                    values:
+                      - operator-controller-controller-manager
+                      - catalogd-controller-manager
+              topologyKey: kubernetes.io/hostname
