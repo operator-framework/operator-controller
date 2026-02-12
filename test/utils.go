@@ -1,10 +1,12 @@
 package test
 
 import (
+	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
@@ -52,4 +54,24 @@ func getFirstFoundEnvTestBinaryDir() string {
 		}
 	}
 	return ""
+}
+
+// StopWithRetry wraps testEnv.Stop() with retry logic for graceful shutdown.
+// This is useful for controller-runtime v0.23.0+ where direct calls to testEnv.Stop()
+// can fail intermittently due to graceful shutdown timing.
+func StopWithRetry(env interface{ Stop() error }, timeout, interval time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if err := env.Stop(); err == nil {
+			return nil
+		} else {
+			log.Printf("StopWithRetry: env.Stop() failed during teardown, retrying in %s: %v", interval, err)
+		}
+		time.Sleep(interval)
+	}
+	err := env.Stop() // Final attempt
+	if err != nil {
+		log.Printf("StopWithRetry: timeout reached before successful teardown; last error: %v", err)
+	}
+	return err
 }

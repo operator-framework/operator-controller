@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -56,13 +57,16 @@ func TestClusterCatalogUnpacking(t *testing.T) {
 		managerPod = managerPods.Items[0]
 	}, time.Minute, time.Second)
 
-	t.Log("Waiting for acquired leader election")
-	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
-	defer leaderCancel()
-	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, &managerPod, leaderSubstrings...)
-	require.NoError(t, err)
-	require.True(t, leaderElected)
+	t.Logf("Waiting for acquired leader election by checking lease")
+	// Instead of watching logs (which has timing issues in controller-runtime v0.23.1+),
+	// directly check the lease object to confirm leader election occurred
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var lease coordinationv1.Lease
+		err := c.Get(ctx, types.NamespacedName{Name: "catalogd-operator-lock", Namespace: "olmv1-system"}, &lease)
+		require.NoError(ct, err)
+		require.NotNil(ct, lease.Spec.HolderIdentity, "lease should have a holder")
+		require.NotEmpty(ct, *lease.Spec.HolderIdentity, "lease holder identity should not be empty")
+	}, 3*time.Minute, time.Second)
 
 	t.Log("Reading logs to make sure that ClusterCatalog was reconciled by catalogdv1")
 	logCtx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -110,16 +114,18 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Wait for operator-controller deployment to be ready")
 	managerPod := waitForDeployment(t, ctx, "operator-controller")
 
-	t.Log("Wait for acquired leader election")
+	t.Log("Wait for acquired leader election by checking lease")
+	// Instead of watching logs (which has timing issues in controller-runtime v0.23.1+),
+	// directly check the lease object to confirm leader election occurred
 	// Average case is under 1 minute but in the worst case: (previous leader crashed)
 	// we could have LeaseDuration (137s) + RetryPeriod (26s) +/- 163s
-	leaderCtx, leaderCancel := context.WithTimeout(ctx, 3*time.Minute)
-	defer leaderCancel()
-
-	leaderSubstrings := []string{"successfully acquired lease"}
-	leaderElected, err := watchPodLogsForSubstring(leaderCtx, managerPod, leaderSubstrings...)
-	require.NoError(t, err)
-	require.True(t, leaderElected)
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		var lease coordinationv1.Lease
+		err := c.Get(ctx, types.NamespacedName{Name: "9c4404e7.operatorframework.io", Namespace: "olmv1-system"}, &lease)
+		require.NoError(ct, err)
+		require.NotNil(ct, lease.Spec.HolderIdentity, "lease should have a holder")
+		require.NotEmpty(ct, *lease.Spec.HolderIdentity, "lease holder identity should not be empty")
+	}, 3*time.Minute, time.Second)
 
 	t.Log("Reading logs to make sure that ClusterExtension was reconciled by operator-controller before we update it")
 	// Make sure that after we upgrade OLM itself we can still reconcile old objects without any changes
@@ -277,32 +283,59 @@ func waitForDeployment(t *testing.T, ctx context.Context, controlPlaneLabel stri
 }
 
 func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, substrings ...string) (bool, error) {
-	podLogOpts := corev1.PodLogOptions{
-		Follow:    true,
-		Container: container,
-	}
+	// Use a polling approach to periodically check pod logs for the substrings
+	// This handles controller-runtime v0.23.1+ where leader election happens faster
+	// and the message may be emitted before we start watching with Follow
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
 
-	req := kclientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
-	podLogs, err := req.Stream(ctx)
-	if err != nil {
-		return false, err
-	}
-	defer podLogs.Close()
-
-	scanner := bufio.NewScanner(podLogs)
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		foundCount := 0
-		for _, substring := range substrings {
-			if strings.Contains(line, substring) {
-				foundCount++
+	for {
+		select {
+		case <-ctx.Done():
+			return false, ctx.Err()
+		case <-ticker.C:
+			// Get recent logs without Follow to check if message exists
+			logOpts := corev1.PodLogOptions{
+				Container: container,
+				TailLines: ptr.To(int64(1000)),
 			}
-		}
-		if foundCount == len(substrings) {
-			return true, nil
+
+			req := kclientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &logOpts)
+			// Use a per-poll timeout derived from ctx so reads don't outlive the caller's context
+			pollCtx, pollCancel := context.WithTimeout(ctx, 5*time.Second)
+			podLogs, err := req.Stream(pollCtx)
+			if err != nil {
+				pollCancel()
+				// Pod might not be ready yet, or the context timed out; continue polling
+				continue
+			}
+
+			scanner := bufio.NewScanner(podLogs)
+			for scanner.Scan() {
+				line := scanner.Text()
+
+				foundCount := 0
+				for _, substring := range substrings {
+					if strings.Contains(line, substring) {
+						foundCount++
+					}
+				}
+				if foundCount == len(substrings) {
+					podLogs.Close()
+					pollCancel()
+					return true, nil
+				}
+			}
+
+			// Check for scanning errors before closing
+			if err := scanner.Err(); err != nil {
+				podLogs.Close()
+				pollCancel()
+				// Log the error but continue polling - might be transient
+				continue
+			}
+			podLogs.Close()
+			pollCancel()
 		}
 	}
-
-	return false, scanner.Err()
 }
