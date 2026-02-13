@@ -135,6 +135,8 @@ func TestApplyBundleWithBoxcutter(t *testing.T) {
 
 			stepFunc := ApplyBundleWithBoxcutter(func(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _, _ map[string]string) (bool, string, error) {
 				return true, "", nil
+			}, func() string {
+				return "" // empty proxy fingerprint for tests
 			})
 			result, err := stepFunc(ctx, state, ext)
 			require.NoError(t, err)

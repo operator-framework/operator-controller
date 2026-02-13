@@ -11,6 +11,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/proxy"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/util"
 	hashutil "github.com/operator-framework/operator-controller/internal/shared/util/hash"
@@ -66,6 +67,7 @@ type Options struct {
 	// DeploymentConfig contains optional customizations to apply to CSV deployments.
 	// If nil, no customizations are applied.
 	DeploymentConfig *config.DeploymentConfig
+	Proxy            *proxy.Proxy
 }
 
 func (o *Options) apply(opts ...Option) *Options {
@@ -118,6 +120,12 @@ func WithCertificateProvider(provider CertificateProvider) Option {
 func WithDeploymentConfig(deploymentConfig *config.DeploymentConfig) Option {
 	return func(o *Options) {
 		o.DeploymentConfig = deploymentConfig
+	}
+}
+
+func WithProxy(proxyVal *proxy.Proxy) Option {
+	return func(o *Options) {
+		o.Proxy = proxyVal
 	}
 }
 

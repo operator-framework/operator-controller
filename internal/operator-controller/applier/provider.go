@@ -14,6 +14,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/proxy"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
@@ -33,6 +34,7 @@ type RegistryV1ManifestProvider struct {
 	CertificateProvider         render.CertificateProvider
 	IsWebhookSupportEnabled     bool
 	IsSingleOwnNamespaceEnabled bool
+	Proxy                       *proxy.Proxy
 }
 
 func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -68,6 +70,9 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 
 	opts := []render.Option{
 		render.WithCertificateProvider(r.CertificateProvider),
+		// Always include proxy option to ensure manifests reflect current proxy state
+		// When r.Proxy is nil, this ensures proxy env vars are removed from manifests
+		render.WithProxy(r.Proxy),
 	}
 
 	if r.IsSingleOwnNamespaceEnabled {
@@ -109,6 +114,13 @@ func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.Regi
 	}
 
 	return opts, nil
+}
+
+// ProxyFingerprint returns a stable hash of the proxy configuration.
+// This is used to detect when proxy settings change and a new revision is needed.
+// The hash is calculated once during proxy construction and cached in the Proxy itself.
+func (r *RegistryV1ManifestProvider) ProxyFingerprint() string {
+	return r.Proxy.Fingerprint()
 }
 
 // RegistryV1HelmChartProvider creates a Helm-Chart from a registry+v1 bundle and its associated ClusterExtension

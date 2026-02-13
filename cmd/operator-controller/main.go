@@ -68,6 +68,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/finalizers"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/proxy"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
@@ -219,6 +220,7 @@ func validateMetricsFlags() error {
 	}
 	return nil
 }
+
 func run() error {
 	setupLog.Info("starting up the controller", "version info", version.String())
 
@@ -474,11 +476,17 @@ func run() error {
 	}
 
 	certProvider := getCertificateProvider()
+
+	// Create proxy configuration from environment variables
+	// The fingerprint is calculated once during construction and cached
+	proxyConfig := proxy.NewFromEnv()
+
 	regv1ManifestProvider := &applier.RegistryV1ManifestProvider{
 		BundleRenderer:              registryv1.Renderer,
 		CertificateProvider:         certProvider,
 		IsWebhookSupportEnabled:     certProvider != nil,
 		IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
+		Proxy:                       proxyConfig,
 	}
 	var cerCfg reconcilerConfigurator
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {
@@ -537,6 +545,73 @@ func run() error {
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
+		return err
+	}
+
+	// Add a runnable to trigger reconciliation of all ClusterExtensions on startup.
+	// This ensures existing deployments get updated when proxy configuration changes
+	// (added, modified, or removed).
+	if err := mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
+		// Wait for the cache to sync
+		if !mgr.GetCache().WaitForCacheSync(ctx) {
+			return fmt.Errorf("failed to wait for cache sync")
+		}
+
+		// Always trigger reconciliation on startup to handle proxy config changes
+		if proxyConfig != nil {
+			setupLog.Info("proxy configuration detected, triggering reconciliation of all ClusterExtensions",
+				"httpProxy", proxy.SanitizeURL(proxyConfig.HTTPProxy), "httpsProxy", proxy.SanitizeURL(proxyConfig.HTTPSProxy), "noProxy", proxyConfig.NoProxy)
+		} else {
+			setupLog.Info("no proxy configuration detected, triggering reconciliation to remove proxy vars from existing deployments")
+		}
+
+		extList := &ocv1.ClusterExtensionList{}
+		if err := cl.List(ctx, extList); err != nil {
+			setupLog.Error(err, "failed to list ClusterExtensions for proxy update")
+			return nil // Don't fail startup
+		}
+
+		for i := range extList.Items {
+			ext := &extList.Items[i]
+
+			// Get current and desired proxy hash
+			currentHash, exists := ext.Annotations[proxy.ConfigHashKey]
+			desiredHash := proxyConfig.Fingerprint()
+
+			// Skip if annotation matches desired state
+			if exists && currentHash == desiredHash {
+				continue
+			}
+			// Skip if neither proxy nor annotation exists
+			if !exists && desiredHash == "" {
+				continue
+			}
+
+			// Use Patch instead of Update to avoid resourceVersion conflicts
+			// This ensures the annotation is set even if the ClusterExtension is modified concurrently
+			patch := client.MergeFrom(ext.DeepCopy())
+			if ext.Annotations == nil {
+				ext.Annotations = make(map[string]string)
+			}
+
+			// Delete annotation if no proxy is configured, otherwise set it
+			if desiredHash == "" {
+				delete(ext.Annotations, proxy.ConfigHashKey)
+			} else {
+				ext.Annotations[proxy.ConfigHashKey] = desiredHash
+			}
+
+			if err := cl.Patch(ctx, ext, patch); err != nil {
+				setupLog.Error(err, "failed to set proxy hash on ClusterExtension", "name", ext.Name)
+				// Continue with other ClusterExtensions
+			}
+		}
+
+		setupLog.Info("triggered reconciliation for existing ClusterExtensions", "count", len(extList.Items))
+
+		return nil
+	})); err != nil {
+		setupLog.Error(err, "unable to add startup reconciliation trigger")
 		return err
 	}
 
@@ -625,13 +700,18 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		ActionClientGetter: acg,
 		RevisionGenerator:  rg,
 	}
+	// Get the ManifestProvider to extract proxy fingerprint
+	regv1Provider, ok := c.regv1ManifestProvider.(*applier.RegistryV1ManifestProvider)
+	if !ok {
+		return fmt.Errorf("manifest provider is not of type *applier.RegistryV1ManifestProvider")
+	}
 	ceReconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
 		controllers.HandleFinalizers(c.finalizers),
 		controllers.MigrateStorage(storageMigrator),
 		controllers.RetrieveRevisionStates(revisionStatesGetter),
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
-		controllers.ApplyBundleWithBoxcutter(appl.Apply),
+		controllers.ApplyBundleWithBoxcutter(appl.Apply, regv1Provider.ProxyFingerprint),
 	}
 
 	baseDiscoveryClient, err := discovery.NewDiscoveryClientForConfig(c.mgr.GetConfig())

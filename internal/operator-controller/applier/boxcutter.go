@@ -33,6 +33,7 @@ import (
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/proxy"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/shared/util/cache"
 )
@@ -515,17 +516,28 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		desiredRevision.Spec.Revision = currentRevision.Spec.Revision
 		desiredRevision.Name = currentRevision.Name
 
-		err := bc.createOrUpdate(ctx, getUserInfo(ext), desiredRevision)
-		switch {
-		case apierrors.IsInvalid(err):
-			// We could not update the current revision due to trying to update an immutable field.
-			// Therefore, we need to create a new revision.
+		// Check if proxy configuration changed by comparing annotations.
+		// The Phases field has CEL immutability validation (self == oldSelf) which prevents
+		// updating nested content like env vars. When proxy config changes, we must create
+		// a new revision rather than attempting to patch the existing one.
+		// Comparing proxy hash annotations is more reliable than comparing phases content,
+		// which has false positives due to serialization differences in unstructured objects.
+		currentProxyHash := currentRevision.Annotations[proxy.ConfigHashKey]
+		desiredProxyHash := desiredRevision.Annotations[proxy.ConfigHashKey]
+		if currentProxyHash != desiredProxyHash {
 			state = StateNeedsUpgrade
-		case err == nil:
-			// inplace patch was successful, no changes in phases
-			state = StateUnchanged
-		default:
-			return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
+		} else {
+			err = bc.createOrUpdate(ctx, getUserInfo(ext), desiredRevision)
+			switch {
+			case apierrors.IsInvalid(err):
+				// We could not update the current revision due to trying to update an immutable field.
+				// Therefore, we need to create a new revision.
+				state = StateNeedsUpgrade
+			case err == nil:
+				state = StateUnchanged
+			default:
+				return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
+			}
 		}
 	}
 
@@ -560,6 +572,10 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 
 		desiredRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
 		desiredRevision.Spec.Revision = revisionNumber
+		// Clear server-added metadata fields from previous patch operation
+		desiredRevision.SetResourceVersion("")
+		desiredRevision.SetUID("")
+		desiredRevision.SetManagedFields(nil)
 
 		if err = bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
 			return false, "", fmt.Errorf("garbage collecting old revisions: %w", err)
