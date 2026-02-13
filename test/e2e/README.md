@@ -335,6 +335,10 @@ A list of available, implemented steps can be obtained by running:
 go test test/e2e/features_test.go -d
 ```
 
+When working with [Claude Code](https://claude.com/claude-code), run the `/list-e2e-steps` command to get a categorized
+reference of all step definitions including parameters, DocString expectations, polling behavior, and handler locations.
+This is useful when writing new feature files or debugging existing scenarios.
+
 ## Best Practices
 
 1. **Keep scenarios focused**: Each scenario should test one specific behavior
