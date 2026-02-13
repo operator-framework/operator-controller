@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -48,9 +47,6 @@ type ClusterExtensionRevisionReconciler struct {
 	Client                client.Client
 	RevisionEngineFactory RevisionEngineFactory
 	TrackingCache         trackingCache
-	// track if we have queued up the reconciliation that detects eventual progress deadline issues
-	// keys is revision UUID, value is boolean
-	progressDeadlineCheckInFlight sync.Map
 }
 
 type trackingCache interface {
@@ -79,25 +75,6 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 	reconciledRev := existingRev.DeepCopy()
 	res, reconcileErr := c.reconcile(ctx, reconciledRev)
 
-	if pd := existingRev.Spec.ProgressDeadlineMinutes; pd > 0 {
-		cnd := meta.FindStatusCondition(reconciledRev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
-		isStillProgressing := cnd != nil && cnd.Status == metav1.ConditionTrue && cnd.Reason != ocv1.ReasonSucceeded
-		succeeded := meta.IsStatusConditionTrue(reconciledRev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded)
-		// check if we reached the progress deadline only if the revision is still progressing and has not succeeded yet
-		if isStillProgressing && !succeeded {
-			timeout := time.Duration(pd) * time.Minute
-			if time.Since(existingRev.CreationTimestamp.Time) > timeout {
-				// progress deadline reached, reset any errors and stop reconciling this revision
-				markAsNotProgressing(reconciledRev, ocv1.ReasonProgressDeadlineExceeded, fmt.Sprintf("Revision has not rolled out for %d minutes.", pd))
-				reconcileErr = nil
-				res = ctrl.Result{}
-			} else if _, found := c.progressDeadlineCheckInFlight.Load(existingRev.GetUID()); !found && reconcileErr == nil {
-				// if we haven't already queued up a reconcile to check for progress deadline, queue one up, but only once
-				c.progressDeadlineCheckInFlight.Store(existingRev.GetUID(), true)
-				res = ctrl.Result{RequeueAfter: timeout}
-			}
-		}
-	}
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingRev.Status, reconciledRev.Status)
 
@@ -169,6 +146,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		if rres != nil {
 			// Log detailed reconcile reports only in debug mode (V(1)) to reduce verbosity.
 			l.V(1).Info("reconcile report", "report", rres.String())
+			updatePhaseStatuses(rev, rres)
 		}
 		setRetryingConditions(rev, err.Error())
 		return ctrl.Result{}, fmt.Errorf("revision reconcile: %v", err)
@@ -178,14 +156,24 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	// TODO: report status, backoff?
 	if verr := rres.GetValidationError(); verr != nil {
 		l.Error(fmt.Errorf("%w", verr), "preflight validation failed, retrying after 10s")
-		setRetryingConditions(rev, fmt.Sprintf("revision validation error: %s", verr))
+		updatePhaseStatuses(rev, rres)
+		markAsNotReady(rev, ocv1.ClusterExtensionRevisionReasonValidationFailed, fmt.Sprintf("revision validation error: %s", verr))
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
 	for i, pres := range rres.GetPhases() {
+		phaseName := ""
+		if i < len(rev.Spec.Phases) {
+			phaseName = rev.Spec.Phases[i].Name
+		}
+		if phaseName == "" {
+			phaseName = fmt.Sprintf("%d", i)
+		}
+
 		if verr := pres.GetValidationError(); verr != nil {
-			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", i)
-			setRetryingConditions(rev, fmt.Sprintf("phase %d validation error: %s", i, verr))
+			l.Error(fmt.Errorf("%w", verr), "phase preflight validation failed, retrying after 10s", "phase", phaseName)
+			updatePhaseStatuses(rev, rres)
+			markAsNotReady(rev, ocv1.ClusterExtensionRevisionReasonValidationFailed, fmt.Sprintf("validation error in phase '%s'", phaseName))
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 
@@ -197,16 +185,20 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		}
 
 		if len(collidingObjs) > 0 {
-			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", i, "collisions", collidingObjs)
-			setRetryingConditions(rev, fmt.Sprintf("revision object collisions in phase %d\n%s", i, strings.Join(collidingObjs, "\n\n")))
+			l.Error(fmt.Errorf("object collision detected"), "object collision, retrying after 10s", "phase", phaseName, "collisions", collidingObjs)
+			updatePhaseStatuses(rev, rres)
+			markAsNotReady(rev, ocv1.ClusterExtensionRevisionReasonObjectCollision, fmt.Sprintf("object collision in phase '%s'", phaseName))
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	}
 
-	if !rres.InTransition() {
-		markAsProgressing(rev, ocv1.ReasonSucceeded, fmt.Sprintf("Revision %s has rolled out.", revVersion))
-	} else {
-		markAsProgressing(rev, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
+	// Update phase statuses
+	updatePhaseStatuses(rev, rres)
+
+	// Check if the revision has progressed (all objects transitioned to a newer revision)
+	if isRevisionProgressing(rres) {
+		markAsNotReady(rev, ocv1.ClusterExtensionRevisionReasonTransitioning, "Revision objects have transitioned to a newer revision")
+		return ctrl.Result{}, nil
 	}
 
 	//nolint:nestif
@@ -226,18 +218,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 			}
 		}
 
-		markAsAvailable(rev, ocv1.ClusterExtensionRevisionReasonProbesSucceeded, "Objects are available and pass all probes.")
-
-		// We'll probably only want to remove this once we are done updating the ClusterExtension conditions
-		// as its one of the interfaces between the revision and the extension. If we still have the Succeeded for now
-		// that's fine.
-		meta.SetStatusCondition(&rev.Status.Conditions, metav1.Condition{
-			Type:               ocv1.ClusterExtensionRevisionTypeSucceeded,
-			Status:             metav1.ConditionTrue,
-			Reason:             ocv1.ReasonSucceeded,
-			Message:            "Revision succeeded rolling out.",
-			ObservedGeneration: rev.Generation,
-		})
+		markAsReady(rev, ocv1.ClusterExtensionRevisionReasonReady, "Revision has rolled out successfully")
 	} else {
 		var probeFailureMsgs []string
 		for _, pres := range rres.GetPhases() {
@@ -266,9 +247,9 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		}
 
 		if len(probeFailureMsgs) > 0 {
-			markAsUnavailable(rev, ocv1.ClusterExtensionRevisionReasonProbeFailure, strings.Join(probeFailureMsgs, "\n"))
+			markAsNotReady(rev, ocv1.ClusterExtensionRevisionReasonProbeFailure, strings.Join(probeFailureMsgs, "\n"))
 		} else {
-			markAsUnavailable(rev, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
+			markAsNotReady(rev, ocv1.ClusterExtensionRevisionReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
 		}
 	}
 
@@ -277,7 +258,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 
 func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (ctrl.Result, error) {
 	if err := c.TrackingCache.Free(ctx, rev); err != nil {
-		markAsAvailableUnknown(rev, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
+		markAsNotReady(rev, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
 		return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 	}
 
@@ -307,7 +288,7 @@ func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) 
 			if !rev.DeletionTimestamp.IsZero() {
 				return true
 			}
-			if cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing); cnd != nil && cnd.Status == metav1.ConditionFalse && cnd.Reason == ocv1.ReasonProgressDeadlineExceeded {
+			if cnd := meta.FindStatusCondition(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady); cnd != nil && cnd.Status == metav1.ConditionFalse && cnd.Reason == ocv1.ClusterExtensionRevisionReasonProgressDeadlineExceeded {
 				return false
 			}
 			return true
@@ -339,6 +320,22 @@ func (c *ClusterExtensionRevisionReconciler) establishWatch(
 		for _, obj := range phase.Objects {
 			gvks.Insert(obj.GroupVersionKind())
 		}
+	}
+
+	// Add the parent ClusterExtension's ServiceAccount to the watch list
+	ownerName, ok := rev.Labels[labels.OwnerNameKey]
+	if ok {
+		ext := &ocv1.ClusterExtension{}
+		if err := c.Client.Get(ctx, client.ObjectKey{Name: ownerName}, ext); err == nil {
+			// Watch the ServiceAccount referenced by the parent ClusterExtension
+			gvks.Insert(schema.GroupVersionKind{
+				Group:   corev1.GroupName,
+				Version: "v1",
+				Kind:    "ServiceAccount",
+			})
+		}
+		// If we can't get the ClusterExtension, continue without adding the ServiceAccount watch
+		// The revision will still watch its own objects
 	}
 
 	return c.TrackingCache.Watch(ctx, rev, gvks)
@@ -539,15 +536,12 @@ var (
 )
 
 func setRetryingConditions(cer *ocv1.ClusterExtensionRevision, message string) {
-	markAsProgressing(cer, ocv1.ClusterExtensionRevisionReasonRetrying, message)
-	if meta.FindStatusCondition(cer.Status.Conditions, ocv1.ClusterExtensionRevisionTypeAvailable) != nil {
-		markAsAvailableUnknown(cer, ocv1.ClusterExtensionRevisionReasonReconciling, message)
-	}
+	markAsNotReady(cer, ocv1.ClusterExtensionRevisionReasonReconciling, message)
 }
 
-func markAsProgressing(cer *ocv1.ClusterExtensionRevision, reason, message string) {
-	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+func markAsReady(cer *ocv1.ClusterExtensionRevision, reason, message string) bool {
+	return meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
+		Type:               ocv1.ClusterExtensionRevisionTypeReady,
 		Status:             metav1.ConditionTrue,
 		Reason:             reason,
 		Message:            message,
@@ -555,40 +549,10 @@ func markAsProgressing(cer *ocv1.ClusterExtensionRevision, reason, message strin
 	})
 }
 
-func markAsNotProgressing(cer *ocv1.ClusterExtensionRevision, reason, message string) bool {
+func markAsNotReady(cer *ocv1.ClusterExtensionRevision, reason, message string) bool {
 	return meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterExtensionRevisionTypeProgressing,
+		Type:               ocv1.ClusterExtensionRevisionTypeReady,
 		Status:             metav1.ConditionFalse,
-		Reason:             reason,
-		Message:            message,
-		ObservedGeneration: cer.Generation,
-	})
-}
-
-func markAsAvailable(cer *ocv1.ClusterExtensionRevision, reason, message string) bool {
-	return meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-		Status:             metav1.ConditionTrue,
-		Reason:             reason,
-		Message:            message,
-		ObservedGeneration: cer.Generation,
-	})
-}
-
-func markAsUnavailable(cer *ocv1.ClusterExtensionRevision, reason, message string) {
-	meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-		Status:             metav1.ConditionFalse,
-		Reason:             reason,
-		Message:            message,
-		ObservedGeneration: cer.Generation,
-	})
-}
-
-func markAsAvailableUnknown(cer *ocv1.ClusterExtensionRevision, reason, message string) bool {
-	return meta.SetStatusCondition(&cer.Status.Conditions, metav1.Condition{
-		Type:               ocv1.ClusterExtensionRevisionTypeAvailable,
-		Status:             metav1.ConditionUnknown,
 		Reason:             reason,
 		Message:            message,
 		ObservedGeneration: cer.Generation,
@@ -597,6 +561,151 @@ func markAsAvailableUnknown(cer *ocv1.ClusterExtensionRevision, reason, message 
 
 func markAsArchived(cer *ocv1.ClusterExtensionRevision) bool {
 	const msg = "revision is archived"
-	updated := markAsNotProgressing(cer, ocv1.ClusterExtensionRevisionReasonArchived, msg)
-	return markAsAvailableUnknown(cer, ocv1.ClusterExtensionRevisionReasonArchived, msg) || updated
+	return markAsNotReady(cer, ocv1.ClusterExtensionRevisionReasonArchived, msg)
+}
+
+// updatePhaseStatuses updates the phase statuses in the ClusterExtensionRevision status based on the reconciliation result.
+// It always shows all phases from the spec, defaulting to Pending state for phases without available data.
+// It only updates lastTransitionTime when the phase state, message, or failing probes actually change.
+func updatePhaseStatuses(rev *ocv1.ClusterExtensionRevision, rres machinery.RevisionResult) {
+	newPhaseStatuses := make([]ocv1.ClusterExtensionRevisionPhaseStatus, 0, len(rev.Spec.Phases))
+	now := metav1.Now()
+
+	// Build a map of existing phase statuses for easy lookup
+	existingPhaseStatuses := make(map[string]ocv1.ClusterExtensionRevisionPhaseStatus)
+	for _, ps := range rev.Status.PhaseStatuses {
+		existingPhaseStatuses[ps.Name] = ps
+	}
+
+	// Build a map of phase results by index for easy lookup
+	var phaseResults map[int]machinery.PhaseResult
+	if rres != nil {
+		phases := rres.GetPhases()
+		phaseResults = make(map[int]machinery.PhaseResult, len(phases))
+		for i, pres := range phases {
+			phaseResults[i] = pres
+		}
+	}
+
+	// Always iterate through all spec phases to ensure all are represented in status
+	for i, specPhase := range rev.Spec.Phases {
+		phaseName := specPhase.Name
+		if phaseName == "" {
+			phaseName = fmt.Sprintf("%d", i)
+		}
+
+		phaseStatus := ocv1.ClusterExtensionRevisionPhaseStatus{
+			Name:               phaseName,
+			LastTransitionTime: now,
+		}
+
+		// Check if we have result data for this phase
+		pres, hasResult := phaseResults[i]
+		if !hasResult {
+			// No data available yet - default to Pending
+			phaseStatus.State = ocv1.ClusterExtensionRevisionPhaseStatePending
+			phaseStatus.Message = "Phase is pending"
+		} else {
+			updatePhaseStatus(&phaseStatus, pres)
+		}
+
+		// Check if this phase status has changed - if not, preserve the lastTransitionTime
+		if existing, found := existingPhaseStatuses[phaseName]; found {
+			if phaseStatusesEqual(existing, phaseStatus) {
+				phaseStatus.LastTransitionTime = existing.LastTransitionTime
+			}
+		}
+
+		newPhaseStatuses = append(newPhaseStatuses, phaseStatus)
+	}
+
+	rev.Status.PhaseStatuses = newPhaseStatuses
+}
+
+func updatePhaseStatus(phaseStatus *ocv1.ClusterExtensionRevisionPhaseStatus, pres machinery.PhaseResult) {
+	// Determine phase state from result
+	if verr := pres.GetValidationError(); verr != nil {
+		phaseStatus.State = ocv1.ClusterExtensionRevisionPhaseStateFailed
+		phaseStatus.Message = fmt.Sprintf("Validation error: %s", verr.Error())
+	} else if c := countObjectsProgressed(pres); c > 0 {
+		// Phase has progressed to a newer revision - don't check probes
+		phaseStatus.State = ocv1.ClusterExtensionRevisionPhaseStateTransitioning
+		phaseStatus.Message = fmt.Sprintf("%d/%d objects have transitioned to newer revision", c, len(pres.GetObjects()))
+	} else if pres.IsComplete() {
+		phaseStatus.State = ocv1.ClusterExtensionRevisionPhaseStateApplied
+		phaseStatus.Message = "All objects applied and at the desired state"
+	} else {
+		phaseStatus.State = ocv1.ClusterExtensionRevisionPhaseStateProgressing
+		phaseStatus.Message = "Phase is progressing"
+		updatePhaseProbeFailures(phaseStatus, pres)
+	}
+}
+
+func updatePhaseProbeFailures(phaseStatus *ocv1.ClusterExtensionRevisionPhaseStatus, pres machinery.PhaseResult) {
+	// Extract failing probes and check for collisions
+	var failingProbes []ocv1.ClusterExtensionRevisionProbeFailure
+	for _, ores := range pres.GetObjects() {
+		if ores.Action() == machinery.ActionCollision {
+			phaseStatus.State = ocv1.ClusterExtensionRevisionPhaseStateFailed
+			phaseStatus.Message = fmt.Sprintf("Object collision: %s", ores.String())
+			break
+		}
+
+		pr := ores.ProbeResults()[boxcutter.ProgressProbeType]
+		if pr.Status != machinerytypes.ProbeStatusTrue {
+			obj := ores.Object()
+			gvk := obj.GetObjectKind().GroupVersionKind()
+			failingProbes = append(failingProbes, ocv1.ClusterExtensionRevisionProbeFailure{
+				Kind:      gvk.Kind,
+				Name:      obj.GetName(),
+				Namespace: obj.GetNamespace(),
+				Message:   strings.Join(pr.Messages, " and "),
+			})
+		}
+	}
+
+	if len(failingProbes) > 0 {
+		phaseStatus.FailingProbes = failingProbes
+		phaseStatus.Message = fmt.Sprintf("%d object(s) failing probes", len(failingProbes))
+	}
+}
+
+func countObjectsProgressed(phaseResult machinery.PhaseResult) int {
+	progressedCount := 0
+	for _, obj := range phaseResult.GetObjects() {
+		if obj.Action() == machinery.ActionProgressed {
+			progressedCount++
+		}
+	}
+	return progressedCount
+}
+
+func isRevisionProgressing(revisionResult machinery.RevisionResult) bool {
+	progressedCount := 0
+	for _, phaseResult := range revisionResult.GetPhases() {
+		if countObjectsProgressed(phaseResult) > 0 {
+			progressedCount++
+		}
+	}
+	return progressedCount > 0
+}
+
+// phaseStatusesEqual compares two phase statuses ignoring lastTransitionTime.
+func phaseStatusesEqual(a, b ocv1.ClusterExtensionRevisionPhaseStatus) bool {
+	if a.State != b.State || a.Message != b.Message {
+		return false
+	}
+
+	if len(a.FailingProbes) != len(b.FailingProbes) {
+		return false
+	}
+
+	// Compare failing probes - order matters
+	for i := range a.FailingProbes {
+		if a.FailingProbes[i] != b.FailingProbes[i] {
+			return false
+		}
+	}
+
+	return true
 }

@@ -17,8 +17,12 @@ entries:
   - name: test-operator.1.0.0
   - name: test-operator.1.0.1
     replaces: test-operator.1.0.0
-  - name: test-operator.1.2.0
+  - name: test-operator.1.0.2
     replaces: test-operator.1.0.1
+  - name: test-operator.1.0.3
+    replaces: test-operator.1.0.2
+  - name: test-operator.1.2.0
+    replaces: test-operator.1.0.3
 ---
 schema: olm.bundle
 name: test-operator.1.0.0

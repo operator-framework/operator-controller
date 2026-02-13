@@ -22,7 +22,9 @@ import (
 	"fmt"
 	"io/fs"
 	"slices"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/release"
@@ -60,7 +62,7 @@ const (
 )
 
 type reconcileState struct {
-	revisionStates           *RevisionStates
+	revisionStates           RevisionStates
 	resolvedRevisionMetadata *RevisionMetadata
 	imageFS                  fs.FS
 }
@@ -100,6 +102,9 @@ func (steps *ReconcileSteps) Reconcile(ctx context.Context, ext *ocv1.ClusterExt
 type ClusterExtensionReconciler struct {
 	client.Client
 	ReconcileSteps ReconcileSteps
+	// ProgressDeadlineCheckInFlight tracks if we have queued up the reconciliation that detects eventual progress deadline issues
+	// key is ClusterExtension UID, value is boolean
+	ProgressDeadlineCheckInFlight sync.Map
 }
 
 type StorageMigrator interface {
@@ -114,7 +119,7 @@ type Applier interface {
 }
 
 type RevisionStatesGetter interface {
-	GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error)
+	GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (RevisionStates, error)
 }
 
 // The operator controller needs to watch all the bundle objects and reconcile accordingly. Though not ideal, but these permissions are required.
@@ -496,24 +501,61 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
+type RevisionState string
+
+const (
+	RevisionStateInstalled  RevisionState = "Installed"
+	RevisionStateRollingOut RevisionState = "RollingOut"
+)
+
 type RevisionMetadata struct {
-	RevisionName string
-	Package      string
-	Image        string
+	RevisionName               string
+	Package                    string
+	Image                      string
+	State                      RevisionState
+	ClusterExtensionGeneration int64
 	ocv1.BundleMetadata
 	Conditions []metav1.Condition
 }
 
-type RevisionStates struct {
-	Installed  *RevisionMetadata
-	RollingOut []*RevisionMetadata
+// RevisionStates is a sorted list of active revision metadata, sorted ascending by revision number.
+// The last element is the most recent revision.
+type RevisionStates []*RevisionMetadata
+
+// Installed returns the installed revision metadata, or nil if none exists.
+func (rs RevisionStates) Installed() *RevisionMetadata {
+	for _, r := range rs {
+		if r.State == RevisionStateInstalled {
+			return r
+		}
+	}
+	return nil
+}
+
+// RollingOut returns all revisions that are currently rolling out.
+func (rs RevisionStates) RollingOut() []*RevisionMetadata {
+	var rolling []*RevisionMetadata
+	for _, r := range rs {
+		if r.State == RevisionStateRollingOut {
+			rolling = append(rolling, r)
+		}
+	}
+	return rolling
+}
+
+// Latest returns the most recent revision, or nil if there are no revisions.
+func (rs RevisionStates) Latest() *RevisionMetadata {
+	if len(rs) == 0 {
+		return nil
+	}
+	return rs[len(rs)-1]
 }
 
 type HelmRevisionStatesGetter struct {
 	helmclient.ActionClientGetter
 }
 
-func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
+func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (RevisionStates, error) {
 	cl, err := d.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
@@ -523,7 +565,8 @@ func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *o
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, err
 	}
-	rs := &RevisionStates{}
+
+	var rs RevisionStates
 	if len(relhis) == 0 {
 		return rs, nil
 	}
@@ -532,14 +575,23 @@ func (d *HelmRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *o
 	// But we need to look for the most-recent _Deployed_ release
 	for _, rel := range relhis {
 		if rel.Info != nil && rel.Info.Status == release.StatusDeployed {
-			rs.Installed = &RevisionMetadata{
-				Package: rel.Labels[labels.PackageNameKey],
-				Image:   rel.Labels[labels.BundleReferenceKey],
+			generation := int64(0)
+			if genStr, ok := rel.Labels[labels.ClusterExtensionGenerationKey]; ok {
+				if gen, err := strconv.ParseInt(genStr, 10, 64); err == nil {
+					generation = gen
+				}
+			}
+
+			rs = RevisionStates{&RevisionMetadata{
+				Package:                    rel.Labels[labels.PackageNameKey],
+				Image:                      rel.Labels[labels.BundleReferenceKey],
+				State:                      RevisionStateInstalled,
+				ClusterExtensionGeneration: generation,
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    rel.Labels[labels.BundleNameKey],
 					Version: rel.Labels[labels.BundleVersionKey],
 				},
-			}
+			}}
 			break
 		}
 	}

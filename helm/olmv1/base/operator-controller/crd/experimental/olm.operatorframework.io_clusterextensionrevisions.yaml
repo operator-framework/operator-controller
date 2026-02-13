@@ -16,11 +16,11 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.conditions[?(@.type=='Available')].status
-      name: Available
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
       type: string
-    - jsonPath: .status.conditions[?(@.type=='Progressing')].status
-      name: Progressing
+    - jsonPath: .status.conditions[?(@.type=='Ready')].reason
+      name: Reason
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -166,16 +166,6 @@ spec:
                 x-kubernetes-validations:
                 - message: phases is immutable
                   rule: self == oldSelf || oldSelf.size() == 0
-              progressDeadlineMinutes:
-                description: |-
-                  progressDeadlineMinutes is an optional field that defines the maximum period
-                  of time in minutes after which an installation should be considered failed and
-                  require manual intervention. This functionality is disabled when no value
-                  is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
-                format: int32
-                maximum: 720
-                minimum: 10
-                type: integer
               revision:
                 description: |-
                   revision is a required, immutable sequence number representing a specific revision
@@ -202,22 +192,16 @@ spec:
                   conditions is an optional list of status conditions describing the state of the
                   ClusterExtensionRevision.
 
-                  The Progressing condition represents whether the revision is actively rolling out:
-                    - When status is True and reason is RollingOut, the ClusterExtensionRevision rollout is actively making progress and is in transition.
-                    - When status is True and reason is Retrying, the ClusterExtensionRevision has encountered an error that could be resolved on subsequent reconciliation attempts.
-                    - When status is True and reason is Succeeded, the ClusterExtensionRevision has reached the desired state.
-                    - When status is False and reason is Blocked, the ClusterExtensionRevision has encountered an error that requires manual intervention for recovery.
+                  The Ready condition represents whether the revision has been successfully rolled out and is ready:
+                    - When status is True and reason is Ready, all ClusterExtensionRevision resources have been applied and all progression probes are successful.
+                    - When status is False and reason is RollingOut, the ClusterExtensionRevision rollout is actively making progress and objects are being applied.
+                    - When status is False and reason is Reconciling, the ClusterExtensionRevision is being reconciled or retrying after an error.
+                    - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes.
+                    - When status is False and reason is ValidationFailed, the revision failed preflight validation checks.
+                    - When status is False and reason is ObjectCollision, the revision encountered object ownership collisions.
+                    - When status is False and reason is ProgressDeadlineExceeded, the revision has not completed within the specified progress deadline.
+                    - When status is False and reason is Transitioning, the revision's objects are being transitioned to a newer revision.
                     - When status is False and reason is Archived, the ClusterExtensionRevision is archived and not being actively reconciled.
-
-                  The Available condition represents whether the revision has been successfully rolled out and is available:
-                    - When status is True and reason is ProbesSucceeded, the ClusterExtensionRevision has been successfully rolled out and all objects pass their readiness probes.
-                    - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes during rollout.
-                    - When status is Unknown and reason is Reconciling, the ClusterExtensionRevision has encountered an error that prevented it from observing the probes.
-                    - When status is Unknown and reason is Archived, the ClusterExtensionRevision has been archived and its objects have been torn down.
-                    - When status is Unknown and reason is Migrated, the ClusterExtensionRevision was migrated from an existing release and object status probe results have not yet been observed.
-
-                  The Succeeded condition represents whether the revision has successfully completed its rollout:
-                    - When status is True and reason is Succeeded, the ClusterExtensionRevision has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -275,6 +259,77 @@ spec:
                 type: array
                 x-kubernetes-list-map-keys:
                 - type
+                x-kubernetes-list-type: map
+              phaseStatuses:
+                description: |-
+                  phaseStatuses provides detailed status information for each phase in the revision.
+                  Each phase status includes the phase name, current state, any error messages,
+                  and details about failing probes if applicable.
+                items:
+                  description: ClusterExtensionRevisionPhaseStatus describes the status
+                    of a single phase.
+                  properties:
+                    failingProbes:
+                      description: |-
+                        failingProbes lists objects in this phase that are failing their readiness probes.
+                        Only populated when state is Progressing and probes are failing.
+                      items:
+                        description: ClusterExtensionRevisionProbeFailure describes
+                          a failing probe for an object in a phase.
+                        properties:
+                          kind:
+                            description: kind is the Kind of the object failing probes.
+                            type: string
+                          message:
+                            description: message contains the joined probe failure
+                              messages.
+                            type: string
+                          name:
+                            description: name is the name of the object failing probes.
+                            type: string
+                          namespace:
+                            description: |-
+                              namespace is the namespace of the object failing probes.
+                              Empty for cluster-scoped objects.
+                            type: string
+                        required:
+                        - kind
+                        - message
+                        - name
+                        type: object
+                      type: array
+                      x-kubernetes-list-type: atomic
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the phase state changed.
+                        This only updates when the state, message, or failingProbes change.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message provides additional context about the phase state.
+                        This may include error messages for failed phases.
+                      type: string
+                    name:
+                      description: name is the name of the phase.
+                      type: string
+                    state:
+                      description: state represents the current state of the phase.
+                      enum:
+                      - Applied
+                      - Progressing
+                      - Failed
+                      - Pending
+                      - Transitioning
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - name
+                  - state
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
                 x-kubernetes-list-type: map
             type: object
         type: object

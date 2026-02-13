@@ -88,52 +88,6 @@ func TestValidate(t *testing.T) {
 			},
 			want: want{valid: true},
 		},
-		"ClusterExtensionRevision: invalid progress deadline < 10": {
-			args: args{
-				object: ClusterExtensionRevisionSpec{
-					ProgressDeadlineMinutes: 9,
-				},
-			},
-			want: want{valid: false},
-		},
-		"ClusterExtensionRevision: valid progress deadline = 10": {
-			args: args{
-				object: ClusterExtensionRevisionSpec{
-					ProgressDeadlineMinutes: 10,
-				},
-			},
-			want: want{valid: true},
-		},
-		"ClusterExtensionRevision: valid progress deadline = 360": {
-			args: args{
-				object: ClusterExtensionRevisionSpec{
-					ProgressDeadlineMinutes: 360,
-				},
-			},
-			want: want{valid: true},
-		},
-		"ClusterExtensionRevision: valid progress deadline = 720": {
-			args: args{
-				object: ClusterExtensionRevisionSpec{
-					ProgressDeadlineMinutes: 720,
-				},
-			},
-			want: want{valid: true},
-		},
-		"ClusterExtensionRevision: invalid progress deadline > 720": {
-			args: args{
-				object: ClusterExtensionRevisionSpec{
-					ProgressDeadlineMinutes: 721,
-				},
-			},
-			want: want{valid: false},
-		},
-		"ClusterExtensionRevision: no progress deadline set": {
-			args: args{
-				object: ClusterExtensionRevisionSpec{},
-			},
-			want: want{valid: true},
-		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			var obj client.Object

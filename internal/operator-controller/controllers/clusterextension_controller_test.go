@@ -280,9 +280,10 @@ func TestClusterExtensionUpgradeShowsInstalledBundleDeprecation(t *testing.T) {
 				}, nil
 		})
 		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
+			RevisionStates: controllers.RevisionStates{
+				{
 					Package: pkgName,
+					State:   controllers.RevisionStateInstalled,
 					BundleMetadata: ocv1.BundleMetadata{
 						Name:    installedBundleName, // v1.0.0 installed
 						Version: "1.0.0",
@@ -365,9 +366,10 @@ func TestClusterExtensionResolutionFailsWithoutCatalogDeprecationData(t *testing
 		})
 
 		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
+			RevisionStates: controllers.RevisionStates{
+				{
 					Package: pkgName,
+					State:   controllers.RevisionStateInstalled,
 					BundleMetadata: ocv1.BundleMetadata{
 						Name:    installedBundleName,
 						Version: "1.0.0",
@@ -681,8 +683,11 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 		// Boxcutter keeps a rolling revision when apply fails. We mirror that state so the test uses
 		// the same inputs the runtime would see.
 		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				RollingOut: []*controllers.RevisionMetadata{{}},
+			RevisionStates: controllers.RevisionStates{
+				{
+					State:                      controllers.RevisionStateRollingOut,
+					ClusterExtensionGeneration: 1, // Match the ClusterExtension generation
+				},
 			},
 		}
 		d.Resolver = resolve.Func(func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bundle.VersionRelease, *declcfg.Deprecation, error) {
@@ -843,8 +848,9 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 		})
 
 		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
+			RevisionStates: controllers.RevisionStates{
+				{
+					State:          controllers.RevisionStateInstalled,
 					BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
 					Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
 				},
@@ -1181,8 +1187,9 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 			installCompleted: true,
 		}
 		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			RevisionStates: &controllers.RevisionStates{
-				Installed: &controllers.RevisionMetadata{
+			RevisionStates: controllers.RevisionStates{
+				{
+					State:          controllers.RevisionStateInstalled,
 					BundleMetadata: ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
 					Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
 				},
@@ -2380,6 +2387,7 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 			},
 			nil,
 			&controllers.RevisionMetadata{
+				State: controllers.RevisionStateInstalled,
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    "test-ext",
 					Version: "1.0",
@@ -2415,6 +2423,7 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 			},
 			nil,
 			&controllers.RevisionMetadata{
+				State: controllers.RevisionStateInstalled,
 				BundleMetadata: ocv1.BundleMetadata{
 					Name:    "test-ext",
 					Version: "1.0",
@@ -2433,8 +2442,8 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 			require.Nil(t, md)
 		} else {
 			require.NoError(t, err)
-			require.Equal(t, tst.expectedInstalled, md.Installed)
-			require.Nil(t, md.RollingOut)
+			require.Equal(t, tst.expectedInstalled, md.Installed())
+			require.Empty(t, md.RollingOut())
 		}
 	}
 }
@@ -2467,9 +2476,10 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 			}
 			d.ImagePuller = &imageutil.MockPuller{ImageFS: fstest.MapFS{}}
 			d.RevisionStatesGetter = &MockRevisionStatesGetter{
-				RevisionStates: &controllers.RevisionStates{
-					Installed: &controllers.RevisionMetadata{
+				RevisionStates: controllers.RevisionStates{
+					{
 						Package:        "test-pkg",
+						State:          controllers.RevisionStateInstalled,
 						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
 						Image:          "test-image:1.0.0",
 					},
@@ -2553,8 +2563,9 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 				return nil, nil, nil, fmt.Errorf("catalog unavailable")
 			})
 			d.RevisionStatesGetter = &MockRevisionStatesGetter{
-				RevisionStates: &controllers.RevisionStates{
-					Installed: &controllers.RevisionMetadata{
+				RevisionStates: controllers.RevisionStates{
+					{
+						State:          controllers.RevisionStateInstalled,
 						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
 					},
 				},
@@ -2624,9 +2635,10 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 				}, &v, &declcfg.Deprecation{}, nil
 			})
 			d.RevisionStatesGetter = &MockRevisionStatesGetter{
-				RevisionStates: &controllers.RevisionStates{
-					Installed: &controllers.RevisionMetadata{
+				RevisionStates: controllers.RevisionStates{
+					{
 						Package:        "test-pkg",
+						State:          controllers.RevisionStateInstalled,
 						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
 						Image:          "test-image:1.0.0",
 					},
@@ -2711,9 +2723,10 @@ func TestResolutionFallbackToInstalledBundle(t *testing.T) {
 				return nil, nil, nil, fmt.Errorf("transient catalog issue: cache stale")
 			})
 			d.RevisionStatesGetter = &MockRevisionStatesGetter{
-				RevisionStates: &controllers.RevisionStates{
-					Installed: &controllers.RevisionMetadata{
+				RevisionStates: controllers.RevisionStates{
+					{
 						Package:        "test-pkg",
+						State:          controllers.RevisionStateInstalled,
 						BundleMetadata: ocv1.BundleMetadata{Name: "test.1.0.0", Version: "1.0.0"},
 						Image:          "test-image:1.0.0",
 					},

@@ -632,6 +632,7 @@ func (c *boxcutterReconcilerConfigurator) Configure(ceReconciler *controllers.Cl
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
 		controllers.ApplyBundleWithBoxcutter(appl.Apply),
+		controllers.CheckProgressDeadline(&ceReconciler.ProgressDeadlineCheckInFlight),
 	}
 
 	baseDiscoveryClient, err := discovery.NewDiscoveryClientForConfig(c.mgr.GetConfig())
@@ -751,6 +752,7 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 		controllers.ResolveBundle(c.resolver, c.mgr.GetClient()),
 		controllers.UnpackBundle(c.imagePuller, c.imageCache),
 		controllers.ApplyBundle(appl),
+		controllers.CheckProgressDeadline(&ceReconciler.ProgressDeadlineCheckInFlight),
 	}
 
 	return nil

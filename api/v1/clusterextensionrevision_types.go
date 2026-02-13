@@ -25,17 +25,18 @@ const (
 	ClusterExtensionRevisionKind = "ClusterExtensionRevision"
 
 	// Condition Types
-	ClusterExtensionRevisionTypeAvailable   = "Available"
-	ClusterExtensionRevisionTypeProgressing = "Progressing"
-	ClusterExtensionRevisionTypeSucceeded   = "Succeeded"
+	ClusterExtensionRevisionTypeReady = "Ready"
 
 	// Condition Reasons
-	ClusterExtensionRevisionReasonArchived        = "Archived"
-	ClusterExtensionRevisionReasonBlocked         = "Blocked"
-	ClusterExtensionRevisionReasonProbeFailure    = "ProbeFailure"
-	ClusterExtensionRevisionReasonProbesSucceeded = "ProbesSucceeded"
-	ClusterExtensionRevisionReasonReconciling     = "Reconciling"
-	ClusterExtensionRevisionReasonRetrying        = "Retrying"
+	ClusterExtensionRevisionReasonReady                    = "Ready"
+	ClusterExtensionRevisionReasonReconciling              = "Reconciling"
+	ClusterExtensionRevisionReasonProbeFailure             = "ProbeFailure"
+	ClusterExtensionRevisionReasonValidationFailed         = "ValidationFailed"
+	ClusterExtensionRevisionReasonObjectCollision          = "ObjectCollision"
+	ClusterExtensionRevisionReasonProgressDeadlineExceeded = "ProgressDeadlineExceeded"
+	ClusterExtensionRevisionReasonArchived                 = "Archived"
+	ClusterExtensionRevisionReasonRollingOut               = "RollingOut"
+	ClusterExtensionRevisionReasonTransitioning            = "Transitioning"
 )
 
 // ClusterExtensionRevisionSpec defines the desired state of ClusterExtensionRevision.
@@ -87,17 +88,6 @@ type ClusterExtensionRevisionSpec struct {
 	// +listMapKey=name
 	// +optional
 	Phases []ClusterExtensionRevisionPhase `json:"phases,omitempty"`
-
-	// progressDeadlineMinutes is an optional field that defines the maximum period
-	// of time in minutes after which an installation should be considered failed and
-	// require manual intervention. This functionality is disabled when no value
-	// is provided. The minimum period is 10 minutes, and the maximum is 720 minutes (12 hours).
-	//
-	// +kubebuilder:validation:Minimum:=10
-	// +kubebuilder:validation:Maximum:=720
-	// +optional
-	// <opcon:experimental>
-	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
 }
 
 // ClusterExtensionRevisionLifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
@@ -184,39 +174,106 @@ const (
 	CollisionProtectionNone CollisionProtection = "None"
 )
 
+// ClusterExtensionRevisionPhaseState represents the state of a phase during rollout.
+type ClusterExtensionRevisionPhaseState string
+
+const (
+	// ClusterExtensionRevisionPhaseStateApplied indicates all objects in the phase have been successfully applied.
+	ClusterExtensionRevisionPhaseStateApplied ClusterExtensionRevisionPhaseState = "Applied"
+	// ClusterExtensionRevisionPhaseStateProgressing indicates the phase is actively being reconciled and probes are being evaluated.
+	ClusterExtensionRevisionPhaseStateProgressing ClusterExtensionRevisionPhaseState = "Progressing"
+	// ClusterExtensionRevisionPhaseStateFailed indicates the phase has failed due to validation errors or collisions.
+	ClusterExtensionRevisionPhaseStateFailed ClusterExtensionRevisionPhaseState = "Failed"
+	// ClusterExtensionRevisionPhaseStatePending indicates the phase is waiting for previous phases to complete.
+	ClusterExtensionRevisionPhaseStatePending ClusterExtensionRevisionPhaseState = "Pending"
+	// ClusterExtensionRevisionPhaseStateTransitioning indicates objects in the phase are transitioning to a newer revision.
+	ClusterExtensionRevisionPhaseStateTransitioning ClusterExtensionRevisionPhaseState = "Transitioning"
+)
+
+// ClusterExtensionRevisionProbeFailure describes a failing probe for an object in a phase.
+type ClusterExtensionRevisionProbeFailure struct {
+	// kind is the Kind of the object failing probes.
+	// +required
+	Kind string `json:"kind"`
+
+	// name is the name of the object failing probes.
+	// +required
+	Name string `json:"name"`
+
+	// namespace is the namespace of the object failing probes.
+	// Empty for cluster-scoped objects.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// message contains the joined probe failure messages.
+	// +required
+	Message string `json:"message"`
+}
+
+// ClusterExtensionRevisionPhaseStatus describes the status of a single phase.
+type ClusterExtensionRevisionPhaseStatus struct {
+	// name is the name of the phase.
+	// +required
+	Name string `json:"name"`
+
+	// state represents the current state of the phase.
+	// +required
+	// +kubebuilder:validation:Enum=Applied;Progressing;Failed;Pending;Transitioning
+	State ClusterExtensionRevisionPhaseState `json:"state"`
+
+	// message provides additional context about the phase state.
+	// This may include error messages for failed phases.
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// lastTransitionTime is the last time the phase state changed.
+	// This only updates when the state, message, or failingProbes change.
+	// +required
+	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
+
+	// failingProbes lists objects in this phase that are failing their readiness probes.
+	// Only populated when state is Progressing and probes are failing.
+	// +optional
+	// +listType=atomic
+	FailingProbes []ClusterExtensionRevisionProbeFailure `json:"failingProbes,omitempty"`
+}
+
 // ClusterExtensionRevisionStatus defines the observed state of a ClusterExtensionRevision.
 type ClusterExtensionRevisionStatus struct {
 	// conditions is an optional list of status conditions describing the state of the
 	// ClusterExtensionRevision.
 	//
-	// The Progressing condition represents whether the revision is actively rolling out:
-	//   - When status is True and reason is RollingOut, the ClusterExtensionRevision rollout is actively making progress and is in transition.
-	//   - When status is True and reason is Retrying, the ClusterExtensionRevision has encountered an error that could be resolved on subsequent reconciliation attempts.
-	//   - When status is True and reason is Succeeded, the ClusterExtensionRevision has reached the desired state.
-	//   - When status is False and reason is Blocked, the ClusterExtensionRevision has encountered an error that requires manual intervention for recovery.
+	// The Ready condition represents whether the revision has been successfully rolled out and is ready:
+	//   - When status is True and reason is Ready, all ClusterExtensionRevision resources have been applied and all progression probes are successful.
+	//   - When status is False and reason is RollingOut, the ClusterExtensionRevision rollout is actively making progress and objects are being applied.
+	//   - When status is False and reason is Reconciling, the ClusterExtensionRevision is being reconciled or retrying after an error.
+	//   - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes.
+	//   - When status is False and reason is ValidationFailed, the revision failed preflight validation checks.
+	//   - When status is False and reason is ObjectCollision, the revision encountered object ownership collisions.
+	//   - When status is False and reason is ProgressDeadlineExceeded, the revision has not completed within the specified progress deadline.
+	//   - When status is False and reason is Transitioning, the revision's objects are being transitioned to a newer revision.
 	//   - When status is False and reason is Archived, the ClusterExtensionRevision is archived and not being actively reconciled.
-	//
-	// The Available condition represents whether the revision has been successfully rolled out and is available:
-	//   - When status is True and reason is ProbesSucceeded, the ClusterExtensionRevision has been successfully rolled out and all objects pass their readiness probes.
-	//   - When status is False and reason is ProbeFailure, one or more objects are failing their readiness probes during rollout.
-	//   - When status is Unknown and reason is Reconciling, the ClusterExtensionRevision has encountered an error that prevented it from observing the probes.
-	//   - When status is Unknown and reason is Archived, the ClusterExtensionRevision has been archived and its objects have been torn down.
-	//   - When status is Unknown and reason is Migrated, the ClusterExtensionRevision was migrated from an existing release and object status probe results have not yet been observed.
-	//
-	// The Succeeded condition represents whether the revision has successfully completed its rollout:
-	//   - When status is True and reason is Succeeded, the ClusterExtensionRevision has successfully completed its rollout. This condition is set once and persists even if the revision later becomes unavailable.
 	//
 	// +listType=map
 	// +listMapKey=type
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// phaseStatuses provides detailed status information for each phase in the revision.
+	// Each phase status includes the phase name, current state, any error messages,
+	// and details about failing probes if applicable.
+	//
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	PhaseStatuses []ClusterExtensionRevisionPhaseStatus `json:"phaseStatuses,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Available",type=string,JSONPath=`.status.conditions[?(@.type=='Available')].status`
-// +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
+// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=='Ready')].status`
+// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.conditions[?(@.type=='Ready')].reason`
 // +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterExtensionRevision represents an immutable snapshot of Kubernetes objects

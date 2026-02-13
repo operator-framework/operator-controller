@@ -53,20 +53,20 @@ func SetStatusCondition(conditions *[]metav1.Condition, condition metav1.Conditi
 }
 
 // setInstalledStatusFromRevisionStates sets the installed status based on the given installedBundle.
-func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates *RevisionStates) {
+func setInstalledStatusFromRevisionStates(ext *ocv1.ClusterExtension, revisionStates RevisionStates) {
 	// Nothing is installed
-	if revisionStates.Installed == nil {
+	if revisionStates.Installed() == nil {
 		setInstallStatus(ext, nil)
-		reason := determineFailureReason(revisionStates.RollingOut)
+		reason := determineFailureReason(revisionStates.RollingOut())
 		setInstalledStatusConditionFalse(ext, reason, "No bundle installed")
 		return
 	}
 	// Something is installed
 	installStatus := &ocv1.ClusterExtensionInstallStatus{
-		Bundle: revisionStates.Installed.BundleMetadata,
+		Bundle: revisionStates.Installed().BundleMetadata,
 	}
 	setInstallStatus(ext, installStatus)
-	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", revisionStates.Installed.Image))
+	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", revisionStates.Installed().Image))
 }
 
 // determineFailureReason determines the appropriate reason for the Installed condition
@@ -93,12 +93,12 @@ func determineFailureReason(rollingRevisions []*RevisionMetadata) string {
 		return ocv1.ReasonFailed
 	}
 
-	// Check if the LATEST rolling revision indicates an error (Retrying reason)
+	// Check if the LATEST rolling revision indicates an error
 	// Latest revision is the last element in the array (sorted ascending by Spec.Revision)
 	latestRevision := rollingRevisions[len(rollingRevisions)-1]
-	progressingCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing)
-	if progressingCond != nil && progressingCond.Reason == string(ocv1.ClusterExtensionRevisionReasonRetrying) {
-		// Retrying indicates an error occurred (config, apply, validation, etc.)
+	readyCond := apimeta.FindStatusCondition(latestRevision.Conditions, ocv1.ClusterExtensionRevisionTypeReady)
+	if readyCond != nil && readyCond.Status == "False" && readyCond.Reason == string(ocv1.ClusterExtensionRevisionReasonReconciling) {
+		// Reconciling indicates an error occurred (config, apply, validation, etc.)
 		// Use Failed for semantic correctness: installation failed due to error
 		return ocv1.ReasonFailed
 	}

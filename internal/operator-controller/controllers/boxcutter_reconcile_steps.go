@@ -23,8 +23,10 @@ import (
 	"fmt"
 	"io/fs"
 	"slices"
+	"strconv"
 
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -38,7 +40,7 @@ type BoxcutterRevisionStatesGetter struct {
 	Reader client.Reader
 }
 
-func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (*RevisionStates, error) {
+func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, ext *ocv1.ClusterExtension) (RevisionStates, error) {
 	// TODO: boxcutter applier has a nearly identical bit of code for listing and sorting revisions
 	//   only difference here is that it sorts in reverse order to start iterating with the most
 	//   recent revisions. We should consolidate to avoid code duplication.
@@ -52,7 +54,7 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 		return cmp.Compare(a.Spec.Revision, b.Spec.Revision)
 	})
 
-	rs := &RevisionStates{}
+	var rs RevisionStates
 	for _, rev := range existingRevisionList.Items {
 		if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
 			continue
@@ -61,22 +63,32 @@ func (d *BoxcutterRevisionStatesGetter) GetRevisionStates(ctx context.Context, e
 		// TODO: the setting of these annotations (happens in boxcutter applier when we pass in "revisionAnnotations")
 		//   is fairly decoupled from this code where we get the annotations back out. We may want to co-locate
 		//   the set/get logic a bit better to make it more maintainable and less likely to get out of sync.
+		state := RevisionStateRollingOut
+		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeReady) {
+			state = RevisionStateInstalled
+		}
+
+		generation := int64(0)
+		if genStr, ok := rev.Annotations[labels.ClusterExtensionGenerationKey]; ok {
+			if gen, err := strconv.ParseInt(genStr, 10, 64); err == nil {
+				generation = gen
+			}
+		}
+
 		rm := &RevisionMetadata{
-			RevisionName: rev.Name,
-			Package:      rev.Annotations[labels.PackageNameKey],
-			Image:        rev.Annotations[labels.BundleReferenceKey],
-			Conditions:   rev.Status.Conditions,
+			RevisionName:               rev.Name,
+			Package:                    rev.Annotations[labels.PackageNameKey],
+			Image:                      rev.Annotations[labels.BundleReferenceKey],
+			State:                      state,
+			ClusterExtensionGeneration: generation,
+			Conditions:                 rev.Status.Conditions,
 			BundleMetadata: ocv1.BundleMetadata{
 				Name:    rev.Annotations[labels.BundleNameKey],
 				Version: rev.Annotations[labels.BundleVersionKey],
 			},
 		}
 
-		if apimeta.IsStatusConditionTrue(rev.Status.Conditions, ocv1.ClusterExtensionRevisionTypeSucceeded) {
-			rs.Installed = rm
-		} else {
-			rs.RollingOut = append(rs.RollingOut, rm)
-		}
+		rs = append(rs, rm)
 	}
 
 	return rs, nil
@@ -100,10 +112,11 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
 		revisionAnnotations := map[string]string{
-			labels.BundleNameKey:      state.resolvedRevisionMetadata.Name,
-			labels.PackageNameKey:     state.resolvedRevisionMetadata.Package,
-			labels.BundleVersionKey:   state.resolvedRevisionMetadata.Version,
-			labels.BundleReferenceKey: state.resolvedRevisionMetadata.Image,
+			labels.BundleNameKey:                 state.resolvedRevisionMetadata.Name,
+			labels.PackageNameKey:                state.resolvedRevisionMetadata.Package,
+			labels.BundleVersionKey:              state.resolvedRevisionMetadata.Version,
+			labels.BundleReferenceKey:            state.resolvedRevisionMetadata.Image,
+			labels.ClusterExtensionGenerationKey: fmt.Sprintf("%d", ext.GetGeneration()),
 		}
 		objLbls := map[string]string{
 			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
@@ -126,38 +139,49 @@ func ApplyBundleWithBoxcutter(apply func(ctx context.Context, contentFS fs.FS, e
 		}
 
 		ext.Status.ActiveRevisions = []ocv1.RevisionStatus{}
-		// Mirror Available/Progressing conditions from the installed revision
-		if i := state.revisionStates.Installed; i != nil {
-			for _, cndType := range []string{ocv1.ClusterExtensionRevisionTypeAvailable, ocv1.ClusterExtensionRevisionTypeProgressing} {
-				if cnd := apimeta.FindStatusCondition(i.Conditions, cndType); cnd != nil {
-					cnd.ObservedGeneration = ext.GetGeneration()
-					apimeta.SetStatusCondition(&ext.Status.Conditions, *cnd)
-				}
+		// Mirror Ready condition from the installed revision
+		if i := state.revisionStates.Installed(); i != nil {
+			if cnd := apimeta.FindStatusCondition(i.Conditions, ocv1.ClusterExtensionRevisionTypeReady); cnd != nil {
+				cnd.ObservedGeneration = ext.GetGeneration()
+				apimeta.SetStatusCondition(&ext.Status.Conditions, *cnd)
 			}
 			ext.Status.Install = &ocv1.ClusterExtensionInstallStatus{
 				Bundle: i.BundleMetadata,
 			}
 			ext.Status.ActiveRevisions = []ocv1.RevisionStatus{{Name: i.RevisionName}}
 		}
-		for idx, r := range state.revisionStates.RollingOut {
+		for idx, r := range state.revisionStates.RollingOut() {
 			rs := ocv1.RevisionStatus{Name: r.RevisionName}
-			for _, cndType := range []string{ocv1.ClusterExtensionRevisionTypeAvailable, ocv1.ClusterExtensionRevisionTypeProgressing} {
-				if cnd := apimeta.FindStatusCondition(r.Conditions, cndType); cnd != nil {
-					cnd.ObservedGeneration = ext.GetGeneration()
-					apimeta.SetStatusCondition(&rs.Conditions, *cnd)
-				}
+			if cnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterExtensionRevisionTypeReady); cnd != nil {
+				cnd.ObservedGeneration = ext.GetGeneration()
+				apimeta.SetStatusCondition(&rs.Conditions, *cnd)
 			}
-			// Mirror Progressing condition from the latest active revision
-			if idx == len(state.revisionStates.RollingOut)-1 {
-				if pcnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing); pcnd != nil {
-					pcnd.ObservedGeneration = ext.GetGeneration()
-					apimeta.SetStatusCondition(&ext.Status.Conditions, *pcnd)
+			// Mirror Ready condition from the latest active revision
+			if idx == len(state.revisionStates.RollingOut())-1 {
+				if rcnd := apimeta.FindStatusCondition(r.Conditions, ocv1.ClusterExtensionRevisionTypeReady); rcnd != nil {
+					rcnd.ObservedGeneration = ext.GetGeneration()
+					apimeta.SetStatusCondition(&ext.Status.Conditions, *rcnd)
 				}
 			}
 			ext.Status.ActiveRevisions = append(ext.Status.ActiveRevisions, rs)
 		}
 
 		setInstalledStatusFromRevisionStates(ext, state.revisionStates)
+
+		// Set Progressing condition based on revision states
+		// If there's an installed revision and no rolling revisions, we've reached the desired state
+		if state.revisionStates.Installed() != nil && len(state.revisionStates.RollingOut()) == 0 {
+			setStatusProgressing(ext, nil)
+		} else {
+			// There are rolling revisions, so we're still progressing
+			SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+				Type:               ocv1.TypeProgressing,
+				Status:             metav1.ConditionTrue,
+				Reason:             ocv1.ReasonRollingOut,
+				Message:            "Rolling out new revision",
+				ObservedGeneration: ext.GetGeneration(),
+			})
+		}
 		return nil, nil
 	}
 }
