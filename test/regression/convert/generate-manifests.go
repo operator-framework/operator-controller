@@ -21,9 +21,14 @@ import (
 	"slices"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
+	"github.com/operator-framework/operator-controller/internal/operator-controller/config"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/render/registryv1"
@@ -59,6 +64,7 @@ func main() {
 		watchNamespace   string
 		bundle           string
 		testCaseName     string
+		deploymentConfig *config.DeploymentConfig
 	}{
 		{
 			name:             "AllNamespaces",
@@ -82,18 +88,167 @@ func main() {
 			installNamespace: "webhook-system",
 			bundle:           "webhook-operator.v0.0.5",
 			testCaseName:     "all-webhook-types",
+		}, {
+			// Test case for rendering all DeploymentConfig options:
+			// - Node selectors
+			// - Tolerations
+			// - Resource requirements
+			// - Env variables and EnvFrom source
+			// - Volumes/Volume mounts
+			// - Node, Pod, and PodAnti affinities
+			// - Annotations
+			name:             "WithDeploymentConfigOptions",
+			installNamespace: "argocd-system",
+			bundle:           "argocd-operator.v0.6.0",
+			testCaseName:     "with-deploymentconfig-options",
+			deploymentConfig: &config.DeploymentConfig{
+				NodeSelector: map[string]string{
+					"kubernetes.io/os": "linux",
+				},
+				Tolerations: []corev1.Toleration{
+					{
+						Key:      "some/key",
+						Operator: corev1.TolerationOpEqual,
+						Effect:   corev1.TaintEffectNoSchedule,
+					},
+					{
+						Key:               "someother/key",
+						Operator:          corev1.TolerationOpExists,
+						Effect:            corev1.TaintEffectNoExecute,
+						TolerationSeconds: ptr.To(int64(120)),
+					},
+				},
+				Resources: &corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("100m"),
+						corev1.ResourceMemory: resource.MustParse("128Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("500m"),
+						corev1.ResourceMemory: resource.MustParse("512Mi"),
+					},
+				},
+				Env: []corev1.EnvVar{
+					{
+						Name:  "CUSTOM_ENV_VAR",
+						Value: "custom-value",
+					},
+					{
+						Name:  "LOG_LEVEL",
+						Value: "debug",
+					},
+				},
+				EnvFrom: []corev1.EnvFromSource{
+					{
+						Prefix: "test",
+					},
+					{
+						ConfigMapRef: &corev1.ConfigMapEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "configmapForTest",
+							},
+						},
+					},
+					{
+						SecretRef: &corev1.SecretEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "secretForTest",
+							},
+						},
+					},
+				},
+				Volumes: []corev1.Volume{
+					{
+						Name: "test-configmap-volume",
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "testVolumeConfigMap",
+								},
+							},
+						},
+					},
+					{
+						Name:         "test-emptydir-volume",
+						VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+					},
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "test-configmap-volume",
+						MountPath: "/test-volume-mount",
+						ReadOnly:  true,
+					},
+				},
+				Affinity: &corev1.Affinity{
+					NodeAffinity: &corev1.NodeAffinity{
+						RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+							NodeSelectorTerms: []corev1.NodeSelectorTerm{
+								{
+									MatchExpressions: []corev1.NodeSelectorRequirement{
+										{
+											Key:      "kubernetes.io/os",
+											Operator: corev1.NodeSelectorOpIn,
+											Values:   []string{"linux"},
+										},
+									},
+									MatchFields: []corev1.NodeSelectorRequirement{
+										{
+											Key:      "key",
+											Operator: corev1.NodeSelectorOpIn,
+											Values:   []string{"val1", "val2"},
+										},
+									},
+								},
+							},
+						},
+					},
+					PodAffinity: &corev1.PodAffinity{
+						RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+							{
+								LabelSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"app.kubernetes.io/name": "test-app",
+									},
+								},
+								TopologyKey: "topKey",
+								Namespaces:  []string{"test", "test2"},
+							},
+						},
+					},
+					PodAntiAffinity: &corev1.PodAntiAffinity{
+						PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
+							{
+								Weight: 100,
+								PodAffinityTerm: corev1.PodAffinityTerm{
+									LabelSelector: &metav1.LabelSelector{
+										MatchLabels: map[string]string{
+											"app.kubernetes.io/name": "test-app-2",
+										},
+									},
+									TopologyKey: "topKey2",
+								},
+							},
+						},
+					},
+				},
+				Annotations: map[string]string{
+					"foo":     "bar",
+					"testkey": "testval",
+				},
+			},
 		},
 	} {
 		bundlePath := filepath.Join(bundleRootDir, tc.bundle)
 		generatedManifestPath := filepath.Join(*outputRootDir, tc.bundle, tc.testCaseName)
-		if err := generateManifests(generatedManifestPath, bundlePath, tc.installNamespace, tc.watchNamespace); err != nil {
+		if err := generateManifests(generatedManifestPath, bundlePath, tc.installNamespace, tc.watchNamespace, tc.deploymentConfig); err != nil {
 			fmt.Printf("Error generating manifests: %v", err)
 			os.Exit(1)
 		}
 	}
 }
 
-func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace string) error {
+func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace string, deploymentConfig *config.DeploymentConfig) error {
 	// Parse bundleFS into RegistryV1
 	regv1, err := source.FromFS(os.DirFS(bundleDir)).GetBundle()
 	if err != nil {
@@ -102,7 +257,11 @@ func generateManifests(outputPath, bundleDir, installNamespace, watchNamespace s
 	}
 
 	// Convert RegistryV1 to plain manifests
-	objs, err := registryv1.Renderer.Render(regv1, installNamespace, render.WithTargetNamespaces(watchNamespace))
+	opts := []render.Option{render.WithTargetNamespaces(watchNamespace)}
+	if deploymentConfig != nil {
+		opts = append(opts, render.WithDeploymentConfig(deploymentConfig))
+	}
+	objs, err := registryv1.Renderer.Render(regv1, installNamespace, opts...)
 	if err != nil {
 		return fmt.Errorf("error converting registry+v1 bundle: %w", err)
 	}
