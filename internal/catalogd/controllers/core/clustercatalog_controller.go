@@ -40,6 +40,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/catalogd/storage"
+	errorutil "github.com/operator-framework/operator-controller/internal/shared/util/error"
 	imageutil "github.com/operator-framework/operator-controller/internal/shared/util/image"
 	k8sutil "github.com/operator-framework/operator-controller/internal/shared/util/k8s"
 )
@@ -336,7 +337,7 @@ func updateStatusProgressing(status *ocv1.ClusterCatalogStatus, generation int64
 	if err != nil {
 		progressingCond.Status = metav1.ConditionTrue
 		progressingCond.Reason = ocv1.ReasonRetrying
-		progressingCond.Message = err.Error()
+		progressingCond.Message = errorutil.SanitizeNetworkError(err)
 	}
 
 	if errors.Is(err, reconcile.TerminalError(nil)) {

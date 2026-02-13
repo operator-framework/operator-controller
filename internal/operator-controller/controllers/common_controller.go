@@ -157,7 +157,7 @@ func setStatusProgressing(ext *ocv1.ClusterExtension, err error) {
 	if err != nil {
 		progressingCond.Reason = ocv1.ReasonRetrying
 		// Unwrap TerminalError to avoid "terminal error:" prefix in message
-		progressingCond.Message = errorutil.UnwrapTerminal(err).Error()
+		progressingCond.Message = errorutil.SanitizeNetworkError(errorutil.UnwrapTerminal(err))
 	}
 
 	if errors.Is(err, reconcile.TerminalError(nil)) {
