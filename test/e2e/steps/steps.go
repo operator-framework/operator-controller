@@ -144,6 +144,7 @@ func k8scliWithInput(yaml string, args ...string) (string, error) {
 	return string(b), err
 }
 
+// OLMisAvailable waits for the OLM operator-controller deployment to become available. Polls with timeout.
 func OLMisAvailable(ctx context.Context) error {
 	require.Eventually(godog.T(ctx), func() bool {
 		v, err := k8sClient("get", "deployment", "-n", olmNamespace, olmDeploymentName, "-o", "jsonpath='{.status.conditions[?(@.type==\"Available\")].status}'")
@@ -155,6 +156,7 @@ func OLMisAvailable(ctx context.Context) error {
 	return nil
 }
 
+// BundleInstalled waits for the ClusterExtension to report the specified bundle name and version as installed. Polls with timeout.
 func BundleInstalled(ctx context.Context, name, version string) error {
 	sc := scenarioCtx(ctx)
 	waitFor(ctx, func() bool {
@@ -191,6 +193,7 @@ func substituteScenarioVars(content string, sc *scenarioContext) string {
 	return templateContent(content, vars)
 }
 
+// ResourceApplyFails waits for kubectl apply of the provided YAML to fail with the expected error message. Polls with timeout.
 func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.DocString) error {
 	sc := scenarioCtx(ctx)
 	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
@@ -211,6 +214,7 @@ func ResourceApplyFails(ctx context.Context, errMsg string, yamlTemplate *godog.
 	return nil
 }
 
+// ClusterExtensionVersionUpdate patches the ClusterExtension's catalog version to the specified value.
 func ClusterExtensionVersionUpdate(ctx context.Context, version string) error {
 	sc := scenarioCtx(ctx)
 	patch := map[string]any{
@@ -230,6 +234,8 @@ func ClusterExtensionVersionUpdate(ctx context.Context, version string) error {
 	return err
 }
 
+// ResourceIsApplied applies the provided YAML resource to the cluster and in case of ClusterExtension it captures its name in the test context
+// so that it can be referred to in later steps with ${NAME}
 func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error {
 	sc := scenarioCtx(ctx)
 	yamlContent := substituteScenarioVars(yamlTemplate.Content, sc)
@@ -247,6 +253,7 @@ func ResourceIsApplied(ctx context.Context, yamlTemplate *godog.DocString) error
 	return nil
 }
 
+// ClusterExtensionIsAvailable waits for the ClusterExtension's Installed condition to be True. Polls with timeout.
 func ClusterExtensionIsAvailable(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	require.Eventually(godog.T(ctx), func() bool {
@@ -259,6 +266,7 @@ func ClusterExtensionIsAvailable(ctx context.Context) error {
 	return nil
 }
 
+// ClusterExtensionReconciledLatestGeneration waits for the ClusterExtension's observedGeneration to match its metadata generation. Polls with timeout.
 func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	waitFor(ctx, func() bool {
@@ -278,6 +286,8 @@ func ClusterExtensionReconciledLatestGeneration(ctx context.Context) error {
 	return nil
 }
 
+// ClusterExtensionIsRolledOut waits for the ClusterExtension's Progressing condition to be True with reason Succeeded,
+// then gathers its constituent resources into the scenario context. Polls with timeout.
 func ClusterExtensionIsRolledOut(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	require.Eventually(godog.T(ctx), func() bool {
@@ -301,6 +311,8 @@ func ClusterExtensionIsRolledOut(ctx context.Context) error {
 	return nil
 }
 
+// ClusterExtensionResourcesCreatedAndAreLabeled verifies each constituent resource has the expected OLM owner-kind
+// and owner-name labels. Polls with timeout per resource.
 func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	if len(sc.GetClusterExtensionObjects()) == 0 {
@@ -337,11 +349,13 @@ func ClusterExtensionResourcesCreatedAndAreLabeled(ctx context.Context) error {
 	return nil
 }
 
+// ClusterExtensionIsRemoved deletes the current ClusterExtension, saving its state for potential restore checks.
 func ClusterExtensionIsRemoved(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	return ResourceRemoved(ctx, fmt.Sprintf("clusterextension/%s", sc.clusterExtensionName))
 }
 
+// ClusterExtensionResourcesRemoved waits for each previously gathered constituent resource to be deleted. Polls with timeout per resource.
 func ClusterExtensionResourcesRemoved(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	if len(sc.GetClusterExtensionObjects()) == 0 {
@@ -394,6 +408,8 @@ func waitForExtensionCondition(ctx context.Context, conditionType, conditionStat
 	return waitForCondition(ctx, "clusterextension", sc.clusterExtensionName, conditionType, conditionStatus, conditionReason, msgCmp)
 }
 
+// ClusterExtensionReportsCondition waits for the ClusterExtension to have a condition matching the specified type,
+// status, reason, and exact message. Polls with timeout.
 func ClusterExtensionReportsCondition(ctx context.Context, conditionType, conditionStatus, conditionReason string, msg *godog.DocString) error {
 	msgCmp := alwaysMatch
 	if msg != nil {
@@ -405,6 +421,8 @@ func ClusterExtensionReportsCondition(ctx context.Context, conditionType, condit
 	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, msgCmp)
 }
 
+// ClusterExtensionReportsConditionWithMessageFragment waits for the ClusterExtension to have a condition matching
+// type, status, and reason, with a message containing the specified fragment. Polls with timeout.
 func ClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, conditionType, conditionStatus, conditionReason string, msgFragment *godog.DocString) error {
 	msgCmp := alwaysMatch
 	if msgFragment != nil {
@@ -416,14 +434,20 @@ func ClusterExtensionReportsConditionWithMessageFragment(ctx context.Context, co
 	return waitForExtensionCondition(ctx, conditionType, conditionStatus, &conditionReason, msgCmp)
 }
 
+// ClusterExtensionReportsConditionWithoutMsg waits for the ClusterExtension to have a condition matching type,
+// status, and reason, without checking the message. Polls with timeout.
 func ClusterExtensionReportsConditionWithoutMsg(ctx context.Context, conditionType, conditionStatus, conditionReason string) error {
 	return ClusterExtensionReportsCondition(ctx, conditionType, conditionStatus, conditionReason, nil)
 }
 
+// ClusterExtensionReportsConditionWithoutReason waits for the ClusterExtension to have a condition matching type
+// and status, without checking reason or message. Polls with timeout.
 func ClusterExtensionReportsConditionWithoutReason(ctx context.Context, conditionType, conditionStatus string) error {
 	return waitForExtensionCondition(ctx, conditionType, conditionStatus, nil, nil)
 }
 
+// ClusterExtensionReportsConditionTransitionTime asserts that a condition's lastTransitionTime falls within
+// the specified minute range since the ClusterExtension's creation.
 func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditionType string, minMinutes, maxMinutes int) error {
 	sc := scenarioCtx(ctx)
 	t := godog.T(ctx)
@@ -454,6 +478,8 @@ func ClusterExtensionReportsConditionTransitionTime(ctx context.Context, conditi
 	return nil
 }
 
+// ClusterExtensionReportsActiveRevisions waits for the ClusterExtension's active revisions to match the expected
+// set of revision names. Polls with timeout.
 func ClusterExtensionReportsActiveRevisions(ctx context.Context, rawRevisionNames string) error {
 	sc := scenarioCtx(ctx)
 	expectedRevisionNames := sets.New[string]()
@@ -479,14 +505,20 @@ func ClusterExtensionReportsActiveRevisions(ctx context.Context, rawRevisionName
 	return nil
 }
 
+// ClusterExtensionRevisionReportsConditionWithoutMsg waits for the named ClusterExtensionRevision to have a condition
+// matching type, status, and reason. Polls with timeout.
 func ClusterExtensionRevisionReportsConditionWithoutMsg(ctx context.Context, revisionName, conditionType, conditionStatus, conditionReason string) error {
 	return waitForCondition(ctx, "clusterextensionrevision", substituteScenarioVars(revisionName, scenarioCtx(ctx)), conditionType, conditionStatus, &conditionReason, nil)
 }
 
+// ClusterExtensionRevisionIsArchived waits for the named ClusterExtensionRevision to have Progressing=False
+// with reason Archived. Polls with timeout.
 func ClusterExtensionRevisionIsArchived(ctx context.Context, revisionName string) error {
 	return waitForCondition(ctx, "clusterextensionrevision", substituteScenarioVars(revisionName, scenarioCtx(ctx)), "Progressing", "False", ptr.To("Archived"), nil)
 }
 
+// ClusterExtensionRevisionHasAnnotationWithValue waits for the named ClusterExtensionRevision to have the specified
+// annotation with the expected value. Polls with timeout.
 func ClusterExtensionRevisionHasAnnotationWithValue(ctx context.Context, revisionName, annotationKey string, annotationValue *godog.DocString) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
@@ -508,6 +540,8 @@ func ClusterExtensionRevisionHasAnnotationWithValue(ctx context.Context, revisio
 	return nil
 }
 
+// ClusterExtensionRevisionHasLabelWithValue waits for the named ClusterExtensionRevision to have the specified label
+// with the expected value. Polls with timeout.
 func ClusterExtensionRevisionHasLabelWithValue(ctx context.Context, revisionName, labelKey, labelValue string) error {
 	sc := scenarioCtx(ctx)
 	revisionName = substituteScenarioVars(strings.TrimSpace(revisionName), sc)
@@ -526,6 +560,7 @@ func ClusterExtensionRevisionHasLabelWithValue(ctx context.Context, revisionName
 	return nil
 }
 
+// ResourceAvailable waits for the specified resource (kind/name format) to exist in the test namespace. Polls with timeout.
 func ResourceAvailable(ctx context.Context, resource string) error {
 	sc := scenarioCtx(ctx)
 	resource = substituteScenarioVars(resource, sc)
@@ -540,6 +575,7 @@ func ResourceAvailable(ctx context.Context, resource string) error {
 	return nil
 }
 
+// ResourceRemoved saves the resource state for potential restore checks, then deletes it from the test namespace.
 func ResourceRemoved(ctx context.Context, resource string) error {
 	sc := scenarioCtx(ctx)
 	resource = substituteScenarioVars(resource, sc)
@@ -560,6 +596,7 @@ func ResourceRemoved(ctx context.Context, resource string) error {
 	return err
 }
 
+// ResourceEventuallyNotFound waits for the specified resource to be fully deleted from the test namespace. Polls with timeout.
 func ResourceEventuallyNotFound(ctx context.Context, resource string) error {
 	sc := scenarioCtx(ctx)
 	resource = substituteScenarioVars(resource, sc)
@@ -575,6 +612,7 @@ func ResourceEventuallyNotFound(ctx context.Context, resource string) error {
 	return nil
 }
 
+// ResourceMatches waits for the specified resource to match the expected content using JSON merge patch comparison. Polls with timeout.
 func ResourceMatches(ctx context.Context, resource string, requiredContentTemplate *godog.DocString) error {
 	sc := scenarioCtx(ctx)
 	resource = substituteScenarioVars(resource, sc)
@@ -613,6 +651,7 @@ func ResourceMatches(ctx context.Context, resource string, requiredContentTempla
 	return nil
 }
 
+// ResourceRestored waits for a previously removed resource to be re-created with matching spec or data. Polls with timeout.
 func ResourceRestored(ctx context.Context, resource string) error {
 	sc := scenarioCtx(ctx)
 	resource = substituteScenarioVars(resource, sc)
@@ -702,18 +741,22 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 	return nil
 }
 
+// ServiceAccountIsAvailableInNamespace creates a ServiceAccount in the test namespace without RBAC permissions.
 func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
 	return applyServiceAccount(ctx, serviceAccount)
 }
 
+// ServiceAccountWithNeededPermissionsIsAvailableInNamespace creates a ServiceAccount and applies standard RBAC permissions.
 func ServiceAccountWithNeededPermissionsIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
 	return applyPermissionsToServiceAccount(ctx, serviceAccount, "rbac-template.yaml")
 }
 
+// ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace creates a ServiceAccount and applies cluster-admin RBAC.
 func ServiceAccountWithClusterAdminPermissionsIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
 	return applyPermissionsToServiceAccount(ctx, serviceAccount, "cluster-admin-rbac-template.yaml")
 }
 
+// ServiceAccountWithFetchMetricsPermissions creates a ServiceAccount and applies metrics-reader RBAC for the specified controller.
 func ServiceAccountWithFetchMetricsPermissions(ctx context.Context, serviceAccount string, controllerName string) error {
 	return applyPermissionsToServiceAccount(ctx, serviceAccount, "metrics-reader-rbac-template.yaml", "CONTROLLER_NAME", controllerName)
 }
@@ -746,6 +789,8 @@ func randomAvailablePort() (int, error) {
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
+// SendMetricsRequest sets up port-forwarding to the controller's service pods and waits for the metrics endpoint
+// to return a successful response. Stores the response body per pod in the scenario context. Polls with timeout.
 func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint string, controllerName string) error {
 	sc := scenarioCtx(ctx)
 	serviceNs, err := k8sClient("get", "service", "-A", "-o", fmt.Sprintf(`jsonpath={.items[?(@.metadata.name=="%s-service")].metadata.namespace}`, controllerName))
@@ -829,6 +874,7 @@ func SendMetricsRequest(ctx context.Context, serviceAccount string, endpoint str
 	return nil
 }
 
+// CatalogIsUpdatedToVersion patches the ClusterCatalog's image reference to the specified version tag.
 func CatalogIsUpdatedToVersion(name, version string) error {
 	ref, err := k8sClient("get", "clustercatalog", fmt.Sprintf("%s-catalog", name), "-o", "jsonpath={.spec.source.image.ref}")
 	if err != nil {
@@ -856,6 +902,7 @@ func CatalogIsUpdatedToVersion(name, version string) error {
 	return err
 }
 
+// CatalogServesBundles applies the ClusterCatalog YAML template to create a catalog that serves bundles.
 func CatalogServesBundles(ctx context.Context, catalogName string) error {
 	yamlContent, err := os.ReadFile(filepath.Join("steps", "testdata", fmt.Sprintf("%s-catalog-template.yaml", catalogName)))
 	if err != nil {
@@ -870,11 +917,13 @@ func CatalogServesBundles(ctx context.Context, catalogName string) error {
 	return nil
 }
 
+// TagCatalogImage adds a new tag to a catalog container image in the local registry using crane.
 func TagCatalogImage(name, oldTag, newTag string) error {
 	imageRef := fmt.Sprintf("%s/%s", os.Getenv("LOCAL_REGISTRY_HOST"), fmt.Sprintf("e2e/%s-catalog:%s", name, oldTag))
 	return crane.Tag(imageRef, newTag, crane.Insecure)
 }
 
+// CatalogIsDeleted deletes the named ClusterCatalog resource and waits for it to be removed.
 func CatalogIsDeleted(ctx context.Context, catalogName string) error {
 	catalogFullName := fmt.Sprintf("%s-catalog", catalogName)
 	_, err := k8sClient("delete", "clustercatalog", catalogFullName, "--ignore-not-found=true", "--wait=true")
@@ -884,6 +933,7 @@ func CatalogIsDeleted(ctx context.Context, catalogName string) error {
 	return nil
 }
 
+// PrometheusMetricsAreReturned validates that each pod's stored metrics response is non-empty and parses as valid Prometheus text format.
 func PrometheusMetricsAreReturned(ctx context.Context) error {
 	sc := scenarioCtx(ctx)
 	for podName, mr := range sc.metricsResponse {
@@ -902,6 +952,7 @@ func PrometheusMetricsAreReturned(ctx context.Context) error {
 	return nil
 }
 
+// OperatorTargetNamespace asserts that the operator deployment has the expected olm.targetNamespaces annotation.
 func OperatorTargetNamespace(ctx context.Context, operator, namespace string) error {
 	sc := scenarioCtx(ctx)
 	namespace = substituteScenarioVars(namespace, sc)
@@ -920,6 +971,7 @@ func OperatorTargetNamespace(ctx context.Context, operator, namespace string) er
 	return nil
 }
 
+// MarkTestOperatorNotReady controls the test-operator's readiness probe by removing or creating the readiness file in its pod.
 func MarkTestOperatorNotReady(ctx context.Context, state string) error {
 	sc := scenarioCtx(ctx)
 	v, err := k8sClient("get", "deployment", "-n", sc.namespace, "test-operator", "-o", "jsonpath={.spec.selector.matchLabels}")
