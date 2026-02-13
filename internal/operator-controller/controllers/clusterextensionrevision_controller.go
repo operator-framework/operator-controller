@@ -140,11 +140,13 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		return ctrl.Result{}, fmt.Errorf("converting to boxcutter revision: %v", err)
 	}
 
+	//
+	// Teardown
+	//
 	if !rev.DeletionTimestamp.IsZero() || rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
-		return c.teardown(ctx, rev)
+		return c.teardown(ctx, revision, rev)
 	}
 
-	revVersion := rev.GetAnnotations()[labels.BundleVersionKey]
 	//
 	// Reconcile
 	//
@@ -203,6 +205,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 		}
 	}
 
+	revVersion := rev.GetAnnotations()[labels.BundleVersionKey]
 	if !rres.InTransition() {
 		markAsProgressing(rev, ocv1.ReasonSucceeded, fmt.Sprintf("Revision %s has rolled out.", revVersion))
 	} else {
@@ -275,18 +278,32 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, rev 
 	return ctrl.Result{}, nil
 }
 
-func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, rev *ocv1.ClusterExtensionRevision) (ctrl.Result, error) {
-	if err := c.TrackingCache.Free(ctx, rev); err != nil {
-		markAsAvailableUnknown(rev, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
+func (c *ClusterExtensionRevisionReconciler) teardown(ctx context.Context, revision *boxcutter.Revision, cer *ocv1.ClusterExtensionRevision) (ctrl.Result, error) {
+	if err := c.TrackingCache.Free(ctx, cer); err != nil {
+		markAsAvailableUnknown(cer, ocv1.ClusterExtensionRevisionReasonReconciling, err.Error())
 		return ctrl.Result{}, fmt.Errorf("error stopping informers: %v", err)
 	}
-
-	// Ensure conditions are set before removing the finalizer when archiving
-	if rev.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived && markAsArchived(rev) {
-		return ctrl.Result{}, nil
+	if cer.Spec.LifecycleState == ocv1.ClusterExtensionRevisionLifecycleStateArchived {
+		revisionEngine, err := c.RevisionEngineFactory.CreateRevisionEngine(ctx, cer)
+		if err != nil {
+			setRetryingConditions(cer, fmt.Sprintf("error archiving: %v", err))
+			return ctrl.Result{}, fmt.Errorf("failed to create revision engine: %v", err)
+		}
+		tdres, err := revisionEngine.Teardown(ctx, *revision)
+		if err != nil {
+			setRetryingConditions(cer, fmt.Sprintf("error archiving: %v", err))
+			return ctrl.Result{}, fmt.Errorf("error tearing down revision: %v", err)
+		}
+		if tdres != nil && !tdres.IsComplete() {
+			setRetryingConditions(cer, "tearing down revision")
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+		// Ensure conditions are set before removing the finalizer when archiving
+		if markAsArchived(cer) {
+			return ctrl.Result{}, nil
+		}
 	}
-
-	if err := c.removeFinalizer(ctx, rev, clusterExtensionRevisionTeardownFinalizer); err != nil {
+	if err := c.removeFinalizer(ctx, cer, clusterExtensionRevisionTeardownFinalizer); err != nil {
 		return ctrl.Result{}, fmt.Errorf("error removing teardown finalizer: %v", err)
 	}
 	return ctrl.Result{}, nil
