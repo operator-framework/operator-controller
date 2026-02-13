@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"testing"
 
@@ -66,6 +67,73 @@ func TestSetStatusProgressing(t *testing.T) {
 				Status:  metav1.ConditionFalse,
 				Reason:  ocv1.ReasonInvalidConfiguration,
 				Message: "missing required field",
+			},
+		},
+		{
+			name: "non-nil ClusterExtension, non-terminal network error with source port, Progressing condition message has source port stripped",
+			err: fmt.Errorf("source catalog content: %w", &net.OpError{
+				Op:  "dial",
+				Net: "tcp",
+				Source: &net.TCPAddr{
+					IP:   net.ParseIP("10.0.0.1"),
+					Port: 52341,
+				},
+				Addr: &net.TCPAddr{
+					IP:   net.ParseIP("192.168.1.100"),
+					Port: 443,
+				},
+				Err: fmt.Errorf("connect: connection refused"),
+			}),
+			clusterExtension: &ocv1.ClusterExtension{},
+			expected: metav1.Condition{
+				Type:    ocv1.TypeProgressing,
+				Status:  metav1.ConditionTrue,
+				Reason:  ocv1.ReasonRetrying,
+				Message: "dial tcp: connect: connection refused",
+			},
+		},
+		{
+			name: "non-nil ClusterExtension, non-terminal DNS error, Progressing condition message is sanitized",
+			err: fmt.Errorf("source catalog content: %w", &net.OpError{
+				Op:  "dial",
+				Net: "tcp",
+				Err: &net.DNSError{
+					IsTemporary: true,
+					IsTimeout:   true,
+					Server:      "10.96.0.10:53",
+					Name:        "registry.example.com",
+					Err:         "read udp 10.244.0.8:46753->10.96.0.10:53",
+				},
+			}),
+			clusterExtension: &ocv1.ClusterExtension{},
+			expected: metav1.Condition{
+				Type:    ocv1.TypeProgressing,
+				Status:  metav1.ConditionTrue,
+				Reason:  ocv1.ReasonRetrying,
+				Message: "lookup registry.example.com on 10.96.0.10:53: i/o timeout",
+			},
+		},
+		{
+			name: "non-nil ClusterExtension, terminal network error, Progressing condition message has source port stripped",
+			err: reconcile.TerminalError(fmt.Errorf("source catalog content: %w", &net.OpError{
+				Op:  "dial",
+				Net: "tcp",
+				Source: &net.TCPAddr{
+					IP:   net.ParseIP("10.0.0.1"),
+					Port: 52341,
+				},
+				Addr: &net.TCPAddr{
+					IP:   net.ParseIP("192.168.1.100"),
+					Port: 443,
+				},
+				Err: fmt.Errorf("connect: connection refused"),
+			})),
+			clusterExtension: &ocv1.ClusterExtension{},
+			expected: metav1.Condition{
+				Type:    ocv1.TypeProgressing,
+				Status:  metav1.ConditionFalse,
+				Reason:  ocv1.ReasonBlocked,
+				Message: "dial tcp: connect: connection refused",
 			},
 		},
 	} {
