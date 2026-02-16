@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/go-logr/logr"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -153,8 +154,61 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	return r.buildClusterExtensionRevision(objs, ext, revisionAnnotations), nil
 }
 
+// removePodTemplateMetadata conditionally removes empty pod template annotations from Deployments.
+// Empty annotations are removed to prevent OLM from claiming ownership via Server-Side Apply,
+// allowing users to add custom annotations. Non-empty (bundle-provided) annotations are preserved.
+// Labels are always preserved as they are required for selector matching and chart functionality.
+func removePodTemplateMetadata(unstr *unstructured.Unstructured, l logr.Logger) {
+	if unstr.GetKind() != "Deployment" || unstr.GroupVersionKind().Group != "apps" {
+		return
+	}
+
+	obj := unstr.Object
+	spec, ok := obj["spec"].(map[string]any)
+	if !ok {
+		return
+	}
+
+	template, ok := spec["template"].(map[string]any)
+	if !ok {
+		return
+	}
+
+	templateMeta, ok := template["metadata"].(map[string]any)
+	if !ok {
+		return
+	}
+
+	// Remove pod template annotations only when the rendered manifest has no annotations.
+	// This allows users to add custom annotations (like kubectl rollout restart) without
+	// OLM overwriting them, while still preserving any chart-provided annotations when present.
+	if annotationsVal, hasAnnotations := templateMeta["annotations"]; hasAnnotations {
+		if annotationsMap, ok := annotationsVal.(map[string]any); ok {
+			if len(annotationsMap) == 0 {
+				delete(templateMeta, "annotations")
+				l.V(1).Info("removed empty pod template annotations from Deployment to preserve user changes",
+					"deployment", unstr.GetName())
+			} else {
+				// Non-empty annotations are preserved so bundle/chart-provided annotations
+				// continue to be applied and maintained by OLM.
+				l.V(2).Info("preserving non-empty pod template annotations on Deployment",
+					"deployment", unstr.GetName(), "count", len(annotationsMap))
+			}
+		}
+	}
+}
+
 // sanitizedUnstructured takes an unstructured obj, removes status if present, and returns a sanitized copy containing only the allowed metadata entries set below.
 // If any unallowed entries are removed, a warning will be logged.
+//
+// For Deployment objects, this function conditionally removes empty pod template annotations.
+// Bundle-provided annotations are preserved to maintain operator functionality.
+// Empty annotations are removed to allow users to add custom annotations without OLM reverting them.
+// Examples of user annotations: "kubectl rollout restart", "kubectl annotate", custom monitoring annotations.
+// Labels are kept because: (1) deployment selector must match template labels, and
+// (2) chart-provided labels may be referenced by other resources.
+// This fixes the issue where user changes to pod template annotations would be undone by OLM.
+// See: https://github.com/operator-framework/operator-lifecycle-manager/issues/3392
 func sanitizedUnstructured(ctx context.Context, unstr *unstructured.Unstructured) {
 	l := log.FromContext(ctx)
 	obj := unstr.Object
@@ -193,6 +247,15 @@ func sanitizedUnstructured(ctx context.Context, unstr *unstructured.Unstructured
 		l.Info("warning: extraneous values removed from manifest metadata", "allowed metadata", allowedMetadata)
 	}
 	obj["metadata"] = metadataSanitized
+
+	// For Deployment objects, conditionally remove empty pod template annotations (always keep labels).
+	// Empty annotations are removed to prevent OLM from claiming ownership.
+	// Non-empty (bundle-provided) annotations are preserved.
+	// This allows users to add custom annotations (kubectl rollout restart, kubectl annotate, etc.)
+	// without OLM overwriting them.
+	// Labels are always preserved because the deployment selector must match template labels,
+	// and chart-provided labels may be needed by other resources.
+	removePodTemplateMetadata(unstr, l)
 }
 
 func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(

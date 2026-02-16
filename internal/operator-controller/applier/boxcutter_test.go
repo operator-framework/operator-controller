@@ -1884,3 +1884,144 @@ func (s *statusWriterMock) Apply(ctx context.Context, obj runtime.ApplyConfigura
 	// helps ensure tests fail if this assumption changes
 	return fmt.Errorf("unexpected call to StatusWriter.Apply() - this method is not expected to be used in these tests")
 }
+
+func Test_SimpleRevisionGenerator_PodTemplateAnnotationSanitization(t *testing.T) {
+	tests := []struct {
+		name                        string
+		podTemplateAnnotations      map[string]string
+		expectAnnotationsInRevision bool
+	}{
+		{
+			name: "deployment with non-empty pod template annotations preserves them",
+			podTemplateAnnotations: map[string]string{
+				"kubectl.kubernetes.io/default-container": "main",
+				"prometheus.io/scrape":                    "true",
+			},
+			expectAnnotationsInRevision: true,
+		},
+		{
+			name:                        "deployment with empty pod template annotations removes them",
+			podTemplateAnnotations:      map[string]string{},
+			expectAnnotationsInRevision: false,
+		},
+		{
+			name:                        "deployment with nil pod template annotations has none in revision",
+			podTemplateAnnotations:      nil,
+			expectAnnotationsInRevision: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a deployment with specified pod template annotations
+			deployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-deployment",
+				},
+				Spec: appsv1.DeploymentSpec{
+					Replicas: ptr.To(int32(1)),
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"app": "test"},
+					},
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels:      map[string]string{"app": "test"},
+							Annotations: tt.podTemplateAnnotations,
+						},
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{
+									Name:  "main",
+									Image: "nginx:latest",
+								},
+							},
+						},
+					},
+				},
+			}
+
+			// Create revision generator with fake manifest provider
+			scheme := runtime.NewScheme()
+			require.NoError(t, k8scheme.AddToScheme(scheme))
+			require.NoError(t, ocv1.AddToScheme(scheme))
+
+			ext := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-extension",
+				},
+			}
+
+			manifestProvider := &FakeManifestProvider{
+				GetFn: func(_ fs.FS, _ *ocv1.ClusterExtension) ([]client.Object, error) {
+					return []client.Object{deployment}, nil
+				},
+			}
+
+			rg := &applier.SimpleRevisionGenerator{
+				Scheme:           scheme,
+				ManifestProvider: manifestProvider,
+			}
+
+			// Create a valid bundle FS
+			bundleFS := bundlefs.Builder().
+				WithPackageName("test-package").
+				WithCSV(clusterserviceversion.Builder().WithName("test-csv").Build()).
+				Build()
+
+			// Generate revision
+			revision, err := rg.GenerateRevision(
+				context.Background(),
+				bundleFS,
+				ext,
+				map[string]string{"test": "label"},
+				nil,
+			)
+			require.NoError(t, err)
+			require.NotNil(t, revision)
+
+			// Find the deployment in the revision
+			var deploymentFound bool
+			for _, obj := range revision.Spec.Phases[0].Objects {
+				if obj.Object.GetKind() == "Deployment" {
+					deploymentFound = true
+
+					// Check pod template annotations
+					spec, ok := obj.Object.Object["spec"].(map[string]any)
+					require.True(t, ok, "deployment should have spec")
+
+					template, ok := spec["template"].(map[string]any)
+					require.True(t, ok, "deployment spec should have template")
+
+					templateMeta, ok := template["metadata"].(map[string]any)
+					require.True(t, ok, "pod template should have metadata")
+
+					annotations, hasAnnotations := templateMeta["annotations"]
+					if tt.expectAnnotationsInRevision {
+						assert.True(t, hasAnnotations, "expected annotations to be present in revision")
+						annotationsMap, ok := annotations.(map[string]any)
+						require.True(t, ok, "annotations should be a map")
+
+						for key, expectedValue := range tt.podTemplateAnnotations {
+							actualValue, exists := annotationsMap[key]
+							assert.True(t, exists, "expected annotation key %s to exist", key)
+							assert.Equal(t, expectedValue, actualValue, "annotation value mismatch for key %s", key)
+						}
+						assert.Len(t, annotationsMap, len(tt.podTemplateAnnotations), "annotation count mismatch")
+					} else {
+						assert.False(t, hasAnnotations, "expected annotations to be removed from revision")
+					}
+
+					// Labels should always be preserved
+					labels, hasLabels := templateMeta["labels"]
+					assert.True(t, hasLabels, "labels should always be preserved")
+					labelsMap, ok := labels.(map[string]any)
+					require.True(t, ok, "labels should be a map")
+					assert.Equal(t, "test", labelsMap["app"], "label app should be preserved")
+
+					break
+				}
+			}
+			assert.True(t, deploymentFound, "deployment should be found in revision")
+		})
+	}
+}
