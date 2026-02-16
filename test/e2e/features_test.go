@@ -38,9 +38,6 @@ func TestMain(m *testing.M) {
 		Options:              &opts,
 	}.Run()
 
-	if st := m.Run(); st > sc {
-		sc = st
-	}
 	switch sc {
 	//	0 - success
 	case 0:
