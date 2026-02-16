@@ -439,37 +439,113 @@ func (bc *Boxcutter) createOrUpdate(ctx context.Context, user user.Info, rev *oc
 		return err
 	}
 
-	// DEPRECATION NOTICE: Using client.Apply (deprecated in controller-runtime v0.23.0+)
+	// Build apply configuration by manually constructing an unstructured object.
 	//
-	// WHY WE CAN'T FIX THIS YET:
-	// The recommended replacement is the new typed Apply() method that requires generated
-	// apply configurations (ApplyConfiguration types). However, this project does not
-	// currently generate these apply configurations for its API types.
+	// We cannot safely convert the typed ClusterExtensionRevision struct directly to unstructured
+	// because that would serialize all fields, including zero values for fields without omitempty tags.
+	// This would incorrectly claim field ownership for fields we don't manage, violating Server-Side
+	// Apply semantics.
 	//
-	// WHY WE NEED SERVER-SIDE APPLY SEMANTICS:
-	// This controller requires server-side apply with field ownership management to:
-	// 1. Track which controller owns which fields (via client.FieldOwner)
-	// 2. Take ownership of fields from other managers during upgrades (via client.ForceOwnership)
-	// 3. Automatically create-or-update without explicit Get/Create/Update logic
-	//
-	// WHY ALTERNATIVES DON'T WORK:
-	// - client.MergeFrom(): Lacks field ownership - causes conflicts during controller upgrades
-	// - client.StrategicMergePatch(): No field management - upgrade tests fail with ownership errors
-	// - Manual Create/Update: Loses server-side apply benefits, complex to implement correctly
-	//
-	// WHAT'S REQUIRED TO FIX PROPERLY:
-	// 1. Generate apply configurations for all API types (ClusterExtensionRevision, etc.)
-	//    - Requires running controller-gen with --with-applyconfig flag
-	//    - Generates ClusterExtensionRevisionApplyConfiguration types
-	// 2. Update all resource creation/update code to use typed Apply methods
-	// 3. Update all tests to work with new patterns
-	// This is a project-wide effort beyond the scope of the k8s v1.35 upgrade.
-	//
-	// MIGRATION PATH:
-	// Track in a future issue: "Generate apply configurations and migrate to typed Apply methods"
-	//
-	// nolint:staticcheck // SA1019: server-side apply required, needs generated apply configurations
-	return bc.Client.Patch(ctx, rev, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
+	// Instead, we manually construct the unstructured object with only the fields we explicitly manage.
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": rev.APIVersion,
+			"kind":       rev.Kind,
+			"metadata": map[string]interface{}{
+				"name": rev.Name,
+			},
+			"spec": map[string]interface{}{
+				"revision": rev.Spec.Revision,
+			},
+		},
+	}
+
+	// Only include phases if non-nil to respect omitempty semantics.
+	// When phases is nil, we don't claim ownership of the field.
+	// When phases is [] (empty but non-nil), we claim ownership with an empty array.
+	if rev.Spec.Phases != nil {
+		spec := u.Object["spec"].(map[string]interface{})
+		spec["phases"] = convertPhasesToUnstructured(rev.Spec.Phases)
+	}
+
+	// Only set optional fields if they have non-zero values
+	if rev.Spec.LifecycleState != "" {
+		spec := u.Object["spec"].(map[string]interface{})
+		spec["lifecycleState"] = rev.Spec.LifecycleState
+	}
+	if rev.Spec.ProgressDeadlineMinutes > 0 {
+		spec := u.Object["spec"].(map[string]interface{})
+		spec["progressDeadlineMinutes"] = rev.Spec.ProgressDeadlineMinutes
+	}
+
+	// Add metadata fields if present
+	if len(rev.Labels) > 0 {
+		metadata := u.Object["metadata"].(map[string]interface{})
+		metadata["labels"] = rev.Labels
+	}
+	if len(rev.Annotations) > 0 {
+		metadata := u.Object["metadata"].(map[string]interface{})
+		metadata["annotations"] = rev.Annotations
+	}
+	if len(rev.OwnerReferences) > 0 {
+		metadata := u.Object["metadata"].(map[string]interface{})
+		metadata["ownerReferences"] = convertOwnerReferencesToUnstructured(rev.OwnerReferences)
+	}
+
+	applyConfig := client.ApplyConfigurationFromUnstructured(u)
+
+	// Use Server-Side Apply with field ownership to manage the revision.
+	return bc.Client.Apply(ctx, applyConfig, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
+}
+
+// convertPhasesToUnstructured converts phases to unstructured format, including only managed fields.
+// Returns an empty slice (not nil) when phases is empty to distinguish from a nil phases field.
+func convertPhasesToUnstructured(phases []ocv1.ClusterExtensionRevisionPhase) []interface{} {
+	// Return empty slice for empty phases to maintain the distinction between
+	// nil (field not set) and [] (field explicitly set to empty array).
+	result := make([]interface{}, 0, len(phases))
+
+	for _, phase := range phases {
+		objects := make([]interface{}, 0, len(phase.Objects))
+		for _, obj := range phase.Objects {
+			objMap := map[string]interface{}{
+				"object": obj.Object.Object,
+			}
+			// Only include collisionProtection if non-empty
+			if obj.CollisionProtection != "" {
+				objMap["collisionProtection"] = obj.CollisionProtection
+			}
+			objects = append(objects, objMap)
+		}
+
+		result = append(result, map[string]interface{}{
+			"name":    phase.Name,
+			"objects": objects,
+		})
+	}
+	return result
+}
+
+// convertOwnerReferencesToUnstructured converts owner references to unstructured format.
+func convertOwnerReferencesToUnstructured(ownerRefs []metav1.OwnerReference) []interface{} {
+	result := make([]interface{}, 0, len(ownerRefs))
+	for _, ref := range ownerRefs {
+		refMap := map[string]interface{}{
+			"apiVersion": ref.APIVersion,
+			"kind":       ref.Kind,
+			"name":       ref.Name,
+			"uid":        ref.UID,
+		}
+		// Only include optional fields if set
+		if ref.Controller != nil {
+			refMap["controller"] = *ref.Controller
+		}
+		if ref.BlockOwnerDeletion != nil {
+			refMap["blockOwnerDeletion"] = *ref.BlockOwnerDeletion
+		}
+		result = append(result, refMap)
+	}
+	return result
 }
 
 func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
