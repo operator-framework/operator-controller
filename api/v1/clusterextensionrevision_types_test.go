@@ -21,7 +21,8 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 	}{
 		"revision is immutable": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Revision = 2
@@ -29,8 +30,9 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases may be initially empty": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
-				Phases:   []ClusterExtensionRevisionPhase{},
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+				Phases:         []ClusterExtensionRevisionPhase{},
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Phases = []ClusterExtensionRevisionPhase{
@@ -44,7 +46,8 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases may be initially unset": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Phases = []ClusterExtensionRevisionPhase{
@@ -58,7 +61,8 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases are immutable if not empty": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
 				Phases: []ClusterExtensionRevisionPhase{
 					{
 						Name:    "foo",
@@ -107,19 +111,86 @@ func TestClusterExtensionRevisionValidity(t *testing.T) {
 	}{
 		"revision cannot be negative": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: -1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       -1,
 			},
 			valid: false,
 		},
 		"revision cannot be zero": {
-			spec:  ClusterExtensionRevisionSpec{},
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+			},
 			valid: false,
 		},
 		"revision must be positive": {
 			spec: ClusterExtensionRevisionSpec{
-				Revision: 1,
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
 			},
 			valid: true,
+		},
+		"lifecycleState must be set": {
+			spec: ClusterExtensionRevisionSpec{
+				Revision: 1,
+			},
+			valid: false,
+		},
+		"phases must have no more than 20 phases": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+				Phases:         make([]ClusterExtensionRevisionPhase, 21),
+			},
+			valid: false,
+		},
+		"phases entries must have no more than 50 objects": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name:    "too-many-objects",
+						Objects: make([]ClusterExtensionRevisionObject, 51),
+					},
+				},
+			},
+			valid: false,
+		},
+		"phases entry names cannot be empty": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name: "",
+					},
+				},
+			},
+			valid: false,
+		},
+		"phases entry names cannot start with symbols": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name: "-invalid",
+					},
+				},
+			},
+			valid: false,
+		},
+		"phases entry names cannot start with numeric characters": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name: "1-invalid",
+					},
+				},
+			},
+			valid: false,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {

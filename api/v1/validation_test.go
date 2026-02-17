@@ -91,6 +91,7 @@ func TestValidate(t *testing.T) {
 		"ClusterExtensionRevision: invalid progress deadline < 10": {
 			args: args{
 				object: ClusterExtensionRevisionSpec{
+					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
 					ProgressDeadlineMinutes: 9,
 				},
 			},
@@ -99,6 +100,7 @@ func TestValidate(t *testing.T) {
 		"ClusterExtensionRevision: valid progress deadline = 10": {
 			args: args{
 				object: ClusterExtensionRevisionSpec{
+					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
 					ProgressDeadlineMinutes: 10,
 				},
 			},
@@ -107,6 +109,7 @@ func TestValidate(t *testing.T) {
 		"ClusterExtensionRevision: valid progress deadline = 360": {
 			args: args{
 				object: ClusterExtensionRevisionSpec{
+					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
 					ProgressDeadlineMinutes: 360,
 				},
 			},
@@ -115,6 +118,7 @@ func TestValidate(t *testing.T) {
 		"ClusterExtensionRevision: valid progress deadline = 720": {
 			args: args{
 				object: ClusterExtensionRevisionSpec{
+					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
 					ProgressDeadlineMinutes: 720,
 				},
 			},
@@ -123,6 +127,7 @@ func TestValidate(t *testing.T) {
 		"ClusterExtensionRevision: invalid progress deadline > 720": {
 			args: args{
 				object: ClusterExtensionRevisionSpec{
+					LifecycleState:          ClusterExtensionRevisionLifecycleStateActive,
 					ProgressDeadlineMinutes: 721,
 				},
 			},
@@ -130,7 +135,9 @@ func TestValidate(t *testing.T) {
 		},
 		"ClusterExtensionRevision: no progress deadline set": {
 			args: args{
-				object: ClusterExtensionRevisionSpec{},
+				object: ClusterExtensionRevisionSpec{
+					LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				},
 			},
 			want: want{valid: true},
 		},

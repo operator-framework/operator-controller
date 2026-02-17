@@ -669,16 +669,19 @@ spec:
             description: spec defines the desired state of the ClusterExtensionRevision.
             properties:
               lifecycleState:
-                default: Active
                 description: |-
                   lifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
 
-                  When set to "Active" (the default), the revision is actively managed and reconciled.
+                  When set to "Active", the revision is actively managed and reconciled.
                   When set to "Archived", the revision is inactive and any resources not managed by a subsequent revision are deleted.
                   The revision is removed from the owner list of all objects previously under management.
                   All objects that did not transition to a succeeding revision are deleted.
 
                   Once a revision is set to "Archived", it cannot be un-archived.
+
+                  It is possible for more than one revision to be "Active" simultaneously. This will occur when
+                  moving from one revision to another. The old revision will not be set to "Archived" until the
+                  new revision has been completely rolled out.
                 enum:
                 - Active
                 - Archived
@@ -704,6 +707,8 @@ spec:
                   The revision progresses to the next phase only after all objects in the current phase pass their readiness probes.
 
                   Once set, even if empty, the phases field is immutable.
+
+                  Each phase in the list must have a unique name. The maximum number of phases is 20.
                 items:
                   description: |-
                     ClusterExtensionRevisionPhase represents a group of objects that are applied together. The phase is considered
@@ -721,25 +726,31 @@ spec:
 
                         [RFC 1123]: https://tools.ietf.org/html/rfc1123
                       maxLength: 63
-                      pattern: ^[a-z]([-a-z0-9]*[a-z0-9])?$
+                      minLength: 1
                       type: string
+                      x-kubernetes-validations:
+                      - message: the value must consist of only lowercase alphanumeric
+                          characters and hyphens, and must start with an alphabetic
+                          character and end with an alphanumeric character.
+                        rule: '!format.dns1123Label().validate(self).hasValue()'
                     objects:
                       description: |-
                         objects is a required list of all Kubernetes objects that belong to this phase.
 
-                        All objects in this list are applied to the cluster in no particular order.
+                        All objects in this list are applied to the cluster in no particular order. The maximum number of objects per phase is 50.
                       items:
                         description: |-
                           ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
                           of a phase, along with its collision protection settings.
                         properties:
                           collisionProtection:
-                            default: Prevent
                             description: |-
                               collisionProtection controls whether the operator can adopt and modify objects
                               that already exist on the cluster.
 
-                              When set to "Prevent" (the default), the operator only manages objects it created itself.
+                              Allowed values are: "Prevent", "IfNoController", and "None".
+
+                              When set to "Prevent", the operator only manages objects it created itself.
                               This prevents ownership collisions.
 
                               When set to "IfNoController", the operator can adopt and modify pre-existing objects
@@ -764,13 +775,16 @@ spec:
                             x-kubernetes-embedded-resource: true
                             x-kubernetes-preserve-unknown-fields: true
                         required:
+                        - collisionProtection
                         - object
                         type: object
+                      maxItems: 50
                       type: array
                   required:
                   - name
                   - objects
                   type: object
+                maxItems: 20
                 type: array
                 x-kubernetes-list-map-keys:
                 - name
@@ -803,6 +817,7 @@ spec:
                 - message: revision is immutable
                   rule: self == oldSelf
             required:
+            - lifecycleState
             - revision
             type: object
           status:
