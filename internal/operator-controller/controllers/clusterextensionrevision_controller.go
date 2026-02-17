@@ -464,10 +464,10 @@ func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Con
 			objLabels[labels.OwnerNameKey] = rev.Labels[labels.OwnerNameKey]
 			obj.SetLabels(objLabels)
 
-			switch specObj.CollisionProtection {
+			switch cp := EffectiveCollisionProtection(rev.Spec.CollisionProtection, specPhase.CollisionProtection, specObj.CollisionProtection); cp {
 			case ocv1.CollisionProtectionIfNoController, ocv1.CollisionProtectionNone:
 				opts = append(opts, boxcutter.WithObjectReconcileOptions(
-					obj, boxcutter.WithCollisionProtection(specObj.CollisionProtection)))
+					obj, boxcutter.WithCollisionProtection(cp)))
 			}
 
 			phase.Objects = append(phase.Objects, *obj)
@@ -475,6 +475,18 @@ func (c *ClusterExtensionRevisionReconciler) toBoxcutterRevision(ctx context.Con
 		r.Phases = append(r.Phases, phase)
 	}
 	return r, opts, nil
+}
+
+// EffectiveCollisionProtection resolves the collision protection value using
+// the inheritance hierarchy: object > phase > spec > default ("Prevent").
+func EffectiveCollisionProtection(cp ...ocv1.CollisionProtection) ocv1.CollisionProtection {
+	ecp := ocv1.CollisionProtectionPrevent
+	for _, c := range cp {
+		if c != "" {
+			ecp = c
+		}
+	}
+	return ecp
 }
 
 var (

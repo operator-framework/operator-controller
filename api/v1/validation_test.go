@@ -36,6 +36,7 @@ func TestValidate(t *testing.T) {
 	}
 	defaultRevisionSpec := func(s *ClusterExtensionRevisionSpec) *ClusterExtensionRevisionSpec {
 		s.Revision = 1
+		s.CollisionProtection = CollisionProtectionPrevent
 		return s
 	}
 	c := newClient(t)

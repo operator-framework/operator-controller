@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestClusterExtensionRevisionImmutability(t *testing.T) {
@@ -21,8 +22,9 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 	}{
 		"revision is immutable": {
 			spec: ClusterExtensionRevisionSpec{
-				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
-				Revision:       1,
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Revision = 2
@@ -30,9 +32,10 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases may be initially empty": {
 			spec: ClusterExtensionRevisionSpec{
-				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
-				Revision:       1,
-				Phases:         []ClusterExtensionRevisionPhase{},
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases:              []ClusterExtensionRevisionPhase{},
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Phases = []ClusterExtensionRevisionPhase{
@@ -46,8 +49,9 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases may be initially unset": {
 			spec: ClusterExtensionRevisionSpec{
-				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
-				Revision:       1,
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
 			},
 			updateFunc: func(cer *ClusterExtensionRevision) {
 				cer.Spec.Phases = []ClusterExtensionRevisionPhase{
@@ -61,8 +65,9 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 		},
 		"phases are immutable if not empty": {
 			spec: ClusterExtensionRevisionSpec{
-				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
-				Revision:       1,
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
 				Phases: []ClusterExtensionRevisionPhase{
 					{
 						Name:    "foo",
@@ -77,6 +82,16 @@ func TestClusterExtensionRevisionImmutability(t *testing.T) {
 						Objects: []ClusterExtensionRevisionObject{},
 					},
 				}
+			},
+		},
+		"spec collisionProtection is immutable": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			updateFunc: func(cer *ClusterExtensionRevision) {
+				cer.Spec.CollisionProtection = CollisionProtectionNone
 			},
 		},
 	} {
@@ -124,8 +139,9 @@ func TestClusterExtensionRevisionValidity(t *testing.T) {
 		},
 		"revision must be positive": {
 			spec: ClusterExtensionRevisionSpec{
-				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
-				Revision:       1,
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
 			},
 			valid: true,
 		},
@@ -192,6 +208,70 @@ func TestClusterExtensionRevisionValidity(t *testing.T) {
 			},
 			valid: false,
 		},
+		"spec collisionProtection accepts Prevent": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+			},
+			valid: true,
+		},
+		"spec collisionProtection accepts IfNoController": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionIfNoController,
+			},
+			valid: true,
+		},
+		"spec collisionProtection accepts None": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionNone,
+			},
+			valid: true,
+		},
+		"spec collisionProtection is required": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+			},
+			valid: false,
+		},
+		"spec collisionProtection rejects invalid values": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtection("Invalid"),
+			},
+			valid: false,
+		},
+		"spec collisionProtection must be set": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState: ClusterExtensionRevisionLifecycleStateActive,
+				Revision:       1,
+			},
+			valid: false,
+		},
+		"object collisionProtection is optional": {
+			spec: ClusterExtensionRevisionSpec{
+				LifecycleState:      ClusterExtensionRevisionLifecycleStateActive,
+				Revision:            1,
+				CollisionProtection: CollisionProtectionPrevent,
+				Phases: []ClusterExtensionRevisionPhase{
+					{
+						Name: "deploy",
+						Objects: []ClusterExtensionRevisionObject{
+							{
+								Object: configMap(),
+							},
+						},
+					},
+				},
+			},
+			valid: true,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			cer := &ClusterExtensionRevision{
@@ -209,5 +289,17 @@ func TestClusterExtensionRevisionValidity(t *testing.T) {
 				t.Fatal("expected create to fail due to invalid payload, but got:", err)
 			}
 		})
+	}
+}
+
+func configMap() unstructured.Unstructured {
+	return unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "ConfigMap",
+			"metadata": map[string]interface{}{
+				"name": "test-cm",
+			},
+		},
 	}
 }

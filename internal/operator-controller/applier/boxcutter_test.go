@@ -114,8 +114,9 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 			},
 		},
 		Spec: ocv1.ClusterExtensionRevisionSpec{
-			LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
-			Revision:       1,
+			LifecycleState:      ocv1.ClusterExtensionRevisionLifecycleStateActive,
+			CollisionProtection: ocv1.CollisionProtectionNone,
+			Revision:            1,
 			Phases: []ocv1.ClusterExtensionRevisionPhase{
 				{
 					Name: "deploy",
@@ -132,7 +133,6 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 									},
 								},
 							},
-							CollisionProtection: ocv1.CollisionProtectionNone,
 						},
 						{
 							Object: unstructured.Unstructured{
@@ -146,7 +146,6 @@ func Test_SimpleRevisionGenerator_GenerateRevisionFromHelmRelease(t *testing.T) 
 									},
 								},
 							},
-							CollisionProtection: ocv1.CollisionProtectionNone,
 						},
 					},
 				},
@@ -215,6 +214,8 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 	}, rev.Labels)
 	t.Log("by checking the revision number is 0")
 	require.Equal(t, int64(0), rev.Spec.Revision)
+	t.Log("by checking the spec-level collisionProtection is set")
+	require.Equal(t, ocv1.CollisionProtectionPrevent, rev.Spec.CollisionProtection)
 	t.Log("by checking the rendered objects are present in the correct phases")
 	require.Equal(t, []ocv1.ClusterExtensionRevisionPhase{
 		{
@@ -231,7 +232,6 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 							"spec": map[string]interface{}{},
 						},
 					},
-					CollisionProtection: ocv1.CollisionProtectionPrevent,
 				},
 				{
 					Object: unstructured.Unstructured{
@@ -260,7 +260,6 @@ func Test_SimpleRevisionGenerator_GenerateRevision(t *testing.T) {
 							},
 						},
 					},
-					CollisionProtection: ocv1.CollisionProtectionPrevent,
 				},
 			},
 		},

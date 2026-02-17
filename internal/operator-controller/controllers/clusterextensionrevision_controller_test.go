@@ -1266,6 +1266,60 @@ func (m *mockTrackingCache) Free(ctx context.Context, user client.Object) error 
 	return nil
 }
 
+func Test_effectiveCollisionProtection(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		specCP   ocv1.CollisionProtection
+		phaseCP  ocv1.CollisionProtection
+		objectCP ocv1.CollisionProtection
+		expected ocv1.CollisionProtection
+	}{
+		{
+			name:     "all empty defaults to Prevent",
+			expected: ocv1.CollisionProtectionPrevent,
+		},
+		{
+			name:     "spec only",
+			specCP:   ocv1.CollisionProtectionNone,
+			expected: ocv1.CollisionProtectionNone,
+		},
+		{
+			name:     "phase overrides spec",
+			specCP:   ocv1.CollisionProtectionPrevent,
+			phaseCP:  ocv1.CollisionProtectionIfNoController,
+			expected: ocv1.CollisionProtectionIfNoController,
+		},
+		{
+			name:     "object overrides phase",
+			specCP:   ocv1.CollisionProtectionPrevent,
+			phaseCP:  ocv1.CollisionProtectionIfNoController,
+			objectCP: ocv1.CollisionProtectionNone,
+			expected: ocv1.CollisionProtectionNone,
+		},
+		{
+			name:     "object overrides spec",
+			specCP:   ocv1.CollisionProtectionNone,
+			objectCP: ocv1.CollisionProtectionPrevent,
+			expected: ocv1.CollisionProtectionPrevent,
+		},
+		{
+			name:     "phase only",
+			phaseCP:  ocv1.CollisionProtectionNone,
+			expected: ocv1.CollisionProtectionNone,
+		},
+		{
+			name:     "object only",
+			objectCP: ocv1.CollisionProtectionIfNoController,
+			expected: ocv1.CollisionProtectionIfNoController,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			result := controllers.EffectiveCollisionProtection(tc.specCP, tc.phaseCP, tc.objectCP)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
 func Test_ClusterExtensionRevisionReconciler_getScopedClient_Errors(t *testing.T) {
 	testScheme := newScheme(t)
 
