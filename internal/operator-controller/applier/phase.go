@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
 )
 
 // The following, with modifications, is taken from:
@@ -123,7 +123,7 @@ func init() {
 // to ensure consistent ordering regardless of input order. This is critical for
 // Helm-to-Boxcutter migration where the same resources may come from different sources
 // (Helm release manifest vs bundle manifest) and need to produce identical phases.
-func compareClusterExtensionRevisionObjects(a, b ocv1.ClusterExtensionRevisionObject) int {
+func compareClusterExtensionRevisionObjects(a, b ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration) int {
 	aGVK := a.Object.GroupVersionKind()
 	bGVK := b.Object.GroupVersionKind()
 
@@ -139,9 +139,9 @@ func compareClusterExtensionRevisionObjects(a, b ocv1.ClusterExtensionRevisionOb
 // PhaseSort takes an unsorted list of objects and organizes them into sorted phases.
 // Each phase will be applied in order according to DefaultPhaseOrder. Objects
 // within a single phase are applied simultaneously.
-func PhaseSort(unsortedObjs []ocv1.ClusterExtensionRevisionObject) []ocv1.ClusterExtensionRevisionPhase {
-	phasesSorted := make([]ocv1.ClusterExtensionRevisionPhase, 0)
-	phaseMap := make(map[Phase][]ocv1.ClusterExtensionRevisionObject, 0)
+func PhaseSort(unsortedObjs []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration) []*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration {
+	phasesSorted := make([]*ocv1ac.ClusterExtensionRevisionPhaseApplyConfiguration, 0)
+	phaseMap := make(map[Phase][]ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration)
 
 	for _, obj := range unsortedObjs {
 		phase := determinePhase(obj.Object.GroupVersionKind().GroupKind())
@@ -153,10 +153,14 @@ func PhaseSort(unsortedObjs []ocv1.ClusterExtensionRevisionObject) []ocv1.Cluste
 			// Sort objects within the phase deterministically
 			slices.SortFunc(objs, compareClusterExtensionRevisionObjects)
 
-			phasesSorted = append(phasesSorted, ocv1.ClusterExtensionRevisionPhase{
-				Name:    string(phaseName),
-				Objects: objs,
-			})
+			// Convert to pointers for WithObjects
+			objPtrs := make([]*ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration, len(objs))
+			for i := range objs {
+				objPtrs[i] = &objs[i]
+			}
+			phasesSorted = append(phasesSorted, ocv1ac.ClusterExtensionRevisionPhase().
+				WithName(string(phaseName)).
+				WithObjects(objPtrs...))
 		}
 	}
 
