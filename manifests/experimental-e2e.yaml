@@ -1824,6 +1824,37 @@ rules:
     verbs:
       - list
       - watch
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clusterextensionrevisions
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clusterextensionrevisions/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clusterextensionrevisions/finalizers
+    verbs:
+      - update
 ---
 # Source: olmv1/templates/rbac/clusterrolebinding-catalogd-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1895,7 +1926,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: operator-controller-manager-role
 subjects:
   - kind: ServiceAccount
     name: operator-controller-controller-manager

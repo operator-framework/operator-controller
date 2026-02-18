@@ -16,11 +16,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-{{- if has "BoxcutterRuntime" .Values.options.operatorController.features.enabled }}
-  name: cluster-admin
-{{- else }}
   name: operator-controller-manager-role
-{{- end }}
 subjects:
   - kind: ServiceAccount
     name: operator-controller-controller-manager

@@ -72,4 +72,37 @@ rules:
     verbs:
       - use
   {{- end }}
+  {{- if has "BoxcutterRuntime" .Values.options.operatorController.features.enabled }}
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clusterextensionrevisions
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clusterextensionrevisions/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - olm.operatorframework.io
+    resources:
+      - clusterextensionrevisions/finalizers
+    verbs:
+      - update
+  {{- end }}
 {{- end }}
