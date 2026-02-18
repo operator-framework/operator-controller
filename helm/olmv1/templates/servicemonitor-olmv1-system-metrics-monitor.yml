@@ -29,5 +29,6 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "olmv1.label.name" . }}
+  serviceDiscoveryRole: EndpointSlice
 {{- end -}}
 {{- end -}}
