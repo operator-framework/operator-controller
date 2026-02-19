@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -87,6 +88,13 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource apply fails with error msg containing "([^"]+)"$`, ResourceApplyFails)
 	sc.Step(`^(?i)resource "([^"]+)" is eventually restored$`, ResourceRestored)
 	sc.Step(`^(?i)resource "([^"]+)" matches$`, ResourceMatches)
+	sc.Step(`^(?i)user performs rollout restart on "([^"]+)"$`, UserPerformsRolloutRestart)
+	sc.Step(`^(?i)resource "([^"]+)" has restart annotation$`, ResourceHasRestartAnnotation)
+	sc.Step(`^(?i)deployment "([^"]+)" is ready$`, DeploymentIsReady)
+	sc.Step(`^(?i)deployment "([^"]+)" rollout completes successfully$`, DeploymentRolloutCompletesSuccessfully)
+	sc.Step(`^(?i)I wait for "([^"]+)" seconds$`, WaitForSeconds)
+	sc.Step(`^(?i)deployment "([^"]+)" rollout is still successful$`, DeploymentRolloutIsStillSuccessful)
+	sc.Step(`^(?i)deployment "([^"]+)" has expected number of ready replicas$`, DeploymentHasExpectedReadyReplicas)
 
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
@@ -1219,4 +1227,266 @@ func latestActiveRevisionForExtension(extName string) (*ocv1.ClusterExtensionRev
 	}
 
 	return latest, nil
+}
+
+// UserPerformsRolloutRestart simulates a user running "kubectl rollout restart deployment/<name>".
+// This adds a restart annotation to trigger a rolling restart of pods.
+// This is used to test the generic fix - OLM should not undo ANY user-added annotations.
+// In OLMv0, OLM would undo this change. In OLMv1, it should stay because kubectl owns it.
+// See: https://github.com/operator-framework/operator-lifecycle-manager/issues/3392
+func UserPerformsRolloutRestart(ctx context.Context, resourceName string) error {
+	sc := scenarioCtx(ctx)
+	resourceName = substituteScenarioVars(resourceName, sc)
+
+	kind, deploymentName, ok := strings.Cut(resourceName, "/")
+	if !ok {
+		return fmt.Errorf("invalid resource name format: %s (expected kind/name)", resourceName)
+	}
+
+	if kind != "deployment" {
+		return fmt.Errorf("only deployment resources are supported for restart annotation, got: %s", kind)
+	}
+
+	// Run kubectl rollout restart to add the restart annotation.
+	// This is the real command users run, so we test actual user behavior.
+	out, err := k8sClient("rollout", "restart", resourceName, "-n", sc.namespace)
+	if err != nil {
+		return fmt.Errorf("failed to rollout restart %s: %w", resourceName, err)
+	}
+
+	logger.V(1).Info("Rollout restart initiated", "deployment", deploymentName, "output", out)
+
+	return nil
+}
+
+// ResourceHasRestartAnnotation checks that a deployment has a restart annotation.
+// This confirms that user changes stay in place after OLM runs.
+// The fix is generic and works for ANY user-added annotations on pod templates.
+func ResourceHasRestartAnnotation(ctx context.Context, resourceName string) error {
+	sc := scenarioCtx(ctx)
+	resourceName = substituteScenarioVars(resourceName, sc)
+
+	kind, deploymentName, ok := strings.Cut(resourceName, "/")
+	if !ok {
+		return fmt.Errorf("invalid resource name format: %s (expected kind/name)", resourceName)
+	}
+
+	if kind != "deployment" {
+		return fmt.Errorf("only deployment resources are supported for restart annotation check, got: %s", kind)
+	}
+
+	// Look for the restart annotation added by "kubectl rollout restart"
+	restartAnnotationKey := "kubectl.kubernetes.io/restartedAt"
+
+	// Keep checking until the annotation appears (it may not show up immediately)
+	// This is better than checking only once
+	var annotationValue string
+	waitFor(ctx, func() bool {
+		out, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace,
+			"-o", fmt.Sprintf("jsonpath={.spec.template.metadata.annotations['%s']}", restartAnnotationKey))
+		if err != nil {
+			return false
+		}
+		// If the annotation exists and has a value, it stayed in place
+		if out == "" {
+			return false
+		}
+		annotationValue = out
+		return true
+	})
+
+	logger.V(1).Info("Restart annotation found", "deployment", deploymentName, "restartedAt", annotationValue)
+	return nil
+}
+
+// DeploymentIsReady checks that a deployment is ready with all pods running.
+func DeploymentIsReady(ctx context.Context, deploymentName string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	waitFor(ctx, func() bool {
+		// Check if deployment is ready
+		out, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace,
+			"-o", "jsonpath={.status.conditions[?(@.type=='Available')].status}")
+		if err != nil {
+			return false
+		}
+		return out == "True"
+	})
+
+	logger.V(1).Info("Deployment is ready", "deployment", deploymentName)
+	return nil
+}
+
+// DeploymentRolloutCompletesSuccessfully waits for the rollout to finish.
+// This checks that new pods were created and are running.
+func DeploymentRolloutCompletesSuccessfully(ctx context.Context, deploymentName string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	// Use kubectl rollout status to wait until done.
+	// This makes sure new pods are created and running.
+	// Timeout is 7m to account for startup probes (test-operator has 5min startup probe)
+	out, err := k8sClient("rollout", "status", "deployment/"+deploymentName, "-n", sc.namespace, "--timeout=7m")
+	if err != nil {
+		return fmt.Errorf("deployment rollout failed: %w, output: %s", err, out)
+	}
+
+	logger.V(1).Info("Deployment rollout completed", "deployment", deploymentName, "status", out)
+
+	// Check deployment status
+	available, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace,
+		"-o", "jsonpath={.status.conditions[?(@.type=='Available')].status}")
+	if err != nil {
+		return fmt.Errorf("failed to check deployment availability: %w", err)
+	}
+	if available != "True" {
+		return fmt.Errorf("deployment %s is not available", deploymentName)
+	}
+
+	progressing, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace,
+		"-o", "jsonpath={.status.conditions[?(@.type=='Progressing')].status}")
+	if err != nil {
+		return fmt.Errorf("failed to check deployment progressing: %w", err)
+	}
+	if progressing != "True" {
+		return fmt.Errorf("deployment %s is not progressing correctly", deploymentName)
+	}
+
+	return nil
+}
+
+// WaitForSeconds waits for the given number of seconds.
+// This gives OLM time to run its checks between test steps.
+//
+// Note: We wait for a fixed time (not checking in a loop) because we need to make sure
+// OLM actually runs (it runs every 10 seconds). We want to check that user changes stay
+// AFTER OLM runs. If we just checked in a loop, we wouldn't know if OLM ran yet.
+func WaitForSeconds(ctx context.Context, seconds string) error {
+	sec, err := strconv.Atoi(seconds)
+	if err != nil {
+		return fmt.Errorf("invalid seconds value %s: %w", seconds, err)
+	}
+
+	if sec <= 0 {
+		return fmt.Errorf("seconds value must be greater than 0, got %d", sec)
+	}
+
+	logger.V(1).Info("Waiting for reconciliation", "seconds", sec)
+
+	// Use select so the wait can be stopped if needed
+	dur := time.Duration(sec) * time.Second
+	select {
+	case <-time.After(dur):
+		logger.V(1).Info("Wait complete")
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("wait canceled: %w", ctx.Err())
+	}
+}
+
+// verifyDeploymentReplicaStatus checks if a deployment has the right number of ready pods.
+func verifyDeploymentReplicaStatus(deploymentName, namespace string) (string, string, error) {
+	readyReplicas, err := k8sClient("get", "deployment", deploymentName, "-n", namespace,
+		"-o", "jsonpath={.status.readyReplicas}")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get ready replicas: %w", err)
+	}
+
+	replicas, err := k8sClient("get", "deployment", deploymentName, "-n", namespace,
+		"-o", "jsonpath={.spec.replicas}")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get desired replicas: %w", err)
+	}
+
+	// Normalize empty jsonpath results (when readyReplicas is omitted for 0 replicas)
+	readyReplicas = strings.TrimSpace(readyReplicas)
+	replicas = strings.TrimSpace(replicas)
+	if readyReplicas == "" {
+		readyReplicas = "0"
+	}
+	if replicas == "" {
+		replicas = "0"
+	}
+
+	// Compare as integers to avoid false negatives
+	readyInt, err := strconv.Atoi(readyReplicas)
+	if err != nil {
+		return readyReplicas, replicas, fmt.Errorf("invalid ready replicas value %q: %w", readyReplicas, err)
+	}
+	replicasInt, err := strconv.Atoi(replicas)
+	if err != nil {
+		return readyReplicas, replicas, fmt.Errorf("invalid desired replicas value %q: %w", replicas, err)
+	}
+
+	if readyInt != replicasInt {
+		return readyReplicas, replicas, fmt.Errorf("deployment %s has %d ready replicas but expected %d",
+			deploymentName, readyInt, replicasInt)
+	}
+
+	return readyReplicas, replicas, nil
+}
+
+// DeploymentRolloutIsStillSuccessful checks that the rollout is still working.
+// This makes sure OLM didn't undo the user's "kubectl rollout restart" command.
+// It checks that new pods are still running.
+func DeploymentRolloutIsStillSuccessful(ctx context.Context, deploymentName string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	// Check deployment status
+	available, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace,
+		"-o", "jsonpath={.status.conditions[?(@.type=='Available')].status}")
+	if err != nil {
+		return fmt.Errorf("failed to check deployment availability: %w", err)
+	}
+	if available != "True" {
+		return fmt.Errorf("deployment %s is not available - rollout was undone", deploymentName)
+	}
+
+	// Check that the deployment is still working correctly
+	progressing, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace,
+		"-o", "jsonpath={.status.conditions[?(@.type=='Progressing')].status}")
+	if err != nil {
+		return fmt.Errorf("failed to check deployment progressing: %w", err)
+	}
+	if progressing != "True" {
+		return fmt.Errorf("deployment %s is not working - rollout may have been undone", deploymentName)
+	}
+
+	// Check that the right number of pods are ready (rollout finished and wasn't stopped)
+	readyReplicas, replicas, err := verifyDeploymentReplicaStatus(deploymentName, sc.namespace)
+	if err != nil {
+		return fmt.Errorf("%w - rollout may have been undone", err)
+	}
+
+	logger.V(1).Info("Deployment rollout is still successful", "deployment", deploymentName,
+		"readyReplicas", readyReplicas, "desiredReplicas", replicas)
+
+	return nil
+}
+
+// DeploymentHasExpectedReadyReplicas checks that the deployment has the right number of ready pods.
+// This makes sure the rollout finished successfully and pods are running.
+func DeploymentHasExpectedReadyReplicas(ctx context.Context, deploymentName string) error {
+	sc := scenarioCtx(ctx)
+	deploymentName = substituteScenarioVars(deploymentName, sc)
+
+	// Check that the right number of pods are ready
+	readyReplicas, replicas, err := verifyDeploymentReplicaStatus(deploymentName, sc.namespace)
+	if err != nil {
+		return err
+	}
+
+	// Also check that there are no unavailable pods
+	unavailableReplicas, err := k8sClient("get", "deployment", deploymentName, "-n", sc.namespace,
+		"-o", "jsonpath={.status.unavailableReplicas}")
+	if err == nil && unavailableReplicas != "" && unavailableReplicas != "0" {
+		return fmt.Errorf("deployment %s has %s unavailable pods", deploymentName, unavailableReplicas)
+	}
+
+	logger.V(1).Info("Deployment has expected ready replicas", "deployment", deploymentName,
+		"readyReplicas", readyReplicas, "desiredReplicas", replicas)
+
+	return nil
 }
