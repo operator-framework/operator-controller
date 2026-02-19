@@ -1345,6 +1345,12 @@ rules:
     verbs:
       - create
   - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - get
+  - apiGroups:
       - apiextensions.k8s.io
     resources:
       - customresourcedefinitions

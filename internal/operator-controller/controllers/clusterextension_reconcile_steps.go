@@ -21,15 +21,16 @@ import (
 	"errors"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/resolve"
@@ -63,6 +64,55 @@ func HandleFinalizers(f finalizer.Finalizer) ReconcileStepFunc {
 	}
 }
 
+// ClusterExtensionValidator is a function that validates a ClusterExtension.
+// It returns an error if validation fails. Validators are executed sequentially
+// in the order they are registered.
+type ClusterExtensionValidator func(context.Context, *ocv1.ClusterExtension) error
+
+// ValidateClusterExtension returns a ReconcileStepFunc that executes all
+// validators sequentially. All validators are executed even if some fail,
+// and all errors are collected and returned as a joined error.
+// This provides complete validation feedback in a single reconciliation cycle.
+func ValidateClusterExtension(validators ...ClusterExtensionValidator) ReconcileStepFunc {
+	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
+		l := log.FromContext(ctx)
+
+		l.Info("validating cluster extension")
+		var validationErrors []error
+		for _, validator := range validators {
+			if err := validator(ctx, ext); err != nil {
+				validationErrors = append(validationErrors, err)
+			}
+		}
+
+		// If there are no validation errors, continue reconciliation
+		if len(validationErrors) == 0 {
+			return nil, nil
+		}
+
+		// Set status condition with the validation error for other validation failures
+		err := fmt.Errorf("installation cannot proceed due to the following validation error(s): %w", errors.Join(validationErrors...))
+		setInstalledStatusConditionUnknown(ext, err.Error())
+		setStatusProgressing(ext, err)
+		return nil, err
+	}
+}
+
+// ServiceAccountValidator returns a validator that checks if the specified
+// ServiceAccount exists in the cluster by performing a direct Get call.
+func ServiceAccountValidator(saClient corev1client.ServiceAccountsGetter) ClusterExtensionValidator {
+	return func(ctx context.Context, ext *ocv1.ClusterExtension) error {
+		_, err := saClient.ServiceAccounts(ext.Spec.Namespace).Get(ctx, ext.Spec.ServiceAccount.Name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return fmt.Errorf("service account %q not found in namespace %q", ext.Spec.ServiceAccount.Name, ext.Spec.Namespace)
+			}
+			return fmt.Errorf("error validating service account: %w", err)
+		}
+		return nil
+	}
+}
+
 func RetrieveRevisionStates(r RevisionStatesGetter) ReconcileStepFunc {
 	return func(ctx context.Context, state *reconcileState, ext *ocv1.ClusterExtension) (*ctrl.Result, error) {
 		l := log.FromContext(ctx)
@@ -70,12 +120,6 @@ func RetrieveRevisionStates(r RevisionStatesGetter) ReconcileStepFunc {
 		revisionStates, err := r.GetRevisionStates(ctx, ext)
 		if err != nil {
 			setInstallStatus(ext, nil)
-			var saerr *authentication.ServiceAccountNotFoundError
-			if errors.As(err, &saerr) {
-				setInstalledStatusConditionUnknown(ext, saerr.Error())
-				setStatusProgressing(ext, errors.New("installation cannot proceed due to missing ServiceAccount"))
-				return nil, err
-			}
 			setInstalledStatusConditionUnknown(ext, err.Error())
 			setStatusProgressing(ext, errors.New("retrying to get installed bundle"))
 			return nil, err

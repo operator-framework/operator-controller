@@ -88,6 +88,7 @@ type deps struct {
 	ImagePuller          image.Puller
 	ImageCache           image.Cache
 	Applier              controllers.Applier
+	Validators           []controllers.ClusterExtensionValidator
 }
 
 func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Client, *controllers.ClusterExtensionReconciler) {
@@ -105,7 +106,11 @@ func newClientAndReconciler(t *testing.T, opts ...reconcilerOption) (client.Clie
 	for _, opt := range opts {
 		opt(d)
 	}
-	reconciler.ReconcileSteps = []controllers.ReconcileStepFunc{controllers.HandleFinalizers(d.Finalizers), controllers.RetrieveRevisionStates(d.RevisionStatesGetter)}
+	reconciler.ReconcileSteps = []controllers.ReconcileStepFunc{
+		controllers.HandleFinalizers(d.Finalizers),
+		controllers.ValidateClusterExtension(d.Validators...),
+		controllers.RetrieveRevisionStates(d.RevisionStatesGetter),
+	}
 	if r := d.Resolver; r != nil {
 		reconciler.ReconcileSteps = append(reconciler.ReconcileSteps, controllers.ResolveBundle(r, cl))
 	}

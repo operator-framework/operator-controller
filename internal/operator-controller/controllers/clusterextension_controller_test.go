@@ -15,11 +15,13 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/kubernetes/fake"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
@@ -29,7 +31,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/operator-controller/authentication"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/controllers"
@@ -767,60 +768,177 @@ func TestClusterExtensionBoxcutterApplierFailsDoesNotLeakDeprecationErrors(t *te
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 }
 
-func TestClusterExtensionServiceAccountNotFound(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, func(d *deps) {
-		d.RevisionStatesGetter = &MockRevisionStatesGetter{
-			Err: &authentication.ServiceAccountNotFoundError{
-				ServiceAccountName:      "missing-sa",
-				ServiceAccountNamespace: "default",
-			}}
-	})
-
-	ctx := context.Background()
-	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
-
-	t.Log("Given a cluster extension with a missing service account")
-	clusterExtension := &ocv1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec: ocv1.ClusterExtensionSpec{
-			Source: ocv1.SourceConfig{
-				SourceType: "Catalog",
-				Catalog: &ocv1.CatalogFilter{
-					PackageName: "test-package",
+func TestValidateClusterExtension(t *testing.T) {
+	tests := []struct {
+		name                 string
+		validators           []controllers.ClusterExtensionValidator
+		expectError          bool
+		errorMessageIncludes string
+	}{
+		{
+			name: "all validators pass",
+			validators: []controllers.ClusterExtensionValidator{
+				// Validator that always passes
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return nil
 				},
 			},
-			Namespace: "default",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "missing-sa",
+			expectError: false,
+		},
+		{
+			name: "validator fails - sets Progressing condition",
+			validators: []controllers.ClusterExtensionValidator{
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return errors.New("generic validation error")
+				},
 			},
+			expectError:          true,
+			errorMessageIncludes: "generic validation error",
+		},
+		{
+			name: "multiple validators - collects all failures",
+			validators: []controllers.ClusterExtensionValidator{
+				// First validator fails
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return errors.New("first validator failed")
+				},
+				// Second validator also fails
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return errors.New("second validator failed")
+				},
+				// Third validator fails too
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return errors.New("third validator failed")
+				},
+			},
+			expectError:          true,
+			errorMessageIncludes: "first validator failed\nsecond validator failed\nthird validator failed",
+		},
+		{
+			name: "multiple validators - all pass",
+			validators: []controllers.ClusterExtensionValidator{
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return nil
+				},
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return nil
+				},
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return nil
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "multiple validators - some pass, some fail",
+			validators: []controllers.ClusterExtensionValidator{
+				// First validator passes
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return nil
+				},
+				// Second validator fails
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return errors.New("validation error 1")
+				},
+				// Third validator passes
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return nil
+				},
+				// Fourth validator fails
+				func(_ context.Context, _ *ocv1.ClusterExtension) error {
+					return errors.New("validation error 2")
+				},
+			},
+			expectError:          true,
+			errorMessageIncludes: "validation error 1\nvalidation error 2",
+		},
+		{
+			name: "service account not found",
+			validators: []controllers.ClusterExtensionValidator{
+				serviceAccountValidatorWithFakeClient(&corev1.ServiceAccount{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "missing-sa",
+						Namespace: "test-ns",
+					},
+				}),
+			},
+			expectError:          true,
+			errorMessageIncludes: `service account "test-sa" not found in namespace "test-ns"`,
+		},
+		{
+			name: "service account found",
+			validators: []controllers.ClusterExtensionValidator{
+				serviceAccountValidatorWithFakeClient(&corev1.ServiceAccount{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-sa",
+						Namespace: "test-ns",
+					},
+				}),
+			},
+			expectError: false,
 		},
 	}
 
-	require.NoError(t, cl.Create(ctx, clusterExtension))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
 
-	t.Log("When reconciling the cluster extension")
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+			cl, reconciler := newClientAndReconciler(t, func(d *deps) {
+				d.RevisionStatesGetter = &MockRevisionStatesGetter{
+					RevisionStates: &controllers.RevisionStates{},
+				}
+				d.Validators = tt.validators
+			})
 
-	require.Equal(t, ctrl.Result{}, res)
-	require.Error(t, err)
-	var saErr *authentication.ServiceAccountNotFoundError
-	require.ErrorAs(t, err, &saErr)
-	t.Log("By fetching updated cluster extension after reconcile")
-	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+			extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
-	t.Log("By checking the status conditions")
-	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
-	require.NotNil(t, installedCond)
-	require.Equal(t, metav1.ConditionUnknown, installedCond.Status)
-	require.Contains(t, installedCond.Message, fmt.Sprintf("service account %q not found in namespace %q: unable to authenticate with the Kubernetes cluster.",
-		"missing-sa", "default"))
+			clusterExtension := &ocv1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+				Spec: ocv1.ClusterExtensionSpec{
+					Source: ocv1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1.CatalogFilter{
+							PackageName: "test-package",
+						},
+					},
+					Namespace: "test-ns",
+					ServiceAccount: ocv1.ServiceAccountReference{
+						Name: "test-sa",
+					},
+				},
+			}
 
-	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
-	require.NotNil(t, progressingCond)
-	require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
-	require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
-	require.Contains(t, progressingCond.Message, "installation cannot proceed due to missing ServiceAccount")
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+			require.NoError(t, cl.Create(ctx, clusterExtension))
+
+			t.Log("When reconciling the cluster extension")
+			res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+			require.Equal(t, ctrl.Result{}, res)
+			if tt.expectError {
+				require.Error(t, err)
+				t.Log("By fetching updated cluster extension after reconcile")
+				require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+				t.Log("By checking the status conditions")
+				installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
+				require.NotNil(t, installedCond)
+				require.Equal(t, metav1.ConditionUnknown, installedCond.Status)
+				require.Contains(t, installedCond.Message, "installation cannot proceed due to the following validation error(s)")
+				require.Contains(t, installedCond.Message, tt.errorMessageIncludes)
+
+				progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
+				require.NotNil(t, progressingCond)
+				require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
+				require.Equal(t, ocv1.ReasonRetrying, progressingCond.Reason)
+				require.Contains(t, progressingCond.Message, "installation cannot proceed due to the following validation error(s)")
+				require.Contains(t, progressingCond.Message, tt.errorMessageIncludes)
+			} else {
+				require.NoError(t, err)
+				require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+				require.Empty(t, clusterExtension.Status.Conditions)
+			}
+			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+		})
+	}
 }
 
 func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
@@ -2877,4 +2995,11 @@ func TestCheckCatalogsExist(t *testing.T) {
 		require.Contains(t, err.Error(), "invalid catalog selector")
 		require.False(t, exists)
 	})
+}
+
+func serviceAccountValidatorWithFakeClient(serviceAccount *corev1.ServiceAccount) controllers.ClusterExtensionValidator {
+	if serviceAccount == nil {
+		return controllers.ServiceAccountValidator(fake.NewClientset().CoreV1())
+	}
+	return controllers.ServiceAccountValidator(fake.NewClientset(serviceAccount).CoreV1())
 }
