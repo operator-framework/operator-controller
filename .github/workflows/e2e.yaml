@@ -31,10 +31,6 @@ jobs:
             make-target: test-upgrade-st2st-e2e
             use-artifacts: true
             use-codecov: false
-          - name: upgrade-ex2ex-e2e
-            make-target: test-upgrade-ex2ex-e2e
-            use-artifacts: true
-            use-codecov: false
           - name: upgrade-st2ex-e2e
             make-target: test-upgrade-st2ex-e2e
             use-artifacts: true
