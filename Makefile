@@ -335,6 +335,10 @@ run-latest-release:
 	@echo -e "\n\U23EC Using $(RELEASE_INSTALL) as release installer\n"
 	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/$(notdir $(RELEASE_INSTALL)) | bash -s
 
+.PHONY: run-main-experimental
+run-main-experimental:
+	KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) ./hack/test/deploy-from-main.sh
+
 .PHONY: pre-upgrade-setup
 pre-upgrade-setup:
 	./hack/test/pre-upgrade-setup.sh $(CATALOG_IMG) $(TEST_CLUSTER_CATALOG_NAME) $(TEST_CLUSTER_EXTENSION_NAME)
@@ -345,6 +349,7 @@ post-upgrade-checks:
 
 
 TEST_UPGRADE_E2E_TASKS := kind-cluster run-latest-release image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean
+TEST_UPGRADE_EX2EX_E2E_TASKS := kind-cluster run-main-experimental image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean
 
 .PHONY: test-upgrade-st2st-e2e
 test-upgrade-st2st-e2e: SOURCE_MANIFEST := $(STANDARD_MANIFEST)
@@ -357,12 +362,11 @@ test-upgrade-st2st-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (standard ->
 
 .PHONY: test-upgrade-ex2ex-e2e
 test-upgrade-ex2ex-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
-test-upgrade-ex2ex-e2e: RELEASE_INSTALL := $(EXPERIMENTAL_RELEASE_INSTALL)
 test-upgrade-ex2ex-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-ex2ex-e2e
 test-upgrade-ex2ex-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
 test-upgrade-ex2ex-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-ex2ex-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-upgrade-ex2ex-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (experimental -> experimental) e2e tests on a local kind cluster
+test-upgrade-ex2ex-e2e: $(TEST_UPGRADE_EX2EX_E2E_TASKS) #HELP Run upgrade (experimental -> experimental) e2e tests on a local kind cluster
 
 .PHONY: test-upgrade-st2ex-e2e
 test-upgrade-st2ex-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
