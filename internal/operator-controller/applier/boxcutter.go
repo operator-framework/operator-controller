@@ -75,8 +75,7 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		sanitizedUnstructured(ctx, &obj)
 
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
-			Object:              obj,
-			CollisionProtection: ocv1.CollisionProtectionNone, // allow to adopt objects from previous release
+			Object: obj,
 		})
 	}
 
@@ -88,6 +87,7 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	})
 	rev.Name = fmt.Sprintf("%s-1", ext.Name)
 	rev.Spec.Revision = 1
+	rev.Spec.CollisionProtection = ocv1.CollisionProtectionNone // allow to adopt objects from previous release
 	return rev, nil
 }
 
@@ -147,11 +147,12 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		sanitizedUnstructured(ctx, &unstr)
 
 		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
-			Object:              unstr,
-			CollisionProtection: ocv1.CollisionProtectionPrevent,
+			Object: unstr,
 		})
 	}
-	return r.buildClusterExtensionRevision(objs, ext, revisionAnnotations), nil
+	rev := r.buildClusterExtensionRevision(objs, ext, revisionAnnotations)
+	rev.Spec.CollisionProtection = ocv1.CollisionProtectionPrevent
+	return rev, nil
 }
 
 // sanitizedUnstructured takes an unstructured obj, removes status if present, and returns a sanitized copy containing only the allowed metadata entries set below.

@@ -105,6 +105,19 @@ type ClusterExtensionRevisionSpec struct {
 	// +optional
 	// <opcon:experimental>
 	ProgressDeadlineMinutes int32 `json:"progressDeadlineMinutes,omitempty"`
+
+	// collisionProtection specifies the default collision protection strategy for all objects
+	// in this revision. Individual phases or objects can override this value.
+	//
+	// When set, this value is used as the default for any phase or object that does not
+	// explicitly specify its own collisionProtection.
+	//
+	// The resolution order is: object > phase > spec
+	//
+	// +required
+	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="collisionProtection is immutable"
+	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
 // ClusterExtensionRevisionLifecycleState specifies the lifecycle state of the ClusterExtensionRevision.
@@ -144,6 +157,19 @@ type ClusterExtensionRevisionPhase struct {
 	// +required
 	// +kubebuilder:validation:MaxItems=50
 	Objects []ClusterExtensionRevisionObject `json:"objects"`
+
+	// collisionProtection specifies the default collision protection strategy for all objects
+	// in this phase. Individual objects can override this value.
+	//
+	// When set, this value is used as the default for any object in this phase that does not
+	// explicitly specify its own collisionProtection.
+	//
+	// When omitted, we use .spec.collistionProtection as the default for any object in this phase that does not
+	// explicitly specify its own collisionProtection.
+	//
+	// +optional
+	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
+	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
 
 // ClusterExtensionRevisionObject represents a Kubernetes object to be applied as part
@@ -174,7 +200,9 @@ type ClusterExtensionRevisionObject struct {
 	// Use this setting with extreme caution as it may cause multiple controllers to fight over
 	// the same resource, resulting in increased load on the API server and etcd.
 	//
-	// +required
+	// When omitted, the value is inherited from the phase, then spec.
+	//
+	// +optional
 	// +kubebuilder:validation:Enum=Prevent;IfNoController;None
 	CollisionProtection CollisionProtection `json:"collisionProtection,omitempty"`
 }
