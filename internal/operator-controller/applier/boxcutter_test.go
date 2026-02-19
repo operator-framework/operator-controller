@@ -2,6 +2,7 @@ package applier_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -559,12 +560,29 @@ func TestBoxcutter_Apply(t *testing.T) {
 				if !ok {
 					return fmt.Errorf("expected ClusterExtensionRevision, got %T", obj)
 				}
-				fmt.Println(cer.Spec.Revision)
 				if cer.Spec.Revision != revNum {
-					fmt.Println("AAA")
 					return apierrors.NewInvalid(cer.GroupVersionKind().GroupKind(), cer.GetName(), field.ErrorList{field.Invalid(field.NewPath("spec.phases"), "immutable", "spec.phases is immutable")})
 				}
 				return client.Patch(ctx, obj, patch, opts...)
+			},
+			Apply: func(ctx context.Context, client client.WithWatch, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+				// Extract revision number from apply configuration to validate it matches expected value
+				cer := &ocv1.ClusterExtensionRevision{}
+				data, err := json.Marshal(obj)
+				if err != nil {
+					return fmt.Errorf("failed to marshal apply configuration: %w", err)
+				}
+				if err := json.Unmarshal(data, cer); err != nil {
+					return fmt.Errorf("failed to unmarshal to ClusterExtensionRevision: %w", err)
+				}
+
+				// Set GVK explicitly since unmarshal doesn't populate TypeMeta
+				cer.SetGroupVersionKind(ocv1.GroupVersion.WithKind(ocv1.ClusterExtensionRevisionKind))
+
+				if cer.Spec.Revision != revNum {
+					return apierrors.NewInvalid(cer.GroupVersionKind().GroupKind(), cer.GetName(), field.ErrorList{field.Invalid(field.NewPath("spec.phases"), "immutable", "spec.phases is immutable")})
+				}
+				return client.Apply(ctx, obj, opts...)
 			},
 		}
 	}
