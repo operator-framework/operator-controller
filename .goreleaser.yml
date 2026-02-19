@@ -45,6 +45,7 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
+      - "--provenance=false"
   - image_templates:
       - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
     dockerfile: Dockerfile.operator-controller
@@ -53,6 +54,7 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
+      - "--provenance=false"
   - image_templates:
       - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
     dockerfile: Dockerfile.operator-controller
@@ -61,6 +63,7 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/ppc64le"
+      - "--provenance=false"
   - image_templates:
       - "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
     dockerfile: Dockerfile.operator-controller
@@ -69,6 +72,7 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/s390x"
+      - "--provenance=false"
   - image_templates:
       - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
     dockerfile: Dockerfile.catalogd
@@ -77,6 +81,7 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
+      - "--provenance=false"
   - image_templates:
       - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
     dockerfile: Dockerfile.catalogd
@@ -85,6 +90,7 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
+      - "--provenance=false"
   - image_templates:
       - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
     dockerfile: Dockerfile.catalogd
@@ -93,6 +99,7 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/ppc64le"
+      - "--provenance=false"
   - image_templates:
       - "{{ .Env.CATD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
     dockerfile: Dockerfile.catalogd
@@ -101,6 +108,7 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/s390x"
+      - "--provenance=false"
 docker_manifests:
   - name_template: "{{ .Env.OPCON_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
     image_templates:
