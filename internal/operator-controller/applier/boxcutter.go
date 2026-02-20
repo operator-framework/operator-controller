@@ -22,15 +22,16 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/cli-runtime/pkg/printers"
+	metav1ac "k8s.io/client-go/applyconfigurations/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1ac "github.com/operator-framework/operator-controller/applyconfigurations/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/authorization"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/labels"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/rukpak/bundle/source"
@@ -42,12 +43,12 @@ const (
 )
 
 type ClusterExtensionRevisionGenerator interface {
-	GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1.ClusterExtensionRevision, error)
+	GenerateRevision(ctx context.Context, bundleFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error)
 	GenerateRevisionFromHelmRelease(
 		ctx context.Context,
 		helmRelease *release.Release, ext *ocv1.ClusterExtension,
 		objectLabels map[string]string,
-	) (*ocv1.ClusterExtensionRevision, error)
+	) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error)
 }
 
 type SimpleRevisionGenerator struct {
@@ -59,9 +60,9 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 	ctx context.Context,
 	helmRelease *release.Release, ext *ocv1.ClusterExtension,
 	objectLabels map[string]string,
-) (*ocv1.ClusterExtensionRevision, error) {
+) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
 	docs := splitManifestDocuments(helmRelease.Manifest)
-	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(docs))
+	objs := make([]ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration, 0, len(docs))
 	for _, doc := range docs {
 		obj := unstructured.Unstructured{}
 		if err := yaml.Unmarshal([]byte(doc), &obj); err != nil {
@@ -74,9 +75,8 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		_ = cache.ApplyStripAnnotationsTransform(&obj)
 		sanitizedUnstructured(ctx, &obj)
 
-		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
-			Object: obj,
-		})
+		objs = append(objs, *ocv1ac.ClusterExtensionRevisionObject().
+			WithObject(obj))
 	}
 
 	rev := r.buildClusterExtensionRevision(objs, ext, map[string]string{
@@ -85,9 +85,9 @@ func (r *SimpleRevisionGenerator) GenerateRevisionFromHelmRelease(
 		labels.BundleVersionKey:   helmRelease.Labels[labels.BundleVersionKey],
 		labels.BundleReferenceKey: helmRelease.Labels[labels.BundleReferenceKey],
 	})
-	rev.Name = fmt.Sprintf("%s-1", ext.Name)
-	rev.Spec.Revision = 1
-	rev.Spec.CollisionProtection = ocv1.CollisionProtectionNone // allow to adopt objects from previous release
+	rev.WithName(fmt.Sprintf("%s-1", ext.Name))
+	rev.Spec.WithRevision(1)
+	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionNone) // allow to adopt objects from previous release
 	return rev, nil
 }
 
@@ -95,7 +95,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	ctx context.Context,
 	bundleFS fs.FS, ext *ocv1.ClusterExtension,
 	objectLabels, revisionAnnotations map[string]string,
-) (*ocv1.ClusterExtensionRevision, error) {
+) (*ocv1ac.ClusterExtensionRevisionApplyConfiguration, error) {
 	// extract plain manifests
 	plain, err := r.ManifestProvider.Get(bundleFS, ext)
 	if err != nil {
@@ -124,7 +124,7 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 	}
 
 	// objectLabels
-	objs := make([]ocv1.ClusterExtensionRevisionObject, 0, len(plain))
+	objs := make([]ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration, 0, len(plain))
 	for _, obj := range plain {
 		obj.SetLabels(mergeLabelMaps(obj.GetLabels(), objectLabels))
 
@@ -146,12 +146,11 @@ func (r *SimpleRevisionGenerator) GenerateRevision(
 		}
 		sanitizedUnstructured(ctx, &unstr)
 
-		objs = append(objs, ocv1.ClusterExtensionRevisionObject{
-			Object: unstr,
-		})
+		objs = append(objs, *ocv1ac.ClusterExtensionRevisionObject().
+			WithObject(unstr))
 	}
 	rev := r.buildClusterExtensionRevision(objs, ext, revisionAnnotations)
-	rev.Spec.CollisionProtection = ocv1.CollisionProtectionPrevent
+	rev.Spec.WithCollisionProtection(ocv1.CollisionProtectionPrevent)
 	return rev, nil
 }
 
@@ -198,33 +197,32 @@ func sanitizedUnstructured(ctx context.Context, unstr *unstructured.Unstructured
 }
 
 func (r *SimpleRevisionGenerator) buildClusterExtensionRevision(
-	objects []ocv1.ClusterExtensionRevisionObject,
+	objects []ocv1ac.ClusterExtensionRevisionObjectApplyConfiguration,
 	ext *ocv1.ClusterExtension,
 	annotations map[string]string,
-) *ocv1.ClusterExtensionRevision {
+) *ocv1ac.ClusterExtensionRevisionApplyConfiguration {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
 	annotations[labels.ServiceAccountNameKey] = ext.Spec.ServiceAccount.Name
 	annotations[labels.ServiceAccountNamespaceKey] = ext.Spec.Namespace
 
-	cer := &ocv1.ClusterExtensionRevision{
-		ObjectMeta: metav1.ObjectMeta{
-			Annotations: annotations,
-			Labels: map[string]string{
-				labels.OwnerKindKey: ocv1.ClusterExtensionKind,
-				labels.OwnerNameKey: ext.Name,
-			},
-		},
-		Spec: ocv1.ClusterExtensionRevisionSpec{
-			LifecycleState: ocv1.ClusterExtensionRevisionLifecycleStateActive,
-			Phases:         PhaseSort(objects),
-		},
-	}
+	phases := PhaseSort(objects)
+
+	spec := ocv1ac.ClusterExtensionRevisionSpec().
+		WithLifecycleState(ocv1.ClusterExtensionRevisionLifecycleStateActive).
+		WithPhases(phases...)
 	if p := ext.Spec.ProgressDeadlineMinutes; p > 0 {
-		cer.Spec.ProgressDeadlineMinutes = p
+		spec.WithProgressDeadlineMinutes(p)
 	}
-	return cer
+
+	return ocv1ac.ClusterExtensionRevision("").
+		WithAnnotations(annotations).
+		WithLabels(map[string]string{
+			labels.OwnerKindKey: ocv1.ClusterExtensionKind,
+			labels.OwnerNameKey: ext.Name,
+		}).
+		WithSpec(spec)
 }
 
 // BoxcutterStorageMigrator migrates ClusterExtensions from Helm-based storage to
@@ -234,12 +232,13 @@ type BoxcutterStorageMigrator struct {
 	RevisionGenerator  ClusterExtensionRevisionGenerator
 	Client             boxcutterStorageMigratorClient
 	Scheme             *runtime.Scheme
+	FieldOwner         string
 }
 
 type boxcutterStorageMigratorClient interface {
+	Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error
 	List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error
-	Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
 	Status() client.StatusWriter
 }
 
@@ -295,17 +294,22 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 	// normal Boxcutter revisions. This label is critical for ensuring we only
 	// set Succeeded=True status on actually-migrated revisions, not on revision 1
 	// created during normal Boxcutter operation.
-	if rev.Labels == nil {
-		rev.Labels = make(map[string]string)
-	}
-	rev.Labels[labels.MigratedFromHelmKey] = "true"
+	rev.WithLabels(map[string]string{labels.MigratedFromHelmKey: "true"})
 
 	// Set ownerReference for proper garbage collection when the ClusterExtension is deleted.
-	if err := controllerutil.SetControllerReference(ext, rev, m.Scheme); err != nil {
-		return fmt.Errorf("set ownerref: %w", err)
+	gvk, err := apiutil.GVKForObject(ext, m.Scheme)
+	if err != nil {
+		return fmt.Errorf("get GVK for owner: %w", err)
 	}
+	rev.WithOwnerReferences(metav1ac.OwnerReference().
+		WithAPIVersion(gvk.GroupVersion().String()).
+		WithKind(gvk.Kind).
+		WithName(ext.Name).
+		WithUID(ext.UID).
+		WithBlockOwnerDeletion(true).
+		WithController(true))
 
-	if err := m.Client.Create(ctx, rev); err != nil {
+	if err := m.Client.Apply(ctx, rev, client.FieldOwner(m.FieldOwner), client.ForceOwnership); err != nil {
 		return err
 	}
 
@@ -325,7 +329,7 @@ func (m *BoxcutterStorageMigrator) Migrate(ctx context.Context, ext *ocv1.Cluste
 	//
 	// Since we're creating this revision from a successfully deployed Helm release, we know it
 	// represents a working installation and can safely mark it as succeeded immediately.
-	return m.ensureRevisionStatus(ctx, rev)
+	return m.ensureRevisionStatus(ctx, *rev.GetName())
 }
 
 // ensureMigratedRevisionStatus checks if revision 1 exists and needs its status set.
@@ -342,7 +346,7 @@ func (m *BoxcutterStorageMigrator) ensureMigratedRevisionStatus(ctx context.Cont
 		}
 		// Ensure revision 1 status is set correctly, including for previously migrated
 		// revisions that may not carry the MigratedFromHelm label.
-		return m.ensureRevisionStatus(ctx, &revisions[i])
+		return m.ensureRevisionStatus(ctx, revisions[i].Name)
 	}
 	// No revision 1 found - migration not applicable (revisions created by normal operation).
 	return nil
@@ -379,9 +383,9 @@ func (m *BoxcutterStorageMigrator) findLatestDeployedRelease(ac helmclient.Actio
 // ensureRevisionStatus ensures the revision has the Succeeded status condition set.
 // Returns nil if the status is already set or after successfully setting it.
 // Only sets status on revisions that were actually migrated from Helm (marked with MigratedFromHelmKey label).
-func (m *BoxcutterStorageMigrator) ensureRevisionStatus(ctx context.Context, rev *ocv1.ClusterExtensionRevision) error {
-	// Re-fetch to get latest version before checking status
-	if err := m.Client.Get(ctx, client.ObjectKeyFromObject(rev), rev); err != nil {
+func (m *BoxcutterStorageMigrator) ensureRevisionStatus(ctx context.Context, name string) error {
+	rev := &ocv1.ClusterExtensionRevision{}
+	if err := m.Client.Get(ctx, client.ObjectKey{Name: name}, rev); err != nil {
 		return fmt.Errorf("getting existing revision for status check: %w", err)
 	}
 
@@ -422,53 +426,15 @@ type Boxcutter struct {
 	FieldOwner        string
 }
 
-// createOrUpdate creates or updates the revision object. PreAuthorization checks are performed to ensure the
-// user has sufficient permissions to manage the revision and its resources
-func (bc *Boxcutter) createOrUpdate(ctx context.Context, user user.Info, rev *ocv1.ClusterExtensionRevision) error {
-	if rev.GetObjectKind().GroupVersionKind().Empty() {
-		gvk, err := apiutil.GVKForObject(rev, bc.Scheme)
-		if err != nil {
-			return err
-		}
-		rev.GetObjectKind().SetGroupVersionKind(gvk)
-	}
-
+// apply applies the revision object using server-side apply. PreAuthorization checks are performed
+// to ensure the user has sufficient permissions to manage the revision and its resources.
+func (bc *Boxcutter) apply(ctx context.Context, user user.Info, rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) error {
 	// Run auth preflight checks
 	if err := bc.runPreAuthorizationChecks(ctx, user, rev); err != nil {
 		return err
 	}
 
-	// DEPRECATION NOTICE: Using client.Apply (deprecated in controller-runtime v0.23.0+)
-	//
-	// WHY WE CAN'T FIX THIS YET:
-	// The recommended replacement is the new typed Apply() method that requires generated
-	// apply configurations (ApplyConfiguration types). However, this project does not
-	// currently generate these apply configurations for its API types.
-	//
-	// WHY WE NEED SERVER-SIDE APPLY SEMANTICS:
-	// This controller requires server-side apply with field ownership management to:
-	// 1. Track which controller owns which fields (via client.FieldOwner)
-	// 2. Take ownership of fields from other managers during upgrades (via client.ForceOwnership)
-	// 3. Automatically create-or-update without explicit Get/Create/Update logic
-	//
-	// WHY ALTERNATIVES DON'T WORK:
-	// - client.MergeFrom(): Lacks field ownership - causes conflicts during controller upgrades
-	// - client.StrategicMergePatch(): No field management - upgrade tests fail with ownership errors
-	// - Manual Create/Update: Loses server-side apply benefits, complex to implement correctly
-	//
-	// WHAT'S REQUIRED TO FIX PROPERLY:
-	// 1. Generate apply configurations for all API types (ClusterExtensionRevision, etc.)
-	//    - Requires running controller-gen with --with-applyconfig flag
-	//    - Generates ClusterExtensionRevisionApplyConfiguration types
-	// 2. Update all resource creation/update code to use typed Apply methods
-	// 3. Update all tests to work with new patterns
-	// This is a project-wide effort beyond the scope of the k8s v1.35 upgrade.
-	//
-	// MIGRATION PATH:
-	// Track in a future issue: "Generate apply configurations and migrate to typed Apply methods"
-	//
-	// nolint:staticcheck // SA1019: server-side apply required, needs generated apply configurations
-	return bc.Client.Patch(ctx, rev, client.Apply, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
+	return bc.Client.Apply(ctx, rev, client.FieldOwner(bc.FieldOwner), client.ForceOwnership)
 }
 
 func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels, revisionAnnotations map[string]string) (bool, string, error) {
@@ -501,9 +467,17 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		return false, "", err
 	}
 
-	if err := controllerutil.SetControllerReference(ext, desiredRevision, bc.Scheme); err != nil {
-		return false, "", fmt.Errorf("set ownerref: %w", err)
+	gvk, err := apiutil.GVKForObject(ext, bc.Scheme)
+	if err != nil {
+		return false, "", fmt.Errorf("get GVK for owner: %w", err)
 	}
+	desiredRevision.WithOwnerReferences(metav1ac.OwnerReference().
+		WithAPIVersion(gvk.GroupVersion().String()).
+		WithKind(gvk.Kind).
+		WithName(ext.Name).
+		WithUID(ext.UID).
+		WithBlockOwnerDeletion(true).
+		WithController(true))
 
 	currentRevision := &ocv1.ClusterExtensionRevision{}
 	state := StateNeedsInstall
@@ -511,10 +485,10 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 	if len(existingRevisions) > 0 {
 		// try first to update the current revision.
 		currentRevision = &existingRevisions[len(existingRevisions)-1]
-		desiredRevision.Spec.Revision = currentRevision.Spec.Revision
-		desiredRevision.Name = currentRevision.Name
+		desiredRevision.Spec.WithRevision(currentRevision.Spec.Revision)
+		desiredRevision.WithName(currentRevision.Name)
 
-		err := bc.createOrUpdate(ctx, getUserInfo(ext), desiredRevision)
+		err := bc.apply(ctx, getUserInfo(ext), desiredRevision)
 		switch {
 		case apierrors.IsInvalid(err):
 			// We could not update the current revision due to trying to update an immutable field.
@@ -524,7 +498,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 			// inplace patch was successful, no changes in phases
 			state = StateUnchanged
 		default:
-			return false, "", fmt.Errorf("patching %s Revision: %w", desiredRevision.Name, err)
+			return false, "", fmt.Errorf("patching %s Revision: %w", *desiredRevision.GetName(), err)
 		}
 	}
 
@@ -557,14 +531,14 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 		prevRevisions := existingRevisions
 		revisionNumber := latestRevisionNumber(prevRevisions) + 1
 
-		desiredRevision.Name = fmt.Sprintf("%s-%d", ext.Name, revisionNumber)
-		desiredRevision.Spec.Revision = revisionNumber
+		desiredRevision.WithName(fmt.Sprintf("%s-%d", ext.Name, revisionNumber))
+		desiredRevision.Spec.WithRevision(revisionNumber)
 
 		if err = bc.garbageCollectOldRevisions(ctx, prevRevisions); err != nil {
 			return false, "", fmt.Errorf("garbage collecting old revisions: %w", err)
 		}
 
-		if err := bc.createOrUpdate(ctx, getUserInfo(ext), desiredRevision); err != nil {
+		if err := bc.apply(ctx, getUserInfo(ext), desiredRevision); err != nil {
 			return false, "", fmt.Errorf("creating new Revision: %w", err)
 		}
 	}
@@ -574,7 +548,7 @@ func (bc *Boxcutter) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.Clust
 
 // runPreAuthorizationChecks runs PreAuthorization checks if the PreAuthorizer is set. An error will be returned if
 // the ClusterExtension service account does not have the necessary permissions to manage the revision's resources
-func (bc *Boxcutter) runPreAuthorizationChecks(ctx context.Context, user user.Info, rev *ocv1.ClusterExtensionRevision) error {
+func (bc *Boxcutter) runPreAuthorizationChecks(ctx context.Context, user user.Info, rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) error {
 	if bc.PreAuthorizer == nil {
 		return nil
 	}
@@ -649,22 +623,27 @@ func splitManifestDocuments(file string) []string {
 }
 
 // getObjects returns a slice of all objects in the revision
-func getObjects(rev *ocv1.ClusterExtensionRevision) []client.Object {
+func getObjects(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) []client.Object {
+	if rev.Spec == nil {
+		return nil
+	}
 	totalObjects := 0
 	for _, phase := range rev.Spec.Phases {
 		totalObjects += len(phase.Objects)
 	}
 	objs := make([]client.Object, 0, totalObjects)
 	for _, phase := range rev.Spec.Phases {
-		for _, phaseObject := range phase.Objects {
-			objs = append(objs, &phaseObject.Object)
+		for i := range phase.Objects {
+			if phase.Objects[i].Object != nil {
+				objs = append(objs, phase.Objects[i].Object)
+			}
 		}
 	}
 	return objs
 }
 
 // revisionManifestReader returns an io.Reader containing all manifests in the revision
-func revisionManifestReader(rev *ocv1.ClusterExtensionRevision) (io.Reader, error) {
+func revisionManifestReader(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) (io.Reader, error) {
 	printer := printers.YAMLPrinter{}
 	buf := new(bytes.Buffer)
 	for _, obj := range getObjects(rev) {
@@ -676,12 +655,12 @@ func revisionManifestReader(rev *ocv1.ClusterExtensionRevision) (io.Reader, erro
 	return buf, nil
 }
 
-func revisionManagementPerms(rev *ocv1.ClusterExtensionRevision) func(user.Info) []authorizer.AttributesRecord {
+func revisionManagementPerms(rev *ocv1ac.ClusterExtensionRevisionApplyConfiguration) func(user.Info) []authorizer.AttributesRecord {
 	return func(user user.Info) []authorizer.AttributesRecord {
 		return []authorizer.AttributesRecord{
 			{
 				User:            user,
-				Name:            rev.Name,
+				Name:            *rev.GetName(),
 				APIGroup:        ocv1.GroupVersion.Group,
 				APIVersion:      ocv1.GroupVersion.Version,
 				Resource:        "clusterextensionrevisions/finalizers",
