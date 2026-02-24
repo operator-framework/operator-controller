@@ -240,6 +240,6 @@ Feature: Update ClusterExtension
     And ClusterExtension is available
     When ClusterExtension is updated to version "1.0.2"
     Then ClusterExtension reports "${NAME}-1, ${NAME}-2" as active revisions
-    And ClusterExtensionRevision "${NAME}-2" reports Progressing as True with Reason Succeeded
+    And ClusterExtensionRevision "${NAME}-2" reports Progressing as True with Reason RollingOut
     And ClusterExtensionRevision "${NAME}-2" reports Available as False with Reason ProbeFailure
 

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -20,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/clock"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
@@ -48,9 +48,7 @@ type ClusterExtensionRevisionReconciler struct {
 	Client                client.Client
 	RevisionEngineFactory RevisionEngineFactory
 	TrackingCache         trackingCache
-	// track if we have queued up the reconciliation that detects eventual progress deadline issues
-	// keys is revision UUID, value is boolean
-	progressDeadlineCheckInFlight sync.Map
+	Clock                 clock.Clock
 }
 
 type trackingCache interface {
@@ -86,15 +84,19 @@ func (c *ClusterExtensionRevisionReconciler) Reconcile(ctx context.Context, req 
 		// check if we reached the progress deadline only if the revision is still progressing and has not succeeded yet
 		if isStillProgressing && !succeeded {
 			timeout := time.Duration(pd) * time.Minute
-			if time.Since(existingRev.CreationTimestamp.Time) > timeout {
+			if c.Clock.Since(existingRev.CreationTimestamp.Time) > timeout {
 				// progress deadline reached, reset any errors and stop reconciling this revision
-				markAsNotProgressing(reconciledRev, ocv1.ReasonProgressDeadlineExceeded, fmt.Sprintf("Revision has not rolled out for %d minutes.", pd))
+				markAsNotProgressing(reconciledRev, ocv1.ReasonProgressDeadlineExceeded, fmt.Sprintf("Revision has not rolled out for %d minute(s).", pd))
 				reconcileErr = nil
 				res = ctrl.Result{}
-			} else if _, found := c.progressDeadlineCheckInFlight.Load(existingRev.GetUID()); !found && reconcileErr == nil {
-				// if we haven't already queued up a reconcile to check for progress deadline, queue one up, but only once
-				c.progressDeadlineCheckInFlight.Store(existingRev.GetUID(), true)
-				res = ctrl.Result{RequeueAfter: timeout}
+			} else if reconcileErr == nil {
+				// We want to requeue so far in the future that the next reconciliation
+				// can detect if the revision did not progress within the given timeout.
+				// Thus, we plan the next reconcile slightly after (+2secs) the timeout is passed.
+				drift := 2 * time.Second
+				requeueAfter := existingRev.CreationTimestamp.Time.Add(timeout).Add(drift).Sub(c.Clock.Now()).Round(time.Second)
+				l.Info(fmt.Sprintf("ProgressDeadline not exceeded, requeue after ~%v to check again.", requeueAfter))
+				res = ctrl.Result{RequeueAfter: requeueAfter}
 			}
 		}
 	}
@@ -208,9 +210,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 	}
 
 	revVersion := cer.GetAnnotations()[labels.BundleVersionKey]
-	if !rres.InTransition() {
-		markAsProgressing(cer, ocv1.ReasonSucceeded, fmt.Sprintf("Revision %s has rolled out.", revVersion))
-	} else {
+	if rres.InTransition() {
 		markAsProgressing(cer, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
 	}
 
@@ -231,6 +231,7 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 			}
 		}
 
+		markAsProgressing(cer, ocv1.ReasonSucceeded, fmt.Sprintf("Revision %s has rolled out.", revVersion))
 		markAsAvailable(cer, ocv1.ClusterExtensionRevisionReasonProbesSucceeded, "Objects are available and pass all probes.")
 
 		// We'll probably only want to remove this once we are done updating the ClusterExtension conditions
@@ -274,6 +275,9 @@ func (c *ClusterExtensionRevisionReconciler) reconcile(ctx context.Context, cer 
 			markAsUnavailable(cer, ocv1.ClusterExtensionRevisionReasonProbeFailure, strings.Join(probeFailureMsgs, "\n"))
 		} else {
 			markAsUnavailable(cer, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
+		}
+		if meta.FindStatusCondition(cer.Status.Conditions, ocv1.ClusterExtensionRevisionTypeProgressing) == nil {
+			markAsProgressing(cer, ocv1.ReasonRollingOut, fmt.Sprintf("Revision %s is rolling out.", revVersion))
 		}
 	}
 
@@ -333,6 +337,7 @@ func (c *ClusterExtensionRevisionReconciler) SetupWithManager(mgr ctrl.Manager) 
 			return true
 		},
 	}
+	c.Clock = clock.RealClock{}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&ocv1.ClusterExtensionRevision{},

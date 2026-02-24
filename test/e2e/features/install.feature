@@ -385,6 +385,39 @@ Feature: Install ClusterExtension
 
   @BoxcutterRuntime
   @ProgressDeadline
+  Scenario: Report ClusterExtension as not progressing if the rollout does not become available within given timeout
+    Given min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
+    And min value for ClusterExtensionRevision .spec.progressDeadlineMinutes is set to 1
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        progressDeadlineMinutes: 1
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            # bundle refers bad image references, so that the deployment never becomes available
+            version: 1.0.2
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtensionRevision "${NAME}-1" reports Progressing as False with Reason ProgressDeadlineExceeded
+    And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded and Message:
+      """
+      Revision has not rolled out for 1 minute(s).
+      """
+    And ClusterExtension reports Progressing transition between 1 and 2 minutes since its creation
+
+  @BoxcutterRuntime
+  @ProgressDeadline
   Scenario: Report ClusterExtension as not progressing if the rollout does not complete within given timeout
     Given min value for ClusterExtension .spec.progressDeadlineMinutes is set to 1
     And min value for ClusterExtensionRevision .spec.progressDeadlineMinutes is set to 1
@@ -411,7 +444,7 @@ Feature: Install ClusterExtension
     Then ClusterExtensionRevision "${NAME}-1" reports Progressing as False with Reason ProgressDeadlineExceeded
     And ClusterExtension reports Progressing as False with Reason ProgressDeadlineExceeded and Message:
       """
-      Revision has not rolled out for 1 minutes.
+      Revision has not rolled out for 1 minute(s).
       """
     And ClusterExtension reports Progressing transition between 1 and 2 minutes since its creation
 

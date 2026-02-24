@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/clock"
+	clocktesting "k8s.io/utils/clock/testing"
 	"pkg.package-operator.run/boxcutter"
 	"pkg.package-operator.run/boxcutter/machinery"
 	machinerytypes "pkg.package-operator.run/boxcutter/machinery/types"
@@ -372,6 +374,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 			name: "set Progressing:True:Succeeded once transition rollout is finished",
 			revisionResult: mockRevisionResult{
 				inTransition: false,
+				isComplete:   true,
 			},
 			reconcilingRevisionName: clusterExtensionRevisionName,
 			existingObjs: func() []client.Object {
@@ -380,7 +383,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_RevisionReconciliation(t 
 				meta.SetStatusCondition(&rev1.Status.Conditions, metav1.Condition{
 					Type:               ocv1.TypeProgressing,
 					Status:             metav1.ConditionTrue,
-					Reason:             ocv1.ReasonSucceeded,
+					Reason:             ocv1.ReasonRollingOut,
 					Message:            "Revision 1.0.0 is rolling out.",
 					ObservedGeneration: 1,
 				})
@@ -945,6 +948,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 		validate        func(*testing.T, client.Client)
 		reconcileErr    error
 		reconcileResult ctrl.Result
+		clock           clock.Clock
 	}{
 		{
 			name: "progressing set to false when progress deadline is exceeded",
@@ -952,9 +956,11 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
 				rev1.Spec.ProgressDeadlineMinutes = 1
-				rev1.CreationTimestamp = metav1.NewTime(time.Now().Add(-61 * time.Second))
+				rev1.CreationTimestamp = metav1.NewTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
 				return []client.Object{rev1, ext}
 			},
+			// 61sec elapsed since the creation of the revision
+			clock: clocktesting.NewFakeClock(time.Date(2022, 1, 1, 0, 1, 1, 0, time.UTC)),
 			revisionResult: &mockRevisionResult{
 				inTransition: true,
 			},
@@ -975,13 +981,14 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 				ext := newTestClusterExtension()
 				rev1 := newTestClusterExtensionRevision(t, clusterExtensionRevisionName, ext, testScheme)
 				rev1.Spec.ProgressDeadlineMinutes = 1
-				rev1.CreationTimestamp = metav1.NewTime(time.Now())
+				rev1.CreationTimestamp = metav1.NewTime(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC))
 				return []client.Object{rev1, ext}
 			},
+			clock: clocktesting.NewFakeClock(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)),
 			revisionResult: &mockRevisionResult{
 				inTransition: true,
 			},
-			reconcileResult: ctrl.Result{RequeueAfter: 1 * time.Minute},
+			reconcileResult: ctrl.Result{RequeueAfter: 62 * time.Second},
 			validate: func(t *testing.T, c client.Client) {
 				rev := &ocv1.ClusterExtensionRevision{}
 				err := c.Get(t.Context(), client.ObjectKey{
@@ -1049,6 +1056,7 @@ func Test_ClusterExtensionRevisionReconciler_Reconcile_ProgressDeadline(t *testi
 				TrackingCache: &mockTrackingCache{
 					client: testClient,
 				},
+				Clock: tc.clock,
 			}).Reconcile(t.Context(), ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name: clusterExtensionRevisionName,
