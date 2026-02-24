@@ -74,6 +74,20 @@ func Test_UnmarshalConfig(t *testing.T) {
 			expectedErrMessage:    `unknown field "somekey"`,
 		},
 		{
+			name:                  "rejects selector field in deploymentConfig (v0 field not supported in v1)",
+			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces},
+			rawConfig: []byte(`{
+				"deploymentConfig": {
+					"selector": {
+						"matchLabels": {
+							"app": "test"
+						}
+					}
+				}
+			}`),
+			expectedErrMessage: `unknown field "selector"`,
+		},
+		{
 			name:                  "rejects valid json but invalid registry+v1",
 			supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
 			rawConfig:             []byte(`{"watchNamespace": {"hello": "there"}}`),
