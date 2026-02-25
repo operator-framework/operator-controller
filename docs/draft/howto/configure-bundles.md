@@ -1,7 +1,7 @@
 ## Description
 
 !!! note
-This feature is still in `alpha` and the `SingleOwnNamespaceInstallSupport` feature-gate must be enabled to make use of it.
+This feature is still `experimental` and the `SingleOwnNamespaceInstallSupport` feature-gate must be enabled to make use of it.
 See the instructions below on how to enable it.
 
 ---
