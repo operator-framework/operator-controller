@@ -18,6 +18,7 @@ const (
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
 	BoxcutterRuntime                  featuregate.Feature = "BoxcutterRuntime"
+	DeploymentConfig                  featuregate.Feature = "DeploymentConfig"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -76,6 +77,14 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 
 	// BoxcutterRuntime configures OLM to use the Boxcutter runtime for extension lifecycling
 	BoxcutterRuntime: {
+		Default:       false,
+		PreRelease:    featuregate.Alpha,
+		LockToDefault: false,
+	},
+
+	// DeploymentConfig enables support for customizing operator deployments
+	// via spec.config.inline.deploymentConfig in ClusterExtension resources.
+	DeploymentConfig: {
 		Default:       false,
 		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
