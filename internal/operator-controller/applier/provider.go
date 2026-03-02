@@ -33,6 +33,7 @@ type RegistryV1ManifestProvider struct {
 	CertificateProvider         render.CertificateProvider
 	IsWebhookSupportEnabled     bool
 	IsSingleOwnNamespaceEnabled bool
+	IsDeploymentConfigEnabled   bool
 }
 
 func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
@@ -70,7 +71,11 @@ func (r *RegistryV1ManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtens
 		render.WithCertificateProvider(r.CertificateProvider),
 	}
 
-	if r.IsSingleOwnNamespaceEnabled {
+	// Always validate inline config when present so that disabled features produce
+	// a clear error rather than being silently ignored. When IsSingleOwnNamespaceEnabled
+	// is true we also call this with no config to validate required fields (e.g.
+	// watchNamespace for OwnNamespace-only bundles).
+	if r.IsSingleOwnNamespaceEnabled || ext.Spec.Config != nil {
 		configOpts, err := r.extractBundleConfigOptions(&rv1, ext)
 		if err != nil {
 			return nil, err
@@ -88,6 +93,14 @@ func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.Regi
 		return nil, fmt.Errorf("error getting configuration schema: %w", err)
 	}
 
+	// When the DeploymentConfig feature gate is disabled, remove deploymentConfig from the
+	// schema so that users get a clear "unknown field" error if they attempt to use it.
+	if !r.IsDeploymentConfigEnabled {
+		if props, ok := schema["properties"].(map[string]any); ok {
+			delete(props, "deploymentConfig")
+		}
+	}
+
 	bundleConfigBytes := extensionConfigBytes(ext)
 	bundleConfig, err := config.UnmarshalConfig(bundleConfigBytes, schema, ext.Spec.Namespace)
 	if err != nil {
@@ -99,13 +112,15 @@ func (r *RegistryV1ManifestProvider) extractBundleConfigOptions(rv1 *bundle.Regi
 		opts = append(opts, render.WithTargetNamespaces(*watchNS))
 	}
 
-	// Extract and convert deploymentConfig if present
-	if deploymentConfigMap := bundleConfig.GetDeploymentConfig(); deploymentConfigMap != nil {
-		deploymentConfig, err := convertToDeploymentConfig(deploymentConfigMap)
-		if err != nil {
-			return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid deploymentConfig: %w", err))
+	// Extract and convert deploymentConfig if present and the feature gate is enabled.
+	if r.IsDeploymentConfigEnabled {
+		if deploymentConfigMap := bundleConfig.GetDeploymentConfig(); deploymentConfigMap != nil {
+			deploymentConfig, err := convertToDeploymentConfig(deploymentConfigMap)
+			if err != nil {
+				return nil, errorutil.NewTerminalError(ocv1.ReasonInvalidConfiguration, fmt.Errorf("invalid deploymentConfig: %w", err))
+			}
+			opts = append(opts, render.WithDeploymentConfig(deploymentConfig))
 		}
-		opts = append(opts, render.WithDeploymentConfig(deploymentConfig))
 	}
 
 	return opts, nil

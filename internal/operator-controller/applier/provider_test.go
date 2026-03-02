@@ -461,6 +461,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 				},
 			},
 			IsSingleOwnNamespaceEnabled: true,
+			IsDeploymentConfigEnabled:   true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -492,6 +493,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 				},
 			},
 			IsSingleOwnNamespaceEnabled: true,
+			IsDeploymentConfigEnabled:   true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -524,6 +526,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 				},
 			},
 			IsSingleOwnNamespaceEnabled: true,
+			IsDeploymentConfigEnabled:   true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -566,6 +569,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 				},
 			},
 			IsSingleOwnNamespaceEnabled: true,
+			IsDeploymentConfigEnabled:   true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -602,6 +606,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 				},
 			},
 			IsSingleOwnNamespaceEnabled: true,
+			IsDeploymentConfigEnabled:   true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -631,6 +636,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 				},
 			},
 			IsSingleOwnNamespaceEnabled: true,
+			IsDeploymentConfigEnabled:   true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -653,6 +659,70 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		require.Contains(t, err.Error(), "invalid ClusterExtension configuration")
 		require.Contains(t, err.Error(), "deploymentConfig.env")
 		require.ErrorIs(t, err, reconcile.TerminalError(nil), "config validation errors should be terminal")
+	})
+
+	t.Run("returns terminal error when deploymentConfig is used but feature gate is disabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: true,
+			IsDeploymentConfigEnabled:   false,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{"deploymentConfig": {"env": [{"name": "TEST_ENV", "value": "test-value"}]}}`),
+					},
+				},
+			},
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unknown field \"deploymentConfig\"")
+		require.ErrorIs(t, err, reconcile.TerminalError(nil), "feature gate disabled error should be terminal")
+	})
+
+	t.Run("returns terminal error when deploymentConfig is used with SingleOwnNamespace disabled and DeploymentConfig gate disabled", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: render.BundleRenderer{
+				ResourceGenerators: []render.ResourceGenerator{
+					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
+						return nil, nil
+					},
+				},
+			},
+			IsSingleOwnNamespaceEnabled: false,
+			IsDeploymentConfigEnabled:   false,
+		}
+
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
+
+		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{"deploymentConfig": {"env": [{"name": "TEST_ENV", "value": "test-value"}]}}`),
+					},
+				},
+			},
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unknown field \"deploymentConfig\"")
+		require.ErrorIs(t, err, reconcile.TerminalError(nil), "config should not be silently ignored when both feature gates are disabled")
 	})
 }
 

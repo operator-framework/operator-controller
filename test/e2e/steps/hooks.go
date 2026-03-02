@@ -71,6 +71,7 @@ var (
 		features.WebhookProviderOpenshiftServiceCA: false,
 		features.HelmChartSupport:                  false,
 		features.BoxcutterRuntime:                  false,
+		features.DeploymentConfig:                  false,
 	}
 	logger logr.Logger
 )
