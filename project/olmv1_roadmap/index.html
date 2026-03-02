@@ -1,0 +1,2382 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../olmv1_limitations/">
+      
+      
+        <link rel="next" href="../public-api/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Roadmap - Operator Lifecycle Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#olm-v1-roadmap-deprecated" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Operator Lifecycle Manager" class="md-header__button md-logo" aria-label="Operator Lifecycle Manager" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Operator Lifecycle Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Roadmap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Operator Lifecycle Manager" class="md-nav__button md-logo" aria-label="Operator Lifecycle Manager" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Operator Lifecycle Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Overview
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../olmv1_community/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../olmv1_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../olmv1_design_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../olmv1_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#functional-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functional Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functional Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#f1-extension-catalogs-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F1 - Extension catalogs (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f2-extension-catalog-discovery-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F2 - Extension catalog discovery (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f3-dependency-preview-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F3 - Dependency preview (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f4-dependency-review-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F4 - Dependency review (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f5-permission-preview-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F5 - Permission preview (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f6-installupdate-preflight-checks-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F6 - Install/Update preflight checks (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f7-extension-installation-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F7 - Extension installation (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f8-semver-based-update-policy-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F8 - Semver-based update policy (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f9-update-notification-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F9 - Update notification (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f10-extension-updates-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F10 - Extension updates (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f11-request-approval-flow-for-installs-updates-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F11 - Request / Approval Flow for Installs / Updates (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f12-installed-extension-discovery-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F12 - Installed extension discovery (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f13-extension-permissions-management-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F13 - Extension permissions management (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f14-extension-permissions-escalation-checks-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F14 - Extension permissions escalation checks (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f15-selective-extension-permissions-grants-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F15 - Selective extension permissions grants (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f16-extension-removal-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F16 - Extension removal (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f17-extension-cascading-removal-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F17 - Extension cascading removal (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f18-standalone-extension-bundle-installation-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F18 - Standalone extension bundle installation (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f19-extension-constraints-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F19 - Extension constraints (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f20-extension-health-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F20 - Extension health (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f21-custom-extension-health-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F21 - Custom extension health (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f22-best-effort-resolution-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F22 - Best effort resolution (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f23-opt-in-to-fallback-rollback-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F23 - Opt-in to fallback / rollback (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f24-extension-overrides-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F24 - Extension Overrides (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f25-extension-controlled-update-readiness-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F25 - Extension-controlled Update Readiness (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f26-canary-style-rollouts-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F26 - Canary Style Rollouts (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f27-pluggable-certificate-management-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F27 - Pluggable certificate management (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f28-provided-service-versions-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F28 - Provided service versions (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../public-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Public API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/olmv1_getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/add-catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a Catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/explore-available-content/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore Content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/install-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/upgrade-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/downgrade-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Downgrade an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/uninstall-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall an Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/catalog-queries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catalog queries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-channel-based-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Channel-Based Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-pin-version/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Pinning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-version-range-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Range Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-z-stream-upgrades/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Z-Stream Upgrades
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/derive-service-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Derive Service Account Permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-grant-api-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grant Access to Your Extension's API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conceptual Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Conceptual Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/single-owner-objects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single Owner Objects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/upgrade-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crd-upgrade-safety/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CRD Upgrade Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/controlling-catalog-selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Content Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/version-ranges/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Ranges
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-reference/olmv1-api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OLMv1 API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-reference/catalogd-webserver/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CatalogD Web Server reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contribute
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developing OLM v1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" hidden>
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#functional-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functional Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functional Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#f1-extension-catalogs-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F1 - Extension catalogs (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f2-extension-catalog-discovery-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F2 - Extension catalog discovery (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f3-dependency-preview-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F3 - Dependency preview (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f4-dependency-review-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F4 - Dependency review (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f5-permission-preview-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F5 - Permission preview (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f6-installupdate-preflight-checks-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F6 - Install/Update preflight checks (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f7-extension-installation-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F7 - Extension installation (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f8-semver-based-update-policy-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F8 - Semver-based update policy (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f9-update-notification-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F9 - Update notification (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f10-extension-updates-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F10 - Extension updates (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f11-request-approval-flow-for-installs-updates-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F11 - Request / Approval Flow for Installs / Updates (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f12-installed-extension-discovery-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F12 - Installed extension discovery (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f13-extension-permissions-management-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F13 - Extension permissions management (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f14-extension-permissions-escalation-checks-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F14 - Extension permissions escalation checks (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f15-selective-extension-permissions-grants-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F15 - Selective extension permissions grants (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f16-extension-removal-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F16 - Extension removal (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f17-extension-cascading-removal-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F17 - Extension cascading removal (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f18-standalone-extension-bundle-installation-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F18 - Standalone extension bundle installation (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f19-extension-constraints-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F19 - Extension constraints (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f20-extension-health-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F20 - Extension health (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f21-custom-extension-health-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F21 - Custom extension health (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f22-best-effort-resolution-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F22 - Best effort resolution (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f23-opt-in-to-fallback-rollback-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F23 - Opt-in to fallback / rollback (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f24-extension-overrides-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F24 - Extension Overrides (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f25-extension-controlled-update-readiness-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F25 - Extension-controlled Update Readiness (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f26-canary-style-rollouts-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F26 - Canary Style Rollouts (P3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f27-pluggable-certificate-management-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F27 - Pluggable certificate management (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f28-provided-service-versions-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F28 - Provided service versions (P2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+
+
+
+  
+  
+
+
+<h1 id="olm-v1-roadmap-deprecated">OLM v1 roadmap (Deprecated)</h1>
+<p><strong>Note</strong>: The current roadmap is deprecated and it is not up-to-date. Refer to project <a href="https://github.com/orgs/operator-framework/projects/8/views/47">dashboard</a> to get latest information.</p>
+<h2 id="functional-requirements">Functional Requirements</h2>
+<p><em>Priority Rating: 1 highest, 2 medium, 3 lower (e.g. P2 = Medium Priority)</em></p>
+<h3 id="f1-extension-catalogs-p1">F1 - Extension catalogs (P1)</h3>
+<p>The existing OLM concepts around catalogs, packages and channels is to be used as a basis for below functional requirements.</p>
+<h3 id="f2-extension-catalog-discovery-p2">F2 - Extension catalog discovery (P2)</h3>
+<p>Unprivileged tenants need to have the ability to discover extensions that are available to install. In particular users need to be able to discover all versions in all channels that an extension package defines in a catalog. The privilege should be given at the discretion of the cluster administrator.</p>
+<h3 id="f3-dependency-preview-p3">F3 - Dependency preview (P3)</h3>
+<p>Before extension installation, OLM needs to introspect the dependencies of an extension and present a preview of the resolution result to the user to let the user confirm they are ok with this.</p>
+<h3 id="f4-dependency-review-p3">F4 - Dependency review (P3)</h3>
+<p>For installed extensions OLM needs to surface the dependency relationship to other installed extensions and also highlight which other extensions depend on a particular extension so users are informed about the relationships at runtime.</p>
+<h3 id="f5-permission-preview-p2">F5 - Permission preview (P2)</h3>
+<p>Before extension installation and updates, OLM needs to allow introspection of the permissions the extension requires on cluster and dependencies APIs. This is especially important during updates when the permission scope increases in which case updates should be blocked until approved (F14).</p>
+<h3 id="f6-installupdate-preflight-checks-p1">F6 - Install/Update preflight checks (P1)</h3>
+<p>When installing and updating extensions OLM should carry out a set of preflight checks to prevent installations from going into a failed state as a result of attempting an upgrade or install. Preflight checks should include availability and (if applicable) health of (running) dependencies and any cluster runtime constraints (F19).</p>
+<h3 id="f7-extension-installation-p1">F7 - Extension installation (P1)</h3>
+<p>OLM needs a declarative way to install extensions either from a catalog of extensions or directly from an OCI image. Should the installation attempt fail due to unfilled requirements, constraints, preflight checks or dependencies there needs to be an option to force the install. Extensions are cluster-wide singletons, thus they can only be installed once in the cluster and are managed at cluster-scope.</p>
+<h3 id="f8-semver-based-update-policy-p2">F8 - Semver-based update policy (P2)</h3>
+<p>OLM should allow users to specify if and when extensions are updated. Manual update policy should include the user explicitly approving an update to be installed. An automatic update policy should allow updates to automatically be applied as soon as they are available and should provide further conditions upon which an update is to be applied. Conditions concern version changes of the extension, specifically: automatic updates on z-streams only, automatic updates on y-streams only, always automatic update. Updates across channels are outside of the update policy.</p>
+<h3 id="f9-update-notification-p3">F9 - Update notification (P3)</h3>
+<p>As updates can be made available at any time using OLMs existing over-the-air catalog update capabilities, OLM should provide events / notifications on the platform to notify users about available but not yet approved updates of existing installed extensions, specifically so that graphical consoles can pick them up and visualize them. Automatically applied updates as per F8 should also create notifications.</p>
+<h3 id="f10-extension-updates-p2">F10 - Extension updates (P2)</h3>
+<p>As extensions get updated, either automatically or manually, OLM replaces the older version of the extensions with a newer version atomically. Up until any custom code or conversion logic runs, an update should be able to be rolled back (F23). When multiple extensions are updated to satisfy an update request, the update policy of each extension needs to be respected to allow users to pin certain extensions to installed versions or certain types of updates (e.g. z-stream only). It should also be possible to force an update to a certain version, even if there is no direct path as per the graph metadata. Otherwise all versions along the update path should be allowed for selecting by the user as the desired target version.Otherwise all versions on</p>
+<h3 id="f11-request-approval-flow-for-installs-updates-p2">F11 - Request / Approval Flow for Installs / Updates (P2)</h3>
+<p>To support multi-tenant environments a request / approval flow is desirable for generally available content within default catalogs. In this model any tenant with enough privilege can discover installable content and can trigger an install request, which can in turn be approved or denied by a more privileged administrative role. Such requests should also have timeouts. Administrators should have the ability to define a list of extensions that are automatically approved at the scope of a namespace. Administrators should be able to get aware of unapproved requested via alerts triggered by the platform.</p>
+<h3 id="f12-installed-extension-discovery-p1">F12 - Installed extension discovery (P1)</h3>
+<p>Unprivileged tenants need to be able to discover installed extensions if they are offering services for them to use in their namespace. OLM needs to provide distinct controls for installed extensions which administrators can use to regulate in which namespaces extensions are discoverable by tenants, irrespective of the namespaces in which the extension has permissions on cluster APIs (see F13)</p>
+<h3 id="f13-extension-permissions-management-p1">F13 - Extension permissions management (P1)</h3>
+<p>Administrative personas need to be able to configure in which namespaces in the cluster the extension can get the requested permissions the extension author deems required. The control needs to be independent of the controls in F12. Extensions should always be given permissions to update their own APIs (if they define any) to inform users about potential lack of permissions in their namespace.</p>
+<h3 id="f14-extension-permissions-escalation-checks-p2">F14 - Extension permissions escalation checks (P2)</h3>
+<p>If, in the course of an update, an extension requests more permissions than the currently installed version, an automatic update is blocked and an administrative persona needs to specifically approve the update by default. The user who installed the extension can opt out of these permission increase checks for the purpose of automation.</p>
+<h3 id="f15-selective-extension-permissions-grants-p3">F15 - Selective extension permissions grants (P3)</h3>
+<p>Administrative personas can choose to give extensions only a subset of the permissions it requests. This should be manageable at a per namespace level.</p>
+<h3 id="f16-extension-removal-p1">F16 - Extension removal (P1)</h3>
+<p>Administrative personas need to be able to remove an extension including all the content that was part of the original installation bundle. Special handling should be implemented for CRDs, which when not removed, are left behind in a functioning state (i.e.any dependencies on running controllers like conversion webhooks need to be removed). When they are to be removed this can only happen if the user opts into F17. Special care also needs to be taken to allow the extension to perform any clean upon getting a signal to be removed. Components need to be removed in an order that allows the extension to handle a graceful shutdown.</p>
+<h3 id="f17-extension-cascading-removal-p2">F17 - Extension cascading removal (P2)</h3>
+<p>OLM needs to be able to cleanly remove an extension entirely, which means deleting CRDs and other resources on the cluster. In particular this means the removal of all custom resource instances of the CRDs to be deleted and all extensions with a hard dependency. A user needs to actively opt-in to this behavior and OLM has to sequence the successful removal of all affected components and the extension itself.</p>
+<h3 id="f18-standalone-extension-bundle-installation-p2">F18 - Standalone extension bundle installation (P2)</h3>
+<p>For local development OLM should allow the installation of an extension by directly referring to the bundle / OCI image in a container registry rather than a package name of an extension in a catalog containing the image in order to simplify testing and delivering hotfixes.</p>
+<h3 id="f19-extension-constraints-p1">F19 - Extension constraints (P1)</h3>
+<p>OLM needs to allow extensions to specify constraints towards aspects of the running cluster and other currently installed or future extensions. Aspects of the running cluster should include software version, resource utilization, overall resource availability and state of configuration settings. These constraints need to be evaluated when extensions are attempted to be installed or updated.</p>
+<h3 id="f20-extension-health-p1">F20 - Extension health (P1)</h3>
+<p>OLM needs to be able to report the overall health state of the extension on a cluster along the following set of aspects: presence of all required objects from the extension bundle, health of all components that have a liveness / readiness endpoint, presence and health of all other extensions the extension in question has a dependency on as well as evaluation of all additional constraints from F19. An extension that was forced to install despite missing / unhealthy dependencies and violated constraints has a reduced health scope down to the liveness / readiness endpoint.</p>
+<h3 id="f21-custom-extension-health-p3">F21 - Custom extension health (P3)</h3>
+<p>OLM should provide a way for extensions to report an aggregate health state with custom logic. This should align with other communications channels that are also used for extensions to declare update readiness (F25). This way extensions can report health more accurately than what OLM reports today based on simple readiness of the extension controller pod. Clients like graphical consoles should be able to make use of this to supply additional overall health states of extensions that provide some form of control plane by the user of other extensions.</p>
+<h3 id="f22-best-effort-resolution-p2">F22 - Best effort resolution (P2)</h3>
+<p>OLM should always try its best to resolve installation and update requests with the currently available and healthy set catalogs to resolve against. Intermittently or permanently failed catalogs should not block resolution for installation and updates. Fulfilling user requests is valued higher than determinism of results.</p>
+<h3 id="f23-opt-in-to-fallback-rollback-p2">F23 - Opt-in to fallback / rollback (P2)</h3>
+<p>OLM should allow extension developers to specify whether or not it is safe to rollback from a particular current version of the extension to an author-specified previous version, once an extension update has passed pre-flights checks in F10 but subsequently failed to become available or carry out a migration. In these cases OLM should allow the administrator to downgrade the extension to the specific previous version. OLM should also respect this downgrade path when conducting updates that fail and use it to fail back to the previous version of the extension indicating that the downgrade path is supported. Extension uptime is an important goal of OLM.</p>
+<h3 id="f24-extension-overrides-p2">F24 - Extension Overrides (P2)</h3>
+<p>Components deployed as part of extensions will require user-provided modifications at runtime in order to aid features like placement, networking configuration, proxy configuration etc. that require customization of volume mounts, annotations, labels, environment variables, taints, tolerations, node selectors, affinity, and resources. OLM should support accepting these customizations to the extension as input from the user prior or after the installation of an extension and apply them to applicable objects such as Deployments, StatefulSets, ReplicatSets.</p>
+<h3 id="f25-extension-controlled-update-readiness-p2">F25 - Extension-controlled Update Readiness (P2)</h3>
+<p>Extensions should be able to control their readiness for updates. An extension could be on a critical path or in a state where updates would lead to disruption or worst-case: outages. OLM should respect these update readiness signals and allow the extension to signal readiness differentiated to what nature the update is based on semantic versioning rules, i.e. patch updates vs. minor or major updates. Once the signal is encountered, OLM should block the update until the signal disappears.</p>
+<h3 id="f26-canary-style-rollouts-p3">F26 - Canary Style Rollouts (P3)</h3>
+<p>OLM should have an opinion about how administrators can carry out roll outs of new extension versions that coexist with already installed versions of the extension, in particular if the extension only ships a controller. While conflicting CRDs cannot co-exist, controllers that only selectively reconcile objects (Ingress controller pattern) can. OLM should support these deployment styles while ensuring integrity of cluster-level extensions like CRDs.</p>
+<h3 id="f27-pluggable-certificate-management-p2">F27 - Pluggable certificate management (P2)</h3>
+<p>OLM should rely on other controllers to create and lifecycle TLS certificates required to drive the functionality of certain extensions, like webhooks that need to trust /  need to be trusted by the cluster's API server. OLM should not implement any certificate handling itself. In a first implementation support should be established for cert-manager.</p>
+<h3 id="f28-provided-service-versions-p2">F28 - Provided service versions (P2)</h3>
+<p>Workload-based extensions can offer multiple services (a.k.a. operands) and their respective versions. Extension admins need to see which operand versions each extension supports by the extension version. Extension admins are guaranteed to install or upgrade an extension that supports their desired operand version(s). Extension authors can list supported operand versions and have guarantees that they can list dependencies that support the necessary operand version(s). When mirroring a catalog, mirroring users can select a subset of the related images to mirror, based on desired operand version(s).</p>
+<h1 id="behavioral-requirements">Behavioral Requirements</h1>
+<p><em>Priority Rating: 1 highest, 2 medium, 3 lower (ex. P2 = Medium Priority)</em></p>
+<h3 id="b1-single-api-control-surface-p1">B1 - Single API control surface (P1)</h3>
+<p>While the underlying implementation of the functional requirements can be carried out by different controllers with different APIs, to the administrative and non-administrative users there should be a single, cluster-level API that represents an installed extension with all high level controls described in / required by F4, F7, F8, F10, F13, F14, F15, F16, F17, F18, F21, F22, F23 and F24.</p>
+<h3 id="b2-gitops-friendly-api-surface-p1">B2 - GitOps-friendly API surface (P1)</h3>
+<p>In many cases OLM APIs will not be used by a human via a CLI or GUI interactively but declaratively through a GitOps pipeline. This means the primary OLM API to lifecycle an extension cannot leak abstractions to other APIs for initial deployment or reconfiguration. Modifications must not require conditional lookup or modifications of other objects on the cluster that are created as part of the declarative intent stored in git in the form of YAML manifest files.</p>
+<h3 id="b3-declarative-api-p1">B3 - Declarative API (P1)</h3>
+<p>As an extension itself, OLMs API controls have to allow for operations to be carried out solely declaratively. This mandates continuous reconciliation and eventual consistency of desired state. OLM should not conduct one-off operations. OLM should not require either clean up of failed operations or restating intent to retry a failed operation (with the exception of F11).</p>
+<h3 id="b4-event-trail-p2">B4 - Event trail (P2)</h3>
+<p>OLM should make heavy use of Kubernetes events to leave an audit trail of tasks and actions carried out on the cluster. For expected failure scenarios administrators should not need to consult the OLM controller logs for debugging but solely rely on events and status conditions (see also B6).</p>
+<h3 id="b5-force-overrides-p1">B5 - Force overrides (P1)</h3>
+<p>While OLM has a lot of opinions about safe operations with cluster extensions they do not apply all the time since OLM cannot possibly foresee how extensions behave at runtime. It needs to yield to the user in cases where they have more certainty about what's going to happen based on their background knowledge of the cluster or the extension. It should offer ways to force-override decisions that OLM made that block the user from proceeding in a certain direction, especially in the areas of extension installation, removal and updates.</p>
+<h3 id="b6-human-readable-status-extensions-information-p2">B6 - Human-readable status extensions information (P2)</h3>
+<p>Whenever OLM is in the process of or having reached or failed to reach a desired state it needs to update the user about what is happening / what has happened without assuming knowledge about OLM internal or implementation details.</p>
+<h3 id="b7-scalability-resource-consumption-p1">B7 - Scalability &amp; Resource consumption (P1)</h3>
+<p>OLM is used on clusters with hundreds to thousands of namespaces and tenants. Its API controls, specifically for F2 and F12 need to be built in such a way that resource consumption scales linearly with usage and cluster size and the overall resource usage envelope stays within manageable bounds that does not put the cluster stability, especially that of the API server at risk. System memory especially is a scarce resource.</p>
+<h1 id="compatibility-requirements">Compatibility Requirements:</h1>
+<h3 id="c1-compatibility-with-existing-extensions-p1">C1 - Compatibility with existing extensions  (P1)</h3>
+<p>OLM should be able to manage extensions packaged with the current bundle format in the way described by the functional and behavior requirements when the bundle supports AllNamespace installation mode.</p>
+<h3 id="c2-compatibility-with-existing-catalogs-p1">C2 - Compatibility with existing catalogs (P1)</h3>
+<p>OLM should be able to retrieve and update extensions that adhere to C1 from the currently supported catalog formats (File-based catalogs).</p>
+<h3 id="c3-incompatibility-with-existing-extensions-p1">C3 - Incompatibility with existing extensions (P1)</h3>
+<p>OLM 1.0 does not support managing bundles or extension versions that do not support AllNamespace installation mode with the new set of APIs or flows</p>
+<h2 id="assumptions">Assumptions</h2>
+<ul>
+<li>
+<p>No additional tenancy model will be introduced at the control plane / API layer of Kubernetes upstream</p>
+</li>
+<li>
+<p>kcp doesn’t fundamentally change OLMs role and responsibilities around managing extensions (at least initially)</p>
+</li>
+<li>
+<p>OLM will move to a descoped, cluster-wide singleton model for cluster extensions, extension management isn’t namespaced</p>
+</li>
+</ul>
+<h2 id="constraints">Constraints</h2>
+<ul>
+<li>Only extension bundles with “AllNamespace” mode installation support can be lifecycled with the new APIs / flows in OLM 1.0</li>
+</ul>
+<h2 id="dependencies">Dependencies</h2>
+<ul>
+<li>"F13 - Extension permissions management (P1)" and "F12 - Installed extension discovery (P1)" will land prior to the GA of OLM 1.0 to unblock most extensions that do not support AllNamespace installation mode today.</li>
+</ul>
+<h2 id="migration">Migration</h2>
+<ul>
+<li>
+<p>A new set of APIs is introduced in parallel to the existing set of APIs</p>
+</li>
+<li>
+<p>Users opt-in to the new set of APIs, potentially resulting in a reinstall of their extension if required</p>
+</li>
+<li>
+<p>Extensions that are shipped with the current bundle format with AllNamespace mode can simply be reused with the new set of APIs and controls</p>
+</li>
+<li>
+<p>Extensions that do not support AllNamespace mode cannot be managed with the new APIs</p>
+</li>
+<li>
+<p>Migration scripting is provided to mass-convert existing installed extensions (“Subscription” / “OperatorGroup” objects) on existing clusters to the new OLM 1.0 model assuming they are compatible</p>
+</li>
+<li>
+<p>Extension authors that are also SRE/Managed PaaS administrators are incentivized to make their extension compatible with the requirements of OLM 1.0 to reap the operational benefits</p>
+</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+  
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.top", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
