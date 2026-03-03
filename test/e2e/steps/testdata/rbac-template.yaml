@@ -28,6 +28,8 @@ rules:
       - serviceaccounts
       - events
       - namespaces
+      - persistentvolumes
+      - persistentvolumeclaims
     verbs: [update, create, list, watch, get, delete, patch]
   - apiGroups: ["apps"]
     resources:
