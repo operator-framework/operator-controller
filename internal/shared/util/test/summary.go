@@ -80,7 +80,7 @@ func (s *githubSummary) PerformanceQuery(title, pod, query, yLabel string, scale
 	matrix, ok := result.(model.Matrix)
 	if !ok {
 		return "", fmt.Errorf("typecast for metrics samples failed; aborting")
-	} else if len(matrix) > 1 {
+	} else if len(matrix) != 1 {
 		return "", fmt.Errorf("expected 1 set of results; got: %d", len(matrix))
 	}
 	chart := xychart{
@@ -160,7 +160,7 @@ func executeTemplate(templateFile string, obj any) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get working directory: %w", err)
 	}
-	tmpl, err := template.New(templateFile).ParseGlob(filepath.Join(wd, "../../internal/shared/util/testutils/templates", templateFile))
+	tmpl, err := template.New(templateFile).ParseGlob(filepath.Join(wd, "../../internal/shared/util/test/templates", templateFile))
 	if err != nil {
 		return "", err
 	}

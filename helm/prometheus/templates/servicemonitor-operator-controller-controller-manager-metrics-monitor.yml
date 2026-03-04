@@ -12,22 +12,22 @@ spec:
           name: prometheus-metrics-token
       interval: 10s
       path: /metrics
-      port: https
+      port: metrics
       scheme: https
       tlsConfig:
         ca:
           secret:
             key: ca.crt
-            name: olmv1-cert
+            name: operator-controller-cert
         cert:
           secret:
             key: tls.crt
-            name: olmv1-cert
+            name: operator-controller-cert
         insecureSkipVerify: false
         keySecret:
           key: tls.key
-          name: olmv1-cert
+          name: operator-controller-cert
         serverName: operator-controller-service.{{ .Values.namespaces.olmv1.name }}.svc
   selector:
     matchLabels:
-      control-plane: operator-controller-controller-manager
+      app.kubernetes.io/name: operator-controller
