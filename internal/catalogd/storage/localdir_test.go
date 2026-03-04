@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -135,6 +136,71 @@ func TestLocalDirStoraget(t *testing.T) {
 				err := s.Delete("nonexistent")
 				if err != nil {
 					t.Errorf("expected no error deleting nonexistent catalog, got: %v", err)
+				}
+			},
+		},
+		{
+			name: "orphaned temp dirs from a previous interrupted store are cleaned up",
+			setup: func(t *testing.T) (*LocalDirV1, fs.FS) {
+				rootDir := t.TempDir()
+				s := &LocalDirV1{RootDir: rootDir}
+
+				// Simulate temp dirs left behind by a previous crashed Store run.
+				for _, orphan := range []string{
+					".test-catalog-1234567890",
+					".test-catalog-9876543210",
+				} {
+					if err := os.MkdirAll(filepath.Join(rootDir, orphan), 0700); err != nil {
+						t.Fatal(err)
+					}
+				}
+				// A dir for a different catalog must not be removed.
+				if err := os.MkdirAll(filepath.Join(rootDir, ".other-catalog-1111111111"), 0700); err != nil {
+					t.Fatal(err)
+				}
+				return s, createTestFS(t)
+			},
+			test: func(t *testing.T, s *LocalDirV1, fsys fs.FS) {
+				const catalog = "test-catalog"
+
+				if err := s.Store(context.Background(), catalog, fsys); err != nil {
+					t.Fatalf("Store failed: %v", err)
+				}
+
+				entries, err := os.ReadDir(s.RootDir)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				names := make([]string, 0, len(entries))
+				for _, e := range entries {
+					names = append(names, e.Name())
+				}
+
+				// Orphaned dirs for "test-catalog" must be gone.
+				for _, orphan := range []string{".test-catalog-1234567890", ".test-catalog-9876543210"} {
+					for _, name := range names {
+						if name == orphan {
+							t.Errorf("expected orphaned temp dir %q to be removed, but it still exists", orphan)
+						}
+					}
+				}
+
+				// The catalog dir itself must exist.
+				if !s.ContentExists(catalog) {
+					t.Error("catalog content should exist after store")
+				}
+
+				// The unrelated catalog temp dir must still be present.
+				found := false
+				for _, name := range names {
+					if name == ".other-catalog-1111111111" {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Error("temp dir for a different catalog should not have been removed")
 				}
 			},
 		},

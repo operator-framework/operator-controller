@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"golang.org/x/sync/errgroup"
@@ -53,6 +54,13 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 	if err := os.MkdirAll(s.RootDir, 0700); err != nil {
 		return err
 	}
+
+	// Remove any orphaned temporary directories left by previously interrupted Store
+	// operations (e.g. after a process crash where deferred cleanup did not run).
+	if err := s.removeOrphanedTempDirs(catalog); err != nil {
+		return fmt.Errorf("error removing orphaned temp directories: %w", err)
+	}
+
 	tmpCatalogDir, err := os.MkdirTemp(s.RootDir, fmt.Sprintf(".%s-*", catalog))
 	if err != nil {
 		return err
@@ -105,6 +113,30 @@ func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) erro
 		os.RemoveAll(catalogDir),
 		os.Rename(tmpCatalogDir, catalogDir),
 	)
+}
+
+// removeOrphanedTempDirs removes temporary staging directories that were created by a
+// previous Store call for the given catalog but were not cleaned up because the process
+// was interrupted (e.g. killed by the OOM killer) before the deferred RemoveAll could run.
+// Temp dirs use the prefix ".{catalog}-" as created by os.MkdirTemp.
+// This method must be called while the write lock is held.
+func (s *LocalDirV1) removeOrphanedTempDirs(catalog string) error {
+	entries, err := os.ReadDir(s.RootDir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("error reading storage directory: %w", err)
+	}
+	prefix := fmt.Sprintf(".%s-", catalog)
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), prefix) {
+			if err := os.RemoveAll(filepath.Join(s.RootDir, entry.Name())); err != nil {
+				return fmt.Errorf("error removing orphaned temp directory %q: %w", entry.Name(), err)
+			}
+		}
+	}
+	return nil
 }
 
 func (s *LocalDirV1) Delete(catalog string) error {
