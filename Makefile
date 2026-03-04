@@ -240,6 +240,17 @@ verify-crd-compatibility: $(CRD_DIFF) manifests
 
 #SECTION Test
 
+define install-sh
+.PHONY: $(1)/install.sh
+$(1)/install.sh: manifests
+	@echo -e "\n\U1F4D8 Using $(1).yaml as source manifest\n"
+	sed "s/cert-git-version/cert-$$(VERSION)/g" manifests/$(1).yaml > $(2)
+	MANIFEST=$(2) INSTALL_DEFAULT_CATALOGS=false DEFAULT_CATALOG=$$(RELEASE_CATALOGS) envsubst '$$$$DEFAULT_CATALOG,$$$$CERT_MGR_VERSION,$$$$INSTALL_DEFAULT_CATALOGS,$$$$MANIFEST' < scripts/install.tpl.sh > $(1)-install.sh
+endef
+
+$(eval $(call install-sh,experimental,operator-controller-experimental.yaml))
+$(eval $(call install-sh,standard,operator-controller-standard.yaml))
+
 .PHONY: test
 test: manifests generate fmt lint test-unit test-e2e test-regression #HELP Run all tests.
 
@@ -343,52 +354,43 @@ run-latest-release:
 	@echo -e "\n\U23EC Using $(RELEASE_INSTALL) as release installer\n"
 	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/$(notdir $(RELEASE_INSTALL)) | bash -s
 
-.PHONY: pre-upgrade-setup
-pre-upgrade-setup:
-	./hack/test/pre-upgrade-setup.sh $(CATALOG_IMG) $(TEST_CLUSTER_CATALOG_NAME) $(TEST_CLUSTER_EXTENSION_NAME)
+.PHONY: test-upgrade-e2e
+test-upgrade-e2e:
+	RELEASE_INSTALL=$(RELEASE_INSTALL) \
+	RELEASE_UPGRADE=$(RELEASE_UPGRADE) \
+	KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) \
+	ROOT_DIR=$(ROOT_DIR) \
+	go test -count=1 -v ./test/upgrade-e2e/upgrade_test.go
 
-.PHONY: post-upgrade-checks
-post-upgrade-checks:
-	go test -count=1 -v ./test/upgrade-e2e/...
 
-
-TEST_UPGRADE_E2E_TASKS := kind-cluster run-latest-release image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean
+TEST_UPGRADE_E2E_TASKS := kind-cluster docker-build kind-load test-upgrade-e2e kind-clean
 
 .PHONY: test-upgrade-st2st-e2e
-test-upgrade-st2st-e2e: SOURCE_MANIFEST := $(STANDARD_MANIFEST)
-test-upgrade-st2st-e2e: RELEASE_INSTALL := $(STANDARD_RELEASE_INSTALL)
+test-upgrade-st2st-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh
+test-upgrade-st2st-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/standard-install.sh
 test-upgrade-st2st-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-st2st-e2e
-test-upgrade-st2st-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
-test-upgrade-st2st-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
-test-upgrade-st2st-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-upgrade-st2st-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (standard -> standard) e2e tests on a local kind cluster
+test-upgrade-st2st-e2e: standard/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (standard -> standard) e2e tests on a local kind cluster
 
 .PHONY: test-upgrade-ex2ex-e2e
-test-upgrade-ex2ex-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
-test-upgrade-ex2ex-e2e: RELEASE_INSTALL := $(EXPERIMENTAL_RELEASE_INSTALL)
+test-upgrade-ex2ex-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install-experimental.sh
 test-upgrade-ex2ex-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-ex2ex-e2e
-test-upgrade-ex2ex-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
-test-upgrade-ex2ex-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
-test-upgrade-ex2ex-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-upgrade-ex2ex-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (experimental -> experimental) e2e tests on a local kind cluster
+test-upgrade-ex2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
+test-upgrade-ex2ex-e2e: experimental/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (experimental -> experimental) e2e tests on a local kind cluster
 
 .PHONY: test-upgrade-st2ex-e2e
-test-upgrade-st2ex-e2e: SOURCE_MANIFEST := $(EXPERIMENTAL_MANIFEST)
-test-upgrade-st2ex-e2e: RELEASE_INSTALL := $(STANDARD_RELEASE_INSTALL)
+test-upgrade-st2ex-e2e: RELEASE_INSTALL := https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh
+test-upgrade-st2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
 test-upgrade-st2ex-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-st2ex-e2e
-test-upgrade-st2ex-e2e: export MANIFEST := $(EXPERIMENTAL_RELEASE_MANIFEST)
-test-upgrade-st2ex-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
-test-upgrade-st2ex-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-upgrade-st2ex-e2e: $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (standard -> experimental) e2e tests on a local kind cluster
+test-upgrade-st2ex-e2e: experimental/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run upgrade (standard -> experimental) e2e tests on a local kind cluster
 
 .PHONY: test-st2ex-e2e
-test-st2ex-e2e: SOURCE_MANIFEST := $(STANDARD_MANIFEST)
-test-st2ex-e2e: RELEASE_INSTALL := $(STANDARD_RELEASE_INSTALL)
+test-st2ex-e2e: RELEASE_INSTALL := $(ROOT_DIR)/standard-install.sh
+test-st2ex-e2e: RELEASE_UPGRADE := $(ROOT_DIR)/experimental-install.sh
 test-st2ex-e2e: KIND_CLUSTER_NAME := operator-controller-st2ex-e2e
 test-st2ex-e2e: export MANIFEST := $(STANDARD_RELEASE_MANIFEST)
 test-st2ex-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-st2ex-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-st2ex-e2e: run-internal image-registry pre-upgrade-setup kind-deploy-experimental post-upgrade-checks kind-clean #HELP Run swichover (standard -> experimental) e2e tests on a local kind cluster
+test-st2ex-e2e: experimental/install.sh standard/install.sh $(TEST_UPGRADE_E2E_TASKS) #HELP Run swichover (standard -> experimental) e2e tests on a local kind cluster
 
 .PHONY: e2e-coverage
 e2e-coverage:
