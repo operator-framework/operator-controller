@@ -11,7 +11,7 @@ metadata:
 rules:
   - apiGroups: [olm.operatorframework.io]
     resources: [clusterextensions, clusterextensions/finalizers]
-    resourceNames: ["${CLUSTEREXTENSION_NAME}"]
+    resourceNames: ["${CLUSTEREXTENSION_NAME}", "upgrade-ce"]
     verbs: [update]
   # Allow ClusterExtensionRevisions to set blockOwnerDeletion ownerReferences
   - apiGroups: [olm.operatorframework.io]

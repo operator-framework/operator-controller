@@ -14,7 +14,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -47,9 +49,24 @@ const (
 )
 
 var (
-	olmNamespace   = "olmv1-system"
-	kubeconfigPath string
-	k8sCli         string
+	olmNamespace        = "olmv1-system"
+	kubeconfigPath      string
+	k8sCli              string
+	deployImageRegistry = sync.OnceValue(func() error {
+		if os.Getenv("KIND_CLUSTER_NAME") == "" {
+			return nil
+		}
+		cmd := exec.Command("bash", "-c", "make image-registry")
+		dir, _ := os.LookupEnv("ROOT_DIR")
+		if dir == "" {
+			return fmt.Errorf("ROOT_DIR environment variable not set")
+		}
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", kubeconfigPath))
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	})
 )
 
 func RegisterSteps(sc *godog.ScenarioContext) {
@@ -89,6 +106,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)resource "([^"]+)" is eventually restored$`, ResourceRestored)
 	sc.Step(`^(?i)resource "([^"]+)" matches$`, ResourceMatches)
 
+	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in "([^"]*)" namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in test namespace$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" with needed permissions is available in \${TEST_NAMESPACE}$`, ServiceAccountWithNeededPermissionsIsAvailableInNamespace)
 	sc.Step(`^(?i)ServiceAccount "([^"]*)" is available in \${TEST_NAMESPACE}$`, ServiceAccountIsAvailableInNamespace)
@@ -108,6 +126,14 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
 
 	sc.Step(`^(?i)min value for (ClusterExtension|ClusterExtensionRevision) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)
+
+	// Upgrade-specific steps
+	sc.Step(`^(?i)the latest stable OLM release is installed$`, LatestStableOLMReleaseIsInstalled)
+	sc.Step(`^(?i)OLM is upgraded$`, OLMIsUpgraded)
+	sc.Step(`^(?i)(catalogd|operator-controller) is ready to reconcile resources$`, ComponentIsReadyToReconcile)
+	sc.Step(`^(?i)all (ClusterCatalog|ClusterExtension) resources are reconciled$`, AllResourcesAreReconciled)
+	sc.Step(`^(?i)(ClusterCatalog|ClusterExtension) is reconciled$`, ResourceTypeIsReconciled)
+	sc.Step(`^(?i)ClusterCatalog reports ([[:alnum:]]+) as ([[:alnum:]]+) with Reason ([[:alnum:]]+)$`, ClusterCatalogReportsCondition)
 }
 
 func init() {
@@ -768,7 +794,8 @@ func applyServiceAccount(ctx context.Context, serviceAccount string) error {
 		"SERVICEACCOUNT_NAME":  serviceAccount,
 	})
 
-	yaml, err := templateYaml(filepath.Join("steps", "testdata", "serviceaccount-template.yaml"), vars)
+	_, thisFile, _, _ := runtime.Caller(0)
+	yaml, err := templateYaml(filepath.Join(filepath.Dir(thisFile), "testdata", "serviceaccount-template.yaml"), vars)
 	if err != nil {
 		return fmt.Errorf("failed to template ServiceAccount yaml: %v", err)
 	}
@@ -795,7 +822,8 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 		"CLUSTEREXTENSION_NAME":  sc.clusterExtensionName,
 	}, keyValue...)
 
-	yaml, err := templateYaml(filepath.Join("steps", "testdata", rbacTemplate), vars)
+	_, thisFile, _, _ := runtime.Caller(0)
+	yaml, err := templateYaml(filepath.Join(filepath.Dir(thisFile), "testdata", rbacTemplate), vars)
 	if err != nil {
 		return fmt.Errorf("failed to template RBAC yaml: %v", err)
 	}
@@ -812,6 +840,13 @@ func applyPermissionsToServiceAccount(ctx context.Context, serviceAccount, rbacT
 // ServiceAccountIsAvailableInNamespace creates a ServiceAccount in the test namespace without RBAC permissions.
 func ServiceAccountIsAvailableInNamespace(ctx context.Context, serviceAccount string) error {
 	return applyServiceAccount(ctx, serviceAccount)
+}
+
+// ServiceAccountWithNeededPermissionsIsAvailableInNamespace creates a ServiceAccount and applies standard RBAC permissions.
+func ServiceAccountWithNeededPermissionsIsAvailableInGivenNamespace(ctx context.Context, serviceAccount string, ns string) error {
+	sc := scenarioCtx(ctx)
+	sc.namespace = ns
+	return applyPermissionsToServiceAccount(ctx, serviceAccount, "rbac-template.yaml")
 }
 
 // ServiceAccountWithNeededPermissionsIsAvailableInNamespace creates a ServiceAccount and applies standard RBAC permissions.
@@ -972,12 +1007,19 @@ func CatalogIsUpdatedToVersion(name, version string) error {
 
 // CatalogServesBundles applies the ClusterCatalog YAML template to create a catalog that serves bundles.
 func CatalogServesBundles(ctx context.Context, catalogName string) error {
-	yamlContent, err := os.ReadFile(filepath.Join("steps", "testdata", fmt.Sprintf("%s-catalog-template.yaml", catalogName)))
+	if err := deployImageRegistry(); err != nil {
+		return err
+	}
+	sc := scenarioCtx(ctx)
+	sc.clusterCatalogName = fmt.Sprintf("%s-catalog", catalogName)
+
+	_, thisFile, _, _ := runtime.Caller(0)
+	yamlContent, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "testdata", fmt.Sprintf("%s-catalog-template.yaml", catalogName)))
 	if err != nil {
 		return fmt.Errorf("failed to read catalog yaml: %v", err)
 	}
 
-	_, err = k8scliWithInput(substituteScenarioVars(string(yamlContent), scenarioCtx(ctx)), "apply", "-f", "-")
+	_, err = k8scliWithInput(substituteScenarioVars(string(yamlContent), sc), "apply", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("failed to apply catalog: %v", err)
 	}

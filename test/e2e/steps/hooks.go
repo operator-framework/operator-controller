@@ -30,9 +30,11 @@ type scenarioContext struct {
 	id                   string
 	namespace            string
 	clusterExtensionName string
+	clusterCatalogName   string
 	removedResources     []unstructured.Unstructured
 	backGroundCmds       []*exec.Cmd
 	metricsResponse      map[string]string
+	leaderPods           map[string]string // component name -> leader pod name
 
 	extensionObjects []client.Object
 }
@@ -87,6 +89,24 @@ func RegisterHooks(sc *godog.ScenarioContext) {
 	sc.After(ScenarioCleanup)
 }
 
+func detectOLMDeployment() (*appsv1.Deployment, error) {
+	raw, err := k8sClient("get", "deployments", "-A", "-l", "app.kubernetes.io/part-of=olm", "-o", "jsonpath={.items}")
+	if err != nil {
+		return nil, err
+	}
+	dl := []appsv1.Deployment{}
+	if err := json.Unmarshal([]byte(raw), &dl); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal OLM deployments: %v", err)
+	}
+
+	for _, d := range dl {
+		if d.Name == olmDeploymentName {
+			return &d, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to detect OLM Deployment")
+}
+
 func BeforeSuite() {
 	if devMode {
 		logger = textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
@@ -94,23 +114,12 @@ func BeforeSuite() {
 		logger = textlogger.NewLogger(textlogger.NewConfig())
 	}
 
-	raw, err := k8sClient("get", "deployments", "-A", "-l", "app.kubernetes.io/part-of=olm", "-o", "jsonpath={.items}")
+	olm, err := detectOLMDeployment()
 	if err != nil {
-		panic(fmt.Errorf("failed to get OLM deployments: %v", err))
+		logger.Info("OLM deployments not found; skipping feature gate detection (upgrade scenarios will install OLM in Background)")
+		return
 	}
-	dl := []appsv1.Deployment{}
-	if err := json.Unmarshal([]byte(raw), &dl); err != nil {
-		panic(fmt.Errorf("failed to unmarshal OLM deployments: %v", err))
-	}
-	var olm *appsv1.Deployment
-
-	for _, d := range dl {
-		if d.Name == olmDeploymentName {
-			olm = &d
-			olmNamespace = d.Namespace
-			break
-		}
-	}
+	olmNamespace = olm.Namespace
 
 	featureGatePattern := regexp.MustCompile(`--feature-gates=([[:alnum:]]+)=(true|false)`)
 	for _, c := range olm.Spec.Template.Spec.Containers {
@@ -144,6 +153,7 @@ func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Con
 		id:                   sc.Id,
 		namespace:            fmt.Sprintf("ns-%s", sc.Id),
 		clusterExtensionName: fmt.Sprintf("ce-%s", sc.Id),
+		leaderPods:           make(map[string]string),
 	}
 	return context.WithValue(ctx, scenarioContextKey, scCtx), nil
 }
