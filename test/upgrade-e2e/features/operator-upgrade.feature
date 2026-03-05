@@ -8,7 +8,7 @@ Feature: Operator upgrade verification
   Background:
     Given the latest stable OLM release is installed
     And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in "upgrade-ns" namespace
+    And ServiceAccount "olm-sa" with permissions to install extensions is available in "upgrade-ns" namespace
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1

@@ -31,6 +31,7 @@ type scenarioContext struct {
 	namespace            string
 	clusterExtensionName string
 	clusterCatalogName   string
+	addedResources       []resource
 	removedResources     []unstructured.Unstructured
 	backGroundCmds       []*exec.Cmd
 	metricsResponse      map[string]string
@@ -181,7 +182,7 @@ func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context
 		return ctx, err
 	}
 
-	forDeletion := []resource{}
+	forDeletion := sc.addedResources
 	if sc.clusterExtensionName != "" {
 		forDeletion = append(forDeletion, resource{name: sc.clusterExtensionName, kind: "clusterextension"})
 	}
