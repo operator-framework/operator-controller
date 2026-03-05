@@ -148,6 +148,14 @@ func BundleCSVPermissionsGenerator(rv1 *bundle.RegistryV1, opts render.Options) 
 // (opts.TargetNamespaces = [”]), the CSV's permission spec will be promoted to ClusterRole and ClusterRoleBinding
 // resources. To keep parity with OLMv0, these will also include an extra rule to get, list, watch namespaces
 // (see https://github.com/operator-framework/operator-lifecycle-manager/blob/dfd0b2bea85038d3c0d65348bc812d297f16b8d2/pkg/controller/operators/olm/operatorgroup.go#L539)
+// The reasoning for this added rule is:
+//   - An operator author designing for both SingleNamespace and AllNamespaces install modes should
+//     only declare the minimum permissions needed — i.e., no cluster-scoped permissions in its CSV.
+//   - When OLM places that operator into a global OperatorGroup, it lifts the Roles to ClusterRoles.
+//     But some operators may need to discover namespaces to function globally, which they didn't need
+//     (and shouldn't have requested) in single-namespace mode.
+//   - So OLM automatically appends get/list/watch on namespaces during the lift, bridging the gap
+//     without requiring the operator author to over-request permissions upfront.
 func BundleCSVClusterPermissionsGenerator(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
 	if rv1 == nil {
 		return nil, fmt.Errorf("bundle cannot be nil")
