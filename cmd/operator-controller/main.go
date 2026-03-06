@@ -475,11 +475,10 @@ func run() error {
 
 	certProvider := getCertificateProvider()
 	regv1ManifestProvider := &applier.RegistryV1ManifestProvider{
-		BundleRenderer:              registryv1.Renderer,
-		CertificateProvider:         certProvider,
-		IsWebhookSupportEnabled:     certProvider != nil,
-		IsSingleOwnNamespaceEnabled: features.OperatorControllerFeatureGate.Enabled(features.SingleOwnNamespaceInstallSupport),
-		IsDeploymentConfigEnabled:   features.OperatorControllerFeatureGate.Enabled(features.DeploymentConfig),
+		BundleRenderer:          registryv1.Renderer,
+		CertificateProvider:     certProvider,
+		IsWebhookSupportEnabled: certProvider != nil,
+		IsDeploymentConfigEnabled: features.OperatorControllerFeatureGate.Enabled(features.DeploymentConfig),
 	}
 	var cerCfg reconcilerConfigurator
 	if features.OperatorControllerFeatureGate.Enabled(features.BoxcutterRuntime) {

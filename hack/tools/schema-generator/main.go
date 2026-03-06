@@ -18,7 +18,7 @@ const (
 	schemaID          = "https://operator-framework.io/schemas/registry-v1-bundle-config.json"
 	schemaDraft       = "http://json-schema.org/draft-07/schema#"
 	schemaTitle       = "Registry+v1 Bundle Configuration"
-	schemaDescription = "Configuration schema for registry+v1 bundles. Includes watchNamespace for controlling operator scope and deploymentConfig for customizing operator deployment (environment variables, resource scheduling, storage, and pod placement). The deploymentConfig follows the same structure and behavior as OLM v0's SubscriptionConfig. Note: The 'selector' field from v0's SubscriptionConfig is not included as it was never used."
+	schemaDescription = "Configuration schema for registry+v1 bundles. Includes deploymentConfig for customizing operator deployment (environment variables, resource scheduling, storage, and pod placement). The deploymentConfig follows the same structure and behavior as OLM v0's SubscriptionConfig. Note: The 'selector' field from v0's SubscriptionConfig is not included as it was never used."
 )
 
 // OpenAPISpec represents the structure of Kubernetes OpenAPI v3 spec
@@ -268,15 +268,6 @@ func generateBundleConfigSchema(openAPISpec *OpenAPISpec, fields []FieldInfo) *S
 	collector := &schemaCollector{
 		openAPISpec:      openAPISpec,
 		collectedSchemas: make(map[string]bool),
-	}
-
-	// Add watchNamespace property (base definition - will be modified at runtime)
-	schema.Properties["watchNamespace"] = &SchemaField{
-		Description: "The namespace that the operator should watch for custom resources. The meaning and validation of this field depends on the operator's install modes. This field may be optional or required, and may have format constraints, based on the operator's supported install modes.",
-		AnyOf: []*SchemaField{
-			{Type: "null"},
-			{Type: "string"},
-		},
 	}
 
 	// Create deploymentConfig property

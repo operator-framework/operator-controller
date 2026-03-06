@@ -104,7 +104,7 @@ func RegisterSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^(?i)ClusterCatalog "([^"]+)" image version "([^"]+)" is also tagged as "([^"]+)"$`, TagCatalogImage)
 	sc.Step(`^(?i)ClusterCatalog "([^"]+)" is deleted$`, CatalogIsDeleted)
 
-	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]+)"$`, OperatorTargetNamespace)
+	sc.Step(`^(?i)operator "([^"]+)" target namespace is "([^"]*)"$`, OperatorTargetNamespace)
 	sc.Step(`^(?i)Prometheus metrics are returned in the response$`, PrometheusMetricsAreReturned)
 
 	sc.Step(`^(?i)min value for (ClusterExtension|ClusterExtensionRevision) ((?:\.[a-zA-Z]+)+) is set to (\d+)$`, SetCRDFieldMinValue)

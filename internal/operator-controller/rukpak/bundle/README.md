@@ -6,7 +6,6 @@ This directory contains the JSON schema for registry+v1 bundle configuration val
 
 The `registryv1bundleconfig.json` schema is used to validate the bundle configuration in the ClusterExtension's inline configuration. This includes:
 
-- `watchNamespace`: Controls which namespace(s) the operator watches for custom resources
 - `deploymentConfig`: Customizes operator deployment (environment variables, resources, volumes, etc.)
 
 The `deploymentConfig` portion is based on OLM v0's `SubscriptionConfig` struct but excludes the `selector` field which was never used in v0.
@@ -43,7 +42,7 @@ This will regenerate the schema based on the current module-resolved version of 
 
 ## Validation
 
-The schema is used to validate user-provided bundle configuration (including `watchNamespace` and `deploymentConfig`) in ClusterExtension resources. The base schema is loaded and customized at runtime based on the operator's install modes to ensure proper validation of the `watchNamespace` field. Validation happens during:
+The schema is used to validate user-provided bundle configuration (`deploymentConfig`) in ClusterExtension resources. Validation happens during:
 
 1. **Admission**: When a ClusterExtension is created or updated
 2. **Runtime**: When extracting configuration from the inline field

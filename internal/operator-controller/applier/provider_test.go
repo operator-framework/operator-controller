@@ -7,6 +7,7 @@ import (
 	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +50,7 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 			},
 		}
 
-		// The contents of the bundle are not important for this tesy, only that it be a valid bundle
+		// The contents of the bundle are not important for this test, only that it be a valid bundle
 		// to avoid errors in the deserialization process
 		bundleFS := bundlefs.Builder().WithPackageName("test").
 			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
@@ -65,40 +66,52 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 		require.Contains(t, err.Error(), "some error")
 	})
 
-	t.Run("surfaces bundle config unmarshall errors", func(t *testing.T) {
+	t.Run("renders bundle with only SingleNamespace install mode in AllNamespaces mode", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						return nil, nil
-					},
-				},
-			},
-			// must be true for now as we only unmarshal configuration when this feature is on
-			// once we go GA and remove IsSingleOwnNamespaceEnabled it's ok to just delete this
-			IsSingleOwnNamespaceEnabled: true,
+			BundleRenderer: registryv1.Renderer,
 		}
 
-		// The contents of the bundle are not important for this tesy, only that it be a valid bundle
-		// to avoid errors in the deserialization process
+		// Bundle only declares SingleNamespace support - no AllNamespaces
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(clusterserviceversion.Builder().
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).
+				WithStrategyDeploymentSpecs(v1alpha1.StrategyDeploymentSpec{
+					Name: "test-operator",
+				}).Build()).Build()
 
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
-				Config: &ocv1.ClusterExtensionConfig{
-					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
-					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{"watchNamespace": "install-namespace"}`),
-					},
-				},
 			},
 		}
 
-		_, err := provider.Get(bundleFS, ext)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid ClusterExtension configuration")
+		objs, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err, "bundles without AllNamespaces support should still render successfully")
+		requireTargetNamespacesAnnotation(t, objs, corev1.NamespaceAll)
+	})
+
+	t.Run("renders bundle with only OwnNamespace install mode in AllNamespaces mode", func(t *testing.T) {
+		provider := applier.RegistryV1ManifestProvider{
+			BundleRenderer: registryv1.Renderer,
+		}
+
+		// Bundle only declares OwnNamespace support - no AllNamespaces
+		bundleFS := bundlefs.Builder().WithPackageName("test").
+			WithCSV(clusterserviceversion.Builder().
+				WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).
+				WithStrategyDeploymentSpecs(v1alpha1.StrategyDeploymentSpec{
+					Name: "test-operator",
+				}).Build()).Build()
+
+		ext := &ocv1.ClusterExtension{
+			Spec: ocv1.ClusterExtensionSpec{
+				Namespace: "install-namespace",
+			},
+		}
+
+		objs, err := provider.Get(bundleFS, ext)
+		require.NoError(t, err, "bundles without AllNamespaces support should still render successfully")
+		requireTargetNamespacesAnnotation(t, objs, corev1.NamespaceAll)
 	})
 
 	t.Run("returns terminal error for invalid config", func(t *testing.T) {
@@ -110,18 +123,21 @@ func Test_RegistryV1ManifestProvider_Integration(t *testing.T) {
 					},
 				},
 			},
-			IsSingleOwnNamespaceEnabled: true,
 		}
 
-		// Bundle with SingleNamespace install mode requiring watchNamespace config
 		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
+			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
 
-		// ClusterExtension without required config
+		// ClusterExtension with invalid config - unknown field
 		ext := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "install-namespace",
-				// No config provided - should fail validation
+				Config: &ocv1.ClusterExtensionConfig{
+					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
+					Inline: &apiextensionsv1.JSON{
+						Raw: []byte(`{"unknownField": "value"}`),
+					},
+				},
 			},
 		}
 
@@ -256,194 +272,6 @@ func Test_RegistryV1ManifestProvider_WebhookSupport(t *testing.T) {
 	})
 }
 
-func Test_RegistryV1ManifestProvider_SingleOwnNamespaceSupport(t *testing.T) {
-	t.Run("rejects bundles without AllNamespaces install mode when Single/OwnNamespace install mode support is disabled", func(t *testing.T) {
-		provider := applier.RegistryV1ManifestProvider{
-			IsSingleOwnNamespaceEnabled: false,
-		}
-
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
-
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-			},
-		})
-		require.Equal(t, "unsupported bundle: bundle does not support AllNamespaces install mode", err.Error())
-	})
-
-	t.Run("rejects bundles without AllNamespaces install mode and with SingleNamespace support when Single/OwnNamespace install mode support is enabled", func(t *testing.T) {
-		expectedWatchNamespace := "some-namespace"
-		provider := applier.RegistryV1ManifestProvider{
-			IsSingleOwnNamespaceEnabled: false,
-		}
-
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
-
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-				Config: &ocv1.ClusterExtensionConfig{
-					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
-					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{"watchNamespace": "` + expectedWatchNamespace + `"}`),
-					},
-				},
-			},
-		})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unsupported bundle")
-	})
-
-	t.Run("rejects bundles without AllNamespaces install mode and with OwnNamespace support when Single/OwnNamespace install mode support is disabled", func(t *testing.T) {
-		provider := applier.RegistryV1ManifestProvider{
-			IsSingleOwnNamespaceEnabled: false,
-		}
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-			},
-		})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unsupported bundle")
-	})
-
-	t.Run("accepts bundles with install modes {SingleNamespace} when the appropriate configuration is given", func(t *testing.T) {
-		expectedWatchNamespace := "some-namespace"
-		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						t.Log("ensure watch namespace is appropriately configured")
-						require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
-						return nil, nil
-					},
-				},
-			},
-			IsSingleOwnNamespaceEnabled: true,
-		}
-
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
-
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-				Config: &ocv1.ClusterExtensionConfig{
-					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
-					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{"watchNamespace": "` + expectedWatchNamespace + `"}`),
-					},
-				},
-			},
-		})
-		require.NoError(t, err)
-	})
-
-	t.Run("rejects bundles with {SingleNamespace} install modes when no configuration is given", func(t *testing.T) {
-		provider := applier.RegistryV1ManifestProvider{
-			IsSingleOwnNamespaceEnabled: true,
-		}
-
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
-
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-			},
-		})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), `required field "watchNamespace" is missing`)
-	})
-
-	t.Run("accepts bundles with {OwnNamespace} install modes when the appropriate configuration is given", func(t *testing.T) {
-		installNamespace := "some-namespace"
-		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						t.Log("ensure watch namespace is appropriately configured")
-						require.Equal(t, []string{installNamespace}, opts.TargetNamespaces)
-						return nil, nil
-					},
-				},
-			},
-			IsSingleOwnNamespaceEnabled: true,
-		}
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: installNamespace,
-				Config: &ocv1.ClusterExtensionConfig{
-					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
-					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{"watchNamespace": "` + installNamespace + `"}`),
-					},
-				},
-			},
-		})
-		require.NoError(t, err)
-	})
-
-	t.Run("rejects bundles with {OwnNamespace} install modes when no configuration is given", func(t *testing.T) {
-		provider := applier.RegistryV1ManifestProvider{
-			IsSingleOwnNamespaceEnabled: true,
-		}
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-			},
-		})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), `required field "watchNamespace" is missing`)
-	})
-
-	t.Run("rejects bundles with {OwnNamespace} install modes when watchNamespace is not install namespace", func(t *testing.T) {
-		provider := applier.RegistryV1ManifestProvider{
-			IsSingleOwnNamespaceEnabled: true,
-		}
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeOwnNamespace).Build()).Build()
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-				Config: &ocv1.ClusterExtensionConfig{
-					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
-					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{"watchNamespace": "not-install-namespace"}`),
-					},
-				},
-			},
-		})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid ClusterExtension configuration:")
-		require.Contains(t, err.Error(), "must be")
-		require.Contains(t, err.Error(), "install-namespace")
-	})
-
-	t.Run("rejects bundles without AllNamespaces, SingleNamespace, or OwnNamespace install mode support when Single/OwnNamespace install mode support is enabled", func(t *testing.T) {
-		provider := applier.RegistryV1ManifestProvider{
-			IsSingleOwnNamespaceEnabled: true,
-		}
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeMultiNamespace).Build()).Build()
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-			},
-		})
-		require.Equal(t, "unsupported bundle: bundle must support at least one of [AllNamespaces SingleNamespace OwnNamespace] install modes", err.Error())
-	})
-}
-
 func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 	t.Run("passes deploymentConfig to renderer when provided in configuration", func(t *testing.T) {
 		expectedEnvVars := []corev1.EnvVar{
@@ -460,8 +288,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-			IsSingleOwnNamespaceEnabled: true,
-			IsDeploymentConfigEnabled:   true,
+			IsDeploymentConfigEnabled: true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -492,8 +319,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-			IsSingleOwnNamespaceEnabled: true,
-			IsDeploymentConfigEnabled:   true,
+			IsDeploymentConfigEnabled: true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -525,8 +351,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-			IsSingleOwnNamespaceEnabled: true,
-			IsDeploymentConfigEnabled:   true,
+			IsDeploymentConfigEnabled: true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -551,49 +376,6 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("passes both watchNamespace and deploymentConfig when both provided", func(t *testing.T) {
-		expectedWatchNamespace := "some-namespace"
-		expectedEnvVars := []corev1.EnvVar{
-			{Name: "TEST_ENV", Value: "test-value"},
-		}
-		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						t.Log("ensure both watchNamespace and deploymentConfig are passed to renderer")
-						require.Equal(t, []string{expectedWatchNamespace}, opts.TargetNamespaces)
-						require.NotNil(t, opts.DeploymentConfig)
-						require.Equal(t, expectedEnvVars, opts.DeploymentConfig.Env)
-						return nil, nil
-					},
-				},
-			},
-			IsSingleOwnNamespaceEnabled: true,
-			IsDeploymentConfigEnabled:   true,
-		}
-
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeSingleNamespace).Build()).Build()
-
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-				Config: &ocv1.ClusterExtensionConfig{
-					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
-					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{
-							"watchNamespace": "some-namespace",
-							"deploymentConfig": {
-								"env": [{"name": "TEST_ENV", "value": "test-value"}]
-							}
-						}`),
-					},
-				},
-			},
-		})
-		require.NoError(t, err)
-	})
-
 	t.Run("handles empty deploymentConfig gracefully", func(t *testing.T) {
 		provider := applier.RegistryV1ManifestProvider{
 			BundleRenderer: render.BundleRenderer{
@@ -605,8 +387,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-			IsSingleOwnNamespaceEnabled: true,
-			IsDeploymentConfigEnabled:   true,
+			IsDeploymentConfigEnabled: true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -635,8 +416,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-			IsSingleOwnNamespaceEnabled: true,
-			IsDeploymentConfigEnabled:   true,
+			IsDeploymentConfigEnabled: true,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -670,8 +450,7 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 					},
 				},
 			},
-			IsSingleOwnNamespaceEnabled: true,
-			IsDeploymentConfigEnabled:   false,
+			IsDeploymentConfigEnabled: false,
 		}
 
 		bundleFS := bundlefs.Builder().WithPackageName("test").
@@ -691,38 +470,6 @@ func Test_RegistryV1ManifestProvider_DeploymentConfig(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unknown field \"deploymentConfig\"")
 		require.ErrorIs(t, err, reconcile.TerminalError(nil), "feature gate disabled error should be terminal")
-	})
-
-	t.Run("returns terminal error when deploymentConfig is used with SingleOwnNamespace disabled and DeploymentConfig gate disabled", func(t *testing.T) {
-		provider := applier.RegistryV1ManifestProvider{
-			BundleRenderer: render.BundleRenderer{
-				ResourceGenerators: []render.ResourceGenerator{
-					func(rv1 *bundle.RegistryV1, opts render.Options) ([]client.Object, error) {
-						return nil, nil
-					},
-				},
-			},
-			IsSingleOwnNamespaceEnabled: false,
-			IsDeploymentConfigEnabled:   false,
-		}
-
-		bundleFS := bundlefs.Builder().WithPackageName("test").
-			WithCSV(clusterserviceversion.Builder().WithInstallModeSupportFor(v1alpha1.InstallModeTypeAllNamespaces).Build()).Build()
-
-		_, err := provider.Get(bundleFS, &ocv1.ClusterExtension{
-			Spec: ocv1.ClusterExtensionSpec{
-				Namespace: "install-namespace",
-				Config: &ocv1.ClusterExtensionConfig{
-					ConfigType: ocv1.ClusterExtensionConfigTypeInline,
-					Inline: &apiextensionsv1.JSON{
-						Raw: []byte(`{"deploymentConfig": {"env": [{"name": "TEST_ENV", "value": "test-value"}]}}`),
-					},
-				},
-			},
-		})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unknown field \"deploymentConfig\"")
-		require.ErrorIs(t, err, reconcile.TerminalError(nil), "config should not be silently ignored when both feature gates are disabled")
 	})
 }
 
@@ -814,4 +561,21 @@ type FakeManifestProvider struct {
 
 func (f *FakeManifestProvider) Get(bundleFS fs.FS, ext *ocv1.ClusterExtension) ([]client.Object, error) {
 	return f.GetFn(bundleFS, ext)
+}
+
+func requireTargetNamespacesAnnotation(t *testing.T, objs []client.Object, expected string) {
+	t.Helper()
+	var found int
+	for _, obj := range objs {
+		dep, ok := obj.(*appsv1.Deployment)
+		if !ok {
+			continue
+		}
+		found++
+		annotations := dep.Spec.Template.Annotations
+		v, exists := annotations["olm.targetNamespaces"]
+		require.True(t, exists, "deployment %q missing olm.targetNamespaces annotation on pod template", dep.Name)
+		require.Equal(t, expected, v, "olm.targetNamespaces annotation on deployment %q", dep.Name)
+	}
+	require.Positive(t, found, "expected at least one Deployment in rendered objects")
 }

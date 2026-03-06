@@ -34,6 +34,29 @@ Feature: Install ClusterExtension
     And resource "configmap/test-configmap" is installed
     And resource "deployment/test-operator" is installed
 
+  Scenario: SingleNamespace-only bundle installs in AllNamespaces mode
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: olm-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: single-namespace-operator
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And operator "single-namespace-operator" target namespace is ""
+
   @mirrored-registry
   Scenario Outline: Install latest available version from mirrored registry
     When ClusterExtension is applied
@@ -113,148 +136,6 @@ Feature: Install ClusterExtension
       operation cannot proceed due to the following validation error(s): service account "non-existent-sa" not found in namespace "${TEST_NAMESPACE}"
       """
 
-  @SingleOwnNamespaceInstallSupport
-  Scenario: watchNamespace config is required for extension supporting single namespace
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
-    And resource is applied
-      """
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: single-namespace-operator-target
-      """
-    And ClusterExtension is applied
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: single-namespace-operator
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
-      """
-      error for resolved bundle "single-namespace-operator.1.0.0" with version "1.0.0":
-      invalid ClusterExtension configuration: invalid configuration: required field "watchNamespace" is missing
-      """
-    When ClusterExtension is updated to set config.watchNamespace field
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
-        config:
-          configType: Inline
-          inline:
-            watchNamespace: single-namespace-operator-target # added
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: single-namespace-operator
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    Then ClusterExtension reports Installed as True
-    And bundle "single-namespace-operator.1.0.0" is installed in version "1.0.0"
-    And operator "single-namespace-operator" target namespace is "single-namespace-operator-target"
-
-  @SingleOwnNamespaceInstallSupport
-  Scenario: watchNamespace config is required for extension supporting own namespace
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
-    And ClusterExtension is applied without the watchNamespace configuration
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: own-namespace-operator
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
-      """
-      error for resolved bundle "own-namespace-operator.1.0.0" with version
-      "1.0.0": invalid ClusterExtension configuration: invalid configuration: required
-      field "watchNamespace" is missing
-      """
-    And ClusterExtension is updated to include the watchNamespace configuration
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
-        config:
-          configType: Inline
-          inline:
-            watchNamespace: some-ns # added, but not own namespace
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: own-namespace-operator
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    And ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message:
-      """
-      error for resolved bundle "own-namespace-operator.1.0.0" with version
-      "1.0.0": invalid ClusterExtension configuration: invalid configuration: invalid
-      format for field "watchNamespace": 'some-ns' is not valid ownNamespaceInstallMode:
-      invalid value "some-ns": must be "${TEST_NAMESPACE}" (the namespace where the
-      operator is installed) because this operator only supports OwnNamespace install mode
-      """
-    When ClusterExtension is updated to set watchNamespace to own namespace value
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
-        config:
-          configType: Inline
-          inline:
-            watchNamespace: ${TEST_NAMESPACE} # own namespace
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: own-namespace-operator
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    Then ClusterExtension is rolled out
-    And ClusterExtension is available
-    And operator "own-namespace-operator" target namespace is "${TEST_NAMESPACE}"
-
   @WebhookProviderCertManager
   Scenario: Install operator having webhooks
     Given ServiceAccount "olm-admin" in test namespace is cluster admin
@@ -320,67 +201,6 @@ Feature: Install ClusterExtension
       spec:
         valid: true
         mutate: true
-      """
-
-  @SingleOwnNamespaceInstallSupport
-  Scenario: Report failure when watchNamespace has invalid DNS-1123 name
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
-    When ClusterExtension is applied
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
-        config:
-          configType: Inline
-          inline:
-            watchNamespace: invalid-namespace-
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: single-namespace-operator
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    Then ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
-      """
-      invalid ClusterExtension configuration: invalid configuration: field "watchNamespace" must match pattern
-      """
-
-  @SingleOwnNamespaceInstallSupport
-  @WebhookProviderCertManager
-  Scenario: Reject watchNamespace for operator that does not support Single/OwnNamespace install modes
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
-    When ClusterExtension is applied
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
-        config:
-          configType: Inline
-          inline:
-            watchNamespace: ${TEST_NAMESPACE}
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: webhook-operator
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    Then ClusterExtension reports Progressing as False with Reason InvalidConfiguration and Message includes:
-      """
-      invalid ClusterExtension configuration: invalid configuration: unknown field "watchNamespace"
       """
 
   @BoxcutterRuntime
