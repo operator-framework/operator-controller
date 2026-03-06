@@ -1,5 +1,9 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
+> **Deprecated:** This guide is no longer applicable. operator-controller now uses its own
+> ServiceAccount with cluster-admin privileges for all extension lifecycle operations.
+> The `spec.serviceAccount` field on ClusterExtension is deprecated and ignored.
+
 OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../project/olmv1_limitations.md),
 OLM must be provided a ServiceAccount configured with the appropriate permissions.
 

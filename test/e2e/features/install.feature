@@ -6,7 +6,6 @@ Feature: Install ClusterExtension
   Background:
     Given OLM is available
     And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
 
   Scenario:  Install latest available version
     When ClusterExtension is applied
@@ -17,8 +16,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -34,6 +31,29 @@ Feature: Install ClusterExtension
     And resource "configmap/test-configmap" is installed
     And resource "deployment/test-operator" is installed
 
+  Scenario: Install succeeds even when serviceAccount references a non-existent SA
+    When ClusterExtension is applied
+      """
+      apiVersion: olm.operatorframework.io/v1
+      kind: ClusterExtension
+      metadata:
+        name: ${NAME}
+      spec:
+        namespace: ${TEST_NAMESPACE}
+        serviceAccount:
+          name: non-existent-sa
+        source:
+          sourceType: Catalog
+          catalog:
+            packageName: test
+            selector:
+              matchLabels:
+                "olm.operatorframework.io/metadata.name": test-catalog
+      """
+    Then ClusterExtension is rolled out
+    And ClusterExtension is available
+    And bundle "test-operator.1.2.0" is installed in version "1.2.0"
+
   @mirrored-registry
   Scenario Outline: Install latest available version from mirrored registry
     When ClusterExtension is applied
@@ -44,8 +64,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -77,8 +95,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -89,34 +105,9 @@ Feature: Install ClusterExtension
       found bundles for package "test" in multiple catalogs with the same priority [extra-catalog test-catalog]
       """
 
-  Scenario: Report error when ServiceAccount does not exist
-    When ClusterExtension is applied
-      """
-      apiVersion: olm.operatorframework.io/v1
-      kind: ClusterExtension
-      metadata:
-        name: ${NAME}
-      spec:
-        namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: non-existent-sa
-        source:
-          sourceType: Catalog
-          catalog:
-            packageName: test
-            selector:
-              matchLabels:
-                "olm.operatorframework.io/metadata.name": test-catalog
-      """
-    Then ClusterExtension reports Progressing as True with Reason Retrying and Message includes:
-      """
-      operation cannot proceed due to the following validation error(s): service account "non-existent-sa" not found in namespace "${TEST_NAMESPACE}"
-      """
-
   @SingleOwnNamespaceInstallSupport
   Scenario: watchNamespace config is required for extension supporting single namespace
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
-    And resource is applied
+    Given resource is applied
       """
       apiVersion: v1
       kind: Namespace
@@ -131,8 +122,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
         source:
           sourceType: Catalog
           catalog:
@@ -154,8 +143,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -174,8 +161,7 @@ Feature: Install ClusterExtension
 
   @SingleOwnNamespaceInstallSupport
   Scenario: watchNamespace config is required for extension supporting own namespace
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
-    And ClusterExtension is applied without the watchNamespace configuration
+    Given ClusterExtension is applied without the watchNamespace configuration
       """
       apiVersion: olm.operatorframework.io/v1
       kind: ClusterExtension
@@ -183,8 +169,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
         source:
           sourceType: Catalog
           catalog:
@@ -207,8 +191,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -237,8 +219,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -257,7 +237,6 @@ Feature: Install ClusterExtension
 
   @WebhookProviderCertManager
   Scenario: Install operator having webhooks
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -266,8 +245,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
         source:
           sourceType: Catalog
           catalog:
@@ -324,7 +301,6 @@ Feature: Install ClusterExtension
 
   @SingleOwnNamespaceInstallSupport
   Scenario: Report failure when watchNamespace has invalid DNS-1123 name
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -333,8 +309,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -355,7 +329,6 @@ Feature: Install ClusterExtension
   @SingleOwnNamespaceInstallSupport
   @WebhookProviderCertManager
   Scenario: Reject watchNamespace for operator that does not support Single/OwnNamespace install modes
-    Given ServiceAccount "olm-admin" in test namespace is cluster admin
     When ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -364,8 +337,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-admin
         config:
           configType: Inline
           inline:
@@ -397,8 +368,6 @@ Feature: Install ClusterExtension
       spec:
         namespace: ${TEST_NAMESPACE}
         progressDeadlineMinutes: 1
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -430,8 +399,6 @@ Feature: Install ClusterExtension
       spec:
         namespace: ${TEST_NAMESPACE}
         progressDeadlineMinutes: 1
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -458,8 +425,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -485,8 +450,6 @@ Feature: Install ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:

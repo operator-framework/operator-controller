@@ -199,9 +199,6 @@ spec:
 		},
 		Spec: ocv1.ClusterExtensionSpec{
 			Namespace: "test-namespace",
-			ServiceAccount: ocv1.ServiceAccountReference{
-				Name: "test-sa",
-			},
 		},
 	}
 	testObjectLabels  = map[string]string{"object": "label"}
@@ -371,7 +368,7 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 			PreAuthorizer: &mockPreAuthorizer{
 				fn: func(ctx context.Context, user user.Info, reader io.Reader, additionalRequiredPerms ...authorization.UserAuthorizerAttributesFactory) ([]authorization.ScopedPolicyRules, error) {
 					t.Log("has correct user")
-					require.Equal(t, "system:serviceaccount:test-namespace:test-sa", user.GetName())
+					require.Equal(t, "system:serviceaccount:olmv1-system:operator-controller-controller-manager", user.GetName())
 					require.Empty(t, user.GetUID())
 					require.Nil(t, user.GetExtra())
 					require.Empty(t, user.GetGroups())
@@ -468,9 +465,6 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		validCE := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			},
 		}
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
@@ -501,9 +495,6 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		validCE := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			},
 		}
 		installSucceeded, installStatus, err := helmApplier.Apply(context.TODO(), validFS, validCE, testObjectLabels, testStorageLabels)
@@ -539,9 +530,6 @@ func TestApply_InstallationWithPreflightPermissionsEnabled(t *testing.T) {
 		validCE := &ocv1.ClusterExtension{
 			Spec: ocv1.ClusterExtensionSpec{
 				Namespace: "default",
-				ServiceAccount: ocv1.ServiceAccountReference{
-					Name: "default",
-				},
 			},
 		}
 

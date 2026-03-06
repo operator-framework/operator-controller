@@ -1,5 +1,10 @@
 #### OLMv1 Permission Model
 
+> **Deprecated:** The permission model described below is no longer accurate.
+> operator-controller now runs with cluster-admin privileges and uses its own ServiceAccount
+> for all extension lifecycle operations. The `spec.serviceAccount` field on ClusterExtension
+> is deprecated and ignored.
+
 Here we aim to describe the OLMv1 permission model. OLMv1 itself does not have cluster-wide admin permissions. Therefore, each cluster extension must specify a service account with sufficient permissions to install and manage it. While this service account is distinct from any service account defined in the bundle, it will need sufficient privileges to create and assign the required RBAC. Therefore, the cluster extension service account's privileges would be a superset of the privileges required by the service account in the bundle.
 
 To understand the permission model, lets see the scope of the the service accounts associated with ClusterExtension deployment:

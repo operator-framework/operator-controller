@@ -6,7 +6,6 @@ Feature: Uninstall ClusterExtension
   Background:
     Given OLM is available
     And ClusterCatalog "test" serves bundles
-    And ServiceAccount "olm-sa" with needed permissions is available in ${TEST_NAMESPACE}
     And ClusterExtension is applied
       """
       apiVersion: olm.operatorframework.io/v1
@@ -15,8 +14,6 @@ Feature: Uninstall ClusterExtension
         name: ${NAME}
       spec:
         namespace: ${TEST_NAMESPACE}
-        serviceAccount:
-          name: olm-sa
         source:
           sourceType: Catalog
           catalog:
@@ -31,12 +28,4 @@ Feature: Uninstall ClusterExtension
 
   Scenario: Removing ClusterExtension triggers the extension uninstall, eventually removing all installed resources
     When ClusterExtension is removed
-    Then the ClusterExtension's constituent resources are removed
-
-  Scenario: Removing ClusterExtension resources leads to all installed resources being removed even if the service account is no longer present
-    When resource "serviceaccount/olm-sa" is removed
-    # Ensure service account is gone before checking to ensure resources are cleaned up whether the service account
-    # and its permissions are present on the cluster or not
-    And resource "serviceaccount/olm-sa" is eventually not found
-    And ClusterExtension is removed
     Then the ClusterExtension's constituent resources are removed

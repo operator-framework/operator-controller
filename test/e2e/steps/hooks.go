@@ -146,6 +146,13 @@ func CreateScenarioContext(ctx context.Context, sc *godog.Scenario) (context.Con
 		namespace:            fmt.Sprintf("ns-%s", sc.Id),
 		clusterExtensionName: fmt.Sprintf("ce-%s", sc.Id),
 	}
+
+	// Create the test namespace for this scenario
+	nsYaml := fmt.Sprintf("apiVersion: v1\nkind: Namespace\nmetadata:\n  name: %s", scCtx.namespace)
+	if _, err := k8scliWithInput(nsYaml, "apply", "-f", "-"); err != nil {
+		return ctx, fmt.Errorf("failed to create test namespace %s: %v", scCtx.namespace, err)
+	}
+
 	return context.WithValue(ctx, scenarioContextKey, scCtx), nil
 }
 
@@ -161,15 +168,12 @@ func stderrOutput(err error) string {
 	return ""
 }
 
-func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context.Context, error) {
+func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, scenarioErr error) (context.Context, error) {
 	sc := scenarioCtx(ctx)
 	for _, bgCmd := range sc.backGroundCmds {
 		if p := bgCmd.Process; p != nil {
 			_ = p.Kill()
 		}
-	}
-	if err != nil {
-		return ctx, err
 	}
 
 	forDeletion := []resource{}
@@ -184,5 +188,5 @@ func ScenarioCleanup(ctx context.Context, _ *godog.Scenario, err error) (context
 			}
 		}
 	}()
-	return ctx, nil
+	return ctx, scenarioErr
 }

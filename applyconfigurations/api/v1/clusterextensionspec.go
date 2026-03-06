@@ -34,11 +34,11 @@ type ClusterExtensionSpecApplyConfiguration struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	Namespace *string `json:"namespace,omitempty"`
-	// serviceAccount specifies a ServiceAccount used to perform all interactions with the cluster
-	// that are required to manage the extension.
-	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// The serviceAccount field is required.
+	// serviceAccount was previously used to specify a ServiceAccount for managing the extension.
+	// This field is now deprecated and ignored. operator-controller uses its own ServiceAccount
+	// for all Kubernetes API interactions.
+	//
+	// Deprecated: This field is ignored. It will be removed in a future API version.
 	ServiceAccount *ServiceAccountReferenceApplyConfiguration `json:"serviceAccount,omitempty"`
 	// source is required and selects the installation source of content for this ClusterExtension.
 	// Set the sourceType field to perform the selection.

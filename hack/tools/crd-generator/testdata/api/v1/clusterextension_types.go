@@ -63,14 +63,14 @@ type ClusterExtensionSpec struct {
 	// +required
 	Namespace string `json:"namespace"`
 
-	// serviceAccount is a reference to a ServiceAccount used to perform all interactions
-	// with the cluster that are required to manage the extension.
-	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
-	// The ServiceAccount must exist in the namespace referenced in the spec.
-	// serviceAccount is required.
+	// serviceAccount was previously used to specify a ServiceAccount for managing the extension.
+	// This field is now deprecated and ignored. operator-controller uses its own ServiceAccount
+	// for all Kubernetes API interactions.
 	//
-	// +required
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+	// Deprecated: This field is ignored. It will be removed in a future API version.
+	//
+	// +optional
+	ServiceAccount ServiceAccountReference `json:"serviceAccount,omitzero"`
 
 	// source is a required field which selects the installation source of content
 	// for this ClusterExtension. Selection is performed by setting the sourceType.

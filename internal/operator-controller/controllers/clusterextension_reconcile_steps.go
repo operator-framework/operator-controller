@@ -21,10 +21,8 @@ import (
 	"errors"
 	"fmt"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/finalizer"
@@ -95,21 +93,6 @@ func ValidateClusterExtension(validators ...ClusterExtensionValidator) Reconcile
 		setInstalledStatusConditionUnknown(ext, err.Error())
 		setStatusProgressing(ext, err)
 		return nil, err
-	}
-}
-
-// ServiceAccountValidator returns a validator that checks if the specified
-// ServiceAccount exists in the cluster by performing a direct Get call.
-func ServiceAccountValidator(saClient corev1client.ServiceAccountsGetter) ClusterExtensionValidator {
-	return func(ctx context.Context, ext *ocv1.ClusterExtension) error {
-		_, err := saClient.ServiceAccounts(ext.Spec.Namespace).Get(ctx, ext.Spec.ServiceAccount.Name, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return fmt.Errorf("service account %q not found in namespace %q", ext.Spec.ServiceAccount.Name, ext.Spec.Namespace)
-			}
-			return fmt.Errorf("error getting service account: %w", err)
-		}
-		return nil
 	}
 }
 
