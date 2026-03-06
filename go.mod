@@ -257,6 +257,8 @@ require (
 
 retract v1.5.0 // contains filename with ':' which causes failure creating module zip file
 
+replace k8s.io/api => k8s.io/api v0.35.0
+
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.35.0
 
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.35.0
