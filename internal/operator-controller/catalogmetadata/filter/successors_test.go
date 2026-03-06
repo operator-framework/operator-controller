@@ -240,3 +240,36 @@ func TestLegacySuccessor(t *testing.T) {
 	assert.True(t, f(b5))
 	assert.False(t, f(emptyBundle))
 }
+
+// TestSuccessorsOf_WithReleaseVersionSupport_FeatureGateDisabled verifies higher releases
+// are NOT successors when ReleaseVersionPriority gate is disabled (default).
+// TODO: Feature gate enabled behavior must be tested in E2E tests.
+func TestSuccessorsOf_WithReleaseVersionSupport_FeatureGateDisabled(t *testing.T) {
+	channel := declcfg.Channel{
+		Entries: []declcfg.ChannelEntry{
+			{Name: "test-package.v1.0.0+1"},
+			{
+				Name:     "test-package.v2.0.0",
+				Replaces: "test-package.v1.0.0+1",
+			},
+		},
+	}
+	installedBundle := ocv1.BundleMetadata{
+		Name:    "test-package.v1.0.0+1",
+		Version: "1.0.0+1",
+	}
+
+	higherRelease := declcfg.Bundle{
+		Name:    "test-package.v1.0.0+2",
+		Package: "test-package",
+		Properties: []property.Property{
+			property.MustBuildPackage("test-package", "1.0.0+2"),
+		},
+	}
+
+	predicate, err := SuccessorsOf(installedBundle, channel)
+	require.NoError(t, err)
+
+	// Higher release should NOT match without feature gate
+	assert.False(t, predicate(higherRelease))
+}
