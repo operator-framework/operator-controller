@@ -48,3 +48,21 @@ func InAnyChannel(channels ...declcfg.Channel) filter.Predicate[declcfg.Bundle] 
 		return false
 	}
 }
+
+// SameVersionHigherRelease returns a predicate that matches bundles with the same
+// semantic version as the provided version-release, but with a higher release value.
+// This is used to identify re-released bundles (e.g., 2.0.0+2 when 2.0.0+1 is installed).
+func SameVersionHigherRelease(expect bundle.VersionRelease) filter.Predicate[declcfg.Bundle] {
+	return func(b declcfg.Bundle) bool {
+		actual, err := bundleutil.GetVersionAndRelease(b)
+		if err != nil {
+			return false
+		}
+
+		if expect.Version.Compare(actual.Version) != 0 {
+			return false
+		}
+
+		return expect.Release.Compare(actual.Release) < 0
+	}
+}

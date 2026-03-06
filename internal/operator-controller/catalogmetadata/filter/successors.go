@@ -9,6 +9,7 @@ import (
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/operator-controller/bundle"
+	"github.com/operator-framework/operator-controller/internal/operator-controller/features"
 	"github.com/operator-framework/operator-controller/internal/shared/util/filter"
 )
 
@@ -28,11 +29,22 @@ func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Chann
 		return nil, fmt.Errorf("getting successorsPredicate: %w", err)
 	}
 
-	// We need either successors or current version (no upgrade)
-	return filter.Or(
+	// Build the final predicate based on feature gate status
+	predicates := []filter.Predicate[declcfg.Bundle]{
 		successorsPredicate,
 		ExactVersionRelease(*installedVersionRelease),
-	), nil
+	}
+
+	// If release version priority is enabled, also consider bundles
+	// with the same semantic version but higher release as valid successors.
+	// This allows upgrades to re-released bundles (e.g., 2.0.0+1 -> 2.0.0+2).
+	if features.OperatorControllerFeatureGate.Enabled(features.ReleaseVersionPriority) {
+		predicates = append(predicates, SameVersionHigherRelease(*installedVersionRelease))
+	}
+
+	// Bundle matches if it's a channel successor, current version (no upgrade),
+	// or (when feature gate enabled) same version with higher release
+	return filter.Or(predicates...), nil
 }
 
 func legacySuccessor(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (filter.Predicate[declcfg.Bundle], error) {
