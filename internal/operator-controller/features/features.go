@@ -13,7 +13,6 @@ const (
 	// Ex: SomeFeature featuregate.Feature = "SomeFeature"
 	PreflightPermissions              featuregate.Feature = "PreflightPermissions"
 	SingleOwnNamespaceInstallSupport  featuregate.Feature = "SingleOwnNamespaceInstallSupport"
-	SyntheticPermissions              featuregate.Feature = "SyntheticPermissions"
 	WebhookProviderCertManager        featuregate.Feature = "WebhookProviderCertManager"
 	WebhookProviderOpenshiftServiceCA featuregate.Feature = "WebhookProviderOpenshiftServiceCA"
 	HelmChartSupport                  featuregate.Feature = "HelmChartSupport"
@@ -36,14 +35,6 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	SingleOwnNamespaceInstallSupport: {
 		Default:       true,
 		PreRelease:    featuregate.GA,
-		LockToDefault: false,
-	},
-
-	// SyntheticPermissions enables support for a synthetic user permission
-	// model to manage operator permission boundaries
-	SyntheticPermissions: {
-		Default:       false,
-		PreRelease:    featuregate.Alpha,
 		LockToDefault: false,
 	},
 

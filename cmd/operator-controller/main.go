@@ -698,9 +698,6 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 	}
 	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
 	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
-	if features.OperatorControllerFeatureGate.Enabled(features.SyntheticPermissions) {
-		clientRestConfigMapper = action.SyntheticUserRestConfigMapper(clientRestConfigMapper)
-	}
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(c.mgr.GetConfig(), c.mgr.GetRESTMapper(),
 		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, c.mgr.GetAPIReader(), cfg.systemNamespace)),
