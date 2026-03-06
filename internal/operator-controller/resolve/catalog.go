@@ -181,12 +181,14 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 	// Check for ambiguity
 	if len(resolvedBundles) != 1 {
 		l.Info("resolution failed", "stats", catStats)
+		upgradePolicyEnforced := ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1.UpgradeConstraintPolicySelfCertified && installedBundle != nil
 		return nil, nil, nil, resolutionError{
-			PackageName:     packageName,
-			Version:         versionRange,
-			Channels:        channels,
-			InstalledBundle: installedBundle,
-			ResolvedBundles: resolvedBundles,
+			PackageName:           packageName,
+			Version:               versionRange,
+			Channels:              channels,
+			InstalledBundle:       installedBundle,
+			ResolvedBundles:       resolvedBundles,
+			UpgradePolicyEnforced: upgradePolicyEnforced,
 		}
 	}
 	resolvedBundle := resolvedBundles[0].bundle
@@ -210,11 +212,12 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtensio
 }
 
 type resolutionError struct {
-	PackageName     string
-	Version         string
-	Channels        []string
-	InstalledBundle *ocv1.BundleMetadata
-	ResolvedBundles []foundBundle
+	PackageName            string
+	Version                string
+	Channels               []string
+	InstalledBundle        *ocv1.BundleMetadata
+	ResolvedBundles        []foundBundle
+	UpgradePolicyEnforced  bool
 }
 
 func (rei resolutionError) Error() string {
@@ -223,6 +226,21 @@ func (rei resolutionError) Error() string {
 		sb.WriteString(fmt.Sprintf("error upgrading from currently installed version %q: ", rei.InstalledBundle.Version))
 	}
 
+	// When upgrade policy is enforced and no bundles were found, provide a clearer message
+	// indicating that the version doesn't match any successor
+	if rei.UpgradePolicyEnforced && len(rei.ResolvedBundles) == 0 {
+		sb.WriteString(fmt.Sprintf("desired package %q ", rei.PackageName))
+		if rei.Version != "" {
+			sb.WriteString(fmt.Sprintf("with version range %q ", rei.Version))
+		}
+		sb.WriteString(fmt.Sprintf("does not match any successor of %q", rei.InstalledBundle.Version))
+		if len(rei.Channels) > 0 {
+			sb.WriteString(fmt.Sprintf(" in channels %v", rei.Channels))
+		}
+		return sb.String()
+	}
+
+	// Default error message for other scenarios
 	if len(rei.ResolvedBundles) > 1 {
 		sb.WriteString(fmt.Sprintf("found bundles for package %q ", rei.PackageName))
 	} else {
