@@ -1806,96 +1806,15 @@ metadata:
     olm.operatorframework.io/feature-set: experimental-e2e
 rules:
   - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts/token
-    verbs:
-      - create
-  - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts
-    verbs:
-      - get
-  - apiGroups:
-      - apiextensions.k8s.io
-    resources:
-      - customresourcedefinitions
-    verbs:
-      - get
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clustercatalogs
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions
-    verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions/finalizers
-    verbs:
-      - update
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensions/status
-    verbs:
-      - patch
-      - update
-  - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
-      - clusterrolebindings
-      - clusterroles
-      - rolebindings
-      - roles
-    verbs:
-      - list
-      - watch
-  - apiGroups:
       - "*"
     resources:
       - "*"
     verbs:
-      - list
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensionrevisions
+      - "*"
+  - nonResourceURLs:
+      - "*"
     verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensionrevisions/status
-    verbs:
-      - patch
-      - update
-  - apiGroups:
-      - olm.operatorframework.io
-    resources:
-      - clusterextensionrevisions/finalizers
-    verbs:
-      - update
+      - "*"
 ---
 # Source: olmv1/templates/rbac/clusterrolebinding-catalogd-manager-rolebinding.yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1963,7 +1882,7 @@ metadata:
   labels:
     app.kubernetes.io/name: operator-controller
     app.kubernetes.io/part-of: olm
-  name: operator-controller-manager-admin-rolebinding
+  name: operator-controller-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
