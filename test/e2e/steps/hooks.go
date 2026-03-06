@@ -67,7 +67,6 @@ var (
 		features.WebhookProviderCertManager:        true,
 		features.PreflightPermissions:              false,
 		features.SingleOwnNamespaceInstallSupport:  true,
-		features.SyntheticPermissions:              false,
 		features.WebhookProviderOpenshiftServiceCA: false,
 		features.HelmChartSupport:                  false,
 		features.BoxcutterRuntime:                  false,
