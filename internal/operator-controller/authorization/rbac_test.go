@@ -396,7 +396,7 @@ func setupFakeClient(role client.Object) client.Client {
 func TestPreAuthorize_Success(t *testing.T) {
 	t.Run("preauthorize succeeds with no missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(privilegedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithClusterCollectionVerbs("list", "watch"), WithNamespacedCollectionVerbs("create"))
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
@@ -406,7 +406,7 @@ func TestPreAuthorize_Success(t *testing.T) {
 func TestPreAuthorize_MissingRBAC(t *testing.T) {
 	t.Run("preauthorize fails and finds missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(limitedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithClusterCollectionVerbs("list", "watch"), WithNamespacedCollectionVerbs("create"))
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, expectedSingleNamespaceMissingRules, missingRules)
@@ -416,7 +416,7 @@ func TestPreAuthorize_MissingRBAC(t *testing.T) {
 func TestPreAuthorizeMultiNamespace_MissingRBAC(t *testing.T) {
 	t.Run("preauthorize fails and finds missing rbac rules in multiple namespaces", func(t *testing.T) {
 		fakeClient := setupFakeClient(limitedClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithClusterCollectionVerbs("list", "watch"), WithNamespacedCollectionVerbs("create"))
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifestMultiNamespace))
 		require.NoError(t, err)
 		require.Equal(t, expectedMultiNamespaceMissingRules, missingRules)
@@ -426,7 +426,7 @@ func TestPreAuthorizeMultiNamespace_MissingRBAC(t *testing.T) {
 func TestPreAuthorize_CheckEscalation(t *testing.T) {
 	t.Run("preauthorize succeeds with no missing rbac rules", func(t *testing.T) {
 		fakeClient := setupFakeClient(escalatingClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithClusterCollectionVerbs("list", "watch"), WithNamespacedCollectionVerbs("create"))
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
 		require.NoError(t, err)
 		require.Equal(t, []ScopedPolicyRules{}, missingRules)
@@ -436,7 +436,7 @@ func TestPreAuthorize_CheckEscalation(t *testing.T) {
 func TestPreAuthorize_AdditionalRequiredPerms_MissingRBAC(t *testing.T) {
 	t.Run("preauthorize fails and finds missing rbac rules coming from the additional required permissions", func(t *testing.T) {
 		fakeClient := setupFakeClient(escalatingClusterRole)
-		preAuth := NewRBACPreAuthorizer(fakeClient)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithClusterCollectionVerbs("list", "watch"), WithNamespacedCollectionVerbs("create"))
 		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest), func(user user.Info) []authorizer.AttributesRecord {
 			return []authorizer.AttributesRecord{
 				{
@@ -462,6 +462,237 @@ func TestPreAuthorize_AdditionalRequiredPerms_MissingRBAC(t *testing.T) {
 				},
 			},
 		}, missingRules)
+	})
+}
+
+func TestPreAuthorize_WithClusterCollectionVerbs(t *testing.T) {
+	// expectedNamespacedMissingRules are the missing rules expected in the "test-namespace"
+	// namespace regardless of cluster collection verb configuration. These come from object
+	// verbs (get, patch, update, delete), namespaced collection verbs (create), and the
+	// escalation check for the role/rolebinding in the manifest.
+	expectedNamespacedMissingRules := ScopedPolicyRules{
+		Namespace: "test-namespace",
+		MissingRules: []rbacv1.PolicyRule{
+			{
+				Verbs:     []string{"create"},
+				APIGroups: []string{"*"},
+				Resources: []string{"certificates"}},
+			{
+				Verbs:     []string{"create"},
+				APIGroups: []string{""},
+				Resources: []string{"services"}},
+			{
+				Verbs:     []string{"create"},
+				APIGroups: []string{"rbac.authorization.k8s.io"},
+				Resources: []string{"rolebindings"}},
+			{
+				Verbs:     []string{"create"},
+				APIGroups: []string{"rbac.authorization.k8s.io"},
+				Resources: []string{"roles"}},
+			{
+				Verbs:         []string{"delete", "get", "patch", "update"},
+				APIGroups:     []string{""},
+				Resources:     []string{"services"},
+				ResourceNames: []string{"test-service"}},
+			{
+				Verbs:         []string{"delete", "get", "patch", "update"},
+				APIGroups:     []string{"rbac.authorization.k8s.io"},
+				Resources:     []string{"rolebindings"},
+				ResourceNames: []string{"test-extension-binding"}},
+			{
+				Verbs:         []string{"delete", "get", "patch", "update"},
+				APIGroups:     []string{"rbac.authorization.k8s.io"},
+				Resources:     []string{"roles"},
+				ResourceNames: []string{"test-extension-role"}},
+			{
+				Verbs:     []string{"watch"},
+				APIGroups: []string{"*"},
+				Resources: []string{"serviceaccounts"},
+			},
+		},
+	}
+
+	t.Run("no cluster collection verbs option omits cluster-scoped collection rules", func(t *testing.T) {
+		fakeClient := setupFakeClient(limitedClusterRole)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithNamespacedCollectionVerbs("create"))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
+		require.NoError(t, err)
+		// With no cluster collection verbs, there should be no cluster-scoped (namespace="") missing rules
+		require.Equal(t, []ScopedPolicyRules{expectedNamespacedMissingRules}, missingRules)
+	})
+
+	t.Run("cluster verbs option only checks those verbs at cluster scope", func(t *testing.T) {
+		fakeClient := setupFakeClient(limitedClusterRole)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithClusterCollectionVerbs("get", "patch", "update"), WithNamespacedCollectionVerbs("create"))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
+		require.NoError(t, err)
+		require.Equal(t, []ScopedPolicyRules{
+			{
+				Namespace: "",
+				MissingRules: []rbacv1.PolicyRule{
+					{
+						Verbs:           []string{"get", "patch", "update"},
+						APIGroups:       []string{""},
+						Resources:       []string{"services"},
+						ResourceNames:   []string(nil),
+						NonResourceURLs: []string(nil)},
+					{
+						Verbs:           []string{"get", "patch", "update"},
+						APIGroups:       []string{"rbac.authorization.k8s.io"},
+						Resources:       []string{"rolebindings"},
+						ResourceNames:   []string(nil),
+						NonResourceURLs: []string(nil)},
+					{
+						Verbs:           []string{"get", "patch", "update"},
+						APIGroups:       []string{"rbac.authorization.k8s.io"},
+						Resources:       []string{"roles"},
+						ResourceNames:   []string(nil),
+						NonResourceURLs: []string(nil),
+					},
+				},
+			},
+			expectedNamespacedMissingRules,
+		}, missingRules)
+	})
+
+	t.Run("privileged user with no cluster collection verbs succeeds", func(t *testing.T) {
+		fakeClient := setupFakeClient(privilegedClusterRole)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithNamespacedCollectionVerbs("create"))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
+		require.NoError(t, err)
+		require.Equal(t, []ScopedPolicyRules{}, missingRules)
+	})
+}
+
+func TestPreAuthorize_WithNamespacedCollectionVerbs(t *testing.T) {
+	// expectedClusterMissingRules are the missing rules expected at cluster scope
+	// when cluster collection verbs are configured as "list", "watch".
+	expectedClusterMissingRules := ScopedPolicyRules{
+		Namespace: "",
+		MissingRules: []rbacv1.PolicyRule{
+			{
+				Verbs:           []string{"list", "watch"},
+				APIGroups:       []string{""},
+				Resources:       []string{"services"},
+				ResourceNames:   []string(nil),
+				NonResourceURLs: []string(nil)},
+			{
+				Verbs:           []string{"list", "watch"},
+				APIGroups:       []string{"rbac.authorization.k8s.io"},
+				Resources:       []string{"rolebindings"},
+				ResourceNames:   []string(nil),
+				NonResourceURLs: []string(nil)},
+			{
+				Verbs:           []string{"list", "watch"},
+				APIGroups:       []string{"rbac.authorization.k8s.io"},
+				Resources:       []string{"roles"},
+				ResourceNames:   []string(nil),
+				NonResourceURLs: []string(nil),
+			},
+		},
+	}
+
+	t.Run("no namespaced collection verbs option omits namespaced collection rules", func(t *testing.T) {
+		fakeClient := setupFakeClient(limitedClusterRole)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithClusterCollectionVerbs("list", "watch"))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
+		require.NoError(t, err)
+		// Without namespaced collection verbs, no "create" rules from collection verbs should appear,
+		// but object verbs (get, patch, update, delete) and escalation checks still apply
+		require.Equal(t, []ScopedPolicyRules{
+			expectedClusterMissingRules,
+			{
+				Namespace: "test-namespace",
+				MissingRules: []rbacv1.PolicyRule{
+					{
+						Verbs:     []string{"create"},
+						APIGroups: []string{"*"},
+						Resources: []string{"certificates"}},
+					{
+						Verbs:         []string{"delete", "get", "patch", "update"},
+						APIGroups:     []string{""},
+						Resources:     []string{"services"},
+						ResourceNames: []string{"test-service"}},
+					{
+						Verbs:         []string{"delete", "get", "patch", "update"},
+						APIGroups:     []string{"rbac.authorization.k8s.io"},
+						Resources:     []string{"rolebindings"},
+						ResourceNames: []string{"test-extension-binding"}},
+					{
+						Verbs:         []string{"delete", "get", "patch", "update"},
+						APIGroups:     []string{"rbac.authorization.k8s.io"},
+						Resources:     []string{"roles"},
+						ResourceNames: []string{"test-extension-role"}},
+					{
+						Verbs:     []string{"watch"},
+						APIGroups: []string{"*"},
+						Resources: []string{"serviceaccounts"},
+					},
+				},
+			},
+		}, missingRules)
+	})
+
+	t.Run("namespaced collection verbs option checks those verbs per namespace", func(t *testing.T) {
+		fakeClient := setupFakeClient(limitedClusterRole)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithClusterCollectionVerbs("list", "watch"), WithNamespacedCollectionVerbs("create", "deletecollection"))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
+		require.NoError(t, err)
+		// Should have cluster-scoped missing rules plus namespaced rules with both create and deletecollection.
+		// Note: "certificates" with apiGroup "*" comes from the escalation check on the Role, not
+		// from namespaced collection verbs, so it only has "create".
+		require.Equal(t, []ScopedPolicyRules{
+			expectedClusterMissingRules,
+			{
+				Namespace: "test-namespace",
+				MissingRules: []rbacv1.PolicyRule{
+					{
+						Verbs:     []string{"create", "deletecollection"},
+						APIGroups: []string{""},
+						Resources: []string{"services"}},
+					{
+						Verbs:     []string{"create", "deletecollection"},
+						APIGroups: []string{"rbac.authorization.k8s.io"},
+						Resources: []string{"rolebindings"}},
+					{
+						Verbs:     []string{"create", "deletecollection"},
+						APIGroups: []string{"rbac.authorization.k8s.io"},
+						Resources: []string{"roles"}},
+					{
+						Verbs:     []string{"create"},
+						APIGroups: []string{"*"},
+						Resources: []string{"certificates"}},
+					{
+						Verbs:         []string{"delete", "get", "patch", "update"},
+						APIGroups:     []string{""},
+						Resources:     []string{"services"},
+						ResourceNames: []string{"test-service"}},
+					{
+						Verbs:         []string{"delete", "get", "patch", "update"},
+						APIGroups:     []string{"rbac.authorization.k8s.io"},
+						Resources:     []string{"rolebindings"},
+						ResourceNames: []string{"test-extension-binding"}},
+					{
+						Verbs:         []string{"delete", "get", "patch", "update"},
+						APIGroups:     []string{"rbac.authorization.k8s.io"},
+						Resources:     []string{"roles"},
+						ResourceNames: []string{"test-extension-role"}},
+					{
+						Verbs:     []string{"watch"},
+						APIGroups: []string{"*"},
+						Resources: []string{"serviceaccounts"},
+					},
+				},
+			},
+		}, missingRules)
+	})
+
+	t.Run("privileged user with custom namespaced collection verbs succeeds", func(t *testing.T) {
+		fakeClient := setupFakeClient(privilegedClusterRole)
+		preAuth := NewRBACPreAuthorizer(fakeClient, WithNamespacedCollectionVerbs("create", "deletecollection"))
+		missingRules, err := preAuth.PreAuthorize(context.TODO(), testUser, strings.NewReader(testManifest))
+		require.NoError(t, err)
+		require.Equal(t, []ScopedPolicyRules{}, missingRules)
 	})
 }
 

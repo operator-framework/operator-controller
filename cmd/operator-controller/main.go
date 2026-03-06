@@ -724,7 +724,12 @@ func (c *helmReconcilerConfigurator) Configure(ceReconciler *controllers.Cluster
 	// determine if PreAuthorizer should be enabled based on feature gate
 	var preAuth authorization.PreAuthorizer
 	if features.OperatorControllerFeatureGate.Enabled(features.PreflightPermissions) {
-		preAuth = authorization.NewRBACPreAuthorizer(c.mgr.GetClient())
+		preAuth = authorization.NewRBACPreAuthorizer(
+			c.mgr.GetClient(),
+			// Additional verbs / bundle manifest that are expected by the content manager to watch those resources
+			authorization.WithClusterCollectionVerbs("list", "watch"),
+			authorization.WithNamespacedCollectionVerbs("create"),
+		)
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, c.mgr.GetConfig(), c.mgr.GetRESTMapper())
